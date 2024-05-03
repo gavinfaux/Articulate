@@ -10,6 +10,7 @@ using Umbraco.Cms.Web.Common.Controllers;
 
 namespace Articulate.Controllers
 {
+    [ArticulateDynamicRoute]
     public class OpenSearchController : RenderController
     {
         private readonly IPublishedValueFallback _publishedValueFallback;

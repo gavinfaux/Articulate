@@ -15,6 +15,7 @@ namespace Articulate.Controllers
     /// <summary>
     /// Really simple discovery controller
     /// </summary>
+    [ArticulateDynamicRoute]
     public class RsdController : RenderController
     {
         private readonly UmbracoHelper _umbracoHelper;

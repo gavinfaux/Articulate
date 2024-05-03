@@ -17,6 +17,7 @@ namespace Articulate.Controllers
     /// <summary>
     /// Renders search results
     /// </summary>
+    [ArticulateDynamicRoute]
     public class ArticulateSearchController : ListControllerBase
     {
         private readonly IArticulateSearcher _articulateSearcher;

@@ -1,3 +1,5 @@
+#nullable enable
+
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.Routing;
@@ -148,6 +150,8 @@ namespace Articulate.Routing
             // Store the route values as a httpcontext feature
             httpContext.Features.Set(umbracoRouteValues);
 
+            umbracoContext.PublishedRequest = publishedRequest;
+
             values[ControllerToken] = dynamicRouteValues.ControllerActionDescriptor.ControllerName;
             if (string.IsNullOrWhiteSpace(dynamicRouteValues.ControllerActionDescriptor.ActionName) == false)
             {
@@ -175,9 +179,11 @@ namespace Articulate.Routing
                 return false;
             }
 
-            // If route values have already been assigned, then Umbraco has
-            // matched content, we will not proceed.            
-            if (umbracoRouteValues?.PublishedRequest?.PublishedContent != null)
+            // If route values have already been assigned, then Umbraco has matched content, we will not proceed.
+            // A 404 can be matched by Umbraco too which will occur for Articulate dynamic routes, so we need to
+            // proceed to see if it is actually a 404.
+            if (umbracoRouteValues?.PublishedRequest?.PublishedContent != null
+                && umbracoRouteValues?.PublishedRequest?.ResponseStatusCode != 404)
             {
                 return false;
             }

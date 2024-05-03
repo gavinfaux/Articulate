@@ -23,6 +23,7 @@ namespace Articulate.Controllers
     /// middleware but that just supports one endpoint, we are basically wrapping that
     /// with our own multi-tenanted version.
     /// </remarks>
+    [ArticulateDynamicRoute]
     public class MetaWeblogController : RenderController
     {
         private readonly IServiceProvider _serviceProvider;

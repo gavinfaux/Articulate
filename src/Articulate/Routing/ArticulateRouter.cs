@@ -20,15 +20,13 @@ namespace Articulate.Routing
     {
         private static readonly object s_locker = new object();
         private static readonly string s_searchControllerName = ControllerExtensions.GetControllerName<ArticulateSearchController>();
-		private static readonly string s_openSearchControllerName = ControllerExtensions.GetControllerName<OpenSearchController>();
-		private static readonly string s_rsdControllerName = ControllerExtensions.GetControllerName<RsdController>();
-		private static readonly string s_wlwControllerName = ControllerExtensions.GetControllerName<WlwManifestController>();
+        private static readonly string s_openSearchControllerName = ControllerExtensions.GetControllerName<OpenSearchController>();
+        private static readonly string s_rsdControllerName = ControllerExtensions.GetControllerName<RsdController>();
+        private static readonly string s_wlwControllerName = ControllerExtensions.GetControllerName<WlwManifestController>();
         private static readonly string s_tagsControllerName = ControllerExtensions.GetControllerName<ArticulateTagsController>();
         private static readonly string s_rssControllerName = ControllerExtensions.GetControllerName<ArticulateRssController>();
         private static readonly string s_markdownEditorControllerName = ControllerExtensions.GetControllerName<MarkdownEditorController>();
         private static readonly string s_metaWeblogControllerName = ControllerExtensions.GetControllerName<MetaWeblogController>();
-
-        
 
         private readonly Dictionary<ArticulateRouteTemplate, ArticulateRootNodeCache> _routeCache = new();
         private readonly IControllerActionSearcher _controllerActionSearcher;
@@ -44,7 +42,7 @@ namespace Articulate.Routing
 
         public bool TryMatch(PathString path, RouteValueDictionary routeValues, out ArticulateRootNodeCache articulateRootNodeCache)
         {
-            foreach(var item in _routeCache)
+            foreach (var item in _routeCache)
             {
                 var templateMatcher = new TemplateMatcher(item.Key.RouteTemplate, routeValues);
                 if (templateMatcher.TryMatch(path, routeValues))
@@ -116,17 +114,17 @@ namespace Articulate.Routing
                         MapAuthorsRssRoute(httpContext, rootNodePath, articulateRootNode, domains);
 
                         MapSearchRoute(httpContext, rootNodePath, articulateRootNode, domains);
-                    MapMetaWeblogRoute(httpContext, rootNodePath, articulateRootNode, domains);
-                    MapManifestRoute(httpContext, rootNodePath, articulateRootNode, domains);
+                        MapMetaWeblogRoute(httpContext, rootNodePath, articulateRootNode, domains);
+                        MapManifestRoute(httpContext, rootNodePath, articulateRootNode, domains);
                         MapRsdRoute(httpContext, rootNodePath, articulateRootNode, domains);
                         MapOpenSearchRoute(httpContext, rootNodePath, articulateRootNode, domains);
 
                         // tags/cats routes are the least specific
                         MapTagsAndCategoriesRoute(httpContext, rootNodePath, articulateRootNode, domains);
                     }
-                } 
+                }
             }
-        }		
+        }
 
         /// <summary>
         /// Generically caches a url path for a particular controller
@@ -153,7 +151,7 @@ namespace Articulate.Routing
                 _routeCache[art] = dynamicRouteValues;
             }
 
-            dynamicRouteValues.Add(articulateRootNode.Id, DomainsForContent(articulateRootNode,domains));
+            dynamicRouteValues.Add(articulateRootNode.Id, DomainsForContent(articulateRootNode, domains));
         }
 
         private List<Domain> DomainsForContent(IPublishedContent content, IReadOnlyList<Domain> domains)
@@ -175,7 +173,7 @@ namespace Articulate.Routing
                 domains);
         }
 
-		private void MapRsdRoute(HttpContext httpContext, string rootNodePath, IPublishedContent articulateRootNode, List<Domain> domains)
+        private void MapRsdRoute(HttpContext httpContext, string rootNodePath, IPublishedContent articulateRootNode, List<Domain> domains)
         {
             RouteTemplate template = TemplateParser.Parse($"{rootNodePath}rsd/{{id}}");
             MapRoute(

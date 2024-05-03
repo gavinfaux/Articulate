@@ -13,7 +13,9 @@ using Umbraco.Cms.Web.Common;
 using Articulate.Services;
 using Umbraco.Cms.Core.PublishedCache;
 using System.Collections.Generic;
-#if NET7_0_OR_GREATER 
+using Umbraco.Cms.Web.Common.Attributes;
+
+#if NET7_0_OR_GREATER
 using Microsoft.AspNetCore.OutputCaching;
 #endif
 
@@ -28,7 +30,7 @@ namespace Articulate.Controllers
 #if NET7_0_OR_GREATER
     [OutputCache(PolicyName = "Articulate60")]
 #endif
-
+    [ArticulateDynamicRoute]
     public class ArticulateTagsController : ListControllerBase
     {
         private readonly UmbracoHelper _umbracoHelper;
@@ -51,7 +53,7 @@ namespace Articulate.Controllers
             _articulateTagService = articulateTagService;
             _tagQuery = tagQuery;
         }
-                
+
         /// <summary>
         /// Used to render the category listing (virtual node)
         /// </summary>

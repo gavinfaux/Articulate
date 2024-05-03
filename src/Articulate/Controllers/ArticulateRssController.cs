@@ -27,6 +27,7 @@ namespace Articulate.Controllers
 #if NET7_0_OR_GREATER 
     [OutputCache(PolicyName = "Articulate300")]
 #endif
+    [ArticulateDynamicRoute]
     public class ArticulateRssController : RenderController
     {
         private readonly IRssFeedGenerator _feedGenerator;

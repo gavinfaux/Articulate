@@ -12,6 +12,7 @@ using Umbraco.Extensions;
 
 namespace Articulate.Controllers
 {
+    [ArticulateDynamicRoute]
     public class MarkdownEditorController : RenderController
     {
         private readonly UmbracoApiControllerTypeCollection _apiControllers;

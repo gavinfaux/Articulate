@@ -8,6 +8,7 @@ using Umbraco.Cms.Web.Common.Controllers;
 
 namespace Articulate.Controllers
 {
+    [ArticulateDynamicRoute]
     public class WlwManifestController : RenderController
     {
         private readonly UmbracoHelper _umbraco;

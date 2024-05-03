@@ -5,7 +5,9 @@ using Articulate.Packaging;
 using Articulate.Routing;
 using Articulate.Services;
 using Articulate.Syndication;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Umbraco.Cms.Core.Composing;
 using Umbraco.Cms.Core.DependencyInjection;
 using Umbraco.Cms.Core.Notifications;
@@ -36,6 +38,7 @@ namespace Articulate.Components
             services.AddSingleton<ArticulateRouter>();
             services.AddSingleton<RouteCacheRefresherFilter>();
             services.AddSingleton<ArticulateFrontEndFilterConvention>();
+            builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<MatcherPolicy, ArticulateDynamicRouteSelectorPolicy>());
 
             builder.UrlProviders().InsertBefore<DefaultUrlProvider, DateFormattedUrlProvider>();
 
