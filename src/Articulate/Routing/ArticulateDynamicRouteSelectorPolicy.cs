@@ -56,7 +56,7 @@ namespace Articulate.Routing
                 for (var i = 0; i < candidates.Count; i++)
                 {
                     // If the candidate is an Articulate dynamic controller, set valid
-                    if (candidates[i].Endpoint.Metadata.GetMetadata<ArticulateDynamicRouteAttribute>() is not null)
+                    if (candidates[i].Endpoint?.Metadata?.GetMetadata<ArticulateDynamicRouteAttribute>() is not null)
                     {
                         candidates.SetValidity(i, true);
                     }
