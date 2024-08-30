@@ -11,6 +11,7 @@ using System.Linq;
 using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Umbraco.Cms.Api.Management.Controllers;
 using Umbraco.Cms.Core.Actions;
 using Umbraco.Cms.Core.Configuration.Models;
 using Umbraco.Cms.Core.Hosting;
@@ -22,7 +23,7 @@ using Umbraco.Cms.Core.PropertyEditors;
 using Umbraco.Cms.Core.Security;
 using Umbraco.Cms.Core.Serialization;
 using Umbraco.Cms.Core.Services;
-using Umbraco.Cms.Web.BackOffice.Controllers;
+
 using Umbraco.Cms.Web.Common;
 using Umbraco.Extensions;
 
@@ -31,7 +32,10 @@ namespace Articulate.Controllers
     /// <summary>
     /// Controller for handling the a-new markdown editor endpoint for creating blog posts
     /// </summary>
-    public class MardownEditorApiController : UmbracoAuthorizedApiController
+    [ApiController]
+    [Route("/umbraco/api/articulate/markdown-api")]
+
+    public class MardownEditorApiController : ManagementApiControllerBase
     {
         private readonly ServiceContext _services;
         private readonly IBackOfficeSecurityAccessor _backOfficeSecurityAccessor;
@@ -68,6 +72,7 @@ namespace Articulate.Controllers
             public string FirstImage { get; set; }
         }
 
+        [HttpPost]
         public async Task<ActionResult> PostNew()
         {
             await Task.CompletedTask;
@@ -113,7 +118,7 @@ namespace Articulate.Controllers
                 return BadRequest("No Articulate Archive node found for the specified id");
             }
 
-            var list = new List<char> { ActionNew.ActionLetter, ActionUpdate.ActionLetter };
+            var list = new List<string> { ActionNew.ActionLetter, ActionUpdate.ActionLetter };
             var hasPermission = CheckPermissions(
                 _backOfficeSecurityAccessor.BackOfficeSecurity.CurrentUser,
                 _services.UserService,
@@ -180,13 +185,12 @@ namespace Articulate.Controllers
             {
                 ModelState.AddModelError("server", "Publishing failed: " + status.Result);
                 //probably  need to send back more info than that...
-                return BadRequest(ModelState);                
+                return BadRequest(ModelState);
             }
 
             IPublishedContent published = _umbracoHelper.Content(content.Id);
             return Ok(new { url = published.Url() });
         }
-        
 
         private ParseImageResponse ParseImages(string body, IFormFileCollection formFiles, bool extractFirstImageAsProperty)
         {
@@ -226,14 +230,14 @@ namespace Articulate.Controllers
                         return result;
                     }
                 }
-                
+
                 return m.Value;
             });
 
             return new ParseImageResponse { BodyText = bodyText, FirstImage = firstImage };
         }
 
-        private static bool CheckPermissions(IUser user, IUserService userService, char[] permissionsToCheck, IContent contentItem)
+        private static bool CheckPermissions(IUser user, IUserService userService, string[] permissionsToCheck, IContent contentItem)
         {
 
             if (permissionsToCheck == null || !permissionsToCheck.Any())

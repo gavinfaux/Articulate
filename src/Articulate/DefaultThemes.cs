@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Smidge;
+
 
 namespace Articulate
 {
@@ -25,43 +25,31 @@ namespace Articulate
         {
             public const string Name = "VAPOR";
 
-            public override void CreateBundles(IBundleManager bundleManager)
-            {
-                bundleManager.CreateJs("articulate-vapor-js", DefaultTheme.RequiredThemedJsFolder(Name));
-                bundleManager.CreateCss("articulate-vapor-css", DefaultTheme.RequiredThemedCssFolder(Name));
-            }
+
         }
 
         public class Material : DefaultTheme
         {
             public const string Name = "Material";
 
-            public override void CreateBundles(IBundleManager bundleManager)
-            {
-                bundleManager.CreateJs("articulate-material-js", DefaultTheme.RequiredThemedJsFolder(Name));
-                bundleManager.CreateCss("articulate-material-css", DefaultTheme.RequiredThemedCssFolder(Name));
-            }
+
         }
 
         public class Phantom : DefaultTheme
         {
             public const string Name = "Phantom";
 
-            public override void CreateBundles(IBundleManager bundleManager)
-                => bundleManager.CreateCss("articulate-phantom-css", DefaultTheme.RequiredThemedCssFolder(Name));
         }
 
         public class Mini : DefaultTheme
         {
             public const string Name = "Mini";
 
-            public override void CreateBundles(IBundleManager bundleManager)
-                => bundleManager.CreateCss("articulate-mini-css", DefaultTheme.RequiredThemedCssFolder(Name));
         }
 
         public abstract class DefaultTheme
         {
-            public abstract void CreateBundles(IBundleManager bundleManager);
+            // public abstract void CreateBundles(IBundleManager bundleManager);
 
             protected static string RequiredThemedCssFolder(string theme)
                 => PathHelper.GetThemePath(theme) + "Assets/css";

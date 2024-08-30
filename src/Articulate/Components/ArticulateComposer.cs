@@ -52,12 +52,11 @@ namespace Articulate.Components
             builder.AddNotificationHandler<ServerVariablesParsingNotification, ServerVariablesParsingHandler>();
             builder.AddNotificationHandler<ContentCacheRefresherNotification, ContentCacheRefresherHandler>();
             builder.AddNotificationHandler<DomainCacheRefresherNotification, DomainCacheRefresherHandler>();
-            builder.AddNotificationHandler<SendingContentNotification, SendingContentHandler>();
+            builder.AddNotificationHandler<ContentSavingNotification, SendingContentHandler>();
 
             builder.Services.ConfigureOptions<ArticulatePipelineStartupFilter>();
             builder.Services.ConfigureOptions<ConfigureArticulateMvcOptions>();
 
-#if NET7_0_OR_GREATER
             builder.Services.AddOutputCache(options =>
             {               
                 options.AddPolicy("Articulate120", builder =>
@@ -67,7 +66,6 @@ namespace Articulate.Components
                 options.AddPolicy("Articulate60", builder =>
                     builder.Expire(TimeSpan.FromSeconds(60)));
             });
-#endif
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using Umbraco.Cms.Core.Events;
 using Umbraco.Cms.Core.Notifications;
 using Umbraco.Extensions;
@@ -14,7 +14,7 @@ namespace Articulate.Components
                 .Where(c => c.Alias.InvariantEquals(ArticulateConstants.ArticulateArchiveContentTypeAlias) || c.Alias.InvariantEquals(ArticulateConstants.ArticulateAuthorsContentTypeAlias))
                 .Where(c => c.HasIdentity == false))
             {
-                c.IsContainer = true;
+//                c.IsContainer = true;
             }
         }
     }

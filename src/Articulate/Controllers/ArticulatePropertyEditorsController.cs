@@ -1,14 +1,16 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Hosting;
+using Umbraco.Cms.Api.Management.Controllers;
 using Umbraco.Cms.Core.Extensions;
-using Umbraco.Cms.Core.Hosting;
-using Umbraco.Cms.Web.BackOffice.Controllers;
 
 namespace Articulate.Controllers
 {
-    public class ArticulatePropertyEditorsController : UmbracoAuthorizedApiController
+    [ApiController]
+    [Route("/umbraco/api/articulate/editor")]
+    public class ArticulatePropertyEditorsController : ManagementApiControllerBase
     {
         private readonly IHostEnvironment _hostingEnvironment;
 
@@ -17,6 +19,7 @@ namespace Articulate.Controllers
             _hostingEnvironment = hostingEnvironment;
         }
 
+        [HttpGet]
         public IEnumerable<string> GetThemes()
         {
             var defaultThemeDir = _hostingEnvironment.MapPathContentRoot(PathHelper.VirtualThemePath);

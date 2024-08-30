@@ -9,29 +9,14 @@ using Umbraco.Cms.Core.Templates;
 
 namespace Articulate.PropertyEditors
 {
-
-    [DataEditor("Articulate.MarkdownEditor", "Articulate Markdown editor", "markdowneditor", ValueType = "TEXT")]
-    public class ArticulateMarkdownPropertyEditor : MarkdownPropertyEditor
-    {
-        [Obsolete]
-        public ArticulateMarkdownPropertyEditor(IDataValueEditorFactory dataValueEditorFactory, IIOHelper ioHelper)
-            : base(dataValueEditorFactory, ioHelper)
-        {
-        }
-
-        public ArticulateMarkdownPropertyEditor(IDataValueEditorFactory dataValueEditorFactory, IIOHelper ioHelper, IEditorConfigurationParser editorConfigurationParser)
-            : base(dataValueEditorFactory, ioHelper, editorConfigurationParser)
-        {
-        }
-    }
+    [DataEditor("Articulate.MarkdownEditor", IsDeprecated = false, ValueEditorIsReusable = false,  ValueType = ValueTypes.Text)]
+    public class ArticulateMarkdownPropertyEditor(IDataValueEditorFactory dataValueEditorFactory)
+        : MarkdownPropertyEditor(dataValueEditorFactory);
 
     // using a reasonable Markdown converter
-    public class ArticulateMarkdownEditorValueConverter : MarkdownEditorValueConverter
+    public class ArticulateMarkdownEditorValueConverter(HtmlLocalLinkParser localLinkParser, HtmlUrlParser urlParser)
+        : MarkdownEditorValueConverter(localLinkParser, urlParser)
     {
-        public ArticulateMarkdownEditorValueConverter(HtmlLocalLinkParser localLinkParser, HtmlUrlParser urlParser) : base(localLinkParser, urlParser)
-        {
-        }
-
         public override bool IsConverter(IPublishedPropertyType propertyType)
             => "Articulate.MarkdownEditor" == propertyType.EditorAlias;
 

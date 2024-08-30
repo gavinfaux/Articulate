@@ -1,25 +1,22 @@
-using Articulate.Models;
-using Newtonsoft.Json.Linq;
 using System;
+using Articulate.Models;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using Articulate.ImportExport;
-using Umbraco.Cms.Web.BackOffice.Controllers;
-using Umbraco.Cms.Core.Hosting;
 using Umbraco.Extensions;
 using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.Security;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Hosting;
-using Umbraco.Cms.Core.Extensions;
+using Umbraco.Cms.Api.Management.Controllers;
 
 namespace Articulate.Controllers
 {
-    public class ArticulateBlogImportController : UmbracoAuthorizedApiController
+    [ApiController]
+    [Route("/umbraco/api/articulate/import")]
+    public class ArticulateBlogImportController : ManagementApiControllerBase
     {
         private readonly BlogMlImporter _blogMlImporter;
         private readonly UmbracoApiControllerTypeCollection _umbracoApiControllerTypeCollection;
@@ -44,6 +41,7 @@ namespace Articulate.Controllers
             _blogMlExporter = blogMlExporter;
         }
 
+        [HttpPost]
         [DisableRequestSizeLimit]
         public ActionResult PostInitialize()
         {
@@ -59,7 +57,7 @@ namespace Articulate.Controllers
 
             var fileName = Path.GetRandomFileName();
             using (var stream = new MemoryStream())
-            {                
+            {
                 Request.Form.Files[0].CopyTo(stream);
                 _articulateTempFileSystem.AddFile(fileName, stream);
             }
@@ -73,22 +71,26 @@ namespace Articulate.Controllers
             });
         }
 
+        [HttpPost("PostExportBlogMl")]
         public ImportModel PostExportBlogMl(ExportBlogMlModel model)
         {
             _blogMlExporter.Export(model.ArticulateNodeId, model.ExportImagesAsBase64);
 
             return new ImportModel
             {
-                DownloadUrl = Url.GetUmbracoApiService<ArticulateBlogImportController>(_umbracoApiControllerTypeCollection, "GetBlogMlExport")
+//                DownloadUrl = Url.GetUmbracoApiService<ArticulateBlogImportController>(_umbracoApiControllerTypeCollection, "GetBlogMlExport")
+                DownloadUrl = string.Empty
             };
         }
 
+        [HttpGet("GetBlogMlExport")]
         public IActionResult GetBlogMlExport()
         {
             var fileStream = _articulateTempFileSystem.OpenFile("BlogMlExport.xml");
             return File(fileStream, "application/octet-stream", "BlogMlExport.xml");
         }
 
+        [HttpPost("PostImportBlogMl")]
         public async Task<ActionResult<ImportModel>> PostImportBlogMl(ImportBlogMlModel model)
         {
             if (!ModelState.IsValid)
@@ -119,10 +121,12 @@ namespace Articulate.Controllers
 
             return new ImportModel
             {
-                DownloadUrl = Url.GetUmbracoApiService<ArticulateBlogImportController>(_umbracoApiControllerTypeCollection, "GetDisqusExport")
+                //DownloadUrl = Url.GetUmbracoApiService<ArticulateBlogImportController>(_umbracoApiControllerTypeCollection, "GetDisqusExport")
+                 DownloadUrl = string.Empty
             };
         }
 
+        [HttpGet("GetDisqusExport")]
         public IActionResult GetDisqusExport()
         {
             //save to Temp folder (base path)

@@ -86,8 +86,7 @@ namespace Articulate.Tests.Website
                 .WithEndpoints(u =>
                 {
                     u.EndpointRouteBuilder.MapRazorPages();
-
-                    u.UseInstallerEndpoints();
+                    // u.UseInstallerEndpoints();
                     u.UseBackOfficeEndpoints();
                     u.UseWebsiteEndpoints();
                 });

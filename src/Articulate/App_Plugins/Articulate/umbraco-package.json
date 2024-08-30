@@ -1,0 +1,24 @@
+{
+  "$schema": "../../umbraco-package-schema.json",
+  "name": "Articulate.Dashboard",
+  "version": "0.1.0",
+  "extensions": [
+    {
+      "type": "dashboard",
+      "alias": "Articulate.Dashboard",
+      "name": "Articulate",
+      "js": "/App_Plugins/articulate/articulate-client.js",
+      "weight": -1,
+      "meta": {
+        "label": "Articulate",
+        "pathname": "articulate-client"
+      },
+      "conditions": [
+        {
+          "alias": "Umb.Condition.SectionAlias",
+          "match": "Umb.Section.Settings"
+        }
+      ]
+    }
+  ]
+}

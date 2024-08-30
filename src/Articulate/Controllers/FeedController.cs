@@ -1,11 +1,9 @@
 using Articulate.Models;
 using Microsoft.AspNetCore.Mvc;
-#if NET7_0_OR_GREATER 
 using Microsoft.AspNetCore.OutputCaching;
-#endif
 using Umbraco.Cms.Core.Cache;
 using Umbraco.Cms.Core.Logging;
-using Umbraco.Cms.Core.Macros;
+
 using Umbraco.Cms.Core.Media;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.Services;
@@ -13,7 +11,6 @@ using Umbraco.Cms.Core.Web;
 using Umbraco.Cms.Infrastructure.Persistence;
 using Umbraco.Cms.Web.Common;
 using Umbraco.Cms.Web.Common.Controllers;
-using Umbraco.Cms.Web.Common.Macros;
 
 namespace Articulate.Controllers
 {
@@ -26,8 +23,6 @@ namespace Articulate.Controllers
         private readonly IVariationContextAccessor _variationContextAccessor;
         private readonly IImageUrlGenerator _imageUrlGenerator;
         private readonly UmbracoHelper _umbracoHelper;
-        private readonly PartialViewMacroEngine _partialViewMacroEngine;
-
         public FeedController(
             IUmbracoContextAccessor umbracoContextAccessor,
             IUmbracoDatabaseFactory databaseFactory,
@@ -37,21 +32,17 @@ namespace Articulate.Controllers
             IPublishedValueFallback publishedValueFallback,
             IVariationContextAccessor variationContextAccessor,
             IImageUrlGenerator imageUrlGenerator,
-            UmbracoHelper umbracoHelper,
-            PartialViewMacroEngine partialViewMacroEngine)
+            UmbracoHelper umbracoHelper)
             : base(umbracoContextAccessor, databaseFactory, services, appCaches, profilingLogger)
         {
             _publishedValueFallback = publishedValueFallback;
             _variationContextAccessor = variationContextAccessor;
             _imageUrlGenerator = imageUrlGenerator;
             _umbracoHelper = umbracoHelper;
-            _partialViewMacroEngine = partialViewMacroEngine;
         }
 
         [HttpGet]
-#if NET7_0_OR_GREATER
         [OutputCache(PolicyName = "Articulate120")]
-#endif
         public IActionResult RenderGitHub(int id)
         {
             var content = _umbracoHelper.Content(id);
@@ -76,15 +67,16 @@ namespace Articulate.Controllers
 		/// <returns></returns>
         private string RenderViewToString(IPublishedContent content, ControllerBase controller, string viewName)
         {
-            MacroContent result = _partialViewMacroEngine.Execute(new MacroModel
-            {
-                Alias = nameof(FeedController),
-                Name = nameof(FeedController),
-                Id = 1,
-                MacroSource = viewName
-            }, content);
+            //MacroContent result = _partialViewMacroEngine.Execute(new MacroModel
+            //{
+            //    Alias = nameof(FeedController),
+            //    Name = nameof(FeedController),
+            //    Id = 1,
+            //    MacroSource = viewName
+            //}, content);
 
-            return result.Text;
+            return "NotImplementedException";
+            //throw new NotImplementedException();
         }
     }
 }
