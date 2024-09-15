@@ -357,25 +357,28 @@ namespace Articulate.MetaWeblog
                     && content.HasProperty("postImage")
                         && !firstImage.IsNullOrWhiteSpace())
                 {
-                    var configuration = _dataTypeService.GetDataType(content.Properties["postImage"].PropertyType.DataTypeId).ConfigurationAs<ImageCropperConfiguration>();
-                    var crops = configuration?.Crops ?? Array.Empty<ImageCropperConfiguration.Crop>();
-
-                    var imageCropValue = new ImageCropperValue
+                    if (content.GetValue<string>("postImage").DetectIsJson())
                     {
-                        Src = firstImage,
-                        Crops = crops.Select(x => new ImageCropperValue.ImageCropperCrop
-                        {
-                            Alias = x.Alias,
-                            Height = x.Height,
-                            Width = x.Width
-                        }).ToList()
-                    };
+                        var configuration = _dataTypeService.GetDataType(content.Properties["postImage"].PropertyType.DataTypeId).ConfigurationAs<ImageCropperConfiguration>();
+                        var crops = configuration?.Crops ?? Array.Empty<ImageCropperConfiguration.Crop>();
 
-                    content.SetInvariantOrDefaultCultureValue(
-                        "postImage",
-                        JsonConvert.SerializeObject(imageCropValue),
-                        contentType,
-                        _localizationService);
+                        var imageCropValue = new ImageCropperValue
+                        {
+                            Src = firstImage,
+                            Crops = crops.Select(x => new ImageCropperValue.ImageCropperCrop
+                            {
+                             Alias = x.Alias,
+                             Height = x.Height,
+                             Width = x.Width
+                            }).ToList()
+                        };
+
+                        content.SetInvariantOrDefaultCultureValue(
+                            "postImage",
+                            JsonConvert.SerializeObject(imageCropValue),
+                            contentType,
+                            _localizationService);
+                    }
                 }
             }
 
