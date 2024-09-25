@@ -329,7 +329,7 @@ namespace Articulate.MetaWeblog
                     return null;
                 });
 
-                var imagesProcessed = 0;
+                var imagesProcessed = extractFirstImageAsProperty && !firstImage.IsNullOrWhiteSpace() ? 1 : 0;
 
                 // Now ensure all anchors have the custom class
                 // and the media file system path is re-updated as per above
