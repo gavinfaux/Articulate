@@ -5,6 +5,7 @@ using Umbraco.Cms.Core.Media;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.PropertyEditors.ValueConverters;
+using Umbraco.Cms.Core.Services.Navigation;
 using Umbraco.Extensions;
 
 namespace Articulate.Models
@@ -12,6 +13,8 @@ namespace Articulate.Models
     public class AuthorModel : ListModel, IImageModel
     {        
         private DateTime? _lastPostDate;
+        private INavigationQueryService _navigationQueryService;
+        private IPublishedContentStatusFilteringService _publishedContentStatusFilteringService;
         
         public AuthorModel(
             IPublishedContent content,
@@ -19,8 +22,8 @@ namespace Articulate.Models
             PagerModel pager,
             int postCount,
             IPublishedValueFallback publishedValueFallback,
-            IVariationContextAccessor variationContextAccessor)
-            : base(content, pager, listItems, publishedValueFallback, variationContextAccessor)
+            IVariationContextAccessor variationContextAccessor, INavigationQueryService navigationQueryService, IPublishedContentStatusFilteringService publishedContentStatusFilteringService)
+            : base(content, pager, listItems, publishedValueFallback, variationContextAccessor, navigationQueryService, publishedContentStatusFilteringService)
         {
             PostCount = postCount;
         }        

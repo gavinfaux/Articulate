@@ -1,13 +1,14 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using Articulate.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Logging;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using Umbraco.Cms.Core.Media;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.Routing;
+using Umbraco.Cms.Core.Services.Navigation;
 using Umbraco.Cms.Core.Web;
 using Umbraco.Cms.Web.Common;
 using Umbraco.Cms.Web.Common.Controllers;
@@ -27,8 +28,9 @@ namespace Articulate.Controllers
             IPublishedUrlProvider publishedUrlProvider,
             IPublishedValueFallback publishedValueFallback,
             IVariationContextAccessor variationContextAccessor,
-            UmbracoHelper umbracoHelper)
-            : base(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider, publishedValueFallback, variationContextAccessor)
+            UmbracoHelper umbracoHelper,
+            INavigationQueryService navigationQueryService, IPublishedContentStatusFilteringService publishedContentStatusFilteringService)
+            : base(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider, publishedValueFallback, variationContextAccessor, navigationQueryService, publishedContentStatusFilteringService)
         {
             _umbracoHelper = umbracoHelper;
         }
@@ -67,7 +69,8 @@ namespace Articulate.Controllers
                 CurrentPage.Name,
                 pager,
                 PublishedValueFallback,
-                VariationContextAccessor);
+                VariationContextAccessor,
+                base.NavigationQueryService, base.PublishedContentStatusFilteringService);
 
             var author = new AuthorModel(
                 CurrentPage,
@@ -75,7 +78,7 @@ namespace Articulate.Controllers
                 pager,
                 totalPosts,
                 PublishedValueFallback,
-                VariationContextAccessor);
+                VariationContextAccessor, base.NavigationQueryService, base.PublishedContentStatusFilteringService);
             
             return View(PathHelper.GetThemeViewPath(author, "Author"), author);
         }

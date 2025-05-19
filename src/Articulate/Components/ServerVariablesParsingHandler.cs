@@ -35,11 +35,12 @@ namespace Articulate.Components
                 return;
             }
 
+            // TODO: Review for Umbraco 14+ 
             e.ServerVariables[ArticulateConstants.ArticulateContentTypeAlias] = new Dictionary<string, object>
             {
-                {"articulateImportBaseUrl", _linkGenerator.GetUmbracoApiServiceBaseUrl<ArticulateBlogImportController>(controller => controller.PostImportBlogMl(null))},
-                {"articulatePropertyEditorsBaseUrl", _linkGenerator.GetUmbracoApiServiceBaseUrl<ArticulatePropertyEditorsController>(controller => controller.GetThemes())},
-                {"articulateThemeEditorBaseUrl", _linkGenerator.GetUmbracoApiServiceBaseUrl<ThemeEditorController>(controller => controller.GetThemes())}
+                {"articulateImportBaseUrl", _linkGenerator.GetPathByAction(action: nameof(ArticulateBlogImportController.PostImportBlogMl), controller: "ArticulateBlogImport", values: null)},
+                {"articulatePropertyEditorsBaseUrl", _linkGenerator.GetPathByAction(action: nameof(ArticulatePropertyEditorsController.GetThemes), controller: "ArticulatePropertyEditorsController", values: null)},
+                {"articulateThemeEditorBaseUrl", _linkGenerator.GetPathByAction(action: nameof(ThemeEditorController.GetThemes), controller: "ThemeEditorController", values: null)},
             };
         }
     }

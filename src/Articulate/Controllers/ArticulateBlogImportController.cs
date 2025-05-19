@@ -1,4 +1,8 @@
+using Articulate.ImportExport;
 using Articulate.Models;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json.Linq;
 using System;
 using System.IO;
@@ -7,19 +11,16 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
-using Articulate.ImportExport;
-using Umbraco.Cms.Web.BackOffice.Controllers;
-using Umbraco.Cms.Core.Hosting;
-using Umbraco.Extensions;
+using Umbraco.Cms.Api.Management.Controllers;
 using Umbraco.Cms.Core;
-using Umbraco.Cms.Core.Security;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Hosting;
 using Umbraco.Cms.Core.Extensions;
+using Umbraco.Cms.Core.Hosting;
+using Umbraco.Cms.Core.Security;
+using Umbraco.Extensions;
 
 namespace Articulate.Controllers
 {
-    public class ArticulateBlogImportController : UmbracoAuthorizedApiController
+    public class ArticulateBlogImportController : ManagementApiControllerBase
     {
         private readonly BlogMlImporter _blogMlImporter;
         private readonly UmbracoApiControllerTypeCollection _umbracoApiControllerTypeCollection;
@@ -27,6 +28,7 @@ namespace Articulate.Controllers
         private readonly ArticulateTempFileSystem _articulateTempFileSystem;
         private readonly IHostEnvironment _hostingEnvironment;
         private readonly BlogMlExporter _blogMlExporter;
+        private readonly LinkGenerator _linkGenerator;
 
         public ArticulateBlogImportController(
             IHostEnvironment hostingEnvironment,
@@ -34,7 +36,8 @@ namespace Articulate.Controllers
             BlogMlImporter blogMlImporter,
             UmbracoApiControllerTypeCollection umbracoApiControllerTypeCollection,
             IBackOfficeSecurityAccessor backOfficeSecurityAccessor,
-            ArticulateTempFileSystem articulateTempFileSystem)
+            ArticulateTempFileSystem articulateTempFileSystem,
+            LinkGenerator linkGenerator)
         {
             _blogMlImporter = blogMlImporter;
             _umbracoApiControllerTypeCollection = umbracoApiControllerTypeCollection;
@@ -42,6 +45,7 @@ namespace Articulate.Controllers
             _articulateTempFileSystem = articulateTempFileSystem;
             _hostingEnvironment = hostingEnvironment;
             _blogMlExporter = blogMlExporter;
+            _linkGenerator = linkGenerator;
         }
 
         [DisableRequestSizeLimit]
@@ -76,10 +80,15 @@ namespace Articulate.Controllers
         public ImportModel PostExportBlogMl(ExportBlogMlModel model)
         {
             _blogMlExporter.Export(model.ArticulateNodeId, model.ExportImagesAsBase64);
-
+            var downloadUrl = _linkGenerator.GetPathByAction(
+                action: nameof(GetBlogMlExport),
+                controller: "ArticulateBlogImport", // Controller name without "Controller" suffix
+                values: null, // or route values if needed
+                httpContext: this.HttpContext // optional, for absolute URLs use GetUriByAction
+            );
             return new ImportModel
             {
-                DownloadUrl = Url.GetUmbracoApiService<ArticulateBlogImportController>(_umbracoApiControllerTypeCollection, "GetBlogMlExport")
+                DownloadUrl = downloadUrl
             };
         }
 
@@ -117,9 +126,15 @@ namespace Articulate.Controllers
                 return Problem("Importing failed, see umbraco log for details");
             }
 
+            var downloadUrl = _linkGenerator.GetPathByAction(
+                action: nameof(GetDisqusExport),
+                controller: "ArticulateBlogImport", // Controller name without "Controller" suffix
+                values: null, // or route values if needed
+                httpContext: this.HttpContext // optional, for absolute URLs use GetUriByAction
+            );
             return new ImportModel
             {
-                DownloadUrl = Url.GetUmbracoApiService<ArticulateBlogImportController>(_umbracoApiControllerTypeCollection, "GetDisqusExport")
+                DownloadUrl = downloadUrl
             };
         }
 

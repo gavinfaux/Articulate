@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using Articulate.Models;
+using Humanizer;
 using Microsoft.AspNetCore.Mvc;
 using Umbraco.Cms.Web.Common.Controllers;
 using Microsoft.Extensions.Logging;
@@ -13,6 +14,7 @@ using Umbraco.Cms.Core.Routing;
 using Umbraco.Cms.Core.Media;
 using Umbraco.Extensions;
 using Microsoft.Extensions.Primitives;
+using Umbraco.Cms.Core.Services.Navigation;
 
 namespace Articulate.Controllers
 {
@@ -27,19 +29,25 @@ namespace Articulate.Controllers
             IUmbracoContextAccessor umbracoContextAccessor,
             IPublishedUrlProvider publishedUrlProvider,
             IPublishedValueFallback publishedValueFallback,
-            IVariationContextAccessor variationContextAccessor)
+            IVariationContextAccessor variationContextAccessor,
+            INavigationQueryService navigationQueryService,
+            IPublishedContentStatusFilteringService publishedContentStatusFilteringService)
             : base(logger, compositeViewEngine, umbracoContextAccessor)
         {
             UmbracoContextAccessor = umbracoContextAccessor;
             PublishedUrlProvider = publishedUrlProvider;
             PublishedValueFallback = publishedValueFallback;
             VariationContextAccessor = variationContextAccessor;
+            NavigationQueryService = navigationQueryService;
+            PublishedContentStatusFilteringService = publishedContentStatusFilteringService;
         }
 
         public IUmbracoContextAccessor UmbracoContextAccessor { get; }
         public IPublishedUrlProvider PublishedUrlProvider { get; }
         public IPublishedValueFallback PublishedValueFallback { get; }
         public IVariationContextAccessor VariationContextAccessor { get; }
+        public INavigationQueryService NavigationQueryService { get; }
+        public IPublishedContentStatusFilteringService PublishedContentStatusFilteringService { get; }
 
         /// <summary>
         /// Gets a paged list view for a given posts by author/tags/categories model
@@ -58,7 +66,7 @@ namespace Articulate.Controllers
                     UmbracoContextAccessor);
             }
 
-            var listModel = new ListModel(pageNode, pager, listItems, PublishedValueFallback, VariationContextAccessor);
+            var listModel = new ListModel(pageNode, pager, listItems, PublishedValueFallback, VariationContextAccessor, NavigationQueryService, PublishedContentStatusFilteringService);
 
             return View(PathHelper.GetThemeViewPath(listModel, "List"), listModel);
         }

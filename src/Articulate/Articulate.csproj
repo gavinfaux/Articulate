@@ -1,9 +1,14 @@
-<Project Sdk="Microsoft.NET.Sdk">
+<!--TODO: Review all of this for netcore / Umbraco 14+ -->
+
+<Project Sdk="Microsoft.NET.Sdk.Razor">
   <PropertyGroup>
-    <TargetFrameworks>net6.0;net7.0;net8.0</TargetFrameworks>
-    <OutputType>Library</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
+    <StaticWebAssetBasePath>/</StaticWebAssetBasePath>
+    <!--<OutputType>Library</OutputType>-->
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
-    <RestorePackages>true</RestorePackages>
   </PropertyGroup>
 
   <!-- Nuget Package -->
@@ -20,7 +25,7 @@
     <Copyright>Copyright © $(Company) $([System.DateTime]::Now.Year)</Copyright>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
-  
+    
   <!--
   Nuget - Dotnet SourceLink & Symbol Package
   https://github.com/dotnet/sourcelink#using-source-link-in-net-projects
@@ -33,7 +38,7 @@
   https://github.com/dotnet/reproducible-builds  
   -->
   <ItemGroup>
-    <PackageReference Include="DotNet.ReproducibleBuilds" Version="1.1.1">
+    <PackageReference Include="DotNet.ReproducibleBuilds" Version="1.2.25">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
@@ -75,33 +80,62 @@
     <EmbeddedResource Include="Packaging\post2.jpg" />
   </ItemGroup>
 
+
+  <!-- TODO: Error NETSDK1022	Duplicate 'Content' items were included. The .NET SDK includes 'Content' items from your project directory by default. 
+  You can either remove these items from your project file, or set the 'EnableDefaultContentItems' property to 'false' if you want to explicitly include them in your project file. 
+  For more information, see https://aka.ms/sdkimplicititems.
+  -->
+  <!-- 
   <ItemGroup>
     <Content Include="App_Plugins/**/*.*">
       <Pack>true</Pack>
       <PackagePath>App_Plugins</PackagePath>
     </Content>
   </ItemGroup>
-  
-  <ItemGroup>
-    <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
-  </ItemGroup>
+  -->
 
   <!-- Nuget Package Dependencies -->
   <ItemGroup>
-    <PackageReference Include="Markdig" Version="0.31.0" />
-    <PackageReference Include="Argotic.Core" Version="3000.0.3" />
-    <PackageReference Include="Microsoft.AspNet.WebApi.Client" Version="5.2.9" />    
-    <PackageReference Include="Umbraco.Cms.Web.BackOffice" Version="10.8.6" />
-    <PackageReference Include="Umbraco.Cms.Web.Website" Version="10.6.1" />
-    <PackageReference Include="Umbraco.Cms.Core" Version="10.8.6" />
-    <PackageReference Include="System.ServiceModel.Syndication" Version="6.0.0" />
-    <PackageReference Include="Microsoft.AspNetCore.DataProtection.Abstractions" Version="6.0.14" />
-    <PackageReference Include="WilderMinds.MetaWeblog" Version="5.1.1" />
+    <PackageReference Include="Argotic.Core" Version="3001.0.0" />
+    <PackageReference Include="Smidge" Version="4.5.1" />
+    <PackageReference Include="System.ServiceModel.Syndication" Version="9.0.5" />
+    <PackageReference Include="Umbraco.Cms.Web.Website" Version="15.4.1" />
+    <PackageReference Include="Umbraco.Cms.Web.Common" Version="15.4.1" />
+    <PackageReference Include="Umbraco.Cms.Api.Common" Version="15.4.1" />
+    <PackageReference Include="Umbraco.Cms.Api.Management" Version="15.4.1" />
+    <PackageReference Include="WilderMinds.MetaWeblog" Version="5.1.3" />
   </ItemGroup>
   
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
+
+  <ItemGroup>
+    <ClientAssetsInputs Include="Client\**" Exclude="$(DefaultItemExcludes)" />
+    <!-- Dont include the client folder as part of packaging nuget build -->
+    <Content Remove="Client\**" />
+    <!-- However make the Umbraco-package.json included for dotnet pack or nuget package and visible to the solution -->
+    <None Include="Client\public\umbraco-package.json" Pack="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="wwwroot\" />
+  </ItemGroup>
+
+  <!-- Restore and build Client files -->
+  <Target Name="RestoreClient" Inputs="Client\package.json;Client\package-lock.json" Outputs="Client\node_modules\.package-lock.json">
+    <Message Importance="high" Text="Restoring Client NPM packages..." />
+    <Exec Command="npm i" WorkingDirectory="Client" />
+  </Target>
+
+  <Target Name="BuildClient" BeforeTargets="AssignTargetPaths" DependsOnTargets="RestoreClient" Inputs="@(ClientAssetsInputs)" Outputs="$(IntermediateOutputPath)client.complete.txt">
+    <Message Importance="high" Text="Executing Client NPM build script..." />
+    <Exec Command="npm run build" WorkingDirectory="Client" />
+    <ItemGroup>
+      <_ClientAssetsBuildOutput Include="wwwroot\App_Plugins\**" />
+    </ItemGroup>
+    <WriteLinesToFile File="$(IntermediateOutputPath)client.complete.txt" Lines="@(_ClientAssetsBuildOutput)" Overwrite="true" />
+  </Target>
 
   <!-- Uses Package Icon on disk in repo -->
   <ItemGroup>
@@ -113,6 +147,9 @@
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Update="Nerdbank.GitVersioning" Version="3.7.115" />
   </ItemGroup>
 
 </Project>

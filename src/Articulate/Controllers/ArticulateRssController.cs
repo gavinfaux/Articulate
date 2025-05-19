@@ -12,6 +12,7 @@ using Umbraco.Cms.Web.Common;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.Media;
 using Articulate.Services;
+using Umbraco.Cms.Core.Services.Navigation;
 #if NET7_0_OR_GREATER 
 using Microsoft.AspNetCore.OutputCaching;
 #endif
@@ -35,6 +36,8 @@ namespace Articulate.Controllers
         private readonly IVariationContextAccessor _variationContextAccessor;
         private readonly UmbracoHelper _umbracoHelper;
         private readonly ArticulateTagService _articulateTagService;
+        private readonly INavigationQueryService _navigationQueryService;
+        private readonly IPublishedContentStatusFilteringService _publishedContentStatusFilteringService;
 
         public ArticulateRssController(
             ILogger<RenderController> logger,
@@ -44,7 +47,7 @@ namespace Articulate.Controllers
             IPublishedValueFallback publishedValueFallback,
             IVariationContextAccessor variationContextAccessor,
             UmbracoHelper umbracoHelper,
-            ArticulateTagService articulateTagService)
+            ArticulateTagService articulateTagService, INavigationQueryService nvNavigationQueryService, IPublishedContentStatusFilteringService publishedContentStatusFilteringService)
             : base(logger, compositeViewEngine, umbracoContextAccessor)
         {
             _feedGenerator = feedGenerator;
@@ -52,6 +55,8 @@ namespace Articulate.Controllers
             _variationContextAccessor = variationContextAccessor;
             _umbracoHelper = umbracoHelper;
             _articulateTagService = articulateTagService;
+            _navigationQueryService = nvNavigationQueryService;
+            _publishedContentStatusFilteringService = publishedContentStatusFilteringService;
         }
 
         //NonAction so it is not routed since we want to use an overload below
@@ -81,7 +86,8 @@ namespace Articulate.Controllers
                 pager,
                 listItems,
                 _publishedValueFallback,
-                _variationContextAccessor);
+                _variationContextAccessor, _navigationQueryService,
+                _publishedContentStatusFilteringService);
             
             var feed = _feedGenerator.GetFeed(rootPageModel, rootPageModel.Children<PostModel>());
 
@@ -105,7 +111,8 @@ namespace Articulate.Controllers
                 author.Name,
                 new PagerModel(maxItems.Value, 0, 1),
                 _publishedValueFallback,
-                _variationContextAccessor);
+                _variationContextAccessor,
+                _navigationQueryService,_publishedContentStatusFilteringService);
 
             var feed = _feedGenerator.GetFeed(masterModel, authorContenet.Select(x => new PostModel(x, _publishedValueFallback, _variationContextAccessor)));
 

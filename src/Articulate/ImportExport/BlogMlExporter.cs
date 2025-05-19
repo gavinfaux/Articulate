@@ -189,7 +189,8 @@ namespace Articulate.ImportExport
                     }
                     else if (child.ContentType.Alias.InvariantEquals("ArticulateMarkdown"))
                     {
-                        content = MarkdownHelper.ToHtml(child.GetValue<string>("markdown"));
+                        // TODO: Check with Umbraco.MarkdownEditor ?
+                        content =  child.GetValue<string>("markdown");
                     }
 
                     var postUrl = new Uri(_urlProvider.GetUrl(child.Id), UriKind.RelativeOrAbsolute);

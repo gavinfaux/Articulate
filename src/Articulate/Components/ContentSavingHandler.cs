@@ -36,7 +36,7 @@ namespace Articulate.Components
             var saved = notification.SavedEntities.ToList();
             if (saved.Count == 0) return;
 
-            var contentTypes = _contentTypeService.GetAll(saved.Select(x => x.ContentTypeId).ToArray()).ToDictionary(x => x.Id);
+            var contentTypes = _contentTypeService.GetMany(saved.Select(x => x.ContentTypeId).ToArray()).ToDictionary(x => x.Id);
 
             foreach (var content in saved)
             {
@@ -91,8 +91,10 @@ namespace Articulate.Components
                                 {
                                     var markdownProperty = ct.CompositionPropertyTypes.First(x => x.Alias == "markdown");
                                     var val = c.GetValue<string>("markdown", markdownProperty.VariesByCulture() ? culture?.Culture : null);
-                                    var html = MarkdownHelper.ToHtml(val);
-                                    return _articulateOptions.GenerateExcerpt(html);
+                                    // TODO: Check with using Umbraco.MarkdownEditor ?
+                                    // var html = MarkdownHelper.ToHtml(val);
+                                    // return _articulateOptions.GenerateExcerpt(html);
+                                    return _articulateOptions.GenerateExcerpt(val);
                                 }
                             });
 

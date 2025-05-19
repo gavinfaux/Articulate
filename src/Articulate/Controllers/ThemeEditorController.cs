@@ -1,16 +1,17 @@
+using Articulate.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Hosting;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Web;
-using Articulate.Models;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Hosting;
+using Umbraco.Cms.Api.Management.Controllers;
 using Umbraco.Cms.Core.Extensions;
 using Umbraco.Cms.Core.Hosting;
 using Umbraco.Cms.Core.Models.ContentEditing;
-using Umbraco.Cms.Web.BackOffice.Controllers;
+
 using Umbraco.Cms.Web.Common.Attributes;
 using Umbraco.Cms.Web.Common.Authorization;
 using Umbraco.Extensions;
@@ -20,7 +21,7 @@ namespace Articulate.Controllers
 
     [PluginController("Articulate")]
     [Authorize(Policy = AuthorizationPolicies.SectionAccessSettings)]
-    public class ThemeEditorController : BackOfficeNotificationsController
+    public class ThemeEditorController : ManagementApiControllerBase
     {
         private readonly IHostEnvironment _hostingEnvironment;
 

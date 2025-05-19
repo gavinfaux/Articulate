@@ -59,8 +59,10 @@ namespace Articulate.ImportExport
 
                 var body = post.GetValue<string>("richText");
                 if (body.IsNullOrWhiteSpace())
-                {                    
-                    body = MarkdownHelper.ToHtml(post.GetValue<string>("markdown"));
+                {
+                    // TODO: Check with Umbraco.MarkdownEditor ?
+
+                    body = post.GetValue<string>("markdown");
                 }
 
                 var xItem = new XElement("item",

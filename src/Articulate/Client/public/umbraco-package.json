@@ -1,0 +1,14 @@
+{
+  "id": "Articulate",
+  "name": "Articulate",
+  "version": "0.0.0",
+  "allowTelemetry": true,
+  "extensions": [
+    {
+      "name": "Articulate Bundle",
+      "alias": "Articulate.Bundle",
+      "type": "bundle",
+      "js": "/App_Plugins/Articulate/articulate.js"
+    }
+  ]
+}

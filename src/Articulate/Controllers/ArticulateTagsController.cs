@@ -13,6 +13,7 @@ using Umbraco.Cms.Web.Common;
 using Articulate.Services;
 using Umbraco.Cms.Core.PublishedCache;
 using System.Collections.Generic;
+using Umbraco.Cms.Core.Services.Navigation;
 using Umbraco.Cms.Web.Common.Attributes;
 
 #if NET7_0_OR_GREATER
@@ -46,8 +47,10 @@ namespace Articulate.Controllers
             IVariationContextAccessor variationContextAccessor,
             UmbracoHelper umbracoHelper,
             ArticulateTagService articulateTagService,
-            ITagQuery tagQuery)
-            : base(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider, publishedValueFallback, variationContextAccessor)
+            ITagQuery tagQuery,
+            INavigationQueryService navigationQueryService,
+            IPublishedContentStatusFilteringService publishedContentStatusFilteringService)
+            : base(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider, publishedValueFallback, variationContextAccessor, navigationQueryService, publishedContentStatusFilteringService)
         {
             _umbracoHelper = umbracoHelper;
             _articulateTagService = articulateTagService;
