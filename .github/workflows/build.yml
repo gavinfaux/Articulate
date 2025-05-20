@@ -49,6 +49,7 @@ jobs:
       run: dotnet pack ${{ env.Code_CSProj_File }} --output ${{ env.Release_Folder }} --configuration ${{ env.Configuration }}
       
     - uses: actions/upload-artifact@v4
+      if: github.ref == 'refs/heads/develop'
       with:
         name: Articulate.${{ env.NBGV_SemVer2 }}
         path: ${{ env.Release_Folder }}/Articulate.*
