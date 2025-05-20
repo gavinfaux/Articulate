@@ -2,15 +2,8 @@ using Articulate.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Hosting;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Web;
 using Umbraco.Cms.Api.Management.Controllers;
 using Umbraco.Cms.Core.Extensions;
-using Umbraco.Cms.Core.Hosting;
-using Umbraco.Cms.Core.Models.ContentEditing;
 
 using Umbraco.Cms.Web.Common.Attributes;
 using Umbraco.Cms.Web.Common.Authorization;

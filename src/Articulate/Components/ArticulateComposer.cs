@@ -1,7 +1,5 @@
-using System;
 using Articulate.ImportExport;
 using Articulate.Options;
-using Articulate.Packaging;
 using Articulate.Routing;
 using Articulate.Services;
 using Articulate.Syndication;
@@ -57,7 +55,7 @@ namespace Articulate.Components
             builder.Services.ConfigureOptions<ArticulatePipelineStartupFilter>();
             builder.Services.ConfigureOptions<ConfigureArticulateMvcOptions>();
 
-#if NET7_0_OR_GREATER
+#if !DEBUG
             builder.Services.AddOutputCache(options =>
             {               
                 options.AddPolicy("Articulate120", builder =>

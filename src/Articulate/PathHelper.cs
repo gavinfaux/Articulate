@@ -1,6 +1,5 @@
 using Articulate.Models;
 using Microsoft.AspNetCore.Http;
-using System;
 using Umbraco.Extensions;
 
 namespace Articulate

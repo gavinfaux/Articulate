@@ -1,20 +1,11 @@
+using System.Net;
 using Articulate.ImportExport;
 using Articulate.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Hosting;
-using Newtonsoft.Json.Linq;
-using System;
-using System.IO;
-using System.Linq;
-using System.Net;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Threading.Tasks;
 using Umbraco.Cms.Api.Management.Controllers;
 using Umbraco.Cms.Core;
-using Umbraco.Cms.Core.Extensions;
-using Umbraco.Cms.Core.Hosting;
 using Umbraco.Cms.Core.Security;
 using Umbraco.Extensions;
 

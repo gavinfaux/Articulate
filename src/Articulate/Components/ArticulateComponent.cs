@@ -1,7 +1,5 @@
 using Smidge;
-using Smidge.Models;
 using Umbraco.Cms.Core.Composing;
-using Umbraco.Extensions;
 
 namespace Articulate.Components
 {

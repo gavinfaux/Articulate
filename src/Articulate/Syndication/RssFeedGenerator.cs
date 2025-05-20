@@ -1,10 +1,6 @@
-using System;
-using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
 using System.ServiceModel.Syndication;
 using System.Text.RegularExpressions;
-using Articulate.Controllers;
 using Articulate.Models;
 using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Core.Hosting;

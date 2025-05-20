@@ -1,7 +1,5 @@
 using Articulate.Options;
 using Microsoft.Extensions.Options;
-using System;
-using System.Linq;
 using Umbraco.Cms.Core.Events;
 using Umbraco.Cms.Core.Notifications;
 using Umbraco.Cms.Core.Security;
@@ -36,8 +34,11 @@ namespace Articulate.Components
             var saved = notification.SavedEntities.ToList();
             if (saved.Count == 0) return;
 
+#if NET9_0_OR_GREATER
             var contentTypes = _contentTypeService.GetMany(saved.Select(x => x.ContentTypeId).ToArray()).ToDictionary(x => x.Id);
-
+#else
+            var contentTypes = _contentTypeService.GetAll(saved.Select(x => x.ContentTypeId).ToArray()).ToDictionary(x => x.Id);
+#endif
             foreach (var content in saved)
             {
                 if (content.ContentType.Alias.InvariantEquals("ArticulateRichText")

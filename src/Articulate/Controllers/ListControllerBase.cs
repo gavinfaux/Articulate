@@ -1,20 +1,18 @@
-using System;
-using System.Collections.Generic;
 using System.Text;
 using Articulate.Models;
-using Humanizer;
 using Microsoft.AspNetCore.Mvc;
-using Umbraco.Cms.Web.Common.Controllers;
-using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
-using Umbraco.Cms.Core.Web;
-using Umbraco.Cms.Core.Models.PublishedContent;
-using Umbraco.Cms.Web.Website.ActionResults;
-using Umbraco.Cms.Core.Routing;
-using Umbraco.Cms.Core.Media;
-using Umbraco.Extensions;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Primitives;
+using Umbraco.Cms.Core.Models.PublishedContent;
+using Umbraco.Cms.Core.Routing;
+using Umbraco.Cms.Core.Web;
+using Umbraco.Cms.Web.Common.Controllers;
+using Umbraco.Cms.Web.Website.ActionResults;
+using Umbraco.Extensions;
+#if NET9_0_OR_GREATER
 using Umbraco.Cms.Core.Services.Navigation;
+#endif
 
 namespace Articulate.Controllers
 {
@@ -23,6 +21,7 @@ namespace Articulate.Controllers
     /// </summary>
     public abstract class ListControllerBase : RenderController
     {
+#if NET9_0_OR_GREATER
         protected ListControllerBase(
             ILogger<RenderController> logger,
             ICompositeViewEngine compositeViewEngine,
@@ -41,14 +40,30 @@ namespace Articulate.Controllers
             NavigationQueryService = navigationQueryService;
             PublishedContentStatusFilteringService = publishedContentStatusFilteringService;
         }
-
+#else
+        protected ListControllerBase(
+            ILogger<RenderController> logger,
+            ICompositeViewEngine compositeViewEngine,
+            IUmbracoContextAccessor umbracoContextAccessor,
+            IPublishedUrlProvider publishedUrlProvider,
+            IPublishedValueFallback publishedValueFallback,
+            IVariationContextAccessor variationContextAccessor)
+            : base(logger, compositeViewEngine, umbracoContextAccessor)
+        {
+            UmbracoContextAccessor = umbracoContextAccessor;
+            PublishedUrlProvider = publishedUrlProvider;
+            PublishedValueFallback = publishedValueFallback;
+            VariationContextAccessor = variationContextAccessor;
+        }
+#endif
         public IUmbracoContextAccessor UmbracoContextAccessor { get; }
         public IPublishedUrlProvider PublishedUrlProvider { get; }
         public IPublishedValueFallback PublishedValueFallback { get; }
         public IVariationContextAccessor VariationContextAccessor { get; }
+#if NET9_0_OR_GREATER
         public INavigationQueryService NavigationQueryService { get; }
         public IPublishedContentStatusFilteringService PublishedContentStatusFilteringService { get; }
-
+#endif
         /// <summary>
         /// Gets a paged list view for a given posts by author/tags/categories model
         /// </summary>
@@ -66,8 +81,11 @@ namespace Articulate.Controllers
                     UmbracoContextAccessor);
             }
 
+#if NET9_0_OR_GREATER
             var listModel = new ListModel(pageNode, pager, listItems, PublishedValueFallback, VariationContextAccessor, NavigationQueryService, PublishedContentStatusFilteringService);
-
+#else
+            var listModel = new ListModel(pageNode, pager, listItems, PublishedValueFallback, VariationContextAccessor);
+#endif
             return View(PathHelper.GetThemeViewPath(listModel, "List"), listModel);
         }
 

@@ -1,14 +1,13 @@
-using System;
-using System.Collections.Generic;
 using Articulate.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Logging;
-using Umbraco.Cms.Core.Media;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.Routing;
+#if NET9_0_OR_GREATER
 using Umbraco.Cms.Core.Services.Navigation;
+#endif
 using Umbraco.Cms.Core.Web;
 using Umbraco.Cms.Web.Common;
 using Umbraco.Cms.Web.Common.Controllers;
@@ -21,6 +20,7 @@ namespace Articulate.Controllers
     /// </summary>
     public class ArticulateArchiveController : ListControllerBase
     {
+#if NET9_0_OR_GREATER
         public ArticulateArchiveController(
             ILogger<RenderController> logger,
             ICompositeViewEngine compositeViewEngine,
@@ -35,7 +35,21 @@ namespace Articulate.Controllers
         {
             Umbraco = umbraco;
         }
-
+#else
+        public ArticulateArchiveController(
+            ILogger<RenderController> logger,
+            ICompositeViewEngine compositeViewEngine,
+            IUmbracoContextAccessor umbracoContextAccessor,
+            IPublishedUrlProvider publishedUrlProvider,
+            IPublishedValueFallback publishedValueFallback,
+            IVariationContextAccessor variationContextAccessor,
+            UmbracoHelper umbraco)
+            : base(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider, publishedValueFallback, variationContextAccessor)
+        {
+            Umbraco = umbraco;
+        }
+        
+#endif 
         public UmbracoHelper Umbraco { get; }
 
         /// <summary>
@@ -72,6 +86,7 @@ namespace Articulate.Controllers
                 pageSize = 10;
             }
 
+#if NET9_0_OR_GREATER
             IEnumerable<PostModel> posts = Umbraco.GetRecentPostsByArchive(
                 archive,
                 1,
@@ -80,7 +95,14 @@ namespace Articulate.Controllers
                 VariationContextAccessor,
                 base.NavigationQueryService,
                 base.PublishedContentStatusFilteringService);
-
+#else
+            IEnumerable<PostModel> posts = Umbraco.GetRecentPostsByArchive(
+                archive,
+                1,
+                pageSize,
+                PublishedValueFallback,
+                VariationContextAccessor);
+#endif
             return GetPagedListView(archive, archive, posts, count, null);          
         }
     }

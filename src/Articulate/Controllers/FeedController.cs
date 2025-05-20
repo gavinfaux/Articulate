@@ -2,7 +2,7 @@
 
 //using Articulate.Models;
 //using Microsoft.AspNetCore.Mvc;
-//#if NET7_0_OR_GREATER 
+//#if !DEBUG
 //using Microsoft.AspNetCore.OutputCaching;
 //#endif
 //using Umbraco.Cms.Core.Cache;
@@ -51,7 +51,7 @@
 //        }
 
 //        [HttpGet]
-//#if NET7_0_OR_GREATER
+//#if !DEBUG
 //        [OutputCache(PolicyName = "Articulate120")]
 //#endif
 //        public IActionResult RenderGitHub(int id)

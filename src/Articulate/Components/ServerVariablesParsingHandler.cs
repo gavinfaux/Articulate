@@ -1,11 +1,8 @@
+using Articulate.Controllers;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
 using Umbraco.Cms.Core.Events;
 using Umbraco.Cms.Core.Notifications;
-using Umbraco.Extensions;
-using Microsoft.AspNetCore.Http;
-using System;
-using Microsoft.AspNetCore.Routing;
-using System.Collections.Generic;
-using Articulate.Controllers;
 
 namespace Articulate.Components
 {

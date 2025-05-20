@@ -189,7 +189,6 @@
 //            return Ok(new { url = published.Url() });
 //        }
 
-
 //        private ParseImageResponse ParseImages(string body, IFormFileCollection formFiles, bool extractFirstImageAsProperty)
 //        {
 //            var firstImage = string.Empty;

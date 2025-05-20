@@ -1,12 +1,10 @@
 using Articulate.Models;
 using Articulate.Services;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using Umbraco.Cms.Core.Media;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.PublishedCache;
+#if NET9_0_OR_GREATER
 using Umbraco.Cms.Core.Services.Navigation;
+#endif
 using Umbraco.Cms.Web.Common;
 using Umbraco.Extensions;
 
@@ -101,8 +99,6 @@ namespace Articulate
             return new PostTagCollection(contentByTags);
         }
 
-        
-
         /// <summary>
         /// Returns a list of the most recent posts
         /// </summary>
@@ -110,6 +106,7 @@ namespace Articulate
         /// <param name="masterModel"></param>
         /// <param name="count"></param>
         /// <returns></returns>
+#if NET9_0_OR_GREATER
         public static IEnumerable<PostModel> GetRecentPosts(
             this UmbracoHelper helper,
             IMasterModel masterModel,
@@ -130,7 +127,27 @@ namespace Articulate
             var rootPageModel = new ListModel(listNodes[0], pager, listItems, publishedValueFallback, variationContextAccessor, navigationQueryService, publishedContentStatusFilteringService);
             return rootPageModel.Posts;
         }
+#else
+        public static IEnumerable<PostModel> GetRecentPosts(
+            this UmbracoHelper helper,
+            IMasterModel masterModel,
+            int count,
+            IPublishedValueFallback publishedValueFallback,
+            IVariationContextAccessor variationContextAccessor)
+        {
+            var listNodes = GetListNodes(masterModel);
 
+            var listNodeIds = listNodes.Select(x => x.Id).ToArray();
+
+            var pager = new PagerModel(count, 0, 1);
+
+            var listItems = helper.GetPostsSortedByPublishedDate(pager, null, listNodeIds);
+
+            var rootPageModel = new ListModel(listNodes[0], pager, listItems, publishedValueFallback, variationContextAccessor);
+            return rootPageModel.Posts;
+        }
+
+#endif
         /// <summary>
         /// Returns a list of the most recent posts
         /// </summary>
@@ -139,6 +156,7 @@ namespace Articulate
         /// <param name="page"></param>
         /// <param name="pageSize"></param>
         /// <returns></returns>
+#if NET9_0_OR_GREATER
         public static IEnumerable<PostModel> GetRecentPosts(
             this UmbracoHelper helper,
             IMasterModel masterModel,
@@ -160,6 +178,27 @@ namespace Articulate
             var rootPageModel = new ListModel(listNodes[0], pager, listItems, publishedValueFallback, variationContextAccessor, navigationQueryService, publishedContentStatusFilteringService);
             return rootPageModel.Posts;
         }
+#else
+        public static IEnumerable<PostModel> GetRecentPosts(
+            this UmbracoHelper helper,
+            IMasterModel masterModel,
+            int page,
+            int pageSize,
+            IPublishedValueFallback publishedValueFallback,
+            IVariationContextAccessor variationContextAccessor)
+        {
+            var listNodes = GetListNodes(masterModel);
+
+            var listNodeIds = listNodes.Select(x => x.Id).ToArray();
+
+            var pager = new PagerModel(pageSize, page - 1, 1);
+
+            var listItems = helper.GetPostsSortedByPublishedDate(pager, null, listNodeIds);
+
+            var rootPageModel = new ListModel(listNodes[0], pager, listItems, publishedValueFallback, variationContextAccessor);
+            return rootPageModel.Posts;
+        }
+#endif
 
         /// <summary>
         /// Returns a list of the most recent posts by archive
@@ -169,6 +208,7 @@ namespace Articulate
         /// <param name="page"></param>
         /// <param name="pageSize"></param>
         /// <returns></returns>
+#if NET9_0_OR_GREATER
         public static IEnumerable<PostModel> GetRecentPostsByArchive(
             this UmbracoHelper helper,
             IMasterModel masterModel,
@@ -187,7 +227,26 @@ namespace Articulate
             var rootPageModel = new ListModel(masterModel, pager, listItems, publishedValueFallback, variationContextAccessor, navigationQueryService, publishedContentStatusFilteringService);
             return rootPageModel.Posts;
         }
+#else
+        public static IEnumerable<PostModel> GetRecentPostsByArchive(
+            this UmbracoHelper helper,
+            IMasterModel masterModel,
+            int page,
+            int pageSize,
+            IPublishedValueFallback publishedValueFallback,
+            IVariationContextAccessor variationContextAccessor)
 
+        {
+            var pager = new PagerModel(pageSize, page - 1, 1);
+
+            var listItems = helper.GetPostsSortedByPublishedDate(pager, null, masterModel.Id);
+
+            var rootPageModel = new ListModel(masterModel, pager, listItems, publishedValueFallback, variationContextAccessor);
+            return rootPageModel.Posts;
+        }
+#endif
+
+#if NET9_0_OR_GREATER
         internal static IEnumerable<IPublishedContent> GetContentByAuthor(
             this UmbracoHelper helper,
             IPublishedContent[] listNodes,
@@ -205,7 +264,24 @@ namespace Articulate
             var rootPageModel = new ListModel(listNodes[0], pager, postWithAuthor, publishedValueFallback, variationContextAccessor, navigationQueryService, publishedContentStatusFilteringService);
             return rootPageModel.Posts;
         }
+#else
+        internal static IEnumerable<IPublishedContent> GetContentByAuthor(
+            this UmbracoHelper helper,
+            IPublishedContent[] listNodes,
+            string authorName,
+            PagerModel pager,
+            IPublishedValueFallback publishedValueFallback,
+            IVariationContextAccessor variationContextAccessor)
+        {
+            var listNodeIds = listNodes.Select(x => x.Id).ToArray();           
 
+            var postWithAuthor = helper.GetPostsSortedByPublishedDate(pager, x => string.Equals(x.Value<string>("author"), authorName.Replace("-", " "), StringComparison.InvariantCultureIgnoreCase), listNodeIds);
+
+            var rootPageModel = new ListModel(listNodes[0], pager, postWithAuthor, publishedValueFallback, variationContextAccessor);
+            return rootPageModel.Posts;
+        }
+
+#endif
         private static IPublishedContent[] GetListNodes(IMasterModel masterModel)
         {
             var listNodes = masterModel.RootBlogNode.ChildrenOfType(ArticulateConstants.ArticulateArchiveContentTypeAlias).ToArray();

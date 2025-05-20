@@ -1,10 +1,6 @@
 using Microsoft.Extensions.Hosting;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using Umbraco.Cms.Api.Management.Controllers;
 using Umbraco.Cms.Core.Extensions;
-using Umbraco.Cms.Core.Hosting;
 
 namespace Articulate.Controllers
 {

@@ -1,7 +1,7 @@
-using Umbraco.Cms.Web.Common.ApplicationBuilder;
+using Articulate.Routing;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Options;
-using Articulate.Routing;
+using Umbraco.Cms.Web.Common.ApplicationBuilder;
 
 namespace Articulate.Components
 {

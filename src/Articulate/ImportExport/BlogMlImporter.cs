@@ -1,12 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Net;
-using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using System.Xml.Linq;
 using Argotic.Syndication.Specialized;
 using Microsoft.AspNetCore.Html;
@@ -21,7 +15,6 @@ using Umbraco.Cms.Core.Strings;
 using Umbraco.Cms.Infrastructure.Persistence;
 using Umbraco.Cms.Infrastructure.Scoping;
 using Umbraco.Extensions;
-using File = System.IO.File;
 using Task = System.Threading.Tasks.Task;
 
 namespace Articulate.ImportExport

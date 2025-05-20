@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Routing.Template;
-using System;
+using Microsoft.AspNetCore.Routing.Template;
 
 namespace Articulate.Routing
 {

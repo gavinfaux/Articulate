@@ -1,7 +1,5 @@
-using System.IO;
 using System.ServiceModel.Syndication;
 using System.Text;
-using System.Threading.Tasks;
 using System.Xml;
 using Articulate.Models;
 using Microsoft.AspNetCore.Http;

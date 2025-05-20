@@ -1,9 +1,7 @@
-using System.Linq;
 using Articulate.Models;
 using Microsoft.AspNetCore.Mvc;
-using Umbraco.Extensions;
 using Umbraco.Cms.Core.Models.PublishedContent;
-using Articulate.Routing;
+using Umbraco.Extensions;
 
 namespace Articulate
 {

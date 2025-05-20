@@ -1,14 +1,13 @@
-using System;
-using System.Linq;
 using Articulate.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Logging;
-using Umbraco.Cms.Core.Media;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.Routing;
+#if NET9_0_OR_GREATER
 using Umbraco.Cms.Core.Services.Navigation;
+#endif
 using Umbraco.Cms.Core.Web;
 using Umbraco.Cms.Web.Common;
 using Umbraco.Cms.Web.Common.Controllers;
@@ -23,6 +22,7 @@ namespace Articulate.Controllers
     {
         private readonly UmbracoHelper _umbracoHelper;
 
+#if NET9_0_OR_GREATER
         public ArticulateController(
             ILogger<RenderController> logger,
             ICompositeViewEngine compositeViewEngine,
@@ -37,7 +37,20 @@ namespace Articulate.Controllers
         {
             _umbracoHelper = umbracoHelper;
         }
-
+#else
+        public ArticulateController(
+            ILogger<RenderController> logger,
+            ICompositeViewEngine compositeViewEngine,
+            IUmbracoContextAccessor umbracoContextAccessor,
+            IPublishedUrlProvider publishedUrlProvider,
+            IPublishedValueFallback publishedValueFallback,
+            IVariationContextAccessor variationContextAccessor,
+            UmbracoHelper umbracoHelper)
+            : base(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider, publishedValueFallback, variationContextAccessor)
+        {
+            _umbracoHelper = umbracoHelper;
+        }
+#endif
         /// <summary>
         /// Declare new Index action with optional page number
         /// </summary>
@@ -66,13 +79,21 @@ namespace Articulate.Controllers
 
             var count = _umbracoHelper.GetPostCount(listNodes.Select(x => x.Id).ToArray());
 
+#if NET9_0_OR_GREATER
             var posts = _umbracoHelper.GetRecentPosts(
                 master,
                 p ?? 1,
                 master.PageSize,
                 PublishedValueFallback,
                 VariationContextAccessor, base.NavigationQueryService, base.PublishedContentStatusFilteringService);
-
+#else
+            var posts = _umbracoHelper.GetRecentPosts(
+                master,
+                p ?? 1,
+                master.PageSize,
+                PublishedValueFallback,
+                VariationContextAccessor);
+#endif
             return GetPagedListView(master, listNodes[0], posts, count, p);
 
         }

@@ -1,19 +1,18 @@
 using Articulate.Models;
-using Articulate.Syndication;
-using System;
-using System.Linq;
-using Microsoft.AspNetCore.Mvc;
-using Umbraco.Cms.Web.Common.Controllers;
-using Microsoft.Extensions.Logging;
-using Microsoft.AspNetCore.Mvc.ViewEngines;
-using Umbraco.Cms.Core.Web;
-using Umbraco.Extensions;
-using Umbraco.Cms.Web.Common;
-using Umbraco.Cms.Core.Models.PublishedContent;
-using Umbraco.Cms.Core.Media;
 using Articulate.Services;
+using Articulate.Syndication;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ViewEngines;
+using Microsoft.Extensions.Logging;
+using Umbraco.Cms.Core.Models.PublishedContent;
+using Umbraco.Cms.Core.Web;
+using Umbraco.Cms.Web.Common;
+using Umbraco.Cms.Web.Common.Controllers;
+using Umbraco.Extensions;
+#if NET9_0_OR_GREATER
 using Umbraco.Cms.Core.Services.Navigation;
-#if NET7_0_OR_GREATER 
+#endif
+#if !DEBUG
 using Microsoft.AspNetCore.OutputCaching;
 #endif
 
@@ -25,7 +24,7 @@ namespace Articulate.Controllers
     /// <remarks>
     /// Cached for one minute
     /// </remarks>
-#if NET7_0_OR_GREATER 
+#if !DEBUG
     [OutputCache(PolicyName = "Articulate300")]
 #endif
     [ArticulateDynamicRoute]
@@ -36,9 +35,10 @@ namespace Articulate.Controllers
         private readonly IVariationContextAccessor _variationContextAccessor;
         private readonly UmbracoHelper _umbracoHelper;
         private readonly ArticulateTagService _articulateTagService;
+
+#if NET9_0_OR_GREATER
         private readonly INavigationQueryService _navigationQueryService;
         private readonly IPublishedContentStatusFilteringService _publishedContentStatusFilteringService;
-
         public ArticulateRssController(
             ILogger<RenderController> logger,
             ICompositeViewEngine compositeViewEngine,
@@ -58,6 +58,25 @@ namespace Articulate.Controllers
             _navigationQueryService = nvNavigationQueryService;
             _publishedContentStatusFilteringService = publishedContentStatusFilteringService;
         }
+#else
+        public ArticulateRssController(
+            ILogger<RenderController> logger,
+            ICompositeViewEngine compositeViewEngine,
+            IUmbracoContextAccessor umbracoContextAccessor,
+            IRssFeedGenerator feedGenerator,
+            IPublishedValueFallback publishedValueFallback,
+            IVariationContextAccessor variationContextAccessor,
+            UmbracoHelper umbracoHelper,
+            ArticulateTagService articulateTagService)
+            : base(logger, compositeViewEngine, umbracoContextAccessor)
+        {
+            _feedGenerator = feedGenerator;
+            _publishedValueFallback = publishedValueFallback;
+            _variationContextAccessor = variationContextAccessor;
+            _umbracoHelper = umbracoHelper;
+            _articulateTagService = articulateTagService;
+        }
+#endif
 
         //NonAction so it is not routed since we want to use an overload below
         [NonAction]
@@ -81,6 +100,7 @@ namespace Articulate.Controllers
 
             var listItems = _umbracoHelper.GetPostsSortedByPublishedDate(pager, null, listNodeIds);
 
+#if NET9_0_OR_GREATER
             var rootPageModel = new ListModel(
                 listNodes[0],
                 pager,
@@ -88,7 +108,14 @@ namespace Articulate.Controllers
                 _publishedValueFallback,
                 _variationContextAccessor, _navigationQueryService,
                 _publishedContentStatusFilteringService);
-            
+#else
+            var rootPageModel = new ListModel(
+                listNodes[0],
+                pager,
+                listItems,
+                _publishedValueFallback,
+                _variationContextAccessor);
+#endif            
             var feed = _feedGenerator.GetFeed(rootPageModel, rootPageModel.Children<PostModel>());
 
             return new RssResult(feed, rootPageModel);
@@ -106,6 +133,7 @@ namespace Articulate.Controllers
 
             var listNodes = masterModel.RootBlogNode.ChildrenOfType(ArticulateConstants.ArticulateArchiveContentTypeAlias).ToArray();
 
+#if NET9_0_OR_GREATER
             var authorContenet = _umbracoHelper.GetContentByAuthor(
                 listNodes,
                 author.Name,
@@ -113,7 +141,15 @@ namespace Articulate.Controllers
                 _publishedValueFallback,
                 _variationContextAccessor,
                 _navigationQueryService,_publishedContentStatusFilteringService);
+#else
+            var authorContenet = _umbracoHelper.GetContentByAuthor(
+                listNodes,
+                author.Name,
+                new PagerModel(maxItems.Value, 0, 1),
+                _publishedValueFallback,
+                _variationContextAccessor);
 
+#endif
             var feed = _feedGenerator.GetFeed(masterModel, authorContenet.Select(x => new PostModel(x, _publishedValueFallback, _variationContextAccessor)));
 
             return new RssResult(feed, masterModel);

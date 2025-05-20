@@ -1,17 +1,12 @@
+using System.Text.Encodings.Web;
 using Articulate.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using Microsoft.AspNetCore.Html;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Razor;
-using Umbraco.Extensions;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Umbraco.Cms.Core.Models.PublishedContent;
-using System.Threading.Tasks;
-using System.Text.Encodings.Web;
+using Umbraco.Extensions;
 
 namespace Articulate
 {

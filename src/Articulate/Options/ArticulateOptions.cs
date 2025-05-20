@@ -1,4 +1,3 @@
-﻿using System;
 using Umbraco.Extensions;
 
 namespace Articulate.Options

@@ -1,22 +1,19 @@
 using Articulate.Models;
-using System;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
-using Umbraco.Cms.Web.Common.Controllers;
-using Microsoft.AspNetCore.Mvc.ViewEngines;
-using Umbraco.Cms.Core.Web;
-using Umbraco.Cms.Core.Routing;
-using Umbraco.Cms.Core.Models.PublishedContent;
-using Umbraco.Cms.Core.Media;
-using Umbraco.Extensions;
-using Umbraco.Cms.Web.Common;
 using Articulate.Services;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ViewEngines;
+using Microsoft.Extensions.Logging;
+using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.PublishedCache;
-using System.Collections.Generic;
+using Umbraco.Cms.Core.Routing;
+using Umbraco.Cms.Core.Web;
+using Umbraco.Cms.Web.Common;
+using Umbraco.Cms.Web.Common.Controllers;
+using Umbraco.Extensions;
+#if NET9_0_OR_GREATER
 using Umbraco.Cms.Core.Services.Navigation;
-using Umbraco.Cms.Web.Common.Attributes;
-
-#if NET7_0_OR_GREATER
+#endif
+#if !DEBUG
 using Microsoft.AspNetCore.OutputCaching;
 #endif
 
@@ -28,7 +25,7 @@ namespace Articulate.Controllers
     /// <remarks>
     /// Cached for one minute
     /// </remarks>
-#if NET7_0_OR_GREATER
+#if !DEBUG
     [OutputCache(PolicyName = "Articulate60")]
 #endif
     [ArticulateDynamicRoute]
@@ -38,6 +35,7 @@ namespace Articulate.Controllers
         private readonly ArticulateTagService _articulateTagService;
         private readonly ITagQuery _tagQuery;
 
+#if NET9_0_OR_GREATER
         public ArticulateTagsController(
             ILogger<RenderController> logger,
             ICompositeViewEngine compositeViewEngine,
@@ -56,7 +54,24 @@ namespace Articulate.Controllers
             _articulateTagService = articulateTagService;
             _tagQuery = tagQuery;
         }
-
+#else
+        public ArticulateTagsController(
+            ILogger<RenderController> logger,
+            ICompositeViewEngine compositeViewEngine,
+            IUmbracoContextAccessor umbracoContextAccessor,
+            IPublishedUrlProvider publishedUrlProvider,
+            IPublishedValueFallback publishedValueFallback,
+            IVariationContextAccessor variationContextAccessor,
+            UmbracoHelper umbracoHelper,
+            ArticulateTagService articulateTagService,
+            ITagQuery tagQuery)
+            : base(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider, publishedValueFallback, variationContextAccessor)
+        {
+            _umbracoHelper = umbracoHelper;
+            _articulateTagService = articulateTagService;
+            _tagQuery = tagQuery;
+        }
+#endif
         /// <summary>
         /// Used to render the category listing (virtual node)
         /// </summary>

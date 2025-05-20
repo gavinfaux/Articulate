@@ -1,18 +1,23 @@
+<!-- TODO: Replace with Umbraco.MarkdownEditor ? -->
+
+@* 
 @addTagHelper *, Smidge
 @inject Smidge.SmidgeHelper SmidgeHelper
 @using Articulate.Controllers
 
 @model global::Articulate.Models.MarkdownEditorInitModel
+ *@
 
-@{
+@* @{
     Layout = null;
 
     SmidgeHelper
         .RequiresJs("~/App_Plugins/Articulate/Assets/md-editor.js")
         .RequiresCss("~/App_Plugins/Articulate/Assets/md-editor.css");
 }
+ *@
 
-<!DOCTYPE html>
+@* <!DOCTYPE html>
 
 <html ng-app="articulateapp">
 <head>
@@ -21,23 +26,23 @@
 
     <link rel="stylesheet" href="https://storage.googleapis.com/code.getmdl.io/1.0.0/material.pink-blue.min.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons"> *@
 
     @* Smidge CSS Bundle (Only a single file for now) *@
-    @await SmidgeHelper.CssHereAsync()
+@*     @await SmidgeHelper.CssHereAsync() *@
 
-    <script src="https://storage.googleapis.com/code.getmdl.io/1.0.0/material.min.js" type="text/javascript"></script>
+@*     <script src="https://storage.googleapis.com/code.getmdl.io/1.0.0/material.min.js" type="text/javascript"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js" type="text/javascript"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.18/angular.min.js" type="text/javascript"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.18/angular-route.min.js" type="text/javascript"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.18/angular-sanitize.min.js" type="text/javascript"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.18/angular-route.min.js" type="text/javascript"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.18/angular-route.min.js" type="text/javascript"></script> *@
 
     @* Smidge JS Bundle (Only a single file for now) *@
-    @await SmidgeHelper.JsHereAsync()
+@*     @await SmidgeHelper.JsHereAsync() *@
 
 
-    <script type="text/ng-template" id="md.html">
+@*     <script type="text/ng-template" id="md.html">
 
         <div class="container">
             <div class="mdl-card mdl-shadow--2dp fill-height">
@@ -173,10 +178,10 @@
         </div>
         <material-refresh></material-refresh>
     </script>
+ *@
+@* </head> *@
 
-</head>
-
-<body ng-controller="EditorController"
+@* <body ng-controller="EditorController"
       data-articulate-nodeid="@Model.ArticulateNodeId"
       data-articulate-post-url="@Model.PostUrl"
       data-umbraco-isauth-url="@Model.IsAuthUrl"
@@ -220,5 +225,5 @@
 
     </form>
 
-</body>
-</html>
+</body> *@
+@* </html> *@
