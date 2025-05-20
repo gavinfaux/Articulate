@@ -1,3 +1,4 @@
+using Articulate.Factories;
 using Articulate.Models;
 using Articulate.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -10,9 +11,6 @@ using Umbraco.Cms.Core.Web;
 using Umbraco.Cms.Web.Common;
 using Umbraco.Cms.Web.Common.Controllers;
 using Umbraco.Extensions;
-#if NET9_0_OR_GREATER
-using Umbraco.Cms.Core.Services.Navigation;
-#endif
 #if !DEBUG
 using Microsoft.AspNetCore.OutputCaching;
 #endif
@@ -35,7 +33,6 @@ namespace Articulate.Controllers
         private readonly ArticulateTagService _articulateTagService;
         private readonly ITagQuery _tagQuery;
 
-#if NET9_0_OR_GREATER
         public ArticulateTagsController(
             ILogger<RenderController> logger,
             ICompositeViewEngine compositeViewEngine,
@@ -46,32 +43,14 @@ namespace Articulate.Controllers
             UmbracoHelper umbracoHelper,
             ArticulateTagService articulateTagService,
             ITagQuery tagQuery,
-            INavigationQueryService navigationQueryService,
-            IPublishedContentStatusFilteringService publishedContentStatusFilteringService)
-            : base(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider, publishedValueFallback, variationContextAccessor, navigationQueryService, publishedContentStatusFilteringService)
+            IListModelFactory listModelFactory)
+            : base(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider, publishedValueFallback, variationContextAccessor, listModelFactory)
         {
             _umbracoHelper = umbracoHelper;
             _articulateTagService = articulateTagService;
             _tagQuery = tagQuery;
         }
-#else
-        public ArticulateTagsController(
-            ILogger<RenderController> logger,
-            ICompositeViewEngine compositeViewEngine,
-            IUmbracoContextAccessor umbracoContextAccessor,
-            IPublishedUrlProvider publishedUrlProvider,
-            IPublishedValueFallback publishedValueFallback,
-            IVariationContextAccessor variationContextAccessor,
-            UmbracoHelper umbracoHelper,
-            ArticulateTagService articulateTagService,
-            ITagQuery tagQuery)
-            : base(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider, publishedValueFallback, variationContextAccessor)
-        {
-            _umbracoHelper = umbracoHelper;
-            _articulateTagService = articulateTagService;
-            _tagQuery = tagQuery;
-        }
-#endif
+
         /// <summary>
         /// Used to render the category listing (virtual node)
         /// </summary>

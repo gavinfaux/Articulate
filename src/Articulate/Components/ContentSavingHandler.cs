@@ -41,8 +41,10 @@ namespace Articulate.Components
 #endif
             foreach (var content in saved)
             {
-                if (content.ContentType.Alias.InvariantEquals("ArticulateRichText")
-                    || content.ContentType.Alias.InvariantEquals("ArticulateMarkdown"))
+                var isArticulatePost = content.ContentType.Alias.InvariantEquals("ArticulateRichText")
+                                       || content.ContentType.Alias.InvariantEquals("ArticulateMarkdown");
+
+                if (isArticulatePost)
                 {
                     content.SetAllPropertyCultureValues(
                         "publishedDate",
@@ -54,7 +56,7 @@ namespace Articulate.Components
                         "author",
                         contentTypes[content.ContentTypeId],
                         // if the author is not already set, then set it 
-                        (c, ct, culture) => c.GetValue("author", culture?.Culture) == null ? _backOfficeSecurityAccessor.BackOfficeSecurity?.CurrentUser?.Name : null);
+                        (c, ct, culture) => c.GetValue("author", culture?.Culture) == null ? _backOfficeSecurityAccessor.BackOfficeSecurity?.CurrentUser?.Name ?? string.Empty : null);
 
                     if (!content.HasIdentity)
                     {
@@ -66,11 +68,8 @@ namespace Articulate.Components
                     }
                 }
 
-                if (_articulateOptions.AutoGenerateExcerpt)
+                if (_articulateOptions.AutoGenerateExcerpt && isArticulatePost)
                 {
-                    if (content.ContentType.Alias.InvariantEquals("ArticulateRichText")
-                        || content.ContentType.Alias.InvariantEquals("ArticulateMarkdown"))
-                    {
 
                         // fill in the excerpt if it is empty
                         content.SetAllPropertyCultureValues(
@@ -115,7 +114,6 @@ namespace Articulate.Components
                                     return content.GetValue<string>("excerpt", excerptProperty.VariesByCulture() ? culture?.Culture : null);
                                 });
                         }
-                    }
                 }
             }
         }
