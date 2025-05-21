@@ -11,12 +11,15 @@
   "devDependencies": {
     "@hey-api/client-fetch": "^0.8.3",
     "@hey-api/openapi-ts": "^0.64.10",
+    "@rollup/rollup-win32-x64-msvc": "4.40.2",
     "@umbraco-cms/backoffice": "^15.4.1",
     "chalk": "^5.4.1",
     "cross-env": "^7.0.3",
     "node-fetch": "^3.3.2",
     "typescript": "^5.8.2",
-    "vite": "^6.2.0",
-    "@rollup/rollup-win32-x64-msvc": "4.40.2"
+    "vite": "^6.2.0"
+  },
+  "dependencies": {
+    "@umbraco-ui/uui-icon-registry-essential": "^1.13.0"
   }
 }
