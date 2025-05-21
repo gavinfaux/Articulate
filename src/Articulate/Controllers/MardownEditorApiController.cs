@@ -33,8 +33,10 @@
 //    /// <summary>
 //    /// Controller for handling the a-new markdown editor endpoint for creating blog posts
 //    /// </summary>
-//    public class MardownEditorApiController : ManagementApiControllerBase
-//    {
+//       [VersionedApiBackOfficeRoute("articulate/mardown")]
+//       [ApiExplorerSettings(GroupName = "Articulate API")]
+//       public class MardownEditorApiController : ManagementApiControllerBase
+//       {
 //        private readonly ServiceContext _services;
 //        private readonly IBackOfficeSecurityAccessor _backOfficeSecurityAccessor;
 //        private readonly UmbracoHelper _umbracoHelper;

@@ -1,17 +1,22 @@
 using System.Net;
 using Articulate.ImportExport;
 using Articulate.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Hosting;
+using Umbraco.Cms.Api.Common.ViewModels.Pagination;
 using Umbraco.Cms.Api.Management.Controllers;
+using Umbraco.Cms.Api.Management.Routing;
 using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.Security;
 using Umbraco.Extensions;
+using static Umbraco.Cms.Core.Constants;
 
 namespace Articulate.Controllers
 {
-    [Route("api/articulate/import")]
+    [VersionedApiBackOfficeRoute("articulate/blogml")]
+    [ApiExplorerSettings(GroupName = "Articulate API")]
     public class ArticulateBlogImportController : ManagementApiControllerBase
     {
         private readonly BlogMlImporter _blogMlImporter;
@@ -41,6 +46,7 @@ namespace Articulate.Controllers
         }
 
         [DisableRequestSizeLimit]
+        [HttpPost]
         public ActionResult PostInitialize()
         {
             if (!Request.HasFormContentType && !Request.Form.Files.Any())
@@ -84,12 +90,14 @@ namespace Articulate.Controllers
             };
         }
 
+        [HttpGet]
         public IActionResult GetBlogMlExport()
         {
             var fileStream = _articulateTempFileSystem.OpenFile("BlogMlExport.xml");
             return File(fileStream, "application/octet-stream", "BlogMlExport.xml");
         }
 
+        [HttpPost]
         public async Task<ActionResult<ImportModel>> PostImportBlogMl(ImportBlogMlModel model)
         {
             if (!ModelState.IsValid)
@@ -130,6 +138,7 @@ namespace Articulate.Controllers
             };
         }
 
+        [HttpGet]
         public IActionResult GetDisqusExport()
         {
             //save to Temp folder (base path)

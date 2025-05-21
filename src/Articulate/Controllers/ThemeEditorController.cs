@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Hosting;
 using Umbraco.Cms.Api.Management.Controllers;
+using Umbraco.Cms.Api.Management.Routing;
 using Umbraco.Cms.Core.Extensions;
 
 using Umbraco.Cms.Web.Common.Attributes;
@@ -11,9 +12,8 @@ using Umbraco.Extensions;
 
 namespace Articulate.Controllers
 {
-    [Route("api/articulate/theme")]
-    [PluginController("Articulate")]
-    [Authorize(Policy = AuthorizationPolicies.SectionAccessSettings)]
+    [VersionedApiBackOfficeRoute("articulate/theme-editor")]
+    [ApiExplorerSettings(GroupName = "Articulate API")]
     public class ThemeEditorController : ManagementApiControllerBase
     {
         private readonly IHostEnvironment _hostingEnvironment;
@@ -24,6 +24,7 @@ namespace Articulate.Controllers
             _hostingEnvironment = hostingEnvironment;
         }
 
+        [HttpPost]
         public ActionResult<Theme> PostCopyTheme(PostCopyThemeModel model)
         {
             if (!ModelState.IsValid)
@@ -64,6 +65,7 @@ namespace Articulate.Controllers
             };
         }
 
+        [HttpGet]
         public IEnumerable<Theme> GetThemes()
         {
             DirectoryInfo[] themeFolderDirectories = GetThemeDirectories(out _);
