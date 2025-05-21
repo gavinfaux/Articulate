@@ -11,7 +11,7 @@ using Umbraco.Extensions;
 
 namespace Articulate.Controllers
 {
-
+    [Route("api/articulate/theme")]
     [PluginController("Articulate")]
     [Authorize(Policy = AuthorizationPolicies.SectionAccessSettings)]
     public class ThemeEditorController : ManagementApiControllerBase

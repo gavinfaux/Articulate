@@ -15,7 +15,7 @@ namespace Articulate.Models
         private readonly IEnumerable<IPublishedContent> _listItems;
         private IEnumerable<PostModel> _resolvedList;
 #if NET9_0_OR_GREATER
-        private readonly INavigationQueryService _navigationQueryService;
+        private readonly IDocumentNavigationQueryService _navigationQueryService;
         private readonly IPublishedContentStatusFilteringService _publishedContentStatusFilteringService;
 #endif
 
@@ -36,7 +36,7 @@ namespace Articulate.Models
             IEnumerable<IPublishedContent> listItems,
             IPublishedValueFallback publishedValueFallback,
             IVariationContextAccessor variationContextAccessor,
-            INavigationQueryService navigationQueryService,
+            IDocumentNavigationQueryService navigationQueryService,
             IPublishedContentStatusFilteringService publishedContentStatusFilteringService)
             : base(content, publishedValueFallback, variationContextAccessor)
         {
@@ -44,6 +44,8 @@ namespace Articulate.Models
             if (content == null) throw new ArgumentNullException(nameof(content));
             if (listItems == null) throw new ArgumentNullException(nameof(listItems));
             if (pager == null) throw new ArgumentNullException(nameof(pager));
+            if (navigationQueryService == null) throw new ArgumentNullException(nameof(navigationQueryService));
+            if (publishedContentStatusFilteringService == null) throw new ArgumentNullException(nameof(publishedContentStatusFilteringService));
 
             _navigationQueryService = navigationQueryService;
             _publishedContentStatusFilteringService = publishedContentStatusFilteringService;

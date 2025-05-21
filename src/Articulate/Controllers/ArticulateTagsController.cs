@@ -44,8 +44,9 @@ namespace Articulate.Controllers
             ArticulateTagService articulateTagService,
             ITagQuery tagQuery,
             IListModelFactory listModelFactory)
-            : base(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider, publishedValueFallback, variationContextAccessor, listModelFactory)
-        {
+             : base(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider, publishedValueFallback, variationContextAccessor, listModelFactory)
+         {
+            if (listModelFactory is null) throw new ArgumentNullException(nameof(listModelFactory));
             _umbracoHelper = umbracoHelper;
             _articulateTagService = articulateTagService;
             _tagQuery = tagQuery;

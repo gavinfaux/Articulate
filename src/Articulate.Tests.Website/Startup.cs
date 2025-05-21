@@ -1,5 +1,7 @@
+using System.Configuration;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Smidge;
 
 namespace Articulate.Tests.Website
 {
@@ -40,6 +42,7 @@ namespace Articulate.Tests.Website
 #pragma warning restore IDE0022 // Use expression body for methods
 
             services.AddRazorPages();
+            services.AddSmidge(_config.GetSection("smidge"));
 
             services.Configure<IISServerOptions>(options =>
             { 
@@ -82,6 +85,9 @@ namespace Articulate.Tests.Website
                     u.UseBackOfficeEndpoints();
                     u.UseWebsiteEndpoints();
                 });
+
+
+            app.UseSmidge();
         }
     }
 }

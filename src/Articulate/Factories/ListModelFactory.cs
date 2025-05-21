@@ -9,11 +9,11 @@ namespace Articulate.Factories
     public class ListModelFactory : IListModelFactory
     {
 #if NET9_0_OR_GREATER
-        private readonly INavigationQueryService _navigationQueryService;
+        private readonly IDocumentNavigationQueryService _navigationQueryService;
         private readonly IPublishedContentStatusFilteringService _statusFilteringService;
 
         public ListModelFactory(
-            INavigationQueryService navigationQueryService,
+            IDocumentNavigationQueryService navigationQueryService,
             IPublishedContentStatusFilteringService statusFilteringService)
         {
             _navigationQueryService = navigationQueryService;

@@ -21,7 +21,7 @@ namespace Articulate.Controllers
         private readonly UmbracoHelper _umbracoHelper;
 #if NET9_0_OR_GREATER
         private readonly IPublishedContentStatusFilteringService _publishedContentStatusFilteringService;
-        private readonly INavigationQueryService _navigationQueryService;
+        private readonly IDocumentNavigationQueryService _navigationQueryService;
 
         public ArticulateAuthorController(
             ILogger<RenderController> logger,
@@ -32,7 +32,7 @@ namespace Articulate.Controllers
             IVariationContextAccessor variationContextAccessor,
             UmbracoHelper umbracoHelper,
             IListModelFactory listModelFactory,
-            INavigationQueryService navigationQueryService,
+            IDocumentNavigationQueryService navigationQueryService,
             IPublishedContentStatusFilteringService publishedContentStatusFilteringService)
             : base(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider, publishedValueFallback, variationContextAccessor, listModelFactory)
         {

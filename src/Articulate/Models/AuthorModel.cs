@@ -19,7 +19,7 @@ namespace Articulate.Models
             int postCount,
             IPublishedValueFallback publishedValueFallback,
             IVariationContextAccessor variationContextAccessor,
-            INavigationQueryService navigationQueryService,
+            IDocumentNavigationQueryService navigationQueryService,
             IPublishedContentStatusFilteringService publishedContentStatusFilteringService)
             : base(content, pager, listItems, publishedValueFallback, variationContextAccessor, navigationQueryService, publishedContentStatusFilteringService)
         {

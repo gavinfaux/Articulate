@@ -1,9 +1,11 @@
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Hosting;
 using Umbraco.Cms.Api.Management.Controllers;
 using Umbraco.Cms.Core.Extensions;
 
 namespace Articulate.Controllers
 {
+    [Route("api/articulate/editors")]
     public class ArticulatePropertyEditorsController : ManagementApiControllerBase
     {
         private readonly IHostEnvironment _hostingEnvironment;

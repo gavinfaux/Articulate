@@ -11,6 +11,7 @@ using Umbraco.Extensions;
 
 namespace Articulate.Controllers
 {
+    [Route("api/articulate/import")]
     public class ArticulateBlogImportController : ManagementApiControllerBase
     {
         private readonly BlogMlImporter _blogMlImporter;

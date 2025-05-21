@@ -491,3 +491,6 @@ build
 # npm lock files
 package-lock.json
 
+/src/Articulate.Tests.Website/umbraco
+/src/Articulate.Tests.Website/wwwroot/App_Plugins/Articulate
+/src/Articulate.Tests.Website/wwwroot/media
