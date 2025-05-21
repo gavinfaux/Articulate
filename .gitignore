@@ -481,16 +481,18 @@ umbraco-package-schema.json
 # Media files
 /wwwroot/media/
 
+# npm lock files
+package-lock.json
+
 # Articulate specific files
 src/packages/*
 /src/Articulate.Tests.Website/App_Plugins/Articulate/*
 /src/Articulate/wwwroot/App_Plugins/Articulate/*
-build
-!build/build.ps1
-
-# npm lock files
-package-lock.json
-
 /src/Articulate.Tests.Website/umbraco
 /src/Articulate.Tests.Website/wwwroot/App_Plugins/Articulate
 /src/Articulate.Tests.Website/wwwroot/media
+
+build
+!build/build.ps1
+
+

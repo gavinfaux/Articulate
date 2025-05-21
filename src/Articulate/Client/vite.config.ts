@@ -1,17 +1,20 @@
 import { defineConfig } from "vite";
+import tsconfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig({
   build: {
     lib: {
-      entry: "src/bundle.manifests.ts", // Bundle registers one or more manifests
-      formats: ["es"]
+      entry: "src/entrypoints/entrypoint.ts",
+      formats: ["es"],
     },
-    outDir: "../wwwroot/App_Plugins/Articulate", // your web component will be saved in this location
+    outDir: "../wwwroot/App_Plugins/Articulate",
     emptyOutDir: true,
     sourcemap: true,
     rollupOptions: {
-      external: [/^@umbraco/],
+      external: [/^@umbraco-cms/]
+//      onwarn: () => { },
     },
   },
-   base: "/App_Plugins/Articulate/",
+  plugins: [tsconfigPaths()],
+  base: "/App_Plugins/Articulate/"
 });

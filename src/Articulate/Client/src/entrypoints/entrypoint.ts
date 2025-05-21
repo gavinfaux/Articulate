@@ -1,19 +1,11 @@
-import type {
-  UmbEntryPointOnInit,
-  UmbEntryPointOnUnload,
-} from "@umbraco-cms/backoffice/extension-api";
-import { manifests as dashboardManifests } from '../dashboards/manifest';
+import type { UmbEntryPointOnInit } from '@umbraco-cms/backoffice/extension-api';
+import { UMB_APP_CONTEXT } from '@umbraco-cms/backoffice/app';
+import { manifest } from '../dashboards/manifests';
 
-// load up the manifests here
 export const onInit: UmbEntryPointOnInit = (_host, extensionRegistry) => {
-  console.log("Articulate extension is initializing...");
-  
-  // Register all manifests
-  extensionRegistry.registerMany([
-    ...dashboardManifests
-  ]);
+  extensionRegistry.register(manifest);
+  _host.getContext(UMB_APP_CONTEXT).then(appContext => {
+    appContext.getBackofficePath();
+  })
 };
 
-export const onUnload: UmbEntryPointOnUnload = (_host, _extensionRegistry) => {
-  console.log("Articulate extension is unloading...");
-};
