@@ -22,5 +22,5 @@ export type PingResponses = {
 
 export type PingResponse = PingResponses[keyof PingResponses];
 export type ClientOptions = {
-    baseUrl: 'https://localhost:44389' | (string & {});
+    baseUrl: 'https://localhost:44366' | (string & {});
 };

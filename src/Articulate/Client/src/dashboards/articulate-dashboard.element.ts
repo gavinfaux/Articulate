@@ -8,111 +8,155 @@ import { UMB_NOTIFICATION_CONTEXT } from '@umbraco-cms/backoffice/notification';
 export class ArticulateDashboardElement extends UmbElementMixin(LitElement) {
     static override styles = [
         css`
-            umb-body-layout {
-                --umb-body-layout-padding: 0;
-                margin-top: var(--uui-size-layout-1);
-            }
 
-            .header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                padding: var(--uui-size-space-4) var(--uui-size-layout-2);
-                width: 100%;
-                max-width: 1000px;
-                margin: 0 auto;
-                border-bottom: 1px solid var(--uui-color-border);
-            }
+:host {
+    display: block;
+    background: var(--uui-color-surface);
+    min-height: 100vh;
+}
 
-            .header-left {
-                flex: 1;
-                display: flex;
-                align-items: center;
-            }
+uui-card-block-type::part(name) {
+    font-size: 1.25rem;
+    font-weight: 900;
+    color: var(--uui-color-text, #222);
+    text-align: center;
+    line-height: 1.2;
+    letter-spacing: 0.01em;
+    margin: 16px 0 0 0;
+    display: block;
+}
 
-            .header-right {
-                display: flex;
-                align-items: center;
-                padding-left: var(--uui-size-space-4);
-            }
+umb-body-layout {
+    --umb-body-layout-padding: 0;
+    margin-top: var(--uui-size-layout-1);
+}
+.header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    border-bottom: 1px solid var(--uui-color-border);
+    box-sizing: border-box;
+    background: var(--uui-color-surface);
+}
 
-            .header uui-heading {
-                margin: 0;
-                font-size: 1.5rem;
-                font-weight: 700;
-                line-height: 1;
-                color: var(--uui-color-text);
-                height: 36px;
-                display: flex;
-                align-items: center;
-            }
+.header-left {
+    display: flex;
+    align-items: center;
+    flex: 1 1 auto;
+    height: 100%;
+    box-sizing: border-box;
+}
+.header-right {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 96px;
+    height: 68px;
+    padding: 0 24px 0 0;
+    box-sizing: border-box;
+    float: right;
+}
 
-            .articulate-logo {
-                height: 36px;
-                width: auto;
-                opacity: 0.85;
-                transition: opacity 0.2s ease;
-            }
+.header uui-heading {
+    margin: 0;
+    padding-left: 24px;
+    font-size: 2.0rem;
+    font-weight: 800;
+    color: var(--uui-color-text);
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    text-align: left;
+    box-sizing: border-box;
+}
+.articulate-logo {
+    width: 64px;
+    height: 64px;
+    display: block;
+    margin: 0 auto;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 8px rgba(185,74,72,0.18)); /* subtle 'bold' effect */
+    padding: 0;
+    vertical-align: middle;
+    background: var(--uui-color-surface); /* matches header background */
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(185,74,72,0.08);
+}
+.articulate-logo:hover {
+    opacity: 1;
+}
 
-            .articulate-logo:hover {
-                opacity: 1;
-            }
+.articulate-logo:hover {
+    transform: scale(1.05);
+}
 
-            .articulate-logo:hover {
-                transform: scale(1.05);
-            }
-
-            .content {
-                padding: 0 var(--uui-size-layout-2);
-                margin: var(--uui-size-space-2) auto;
-                max-width: 1000px;
-            }
-
-            uui-box {
-                background: var(--uui-color-surface);
-                border-radius: var(--uui-border-radius);
-                box-shadow: var(--uui-shadow-depth-1);
-                margin: 0;
-                padding: var(--uui-size-space-4);
-            }
-
-            .cards-container {
-                display: flex;
-                flex-wrap: wrap;
-                gap: var(--uui-size-space-4);
-            }
-
-            uui-card-block-type {
-                flex: 1;
-                min-width: 250px;
-                --uui-card-block-type-background: var(--uui-color-surface);
-                --uui-card-block-type-border: 1px solid var(--uui-color-border);
-            }
-
-            .card-title {
-                font-size: var(--uui-type-h6);
-                font-weight: 500;
-                color: var(--uui-color-text);
-                margin-top: var(--uui-size-space-3);
-            }
-
-            uui-icon {
-                font-size: 32px;
-                color: var(--uui-color-interactive);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                width: 48px;
-                height: 48px;
-                background: var(--uui-color-interactive-emphasis);
-                border-radius: var(--uui-border-radius);
-            }
-
-            uui-icon:hover {
-                background: var(--uui-color-interactive);
-                color: var(--uui-color-interactive-emphasis);
-                transition: all 0.2s ease;
-            }
+.content {
+    padding: 0;
+    margin-top: 32px;
+    margin-left: 20px;
+    margin-right: 0;
+    max-width: 1000px;
+}
+uui-box {
+    background: none;
+    border-radius: 0;
+    box-shadow: none;
+    margin: 0 auto;
+    padding: 0;
+    width: 100%;
+}
+.cards-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: stretch;
+    gap: 32px;
+    width: 100%;
+}
+uui-card-block-type {
+    flex: 1 1 0;
+    min-width: 240px;
+    max-width: 320px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: none;
+    border: none;
+    background: var(--uui-color-surface);
+    padding: 32px 0 24px 0;
+    margin: 0;
+}
+.card-title {
+    font-size: 1.25rem;
+    font-weight: 900;
+    color: var(--uui-color-text);
+    margin: 16px 0 0 0;
+    text-align: center;
+    line-height: 1.2;
+    letter-spacing: 0.01em;
+}
+uui-icon {
+    font-size: 24px;
+    color: var(--uui-color-interactive);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    background: none;
+    border-radius: 50%;
+    margin: 0 auto;
+}
+uui-icon:hover {
+    background: none;
+    color: var(--uui-color-interactive-emphasis);
+    transition: color 0.2s ease;
+}
         `
     ];
     @state()
@@ -139,14 +183,14 @@ export class ArticulateDashboardElement extends UmbElementMixin(LitElement) {
         try {
             // TODO: Replace with actual data/api call 
             await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
-            
 
-            
+
+
         } catch (error) {
             this._notificationContext?.peek('danger', {
-                data: { 
+                data: {
                     headline: 'Error',
-                    message: 'Failed to load Articulate data' 
+                    message: 'Failed to load Articulate data'
                 }
             });
         } finally {
@@ -169,8 +213,9 @@ export class ArticulateDashboardElement extends UmbElementMixin(LitElement) {
                         <uui-heading>Articulate Management</uui-heading>
                     </div>
                     <div class="header-right">
+                        <!-- TODO: transparent background logo or remove header-right background styling -->
                         <img
-                            src="/App_Plugins/Articulate/assets/Icon-transparent.png"
+                            src="https://raw.githubusercontent.com/Shandem/Articulate/master/assets/Icon.png"
                             alt="Articulate Logo"
                             class="articulate-logo">
                     </div>
@@ -181,22 +226,22 @@ export class ArticulateDashboardElement extends UmbElementMixin(LitElement) {
                     <uui-icon-registry-essential>
                             <div class="cards-container">
                                 <uui-card-block-type
-                                    name="articulate-importer"
+                                    name="Articulate BlogML Importer"
                                     selectable>
-                                    <uui-icon name="arrow-down" slot="icon"></uui-icon>
-                                    <span slot="title" class="card-title">Articulate BlogML Importer</span>
+                                    <uui-icon name="sync" aria-hidden="true"></uui-icon>
+                                    
                                 </uui-card-block-type>
                                 <uui-card-block-type
-                                    name="articulate-exporter"
+                                    name="Articulate BlogML Exporter"
                                     selectable>
-                                    <uui-icon name="arrow-up" slot="icon"></uui-icon>
-                                    <span slot="title" class="card-title">Articulate BlogML Exporter</span>
+                                    <uui-icon name="download" aria-hidden="true"></uui-icon>
+                                    
                                 </uui-card-block-type>
                                 <uui-card-block-type
-                                    name="articulate-theme"
+                                    name="Articulate Theme"
                                     selectable>
-                                    <uui-icon name="brush" slot="icon"></uui-icon>
-                                    <span slot="title" class="card-title">Articulate Theme</span>
+                                    <uui-icon name="picture" aria-hidden="true"></uui-icon>
+                                    
                                 </uui-card-block-type>
                             </div>
                         </uui-icon-registry-essential>
