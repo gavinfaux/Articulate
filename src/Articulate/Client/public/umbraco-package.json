@@ -10,6 +10,19 @@
       "alias": "Articulate.Extension",
       "type": "backofficeEntryPoint",
       "js": "/App_Plugins/Articulate/articulate.js"
+    },
+    {
+      "type": "propertyEditorUi",
+      "alias": "Articulate.ThemePicker.UI",
+      "name": "Articulate Theme Picker UI",
+      "elementName": "articulate-theme-picker-element",
+      "element": "/App_Plugins/Articulate/theme-picker.element.js",
+      "meta": {
+        "label": "Articulate Theme Picker",
+        "propertyEditorSchemaAlias": "Umbraco.Plain.String",
+        "icon": "icon-layout",
+        "group": "Pickers"
+      }
     }
   ]
 }

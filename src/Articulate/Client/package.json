@@ -1,23 +1,26 @@
 {
-  "name": "articulate",
-  "private": true,
-  "version": "6.0.0",
-  "type": "module",
-  "scripts": {
-    "watch": "tsc && vite build --watch",
-    "build": "tsc && vite build",
-    "generate-client": "node scripts/generate-openapi.js https://localhost:44366/umbraco/swagger/articulate/swagger.json"
-  },
-  "devDependencies": {
-    "@hey-api/client-fetch": "^0.8.3",
-    "@hey-api/openapi-ts": "^0.64.10",
-    "@rollup/rollup-win32-x64-msvc": "4.40.2",
-    "@umbraco-cms/backoffice": "^15.4.1",
-    "chalk": "^5.4.1",
-    "cross-env": "^7.0.3",
-    "node-fetch": "^3.3.2",
-    "typescript": "^5.8.2",
-    "vite": "^6.2.0",
-    "vite-tsconfig-paths": "^5.1.4"
-  }
+    "name": "articulate",
+    "private": true,
+    "version": "6.0.0",
+    "type": "module",
+    "scripts": {
+        "watch": "tsc && vite build --watch",
+        "build": "tsc && vite build && powershell -Command \"Remove-Item -Recurse -Force 'F:\\int\\Articulate\\src\\Articulate.Tests.Website\\wwwroot\\App_Plugins\\Articulate\\*'; Copy-Item -Path 'F:\\int\\Articulate\\src\\Articulate\\wwwroot\\App_Plugins\\Articulate\\*' -Destination 'F:\\int\\Articulate\\src\\Articulate.Tests.Website\\wwwroot\\App_Plugins\\Articulate\\' -Recurse -Force; Write-Host '✅ Copied build output.'\"",
+        "generate-client": "node scripts/generate-openapi.js https://localhost:44366/umbraco/swagger/articulate/swagger.json",
+        "check": "npx @biomejs/biome check --write ."
+    },
+    "devDependencies": {
+        "@biomejs/biome": "1.9.4",
+        "@biomejs/cli-win32-x64": "^1.9.4",
+        "@hey-api/client-fetch": "^0.8.3",
+        "@hey-api/openapi-ts": "^0.64.10",
+        "@rollup/rollup-win32-x64-msvc": "4.40.2",
+        "@umbraco-cms/backoffice": "^15.4.1",
+        "chalk": "^5.4.1",
+        "cross-env": "^7.0.3",
+        "node-fetch": "^3.3.2",
+        "typescript": "^5.8.2",
+        "vite": "^6.2.0",
+        "vite-tsconfig-paths": "^5.1.4"
+    }
 }

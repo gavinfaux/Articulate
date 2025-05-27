@@ -1,14 +1,22 @@
-import { LitElement, html } from '@umbraco-cms/backoffice/external/lit';
-import { customElement, property } from 'lit/decorators.js';
-import { formStyles } from './articulate-dashboard-overview.element'
+import {
+  css,
+  customElement,
+  html,
+  property,
+} from "@umbraco-cms/backoffice/external/lit";
+import { UmbLitElement } from "@umbraco-cms/backoffice/lit-element";
+import { UmbTextStyles } from "@umbraco-cms/backoffice/style";
+import { formStyles } from "./form-styles";
 
-@customElement('articulate-blogml-exporter')
-export default class ArticulateBlogMlExporterElement extends LitElement {
-  @property({ type: String }) parentRoutePath = '';
+@customElement("articulate-blogml-exporter")
+export default class ArticulateBlogMlExporterElement extends UmbLitElement {
+  @property({ type: String })
+  routerPath?: string;
+
   private _isSubmitting = false;
 
   private _showMessage(element: HTMLElement, type: string, message: string) {
-    element.setAttribute('data-type', type);
+    element.setAttribute("data-type", type);
     element.textContent = message;
   }
 
@@ -18,67 +26,101 @@ export default class ArticulateBlogMlExporterElement extends LitElement {
 
     const form = e.target as HTMLFormElement;
     const formData = new FormData(form);
-    const formMessage = form.querySelector<HTMLElement>('#formMessage');
-    const submitButton = form.querySelector<HTMLElement>('uui-button[look="primary"]');
+    const formMessage = form.querySelector<HTMLElement>("#formMessage");
+    const submitButton = form.querySelector<HTMLElement>(
+      'uui-button[look="primary"]',
+    );
 
     if (!formMessage || !submitButton) return;
 
-    const blogNode = formData.get('blogNode');
+    const blogNode = formData.get("blogNode");
     if (!blogNode) {
-      this._showMessage(formMessage, 'error', 'Please select a blog node');
+      this._showMessage(formMessage, "error", "Please select a blog node");
       return;
     }
 
     try {
       this._isSubmitting = true;
-      submitButton.setAttribute('state', 'waiting');
+      submitButton.setAttribute("state", "waiting");
 
-      // TODO: Implement actual API call with embedImages flag
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      this._showMessage(formMessage, 'positive', 'Export successful!');
+      // TODO: Implement actual API call 
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      this._showMessage(formMessage, "positive", "Export successful!");
     } catch (error) {
       this._showMessage(
         formMessage,
-        'error',
-        error instanceof Error ? error.message : 'Export failed'
+        "error",
+        error instanceof Error ? error.message : "Export failed",
       );
     } finally {
       this._isSubmitting = false;
-      submitButton.setAttribute('state', 'default');
+      submitButton.setAttribute("state", "default");
     }
   }
 
-  static styles = [
-    formStyles
-  ];
+  private _navigateBack() {
+    history.pushState({}, "", "section/settings/dashboard/articulate");
+  }
 
-  render() {
+  override render() {
+    if (!this.routerPath) {
+      return html`<uui-loader></uui-loader>`;
+    }
+
     return html`
-      <a href="${this.parentRoutePath}" class="back-link"
-        @click=${(e: MouseEvent) => {
-          e.preventDefault();
-          window.history.pushState({}, '', this.parentRoutePath);
-          window.dispatchEvent(new PopStateEvent('popstate'));
-        }}
-      >
-        <uui-button look="secondary">← Back to overview</uui-button>
-      </a>
-      <uui-box headline="Articulate BlogML Exporter">
-        <uui-form @submit=${this._handleSubmit}>
-          <uui-form-layout-item>
-            <uui-label for="blogNode" required>Articulate blog node</uui-label>
-            <uui-input id="blogNode" name="blogNode" placeholder="Choose node..."></uui-input>
-          </uui-form-layout-item>
-          <uui-form-layout-item>
-            <uui-label for="embedImages">Embed images?</uui-label>
-            <uui-boolean-input id="embedImages" name="embedImages"></uui-boolean-input>
-          </uui-form-layout-item>
-          <uui-form-validation-message id="formMessage"></uui-form-validation-message>
-          <div class="form-actions">
-            <uui-button look="primary" label="Submit">Submit</uui-button>
-          </div>
-        </uui-form>
+      <uui-box headline="BlogML Exporter" headline-variant="h2">
+      <uui-button
+    slot="headline-action"
+    compact
+    @click="${this._navigateBack}">
+    <uui-icon name="icon-arrow-left"></uui-icon>
+    <span>Back</span>
+  </uui-button>
+      <uui-form @submit=${this._handleSubmit}>
+        <uui-form-layout-item>
+          <uui-label for="blogNode" required>Articulate blog node</uui-label>
+          <uui-input id="blogNode" name="blogNode" placeholder="Choose node..."></uui-input>
+        </uui-form-layout-item>
+        <uui-form-layout-item>
+          <uui-label for="embedImages">Embed images?</uui-label>
+          <uui-boolean-input id="embedImages" name="embedImages"></uui-boolean-input>
+        </uui-form-layout-item>
+        <uui-form-validation-message id="formMessage"></uui-form-validation-message>
+        <div class="form-actions">
+          <uui-button look="primary" label="Submit">Submit</uui-button>
+        </div>
+      </uui-form>
       </uui-box>
     `;
+  }
+
+  static override readonly styles = [
+    UmbTextStyles,
+    formStyles,
+    css`
+  .back-link {
+    position: absolute;
+    left: 2rem;
+    bottom: -2.2rem;
+    text-decoration: none;
+    font-size: 0.98rem;
+    color: var(--uui-color-interactive-emphasis);
+    background: #fff;
+    border-radius: var(--uui-border-radius);
+    box-shadow: var(--uui-shadow-1);
+    padding: 0.3rem 1.1rem;
+    transition: background 0.2s;
+    z-index: 1;
+  }
+  .back-link:hover {
+    background: var(--uui-color-surface-alt);
+  }
+`,
+  ];
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    "articulate-blogml-exporter": ArticulateBlogMlExporterElement;
   }
 }
