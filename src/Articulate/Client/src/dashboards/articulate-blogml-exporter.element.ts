@@ -43,7 +43,7 @@ export default class ArticulateBlogMlExporterElement extends UmbLitElement {
       this._isSubmitting = true;
       submitButton.setAttribute("state", "waiting");
 
-      // TODO: Implement actual API call 
+      // TODO: Implement actual API call
       await new Promise((resolve) => setTimeout(resolve, 1000));
       this._showMessage(formMessage, "positive", "Export successful!");
     } catch (error) {
@@ -58,24 +58,26 @@ export default class ArticulateBlogMlExporterElement extends UmbLitElement {
     }
   }
 
-  private _navigateBack() {
-    history.pushState({}, "", "section/settings/dashboard/articulate");
-  }
-
   override render() {
     if (!this.routerPath) {
       return html`<uui-loader></uui-loader>`;
     }
 
     return html`
-      <uui-box headline="BlogML Exporter" headline-variant="h2">
-      <uui-button
-    slot="headline-action"
-    compact
-    @click="${this._navigateBack}">
-    <uui-icon name="icon-arrow-left"></uui-icon>
-    <span>Back</span>
-  </uui-button>
+      <uui-box>
+        <div slot="headline">
+          <h2 class="headline">BlogML Exporter</h2>
+          <span class="header">Export content you can import to any BlogML compatible platform.</span>
+        </div>
+        <div slot="header-actions">
+        <uui-button
+          label="Back to Articulate dashboard options"
+          look="outline"
+          compact
+          href=${this.routerPath || "/umbraco/section/settings/dashboard/articulate"}>
+          ← Back
+        </uui-button>
+      </div> 
       <uui-form @submit=${this._handleSubmit}>
         <uui-form-layout-item>
           <uui-label for="blogNode" required>Articulate blog node</uui-label>
@@ -98,7 +100,22 @@ export default class ArticulateBlogMlExporterElement extends UmbLitElement {
     UmbTextStyles,
     formStyles,
     css`
-  .back-link {
+  h2.headline { 
+    margin: 0; /
+    font-size: 1.4rem;
+    font-weight: 600;
+    line-height: 1.2; 
+    display: block; 
+  }
+
+
+span.header { 
+  font-size: 0.85rem; 
+  color: var(--uui-color-text-alt)
+  display: block; 
+  margin-top: 4px; 
+}
+.back-link {
     position: absolute;
     left: 2rem;
     bottom: -2.2rem;

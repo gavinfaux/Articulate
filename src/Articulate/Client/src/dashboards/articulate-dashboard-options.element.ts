@@ -34,10 +34,6 @@ export class ArticulateDashboardOptionsElement extends UmbLitElement {
   routerPath?: string;
 
   override render() {
-    console.log(
-      "ArticulateDashboardOptionsElement: render. routerPath prop:",
-      this.routerPath,
-    );
     if (!this.routerPath) {
       return html`<uui-loader></uui-loader>`;
     }
@@ -49,10 +45,6 @@ export class ArticulateDashboardOptionsElement extends UmbLitElement {
               ? this.routerPath?.slice(0, -1)
               : this.routerPath;
             const fullHref = `${basePath}/${d.path}`;
-            console.log(
-              "ArticulateDashboardOptionsElement: Setting card href to:",
-              fullHref,
-            );
             return html`
                 <uui-card-block-type
                   class="tool-card"
@@ -82,11 +74,11 @@ export class ArticulateDashboardOptionsElement extends UmbLitElement {
       cursor: pointer;
     }
     uui-card,
-    uui-card-block-type { /* General card styles if needed by other routes */
+    uui-card-block-type {
       transition: var(--uui-animation-duration) var(--uui-animation-easing);
     }
 
-    a { text-decoration: none; color: inherit; display: block; /* Ensure it's a block for card to fill */ }
+    a { text-decoration: none; color: inherit; display: block;}
     @media (max-width: 768px) {
       .tools-grid {
         gap: var(--uui-size-space-4);

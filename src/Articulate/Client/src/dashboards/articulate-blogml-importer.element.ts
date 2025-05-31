@@ -63,54 +63,55 @@ export default class ArticulateBlogMlImporterElement extends UmbLitElement {
     }
   }
 
-  private _navigateBack() {
-    history.pushState({}, "", "section/settings/dashboard/articulate");
-  }
-
   override render() {
     if (!this.routerPath) {
       return html`<uui-loader></uui-loader>`;
     }
     return html`
-      <uui-box headline="BlogML Importer" headline-variant="h2">
-      <uui-button
-    slot="headline-action"
-    compact
-    @click="${this._navigateBack}">
-    <uui-icon name="icon-arrow-left"></uui-icon>
-    <span>Back</span>
-  </uui-button>
-
-      <uui-form @submit=${this._handleSubmit}>
-        <uui-form-layout-item>
-          <uui-label for="blogNode" required>Articulate blog node</uui-label>
-          <uui-input id="blogNode" name="blogNode" placeholder="Choose node..."></uui-input>
-        </uui-form-layout-item>
-        <uui-form-layout-item>
-          <uui-label for="importFile">BlogML import file</uui-label>
-          <uui-input-file id="importFile" name="importFile"></uui-input-file>
-        </uui-form-layout-item>
-        <uui-form-layout-item>
-          <uui-label for="overwrite">Overwrite imported posts?</uui-label>
-          <uui-boolean-input id="overwrite" name="overwrite"></uui-boolean-input>
-        </uui-form-layout-item>
-        <uui-form-layout-item>
-          <uui-label for="publishAll">Publish all posts?</uui-label>
-          <uui-boolean-input id="publishAll" name="publishAll"></uui-boolean-input>
-        </uui-form-layout-item>
-        <uui-form-layout-item>
-          <uui-label for="disqusExport">Export Disqus Xml</uui-label>
-          <uui-boolean-input id="disqusExport" name="disqusExport"></uui-boolean-input>
-        </uui-form-layout-item>
-        <uui-form-layout-item>
-          <uui-label for="importImage">Import First Image from Post Attachments</uui-label>
-          <uui-boolean-input id="importImage" name="importImage"></uui-boolean-input>
-        </uui-form-layout-item>
-        <uui-form-validation-message id="formMessage"></uui-form-validation-message>
-        <div class="form-actions">
-          <uui-button look="primary" label="Submit">Submit</uui-button>
+      <uui-box>
+        <div slot="headline">
+          <h2 class="headline">BlogML Importer</h2>
+          <span class="header">Import content from any BlogML compatible platform.</span>
         </div>
-      </uui-form>
+        <div slot="header-actions">
+          <uui-button
+            label="Back to Articulate dashboard options"
+            look="outline"
+            compact
+            href=${this.routerPath || "/umbraco/section/settings/dashboard/articulate"}>
+            ← Back
+          </uui-button>
+        </div> 
+        <uui-form @submit=${this._handleSubmit}>
+          <uui-form-layout-item>
+            <uui-label for="blogNode" required>Articulate blog node</uui-label>
+            <uui-input id="blogNode" name="blogNode" placeholder="Choose node..."></uui-input>
+          </uui-form-layout-item>
+          <uui-form-layout-item>
+            <uui-label for="importFile">BlogML import file</uui-label>
+            <uui-input-file id="importFile" name="importFile"></uui-input-file>
+          </uui-form-layout-item>
+          <uui-form-layout-item>
+            <uui-label for="overwrite">Overwrite imported posts?</uui-label>
+            <uui-boolean-input id="overwrite" name="overwrite"></uui-boolean-input>
+          </uui-form-layout-item>
+          <uui-form-layout-item>
+            <uui-label for="publishAll">Publish all posts?</uui-label>
+            <uui-boolean-input id="publishAll" name="publishAll"></uui-boolean-input>
+          </uui-form-layout-item>
+          <uui-form-layout-item>
+            <uui-label for="disqusExport">Export Disqus Xml</uui-label>
+            <uui-boolean-input id="disqusExport" name="disqusExport"></uui-boolean-input>
+          </uui-form-layout-item>
+          <uui-form-layout-item>
+            <uui-label for="importImage">Import First Image from Post Attachments</uui-label>
+            <uui-boolean-input id="importImage" name="importImage"></uui-boolean-input>
+          </uui-form-layout-item>
+          <uui-form-validation-message id="formMessage"></uui-form-validation-message>
+          <div class="form-actions">
+            <uui-button look="primary" label="Submit">Submit</uui-button>
+          </div>
+        </uui-form>
       </uui-box>
     `;
   }
@@ -119,7 +120,23 @@ export default class ArticulateBlogMlImporterElement extends UmbLitElement {
     UmbTextStyles,
     formStyles,
     css`
-   .back-link {
+  h2.headline { 
+    margin: 0; /
+    font-size: 1.4rem;
+    font-weight: 600;
+    line-height: 1.2; 
+    display: block; 
+  }
+
+
+span.header { 
+  font-size: 0.85rem; 
+  color: var(--uui-color-text-alt)
+  display: block; 
+  margin-top: 4px; 
+}
+
+.back-link {
     position: absolute;
     left: 2rem;
     bottom: -2.2rem;

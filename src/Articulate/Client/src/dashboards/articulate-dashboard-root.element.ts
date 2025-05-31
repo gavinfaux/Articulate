@@ -5,11 +5,9 @@ import {
   state,
 } from "@umbraco-cms/backoffice/external/lit";
 import { UmbLitElement } from "@umbraco-cms/backoffice/lit-element";
-import {
-  UMB_ROUTE_CONTEXT,
-  type UmbRoute,
-  type UmbRouterSlotChangeEvent,
-  type UmbRouterSlotInitEvent,
+import type {
+  UmbRoute,
+  UmbRouterSlotInitEvent,
 } from "@umbraco-cms/backoffice/router";
 
 import { UmbTextStyles } from "@umbraco-cms/backoffice/style";
@@ -18,23 +16,13 @@ import ArticulateBlogMlImporterElement from "./articulate-blogml-importer.elemen
 import { ArticulateDashboardOptionsElement } from "./articulate-dashboard-options.element.js";
 import ArticulateThemesElement from "./articulate-themes.element.js";
 
-interface UmbSubscription {
-  unsubscribe: () => void;
-}
-
-console.log("ARTICULATE DASHBOARD ROOT JS LOADED (click handler test v1)");
-
 @customElement("articulate-dashboard-root")
 export class ArticulateDashboardRootElement extends UmbLitElement {
-  @state() private _activeSubPath = "";
   @state() private _routerBasePath?: string;
   @state() private _routes: UmbRoute[];
-  private _parentContextSubscriptions: Array<UmbSubscription> = [];
-  private _isSlotInitialized = false;
 
   constructor() {
     super();
-    console.log("ArticulateDashboardRootElement: constructor");
     this._routes = [
       {
         path: "import",
@@ -84,115 +72,17 @@ export class ArticulateDashboardRootElement extends UmbLitElement {
             .UmbRouteNotFoundElement,
       },
     ];
-    this.consumeContext(UMB_ROUTE_CONTEXT, (context) => {
-      console.log(
-        "ArticulateDashboardRootElement: Consumed UMB_ROUTE_CONTEXT from parent:",
-        context,
-      );
-      for (const sub of this._parentContextSubscriptions) {
-        sub.unsubscribe();
-      }
-      this._parentContextSubscriptions = [];
-      if (context && typeof context.basePath?.subscribe === "function") {
-        const s = context.basePath.subscribe((p: string | undefined) =>
-          console.log("Parent ctx basePath:", p),
-        );
-        this._parentContextSubscriptions.push(s);
-      }
-      if (context && typeof context.activePath?.subscribe === "function") {
-        const s = context.activePath.subscribe((p: string | undefined) =>
-          console.log("Parent ctx activePath:", p),
-        );
-        this._parentContextSubscriptions.push(s);
-      }
-      if (context && typeof context.activeLocalPath?.subscribe === "function") {
-        const s = context.activeLocalPath.subscribe((p: string | undefined) =>
-          console.log("Parent ctx activeLocalPath:", p),
-        );
-        this._parentContextSubscriptions.push(s);
-      }
-    });
-  }
-
-  override connectedCallback(): void {
-    super.connectedCallback();
-    console.log("ArticulateDashboardRootElement: connectedCallback");
-  }
-  override disconnectedCallback(): void {
-    super.disconnectedCallback();
-    console.log("ArticulateDashboardRootElement: disconnectedCallback");
-    for (const sub of this._parentContextSubscriptions) {
-      sub.unsubscribe();
-    }
-  }
-  private _updateActiveSubPath(urlCandidate: string, source: string) {
-    const routerBase = this._routerBasePath
-      ? this._routerBasePath.endsWith("/")
-        ? this._routerBasePath.slice(0, -1)
-        : this._routerBasePath
-      : undefined;
-    let currentPath = urlCandidate.split(/[?#]/)[0];
-    if (currentPath.length > 1 && currentPath.endsWith("/"))
-      currentPath = currentPath.slice(0, -1);
-
-    let newActiveSubPath = "";
-    if (routerBase && currentPath.startsWith(routerBase)) {
-      let local = currentPath.substring(routerBase.length);
-      if (local.startsWith("/")) local = local.substring(1);
-      newActiveSubPath = local;
-    } else if (routerBase === currentPath) newActiveSubPath = "";
-
-    if (this._activeSubPath !== newActiveSubPath) {
-      this._activeSubPath = newActiveSubPath;
-      console.log(
-        `RootEl (${source}): Updated active SUB path: '${this._activeSubPath}' from URL: '${currentPath}', base: '${routerBase}'`,
-      );
-      this.requestUpdate();
-    }
   }
 
   override render() {
-    console.log(
-      "ArticulateDashboardRootElement: render. Active SUB path:",
-      this._activeSubPath,
-      "My Base path:",
-      this._routerBasePath,
-    );
     return html`
       <umb-body-layout>
-        <div slot="header" class="header-container"><div class="articulate-header"><div class="header-title">Articulate Management</div><div class="header-logo">ã</div></div></div>
+        <div slot="header" class="header-container"><div class="articulate-header"><h1 class="header-title">Articulate Management</h1><div class="header-logo">ã</div></div></div>
         <div class="dashboard-container">
           <umb-router-slot
             .routes=${this._routes}
             @init=${(event: UmbRouterSlotInitEvent) => {
               this._routerBasePath = event.target.absoluteRouterPath;
-              console.log(
-                "RootEl: umb-router-slot @init. Base path:",
-                this._routerBasePath,
-              );
-              this._updateActiveSubPath(
-                window.location.pathname +
-                  window.location.search +
-                  window.location.hash,
-                "@init/window",
-              );
-              Promise.resolve().then(() => {
-                this._isSlotInitialized = true;
-                console.log("RootEl: Slot initialized flag SET.");
-              });
-            }}
-            @change=${(event: UmbRouterSlotChangeEvent) => {
-              if (!this._isSlotInitialized) {
-                console.log(
-                  "RootEl: umb-router-slot @change IGNORED (slot not fully initialized).",
-                );
-                return;
-              }
-              const path = event.target.absoluteActiveViewPath;
-              if (path) {
-                console.log("RootEl: umb-router-slot @change. Path:", path);
-                this._updateActiveSubPath(path, "@change");
-              } else console.warn("RootEl: @change event with no path.");
             }}>
           </umb-router-slot>
         </div>
@@ -203,6 +93,11 @@ export class ArticulateDashboardRootElement extends UmbLitElement {
   static override readonly styles = [
     UmbTextStyles,
     css`
+    :host { 
+      display: block;
+      padding: var(--uui-size-space-5); 
+    }
+
     .header-container {
       width: 100%;
       padding: 0 var(--uui-size-space-3);
@@ -273,9 +168,6 @@ export class ArticulateDashboardRootElement extends UmbLitElement {
       margin: 0 auto;
       padding: 0 var(--uui-size-space-3);
     }
-
-    /* Styles for .tools-grid, .tool-card were moved to articulate-dashboard-options.element.ts */
-    
   `,
   ];
 }

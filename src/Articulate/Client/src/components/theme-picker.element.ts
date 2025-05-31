@@ -65,7 +65,8 @@ export class ArticulateThemePickerElement
       this._themes = data;
     } catch (e) {
       console.error("Error fetching themes:", e);
-      const userFriendlyMessage = "Failed to load themes. Please try again later.";
+      const userFriendlyMessage =
+        "Failed to load themes. Please try again later.";
       this._error = userFriendlyMessage;
       const data: UmbNotificationDefaultData = {
         message: userFriendlyMessage,
