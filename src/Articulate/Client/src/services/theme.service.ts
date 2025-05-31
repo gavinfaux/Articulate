@@ -30,20 +30,13 @@ export class ThemeService {
     ];
   }
 
-  async createTheme(
-    name: string,
-    templatePath: string,
-  ): Promise<{ name: string; path: string }> {
-    console.log(
-      `[ThemeService] Creating theme ${name} from ${templatePath} (mock implementation)`,
-    );
+  async createTheme(name: string, templatePath: string): Promise<{ name: string; path: string }> {
+    console.log(`[ThemeService] Creating theme ${name} from ${templatePath} (mock implementation)`);
     return { name, path: `/App_Plugins/Articulate/Themes/${name}` };
   }
 
   async deleteTheme(themePath: string): Promise<void> {
-    console.log(
-      `[ThemeService] Deleting theme at ${themePath} (mock implementation)`,
-    );
+    console.log(`[ThemeService] Deleting theme at ${themePath} (mock implementation)`);
     return Promise.resolve();
   }
 

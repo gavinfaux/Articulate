@@ -6,24 +6,24 @@ export const formStyles = css`
     max-width: var(--uui-size-content);
     margin-inline: auto;
   }
-  
+
   uui-form-layout-item {
     margin-bottom: var(--uui-size-space-4);
   }
-  
+
   uui-label {
     min-width: var(--uui-size-input-medium);
     font-weight: var(--uui-weight-medium);
   }
-  
+
   .back-link {
     text-decoration: none;
     margin-bottom: var(--uui-size-space-4);
     display: inline-block;
   }
-  
+
   .form-actions {
     margin-top: var(--uui-size-space-6);
     text-align: right;
   }
-  `;
+`;

@@ -1,12 +1,6 @@
 import { UmbElementMixin } from "@umbraco-cms/backoffice/element-api";
 import { UmbChangeEvent } from "@umbraco-cms/backoffice/event";
-import {
-  css,
-  customElement,
-  html,
-  property,
-  state,
-} from "@umbraco-cms/backoffice/external/lit";
+import { css, customElement, html, property, state } from "@umbraco-cms/backoffice/external/lit";
 import { UmbLitElement } from "@umbraco-cms/backoffice/lit-element";
 import {
   UMB_NOTIFICATION_CONTEXT,
@@ -53,20 +47,15 @@ export class ArticulateThemePickerElement
     this._loading = true;
     this._error = "";
     try {
-      const response = await fetch(
-        "/umbraco/management/api/v1/articulate/themes",
-      );
+      const response = await fetch("/umbraco/management/api/v1/articulate/themes");
       if (!response.ok) {
-        throw new Error(
-          `Failed to fetch themes: ${response.status} ${response.statusText}`,
-        );
+        throw new Error(`Failed to fetch themes: ${response.status} ${response.statusText}`);
       }
       const data: string[] = await response.json();
       this._themes = data;
     } catch (e) {
       console.error("Error fetching themes:", e);
-      const userFriendlyMessage =
-        "Failed to load themes. Please try again later.";
+      const userFriendlyMessage = "Failed to load themes. Please try again later.";
       this._error = userFriendlyMessage;
       const data: UmbNotificationDefaultData = {
         message: userFriendlyMessage,
@@ -90,32 +79,31 @@ export class ArticulateThemePickerElement
 
     if (this._error) {
       return html`
-                <uui-box headline="Error" style="color: var(--uui-color-danger-emphasis);">
-                    <p>Could not load themes:</p>
-                    <p>${this._error}</p>
-                </uui-box>
-            `;
+        <uui-box headline="Error" style="color: var(--uui-color-danger-emphasis);">
+          <p>Could not load themes:</p>
+          <p>${this._error}</p>
+        </uui-box>
+      `;
     }
 
     return html`
-            <uui-select
-                .value=${this.value}
-                @change=${this._handleInput}
-                label="Select a theme">
-                ${this._themes.map(
-                  (theme) =>
-                    html`<uui-select-option .value=${theme} .displayValue=${theme}>${theme}</uui-select-option>`,
-                )}
-            </uui-select>
-        `;
+      <uui-select .value=${this.value} @change=${this._handleInput} label="Select a theme">
+        ${this._themes.map(
+          (theme) =>
+            html`<uui-select-option .value=${theme} .displayValue=${theme}
+              >${theme}</uui-select-option
+            >`,
+        )}
+      </uui-select>
+    `;
   }
 
   static override readonly styles = [
     UmbTextStyles,
     css`
-        uui-select {
-            width: 100%;
-        }
+      uui-select {
+        width: 100%;
+      }
     `,
   ];
 }

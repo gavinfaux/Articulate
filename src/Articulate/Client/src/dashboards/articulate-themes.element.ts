@@ -39,10 +39,7 @@ export default class ArticulateThemesElement extends UmbLitElement {
     } catch (error) {
       console.error("Error fetching themes:", error);
       this._themes = [];
-      this._showNotification(
-        "Failed to load themes. Please try again later.",
-        "error",
-      );
+      this._showNotification("Failed to load themes. Please try again later.", "error");
     } finally {
       this._isLoading = false;
       this.requestUpdate();
@@ -92,10 +89,7 @@ export default class ArticulateThemesElement extends UmbLitElement {
       await this.#loadThemes();
     } catch (error) {
       console.error("Error duplicating theme:", error);
-      await this._showNotification(
-        "Failed to duplicate theme. Please try again later.",
-        "error",
-      );
+      await this._showNotification("Failed to duplicate theme. Please try again later.", "error");
     } finally {
       this._isLoading = false;
     }
@@ -106,120 +100,128 @@ export default class ArticulateThemesElement extends UmbLitElement {
       return html`<uui-loader></uui-loader>`;
     }
     return html`
-    <uui-box>
-      <div slot="headline">
-        <h2 class="headline">Themes</h2>
-        <span class="header">Manage Articulate themes and create your own</span>
-      </div>
-      <div slot="header-actions">
-        <uui-button
-          label="Back to Articulate dashboard options"
-          look="outline"
-          compact
-          .href=${this.routerPath || "/umbraco/section/settings/dashboard/articulate"}>
-          ← Back
-        </uui-button>
-      </div> 
+      <uui-box>
+        <div slot="headline">
+          <h2 class="headline">Themes</h2>
+          <span class="header">Manage Articulate themes and create your own</span>
+        </div>
+        <div slot="header-actions">
+          <uui-button
+            label="Back to Articulate dashboard options"
+            look="outline"
+            compact
+            .href=${this.routerPath || "/umbraco/section/settings/dashboard/articulate"}
+          >
+            ← Back
+          </uui-button>
+        </div>
 
-      <div class="container"> 
-        <p>
-          You can duplicate any of Articulate's built-in themes to customize them yourself.
-          The duplicated theme will be copied to the ~/Views/Articulate folder where you can edit it.
-          Then you can select this theme from the themes drop down on your Articulate root node to use it.
-        </p>
-        ${
-          this._isLoading && !this._themes.length
+        <div class="container">
+          <p>
+            You can duplicate any of Articulate's built-in themes to customize them yourself. The
+            duplicated theme will be copied to the ~/Views/Articulate folder where you can edit it.
+            Then you can select this theme from the themes drop down on your Articulate root node to
+            use it.
+          </p>
+          ${this._isLoading && !this._themes.length
             ? html`<uui-loader></uui-loader>`
             : this._themes.length > 0
               ? html`
-            <div class="theme-grid">
-              ${this._themes.map(
-                (theme) => html`
-                  <uui-card-block-type
-                    class="theme-card"
-                    name="${theme.name}"
-                    description="" 
-                    ?selectable=${true}
-                    ?selected=${this._selectedTheme?.name === theme.name}
-                    @click=${() => this._selectTheme(theme)}
-                  >
-                    <div class="theme-initial-display">
-                      ${theme.name.charAt(0).toUpperCase()}
-                    </div>
-                  </uui-card-block-type>
-                `,
-              )}
-            </div>
-          `
+                  <div class="theme-grid">
+                    ${this._themes.map(
+                      (theme) => html`
+                        <uui-card-block-type
+                          class="theme-card"
+                          name="${theme.name}"
+                          description=""
+                          ?selectable=${true}
+                          ?selected=${this._selectedTheme?.name === theme.name}
+                          @click=${() => this._selectTheme(theme)}
+                        >
+                          <div class="theme-initial-display">
+                            ${theme.name.charAt(0).toUpperCase()}
+                          </div>
+                        </uui-card-block-type>
+                      `,
+                    )}
+                  </div>
+                `
               : html`
-            <p class="no-themes-message" style="text-align: center; margin-block: var(--uui-size-space-5);">
-              No themes available.
-            </p>
-          `
-        }
-        
-        ${
-          this._selectedTheme
+                  <p
+                    class="no-themes-message"
+                    style="text-align: center; margin-block: var(--uui-size-space-5);"
+                  >
+                    No themes available.
+                  </p>
+                `}
+          ${this._selectedTheme
             ? html`
-              <div class="duplicate-form">
-                <h3>Duplicate '${this._selectedTheme.name}' Theme</h3>
-                <p>Create a copy of this theme that you can customize.</p>
-                
-                <uui-form-layout-item>
-                  <uui-label for="newThemeName" slot="label" required>New theme name</uui-label>
-                  <uui-input 
-                    id="newThemeName"
-                    .value=${this._newThemeName}
-                    @input=${this.#onNewThemeNameChange}
-                    required
-                    ?disabled=${this._isLoading && this._selectedTheme?.name === this._selectedTheme.name} 
-                  ></uui-input>
-                </uui-form-layout-item>
+                <div class="duplicate-form">
+                  <h3>Duplicate '${this._selectedTheme.name}' Theme</h3>
+                  <p>Create a copy of this theme that you can customize.</p>
 
-                <div class="form-actions"> 
-                  <uui-button 
-                    look="primary" 
-                    label="Duplicate"
-                    @click=${this._duplicateTheme}
-                    ?disabled=${!this._newThemeName || (this._isLoading && this._selectedTheme?.name === this._selectedTheme.name)}
-                    .state=${this._isLoading && this._selectedTheme?.name === this._selectedTheme.name ? "waiting" : "default"}>
-                    ${this._isLoading && this._selectedTheme?.name === this._selectedTheme.name ? "Duplicating..." : "Duplicate"}
-                  </uui-button>
-                  
-                  <uui-button 
-                    look="secondary" 
-                    label="Cancel"
-                    @click=${this.#onCancelClick}
-                    ?disabled=${this._isLoading && this._selectedTheme?.name === this._selectedTheme.name}>
-                    Cancel
-                  </uui-button>
-                </div> 
+                  <uui-form-layout-item>
+                    <uui-label for="newThemeName" slot="label" required>New theme name</uui-label>
+                    <uui-input
+                      id="newThemeName"
+                      .value=${this._newThemeName}
+                      @input=${this.#onNewThemeNameChange}
+                      required
+                      ?disabled=${this._isLoading &&
+                      this._selectedTheme?.name === this._selectedTheme.name}
+                    ></uui-input>
+                  </uui-form-layout-item>
 
-              </div> 
-            `
-            : ""
-        }
-      </div> 
-    </uui-box> 
-  `;
+                  <div class="form-actions">
+                    <uui-button
+                      look="primary"
+                      label="Duplicate"
+                      @click=${this._duplicateTheme}
+                      ?disabled=${!this._newThemeName ||
+                      (this._isLoading && this._selectedTheme?.name === this._selectedTheme.name)}
+                      .state=${this._isLoading &&
+                      this._selectedTheme?.name === this._selectedTheme.name
+                        ? "waiting"
+                        : "default"}
+                    >
+                      ${this._isLoading && this._selectedTheme?.name === this._selectedTheme.name
+                        ? "Duplicating..."
+                        : "Duplicate"}
+                    </uui-button>
+
+                    <uui-button
+                      look="secondary"
+                      label="Cancel"
+                      @click=${this.#onCancelClick}
+                      ?disabled=${this._isLoading &&
+                      this._selectedTheme?.name === this._selectedTheme.name}
+                    >
+                      Cancel
+                    </uui-button>
+                  </div>
+                </div>
+              `
+            : ""}
+        </div>
+      </uui-box>
+    `;
   }
 
   static override readonly styles = [
     UmbTextStyles,
     css`
-      
-      h2.headline { 
+      h2.headline {
         margin: 0;
         font-size: 1.4rem;
         font-weight: 600;
-        line-height: 1.2; 
-        display: block; 
+        line-height: 1.2;
+        display: block;
       }
-      span.header { 
-        font-size: 0.85rem; 
+      span.header {
+        font-size: 0.85rem;
         color: var(--uui-color-text-alt);
-        display: block; 
-        margin-top: 4px; 
+        display: block;
+        margin-top: 4px;
       }
 
       .theme-grid {
@@ -229,19 +231,19 @@ export default class ArticulateThemesElement extends UmbLitElement {
         margin: var(--uui-size-space-5) 0;
       }
 
-      .theme-card { 
+      .theme-card {
         cursor: pointer;
-        border: 1px solid var(--uui-color-border-emphasis); 
-        min-height: 120px; 
+        border: 1px solid var(--uui-color-border-emphasis);
+        min-height: 120px;
       }
 
-      .theme-initial-display { 
+      .theme-initial-display {
         display: flex;
         align-items: center;
         justify-content: center;
-        box-sizing: border-box; 
-        width: 100%; 
-        height: 80px; 
+        box-sizing: border-box;
+        width: 100%;
+        height: 80px;
         font-size: 2.2rem;
       }
 
@@ -259,38 +261,38 @@ export default class ArticulateThemesElement extends UmbLitElement {
       }
 
       .back-link {
-    position: absolute;
-    left: 2rem;
-    bottom: -2.2rem;
-    text-decoration: none;
-    font-size: 0.98rem;
-    color: var(--uui-color-interactive-emphasis);
-    background: #fff;
-    border-radius: var(--uui-border-radius);
-    box-shadow: var(--uui-shadow-1);
-    padding: 0.3rem 1.1rem;
-    transition: background 0.2s;
-    z-index: 1;
-  }
-  .back-link:hover {
-    background: var(--uui-color-surface-alt);
-  }
-  .container {
-    padding-block-start: var(--uui-size-space-3);
-  }
+        position: absolute;
+        left: 2rem;
+        bottom: -2.2rem;
+        text-decoration: none;
+        font-size: 0.98rem;
+        color: var(--uui-color-interactive-emphasis);
+        background: #fff;
+        border-radius: var(--uui-border-radius);
+        box-shadow: var(--uui-shadow-1);
+        padding: 0.3rem 1.1rem;
+        transition: background 0.2s;
+        z-index: 1;
+      }
+      .back-link:hover {
+        background: var(--uui-color-surface-alt);
+      }
+      .container {
+        padding-block-start: var(--uui-size-space-3);
+      }
 
-  @media (max-width: var(--uui-breakpoint-sm)) {
-    :host { 
-      padding: var(--uui-size-space-3);
-    }
-    .theme-grid {
-      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    }
-  }
-  .no-themes-message {
-    color: var(--uui-color-text-alt);
-  }
-  `,
+      @media (max-width: var(--uui-breakpoint-sm)) {
+        :host {
+          padding: var(--uui-size-space-3);
+        }
+        .theme-grid {
+          grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        }
+      }
+      .no-themes-message {
+        color: var(--uui-color-text-alt);
+      }
+    `,
   ];
 }
 declare global {

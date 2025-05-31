@@ -1,9 +1,4 @@
-import {
-  css,
-  customElement,
-  html,
-  property,
-} from "@umbraco-cms/backoffice/external/lit";
+import { css, customElement, html, property } from "@umbraco-cms/backoffice/external/lit";
 import { UmbLitElement } from "@umbraco-cms/backoffice/lit-element";
 import { UmbTextStyles } from "@umbraco-cms/backoffice/style";
 
@@ -39,21 +34,22 @@ export class ArticulateDashboardOptionsElement extends UmbLitElement {
     }
     return html`
       <uui-box headline="Settings" headline-variant="h2">
-      <div class="tools-grid">
+        <div class="tools-grid">
           ${dashboards.map((d) => {
             const basePath = this.routerPath?.endsWith("/")
               ? this.routerPath?.slice(0, -1)
               : this.routerPath;
             const fullHref = `${basePath}/${d.path}`;
             return html`
-                <uui-card-block-type
-                  class="tool-card"
-                  name="${d.name}"
-                  description="${d.description}"
-                  href=${fullHref}>
-                  <uui-icon name="${d.icon}"></uui-icon>
-                </uui-card-block-type>
-              `;
+              <uui-card-block-type
+                class="tool-card"
+                name="${d.name}"
+                description="${d.description}"
+                href=${fullHref}
+              >
+                <uui-icon name="${d.icon}"></uui-icon>
+              </uui-card-block-type>
+            `;
           })}
         </div>
       </uui-box>
@@ -63,28 +59,32 @@ export class ArticulateDashboardOptionsElement extends UmbLitElement {
   static override readonly styles = [
     UmbTextStyles,
     css`
-    .tools-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));
-      gap: var(--uui-size-space-5);
-    }
-
-    .tool-card {
-      min-width: 0;
-      cursor: pointer;
-    }
-    uui-card,
-    uui-card-block-type {
-      transition: var(--uui-animation-duration) var(--uui-animation-easing);
-    }
-
-    a { text-decoration: none; color: inherit; display: block;}
-    @media (max-width: 768px) {
       .tools-grid {
-        gap: var(--uui-size-space-4);
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));
+        gap: var(--uui-size-space-5);
       }
-    }
-  `,
+
+      .tool-card {
+        min-width: 0;
+        cursor: pointer;
+      }
+      uui-card,
+      uui-card-block-type {
+        transition: var(--uui-animation-duration) var(--uui-animation-easing);
+      }
+
+      a {
+        text-decoration: none;
+        color: inherit;
+        display: block;
+      }
+      @media (max-width: 768px) {
+        .tools-grid {
+          gap: var(--uui-size-space-4);
+        }
+      }
+    `,
   ];
 }
 

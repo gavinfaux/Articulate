@@ -1,9 +1,4 @@
-import {
-  css,
-  customElement,
-  html,
-  property,
-} from "@umbraco-cms/backoffice/external/lit";
+import { css, customElement, html, property } from "@umbraco-cms/backoffice/external/lit";
 import { UmbLitElement } from "@umbraco-cms/backoffice/lit-element";
 import { UmbTextStyles } from "@umbraco-cms/backoffice/style";
 import { formStyles } from "./form-styles";
@@ -26,20 +21,14 @@ export default class ArticulateBlogMlImporterElement extends UmbLitElement {
     const form = e.target as HTMLFormElement;
     const formData = new FormData(form);
     const formMessage = form.querySelector<HTMLElement>("#formMessage");
-    const submitButton = form.querySelector<HTMLElement>(
-      'uui-button[look="primary"]',
-    );
+    const submitButton = form.querySelector<HTMLElement>('uui-button[look="primary"]');
 
     if (!formMessage || !submitButton) return;
 
     const blogNode = formData.get("blogNode");
     const importFile = formData.get("importFile");
     if (!blogNode || !importFile) {
-      this._showMessage(
-        formMessage,
-        "error",
-        "Please fill in all required fields",
-      );
+      this._showMessage(formMessage, "error", "Please fill in all required fields");
       return;
     }
 
@@ -78,10 +67,11 @@ export default class ArticulateBlogMlImporterElement extends UmbLitElement {
             label="Back to Articulate dashboard options"
             look="outline"
             compact
-            href=${this.routerPath || "/umbraco/section/settings/dashboard/articulate"}>
+            href=${this.routerPath || "/umbraco/section/settings/dashboard/articulate"}
+          >
             ← Back
           </uui-button>
-        </div> 
+        </div>
         <uui-form @submit=${this._handleSubmit}>
           <uui-form-layout-item>
             <uui-label for="blogNode" required>Articulate blog node</uui-label>

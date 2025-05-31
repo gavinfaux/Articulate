@@ -1,0 +1,14 @@
+node_modules/
+build/
+dist/
+public/
+scripts/
+src/api/
+docs/
+
+*.min.js
+*.bundle.js
+*.d.ts
+*.css
+*.map
+umbraco-package-schema.json

@@ -1,9 +1,4 @@
-import {
-  css,
-  customElement,
-  html,
-  property,
-} from "@umbraco-cms/backoffice/external/lit";
+import { css, customElement, html, property } from "@umbraco-cms/backoffice/external/lit";
 import { UmbLitElement } from "@umbraco-cms/backoffice/lit-element";
 import { UmbTextStyles } from "@umbraco-cms/backoffice/style";
 import { formStyles } from "./form-styles";
@@ -27,9 +22,7 @@ export default class ArticulateBlogMlExporterElement extends UmbLitElement {
     const form = e.target as HTMLFormElement;
     const formData = new FormData(form);
     const formMessage = form.querySelector<HTMLElement>("#formMessage");
-    const submitButton = form.querySelector<HTMLElement>(
-      'uui-button[look="primary"]',
-    );
+    const submitButton = form.querySelector<HTMLElement>('uui-button[look="primary"]');
 
     if (!formMessage || !submitButton) return;
 
@@ -67,31 +60,34 @@ export default class ArticulateBlogMlExporterElement extends UmbLitElement {
       <uui-box>
         <div slot="headline">
           <h2 class="headline">BlogML Exporter</h2>
-          <span class="header">Export content you can import to any BlogML compatible platform.</span>
+          <span class="header"
+            >Export content you can import to any BlogML compatible platform.</span
+          >
         </div>
         <div slot="header-actions">
-        <uui-button
-          label="Back to Articulate dashboard options"
-          look="outline"
-          compact
-          href=${this.routerPath || "/umbraco/section/settings/dashboard/articulate"}>
-          ← Back
-        </uui-button>
-      </div> 
-      <uui-form @submit=${this._handleSubmit}>
-        <uui-form-layout-item>
-          <uui-label for="blogNode" required>Articulate blog node</uui-label>
-          <uui-input id="blogNode" name="blogNode" placeholder="Choose node..."></uui-input>
-        </uui-form-layout-item>
-        <uui-form-layout-item>
-          <uui-label for="embedImages">Embed images?</uui-label>
-          <uui-boolean-input id="embedImages" name="embedImages"></uui-boolean-input>
-        </uui-form-layout-item>
-        <uui-form-validation-message id="formMessage"></uui-form-validation-message>
-        <div class="form-actions">
-          <uui-button look="primary" label="Submit">Submit</uui-button>
+          <uui-button
+            label="Back to Articulate dashboard options"
+            look="outline"
+            compact
+            href=${this.routerPath || "/umbraco/section/settings/dashboard/articulate"}
+          >
+            ← Back
+          </uui-button>
         </div>
-      </uui-form>
+        <uui-form @submit=${this._handleSubmit}>
+          <uui-form-layout-item>
+            <uui-label for="blogNode" required>Articulate blog node</uui-label>
+            <uui-input id="blogNode" name="blogNode" placeholder="Choose node..."></uui-input>
+          </uui-form-layout-item>
+          <uui-form-layout-item>
+            <uui-label for="embedImages">Embed images?</uui-label>
+            <uui-boolean-input id="embedImages" name="embedImages"></uui-boolean-input>
+          </uui-form-layout-item>
+          <uui-form-validation-message id="formMessage"></uui-form-validation-message>
+          <div class="form-actions">
+            <uui-button look="primary" label="Submit">Submit</uui-button>
+          </div>
+        </uui-form>
       </uui-box>
     `;
   }
