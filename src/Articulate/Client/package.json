@@ -1,16 +1,18 @@
 {
-        "build": "tsc && vite build && powershell -Command \"Remove-Item -Recurse -Force 'F:\\int\\Articulate\\src\\Articulate.Tests.Website\\wwwroot\\App_Plugins\\Articulate\\*'; Copy-Item -Path 'F:\\int\\Articulate\\src\\Articulate\\wwwroot\\App_Plugins\\Articulate\\*' -Destination 'F:\\int\\Articulate\\src\\Articulate.Tests.Website\\wwwroot\\App_Plugins\\Articulate\\' -Recurse -Force; Write-Host '✅ Copied build output.'\"",
   "name": "articulate",
   "private": true,
   "version": "6.0.0",
   "type": "module",
   "scripts": {
-    "watch": "tsc && vite build --watch",
+    "watch": "npx chokidar \"src/**/*\" -c \"npm run build\"",
+    "build": "tsc && vite build && node scripts/copy-articulate-output.cjs",
     "generate-client": "node scripts/generate-openapi.js https://localhost:44366/umbraco/swagger/articulate/swagger.json",
     "format": "prettier --write .",
     "lint": "eslint . --ext .ts,.js,.tsx,.jsx"
   },
   "devDependencies": {
+    "chokidar-cli": "^3.0.0",
+    "fs-extra": "^11.2.0",
     "@eslint/compat": "^1.2.9",
     "@eslint/js": "^9.28.0",
     "@hey-api/client-fetch": "^0.8.3",
