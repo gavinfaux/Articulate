@@ -1,4 +1,4 @@
-﻿using System.Runtime.Serialization;
+using System.Runtime.Serialization;
 
 namespace Articulate.Models
 {
@@ -6,6 +6,6 @@ namespace Articulate.Models
     public class ImportModel
     {
         [DataMember(Name = "downloadUrl")]
-        public string DownloadUrl { get; set; }
+        public required string DownloadUrl { get; set; }
     }
 }

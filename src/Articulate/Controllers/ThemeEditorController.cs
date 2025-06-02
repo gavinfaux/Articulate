@@ -1,88 +1,102 @@
 using Articulate.Models;
+using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Hosting;
 using Umbraco.Cms.Api.Management.Controllers;
 using Umbraco.Cms.Api.Management.Routing;
 using Umbraco.Cms.Core.Extensions;
-
-using Umbraco.Cms.Web.Common.Attributes;
 using Umbraco.Cms.Web.Common.Authorization;
 using Umbraco.Extensions;
 
 namespace Articulate.Controllers
 {
+    [ApiVersion("1.0")]
+    [Authorize(Policy = AuthorizationPolicies.SectionAccessSettings)]
     [VersionedApiBackOfficeRoute("articulate/theme-editor")]
-    [ApiExplorerSettings(GroupName = "Articulate API")]
-    public class ThemeEditorController : ManagementApiControllerBase
+    [ApiExplorerSettings(GroupName = "Articulate")]
+    public class ThemeEditorController(IHostEnvironment hostingEnvironment) : ManagementApiControllerBase
     {
-        private readonly IHostEnvironment _hostingEnvironment;
-
-        public ThemeEditorController(
-            IHostEnvironment hostingEnvironment)
+        public enum ThemeEditorOperationStatus
         {
-            _hostingEnvironment = hostingEnvironment;
+            NotFound,
+            DuplicateValue
         }
 
         [HttpPost]
-        public ActionResult<Theme> PostCopyTheme(PostCopyThemeModel model)
+        [ProducesResponseType<Theme>(StatusCodes.Status200OK)]
+        [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+        [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
+        public IActionResult PostCopyTheme([FromBody] PostCopyThemeModel model)
         {
-            if (!ModelState.IsValid)
-            {
-                return ValidationProblem(ModelState);
-            }
+            // ManagementApiControllerBase [ApiController] attribute will automatically validate the model
 
-            DirectoryInfo[] themeFolderDirectories = GetThemeDirectories(out var themeDirectory);
+            var themeFolderDirectories = GetThemeDirectories();
 
-            DirectoryInfo sourceTheme = themeFolderDirectories.FirstOrDefault(x => x.Name.InvariantEquals(model.ThemeName));
+            var sourceTheme = themeFolderDirectories.FirstOrDefault(x => x.Name.InvariantEquals(model.ThemeName));
             if (sourceTheme == null)
             {
-                return NotFound();
+                return OperationStatusResult(ThemeEditorOperationStatus.NotFound, builder => NotFound(builder.WithTitle("Theme directory not found").Build()));
             }
 
-            var articulateUserThemesDirectory = _hostingEnvironment.MapPathContentRoot(PathHelper.UserVirtualThemePath);
+            var articulateUserThemesDirectory = hostingEnvironment.MapPathContentRoot(PathHelper.UserVirtualThemePath);
             if (!Directory.Exists(articulateUserThemesDirectory))
             {
-                Directory.CreateDirectory(articulateUserThemesDirectory);
+                _ = Directory.CreateDirectory(articulateUserThemesDirectory);
             }
 
-            DirectoryInfo[] articulateUserThemesDirectories = new DirectoryInfo(articulateUserThemesDirectory).GetDirectories();
+            var articulateUserThemesDirectories = new DirectoryInfo(articulateUserThemesDirectory).GetDirectories();
 
-            DirectoryInfo destTheme = articulateUserThemesDirectories.FirstOrDefault(x => x.Name.InvariantEquals(model.NewThemeName));
+            var destTheme = articulateUserThemesDirectories.FirstOrDefault(x => x.Name.InvariantEquals(model.NewThemeName));
 
             if (destTheme != null)
             {
-                ModelState.AddModelError("value", "The theme " + model.NewThemeName + " already exists");
-                return ValidationProblem(ModelState);
+                return OperationStatusResult(ThemeEditorOperationStatus.DuplicateValue, builder => BadRequest(builder.WithTitle("Theme name is already used").WithDetail("The theme name must be unique").Build()));
+
+            }
+            try 
+            {
+                CopyDirectory(sourceTheme, new DirectoryInfo(Path.Combine(articulateUserThemesDirectory, model.NewThemeName)));
+            }
+            catch (InvalidOperationException)
+            {
+                return OperationStatusResult(ThemeEditorOperationStatus.DuplicateValue, builder => BadRequest(builder.WithTitle("Theme name is already used").WithDetail("The theme name must be unique").Build()));
             }
 
-            CopyDirectory(sourceTheme, new DirectoryInfo(Path.Combine(articulateUserThemesDirectory, model.NewThemeName)));
-
-            return new Theme()
+            return Ok(new Theme
             {
                 Name = model.NewThemeName,
                 Path = "-1," + model.NewThemeName
-            };
+
+            });
         }
 
-        [HttpGet]
-        public IEnumerable<Theme> GetThemes()
+        private List<Theme> AllThemes()
         {
-            DirectoryInfo[] themeFolderDirectories = GetThemeDirectories(out _);
+            var themeFolderDirectories = GetThemeDirectories();
 
-            IEnumerable<Theme> themes = themeFolderDirectories
+            var themes = themeFolderDirectories
                 .Select(x => new Theme
                 {
                     Name = x.Name
                 });
 
-            return themes;
+            return [.. themes];
         }
 
-        private DirectoryInfo[] GetThemeDirectories(out string themeFolder)
+        [HttpGet]
+        [ProducesResponseType<List<Theme>>(StatusCodes.Status200OK)]
+        public IActionResult GetThemes()
+            =>  Ok(
+                AllThemes()
+
+            );
+
+        private DirectoryInfo[] GetThemeDirectories()
         {
-            themeFolder = _hostingEnvironment.MapPathContentRoot(PathHelper.VirtualThemePath);
-            DirectoryInfo[] themeFolderDirectories = new DirectoryInfo(Path.Combine(themeFolder)).GetDirectories();
+            var themeFolder = hostingEnvironment.MapPathContentRoot(PathHelper.VirtualThemePath);
+            var themeFolderDirectories = new DirectoryInfo(Path.Combine(themeFolder)).GetDirectories();
             return themeFolderDirectories;
         }
 
@@ -96,18 +110,18 @@ namespace Articulate.Controllers
             destination.Create();
 
             // Copy all files.
-            FileInfo[] files = source.GetFiles();
-            foreach (FileInfo file in files)
+            var files = source.GetFiles();
+            foreach (var file in files)
             {
-                file.CopyTo(Path.Combine(destination.FullName, file.Name));
+                _ = file.CopyTo(Path.Combine(destination.FullName, file.Name));
             }
 
             // Process subdirectories.
-            DirectoryInfo[] dirs = source.GetDirectories();
-            foreach (DirectoryInfo dir in dirs)
+            var dirs = source.GetDirectories();
+            foreach (var dir in dirs)
             {
                 // Get destination directory.
-                string destinationDir = Path.Combine(destination.FullName, dir.Name);
+                var destinationDir = Path.Combine(destination.FullName, dir.Name);
 
                 // Call CopyDirectory() recursively.
                 CopyDirectory(dir, new DirectoryInfo(destinationDir));

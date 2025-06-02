@@ -1,113 +1,110 @@
 using System.Net;
 using Articulate.ImportExport;
 using Articulate.Models;
+using Asp.Versioning;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
-using Microsoft.Extensions.Hosting;
-using Umbraco.Cms.Api.Common.ViewModels.Pagination;
 using Umbraco.Cms.Api.Management.Controllers;
 using Umbraco.Cms.Api.Management.Routing;
-using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.Security;
+using Umbraco.Cms.Web.Common.Authorization;
 using Umbraco.Extensions;
-using static Umbraco.Cms.Core.Constants;
 
 namespace Articulate.Controllers
 {
-    [VersionedApiBackOfficeRoute("articulate/blogml")]
-    [ApiExplorerSettings(GroupName = "Articulate API")]
+
+
+    [ApiVersion("1.0")]
+    [Authorize(Policy = AuthorizationPolicies.SectionAccessSettings)]
+    [VersionedApiBackOfficeRoute("articulate")]
+    [ApiExplorerSettings(GroupName = "Articulate")]
     public class ArticulateBlogImportController : ManagementApiControllerBase
     {
+
         private readonly BlogMlImporter _blogMlImporter;
-        private readonly UmbracoApiControllerTypeCollection _umbracoApiControllerTypeCollection;
         private readonly IBackOfficeSecurityAccessor _backOfficeSecurityAccessor;
         private readonly ArticulateTempFileSystem _articulateTempFileSystem;
-        private readonly IHostEnvironment _hostingEnvironment;
         private readonly BlogMlExporter _blogMlExporter;
         private readonly LinkGenerator _linkGenerator;
 
-        public ArticulateBlogImportController(
-            IHostEnvironment hostingEnvironment,
-            BlogMlExporter blogMlExporter,
+        [Obsolete]
+        public ArticulateBlogImportController(BlogMlExporter blogMlExporter,
             BlogMlImporter blogMlImporter,
-            UmbracoApiControllerTypeCollection umbracoApiControllerTypeCollection,
             IBackOfficeSecurityAccessor backOfficeSecurityAccessor,
             ArticulateTempFileSystem articulateTempFileSystem,
             LinkGenerator linkGenerator)
         {
             _blogMlImporter = blogMlImporter;
-            _umbracoApiControllerTypeCollection = umbracoApiControllerTypeCollection;
             _backOfficeSecurityAccessor = backOfficeSecurityAccessor;
             _articulateTempFileSystem = articulateTempFileSystem;
-            _hostingEnvironment = hostingEnvironment;
             _blogMlExporter = blogMlExporter;
             _linkGenerator = linkGenerator;
         }
 
-        [DisableRequestSizeLimit]
-        [HttpPost]
-        public ActionResult PostInitialize()
+        [HttpPost("post/init")]
+        [ProducesResponseType<PostResponseModel>(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status415UnsupportedMediaType)]
+        public IActionResult PostInitialize()
         {
-            if (!Request.HasFormContentType && !Request.Form.Files.Any())
-            {
-                return StatusCode((int)HttpStatusCode.UnsupportedMediaType);
-            }
-
-            if (!Path.GetExtension(Request.Form.Files[0].FileName.Trim('\"')).InvariantEquals(".xml"))
+            if ((!Request.HasFormContentType && !Request.Form.Files.Any()) || !Path.GetExtension(Request.Form.Files[0].FileName.Trim('\"')).InvariantEquals(".xml"))
             {
                 return StatusCode((int)HttpStatusCode.UnsupportedMediaType);
             }
 
             var fileName = Path.GetRandomFileName();
             using (var stream = new MemoryStream())
-            {                
+            {
                 Request.Form.Files[0].CopyTo(stream);
                 _articulateTempFileSystem.AddFile(fileName, stream);
             }
 
             var count = _blogMlImporter.GetPostCount(fileName);
 
-            return this.Ok(new
+            return Ok(new PostResponseModel
             {
-                count = count,
-                tempFile = fileName
-            });
+                PostCount = count,
+                TemporaryFileName = fileName
+            }
+            );
         }
 
-        public ImportModel PostExportBlogMl(ExportBlogMlModel model)
+        [HttpPost("post/export")]
+        [ProducesResponseType<ImportModel>(StatusCodes.Status200OK)]
+        public IActionResult PostExportBlogMl(ExportBlogMlModel model)
         {
             _blogMlExporter.Export(model.ArticulateNodeId, model.ExportImagesAsBase64);
             var downloadUrl = _linkGenerator.GetPathByAction(
                 action: nameof(GetBlogMlExport),
                 controller: "ArticulateBlogImport", // Controller name without "Controller" suffix
                 values: null, // or route values if needed
-                httpContext: this.HttpContext // optional, for absolute URLs use GetUriByAction
+                httpContext: HttpContext // optional, for absolute URLs use GetUriByAction
             );
-            return new ImportModel
+            return Ok(new ImportModel
             {
-                DownloadUrl = downloadUrl
-            };
+                DownloadUrl = downloadUrl ?? string.Empty
+            });
         }
 
-        [HttpGet]
+        [HttpGet("blogml")]
+        [ProducesResponseType<FileResult>(StatusCodes.Status200OK)]
         public IActionResult GetBlogMlExport()
         {
             var fileStream = _articulateTempFileSystem.OpenFile("BlogMlExport.xml");
-            return File(fileStream, "application/octet-stream", "BlogMlExport.xml");
+            return Ok(File(fileStream, "application/octet-stream", "BlogMlExport.xml"));
         }
 
-        [HttpPost]
+        [HttpPost("post/import")]
+        [ProducesResponseType<ImportModel>(StatusCodes.Status200OK)]
+        [ProducesResponseType<ProblemDetails>(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<ImportModel>> PostImportBlogMl(ImportBlogMlModel model)
         {
-            if (!ModelState.IsValid)
-            {
-                return ValidationProblem(ModelState);
-            }
+            // ManagementApiControllerBase [ApiController] attribute will automatically validate the model
 
             //there should only be one file so we'll just use the first one
 
-            var successful = await _blogMlImporter.Import(
+            var successful = _backOfficeSecurityAccessor.BackOfficeSecurity?.CurrentUser != null && await _blogMlImporter.Import(
                 _backOfficeSecurityAccessor.BackOfficeSecurity.CurrentUser.Id,
                 model.TempFile,
                 model.ArticulateNodeId,
@@ -123,27 +120,25 @@ namespace Articulate.Controllers
 
             if (!successful)
             {
-                return Problem("Importing failed, see umbraco log for details");
+                return Problem("Importing failed, see umbraco log for details", statusCode: 500, title: "Internal Server Error");
             }
 
             var downloadUrl = _linkGenerator.GetPathByAction(
                 action: nameof(GetDisqusExport),
                 controller: "ArticulateBlogImport", // Controller name without "Controller" suffix
                 values: null, // or route values if needed
-                httpContext: this.HttpContext // optional, for absolute URLs use GetUriByAction
+                httpContext: HttpContext // optional, for absolute URLs use GetUriByAction
             );
-            return new ImportModel
-            {
-                DownloadUrl = downloadUrl
-            };
+            return Ok(Task.FromResult(new ImportModel { DownloadUrl = downloadUrl ?? string.Empty }));
         }
 
-        [HttpGet]
+        [HttpGet("disqus")]
+        [ProducesResponseType<FileStreamResult>(StatusCodes.Status200OK)]
         public IActionResult GetDisqusExport()
         {
             //save to Temp folder (base path)
             var fileStream = _articulateTempFileSystem.OpenFile("DisqusXmlExport.xml");
-            return File(fileStream, "application/octet-stream", "DisqusXmlExport.xml");
+            return Ok(File(fileStream, "application/octet-stream", "DisqusXmlExport.xml"));
         }
     }
 }
