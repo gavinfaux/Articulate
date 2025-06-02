@@ -33,7 +33,7 @@ fetch(swaggerUrl).then(async (response) => {
 
   await createClient({
     input: swaggerUrl,
-    output: 'src/api',
+    output: 'src/api/core',
     plugins: [
       ...defaultPlugins,
       '@hey-api/client-fetch',

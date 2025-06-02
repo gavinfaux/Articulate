@@ -12,6 +12,7 @@ import type {
   UmbPropertyEditorUiElement,
 } from "@umbraco-cms/backoffice/property-editor";
 import { UmbTextStyles } from "@umbraco-cms/backoffice/style";
+import { ArticulateService } from "../api/core";
 
 @customElement("articulate-theme-picker-element")
 export class ArticulateThemePickerElement
@@ -47,12 +48,8 @@ export class ArticulateThemePickerElement
     this._loading = true;
     this._error = "";
     try {
-      const response = await fetch("/umbraco/management/api/v1/articulate/themes");
-      if (!response.ok) {
-        throw new Error(`Failed to fetch themes: ${response.status} ${response.statusText}`);
-      }
-      const data: string[] = await response.json();
-      this._themes = data;
+      const { data } = await ArticulateService.getUmbracoManagementApiV1ArticulateThemes();
+      this._themes = data ?? [];
     } catch (e) {
       console.error("Error fetching themes:", e);
       const userFriendlyMessage = "Failed to load themes. Please try again later.";

@@ -4,15 +4,10 @@ import { customElement, property, state } from "lit/decorators.js";
 
 import { UmbLitElement } from "@umbraco-cms/backoffice/lit-element";
 import { UmbTextStyles } from "@umbraco-cms/backoffice/style";
-
-// TODO: auto-generated service when API is ready
-import { ThemeService } from "../services/theme.service";
-
-// TODO: generated type from API
-interface Theme {
-  name: string;
-  path: string;
-}
+import {
+  ArticulateService,
+  PostUmbracoManagementApiV1ArticulateThemeEditorData,
+} from "../api/core";
 
 @customElement("articulate-themes")
 export default class ArticulateThemesElement extends UmbLitElement {
@@ -21,11 +16,9 @@ export default class ArticulateThemesElement extends UmbLitElement {
 
   //TODO: review if state is needed here
   @state() private _isLoading = false;
-  @state() private _themes: Theme[] = [];
+  @state() private _themes: string[] = [];
   @state() private _newThemeName = "";
-  @state() private _selectedTheme: Theme | null = null;
-
-  #themeService = new ThemeService(this);
+  @state() private _selectedTheme: string | null = null;
 
   async connectedCallback() {
     super.connectedCallback();
@@ -35,7 +28,8 @@ export default class ArticulateThemesElement extends UmbLitElement {
   async #loadThemes() {
     this._isLoading = true;
     try {
-      this._themes = await this.#themeService.getThemes();
+      const { data } = await ArticulateService.getUmbracoManagementApiV1ArticulateThemes();
+      this._themes = data?.map((theme) => theme) ?? [];
     } catch (error) {
       console.error("Error fetching themes:", error);
       this._themes = [];
@@ -55,10 +49,18 @@ export default class ArticulateThemesElement extends UmbLitElement {
     }
   }
 
-  private _selectTheme(theme: Theme) {
+  private _selectTheme(theme: string) {
     this._selectedTheme = theme;
-    this._newThemeName = `${theme.name} - Copy`;
+    this._newThemeName = `${theme} - Copy`;
   }
+
+  private _deselectTheme = (event: Event) => {
+    // Only clear if the deselected card is the selected one
+    const card = event.target as HTMLElement;
+    if (card.getAttribute("name") === this._selectedTheme) {
+      this._selectedTheme = null;
+    }
+  };
 
   #onNewThemeNameChange = (e: Event) => {
     this._newThemeName = (e.target as HTMLInputElement).value;
@@ -70,16 +72,24 @@ export default class ArticulateThemesElement extends UmbLitElement {
 
   private async _duplicateTheme() {
     if (this._isLoading || !this._selectedTheme || !this._newThemeName) return;
-
+    const payload: PostUmbracoManagementApiV1ArticulateThemeEditorData = {
+      body: {
+        themeName: this._selectedTheme,
+        newThemeName: this._newThemeName,
+      },
+      url: "/umbraco/management/api/v1/articulate/theme-editor",
+    };
     try {
       this._isLoading = true;
-      const newTheme = await this.#themeService.duplicateTheme(
-        this._selectedTheme.name,
-        this._newThemeName,
-      );
+      const { data: newTheme } =
+        await ArticulateService.postUmbracoManagementApiV1ArticulateThemeEditor(payload);
+
+      if (!newTheme) {
+        throw new Error("Failed to duplicate theme");
+      }
 
       await this._showNotification(
-        `Theme '${this._selectedTheme.name}' duplicated to '${newTheme.name}'`,
+        `Theme '${this._selectedTheme}' duplicated to '${newTheme.name}'`,
         "positive",
       );
 
@@ -123,24 +133,23 @@ export default class ArticulateThemesElement extends UmbLitElement {
             Then you can select this theme from the themes drop down on your Articulate root node to
             use it.
           </p>
-          ${this._isLoading && !this._themes.length
+          ${this._isLoading && !(this._themes?.length ?? 0)
             ? html`<uui-loader></uui-loader>`
-            : this._themes.length > 0
+            : (this._themes?.length ?? 0) > 0
               ? html`
                   <div class="theme-grid">
-                    ${this._themes.map(
-                      (theme) => html`
+                    ${(this._themes ?? []).map(
+                      (theme: string) => html`
                         <uui-card-block-type
                           class="theme-card"
-                          name="${theme.name}"
+                          name="${theme}"
                           description=""
                           ?selectable=${true}
-                          ?selected=${this._selectedTheme?.name === theme.name}
-                          @click=${() => this._selectTheme(theme)}
+                          ?selected=${this._selectedTheme === theme}
+                          @selected=${() => this._selectTheme(theme)}
+                          @deselected=${this._deselectTheme}
                         >
-                          <div class="theme-initial-display">
-                            ${theme.name.charAt(0).toUpperCase()}
-                          </div>
+                          <div class="theme-initial-display">${theme.charAt(0).toUpperCase()}</div>
                         </uui-card-block-type>
                       `,
                     )}
@@ -157,7 +166,7 @@ export default class ArticulateThemesElement extends UmbLitElement {
           ${this._selectedTheme
             ? html`
                 <div class="duplicate-form">
-                  <h3>Duplicate '${this._selectedTheme.name}' Theme</h3>
+                  <h3>Duplicate '${this._selectedTheme}' Theme</h3>
                   <p>Create a copy of this theme that you can customize.</p>
 
                   <uui-form-layout-item>
@@ -167,8 +176,7 @@ export default class ArticulateThemesElement extends UmbLitElement {
                       .value=${this._newThemeName}
                       @input=${this.#onNewThemeNameChange}
                       required
-                      ?disabled=${this._isLoading &&
-                      this._selectedTheme?.name === this._selectedTheme.name}
+                      ?disabled=${this._isLoading && this._selectedTheme === this._selectedTheme}
                     ></uui-input>
                   </uui-form-layout-item>
 
@@ -178,13 +186,12 @@ export default class ArticulateThemesElement extends UmbLitElement {
                       label="Duplicate"
                       @click=${this._duplicateTheme}
                       ?disabled=${!this._newThemeName ||
-                      (this._isLoading && this._selectedTheme?.name === this._selectedTheme.name)}
-                      .state=${this._isLoading &&
-                      this._selectedTheme?.name === this._selectedTheme.name
+                      (this._isLoading && this._selectedTheme === this._selectedTheme)}
+                      .state=${this._isLoading && this._selectedTheme === this._selectedTheme
                         ? "waiting"
                         : "default"}
                     >
-                      ${this._isLoading && this._selectedTheme?.name === this._selectedTheme.name
+                      ${this._isLoading && this._selectedTheme === this._selectedTheme
                         ? "Duplicating..."
                         : "Duplicate"}
                     </uui-button>
@@ -193,8 +200,7 @@ export default class ArticulateThemesElement extends UmbLitElement {
                       look="secondary"
                       label="Cancel"
                       @click=${this.#onCancelClick}
-                      ?disabled=${this._isLoading &&
-                      this._selectedTheme?.name === this._selectedTheme.name}
+                      ?disabled=${this._isLoading && this._selectedTheme === this._selectedTheme}
                     >
                       Cancel
                     </uui-button>

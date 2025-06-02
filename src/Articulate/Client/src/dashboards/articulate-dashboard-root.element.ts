@@ -1,6 +1,6 @@
 import { css, customElement, html, state } from "@umbraco-cms/backoffice/external/lit";
 import { UmbLitElement } from "@umbraco-cms/backoffice/lit-element";
-import type { UmbRoute } from "@umbraco-cms/backoffice/router";
+import type { UmbRoute, UmbRouterSlotInitEvent } from "@umbraco-cms/backoffice/router";
 
 import { UmbTextStyles } from "@umbraco-cms/backoffice/style";
 import ArticulateBlogMlExporterElement from "./articulate-blogml-exporter.element.js";
@@ -66,7 +66,12 @@ export class ArticulateDashboardRootElement extends UmbLitElement {
           </div>
         </div>
         <div class="dashboard-container">
-          <umb-router-slot .routes=${this._routes}></umb-router-slot>
+          <umb-router-slot
+            .routes=${this._routes}
+            @init=${(event: UmbRouterSlotInitEvent) => {
+              this._routerBasePath = event.target.absoluteRouterPath;
+            }}
+          ></umb-router-slot>
         </div>
       </umb-body-layout>
     `;
