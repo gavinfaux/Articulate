@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Api.Management.Controllers;
 using Umbraco.Cms.Api.Management.Routing;
 using Umbraco.Cms.Core.Extensions;
@@ -14,20 +15,21 @@ namespace Articulate.Controllers
 {
     [ApiVersion("1.0")]
     [Authorize(Policy = AuthorizationPolicies.SectionAccessSettings)]
-    [VersionedApiBackOfficeRoute("articulate/theme-editor")]
+    [VersionedApiBackOfficeRoute("articulate/theme")]
     [ApiExplorerSettings(GroupName = "Articulate")]
-    public class ThemeEditorController(IHostEnvironment hostingEnvironment) : ManagementApiControllerBase
+    public class ThemeEditorController(IHostEnvironment hostingEnvironment, ILogger<ThemeEditorController> logger) : ManagementApiControllerBase
     {
         public enum ThemeEditorOperationStatus
         {
             NotFound,
-            DuplicateValue
+            DuplicateThemeName
         }
 
-        [HttpPost]
+        [HttpPost("copy")]
         [ProducesResponseType<Theme>(StatusCodes.Status200OK)]
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType<ProblemDetails>(StatusCodes.Status500InternalServerError)]
         public IActionResult PostCopyTheme([FromBody] PostCopyThemeModel model)
         {
             // ManagementApiControllerBase [ApiController] attribute will automatically validate the model
@@ -37,6 +39,7 @@ namespace Articulate.Controllers
             var sourceTheme = themeFolderDirectories.FirstOrDefault(x => x.Name.InvariantEquals(model.ThemeName));
             if (sourceTheme == null)
             {
+                logger.LogError("Theme directory not found: {ThemeName}", model.ThemeName);
                 return OperationStatusResult(ThemeEditorOperationStatus.NotFound, builder => NotFound(builder.WithTitle("Theme directory not found").Build()));
             }
 
@@ -52,23 +55,28 @@ namespace Articulate.Controllers
 
             if (destTheme != null)
             {
-                return OperationStatusResult(ThemeEditorOperationStatus.DuplicateValue, builder => BadRequest(builder.WithTitle("Theme name is already used").WithDetail("The theme name must be unique").Build()));
-
+                logger.LogWarning("Theme name is already is use: {ThemeName}", model.ThemeName);
+                return OperationStatusResult(ThemeEditorOperationStatus.DuplicateThemeName, builder => BadRequest(builder.WithTitle("Theme name is already used").WithDetail("The theme name must be unique").Build()));
             }
+
             try 
             {
                 CopyDirectory(sourceTheme, new DirectoryInfo(Path.Combine(articulateUserThemesDirectory, model.NewThemeName)));
             }
-            catch (InvalidOperationException)
+            catch (InvalidOperationException e)
             {
-                return OperationStatusResult(ThemeEditorOperationStatus.DuplicateValue, builder => BadRequest(builder.WithTitle("Theme name is already used").WithDetail("The theme name must be unique").Build()));
+                if (e.Message == "Theme already exists")
+                {
+                    logger.LogWarning(e,"Theme name is already is use: {ThemeName}", model.NewThemeName);
+                    return OperationStatusResult(ThemeEditorOperationStatus.DuplicateThemeName, builder => BadRequest(builder.WithTitle("Theme name is already used").WithDetail("The theme name must be unique").Build()));
+                }
+
+                throw;
             }
 
             return Ok(new Theme
             {
-                Name = model.NewThemeName,
-                Path = "-1," + model.NewThemeName
-
+                Name = model.NewThemeName
             });
         }
 
@@ -79,13 +87,13 @@ namespace Articulate.Controllers
             var themes = themeFolderDirectories
                 .Select(x => new Theme
                 {
-                    Name = x.Name
+                    Name = x.Name,
                 });
 
             return [.. themes];
         }
 
-        [HttpGet]
+        [HttpGet("themes")]
         [ProducesResponseType<List<Theme>>(StatusCodes.Status200OK)]
         public IActionResult GetThemes()
             =>  Ok(

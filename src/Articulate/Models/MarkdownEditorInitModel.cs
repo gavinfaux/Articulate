@@ -1,14 +1,12 @@
-// TODO: Replace with Umbraco.MarkdownEditor ?
+namespace Articulate.Models
+{
+    public class MarkdownEditorInitModel
+    {
+        public int ArticulateNodeId { get; set; }
+        public string PostUrl { get; set; }
 
-//namespace Articulate.Models
-//{
-//    public class MarkdownEditorInitModel
-//    {
-//        public int ArticulateNodeId { get; set; }
-//        public string PostUrl { get; set; }
+        public string IsAuthUrl { get; set; }
 
-//        public string IsAuthUrl { get; set; }
-
-//        public string DoAuthUrl { get; set; }
-//    }
-//}
+        public string DoAuthUrl { get; set; }
+    }
+}

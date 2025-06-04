@@ -1,4 +1,3 @@
-using Articulate.Factories;
 using Articulate.ImportExport;
 using Articulate.Options;
 using Articulate.Routing;
@@ -31,7 +30,6 @@ namespace Articulate.Components
             services.AddSingleton<IBundleManager, BundleManager>();
             services.AddSingleton<IArticulateTagRepository, ArticulateTagRepository>();
             services.AddSingleton<ArticulateTagService>();
-            services.AddSingleton<IListModelFactory, ListModelFactory>();
             services.AddSingleton<DisqusXmlExporter>();
             services.AddSingleton<BlogMlImporter>();
             services.AddSingleton<IArticulateSearcher, DefaultArticulateSearcher>();
@@ -41,13 +39,8 @@ namespace Articulate.Components
             services.AddSingleton<ArticulateFrontEndFilterConvention>();
             builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<MatcherPolicy, ArticulateDynamicRouteSelectorPolicy>());
 
-#if NET9_0_OR_GREATER
             builder.UrlProviders().InsertBefore<NewDefaultUrlProvider, DateFormattedUrlProvider>();
             builder.ContentFinders().InsertBefore<ContentFinderByUrlNew, DateFormattedPostContentFinder>();
-#else
-            builder.UrlProviders().InsertBefore<DefaultUrlProvider, DateFormattedUrlProvider>();
-            builder.ContentFinders().InsertBefore<ContentFinderByUrl, DateFormattedPostContentFinder>();
-#endif
 
             services.AddOptions<ArticulateOptions>();
 

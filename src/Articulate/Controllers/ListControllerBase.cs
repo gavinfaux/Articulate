@@ -1,5 +1,5 @@
 using System.Text;
-using Articulate.Factories;
+
 using Articulate.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Primitives;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.Routing;
+using Umbraco.Cms.Core.Services.Navigation;
 using Umbraco.Cms.Core.Web;
 using Umbraco.Cms.Web.Common.Controllers;
 using Umbraco.Cms.Web.Website.ActionResults;
@@ -25,21 +26,22 @@ namespace Articulate.Controllers
             IUmbracoContextAccessor umbracoContextAccessor,
             IPublishedUrlProvider publishedUrlProvider,
             IPublishedValueFallback publishedValueFallback,
-            IVariationContextAccessor variationContextAccessor,
-            IListModelFactory listModelFactory)
+            IVariationContextAccessor variationContextAccessor, IDocumentNavigationQueryService documentNavigationQueryService, IPublishedContentStatusFilteringService publishedContentStatusFilteringService)
             : base(logger, compositeViewEngine, umbracoContextAccessor)
         {
             UmbracoContextAccessor = umbracoContextAccessor;
             PublishedUrlProvider = publishedUrlProvider;
             PublishedValueFallback = publishedValueFallback;
             VariationContextAccessor = variationContextAccessor;
-            ListModelFactory = listModelFactory;
+            DocumentNavigationQueryService = documentNavigationQueryService;
+            PublishedContentStatusFilteringService = publishedContentStatusFilteringService;
         }
         public IUmbracoContextAccessor UmbracoContextAccessor { get; }
         public IPublishedUrlProvider PublishedUrlProvider { get; }
         public IPublishedValueFallback PublishedValueFallback { get; }
         public IVariationContextAccessor VariationContextAccessor { get; }
-        public IListModelFactory ListModelFactory { get; }
+        public IDocumentNavigationQueryService DocumentNavigationQueryService { get; }
+        public IPublishedContentStatusFilteringService PublishedContentStatusFilteringService { get; }
 
         /// <summary>
         /// Gets a paged list view for a given posts by author/tags/categories model
@@ -58,7 +60,7 @@ namespace Articulate.Controllers
                     UmbracoContextAccessor);
             }
 
-            var listModel = ListModelFactory.Create(pageNode, pager, listItems, PublishedValueFallback, VariationContextAccessor);
+            var listModel = new ListModel(pageNode, pager, listItems, PublishedValueFallback, VariationContextAccessor, DocumentNavigationQueryService, PublishedContentStatusFilteringService);
             return View(PathHelper.GetThemeViewPath(listModel, "List"), listModel);
         }
 

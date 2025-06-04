@@ -53,7 +53,7 @@ namespace Articulate.ImportExport
         }
 
         public void Export(
-            int blogRootNode,
+            Guid blogRootNode,
             bool exportImagesAsBase64 = false)
         {
             var root = _contentService.GetById(blogRootNode) ?? throw new InvalidOperationException("No node found with id " + blogRootNode);

@@ -1,17 +1,14 @@
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Extensions;
-#if NET9_0_OR_GREATER
 using Umbraco.Cms.Core.Services.Navigation;
 using Umbraco.Cms.Core.PublishedCache;
-#endif
 namespace Articulate.Models
 {
     public class AuthorModel : ListModel, IImageModel
     {        
         private DateTime? _lastPostDate;
 
-#if NET9_0_OR_GREATER
         public AuthorModel(
             IPublishedContent content,
             IEnumerable<IPublishedContent> listItems,
@@ -25,19 +22,6 @@ namespace Articulate.Models
         {
             PostCount = postCount;
         }
-#else
-        public AuthorModel(
-            IPublishedContent content,
-            IEnumerable<IPublishedContent> listItems,
-            PagerModel pager,
-            int postCount,
-            IPublishedValueFallback publishedValueFallback,
-            IVariationContextAccessor variationContextAccessor)
-            : base(content, pager, listItems, publishedValueFallback, variationContextAccessor)
-        {
-            PostCount = postCount;
-        }
-#endif
 
         public string Bio => this.Value<string>("authorBio");
 

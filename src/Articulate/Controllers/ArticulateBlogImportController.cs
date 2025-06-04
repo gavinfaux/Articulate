@@ -15,10 +15,9 @@ using Umbraco.Extensions;
 namespace Articulate.Controllers
 {
 
-
     [ApiVersion("1.0")]
     [Authorize(Policy = AuthorizationPolicies.SectionAccessSettings)]
-    [VersionedApiBackOfficeRoute("articulate")]
+    [VersionedApiBackOfficeRoute("articulate/blog")]
     [ApiExplorerSettings(GroupName = "Articulate")]
     public class ArticulateBlogImportController : ManagementApiControllerBase
     {
@@ -87,7 +86,7 @@ namespace Articulate.Controllers
             });
         }
 
-        [HttpGet("blogml")]
+        [HttpGet("export")]
         [ProducesResponseType<FileResult>(StatusCodes.Status200OK)]
         public IActionResult GetBlogMlExport()
         {
@@ -132,7 +131,7 @@ namespace Articulate.Controllers
             return Ok(Task.FromResult(new ImportModel { DownloadUrl = downloadUrl ?? string.Empty }));
         }
 
-        [HttpGet("disqus")]
+        [HttpGet("export/disqus")]
         [ProducesResponseType<FileStreamResult>(StatusCodes.Status200OK)]
         public IActionResult GetDisqusExport()
         {

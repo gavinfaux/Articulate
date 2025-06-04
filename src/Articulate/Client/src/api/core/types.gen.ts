@@ -982,7 +982,7 @@ export enum EventMessageTypeModel {
 }
 
 export type ExportBlogMlModel = {
-    articulateNodeId: number;
+    articulateNodeId: string;
     exportImagesAsBase64: boolean;
 };
 
@@ -1017,7 +1017,9 @@ export type HealthCheckActionRequestModel = {
     providedValue?: string | null;
     providedValueValidation?: string | null;
     providedValueValidationRegex?: string | null;
-    actionParameters?: {} | null;
+    actionParameters?: {
+        [key: string]: unknown;
+    } | null;
 };
 
 export type HealthCheckGroupPresentationModel = {
@@ -1080,7 +1082,7 @@ export enum ImageCropModeModel {
 }
 
 export type ImportBlogMlModel = {
-    articulateNodeId: number;
+    articulateNodeId: string;
     overwrite: boolean;
     regexMatch: string;
     regexReplace: string;
@@ -1114,11 +1116,19 @@ export type IndexResponseModel = {
     searcherName: string;
     documentCount: number;
     fieldCount: number;
-    providerProperties?: {} | null;
+    providerProperties?: {
+        [key: string]: unknown;
+    } | null;
 };
 
-export type InstallRequestModel = {
-    user: UserInstallRequestModel;
+export type InstallRequestModelReadable = {
+    user: UserInstallRequestModelReadable;
+    database: DatabaseInstallRequestModel;
+    telemetryLevel: TelemetryLevelModel;
+};
+
+export type InstallRequestModelWritable = {
+    user: UserInstallRequestModelWritable;
     database: DatabaseInstallRequestModel;
     telemetryLevel: TelemetryLevelModel;
 };
@@ -1685,7 +1695,7 @@ export type PackageConfigurationResponseModel = {
     marketplaceUrl: string;
 };
 
-export type PackageDefinitionResponseModel = {
+export type PackageDefinitionResponseModelReadable = {
     name: string;
     contentNodeId?: string | null;
     contentLoadChildNodes: boolean;
@@ -1702,6 +1712,24 @@ export type PackageDefinitionResponseModel = {
     dictionaryItems: Array<string>;
     id: string;
     readonly packagePath: string;
+};
+
+export type PackageDefinitionResponseModelWritable = {
+    name: string;
+    contentNodeId?: string | null;
+    contentLoadChildNodes: boolean;
+    mediaIds: Array<string>;
+    mediaLoadChildNodes: boolean;
+    documentTypes: Array<string>;
+    mediaTypes: Array<string>;
+    dataTypes: Array<string>;
+    templates: Array<string>;
+    partialViews: Array<string>;
+    stylesheets: Array<string>;
+    scripts: Array<string>;
+    languages: Array<string>;
+    dictionaryItems: Array<string>;
+    id: string;
 };
 
 export type PackageMigrationStatusResponseModel = {
@@ -1909,9 +1937,14 @@ export type PagedObjectTypeResponseModel = {
     items: Array<ObjectTypeResponseModel>;
 };
 
-export type PagedPackageDefinitionResponseModel = {
+export type PagedPackageDefinitionResponseModelReadable = {
     total: number;
-    items: Array<PackageDefinitionResponseModel>;
+    items: Array<PackageDefinitionResponseModelReadable>;
+};
+
+export type PagedPackageDefinitionResponseModelWritable = {
+    total: number;
+    items: Array<PackageDefinitionResponseModelWritable>;
 };
 
 export type PagedPackageMigrationStatusResponseModel = {
@@ -1939,9 +1972,14 @@ export type PagedReferenceByIdModel = {
     items: Array<ReferenceByIdModel>;
 };
 
-export type PagedRelationResponseModel = {
+export type PagedRelationResponseModelReadable = {
     total: number;
-    items: Array<RelationResponseModel>;
+    items: Array<RelationResponseModelReadable>;
+};
+
+export type PagedRelationResponseModelWritable = {
+    total: number;
+    items: Array<RelationResponseModelWritable>;
 };
 
 export type PagedRelationTypeResponseModel = {
@@ -1954,9 +1992,14 @@ export type PagedSavedLogSearchResponseModel = {
     items: Array<SavedLogSearchResponseModel>;
 };
 
-export type PagedSearchResultResponseModel = {
+export type PagedSearchResultResponseModelReadable = {
     total: number;
-    items: Array<SearchResultResponseModel>;
+    items: Array<SearchResultResponseModelReadable>;
+};
+
+export type PagedSearchResultResponseModelWritable = {
+    total: number;
+    items: Array<SearchResultResponseModelWritable>;
 };
 
 export type PagedSearcherResponseModel = {
@@ -2160,13 +2203,20 @@ export type RelationReferenceModel = {
     name?: string | null;
 };
 
-export type RelationResponseModel = {
+export type RelationResponseModelReadable = {
     id: string;
     relationType: ReferenceByIdModel;
     parent: RelationReferenceModel;
     child: RelationReferenceModel;
     readonly createDate: string;
     readonly comment?: string | null;
+};
+
+export type RelationResponseModelWritable = {
+    id: string;
+    relationType: ReferenceByIdModel;
+    parent: RelationReferenceModel;
+    child: RelationReferenceModel;
 };
 
 export type RelationTypeItemResponseModel = {
@@ -2266,10 +2316,16 @@ export type ScriptResponseModel = {
     content: string;
 };
 
-export type SearchResultResponseModel = {
+export type SearchResultResponseModelReadable = {
     id: string;
     score: number;
     readonly fieldCount: number;
+    fields: Array<FieldPresentationModel>;
+};
+
+export type SearchResultResponseModelWritable = {
+    id: string;
+    score: number;
     fields: Array<FieldPresentationModel>;
 };
 
@@ -2462,7 +2518,6 @@ export type TemporaryFileResponseModel = {
 
 export type Theme = {
     name: string;
-    path: string;
 };
 
 export type TrackedReferenceDocumentTypeModel = {
@@ -2683,7 +2738,7 @@ export type UpdateMemberTypeRequestModel = {
     compositions: Array<MemberTypeCompositionModel>;
 };
 
-export type UpdatePackageRequestModel = {
+export type UpdatePackageRequestModelReadable = {
     name: string;
     contentNodeId?: string | null;
     contentLoadChildNodes: boolean;
@@ -2699,6 +2754,23 @@ export type UpdatePackageRequestModel = {
     languages: Array<string>;
     dictionaryItems: Array<string>;
     readonly packagePath: string;
+};
+
+export type UpdatePackageRequestModelWritable = {
+    name: string;
+    contentNodeId?: string | null;
+    contentLoadChildNodes: boolean;
+    mediaIds: Array<string>;
+    mediaLoadChildNodes: boolean;
+    documentTypes: Array<string>;
+    mediaTypes: Array<string>;
+    dataTypes: Array<string>;
+    templates: Array<string>;
+    partialViews: Array<string>;
+    stylesheets: Array<string>;
+    scripts: Array<string>;
+    languages: Array<string>;
+    dictionaryItems: Array<string>;
 };
 
 export type UpdatePartialViewRequestModel = {
@@ -2776,12 +2848,19 @@ export type UpgradeCheckResponseModel = {
     url: string;
 };
 
-export type UpgradeSettingsResponseModel = {
+export type UpgradeSettingsResponseModelReadable = {
     currentState: string;
     newState: string;
     newVersion: string;
     oldVersion: string;
     readonly reportUrl: string;
+};
+
+export type UpgradeSettingsResponseModelWritable = {
+    currentState: string;
+    newState: string;
+    newVersion: string;
+    oldVersion: string;
 };
 
 export type UserConfigurationResponseModel = {
@@ -2844,11 +2923,17 @@ export type UserGroupResponseModel = {
     aliasCanBeChanged: boolean;
 };
 
-export type UserInstallRequestModel = {
+export type UserInstallRequestModelReadable = {
     name: string;
     email: string;
     password: string;
     readonly subscribeToNewsletter: boolean;
+};
+
+export type UserInstallRequestModelWritable = {
+    name: string;
+    email: string;
+    password: string;
 };
 
 export type UserItemResponseModel = {
@@ -3007,14 +3092,14 @@ export type WebhookResponseModel = {
     events: Array<WebhookEventResponseModel>;
 };
 
-export type GetUmbracoManagementApiV1ArticulateBlogmlData = {
+export type GetUmbracoManagementApiV1ArticulateBlogExportData = {
     body?: never;
     path?: never;
     query?: never;
-    url: '/umbraco/management/api/v1/articulate/blogml';
+    url: '/umbraco/management/api/v1/articulate/blog/export';
 };
 
-export type GetUmbracoManagementApiV1ArticulateBlogmlErrors = {
+export type GetUmbracoManagementApiV1ArticulateBlogExportErrors = {
     /**
      * The resource is protected and requires an authentication token
      */
@@ -3025,23 +3110,23 @@ export type GetUmbracoManagementApiV1ArticulateBlogmlErrors = {
     403: unknown;
 };
 
-export type GetUmbracoManagementApiV1ArticulateBlogmlResponses = {
+export type GetUmbracoManagementApiV1ArticulateBlogExportResponses = {
     /**
      * OK
      */
     200: Blob | File;
 };
 
-export type GetUmbracoManagementApiV1ArticulateBlogmlResponse = GetUmbracoManagementApiV1ArticulateBlogmlResponses[keyof GetUmbracoManagementApiV1ArticulateBlogmlResponses];
+export type GetUmbracoManagementApiV1ArticulateBlogExportResponse = GetUmbracoManagementApiV1ArticulateBlogExportResponses[keyof GetUmbracoManagementApiV1ArticulateBlogExportResponses];
 
-export type GetUmbracoManagementApiV1ArticulateDisqusData = {
+export type GetUmbracoManagementApiV1ArticulateBlogExportDisqusData = {
     body?: never;
     path?: never;
     query?: never;
-    url: '/umbraco/management/api/v1/articulate/disqus';
+    url: '/umbraco/management/api/v1/articulate/blog/export/disqus';
 };
 
-export type GetUmbracoManagementApiV1ArticulateDisqusErrors = {
+export type GetUmbracoManagementApiV1ArticulateBlogExportDisqusErrors = {
     /**
      * The resource is protected and requires an authentication token
      */
@@ -3052,23 +3137,23 @@ export type GetUmbracoManagementApiV1ArticulateDisqusErrors = {
     403: unknown;
 };
 
-export type GetUmbracoManagementApiV1ArticulateDisqusResponses = {
+export type GetUmbracoManagementApiV1ArticulateBlogExportDisqusResponses = {
     /**
      * OK
      */
     200: Blob | File;
 };
 
-export type GetUmbracoManagementApiV1ArticulateDisqusResponse = GetUmbracoManagementApiV1ArticulateDisqusResponses[keyof GetUmbracoManagementApiV1ArticulateDisqusResponses];
+export type GetUmbracoManagementApiV1ArticulateBlogExportDisqusResponse = GetUmbracoManagementApiV1ArticulateBlogExportDisqusResponses[keyof GetUmbracoManagementApiV1ArticulateBlogExportDisqusResponses];
 
-export type PostUmbracoManagementApiV1ArticulatePostExportData = {
+export type PostUmbracoManagementApiV1ArticulateBlogPostExportData = {
     body?: ExportBlogMlModel;
     path?: never;
     query?: never;
-    url: '/umbraco/management/api/v1/articulate/post/export';
+    url: '/umbraco/management/api/v1/articulate/blog/post/export';
 };
 
-export type PostUmbracoManagementApiV1ArticulatePostExportErrors = {
+export type PostUmbracoManagementApiV1ArticulateBlogPostExportErrors = {
     /**
      * The resource is protected and requires an authentication token
      */
@@ -3079,23 +3164,23 @@ export type PostUmbracoManagementApiV1ArticulatePostExportErrors = {
     403: unknown;
 };
 
-export type PostUmbracoManagementApiV1ArticulatePostExportResponses = {
+export type PostUmbracoManagementApiV1ArticulateBlogPostExportResponses = {
     /**
      * OK
      */
     200: ImportModel;
 };
 
-export type PostUmbracoManagementApiV1ArticulatePostExportResponse = PostUmbracoManagementApiV1ArticulatePostExportResponses[keyof PostUmbracoManagementApiV1ArticulatePostExportResponses];
+export type PostUmbracoManagementApiV1ArticulateBlogPostExportResponse = PostUmbracoManagementApiV1ArticulateBlogPostExportResponses[keyof PostUmbracoManagementApiV1ArticulateBlogPostExportResponses];
 
-export type PostUmbracoManagementApiV1ArticulatePostImportData = {
+export type PostUmbracoManagementApiV1ArticulateBlogPostImportData = {
     body?: ImportBlogMlModel;
     path?: never;
     query?: never;
-    url: '/umbraco/management/api/v1/articulate/post/import';
+    url: '/umbraco/management/api/v1/articulate/blog/post/import';
 };
 
-export type PostUmbracoManagementApiV1ArticulatePostImportErrors = {
+export type PostUmbracoManagementApiV1ArticulateBlogPostImportErrors = {
     /**
      * The resource is protected and requires an authentication token
      */
@@ -3110,25 +3195,25 @@ export type PostUmbracoManagementApiV1ArticulatePostImportErrors = {
     500: ProblemDetails;
 };
 
-export type PostUmbracoManagementApiV1ArticulatePostImportError = PostUmbracoManagementApiV1ArticulatePostImportErrors[keyof PostUmbracoManagementApiV1ArticulatePostImportErrors];
+export type PostUmbracoManagementApiV1ArticulateBlogPostImportError = PostUmbracoManagementApiV1ArticulateBlogPostImportErrors[keyof PostUmbracoManagementApiV1ArticulateBlogPostImportErrors];
 
-export type PostUmbracoManagementApiV1ArticulatePostImportResponses = {
+export type PostUmbracoManagementApiV1ArticulateBlogPostImportResponses = {
     /**
      * OK
      */
     200: ImportModel;
 };
 
-export type PostUmbracoManagementApiV1ArticulatePostImportResponse = PostUmbracoManagementApiV1ArticulatePostImportResponses[keyof PostUmbracoManagementApiV1ArticulatePostImportResponses];
+export type PostUmbracoManagementApiV1ArticulateBlogPostImportResponse = PostUmbracoManagementApiV1ArticulateBlogPostImportResponses[keyof PostUmbracoManagementApiV1ArticulateBlogPostImportResponses];
 
-export type PostUmbracoManagementApiV1ArticulatePostInitData = {
+export type PostUmbracoManagementApiV1ArticulateBlogPostInitData = {
     body?: never;
     path?: never;
     query?: never;
-    url: '/umbraco/management/api/v1/articulate/post/init';
+    url: '/umbraco/management/api/v1/articulate/blog/post/init';
 };
 
-export type PostUmbracoManagementApiV1ArticulatePostInitErrors = {
+export type PostUmbracoManagementApiV1ArticulateBlogPostInitErrors = {
     /**
      * The resource is protected and requires an authentication token
      */
@@ -3143,23 +3228,23 @@ export type PostUmbracoManagementApiV1ArticulatePostInitErrors = {
     415: unknown;
 };
 
-export type PostUmbracoManagementApiV1ArticulatePostInitResponses = {
+export type PostUmbracoManagementApiV1ArticulateBlogPostInitResponses = {
     /**
      * OK
      */
     200: PostResponseModel;
 };
 
-export type PostUmbracoManagementApiV1ArticulatePostInitResponse = PostUmbracoManagementApiV1ArticulatePostInitResponses[keyof PostUmbracoManagementApiV1ArticulatePostInitResponses];
+export type PostUmbracoManagementApiV1ArticulateBlogPostInitResponse = PostUmbracoManagementApiV1ArticulateBlogPostInitResponses[keyof PostUmbracoManagementApiV1ArticulateBlogPostInitResponses];
 
-export type GetUmbracoManagementApiV1ArticulateThemeEditorData = {
+export type GetUmbracoManagementApiV1ArticulateEditorsThemesData = {
     body?: never;
     path?: never;
     query?: never;
-    url: '/umbraco/management/api/v1/articulate/theme-editor';
+    url: '/umbraco/management/api/v1/articulate/editors/themes';
 };
 
-export type GetUmbracoManagementApiV1ArticulateThemeEditorErrors = {
+export type GetUmbracoManagementApiV1ArticulateEditorsThemesErrors = {
     /**
      * The resource is protected and requires an authentication token
      */
@@ -3170,23 +3255,23 @@ export type GetUmbracoManagementApiV1ArticulateThemeEditorErrors = {
     403: unknown;
 };
 
-export type GetUmbracoManagementApiV1ArticulateThemeEditorResponses = {
+export type GetUmbracoManagementApiV1ArticulateEditorsThemesResponses = {
     /**
      * OK
      */
-    200: Array<Theme>;
+    200: Array<string>;
 };
 
-export type GetUmbracoManagementApiV1ArticulateThemeEditorResponse = GetUmbracoManagementApiV1ArticulateThemeEditorResponses[keyof GetUmbracoManagementApiV1ArticulateThemeEditorResponses];
+export type GetUmbracoManagementApiV1ArticulateEditorsThemesResponse = GetUmbracoManagementApiV1ArticulateEditorsThemesResponses[keyof GetUmbracoManagementApiV1ArticulateEditorsThemesResponses];
 
-export type PostUmbracoManagementApiV1ArticulateThemeEditorData = {
+export type PostUmbracoManagementApiV1ArticulateThemeCopyData = {
     body?: PostCopyThemeModel;
     path?: never;
     query?: never;
-    url: '/umbraco/management/api/v1/articulate/theme-editor';
+    url: '/umbraco/management/api/v1/articulate/theme/copy';
 };
 
-export type PostUmbracoManagementApiV1ArticulateThemeEditorErrors = {
+export type PostUmbracoManagementApiV1ArticulateThemeCopyErrors = {
     /**
      * Bad Request
      */
@@ -3203,27 +3288,31 @@ export type PostUmbracoManagementApiV1ArticulateThemeEditorErrors = {
      * Not Found
      */
     404: ProblemDetails;
+    /**
+     * Internal Server Error
+     */
+    500: ProblemDetails;
 };
 
-export type PostUmbracoManagementApiV1ArticulateThemeEditorError = PostUmbracoManagementApiV1ArticulateThemeEditorErrors[keyof PostUmbracoManagementApiV1ArticulateThemeEditorErrors];
+export type PostUmbracoManagementApiV1ArticulateThemeCopyError = PostUmbracoManagementApiV1ArticulateThemeCopyErrors[keyof PostUmbracoManagementApiV1ArticulateThemeCopyErrors];
 
-export type PostUmbracoManagementApiV1ArticulateThemeEditorResponses = {
+export type PostUmbracoManagementApiV1ArticulateThemeCopyResponses = {
     /**
      * OK
      */
     200: Theme;
 };
 
-export type PostUmbracoManagementApiV1ArticulateThemeEditorResponse = PostUmbracoManagementApiV1ArticulateThemeEditorResponses[keyof PostUmbracoManagementApiV1ArticulateThemeEditorResponses];
+export type PostUmbracoManagementApiV1ArticulateThemeCopyResponse = PostUmbracoManagementApiV1ArticulateThemeCopyResponses[keyof PostUmbracoManagementApiV1ArticulateThemeCopyResponses];
 
-export type GetUmbracoManagementApiV1ArticulateThemesData = {
+export type GetUmbracoManagementApiV1ArticulateThemeThemesData = {
     body?: never;
     path?: never;
     query?: never;
-    url: '/umbraco/management/api/v1/articulate/themes';
+    url: '/umbraco/management/api/v1/articulate/theme/themes';
 };
 
-export type GetUmbracoManagementApiV1ArticulateThemesErrors = {
+export type GetUmbracoManagementApiV1ArticulateThemeThemesErrors = {
     /**
      * The resource is protected and requires an authentication token
      */
@@ -3234,14 +3323,14 @@ export type GetUmbracoManagementApiV1ArticulateThemesErrors = {
     403: unknown;
 };
 
-export type GetUmbracoManagementApiV1ArticulateThemesResponses = {
+export type GetUmbracoManagementApiV1ArticulateThemeThemesResponses = {
     /**
      * OK
      */
-    200: Array<string>;
+    200: Array<Theme>;
 };
 
-export type GetUmbracoManagementApiV1ArticulateThemesResponse = GetUmbracoManagementApiV1ArticulateThemesResponses[keyof GetUmbracoManagementApiV1ArticulateThemesResponses];
+export type GetUmbracoManagementApiV1ArticulateThemeThemesResponse = GetUmbracoManagementApiV1ArticulateThemeThemesResponses[keyof GetUmbracoManagementApiV1ArticulateThemeThemesResponses];
 
 export type GetCultureData = {
     body?: never;
@@ -7685,7 +7774,7 @@ export type GetInstallSettingsResponses = {
 export type GetInstallSettingsResponse = GetInstallSettingsResponses[keyof GetInstallSettingsResponses];
 
 export type PostInstallSetupData = {
-    body?: InstallRequestModel;
+    body?: InstallRequestModelWritable;
     path?: never;
     query?: never;
     url: '/umbraco/management/api/v1/install/setup';
@@ -11313,7 +11402,7 @@ export type GetPackageCreatedResponses = {
     /**
      * OK
      */
-    200: PagedPackageDefinitionResponseModel;
+    200: PagedPackageDefinitionResponseModelReadable;
 };
 
 export type GetPackageCreatedResponse = GetPackageCreatedResponses[keyof GetPackageCreatedResponses];
@@ -11416,13 +11505,13 @@ export type GetPackageCreatedByIdResponses = {
     /**
      * OK
      */
-    200: PackageDefinitionResponseModel;
+    200: PackageDefinitionResponseModelReadable;
 };
 
 export type GetPackageCreatedByIdResponse = GetPackageCreatedByIdResponses[keyof GetPackageCreatedByIdResponses];
 
 export type PutPackageCreatedByIdData = {
-    body?: UpdatePackageRequestModel;
+    body?: UpdatePackageRequestModelWritable;
     path: {
         id: string;
     };
@@ -12484,7 +12573,7 @@ export type GetRelationByRelationTypeIdResponses = {
     /**
      * OK
      */
-    200: PagedRelationResponseModel;
+    200: PagedRelationResponseModelReadable;
 };
 
 export type GetRelationByRelationTypeIdResponse = GetRelationByRelationTypeIdResponses[keyof GetRelationByRelationTypeIdResponses];
@@ -12948,7 +13037,7 @@ export type GetSearcherBySearcherNameQueryResponses = {
     /**
      * OK
      */
-    200: PagedSearchResultResponseModel;
+    200: PagedSearchResultResponseModelReadable;
 };
 
 export type GetSearcherBySearcherNameQueryResponse = GetSearcherBySearcherNameQueryResponses[keyof GetSearcherBySearcherNameQueryResponses];
@@ -14401,7 +14490,7 @@ export type GetUpgradeSettingsResponses = {
     /**
      * OK
      */
-    200: UpgradeSettingsResponseModel;
+    200: UpgradeSettingsResponseModelReadable;
 };
 
 export type GetUpgradeSettingsResponse = GetUpgradeSettingsResponses[keyof GetUpgradeSettingsResponses];

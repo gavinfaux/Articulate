@@ -17,7 +17,7 @@ export class ArticulateDashboardRootElement extends UmbLitElement {
     super();
     this._routes = [
       {
-        path: "import",
+        path: "blogml/import",
         component: ArticulateBlogMlImporterElement,
         setup: (el) => {
           if (this._routerBasePath && el instanceof ArticulateBlogMlImporterElement)
@@ -25,7 +25,7 @@ export class ArticulateDashboardRootElement extends UmbLitElement {
         },
       },
       {
-        path: "export",
+        path: "blogml/export",
         component: ArticulateBlogMlExporterElement,
         setup: (el) => {
           if (this._routerBasePath && el instanceof ArticulateBlogMlExporterElement)
@@ -33,7 +33,7 @@ export class ArticulateDashboardRootElement extends UmbLitElement {
         },
       },
       {
-        path: "themes",
+        path: "theme/collection",
         component: ArticulateThemesElement,
         setup: (el) => {
           if (this._routerBasePath && el instanceof ArticulateThemesElement)
@@ -61,7 +61,7 @@ export class ArticulateDashboardRootElement extends UmbLitElement {
       <umb-body-layout>
         <div slot="header" class="header-container">
           <div class="articulate-header">
-            <h1 class="header-title">Articulate Management</h1>
+            <h3 class="header-title">Articulate Management</h3>
             <div class="header-logo">ã</div>
           </div>
         </div>
@@ -95,8 +95,8 @@ export class ArticulateDashboardRootElement extends UmbLitElement {
         align-items: center;
         justify-content: space-between;
         width: 100%;
-        height: 69px; /* Match slot height */
-        background: #fff;
+        height: 69px;
+        background: var(--uui-color-surface);
         border-radius: var(--uui-border-radius);
         box-shadow: var(--uui-shadow-1);
         box-sizing: border-box;
@@ -105,39 +105,22 @@ export class ArticulateDashboardRootElement extends UmbLitElement {
         position: relative;
       }
       .header-title {
-        font-size: 2.25rem;
-        font-weight: 900;
+        font-size: var(--uui-type-h3-size);
+        font-weight: 700;
         letter-spacing: 0.01em;
-        color: #222;
+        color: var(--uui-color-text);
         display: flex;
         align-items: center;
         height: 100%;
       }
       .header-logo {
         font-weight: 900;
-        font-size: 3.25rem;
+        font-size: var(--uui-type-h1-size);
         color: #c44;
         display: flex;
         align-items: center;
         justify-content: flex-end;
         height: 100%;
-      }
-      .back-link {
-        position: absolute;
-        left: 2rem;
-        bottom: -2.2rem;
-        text-decoration: none;
-        font-size: 0.98rem;
-        color: var(--uui-color-interactive-emphasis);
-        background: #fff;
-        border-radius: var(--uui-border-radius);
-        box-shadow: var(--uui-shadow-1);
-        padding: 0.3rem 1.1rem;
-        transition: background 0.2s;
-        z-index: 1;
-      }
-      .back-link:hover {
-        background: var(--uui-color-surface-alt);
       }
       @media (max-width: 768px) {
         :host {
@@ -145,9 +128,6 @@ export class ArticulateDashboardRootElement extends UmbLitElement {
         }
         .articulate-header {
           padding: 1rem 0.7rem;
-        }
-        .back-link {
-          left: 0.7rem;
         }
       }
       .dashboard-container {

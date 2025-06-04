@@ -1,10 +1,11 @@
-using Articulate.Factories;
+
 using Articulate.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.Routing;
+using Umbraco.Cms.Core.Services.Navigation;
 using Umbraco.Cms.Core.Web;
 using Umbraco.Cms.Web.Common.Controllers;
 using Umbraco.Cms.Web.Common.Routing;
@@ -27,9 +28,10 @@ namespace Articulate.Controllers
             IPublishedUrlProvider publishedUrlProvider,
             IPublishedValueFallback publishedValueFallback,
             IVariationContextAccessor variationContextAccessor,
-            IArticulateSearcher articulateSearcher,
-            IListModelFactory listModelFactory)
-            : base(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider, publishedValueFallback, variationContextAccessor, listModelFactory)
+            IDocumentNavigationQueryService navigationQueryService,
+            IPublishedContentStatusFilteringService publishedContentStatusFilteringService,
+            IArticulateSearcher articulateSearcher)
+            : base(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider, publishedValueFallback, variationContextAccessor, navigationQueryService, publishedContentStatusFilteringService)
         {
             _articulateSearcher = articulateSearcher;
         }
@@ -56,12 +58,12 @@ namespace Articulate.Controllers
             if (term == null)
             {
                 //nothing to search, just render the view
-                var emptyList = base.ListModelFactory.Create(
+                var emptyList =new ListModel(
                     CurrentPage,
                     new PagerModel(masterModel.PageSize, 0, 0),
                     Enumerable.Empty<IPublishedContent>(),
                     PublishedValueFallback,
-                    VariationContextAccessor);
+                    VariationContextAccessor,base.DocumentNavigationQueryService, base.PublishedContentStatusFilteringService);
                 return View(PathHelper.GetThemeViewPath(emptyList, "List"), emptyList);
             }
 

@@ -6,9 +6,7 @@ namespace Articulate.Models
     public class Theme
     {
         [DataMember(Name = "name")]
-        public string Name { get; set; }
+        public required string Name { get; set; }
 
-        [DataMember(Name = "path")]
-        public string Path { get; set; }
     }
 }

@@ -2,7 +2,7 @@ import { ArticulateDashboardRootElement } from "./articulate-dashboard-root.elem
 
 const dashboardManifest: UmbExtensionManifest = {
   type: "dashboard",
-  alias: "Articulate.Dashboard",
+  alias: "Articulate.BackOffice.Dashboard",
   name: "Articulate Dashboard",
   element: ArticulateDashboardRootElement,
   weight: 100,

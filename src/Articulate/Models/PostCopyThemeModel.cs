@@ -6,10 +6,10 @@ namespace Articulate.Models
     public class PostCopyThemeModel : IValidatableObject
     {
         [Required(AllowEmptyStrings = false)]
-        public string ThemeName { get; set; }
+        public required string ThemeName { get; set; }
 
         [Required(AllowEmptyStrings = false)]
-        public string NewThemeName { get; set; }
+        public required string NewThemeName { get; set; }
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {

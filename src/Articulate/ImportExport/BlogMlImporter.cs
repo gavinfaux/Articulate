@@ -96,7 +96,7 @@ namespace Articulate.ImportExport
         public async Task<bool> Import(
             int userId,
             string fileName,
-            int blogRootNode,
+            Guid blogRootNode,
             bool overwrite,
             string regexMatch,
             string regexReplace,

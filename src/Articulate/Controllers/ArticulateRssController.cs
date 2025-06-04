@@ -1,4 +1,4 @@
-using Articulate.Factories;
+
 using Articulate.Models;
 using Articulate.Services;
 using Articulate.Syndication;
@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Core.Models.PublishedContent;
+using Umbraco.Cms.Core.Services.Navigation;
 using Umbraco.Cms.Core.Web;
 using Umbraco.Cms.Web.Common;
 using Umbraco.Cms.Web.Common.Controllers;
@@ -33,7 +34,8 @@ namespace Articulate.Controllers
         private readonly IVariationContextAccessor _variationContextAccessor;
         private readonly UmbracoHelper _umbracoHelper;
         private readonly ArticulateTagService _articulateTagService;
-        private readonly IListModelFactory _listModelFactory;
+        private readonly IDocumentNavigationQueryService _documentNavigationQueryService;
+        private readonly IPublishedContentStatusFilteringService _publishedContentStatusFilteringService;
 
         public ArticulateRssController(
             ILogger<RenderController> logger,
@@ -42,9 +44,10 @@ namespace Articulate.Controllers
             IRssFeedGenerator feedGenerator,
             IPublishedValueFallback publishedValueFallback,
             IVariationContextAccessor variationContextAccessor,
+            IDocumentNavigationQueryService documentNavigationQueryService,
+            IPublishedContentStatusFilteringService publishedContentStatusFilteringService,
             UmbracoHelper umbracoHelper,
-            ArticulateTagService articulateTagService,
-            IListModelFactory listModelFactory)
+            ArticulateTagService articulateTagService)
             : base(logger, compositeViewEngine, umbracoContextAccessor)
         {
             _feedGenerator = feedGenerator;
@@ -52,7 +55,8 @@ namespace Articulate.Controllers
             _variationContextAccessor = variationContextAccessor;
             _umbracoHelper = umbracoHelper;
             _articulateTagService = articulateTagService;
-            _listModelFactory = listModelFactory;
+            _documentNavigationQueryService = documentNavigationQueryService;
+            _publishedContentStatusFilteringService = publishedContentStatusFilteringService;
         }
 
         //NonAction so it is not routed since we want to use an overload below
@@ -77,12 +81,12 @@ namespace Articulate.Controllers
 
             var listItems = _umbracoHelper.GetPostsSortedByPublishedDate(pager, null, listNodeIds);
 
-            var rootPageModel = _listModelFactory.Create(
+            var rootPageModel = new ListModel(
                 listNodes[0],
                 pager,
                 listItems,
                 _publishedValueFallback,
-                _variationContextAccessor);
+                _variationContextAccessor,_documentNavigationQueryService,_publishedContentStatusFilteringService);
 
             var feed = _feedGenerator.GetFeed(rootPageModel, rootPageModel.Children<PostModel>());
 
@@ -106,8 +110,7 @@ namespace Articulate.Controllers
                 author.Name,
                 new PagerModel(maxItems.Value, 0, 1),
                 _publishedValueFallback,
-                _variationContextAccessor,
-                _listModelFactory);
+                _variationContextAccessor, _documentNavigationQueryService, _publishedContentStatusFilteringService);
 
             var feed = _feedGenerator.GetFeed(masterModel, authorContenet.Select(x => new PostModel(x, _publishedValueFallback, _variationContextAccessor)));
 

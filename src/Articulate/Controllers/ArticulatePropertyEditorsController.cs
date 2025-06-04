@@ -12,11 +12,11 @@ namespace Articulate.Controllers
 {
     [ApiVersion("1.0")]
     [Authorize(Policy = AuthorizationPolicies.SectionAccessSettings)]
-    [VersionedApiBackOfficeRoute("articulate/themes")]
+    [VersionedApiBackOfficeRoute("articulate/editors")]
     [ApiExplorerSettings(GroupName = "Articulate")]
     public class ArticulatePropertyEditorsController(IHostEnvironment hostingEnvironment) : ManagementApiControllerBase
     {
-        [HttpGet]
+        [HttpGet("themes")]
         [ProducesResponseType<IEnumerable<string>>(StatusCodes.Status200OK)]
         public ActionResult<IEnumerable<string>> GetThemes()
         {

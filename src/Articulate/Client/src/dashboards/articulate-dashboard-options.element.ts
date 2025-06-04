@@ -4,22 +4,22 @@ import { UmbTextStyles } from "@umbraco-cms/backoffice/style";
 
 const dashboards = [
   {
-    path: "import",
+    path: "blogml/import",
     name: "BlogML Importer",
     icon: "sync",
-    description: "Import blog content from BlogML format",
+    description: "Import content from any BlogML compatible platform",
   },
   {
-    path: "export",
+    path: "blogml/export",
     name: "BlogML Exporter",
     icon: "download",
-    description: "Export blog content to BlogML format",
+    description: "Export content to any BlogML compatible platform",
   },
   {
-    path: "themes",
+    path: "theme/collection",
     name: "Themes",
     icon: "wand",
-    description: "Manage and customize Articulate themes",
+    description: "Manage customization of Articulate themes",
   },
 ];
 
@@ -33,12 +33,10 @@ export class ArticulateDashboardOptionsElement extends UmbLitElement {
       return html`<uui-loader></uui-loader>`;
     }
     return html`
-      <uui-box headline="Settings" headline-variant="h2">
+      <uui-box headline="Options">
         <div class="tools-grid">
           ${dashboards.map((d) => {
-            const basePath = this.routerPath?.endsWith("/")
-              ? this.routerPath?.slice(0, -1)
-              : this.routerPath;
+            const basePath = this.routerPath?.replace(/\/$/, "");
             const fullHref = `${basePath}/${d.path}`;
             return html`
               <uui-card-block-type
@@ -61,23 +59,22 @@ export class ArticulateDashboardOptionsElement extends UmbLitElement {
     css`
       .tools-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
         gap: var(--uui-size-space-5);
       }
 
       .tool-card {
         min-width: 0;
-        cursor: pointer;
+        height: 128px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        text-align: center;
       }
+
       uui-card,
       uui-card-block-type {
         transition: var(--uui-animation-duration) var(--uui-animation-easing);
-      }
-
-      a {
-        text-decoration: none;
-        color: inherit;
-        display: block;
       }
       @media (max-width: 768px) {
         .tools-grid {

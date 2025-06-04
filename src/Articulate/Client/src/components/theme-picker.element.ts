@@ -44,20 +44,21 @@ export class ArticulateThemePickerElement
     this._fetchThemes();
   }
 
+  private _showErrorNotification(message: string) {
+    const data: UmbNotificationDefaultData = { message };
+    this.#notificationContext?.peek("danger", { data });
+  }
+
   private async _fetchThemes() {
     this._loading = true;
     this._error = "";
     try {
-      const { data } = await ArticulateService.getUmbracoManagementApiV1ArticulateThemes();
-      this._themes = data ?? [];
-    } catch (e) {
-      console.error("Error fetching themes:", e);
+      const { data } = await ArticulateService.getUmbracoManagementApiV1ArticulateThemeThemes();
+      this._themes = data?.map((theme) => theme.name) ?? [];
+    } catch {
       const userFriendlyMessage = "Failed to load themes. Please try again later.";
       this._error = userFriendlyMessage;
-      const data: UmbNotificationDefaultData = {
-        message: userFriendlyMessage,
-      };
-      this.#notificationContext?.peek("danger", { data });
+      this._showErrorNotification(userFriendlyMessage);
     } finally {
       this._loading = false;
     }

@@ -16,12 +16,6 @@ export const formStyles = css`
     font-weight: var(--uui-weight-medium);
   }
 
-  .back-link {
-    text-decoration: none;
-    margin-bottom: var(--uui-size-space-4);
-    display: inline-block;
-  }
-
   .form-actions {
     margin-top: var(--uui-size-space-6);
     text-align: right;

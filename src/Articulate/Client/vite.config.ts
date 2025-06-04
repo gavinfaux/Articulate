@@ -11,7 +11,7 @@ export default defineConfig({
       formats: ["es"],
       fileName: (format, entryName) => `${entryName}.js`,
     },
-    outDir: "../wwwroot/App_Plugins/Articulate",
+    outDir: "../wwwroot/App_Plugins/Articulate/BackOffice/",
     emptyOutDir: true,
     sourcemap: true,
     rollupOptions: {
@@ -19,5 +19,5 @@ export default defineConfig({
     },
   },
   plugins: [tsconfigPaths()],
-  base: "/App_Plugins/Articulate/",
+  base: "/App_Plugins/Articulate/BackOffice/",
 });
