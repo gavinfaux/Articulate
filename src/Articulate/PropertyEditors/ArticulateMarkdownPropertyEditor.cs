@@ -1,24 +1,12 @@
 using System;
-using Umbraco.Cms.Core.IO;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.PropertyEditors;
 using Umbraco.Cms.Core.PropertyEditors.ValueConverters;
-using Umbraco.Cms.Core.Services;
 using Umbraco.Cms.Core.Strings;
 using Umbraco.Cms.Core.Templates;
 
 namespace Articulate.PropertyEditors
 {
-
-    [DataEditor("Articulate.MarkdownEditor")]
-    public class ArticulateMarkdownPropertyEditor : DataEditor
-    {
-        public ArticulateMarkdownPropertyEditor(IDataValueEditorFactory dataValueEditorFactory)
-            : base(dataValueEditorFactory)
-        {
-        }
-    }
-
     // using a reasonable Markdown converter
     public class ArticulateMarkdownEditorValueConverter : MarkdownEditorValueConverter
     {
