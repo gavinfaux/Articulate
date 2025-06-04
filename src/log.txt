@@ -1,0 +1,944 @@
+2021-05-27 14:53:04.459 -07:00 [INF] MSBuild registered from C:\Program Files\dotnet\sdk\5.0.203\
+2021-05-27 14:53:04.547 -07:00 [INF] Registered 1 extensions:
+	Default extension
+2021-05-27 14:53:08.703 -07:00 [INF] Initializing upgrade step Select an entrypoint
+2021-05-27 14:53:08.711 -07:00 [INF] Setting entrypoint to only project in solution: C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Articulate.csproj
+2021-05-27 14:53:08.723 -07:00 [INF] Initializing upgrade step Select project to upgrade
+2021-05-27 14:53:08.833 -07:00 [INF] Initializing upgrade step Back up project
+2021-05-27 14:53:12.667 -07:00 [INF] Skipping upgrade step Back up project
+2021-05-27 14:53:12.668 -07:00 [INF] Upgrade step Back up project skipped
+2021-05-27 14:53:14.766 -07:00 [INF] Initializing upgrade step Convert project file to SDK style
+2021-05-27 14:53:16.923 -07:00 [INF] Applying upgrade step Convert project file to SDK style
+2021-05-27 14:53:16.926 -07:00 [INF] Converting project file format with try-convert, version 0.7.217901
+2021-05-27 14:53:17.826 -07:00 [INF] [try-convert] C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Articulate.csproj contains a reference to System.Web, which is not supported on .NET Core. You may have significant work ahead of you to fully port this project.
+2021-05-27 14:53:20.334 -07:00 [INF] [try-convert] This project has an unrecognized custom import which may need reviewed after conversion: GitVersionTask.props
+2021-05-27 14:53:20.337 -07:00 [INF] [try-convert] This project has an unrecognized custom import which may need reviewed after conversion: AutoMapper.targets
+2021-05-27 14:53:20.338 -07:00 [INF] [try-convert] This project has an unrecognized custom import which may need reviewed after conversion: Umbraco.SqlServerCE.targets
+2021-05-27 14:53:20.340 -07:00 [INF] [try-convert] This project has an unrecognized custom import which may need reviewed after conversion: GitVersionTask.targets
+2021-05-27 14:53:22.451 -07:00 [INF] [try-convert] Conversion complete!
+2021-05-27 14:53:23.031 -07:00 [INF] Project file converted successfully! The project may require additional changes to build successfully against the new .NET target.
+2021-05-27 14:53:32.552 -07:00 [INF] Upgrade step Convert project file to SDK style applied successfully
+2021-05-27 14:53:39.294 -07:00 [INF] Initializing upgrade step Clean up NuGet package references
+2021-05-27 14:53:41.558 -07:00 [INF] Marking package Argotic.Common for removal because it appears to be a transitive dependency
+2021-05-27 14:53:41.571 -07:00 [INF] Marking package Argotic.Extensions for removal because it appears to be a transitive dependency
+2021-05-27 14:53:41.586 -07:00 [INF] Marking package ClientDependency-Mvc5 for removal because it appears to be a transitive dependency
+2021-05-27 14:53:41.593 -07:00 [INF] Marking package CSharpTest.Net.Collections for removal because it appears to be a transitive dependency
+2021-05-27 14:53:41.597 -07:00 [INF] Marking package Examine for removal because it appears to be a transitive dependency
+2021-05-27 14:53:41.605 -07:00 [INF] Marking package HtmlAgilityPack for removal because it appears to be a transitive dependency
+2021-05-27 14:53:41.617 -07:00 [INF] Marking package ImageProcessor for removal because it appears to be a transitive dependency
+2021-05-27 14:53:41.623 -07:00 [INF] Marking package LightInject for removal because it appears to be a transitive dependency
+2021-05-27 14:53:41.628 -07:00 [INF] Marking package LightInject.Annotation for removal because it appears to be a transitive dependency
+2021-05-27 14:53:41.634 -07:00 [INF] Marking package LightInject.Mvc for removal because it appears to be a transitive dependency
+2021-05-27 14:53:41.637 -07:00 [INF] Marking package LightInject.Web for removal because it appears to be a transitive dependency
+2021-05-27 14:53:41.646 -07:00 [INF] Marking package LightInject.WebApi for removal because it appears to be a transitive dependency
+2021-05-27 14:53:41.650 -07:00 [INF] Marking package Lucene.Net for removal because it appears to be a transitive dependency
+2021-05-27 14:53:41.657 -07:00 [INF] Marking package Markdown for removal because it appears to be a transitive dependency
+2021-05-27 14:53:41.666 -07:00 [INF] Marking package Microsoft.AspNet.Identity.Core for removal because it appears to be a transitive dependency
+2021-05-27 14:53:41.672 -07:00 [INF] Marking package Microsoft.AspNet.Identity.Owin for removal because it appears to be a transitive dependency
+2021-05-27 14:53:41.678 -07:00 [INF] Marking package Microsoft.AspNet.Mvc for removal because it appears to be a transitive dependency
+2021-05-27 14:53:41.682 -07:00 [INF] Marking package Microsoft.AspNet.Razor for removal because it appears to be a transitive dependency
+2021-05-27 14:53:41.687 -07:00 [INF] Marking package Microsoft.AspNet.SignalR.Core for removal because it appears to be a transitive dependency
+2021-05-27 14:53:41.695 -07:00 [INF] Marking package Microsoft.AspNet.WebApi for removal because it appears to be a transitive dependency
+2021-05-27 14:53:41.700 -07:00 [INF] Marking package Microsoft.AspNet.WebApi.Client for removal because it appears to be a transitive dependency
+2021-05-27 14:53:41.705 -07:00 [INF] Marking package Microsoft.AspNet.WebApi.Core for removal because it appears to be a transitive dependency
+2021-05-27 14:53:41.711 -07:00 [INF] Marking package Microsoft.AspNet.WebApi.WebHost for removal because it appears to be a transitive dependency
+2021-05-27 14:53:41.716 -07:00 [INF] Marking package Microsoft.AspNet.WebPages for removal because it appears to be a transitive dependency
+2021-05-27 14:53:41.727 -07:00 [INF] Marking package Microsoft.Extensions.DependencyInjection.Abstractions for removal because it appears to be a transitive dependency
+2021-05-27 14:53:41.734 -07:00 [INF] Marking package Microsoft.Owin for removal because it appears to be a transitive dependency
+2021-05-27 14:53:41.738 -07:00 [INF] Marking package Microsoft.Owin.Host.SystemWeb for removal because it appears to be a transitive dependency
+2021-05-27 14:53:41.746 -07:00 [INF] Marking package Microsoft.Owin.Security for removal because it appears to be a transitive dependency
+2021-05-27 14:53:41.752 -07:00 [INF] Marking package Microsoft.Owin.Security.Cookies for removal because it appears to be a transitive dependency
+2021-05-27 14:53:41.757 -07:00 [INF] Marking package Microsoft.Owin.Security.OAuth for removal because it appears to be a transitive dependency
+2021-05-27 14:53:41.764 -07:00 [INF] Marking package Microsoft.Web.Infrastructure for removal because it appears to be a transitive dependency
+2021-05-27 14:53:41.771 -07:00 [INF] Marking package MiniProfiler for removal because it appears to be a transitive dependency
+2021-05-27 14:53:41.782 -07:00 [INF] Marking package MiniProfiler.Shared for removal because it appears to be a transitive dependency
+2021-05-27 14:53:41.789 -07:00 [INF] Marking package Newtonsoft.Json for removal because it appears to be a transitive dependency
+2021-05-27 14:53:41.798 -07:00 [INF] Marking package NPoco for removal because it appears to be a transitive dependency
+2021-05-27 14:53:41.802 -07:00 [INF] Marking package Owin for removal because it appears to be a transitive dependency
+2021-05-27 14:53:41.812 -07:00 [INF] Marking package Semver for removal because it appears to be a transitive dependency
+2021-05-27 14:53:41.818 -07:00 [INF] Marking package Serilog for removal because it appears to be a transitive dependency
+2021-05-27 14:53:41.822 -07:00 [INF] Marking package Serilog.Enrichers.Process for removal because it appears to be a transitive dependency
+2021-05-27 14:53:41.830 -07:00 [INF] Marking package Serilog.Enrichers.Thread for removal because it appears to be a transitive dependency
+2021-05-27 14:53:41.838 -07:00 [INF] Marking package Serilog.Filters.Expressions for removal because it appears to be a transitive dependency
+2021-05-27 14:53:41.846 -07:00 [INF] Marking package Serilog.Formatting.Compact for removal because it appears to be a transitive dependency
+2021-05-27 14:53:41.850 -07:00 [INF] Marking package Serilog.Formatting.Compact.Reader for removal because it appears to be a transitive dependency
+2021-05-27 14:53:41.858 -07:00 [INF] Marking package Serilog.Settings.AppSettings for removal because it appears to be a transitive dependency
+2021-05-27 14:53:41.891 -07:00 [INF] Marking package Serilog.Sinks.Async for removal because it appears to be a transitive dependency
+2021-05-27 14:53:41.901 -07:00 [INF] Marking package Serilog.Sinks.File for removal because it appears to be a transitive dependency
+2021-05-27 14:53:41.911 -07:00 [INF] Marking package Serilog.Sinks.Map for removal because it appears to be a transitive dependency
+2021-05-27 14:53:41.917 -07:00 [INF] Marking package SharpZipLib for removal because it appears to be a transitive dependency
+2021-05-27 14:53:41.922 -07:00 [INF] Marking package Superpower for removal because it appears to be a transitive dependency
+2021-05-27 14:53:41.929 -07:00 [INF] Marking package System.Buffers for removal because it appears to be a transitive dependency
+2021-05-27 14:53:41.937 -07:00 [INF] Marking package System.Diagnostics.DiagnosticSource for removal because it appears to be a transitive dependency
+2021-05-27 14:53:41.950 -07:00 [INF] Marking package System.Memory for removal because it appears to be a transitive dependency
+2021-05-27 14:53:41.955 -07:00 [INF] Marking package System.Numerics.Vectors for removal because it appears to be a transitive dependency
+2021-05-27 14:53:41.966 -07:00 [INF] Marking package System.Runtime.CompilerServices.Unsafe for removal because it appears to be a transitive dependency
+2021-05-27 14:53:41.972 -07:00 [INF] Marking package System.Threading.Tasks.Dataflow for removal because it appears to be a transitive dependency
+2021-05-27 14:53:41.980 -07:00 [INF] Marking package Umbraco.SqlServerCE for removal because it appears to be a transitive dependency
+2021-05-27 14:53:41.987 -07:00 [INF] Marking package UmbracoCms.Core for removal because it appears to be a transitive dependency
+2021-05-27 14:53:41.999 -07:00 [INF] Marking package xmlrpcnet for removal because it appears to be a transitive dependency
+2021-05-27 14:53:42.105 -07:00 [INF] Marking assembly reference System.Configuration for removal based on package mapping configuration System.Configuration
+2021-05-27 14:53:42.114 -07:00 [INF] Adding package System.Configuration.ConfigurationManager based on package mapping configuration System.Configuration
+2021-05-27 14:53:42.116 -07:00 [INF] Marking assembly reference System.ServiceModel for removal based on package mapping configuration System.ServiceModel
+2021-05-27 14:53:42.117 -07:00 [INF] Adding package System.ServiceModel.Primitives based on package mapping configuration System.ServiceModel
+2021-05-27 14:53:42.119 -07:00 [INF] Adding package System.ServiceModel.Http based on package mapping configuration System.ServiceModel
+2021-05-27 14:53:42.120 -07:00 [INF] Adding package System.ServiceModel.Duplex based on package mapping configuration System.ServiceModel
+2021-05-27 14:53:42.121 -07:00 [INF] Adding package System.ServiceModel.NetTcp based on package mapping configuration System.ServiceModel
+2021-05-27 14:53:42.122 -07:00 [INF] Adding package System.ServiceModel.Security based on package mapping configuration System.ServiceModel
+2021-05-27 14:53:42.125 -07:00 [INF] Adding package System.ServiceModel.Federation based on package mapping configuration System.ServiceModel
+2021-05-27 14:53:49.956 -07:00 [WRN] No version of GitVersionTask found that supports ["net472"]; leaving unchanged
+2021-05-27 14:53:51.476 -07:00 [INF] Reference to .NET Upgrade Assistant analyzer package (Microsoft.DotNet.UpgradeAssistant.Extensions.Default.Analyzers, version 0.2.227701) needs added
+2021-05-27 14:53:51.486 -07:00 [INF] References to be removed:
+System.Configuration
+System.ServiceModel
+2021-05-27 14:53:51.490 -07:00 [INF] Packages to be removed:
+Argotic.Common, Version=2008.0.2.0
+Argotic.Extensions, Version=2008.0.2.0
+ClientDependency-Mvc5, Version=1.9.3
+CSharpTest.Net.Collections, Version=14.906.1403.1082
+Examine, Version=1.0.1
+HtmlAgilityPack, Version=1.8.14
+ImageProcessor, Version=2.7.0.100
+LightInject, Version=5.4.0
+LightInject.Annotation, Version=1.1.0
+LightInject.Mvc, Version=2.0.0
+LightInject.Web, Version=2.0.0
+LightInject.WebApi, Version=2.0.0
+Lucene.Net, Version=3.0.3
+Markdown, Version=2.2.1
+Microsoft.AspNet.Identity.Core, Version=2.2.2
+Microsoft.AspNet.Identity.Owin, Version=2.2.2
+Microsoft.AspNet.Mvc, Version=5.2.7
+Microsoft.AspNet.Razor, Version=3.2.7
+Microsoft.AspNet.SignalR.Core, Version=2.4.0
+Microsoft.AspNet.WebApi, Version=5.2.7
+Microsoft.AspNet.WebApi.Client, Version=5.2.7
+Microsoft.AspNet.WebApi.Core, Version=5.2.7
+Microsoft.AspNet.WebApi.WebHost, Version=5.2.7
+Microsoft.AspNet.WebPages, Version=3.2.7
+Microsoft.Extensions.DependencyInjection.Abstractions, Version=2.0.0
+Microsoft.Owin, Version=4.0.1
+Microsoft.Owin.Host.SystemWeb, Version=4.0.1
+Microsoft.Owin.Security, Version=4.0.1
+Microsoft.Owin.Security.Cookies, Version=4.0.1
+Microsoft.Owin.Security.OAuth, Version=4.0.1
+Microsoft.Web.Infrastructure, Version=1.0.0.0
+MiniProfiler, Version=4.0.138
+MiniProfiler.Shared, Version=4.0.138
+Newtonsoft.Json, Version=12.0.1
+NPoco, Version=3.9.4
+Owin, Version=1.0
+Semver, Version=2.0.4
+Serilog, Version=2.8.0
+Serilog.Enrichers.Process, Version=2.0.1
+Serilog.Enrichers.Thread, Version=3.0.0
+Serilog.Filters.Expressions, Version=2.0.0
+Serilog.Formatting.Compact, Version=1.0.0
+Serilog.Formatting.Compact.Reader, Version=1.0.3
+Serilog.Settings.AppSettings, Version=2.2.2
+Serilog.Sinks.Async, Version=1.3.0
+Serilog.Sinks.File, Version=4.0.0
+Serilog.Sinks.Map, Version=1.0.0
+SharpZipLib, Version=0.86.0
+Superpower, Version=2.0.0
+System.Buffers, Version=4.5.1
+System.Diagnostics.DiagnosticSource, Version=4.4.1
+System.Memory, Version=4.5.4
+System.Numerics.Vectors, Version=4.5.0
+System.Runtime.CompilerServices.Unsafe, Version=4.5.3
+System.Threading.Tasks.Dataflow, Version=4.9.0
+Umbraco.SqlServerCE, Version=4.0.0.1
+UmbracoCms.Core, Version=8.2.3
+xmlrpcnet, Version=3.0.0.266
+2021-05-27 14:53:51.494 -07:00 [INF] Packages to be added:
+System.Configuration.ConfigurationManager, Version=5.0.0
+System.ServiceModel.Primitives, Version=4.8.1
+System.ServiceModel.Http, Version=4.8.1
+System.ServiceModel.Duplex, Version=4.8.1
+System.ServiceModel.NetTcp, Version=4.8.1
+System.ServiceModel.Security, Version=4.8.1
+System.ServiceModel.Federation, Version=4.8.1
+Microsoft.DotNet.UpgradeAssistant.Extensions.Default.Analyzers, Version=0.2.227701
+2021-05-27 15:22:21.893 -07:00 [INF] Applying upgrade step Clean up NuGet package references
+2021-05-27 15:22:21.899 -07:00 [INF] Removing outdated assembly reference: System.Configuration
+2021-05-27 15:22:21.902 -07:00 [INF] Removing outdated assembly reference: System.ServiceModel
+2021-05-27 15:22:21.906 -07:00 [INF] Removing outdated package reference: Argotic.Common, Version=2008.0.2.0
+2021-05-27 15:22:21.907 -07:00 [INF] Removing outdated package reference: Argotic.Extensions, Version=2008.0.2.0
+2021-05-27 15:22:21.908 -07:00 [INF] Removing outdated package reference: ClientDependency-Mvc5, Version=1.9.3
+2021-05-27 15:22:21.909 -07:00 [INF] Removing outdated package reference: CSharpTest.Net.Collections, Version=14.906.1403.1082
+2021-05-27 15:22:21.910 -07:00 [INF] Removing outdated package reference: Examine, Version=1.0.1
+2021-05-27 15:22:21.911 -07:00 [INF] Removing outdated package reference: HtmlAgilityPack, Version=1.8.14
+2021-05-27 15:22:21.912 -07:00 [INF] Removing outdated package reference: ImageProcessor, Version=2.7.0.100
+2021-05-27 15:22:21.913 -07:00 [INF] Removing outdated package reference: LightInject, Version=5.4.0
+2021-05-27 15:22:21.914 -07:00 [INF] Removing outdated package reference: LightInject.Annotation, Version=1.1.0
+2021-05-27 15:22:21.915 -07:00 [INF] Removing outdated package reference: LightInject.Mvc, Version=2.0.0
+2021-05-27 15:22:21.916 -07:00 [INF] Removing outdated package reference: LightInject.Web, Version=2.0.0
+2021-05-27 15:22:21.918 -07:00 [INF] Removing outdated package reference: LightInject.WebApi, Version=2.0.0
+2021-05-27 15:22:21.921 -07:00 [INF] Removing outdated package reference: Lucene.Net, Version=3.0.3
+2021-05-27 15:22:21.923 -07:00 [INF] Removing outdated package reference: Markdown, Version=2.2.1
+2021-05-27 15:22:21.924 -07:00 [INF] Removing outdated package reference: Microsoft.AspNet.Identity.Core, Version=2.2.2
+2021-05-27 15:22:21.925 -07:00 [INF] Removing outdated package reference: Microsoft.AspNet.Identity.Owin, Version=2.2.2
+2021-05-27 15:22:21.926 -07:00 [INF] Removing outdated package reference: Microsoft.AspNet.Mvc, Version=5.2.7
+2021-05-27 15:22:21.926 -07:00 [INF] Removing outdated package reference: Microsoft.AspNet.Razor, Version=3.2.7
+2021-05-27 15:22:21.927 -07:00 [INF] Removing outdated package reference: Microsoft.AspNet.SignalR.Core, Version=2.4.0
+2021-05-27 15:22:21.928 -07:00 [INF] Removing outdated package reference: Microsoft.AspNet.WebApi, Version=5.2.7
+2021-05-27 15:22:21.929 -07:00 [INF] Removing outdated package reference: Microsoft.AspNet.WebApi.Client, Version=5.2.7
+2021-05-27 15:22:21.930 -07:00 [INF] Removing outdated package reference: Microsoft.AspNet.WebApi.Core, Version=5.2.7
+2021-05-27 15:22:21.931 -07:00 [INF] Removing outdated package reference: Microsoft.AspNet.WebApi.WebHost, Version=5.2.7
+2021-05-27 15:22:21.933 -07:00 [INF] Removing outdated package reference: Microsoft.AspNet.WebPages, Version=3.2.7
+2021-05-27 15:22:21.935 -07:00 [INF] Removing outdated package reference: Microsoft.Extensions.DependencyInjection.Abstractions, Version=2.0.0
+2021-05-27 15:22:21.937 -07:00 [INF] Removing outdated package reference: Microsoft.Owin, Version=4.0.1
+2021-05-27 15:22:21.939 -07:00 [INF] Removing outdated package reference: Microsoft.Owin.Host.SystemWeb, Version=4.0.1
+2021-05-27 15:22:21.941 -07:00 [INF] Removing outdated package reference: Microsoft.Owin.Security, Version=4.0.1
+2021-05-27 15:22:21.943 -07:00 [INF] Removing outdated package reference: Microsoft.Owin.Security.Cookies, Version=4.0.1
+2021-05-27 15:22:21.944 -07:00 [INF] Removing outdated package reference: Microsoft.Owin.Security.OAuth, Version=4.0.1
+2021-05-27 15:22:21.945 -07:00 [INF] Removing outdated package reference: Microsoft.Web.Infrastructure, Version=1.0.0.0
+2021-05-27 15:22:21.946 -07:00 [INF] Removing outdated package reference: MiniProfiler, Version=4.0.138
+2021-05-27 15:22:21.946 -07:00 [INF] Removing outdated package reference: MiniProfiler.Shared, Version=4.0.138
+2021-05-27 15:22:21.948 -07:00 [INF] Removing outdated package reference: Newtonsoft.Json, Version=12.0.1
+2021-05-27 15:22:21.950 -07:00 [INF] Removing outdated package reference: NPoco, Version=3.9.4
+2021-05-27 15:22:21.951 -07:00 [INF] Removing outdated package reference: Owin, Version=1.0
+2021-05-27 15:22:21.952 -07:00 [INF] Removing outdated package reference: Semver, Version=2.0.4
+2021-05-27 15:22:21.953 -07:00 [INF] Removing outdated package reference: Serilog, Version=2.8.0
+2021-05-27 15:22:21.954 -07:00 [INF] Removing outdated package reference: Serilog.Enrichers.Process, Version=2.0.1
+2021-05-27 15:22:21.957 -07:00 [INF] Removing outdated package reference: Serilog.Enrichers.Thread, Version=3.0.0
+2021-05-27 15:22:21.958 -07:00 [INF] Removing outdated package reference: Serilog.Filters.Expressions, Version=2.0.0
+2021-05-27 15:22:21.959 -07:00 [INF] Removing outdated package reference: Serilog.Formatting.Compact, Version=1.0.0
+2021-05-27 15:22:21.959 -07:00 [INF] Removing outdated package reference: Serilog.Formatting.Compact.Reader, Version=1.0.3
+2021-05-27 15:22:21.960 -07:00 [INF] Removing outdated package reference: Serilog.Settings.AppSettings, Version=2.2.2
+2021-05-27 15:22:21.961 -07:00 [INF] Removing outdated package reference: Serilog.Sinks.Async, Version=1.3.0
+2021-05-27 15:22:21.962 -07:00 [INF] Removing outdated package reference: Serilog.Sinks.File, Version=4.0.0
+2021-05-27 15:22:21.964 -07:00 [INF] Removing outdated package reference: Serilog.Sinks.Map, Version=1.0.0
+2021-05-27 15:22:21.965 -07:00 [INF] Removing outdated package reference: SharpZipLib, Version=0.86.0
+2021-05-27 15:22:21.966 -07:00 [INF] Removing outdated package reference: Superpower, Version=2.0.0
+2021-05-27 15:22:21.967 -07:00 [INF] Removing outdated package reference: System.Buffers, Version=4.5.1
+2021-05-27 15:22:21.968 -07:00 [INF] Removing outdated package reference: System.Diagnostics.DiagnosticSource, Version=4.4.1
+2021-05-27 15:22:21.969 -07:00 [INF] Removing outdated package reference: System.Memory, Version=4.5.4
+2021-05-27 15:22:21.971 -07:00 [INF] Removing outdated package reference: System.Numerics.Vectors, Version=4.5.0
+2021-05-27 15:22:21.973 -07:00 [INF] Removing outdated package reference: System.Runtime.CompilerServices.Unsafe, Version=4.5.3
+2021-05-27 15:22:21.975 -07:00 [INF] Removing outdated package reference: System.Threading.Tasks.Dataflow, Version=4.9.0
+2021-05-27 15:22:21.976 -07:00 [INF] Removing outdated package reference: Umbraco.SqlServerCE, Version=4.0.0.1
+2021-05-27 15:22:21.977 -07:00 [INF] Removing outdated package reference: UmbracoCms.Core, Version=8.2.3
+2021-05-27 15:22:21.978 -07:00 [INF] Removing outdated package reference: xmlrpcnet, Version=3.0.0.266
+2021-05-27 15:22:21.981 -07:00 [INF] Adding package reference: System.Configuration.ConfigurationManager, Version=5.0.0
+2021-05-27 15:22:21.983 -07:00 [INF] Adding package reference: System.ServiceModel.Primitives, Version=4.8.1
+2021-05-27 15:22:21.984 -07:00 [INF] Adding package reference: System.ServiceModel.Http, Version=4.8.1
+2021-05-27 15:22:21.985 -07:00 [INF] Adding package reference: System.ServiceModel.Duplex, Version=4.8.1
+2021-05-27 15:22:21.986 -07:00 [INF] Adding package reference: System.ServiceModel.NetTcp, Version=4.8.1
+2021-05-27 15:22:21.988 -07:00 [INF] Adding package reference: System.ServiceModel.Security, Version=4.8.1
+2021-05-27 15:22:21.991 -07:00 [INF] Adding package reference: System.ServiceModel.Federation, Version=4.8.1
+2021-05-27 15:22:21.994 -07:00 [INF] Adding package reference: Microsoft.DotNet.UpgradeAssistant.Extensions.Default.Analyzers, Version=0.2.227701
+2021-05-27 15:22:28.240 -07:00 [INF] Marking package System.ServiceModel.Primitives for removal because it appears to be a transitive dependency
+2021-05-27 15:22:28.244 -07:00 [INF] Marking package System.ServiceModel.Http for removal because it appears to be a transitive dependency
+2021-05-27 15:22:28.256 -07:00 [INF] Marking package System.ServiceModel.Security for removal because it appears to be a transitive dependency
+2021-05-27 15:22:33.191 -07:00 [WRN] No version of GitVersionTask found that supports ["net472"]; leaving unchanged
+2021-05-27 15:22:33.234 -07:00 [INF] Removing outdated package reference: System.ServiceModel.Primitives, Version=4.8.1
+2021-05-27 15:22:33.237 -07:00 [INF] Removing outdated package reference: System.ServiceModel.Http, Version=4.8.1
+2021-05-27 15:22:33.239 -07:00 [INF] Removing outdated package reference: System.ServiceModel.Security, Version=4.8.1
+2021-05-27 15:22:37.892 -07:00 [WRN] No version of GitVersionTask found that supports ["net472"]; leaving unchanged
+2021-05-27 15:22:37.924 -07:00 [INF] Upgrade step Clean up NuGet package references applied successfully
+2021-05-27 15:25:58.265 -07:00 [INF] Initializing upgrade step Update TFM
+2021-05-27 15:25:58.282 -07:00 [INF] TFM needs updated to net5.0
+2021-05-27 15:25:59.967 -07:00 [INF] Applying upgrade step Update TFM
+2021-05-27 15:26:08.635 -07:00 [INF] Updated TFM to net5.0
+2021-05-27 15:26:08.638 -07:00 [INF] Upgrade step Update TFM applied successfully
+2021-05-27 16:05:09.952 -07:00 [INF] Initializing upgrade step Update NuGet Packages
+2021-05-27 16:05:12.353 -07:00 [INF] Marking package System.Configuration.ConfigurationManager for removal because it appears to be a transitive dependency
+2021-05-27 16:05:12.376 -07:00 [INF] Marking assembly reference System.Web for removal based on package mapping configuration ASP.NET
+2021-05-27 16:05:12.378 -07:00 [INF] Adding framework reference Microsoft.AspNetCore.App based on package mapping configuration ASP.NET
+2021-05-27 16:05:12.380 -07:00 [INF] Marking assembly reference System.Web.ApplicationServices for removal based on package mapping configuration ASP.NET
+2021-05-27 16:05:12.381 -07:00 [INF] Marking assembly reference System.Web.Extensions for removal based on package mapping configuration ASP.NET
+2021-05-27 16:05:22.142 -07:00 [INF] Marking package Argotic.Core, Version=2008.0.2.0 for removal because it doesn't support the target framework but a newer version (3000.0.1) does
+2021-05-27 16:05:22.145 -07:00 [WRN] Package Argotic.Core has been upgraded across major versions (2008.0.2.0 -> 3000.0.1) which may introduce breaking changes
+2021-05-27 16:05:25.427 -07:00 [WRN] No version of ClientDependency found that supports ["net5.0"]; leaving unchanged
+2021-05-27 16:05:27.366 -07:00 [WRN] No version of UmbracoCms.Web found that supports ["net5.0"]; leaving unchanged
+2021-05-27 16:05:28.899 -07:00 [WRN] No version of xmlrpcnet-server found that supports ["net5.0"]; leaving unchanged
+2021-05-27 16:05:28.912 -07:00 [INF] References to be removed:
+System.Web
+System.Web.ApplicationServices
+System.Web.Extensions
+2021-05-27 16:05:28.914 -07:00 [INF] Packages to be removed:
+System.Configuration.ConfigurationManager, Version=5.0.0
+Argotic.Core, Version=2008.0.2.0
+2021-05-27 16:05:28.915 -07:00 [INF] Packages to be added:
+Argotic.Core, Version=3000.0.1
+2021-05-27 16:05:28.915 -07:00 [INF] Framework references to be added:
+Microsoft.AspNetCore.App
+2021-05-27 16:13:10.459 -07:00 [INF] Applying upgrade step Update NuGet Packages
+2021-05-27 16:13:10.461 -07:00 [INF] Removing outdated assembly reference: System.Web
+2021-05-27 16:13:10.463 -07:00 [INF] Removing outdated assembly reference: System.Web.ApplicationServices
+2021-05-27 16:13:10.465 -07:00 [INF] Removing outdated assembly reference: System.Web.Extensions
+2021-05-27 16:13:10.467 -07:00 [INF] Removing outdated package reference: Argotic.Core, Version=2008.0.2.0
+2021-05-27 16:13:10.469 -07:00 [INF] Removing outdated package reference: System.Configuration.ConfigurationManager, Version=5.0.0
+2021-05-27 16:13:10.470 -07:00 [INF] Adding package reference: Argotic.Core, Version=3000.0.1
+2021-05-27 16:13:10.472 -07:00 [INF] Adding framework reference: Microsoft.AspNetCore.App
+2021-05-27 16:13:19.269 -07:00 [WRN] No version of ClientDependency found that supports ["net5.0"]; leaving unchanged
+2021-05-27 16:13:20.420 -07:00 [WRN] No version of UmbracoCms.Web found that supports ["net5.0"]; leaving unchanged
+2021-05-27 16:13:21.571 -07:00 [WRN] No version of xmlrpcnet-server found that supports ["net5.0"]; leaving unchanged
+2021-05-27 16:13:21.586 -07:00 [INF] Upgrade step Update NuGet Packages applied successfully
+2021-05-27 16:13:38.290 -07:00 [INF] Initializing upgrade step Add template files
+2021-05-27 16:13:38.359 -07:00 [INF] 0 expected template items needed
+2021-05-27 16:13:38.362 -07:00 [INF] Initializing upgrade step Upgrade app config files
+2021-05-27 16:13:38.402 -07:00 [INF] Found 0 app settings for upgrade: 
+2021-05-27 16:13:38.412 -07:00 [INF] 0 web page namespace imports need upgraded: 
+2021-05-27 16:13:38.431 -07:00 [INF] Initializing upgrade step Update source code
+2021-05-27 16:13:43.369 -07:00 [INF] Applying upgrade step Apply fix for UA0001: ASP.NET Core projects should not reference ASP.NET namespaces
+2021-05-27 16:13:43.626 -07:00 [INF] Diagnostic UA0001 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Components\ArticulateComponent.cs
+2021-05-27 16:13:43.650 -07:00 [INF] Diagnostic UA0001 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Controllers\ArticulateArchiveController.cs
+2021-05-27 16:13:43.655 -07:00 [INF] Diagnostic UA0001 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Controllers\ArticulateAuthorController.cs
+2021-05-27 16:13:43.667 -07:00 [INF] Diagnostic UA0001 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Controllers\ArticulateAuthorsController.cs
+2021-05-27 16:13:43.672 -07:00 [INF] Diagnostic UA0001 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Controllers\ArticulateBlogDataInstallController.cs
+2021-05-27 16:13:43.679 -07:00 [INF] Diagnostic UA0001 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Controllers\ArticulateBlogImportController.cs
+2021-05-27 16:13:43.685 -07:00 [INF] Diagnostic UA0001 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Controllers\ArticulateController.cs
+2021-05-27 16:13:43.691 -07:00 [INF] Diagnostic UA0001 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Controllers\ArticulateRssController.cs
+2021-05-27 16:13:43.700 -07:00 [INF] Diagnostic UA0001 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Controllers\ArticulateSearchController.cs
+2021-05-27 16:13:43.705 -07:00 [INF] Diagnostic UA0001 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Controllers\ArticulateTagsController.cs
+2021-05-27 16:13:43.714 -07:00 [INF] Diagnostic UA0001 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Controllers\BlogPostControllerBase.cs
+2021-05-27 16:13:43.719 -07:00 [INF] Diagnostic UA0001 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Controllers\FeedController.cs
+2021-05-27 16:13:43.724 -07:00 [INF] Diagnostic UA0001 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Controllers\ListControllerBase.cs
+2021-05-27 16:13:43.732 -07:00 [INF] Diagnostic UA0001 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Controllers\MardownEditorApiController.cs
+2021-05-27 16:13:43.737 -07:00 [INF] Diagnostic UA0001 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Controllers\MarkdownEditorController.cs
+2021-05-27 16:13:43.746 -07:00 [INF] Diagnostic UA0001 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Controllers\OpenSearchController.cs
+2021-05-27 16:13:43.752 -07:00 [INF] Diagnostic UA0001 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Controllers\RsdController.cs
+2021-05-27 16:13:43.765 -07:00 [INF] Diagnostic UA0001 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Controllers\TagsControllerActionInvoker.cs
+2021-05-27 16:13:43.770 -07:00 [INF] Diagnostic UA0001 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Controllers\ThemeEditorController.cs
+2021-05-27 16:13:43.776 -07:00 [INF] Diagnostic UA0001 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Controllers\ThemeTreeController.cs
+2021-05-27 16:13:43.783 -07:00 [INF] Diagnostic UA0001 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Controllers\UmbracoNotFoundResult.cs
+2021-05-27 16:13:43.789 -07:00 [INF] Diagnostic UA0001 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Controllers\UrlHelperExtensions.cs
+2021-05-27 16:13:43.795 -07:00 [INF] Diagnostic UA0001 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Controllers\WlwManifestController.cs
+2021-05-27 16:13:43.800 -07:00 [INF] Diagnostic UA0001 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\HtmlHelperExtensions.cs
+2021-05-27 16:13:43.806 -07:00 [INF] Diagnostic UA0001 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\ImportExport\DisqusImporter.cs
+2021-05-27 16:13:43.812 -07:00 [INF] Diagnostic UA0001 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Models\MetaWeblog\MetaWeblogPost.cs
+2021-05-27 16:13:43.817 -07:00 [INF] Diagnostic UA0001 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Models\PostModel.cs
+2021-05-27 16:13:43.826 -07:00 [INF] Diagnostic UA0001 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Packaging\ArticulateInstallPackageAction.cs
+2021-05-27 16:13:43.839 -07:00 [INF] Diagnostic UA0001 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\PathHelper.cs
+2021-05-27 16:13:43.846 -07:00 [INF] Diagnostic UA0001 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\PropertyEditors\ArticulateMarkdownPropertyEditor.cs
+2021-05-27 16:13:43.852 -07:00 [INF] Diagnostic UA0001 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Routing\ArticulateRoutes.cs
+2021-05-27 16:13:43.858 -07:00 [INF] Diagnostic UA0001 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Routing\ArticulateSearchRouteHandler.cs
+2021-05-27 16:13:43.863 -07:00 [INF] Diagnostic UA0001 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Routing\ArticulateTagsRouteHandler.cs
+2021-05-27 16:13:43.871 -07:00 [INF] Diagnostic UA0001 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Routing\ArticulateVirtualNodeByIdRouteHandler.cs
+2021-05-27 16:13:43.880 -07:00 [INF] Diagnostic UA0001 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Routing\MetaWeblogHandler.cs
+2021-05-27 16:13:43.886 -07:00 [INF] Diagnostic UA0001 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Routing\MetaWeblogRouteConstraint.cs
+2021-05-27 16:13:43.897 -07:00 [INF] Diagnostic UA0001 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Routing\NotFoundHandler.cs
+2021-05-27 16:13:43.903 -07:00 [INF] Diagnostic UA0001 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Routing\RouteCollectionExtensions.cs
+2021-05-27 16:13:43.908 -07:00 [INF] Diagnostic UA0001 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Routing\TagsOrCategoryPathRouteConstraint.cs
+2021-05-27 16:13:43.914 -07:00 [INF] Diagnostic UA0001 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\StringExtensions.cs
+2021-05-27 16:13:43.919 -07:00 [INF] Diagnostic UA0001 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Syndication\RssFeedGenerator.cs
+2021-05-27 16:13:43.924 -07:00 [INF] Diagnostic UA0001 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Syndication\RssResult.cs
+2021-05-27 16:13:43.933 -07:00 [INF] Diagnostic UA0001 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\UrlHelperExtensions.cs
+2021-05-27 16:13:44.335 -07:00 [INF] Diagnostic UA0001 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Components\ArticulateComponent.cs
+2021-05-27 16:13:44.340 -07:00 [INF] Diagnostic UA0001 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Controllers\ArticulateTagsController.cs
+2021-05-27 16:13:44.345 -07:00 [INF] Diagnostic UA0001 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Controllers\TagsControllerActionInvoker.cs
+2021-05-27 16:13:44.355 -07:00 [INF] Diagnostic UA0001 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Controllers\ThemeEditorController.cs
+2021-05-27 16:13:44.361 -07:00 [INF] Diagnostic UA0001 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Controllers\UmbracoNotFoundResult.cs
+2021-05-27 16:13:44.365 -07:00 [INF] Diagnostic UA0001 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Controllers\UrlHelperExtensions.cs
+2021-05-27 16:13:44.369 -07:00 [INF] Diagnostic UA0001 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\HtmlHelperExtensions.cs
+2021-05-27 16:13:44.374 -07:00 [INF] Diagnostic UA0001 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Models\PostModel.cs
+2021-05-27 16:13:44.381 -07:00 [INF] Diagnostic UA0001 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Routing\ArticulateRoutes.cs
+2021-05-27 16:13:44.385 -07:00 [INF] Diagnostic UA0001 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Routing\ArticulateTagsRouteHandler.cs
+2021-05-27 16:13:44.390 -07:00 [INF] Diagnostic UA0001 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Routing\MetaWeblogHandler.cs
+2021-05-27 16:13:44.397 -07:00 [INF] Diagnostic UA0001 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Routing\MetaWeblogRouteConstraint.cs
+2021-05-27 16:13:44.401 -07:00 [INF] Diagnostic UA0001 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Routing\RouteCollectionExtensions.cs
+2021-05-27 16:13:44.406 -07:00 [INF] Diagnostic UA0001 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Routing\TagsOrCategoryPathRouteConstraint.cs
+2021-05-27 16:13:44.413 -07:00 [INF] Diagnostic UA0001 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Syndication\RssFeedGenerator.cs
+2021-05-27 16:13:44.417 -07:00 [INF] Diagnostic UA0001 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\UrlHelperExtensions.cs
+2021-05-27 16:13:44.763 -07:00 [INF] Diagnostic UA0001 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Components\ArticulateComponent.cs
+2021-05-27 16:13:44.768 -07:00 [INF] Diagnostic UA0001 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\HtmlHelperExtensions.cs
+2021-05-27 16:13:44.773 -07:00 [INF] Diagnostic UA0001 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Routing\MetaWeblogHandler.cs
+2021-05-27 16:13:44.779 -07:00 [INF] Diagnostic UA0001 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Routing\RouteCollectionExtensions.cs
+2021-05-27 16:13:45.080 -07:00 [INF] Diagnostic UA0001 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\HtmlHelperExtensions.cs
+2021-05-27 16:13:45.402 -07:00 [INF] Upgrade step Apply fix for UA0001: ASP.NET Core projects should not reference ASP.NET namespaces applied successfully
+2021-05-27 16:13:50.016 -07:00 [INF] Applying upgrade step Apply fix for UA0002: HtmlString types should be replaced with Microsoft.AspNetCore.Html.HtmlString
+2021-05-27 16:13:50.390 -07:00 [INF] Diagnostic UA0002 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Models\PostModel.cs
+2021-05-27 16:13:50.472 -07:00 [INF] Diagnostic UA0002 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\HtmlHelperExtensions.cs
+2021-05-27 16:13:50.517 -07:00 [INF] Diagnostic UA0002 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\PropertyEditors\ArticulateMarkdownPropertyEditor.cs
+2021-05-27 16:13:50.798 -07:00 [INF] Diagnostic UA0002 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\HtmlHelperExtensions.cs
+2021-05-27 16:13:50.836 -07:00 [INF] Diagnostic UA0002 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Models\PostModel.cs
+2021-05-27 16:13:51.177 -07:00 [INF] Diagnostic UA0002 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\HtmlHelperExtensions.cs
+2021-05-27 16:13:51.201 -07:00 [INF] Diagnostic UA0002 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Models\PostModel.cs
+2021-05-27 16:13:51.483 -07:00 [INF] Diagnostic UA0002 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\HtmlHelperExtensions.cs
+2021-05-27 16:13:51.851 -07:00 [INF] Diagnostic UA0002 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\HtmlHelperExtensions.cs
+2021-05-27 16:13:52.135 -07:00 [INF] Diagnostic UA0002 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\HtmlHelperExtensions.cs
+2021-05-27 16:13:52.463 -07:00 [INF] Diagnostic UA0002 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\HtmlHelperExtensions.cs
+2021-05-27 16:13:52.757 -07:00 [INF] Diagnostic UA0002 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\HtmlHelperExtensions.cs
+2021-05-27 16:13:53.084 -07:00 [INF] Diagnostic UA0002 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\HtmlHelperExtensions.cs
+2021-05-27 16:13:53.356 -07:00 [INF] Diagnostic UA0002 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\HtmlHelperExtensions.cs
+2021-05-27 16:13:53.669 -07:00 [INF] Diagnostic UA0002 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\HtmlHelperExtensions.cs
+2021-05-27 16:13:53.953 -07:00 [INF] Diagnostic UA0002 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\HtmlHelperExtensions.cs
+2021-05-27 16:13:54.253 -07:00 [INF] Diagnostic UA0002 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\HtmlHelperExtensions.cs
+2021-05-27 16:13:54.540 -07:00 [INF] Diagnostic UA0002 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\HtmlHelperExtensions.cs
+2021-05-27 16:13:54.894 -07:00 [INF] Diagnostic UA0002 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\HtmlHelperExtensions.cs
+2021-05-27 16:13:55.118 -07:00 [INF] Upgrade step Apply fix for UA0002: HtmlString types should be replaced with Microsoft.AspNetCore.Html.HtmlString applied successfully
+2021-05-27 16:14:01.825 -07:00 [INF] Applying upgrade step Apply fix for UA0003: ActionResult types should come from the Microsoft.AspNetCore.Mvc namespace
+2021-05-27 16:14:01.837 -07:00 [INF] Diagnostic UA0003 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Controllers\RsdController.cs
+2021-05-27 16:14:01.852 -07:00 [INF] Diagnostic UA0003 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Syndication\RssResult.cs
+2021-05-27 16:14:01.870 -07:00 [INF] Diagnostic UA0003 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Controllers\UmbracoNotFoundResult.cs
+2021-05-27 16:14:01.884 -07:00 [INF] Diagnostic UA0003 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Controllers\ArticulateArchiveController.cs
+2021-05-27 16:14:01.900 -07:00 [INF] Diagnostic UA0003 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Controllers\WlwManifestController.cs
+2021-05-27 16:14:01.917 -07:00 [INF] Diagnostic UA0003 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Controllers\ArticulateAuthorController.cs
+2021-05-27 16:14:01.931 -07:00 [INF] Diagnostic UA0003 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Controllers\ArticulateAuthorsController.cs
+2021-05-27 16:14:01.953 -07:00 [INF] Diagnostic UA0003 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Controllers\ArticulateController.cs
+2021-05-27 16:14:01.975 -07:00 [INF] Diagnostic UA0003 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Controllers\ArticulateRssController.cs
+2021-05-27 16:14:01.993 -07:00 [INF] Diagnostic UA0003 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Controllers\ArticulateTagsController.cs
+2021-05-27 16:14:02.006 -07:00 [INF] Diagnostic UA0003 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Controllers\ArticulateSearchController.cs
+2021-05-27 16:14:02.027 -07:00 [INF] Diagnostic UA0003 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Controllers\BlogPostControllerBase.cs
+2021-05-27 16:14:02.063 -07:00 [INF] Diagnostic UA0003 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Controllers\FeedController.cs
+2021-05-27 16:14:02.092 -07:00 [INF] Diagnostic UA0003 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Controllers\ListControllerBase.cs
+2021-05-27 16:14:02.102 -07:00 [INF] Diagnostic UA0003 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Controllers\MarkdownEditorController.cs
+2021-05-27 16:14:02.116 -07:00 [INF] Diagnostic UA0003 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Controllers\OpenSearchController.cs
+2021-05-27 16:14:02.378 -07:00 [INF] Diagnostic UA0003 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Controllers\WlwManifestController.cs
+2021-05-27 16:14:02.394 -07:00 [INF] Diagnostic UA0003 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Controllers\ArticulateTagsController.cs
+2021-05-27 16:14:02.410 -07:00 [INF] Diagnostic UA0003 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Controllers\OpenSearchController.cs
+2021-05-27 16:14:02.432 -07:00 [INF] Diagnostic UA0003 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Controllers\RsdController.cs
+2021-05-27 16:14:02.668 -07:00 [INF] Upgrade step Apply fix for UA0003: ActionResult types should come from the Microsoft.AspNetCore.Mvc namespace applied successfully
+2021-05-27 16:14:09.490 -07:00 [INF] Applying upgrade step Apply fix for UA0005: Do not use HttpContext.Current
+2021-05-27 16:14:09.540 -07:00 [INF] Diagnostic UA0005 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Controllers\UmbracoNotFoundResult.cs
+2021-05-27 16:14:09.559 -07:00 [INF] Diagnostic UA0005 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Components\ArticulateComponent.cs
+2021-05-27 16:14:09.783 -07:00 [WRN] Diagnostic UA0005 was not fixed as expected. This may be caused by the project being in a bad state (did NuGet packages restore correctly?) or by errors in analyzers or code fix providers related to this diagnostic.
+2021-05-27 16:14:09.785 -07:00 [INF] Upgrade step Apply fix for UA0005: Do not use HttpContext.Current applied successfully
+2021-05-27 16:14:15.011 -07:00 [INF] Applying upgrade step Apply fix for UA0007: HtmlHelper should be replaced with IHtmlHelper
+2021-05-27 16:14:15.054 -07:00 [INF] Diagnostic UA0007 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\HtmlHelperExtensions.cs
+2021-05-27 16:14:15.325 -07:00 [INF] Diagnostic UA0007 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\HtmlHelperExtensions.cs
+2021-05-27 16:14:15.653 -07:00 [INF] Diagnostic UA0007 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\HtmlHelperExtensions.cs
+2021-05-27 16:14:15.921 -07:00 [INF] Diagnostic UA0007 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\HtmlHelperExtensions.cs
+2021-05-27 16:14:16.270 -07:00 [INF] Diagnostic UA0007 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\HtmlHelperExtensions.cs
+2021-05-27 16:14:16.545 -07:00 [INF] Diagnostic UA0007 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\HtmlHelperExtensions.cs
+2021-05-27 16:14:16.851 -07:00 [INF] Diagnostic UA0007 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\HtmlHelperExtensions.cs
+2021-05-27 16:14:17.131 -07:00 [INF] Diagnostic UA0007 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\HtmlHelperExtensions.cs
+2021-05-27 16:14:17.436 -07:00 [INF] Diagnostic UA0007 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\HtmlHelperExtensions.cs
+2021-05-27 16:14:17.712 -07:00 [INF] Diagnostic UA0007 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\HtmlHelperExtensions.cs
+2021-05-27 16:14:18.046 -07:00 [INF] Diagnostic UA0007 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\HtmlHelperExtensions.cs
+2021-05-27 16:14:18.311 -07:00 [INF] Diagnostic UA0007 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\HtmlHelperExtensions.cs
+2021-05-27 16:14:18.624 -07:00 [INF] Diagnostic UA0007 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\HtmlHelperExtensions.cs
+2021-05-27 16:14:18.903 -07:00 [INF] Diagnostic UA0007 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\HtmlHelperExtensions.cs
+2021-05-27 16:14:19.240 -07:00 [INF] Diagnostic UA0007 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\HtmlHelperExtensions.cs
+2021-05-27 16:14:19.549 -07:00 [INF] Diagnostic UA0007 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\HtmlHelperExtensions.cs
+2021-05-27 16:14:19.885 -07:00 [INF] Diagnostic UA0007 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\HtmlHelperExtensions.cs
+2021-05-27 16:14:20.192 -07:00 [INF] Diagnostic UA0007 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\HtmlHelperExtensions.cs
+2021-05-27 16:14:20.534 -07:00 [INF] Diagnostic UA0007 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\HtmlHelperExtensions.cs
+2021-05-27 16:14:20.824 -07:00 [INF] Diagnostic UA0007 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\HtmlHelperExtensions.cs
+2021-05-27 16:14:21.156 -07:00 [INF] Diagnostic UA0007 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\HtmlHelperExtensions.cs
+2021-05-27 16:14:21.483 -07:00 [INF] Diagnostic UA0007 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\HtmlHelperExtensions.cs
+2021-05-27 16:14:21.838 -07:00 [INF] Diagnostic UA0007 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\HtmlHelperExtensions.cs
+2021-05-27 16:14:22.134 -07:00 [INF] Diagnostic UA0007 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\HtmlHelperExtensions.cs
+2021-05-27 16:14:22.474 -07:00 [INF] Diagnostic UA0007 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\HtmlHelperExtensions.cs
+2021-05-27 16:14:22.763 -07:00 [INF] Diagnostic UA0007 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\HtmlHelperExtensions.cs
+2021-05-27 16:14:23.110 -07:00 [INF] Diagnostic UA0007 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\HtmlHelperExtensions.cs
+2021-05-27 16:14:23.422 -07:00 [INF] Diagnostic UA0007 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\HtmlHelperExtensions.cs
+2021-05-27 16:14:23.703 -07:00 [INF] Upgrade step Apply fix for UA0007: HtmlHelper should be replaced with IHtmlHelper applied successfully
+2021-05-27 16:14:37.181 -07:00 [INF] Applying upgrade step Apply fix for UA0008: UrlHelper should be replaced with IUrlHelper
+2021-05-27 16:14:37.260 -07:00 [INF] Diagnostic UA0008 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Components\ArticulateComponent.cs
+2021-05-27 16:14:37.281 -07:00 [INF] Diagnostic UA0008 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\UrlHelperExtensions.cs
+2021-05-27 16:14:37.293 -07:00 [INF] Diagnostic UA0008 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\Controllers\UrlHelperExtensions.cs
+2021-05-27 16:14:37.352 -07:00 [INF] Diagnostic UA0008 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\HtmlHelperExtensions.cs
+2021-05-27 16:14:37.614 -07:00 [INF] Diagnostic UA0008 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\UrlHelperExtensions.cs
+2021-05-27 16:14:37.906 -07:00 [INF] Diagnostic UA0008 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\UrlHelperExtensions.cs
+2021-05-27 16:14:38.145 -07:00 [INF] Diagnostic UA0008 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\UrlHelperExtensions.cs
+2021-05-27 16:14:38.447 -07:00 [INF] Diagnostic UA0008 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\UrlHelperExtensions.cs
+2021-05-27 16:14:38.676 -07:00 [INF] Diagnostic UA0008 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\UrlHelperExtensions.cs
+2021-05-27 16:14:38.950 -07:00 [INF] Diagnostic UA0008 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\UrlHelperExtensions.cs
+2021-05-27 16:14:39.187 -07:00 [INF] Diagnostic UA0008 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\UrlHelperExtensions.cs
+2021-05-27 16:14:39.459 -07:00 [INF] Diagnostic UA0008 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\UrlHelperExtensions.cs
+2021-05-27 16:14:39.696 -07:00 [INF] Diagnostic UA0008 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\UrlHelperExtensions.cs
+2021-05-27 16:14:39.940 -07:00 [INF] Diagnostic UA0008 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\UrlHelperExtensions.cs
+2021-05-27 16:14:40.184 -07:00 [INF] Diagnostic UA0008 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\UrlHelperExtensions.cs
+2021-05-27 16:14:40.384 -07:00 [INF] Upgrade step Apply fix for UA0008: UrlHelper should be replaced with IUrlHelper applied successfully
+2021-05-27 16:14:50.891 -07:00 [INF] Applying upgrade step Apply fix for UA0009: HelperResult should be replaced with Microsoft.AspNetCore.Mvc.Razor.HelperResult
+2021-05-27 16:14:50.936 -07:00 [INF] Diagnostic UA0009 fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\HtmlHelperExtensions.cs
+2021-05-27 16:14:51.193 -07:00 [INF] Upgrade step Apply fix for UA0009: HelperResult should be replaced with Microsoft.AspNetCore.Mvc.Razor.HelperResult applied successfully
+2021-05-27 16:14:56.071 -07:00 [INF] Applying upgrade step Update source code
+2021-05-27 16:14:56.725 -07:00 [WRN] Completing source updates with 3 diagnostics still unaddressed
+2021-05-27 16:14:56.727 -07:00 [INF] Upgrade step Update source code applied successfully
+2021-05-27 16:15:02.877 -07:00 [INF] Initializing upgrade step Move to next project
+2021-05-27 16:15:04.544 -07:00 [INF] Applying upgrade step Move to next project
+2021-05-27 16:15:04.545 -07:00 [INF] Upgrade step Move to next project applied successfully
+2021-05-27 16:15:05.544 -07:00 [INF] Initializing upgrade step Finalize upgrade
+2021-05-27 16:15:07.124 -07:00 [INF] Applying upgrade step Finalize upgrade
+2021-05-27 16:15:07.125 -07:00 [INF] Upgrade step Finalize upgrade applied successfully
+2021-05-27 16:15:08.141 -07:00 [INF] Upgrade has completed. Please review any changes.
+2021-05-27 16:15:08.144 -07:00 [INF] Saving upgrade progress file at C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate\.upgrade-assistant
+2021-05-27 16:15:19.536 -07:00 [INF] MSBuild registered from C:\Program Files\dotnet\sdk\5.0.203\
+2021-05-27 16:15:19.595 -07:00 [INF] Registered 1 extensions:
+	Default extension
+2021-05-27 16:15:22.580 -07:00 [INF] Initializing upgrade step Select an entrypoint
+2021-05-27 16:15:22.588 -07:00 [INF] Setting entrypoint to user selected project: C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\Articulate.Web.csproj
+2021-05-27 16:15:22.602 -07:00 [INF] Initializing upgrade step Select project to upgrade
+2021-05-27 16:15:23.058 -07:00 [INF] Initializing upgrade step Back up project
+2021-05-27 16:15:25.395 -07:00 [INF] Skipping upgrade step Back up project
+2021-05-27 16:15:25.397 -07:00 [INF] Upgrade step Back up project skipped
+2021-05-27 16:15:26.565 -07:00 [INF] Initializing upgrade step Convert project file to SDK style
+2021-05-27 16:15:27.628 -07:00 [INF] Applying upgrade step Convert project file to SDK style
+2021-05-27 16:15:27.634 -07:00 [INF] Converting project file format with try-convert, version 0.7.217901
+2021-05-27 16:15:28.476 -07:00 [INF] [try-convert] C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\Articulate.Web.csproj contains a reference to System.Web, which is not supported on .NET Core. You may have significant work ahead of you to fully port this project.
+2021-05-27 16:15:28.480 -07:00 [INF] [try-convert] 'C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\Articulate.Web.csproj' is a legacy web project and/or references System.Web. Legacy Web projects and System.Web are unsupported on .NET Core. You will need to rewrite your application or find a way to not depend on System.Web to convert this project.
+2021-05-27 16:15:53.527 -07:00 [INF] [try-convert] This project has an unrecognized custom import which may need reviewed after conversion: GitVersionTask.props
+2021-05-27 16:15:53.531 -07:00 [INF] [try-convert] This project has an unrecognized custom import which may need reviewed after conversion: UmbracoCms.props
+2021-05-27 16:15:53.533 -07:00 [INF] [try-convert] This project has an unrecognized custom import which may need reviewed after conversion: Microsoft.Bcl.Build.targets
+2021-05-27 16:15:53.535 -07:00 [INF] [try-convert] This project has an unrecognized custom import which may need reviewed after conversion: Umbraco.SqlServerCE.targets
+2021-05-27 16:15:53.536 -07:00 [INF] [try-convert] This project has an unrecognized custom import which may need reviewed after conversion: UmbracoCms.targets
+2021-05-27 16:15:53.538 -07:00 [INF] [try-convert] This project has an unrecognized custom import which may need reviewed after conversion: GitVersionTask.targets
+2021-05-27 16:16:12.159 -07:00 [INF] [try-convert] Conversion complete!
+2021-05-27 16:16:16.418 -07:00 [INF] Project file converted successfully! The project may require additional changes to build successfully against the new .NET target.
+2021-05-27 16:16:36.421 -07:00 [INF] Upgrade step Convert project file to SDK style applied successfully
+2021-05-27 16:28:10.344 -07:00 [INF] Initializing upgrade step Clean up NuGet package references
+2021-05-27 16:28:27.934 -07:00 [INF] Marking package ClientDependency-Mvc5 for removal because it appears to be a transitive dependency
+2021-05-27 16:28:27.966 -07:00 [INF] Marking package CSharpTest.Net.Collections for removal because it appears to be a transitive dependency
+2021-05-27 16:28:27.975 -07:00 [INF] Marking package Examine for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.001 -07:00 [INF] Marking package HtmlAgilityPack for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.009 -07:00 [INF] Marking package ImageProcessor for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.022 -07:00 [INF] Marking package ImageProcessor.Web for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.039 -07:00 [INF] Marking package ImageProcessor.Web.Config for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.050 -07:00 [INF] Marking package LightInject for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.065 -07:00 [INF] Marking package LightInject.Annotation for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.084 -07:00 [INF] Marking package LightInject.Mvc for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.094 -07:00 [INF] Marking package LightInject.Web for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.113 -07:00 [INF] Marking package LightInject.WebApi for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.127 -07:00 [INF] Marking package Lucene.Net for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.139 -07:00 [INF] Marking package Markdown for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.154 -07:00 [INF] Marking package Microsoft.AspNet.SignalR.Core for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.175 -07:00 [INF] Marking package Microsoft.AspNet.WebApi for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.188 -07:00 [INF] Marking package Microsoft.AspNet.WebApi.Client for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.205 -07:00 [INF] Marking package Microsoft.Bcl for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.220 -07:00 [INF] Marking package Microsoft.Bcl.Build for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.236 -07:00 [INF] Marking package Microsoft.CodeAnalysis.Analyzers for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.244 -07:00 [INF] Marking package Microsoft.CodeAnalysis.Common for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.258 -07:00 [INF] Marking package Microsoft.CodeAnalysis.CSharp for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.277 -07:00 [INF] Marking package Microsoft.Extensions.DependencyInjection.Abstractions for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.292 -07:00 [INF] Marking package Microsoft.IO.RecyclableMemoryStream for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.302 -07:00 [INF] Marking package Microsoft.Net.Compilers for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.328 -07:00 [INF] Marking package MiniProfiler for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.341 -07:00 [INF] Marking package MiniProfiler.Shared for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.355 -07:00 [INF] Marking package Newtonsoft.Json for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.372 -07:00 [INF] Marking package NPoco for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.382 -07:00 [INF] Marking package Semver for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.393 -07:00 [INF] Marking package Serilog for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.403 -07:00 [INF] Marking package Serilog.Enrichers.Process for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.416 -07:00 [INF] Marking package Serilog.Enrichers.Thread for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.423 -07:00 [INF] Marking package Serilog.Filters.Expressions for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.436 -07:00 [INF] Marking package Serilog.Formatting.Compact for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.450 -07:00 [INF] Marking package Serilog.Formatting.Compact.Reader for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.459 -07:00 [INF] Marking package Serilog.Settings.AppSettings for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.474 -07:00 [INF] Marking package Serilog.Sinks.Async for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.482 -07:00 [INF] Marking package Serilog.Sinks.File for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.492 -07:00 [INF] Marking package Serilog.Sinks.Map for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.507 -07:00 [INF] Marking package SharpZipLib for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.515 -07:00 [INF] Marking package Superpower for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.528 -07:00 [INF] Marking package System.AppContext for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.545 -07:00 [INF] Marking package System.Collections for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.555 -07:00 [INF] Marking package System.Collections.Concurrent for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.570 -07:00 [INF] Marking package System.Collections.Immutable for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.593 -07:00 [INF] Marking package System.Console for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.617 -07:00 [INF] Marking package System.Diagnostics.Debug for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.626 -07:00 [INF] Marking package System.Diagnostics.DiagnosticSource for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.639 -07:00 [INF] Marking package System.Diagnostics.FileVersionInfo for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.649 -07:00 [INF] Marking package System.Diagnostics.StackTrace for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.659 -07:00 [INF] Marking package System.Diagnostics.Tools for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.672 -07:00 [INF] Marking package System.Dynamic.Runtime for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.683 -07:00 [INF] Marking package System.Globalization for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.697 -07:00 [INF] Marking package System.IO for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.713 -07:00 [INF] Marking package System.IO.Compression for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.722 -07:00 [INF] Marking package System.IO.FileSystem for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.735 -07:00 [INF] Marking package System.IO.FileSystem.Primitives for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.744 -07:00 [INF] Marking package System.Linq for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.756 -07:00 [INF] Marking package System.Linq.Expressions for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.766 -07:00 [INF] Marking package System.Reflection for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.779 -07:00 [INF] Marking package System.Reflection.Metadata for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.790 -07:00 [INF] Marking package System.Resources.ResourceManager for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.800 -07:00 [INF] Marking package System.Runtime for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.817 -07:00 [INF] Marking package System.Runtime.Extensions for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.828 -07:00 [INF] Marking package System.Runtime.InteropServices for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.842 -07:00 [INF] Marking package System.Runtime.Numerics for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.852 -07:00 [INF] Marking package System.Security.Cryptography.Algorithms for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.863 -07:00 [INF] Marking package System.Security.Cryptography.Encoding for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.884 -07:00 [INF] Marking package System.Security.Cryptography.Primitives for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.892 -07:00 [INF] Marking package System.Security.Cryptography.X509Certificates for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.905 -07:00 [INF] Marking package System.Text.Encoding for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.916 -07:00 [INF] Marking package System.Text.Encoding.CodePages for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.925 -07:00 [INF] Marking package System.Text.Encoding.Extensions for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.937 -07:00 [INF] Marking package System.Threading for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.954 -07:00 [INF] Marking package System.Threading.Tasks for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.964 -07:00 [INF] Marking package System.Threading.Tasks.Dataflow for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.977 -07:00 [INF] Marking package System.Threading.Tasks.Extensions for removal because it appears to be a transitive dependency
+2021-05-27 16:28:28.993 -07:00 [INF] Marking package System.Threading.Tasks.Parallel for removal because it appears to be a transitive dependency
+2021-05-27 16:28:29.001 -07:00 [INF] Marking package System.Threading.Thread for removal because it appears to be a transitive dependency
+2021-05-27 16:28:29.015 -07:00 [INF] Marking package System.Xml.ReaderWriter for removal because it appears to be a transitive dependency
+2021-05-27 16:28:29.027 -07:00 [INF] Marking package System.Xml.XDocument for removal because it appears to be a transitive dependency
+2021-05-27 16:28:29.038 -07:00 [INF] Marking package System.Xml.XmlDocument for removal because it appears to be a transitive dependency
+2021-05-27 16:28:29.048 -07:00 [INF] Marking package System.Xml.XPath for removal because it appears to be a transitive dependency
+2021-05-27 16:28:29.060 -07:00 [INF] Marking package System.Xml.XPath.XDocument for removal because it appears to be a transitive dependency
+2021-05-27 16:28:29.074 -07:00 [INF] Marking package Umbraco.ModelsBuilder for removal because it appears to be a transitive dependency
+2021-05-27 16:28:29.084 -07:00 [INF] Marking package Umbraco.ModelsBuilder.Ui for removal because it appears to be a transitive dependency
+2021-05-27 16:28:29.098 -07:00 [INF] Marking package Umbraco.SqlServerCE for removal because it appears to be a transitive dependency
+2021-05-27 16:28:29.114 -07:00 [INF] Marking package UmbracoCms.Core for removal because it appears to be a transitive dependency
+2021-05-27 16:28:29.127 -07:00 [INF] Marking package UmbracoCms.Web for removal because it appears to be a transitive dependency
+2021-05-27 16:28:29.193 -07:00 [INF] Marking package Microsoft.Net.Http for removal based on package mapping configuration HTTP packages
+2021-05-27 16:28:29.203 -07:00 [INF] Adding package System.Net.Http based on package mapping configuration HTTP packages
+2021-05-27 16:28:29.205 -07:00 [INF] Marking assembly reference System.Configuration for removal based on package mapping configuration System.Configuration
+2021-05-27 16:28:29.208 -07:00 [INF] Adding package System.Configuration.ConfigurationManager based on package mapping configuration System.Configuration
+2021-05-27 16:28:36.929 -07:00 [WRN] No version of GitVersionTask found that supports ["net472"]; leaving unchanged
+2021-05-27 16:28:38.450 -07:00 [INF] Reference to .NET Upgrade Assistant analyzer package (Microsoft.DotNet.UpgradeAssistant.Extensions.Default.Analyzers, version 0.2.227701) needs added
+2021-05-27 16:28:38.467 -07:00 [INF] References to be removed:
+System.Configuration
+2021-05-27 16:28:38.470 -07:00 [INF] Packages to be removed:
+ClientDependency-Mvc5, Version=1.9.3
+CSharpTest.Net.Collections, Version=14.906.1403.1082
+Examine, Version=1.0.1
+HtmlAgilityPack, Version=1.8.14
+ImageProcessor, Version=2.7.0.100
+ImageProcessor.Web, Version=4.10.0.100
+ImageProcessor.Web.Config, Version=2.5.0.100
+LightInject, Version=5.4.0
+LightInject.Annotation, Version=1.1.0
+LightInject.Mvc, Version=2.0.0
+LightInject.Web, Version=2.0.0
+LightInject.WebApi, Version=2.0.0
+Lucene.Net, Version=3.0.3
+Markdown, Version=2.2.1
+Microsoft.AspNet.SignalR.Core, Version=2.4.0
+Microsoft.AspNet.WebApi, Version=5.2.7
+Microsoft.AspNet.WebApi.Client, Version=5.2.7
+Microsoft.Bcl, Version=1.1.10
+Microsoft.Bcl.Build, Version=1.0.14
+Microsoft.CodeAnalysis.Analyzers, Version=2.6.1
+Microsoft.CodeAnalysis.Common, Version=2.10.0
+Microsoft.CodeAnalysis.CSharp, Version=2.10.0
+Microsoft.Extensions.DependencyInjection.Abstractions, Version=2.0.0
+Microsoft.IO.RecyclableMemoryStream, Version=1.2.2
+Microsoft.Net.Compilers, Version=2.10.0
+MiniProfiler, Version=4.0.138
+MiniProfiler.Shared, Version=4.0.138
+Newtonsoft.Json, Version=12.0.1
+NPoco, Version=3.9.4
+Semver, Version=2.0.4
+Serilog, Version=2.8.0
+Serilog.Enrichers.Process, Version=2.0.1
+Serilog.Enrichers.Thread, Version=3.0.0
+Serilog.Filters.Expressions, Version=2.0.0
+Serilog.Formatting.Compact, Version=1.0.0
+Serilog.Formatting.Compact.Reader, Version=1.0.3
+Serilog.Settings.AppSettings, Version=2.2.2
+Serilog.Sinks.Async, Version=1.3.0
+Serilog.Sinks.File, Version=4.0.0
+Serilog.Sinks.Map, Version=1.0.0
+SharpZipLib, Version=0.86.0
+Superpower, Version=2.0.0
+System.AppContext, Version=4.3.0
+System.Collections, Version=4.3.0
+System.Collections.Concurrent, Version=4.3.0
+System.Collections.Immutable, Version=1.5.0
+System.Console, Version=4.3.0
+System.Diagnostics.Debug, Version=4.3.0
+System.Diagnostics.DiagnosticSource, Version=4.4.1
+System.Diagnostics.FileVersionInfo, Version=4.3.0
+System.Diagnostics.StackTrace, Version=4.3.0
+System.Diagnostics.Tools, Version=4.3.0
+System.Dynamic.Runtime, Version=4.3.0
+System.Globalization, Version=4.3.0
+System.IO, Version=4.3.0
+System.IO.Compression, Version=4.3.0
+System.IO.FileSystem, Version=4.3.0
+System.IO.FileSystem.Primitives, Version=4.3.0
+System.Linq, Version=4.3.0
+System.Linq.Expressions, Version=4.3.0
+System.Reflection, Version=4.3.0
+System.Reflection.Metadata, Version=1.6.0
+System.Resources.ResourceManager, Version=4.3.0
+System.Runtime, Version=4.3.0
+System.Runtime.Extensions, Version=4.3.0
+System.Runtime.InteropServices, Version=4.3.0
+System.Runtime.Numerics, Version=4.3.0
+System.Security.Cryptography.Algorithms, Version=4.3.0
+System.Security.Cryptography.Encoding, Version=4.3.0
+System.Security.Cryptography.Primitives, Version=4.3.0
+System.Security.Cryptography.X509Certificates, Version=4.3.0
+System.Text.Encoding, Version=4.3.0
+System.Text.Encoding.CodePages, Version=4.3.0
+System.Text.Encoding.Extensions, Version=4.3.0
+System.Threading, Version=4.3.0
+System.Threading.Tasks, Version=4.3.0
+System.Threading.Tasks.Dataflow, Version=4.9.0
+System.Threading.Tasks.Extensions, Version=4.3.0
+System.Threading.Tasks.Parallel, Version=4.3.0
+System.Threading.Thread, Version=4.3.0
+System.Xml.ReaderWriter, Version=4.3.0
+System.Xml.XDocument, Version=4.3.0
+System.Xml.XmlDocument, Version=4.3.0
+System.Xml.XPath, Version=4.3.0
+System.Xml.XPath.XDocument, Version=4.3.0
+Umbraco.ModelsBuilder, Version=8.1.0
+Umbraco.ModelsBuilder.Ui, Version=8.1.0
+Umbraco.SqlServerCE, Version=4.0.0.1
+UmbracoCms.Core, Version=8.2.3
+UmbracoCms.Web, Version=8.2.3
+Microsoft.Net.Http, Version=2.2.29
+2021-05-27 16:28:38.476 -07:00 [INF] Packages to be added:
+System.Net.Http, Version=4.3.0
+System.Configuration.ConfigurationManager, Version=5.0.0
+Microsoft.DotNet.UpgradeAssistant.Extensions.Default.Analyzers, Version=0.2.227701
+2021-05-27 16:31:56.869 -07:00 [INF] Applying upgrade step Clean up NuGet package references
+2021-05-27 16:31:56.874 -07:00 [INF] Removing outdated assembly reference: System.Configuration
+2021-05-27 16:31:56.879 -07:00 [INF] Removing outdated package reference: ClientDependency-Mvc5, Version=1.9.3
+2021-05-27 16:31:56.880 -07:00 [INF] Removing outdated package reference: CSharpTest.Net.Collections, Version=14.906.1403.1082
+2021-05-27 16:31:56.881 -07:00 [INF] Removing outdated package reference: Examine, Version=1.0.1
+2021-05-27 16:31:56.883 -07:00 [INF] Removing outdated package reference: HtmlAgilityPack, Version=1.8.14
+2021-05-27 16:31:56.884 -07:00 [INF] Removing outdated package reference: ImageProcessor, Version=2.7.0.100
+2021-05-27 16:31:56.885 -07:00 [INF] Removing outdated package reference: ImageProcessor.Web, Version=4.10.0.100
+2021-05-27 16:31:56.888 -07:00 [INF] Removing outdated package reference: ImageProcessor.Web.Config, Version=2.5.0.100
+2021-05-27 16:31:56.889 -07:00 [INF] Removing outdated package reference: LightInject, Version=5.4.0
+2021-05-27 16:31:56.890 -07:00 [INF] Removing outdated package reference: LightInject.Annotation, Version=1.1.0
+2021-05-27 16:31:56.891 -07:00 [INF] Removing outdated package reference: LightInject.Mvc, Version=2.0.0
+2021-05-27 16:31:56.892 -07:00 [INF] Removing outdated package reference: LightInject.Web, Version=2.0.0
+2021-05-27 16:31:56.893 -07:00 [INF] Removing outdated package reference: LightInject.WebApi, Version=2.0.0
+2021-05-27 16:31:56.894 -07:00 [INF] Removing outdated package reference: Lucene.Net, Version=3.0.3
+2021-05-27 16:31:56.894 -07:00 [INF] Removing outdated package reference: Markdown, Version=2.2.1
+2021-05-27 16:31:56.895 -07:00 [INF] Removing outdated package reference: Microsoft.AspNet.SignalR.Core, Version=2.4.0
+2021-05-27 16:31:56.896 -07:00 [INF] Removing outdated package reference: Microsoft.AspNet.WebApi, Version=5.2.7
+2021-05-27 16:31:56.898 -07:00 [INF] Removing outdated package reference: Microsoft.AspNet.WebApi.Client, Version=5.2.7
+2021-05-27 16:31:56.900 -07:00 [INF] Removing outdated package reference: Microsoft.Bcl, Version=1.1.10
+2021-05-27 16:31:56.901 -07:00 [INF] Removing outdated package reference: Microsoft.Bcl.Build, Version=1.0.14
+2021-05-27 16:31:56.902 -07:00 [INF] Removing outdated package reference: Microsoft.CodeAnalysis.Analyzers, Version=2.6.1
+2021-05-27 16:31:56.904 -07:00 [INF] Removing outdated package reference: Microsoft.CodeAnalysis.Common, Version=2.10.0
+2021-05-27 16:31:56.905 -07:00 [INF] Removing outdated package reference: Microsoft.CodeAnalysis.CSharp, Version=2.10.0
+2021-05-27 16:31:56.906 -07:00 [INF] Removing outdated package reference: Microsoft.Extensions.DependencyInjection.Abstractions, Version=2.0.0
+2021-05-27 16:31:56.907 -07:00 [INF] Removing outdated package reference: Microsoft.IO.RecyclableMemoryStream, Version=1.2.2
+2021-05-27 16:31:56.908 -07:00 [INF] Removing outdated package reference: Microsoft.Net.Compilers, Version=2.10.0
+2021-05-27 16:31:56.909 -07:00 [INF] Removing outdated package reference: Microsoft.Net.Http, Version=2.2.29
+2021-05-27 16:31:56.910 -07:00 [INF] Removing outdated package reference: MiniProfiler, Version=4.0.138
+2021-05-27 16:31:56.911 -07:00 [INF] Removing outdated package reference: MiniProfiler.Shared, Version=4.0.138
+2021-05-27 16:31:56.912 -07:00 [INF] Removing outdated package reference: Newtonsoft.Json, Version=12.0.1
+2021-05-27 16:31:56.914 -07:00 [INF] Removing outdated package reference: NPoco, Version=3.9.4
+2021-05-27 16:31:56.916 -07:00 [INF] Removing outdated package reference: Semver, Version=2.0.4
+2021-05-27 16:31:56.917 -07:00 [INF] Removing outdated package reference: Serilog, Version=2.8.0
+2021-05-27 16:31:56.919 -07:00 [INF] Removing outdated package reference: Serilog.Enrichers.Process, Version=2.0.1
+2021-05-27 16:31:56.920 -07:00 [INF] Removing outdated package reference: Serilog.Enrichers.Thread, Version=3.0.0
+2021-05-27 16:31:56.921 -07:00 [INF] Removing outdated package reference: Serilog.Filters.Expressions, Version=2.0.0
+2021-05-27 16:31:56.922 -07:00 [INF] Removing outdated package reference: Serilog.Formatting.Compact, Version=1.0.0
+2021-05-27 16:31:56.923 -07:00 [INF] Removing outdated package reference: Serilog.Formatting.Compact.Reader, Version=1.0.3
+2021-05-27 16:31:56.924 -07:00 [INF] Removing outdated package reference: Serilog.Settings.AppSettings, Version=2.2.2
+2021-05-27 16:31:56.925 -07:00 [INF] Removing outdated package reference: Serilog.Sinks.Async, Version=1.3.0
+2021-05-27 16:31:56.926 -07:00 [INF] Removing outdated package reference: Serilog.Sinks.File, Version=4.0.0
+2021-05-27 16:31:56.927 -07:00 [INF] Removing outdated package reference: Serilog.Sinks.Map, Version=1.0.0
+2021-05-27 16:31:56.929 -07:00 [INF] Removing outdated package reference: SharpZipLib, Version=0.86.0
+2021-05-27 16:31:56.930 -07:00 [INF] Removing outdated package reference: Superpower, Version=2.0.0
+2021-05-27 16:31:56.932 -07:00 [INF] Removing outdated package reference: System.AppContext, Version=4.3.0
+2021-05-27 16:31:56.933 -07:00 [INF] Removing outdated package reference: System.Collections, Version=4.3.0
+2021-05-27 16:31:56.934 -07:00 [INF] Removing outdated package reference: System.Collections.Concurrent, Version=4.3.0
+2021-05-27 16:31:56.937 -07:00 [INF] Removing outdated package reference: System.Collections.Immutable, Version=1.5.0
+2021-05-27 16:31:56.939 -07:00 [INF] Removing outdated package reference: System.Console, Version=4.3.0
+2021-05-27 16:31:56.940 -07:00 [INF] Removing outdated package reference: System.Diagnostics.Debug, Version=4.3.0
+2021-05-27 16:31:56.941 -07:00 [INF] Removing outdated package reference: System.Diagnostics.DiagnosticSource, Version=4.4.1
+2021-05-27 16:31:56.942 -07:00 [INF] Removing outdated package reference: System.Diagnostics.FileVersionInfo, Version=4.3.0
+2021-05-27 16:31:56.943 -07:00 [INF] Removing outdated package reference: System.Diagnostics.StackTrace, Version=4.3.0
+2021-05-27 16:31:56.944 -07:00 [INF] Removing outdated package reference: System.Diagnostics.Tools, Version=4.3.0
+2021-05-27 16:31:56.945 -07:00 [INF] Removing outdated package reference: System.Dynamic.Runtime, Version=4.3.0
+2021-05-27 16:31:56.947 -07:00 [INF] Removing outdated package reference: System.Globalization, Version=4.3.0
+2021-05-27 16:31:56.949 -07:00 [INF] Removing outdated package reference: System.IO, Version=4.3.0
+2021-05-27 16:31:56.950 -07:00 [INF] Removing outdated package reference: System.IO.Compression, Version=4.3.0
+2021-05-27 16:31:56.952 -07:00 [INF] Removing outdated package reference: System.IO.FileSystem, Version=4.3.0
+2021-05-27 16:31:56.954 -07:00 [INF] Removing outdated package reference: System.IO.FileSystem.Primitives, Version=4.3.0
+2021-05-27 16:31:56.955 -07:00 [INF] Removing outdated package reference: System.Linq, Version=4.3.0
+2021-05-27 16:31:56.957 -07:00 [INF] Removing outdated package reference: System.Linq.Expressions, Version=4.3.0
+2021-05-27 16:31:56.959 -07:00 [INF] Removing outdated package reference: System.Reflection, Version=4.3.0
+2021-05-27 16:31:56.960 -07:00 [INF] Removing outdated package reference: System.Reflection.Metadata, Version=1.6.0
+2021-05-27 16:31:56.961 -07:00 [INF] Removing outdated package reference: System.Resources.ResourceManager, Version=4.3.0
+2021-05-27 16:31:56.962 -07:00 [INF] Removing outdated package reference: System.Runtime, Version=4.3.0
+2021-05-27 16:31:56.963 -07:00 [INF] Removing outdated package reference: System.Runtime.Extensions, Version=4.3.0
+2021-05-27 16:31:56.965 -07:00 [INF] Removing outdated package reference: System.Runtime.InteropServices, Version=4.3.0
+2021-05-27 16:31:56.966 -07:00 [INF] Removing outdated package reference: System.Runtime.Numerics, Version=4.3.0
+2021-05-27 16:31:56.967 -07:00 [INF] Removing outdated package reference: System.Security.Cryptography.Algorithms, Version=4.3.0
+2021-05-27 16:31:56.968 -07:00 [INF] Removing outdated package reference: System.Security.Cryptography.Encoding, Version=4.3.0
+2021-05-27 16:31:56.970 -07:00 [INF] Removing outdated package reference: System.Security.Cryptography.Primitives, Version=4.3.0
+2021-05-27 16:31:56.971 -07:00 [INF] Removing outdated package reference: System.Security.Cryptography.X509Certificates, Version=4.3.0
+2021-05-27 16:31:56.972 -07:00 [INF] Removing outdated package reference: System.Text.Encoding, Version=4.3.0
+2021-05-27 16:31:56.973 -07:00 [INF] Removing outdated package reference: System.Text.Encoding.CodePages, Version=4.3.0
+2021-05-27 16:31:56.974 -07:00 [INF] Removing outdated package reference: System.Text.Encoding.Extensions, Version=4.3.0
+2021-05-27 16:31:56.975 -07:00 [INF] Removing outdated package reference: System.Threading, Version=4.3.0
+2021-05-27 16:31:56.976 -07:00 [INF] Removing outdated package reference: System.Threading.Tasks, Version=4.3.0
+2021-05-27 16:31:56.978 -07:00 [INF] Removing outdated package reference: System.Threading.Tasks.Dataflow, Version=4.9.0
+2021-05-27 16:31:56.979 -07:00 [INF] Removing outdated package reference: System.Threading.Tasks.Extensions, Version=4.3.0
+2021-05-27 16:31:56.980 -07:00 [INF] Removing outdated package reference: System.Threading.Tasks.Parallel, Version=4.3.0
+2021-05-27 16:31:56.981 -07:00 [INF] Removing outdated package reference: System.Threading.Thread, Version=4.3.0
+2021-05-27 16:31:56.982 -07:00 [INF] Removing outdated package reference: System.Xml.ReaderWriter, Version=4.3.0
+2021-05-27 16:31:56.983 -07:00 [INF] Removing outdated package reference: System.Xml.XDocument, Version=4.3.0
+2021-05-27 16:31:56.983 -07:00 [INF] Removing outdated package reference: System.Xml.XmlDocument, Version=4.3.0
+2021-05-27 16:31:56.985 -07:00 [INF] Removing outdated package reference: System.Xml.XPath, Version=4.3.0
+2021-05-27 16:31:56.986 -07:00 [INF] Removing outdated package reference: System.Xml.XPath.XDocument, Version=4.3.0
+2021-05-27 16:31:56.988 -07:00 [INF] Removing outdated package reference: Umbraco.ModelsBuilder, Version=8.1.0
+2021-05-27 16:31:56.989 -07:00 [INF] Removing outdated package reference: Umbraco.ModelsBuilder.Ui, Version=8.1.0
+2021-05-27 16:31:56.990 -07:00 [INF] Removing outdated package reference: Umbraco.SqlServerCE, Version=4.0.0.1
+2021-05-27 16:31:56.991 -07:00 [INF] Removing outdated package reference: UmbracoCms.Core, Version=8.2.3
+2021-05-27 16:31:56.992 -07:00 [INF] Removing outdated package reference: UmbracoCms.Web, Version=8.2.3
+2021-05-27 16:31:56.995 -07:00 [INF] Adding package reference: System.Net.Http, Version=4.3.0
+2021-05-27 16:31:56.997 -07:00 [INF] Adding package reference: System.Configuration.ConfigurationManager, Version=5.0.0
+2021-05-27 16:31:56.998 -07:00 [INF] Adding package reference: Microsoft.DotNet.UpgradeAssistant.Extensions.Default.Analyzers, Version=0.2.227701
+2021-05-27 16:32:25.572 -07:00 [WRN] No version of GitVersionTask found that supports ["net472"]; leaving unchanged
+2021-05-27 16:32:29.129 -07:00 [INF] Upgrade step Clean up NuGet package references applied successfully
+2021-05-27 16:33:00.814 -07:00 [INF] Initializing upgrade step Update TFM
+2021-05-27 16:33:00.984 -07:00 [INF] TFM needs updated to net5.0
+2021-05-27 17:56:28.323 -07:00 [INF] Applying upgrade step Update TFM
+2021-05-27 17:56:49.352 -07:00 [INF] Updated TFM to net5.0
+2021-05-27 17:56:49.354 -07:00 [INF] Upgrade step Update TFM applied successfully
+2021-05-27 18:01:03.810 -07:00 [INF] Initializing upgrade step Update NuGet Packages
+2021-05-27 18:01:21.110 -07:00 [INF] Marking package AutoMapper for removal because it appears to be a transitive dependency
+2021-05-27 18:01:21.117 -07:00 [INF] Marking package ClientDependency for removal because it appears to be a transitive dependency
+2021-05-27 18:01:21.125 -07:00 [INF] Marking package GitVersionTask for removal because it appears to be a transitive dependency
+2021-05-27 18:01:21.138 -07:00 [INF] Marking package Microsoft.CSharp for removal because it appears to be a transitive dependency
+2021-05-27 18:01:21.145 -07:00 [INF] Marking package System.ComponentModel.Annotations for removal because it appears to be a transitive dependency
+2021-05-27 18:01:21.178 -07:00 [INF] Marking package System.Runtime.Caching for removal because it appears to be a transitive dependency
+2021-05-27 18:01:21.191 -07:00 [INF] Marking package xmlrpcnet for removal because it appears to be a transitive dependency
+2021-05-27 18:01:21.206 -07:00 [INF] Marking package System.Configuration.ConfigurationManager for removal because it appears to be a transitive dependency
+2021-05-27 18:01:29.401 -07:00 [WRN] No version of UmbracoCms found that supports ["net5.0"]; leaving unchanged
+2021-05-27 18:01:32.173 -07:00 [INF] Reference to Newtonsoft package (Microsoft.AspNetCore.Mvc.NewtonsoftJson, version 5.0.6) needs added
+2021-05-27 18:01:32.177 -07:00 [INF] Packages to be removed:
+AutoMapper, Version=8.0.0
+ClientDependency, Version=1.9.9
+GitVersionTask, Version=5.5.1
+Microsoft.CSharp, Version=4.7.0
+System.ComponentModel.Annotations, Version=5.0.0
+System.Runtime.Caching, Version=5.0.0
+xmlrpcnet, Version=3.0.0.266
+System.Configuration.ConfigurationManager, Version=5.0.0
+2021-05-27 18:01:32.177 -07:00 [INF] Packages to be added:
+Microsoft.AspNetCore.Mvc.NewtonsoftJson, Version=5.0.6
+2021-05-27 18:08:28.491 -07:00 [INF] Applying upgrade step Update NuGet Packages
+2021-05-27 18:08:28.494 -07:00 [INF] Removing outdated package reference: AutoMapper, Version=8.0.0
+2021-05-27 18:08:28.496 -07:00 [INF] Removing outdated package reference: ClientDependency, Version=1.9.9
+2021-05-27 18:08:28.497 -07:00 [INF] Removing outdated package reference: GitVersionTask, Version=5.5.1
+2021-05-27 18:08:28.498 -07:00 [INF] Removing outdated package reference: Microsoft.CSharp, Version=4.7.0
+2021-05-27 18:08:28.499 -07:00 [INF] Removing outdated package reference: System.ComponentModel.Annotations, Version=5.0.0
+2021-05-27 18:08:28.500 -07:00 [INF] Removing outdated package reference: System.Runtime.Caching, Version=5.0.0
+2021-05-27 18:08:28.501 -07:00 [INF] Removing outdated package reference: xmlrpcnet, Version=3.0.0.266
+2021-05-27 18:08:28.502 -07:00 [INF] Removing outdated package reference: System.Configuration.ConfigurationManager, Version=5.0.0
+2021-05-27 18:08:28.503 -07:00 [INF] Adding package reference: Microsoft.AspNetCore.Mvc.NewtonsoftJson, Version=5.0.6
+2021-05-27 18:08:53.740 -07:00 [WRN] No version of UmbracoCms found that supports ["net5.0"]; leaving unchanged
+2021-05-27 18:08:54.516 -07:00 [INF] Upgrade step Update NuGet Packages applied successfully
+2021-05-27 18:09:28.496 -07:00 [INF] Initializing upgrade step Add template files
+2021-05-27 18:09:28.581 -07:00 [INF] 4 expected template items needed
+2021-05-27 18:09:30.234 -07:00 [INF] Applying upgrade step Add template files
+2021-05-27 18:09:30.281 -07:00 [INF] Added template file Program.cs from Default extension
+2021-05-27 18:09:30.300 -07:00 [INF] Added template file Startup.cs from Default extension
+2021-05-27 18:09:30.315 -07:00 [INF] Added template file appsettings.json from Default extension
+2021-05-27 18:09:30.333 -07:00 [INF] Added template file appsettings.Development.json from Default extension
+2021-05-27 18:09:42.643 -07:00 [INF] 4 template items added
+2021-05-27 18:09:42.646 -07:00 [INF] Upgrade step Add template files applied successfully
+2021-05-27 19:44:51.679 -07:00 [INF] Initializing upgrade step Upgrade app config files
+2021-05-27 19:44:56.816 -07:00 [INF] Found 16 app settings for upgrade: Umbraco.Core.ConfigurationStatus, Umbraco.Core.ReservedUrls, Umbraco.Core.ReservedPaths, Umbraco.Core.Path, Umbraco.Core.HideTopLevelNodeFromPath, Umbraco.Core.TimeOutInMinutes, Umbraco.Core.DefaultUILanguage, Umbraco.Core.UseHttps, ValidationSettings:UnobtrusiveValidationMode, webpages:Enabled, enableSimpleMembership, autoFormsAuthentication, dataAnnotations:dataTypeAttribute:disableRegEx, owin:appStartup, Umbraco.ModelsBuilder.Enable, Umbraco.ModelsBuilder.ModelsMode
+2021-05-27 19:44:56.828 -07:00 [INF] 7 web page namespace imports need upgraded: Umbraco.Web, Umbraco.Core, Umbraco.Core.Models, Umbraco.Core.Models.PublishedContent, Umbraco.Web.Mvc, Examine, Umbraco.Web.PublishedModels
+2021-05-27 19:44:56.970 -07:00 [INF] Applying upgrade step Convert Application Settings
+2021-05-27 19:44:57.071 -07:00 [INF] Upgrade step Convert Application Settings applied successfully
+2021-05-27 19:45:04.224 -07:00 [INF] Applying upgrade step Convert system.web.webPages.razor/pages/namespaces
+2021-05-27 19:45:04.230 -07:00 [INF] View imports written to C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\Views\_ViewImports.cshtml
+2021-05-27 19:45:04.232 -07:00 [INF] Upgrade step Convert system.web.webPages.razor/pages/namespaces applied successfully
+2021-05-27 19:45:04.233 -07:00 [INF] Applying upgrade step Upgrade app config files
+2021-05-27 19:45:04.234 -07:00 [INF] Upgrade step Upgrade app config files applied successfully
+2021-05-27 19:45:07.252 -07:00 [INF] Initializing upgrade step Update Razor files
+2021-05-27 19:45:13.091 -07:00 [INF] Identified 53 fixable diagnostics in Razor files in project Articulate.Web
+2021-05-27 19:45:13.096 -07:00 [INF]   2 diagnostics need fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\Umbraco\Views\AuthorizeUpgrade.cshtml
+2021-05-27 19:45:13.097 -07:00 [INF]   1 diagnostics need fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\Umbraco\PartialViewMacros\Templates\EditProfile.cshtml
+2021-05-27 19:45:13.098 -07:00 [INF]   2 diagnostics need fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\Umbraco\PartialViewMacros\Templates\Login.cshtml
+2021-05-27 19:45:13.099 -07:00 [INF]   1 diagnostics need fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\Umbraco\PartialViewMacros\Templates\LoginStatus.cshtml
+2021-05-27 19:45:13.100 -07:00 [INF]   1 diagnostics need fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\Umbraco\PartialViewMacros\Templates\RegisterMember.cshtml
+2021-05-27 19:45:13.102 -07:00 [INF]   2 diagnostics need fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190212-141614\Umbraco\Views\AuthorizeUpgrade.cshtml
+2021-05-27 19:45:13.104 -07:00 [INF]   2 diagnostics need fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190215-131139\Umbraco\Views\AuthorizeUpgrade.cshtml
+2021-05-27 19:45:13.105 -07:00 [INF]   2 diagnostics need fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190218-151128\Umbraco\Views\AuthorizeUpgrade.cshtml
+2021-05-27 19:45:13.106 -07:00 [INF]   2 diagnostics need fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190219-131524\Umbraco\Views\AuthorizeUpgrade.cshtml
+2021-05-27 19:45:13.107 -07:00 [INF]   2 diagnostics need fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190220-171406\Umbraco\Views\AuthorizeUpgrade.cshtml
+2021-05-27 19:45:13.108 -07:00 [INF]   2 diagnostics need fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190222-115647\Umbraco\Views\AuthorizeUpgrade.cshtml
+2021-05-27 19:45:13.109 -07:00 [INF]   2 diagnostics need fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190307-194351\Umbraco\Views\AuthorizeUpgrade.cshtml
+2021-05-27 19:45:13.110 -07:00 [INF]   1 diagnostics need fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190212-141614\Umbraco\PartialViewMacros\Templates\EditProfile.cshtml
+2021-05-27 19:45:13.111 -07:00 [INF]   1 diagnostics need fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190212-141614\Umbraco\PartialViewMacros\Templates\Login.cshtml
+2021-05-27 19:45:13.113 -07:00 [INF]   1 diagnostics need fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190212-141614\Umbraco\PartialViewMacros\Templates\LoginStatus.cshtml
+2021-05-27 19:45:13.114 -07:00 [INF]   1 diagnostics need fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190212-141614\Umbraco\PartialViewMacros\Templates\RegisterMember.cshtml
+2021-05-27 19:45:13.115 -07:00 [INF]   1 diagnostics need fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190215-131139\Umbraco\PartialViewMacros\Templates\EditProfile.cshtml
+2021-05-27 19:45:13.117 -07:00 [INF]   1 diagnostics need fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190215-131139\Umbraco\PartialViewMacros\Templates\Login.cshtml
+2021-05-27 19:45:13.118 -07:00 [INF]   1 diagnostics need fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190215-131139\Umbraco\PartialViewMacros\Templates\LoginStatus.cshtml
+2021-05-27 19:45:13.119 -07:00 [INF]   1 diagnostics need fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190215-131139\Umbraco\PartialViewMacros\Templates\RegisterMember.cshtml
+2021-05-27 19:45:13.122 -07:00 [INF]   1 diagnostics need fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190218-151128\Umbraco\PartialViewMacros\Templates\EditProfile.cshtml
+2021-05-27 19:45:13.123 -07:00 [INF]   1 diagnostics need fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190218-151128\Umbraco\PartialViewMacros\Templates\Login.cshtml
+2021-05-27 19:45:13.124 -07:00 [INF]   1 diagnostics need fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190218-151128\Umbraco\PartialViewMacros\Templates\LoginStatus.cshtml
+2021-05-27 19:45:13.125 -07:00 [INF]   1 diagnostics need fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190218-151128\Umbraco\PartialViewMacros\Templates\RegisterMember.cshtml
+2021-05-27 19:45:13.126 -07:00 [INF]   1 diagnostics need fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190219-131524\Umbraco\PartialViewMacros\Templates\EditProfile.cshtml
+2021-05-27 19:45:13.127 -07:00 [INF]   1 diagnostics need fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190219-131524\Umbraco\PartialViewMacros\Templates\Login.cshtml
+2021-05-27 19:45:13.128 -07:00 [INF]   1 diagnostics need fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190219-131524\Umbraco\PartialViewMacros\Templates\LoginStatus.cshtml
+2021-05-27 19:45:13.129 -07:00 [INF]   1 diagnostics need fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190219-131524\Umbraco\PartialViewMacros\Templates\RegisterMember.cshtml
+2021-05-27 19:45:13.130 -07:00 [INF]   1 diagnostics need fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190220-171406\Umbraco\PartialViewMacros\Templates\EditProfile.cshtml
+2021-05-27 19:45:13.132 -07:00 [INF]   1 diagnostics need fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190220-171406\Umbraco\PartialViewMacros\Templates\Login.cshtml
+2021-05-27 19:45:13.134 -07:00 [INF]   1 diagnostics need fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190220-171406\Umbraco\PartialViewMacros\Templates\LoginStatus.cshtml
+2021-05-27 19:45:13.136 -07:00 [INF]   1 diagnostics need fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190220-171406\Umbraco\PartialViewMacros\Templates\RegisterMember.cshtml
+2021-05-27 19:45:13.137 -07:00 [INF]   1 diagnostics need fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190222-115647\Umbraco\PartialViewMacros\Templates\EditProfile.cshtml
+2021-05-27 19:45:13.139 -07:00 [INF]   1 diagnostics need fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190222-115647\Umbraco\PartialViewMacros\Templates\Login.cshtml
+2021-05-27 19:45:13.140 -07:00 [INF]   1 diagnostics need fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190222-115647\Umbraco\PartialViewMacros\Templates\LoginStatus.cshtml
+2021-05-27 19:45:13.141 -07:00 [INF]   1 diagnostics need fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190222-115647\Umbraco\PartialViewMacros\Templates\RegisterMember.cshtml
+2021-05-27 19:45:13.142 -07:00 [INF]   1 diagnostics need fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190307-194351\Umbraco\PartialViewMacros\Templates\EditProfile.cshtml
+2021-05-27 19:45:13.143 -07:00 [INF]   1 diagnostics need fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190307-194351\Umbraco\PartialViewMacros\Templates\Login.cshtml
+2021-05-27 19:45:13.144 -07:00 [INF]   1 diagnostics need fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190307-194351\Umbraco\PartialViewMacros\Templates\LoginStatus.cshtml
+2021-05-27 19:45:13.145 -07:00 [INF]   1 diagnostics need fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190307-194351\Umbraco\PartialViewMacros\Templates\RegisterMember.cshtml
+2021-05-27 19:45:13.147 -07:00 [INF]   2 diagnostics need fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\Views\Partials\Grid\Bootstrap3-Fluid.cshtml
+2021-05-27 19:45:13.149 -07:00 [INF]   2 diagnostics need fixed in C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\Views\Partials\Grid\Bootstrap3.cshtml
+2021-05-27 19:45:14.774 -07:00 [INF] Applying upgrade step Apply code fixes to Razor documents
+2021-05-27 19:45:18.634 -07:00 [INF] Updating source code in Razor document C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\Views\Partials\Grid\Bootstrap3-Fluid.cshtml at line 56
+2021-05-27 19:45:18.638 -07:00 [INF] Updating source code in Razor document C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\Views\Partials\Grid\Bootstrap3-Fluid.cshtml at line 0
+2021-05-27 19:45:18.648 -07:00 [INF] Updating source code in Razor document C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\Views\Partials\Grid\Bootstrap3.cshtml at line 56
+2021-05-27 19:45:18.651 -07:00 [INF] Updating source code in Razor document C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\Views\Partials\Grid\Bootstrap3.cshtml at line 0
+2021-05-27 19:45:18.656 -07:00 [INF] Updating source code in Razor document C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\Umbraco\PartialViewMacros\Templates\Login.cshtml at line 8
+2021-05-27 19:45:18.657 -07:00 [INF] Updating source code in Razor document C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\Umbraco\PartialViewMacros\Templates\Login.cshtml at line 1
+2021-05-27 19:45:18.658 -07:00 [INF] Updating source code in Razor document C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\Umbraco\PartialViewMacros\Templates\Login.cshtml at line 0
+2021-05-27 19:45:18.660 -07:00 [INF] Updating source code in Razor document C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\Umbraco\Views\AuthorizeUpgrade.cshtml at line 7
+2021-05-27 19:45:18.662 -07:00 [INF] Updating source code in Razor document C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\Umbraco\Views\AuthorizeUpgrade.cshtml at line 3
+2021-05-27 19:45:18.664 -07:00 [INF] Updating source code in Razor document C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190212-141614\Umbraco\Views\AuthorizeUpgrade.cshtml at line 7
+2021-05-27 19:45:18.666 -07:00 [INF] Updating source code in Razor document C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190212-141614\Umbraco\Views\AuthorizeUpgrade.cshtml at line 3
+2021-05-27 19:45:18.669 -07:00 [INF] Updating source code in Razor document C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190215-131139\Umbraco\Views\AuthorizeUpgrade.cshtml at line 7
+2021-05-27 19:45:18.672 -07:00 [INF] Updating source code in Razor document C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190215-131139\Umbraco\Views\AuthorizeUpgrade.cshtml at line 3
+2021-05-27 19:45:18.675 -07:00 [INF] Updating source code in Razor document C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190218-151128\Umbraco\Views\AuthorizeUpgrade.cshtml at line 7
+2021-05-27 19:45:18.677 -07:00 [INF] Updating source code in Razor document C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190218-151128\Umbraco\Views\AuthorizeUpgrade.cshtml at line 3
+2021-05-27 19:45:18.680 -07:00 [INF] Updating source code in Razor document C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190219-131524\Umbraco\Views\AuthorizeUpgrade.cshtml at line 7
+2021-05-27 19:45:18.681 -07:00 [INF] Updating source code in Razor document C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190219-131524\Umbraco\Views\AuthorizeUpgrade.cshtml at line 3
+2021-05-27 19:45:18.683 -07:00 [INF] Updating source code in Razor document C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190220-171406\Umbraco\Views\AuthorizeUpgrade.cshtml at line 7
+2021-05-27 19:45:18.686 -07:00 [INF] Updating source code in Razor document C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190220-171406\Umbraco\Views\AuthorizeUpgrade.cshtml at line 3
+2021-05-27 19:45:18.688 -07:00 [INF] Updating source code in Razor document C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190222-115647\Umbraco\Views\AuthorizeUpgrade.cshtml at line 7
+2021-05-27 19:45:18.690 -07:00 [INF] Updating source code in Razor document C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190222-115647\Umbraco\Views\AuthorizeUpgrade.cshtml at line 3
+2021-05-27 19:45:18.692 -07:00 [INF] Updating source code in Razor document C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190307-194351\Umbraco\Views\AuthorizeUpgrade.cshtml at line 7
+2021-05-27 19:45:18.694 -07:00 [INF] Updating source code in Razor document C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190307-194351\Umbraco\Views\AuthorizeUpgrade.cshtml at line 3
+2021-05-27 19:45:18.696 -07:00 [INF] Updating source code in Razor document C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\Umbraco\PartialViewMacros\Templates\EditProfile.cshtml at line 1
+2021-05-27 19:45:18.700 -07:00 [INF] Updating source code in Razor document C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\Umbraco\PartialViewMacros\Templates\LoginStatus.cshtml at line 1
+2021-05-27 19:45:18.704 -07:00 [INF] Updating source code in Razor document C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\Umbraco\PartialViewMacros\Templates\RegisterMember.cshtml at line 1
+2021-05-27 19:45:18.707 -07:00 [INF] Updating source code in Razor document C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190212-141614\Umbraco\PartialViewMacros\Templates\EditProfile.cshtml at line 1
+2021-05-27 19:45:18.709 -07:00 [INF] Updating source code in Razor document C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190212-141614\Umbraco\PartialViewMacros\Templates\Login.cshtml at line 1
+2021-05-27 19:45:18.713 -07:00 [INF] Updating source code in Razor document C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190212-141614\Umbraco\PartialViewMacros\Templates\LoginStatus.cshtml at line 1
+2021-05-27 19:45:18.716 -07:00 [INF] Updating source code in Razor document C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190212-141614\Umbraco\PartialViewMacros\Templates\RegisterMember.cshtml at line 1
+2021-05-27 19:45:18.719 -07:00 [INF] Updating source code in Razor document C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190215-131139\Umbraco\PartialViewMacros\Templates\EditProfile.cshtml at line 1
+2021-05-27 19:45:18.722 -07:00 [INF] Updating source code in Razor document C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190215-131139\Umbraco\PartialViewMacros\Templates\Login.cshtml at line 1
+2021-05-27 19:45:18.725 -07:00 [INF] Updating source code in Razor document C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190215-131139\Umbraco\PartialViewMacros\Templates\LoginStatus.cshtml at line 1
+2021-05-27 19:45:18.733 -07:00 [INF] Updating source code in Razor document C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190215-131139\Umbraco\PartialViewMacros\Templates\RegisterMember.cshtml at line 1
+2021-05-27 19:45:18.737 -07:00 [INF] Updating source code in Razor document C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190218-151128\Umbraco\PartialViewMacros\Templates\EditProfile.cshtml at line 1
+2021-05-27 19:45:18.740 -07:00 [INF] Updating source code in Razor document C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190218-151128\Umbraco\PartialViewMacros\Templates\Login.cshtml at line 1
+2021-05-27 19:45:18.742 -07:00 [INF] Updating source code in Razor document C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190218-151128\Umbraco\PartialViewMacros\Templates\LoginStatus.cshtml at line 1
+2021-05-27 19:45:18.746 -07:00 [INF] Updating source code in Razor document C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190218-151128\Umbraco\PartialViewMacros\Templates\RegisterMember.cshtml at line 1
+2021-05-27 19:45:18.749 -07:00 [INF] Updating source code in Razor document C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190219-131524\Umbraco\PartialViewMacros\Templates\EditProfile.cshtml at line 1
+2021-05-27 19:45:18.752 -07:00 [INF] Updating source code in Razor document C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190219-131524\Umbraco\PartialViewMacros\Templates\Login.cshtml at line 1
+2021-05-27 19:45:18.754 -07:00 [INF] Updating source code in Razor document C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190219-131524\Umbraco\PartialViewMacros\Templates\LoginStatus.cshtml at line 1
+2021-05-27 19:45:18.757 -07:00 [INF] Updating source code in Razor document C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190219-131524\Umbraco\PartialViewMacros\Templates\RegisterMember.cshtml at line 1
+2021-05-27 19:45:18.761 -07:00 [INF] Updating source code in Razor document C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190220-171406\Umbraco\PartialViewMacros\Templates\EditProfile.cshtml at line 1
+2021-05-27 19:45:18.764 -07:00 [INF] Updating source code in Razor document C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190220-171406\Umbraco\PartialViewMacros\Templates\Login.cshtml at line 1
+2021-05-27 19:45:18.766 -07:00 [INF] Updating source code in Razor document C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190220-171406\Umbraco\PartialViewMacros\Templates\LoginStatus.cshtml at line 1
+2021-05-27 19:45:18.770 -07:00 [INF] Updating source code in Razor document C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190220-171406\Umbraco\PartialViewMacros\Templates\RegisterMember.cshtml at line 1
+2021-05-27 19:45:18.773 -07:00 [INF] Updating source code in Razor document C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190222-115647\Umbraco\PartialViewMacros\Templates\EditProfile.cshtml at line 1
+2021-05-27 19:45:18.776 -07:00 [INF] Updating source code in Razor document C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190222-115647\Umbraco\PartialViewMacros\Templates\Login.cshtml at line 1
+2021-05-27 19:45:18.778 -07:00 [INF] Updating source code in Razor document C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190222-115647\Umbraco\PartialViewMacros\Templates\LoginStatus.cshtml at line 1
+2021-05-27 19:45:18.780 -07:00 [INF] Updating source code in Razor document C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190222-115647\Umbraco\PartialViewMacros\Templates\RegisterMember.cshtml at line 1
+2021-05-27 19:45:18.782 -07:00 [INF] Updating source code in Razor document C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190307-194351\Umbraco\PartialViewMacros\Templates\EditProfile.cshtml at line 1
+2021-05-27 19:45:18.786 -07:00 [INF] Updating source code in Razor document C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190307-194351\Umbraco\PartialViewMacros\Templates\Login.cshtml at line 1
+2021-05-27 19:45:18.788 -07:00 [INF] Updating source code in Razor document C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190307-194351\Umbraco\PartialViewMacros\Templates\LoginStatus.cshtml at line 1
+2021-05-27 19:45:18.792 -07:00 [INF] Updating source code in Razor document C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\App_Data\NuGetBackup\20190307-194351\Umbraco\PartialViewMacros\Templates\RegisterMember.cshtml at line 1
+2021-05-27 19:45:28.735 -07:00 [INF] Upgrade step Apply code fixes to Razor documents applied successfully
+2021-05-27 19:45:28.740 -07:00 [INF] Applying upgrade step Update Razor files
+2021-05-27 19:45:28.742 -07:00 [INF] Upgrade step Update Razor files applied successfully
+2021-05-27 19:45:45.353 -07:00 [INF] Initializing upgrade step Update source code
+2021-05-27 19:45:45.851 -07:00 [INF] Initializing upgrade step Move to next project
+2021-05-27 19:50:07.202 -07:00 [INF] Applying upgrade step Move to next project
+2021-05-27 19:50:07.203 -07:00 [INF] Upgrade step Move to next project applied successfully
+2021-05-28 12:30:01.627 -07:00 [INF] Initializing upgrade step Finalize upgrade
+2021-05-28 12:30:03.041 -07:00 [INF] Applying upgrade step Finalize upgrade
+2021-05-28 12:30:03.049 -07:00 [INF] Upgrade step Finalize upgrade applied successfully
+2021-05-28 12:30:04.224 -07:00 [INF] Upgrade has completed. Please review any changes.
+2021-05-28 12:30:04.230 -07:00 [INF] Saving upgrade progress file at C:\Users\Shannon\Documents\_Projects\Articulate\Articulate.Project\src\Articulate.Web\.upgrade-assistant

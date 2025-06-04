@@ -6,7 +6,14 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
+using System.Linq;
+using System.Threading.Tasks;
 using Umbraco.Cms.Core.DependencyInjection;
+using Umbraco.Cms.Core.Events;
+using Umbraco.Cms.Core.Notifications;
+using Umbraco.Cms.Core.Routing;
+using Umbraco.Cms.Core.Services;
+using Umbraco.Cms.Core.Web;
 using Umbraco.Extensions;
 
 namespace Articulate.Tests.Website
@@ -40,11 +47,15 @@ namespace Articulate.Tests.Website
         public void ConfigureServices(IServiceCollection services)
         {
 #pragma warning disable IDE0022 // Use expression body for methods
-            services.AddUmbraco(_env, _config)
+            var builder = services.AddUmbraco(_env, _config)
                 .AddBackOffice()
                 .AddWebsite()
-                .AddComposers()
-                .Build();
+                .AddComposers();
+
+            builder.SetContentLastChanceFinder<My404ContentFinder>();
+            builder.AddNotificationHandler<RoutingRequestNotification, MyRoutingNotificationHandler>();
+
+            builder.Build();
 #pragma warning restore IDE0022 // Use expression body for methods
 
             services.AddRazorPages();
@@ -91,6 +102,55 @@ namespace Articulate.Tests.Website
                     u.UseBackOfficeEndpoints();
                     u.UseWebsiteEndpoints();
                 });
+        }
+    }
+
+    public class MyRoutingNotificationHandler : INotificationHandler<RoutingRequestNotification>
+    {
+        public void Handle(RoutingRequestNotification notification)
+        {
+        }
+    }
+
+    public class My404ContentFinder : IContentLastChanceFinder
+    {
+        private readonly IDomainService _domainService;
+        private readonly IUmbracoContextAccessor _umbracoContextAccessor;
+
+        public My404ContentFinder(IDomainService domainService, IUmbracoContextAccessor umbracoContextAccessor)
+        {
+            _domainService = domainService;
+            _umbracoContextAccessor = umbracoContextAccessor;
+        }
+
+        public Task<bool> TryFindContent(IPublishedRequestBuilder contentRequest)
+        {
+            if (!_umbracoContextAccessor.TryGetUmbracoContext(out var umbracoContext))
+            {
+                return Task.FromResult(false);
+            }
+
+            if (umbracoContext.Content == null)
+            {
+                return Task.FromResult(contentRequest.PublishedContent is not null);
+            }
+
+            var notFoundNode = umbracoContext.Content.GetAtRoot().Where(x => x.Name == "404").FirstOrDefault();
+
+            if (notFoundNode is null)
+            {
+                return Task.FromResult(false);
+            }
+
+            //return Task.FromResult(false);
+
+            if (notFoundNode is not null)
+            {
+                contentRequest.SetPublishedContent(notFoundNode);
+            }
+
+            // Return true or false depending on whether our custom 404 page was found
+            return Task.FromResult(notFoundNode is not null);
         }
     }
 }
