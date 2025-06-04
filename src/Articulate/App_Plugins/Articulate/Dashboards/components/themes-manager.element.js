@@ -38,39 +38,76 @@ export default class ThemesManagerElement extends UmbElementMixin(LitElement) {
             margin-bottom: 15px;
         }
         
+        /* Use the original Umbraco package styling but adapted */
         .themes-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            display: flex;
+            flex-wrap: wrap;
             gap: 15px;
             margin-bottom: 20px;
         }
         
-        .theme-card {
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
+        .theme-package {
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
             padding: 15px;
-            text-align: center;
             cursor: pointer;
             transition: all 0.3s ease;
             background: white;
+            text-align: center;
+            min-width: 140px;
         }
         
-        .theme-card:hover {
+        .theme-package:hover {
             border-color: #1976d2;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
         
-        .theme-card.selected {
-            border-color: #1976d2;
-            background: #e3f2fd;
+        .theme-package.selected {
+            border-color: #2152a3;
+            border-width: 2px;
+            background: #f8f9ff;
+        }
+        
+        .theme-package-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
         
         .theme-icon {
-            width: 60px;
-            height: 60px;
-            margin: 0 auto 10px;
+            margin-bottom: 10px;
+        }
+        
+        /* Original theme styles adapted for the new component */
+        .articulate-theme {
+            width: 100px;
+            height: 100px;
+            background-color: transparent;
+            background-repeat: no-repeat;
+            background-size: auto 100px;
             border-radius: 4px;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .articulate-theme-Material {
+            background-image: url('../BackOffice/assets/theme-material.png');
+        }
+        
+        .articulate-theme-Mini {
+            background-image: url('../BackOffice/assets/theme-mini.png');
+        }
+        
+        .articulate-theme-Phantom {
+            background-image: url('../BackOffice/assets/theme-phantom.png');
+        }
+        
+        .articulate-theme-VAPOR {
+            background-image: url('../BackOffice/assets/theme-vapor.png');
+        }
+        
+        /* Fallback for themes without images */
+        .articulate-theme-fallback {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             display: flex;
             align-items: center;
@@ -83,6 +120,7 @@ export default class ThemesManagerElement extends UmbElementMixin(LitElement) {
         .theme-name {
             font-weight: 500;
             color: #333;
+            font-size: 14px;
         }
         
         .form-input {
@@ -288,8 +326,27 @@ export default class ThemesManagerElement extends UmbElementMixin(LitElement) {
         }
     }
 
+    hasThemeImage(themeName) {
+        const supportedThemes = ['Material', 'Mini', 'Phantom', 'VAPOR'];
+        return supportedThemes.includes(themeName);
+    }
+
     getThemeIconLetter(themeName) {
         return themeName.charAt(0).toUpperCase();
+    }
+
+    renderThemeIcon(theme) {
+        if (this.hasThemeImage(theme.name)) {
+            return html`
+                <div class="articulate-theme articulate-theme-${theme.name}"></div>
+            `;
+        } else {
+            return html`
+                <div class="articulate-theme articulate-theme-fallback">
+                    ${this.getThemeIconLetter(theme.name)}
+                </div>
+            `;
+        }
     }
 
     render() {
@@ -314,13 +371,15 @@ export default class ThemesManagerElement extends UmbElementMixin(LitElement) {
                     <div class="themes-grid">
                         ${this.themes.map(theme => html`
                             <div 
-                                class="theme-card ${theme.selected ? 'selected' : ''}"
+                                class="theme-package ${theme.selected ? 'selected' : ''}"
                                 @click=${() => this.selectTheme(theme)}
                             >
-                                <div class="theme-icon">
-                                    ${this.getThemeIconLetter(theme.name)}
+                                <div class="theme-package-content">
+                                    <div class="theme-icon">
+                                        ${this.renderThemeIcon(theme)}
+                                    </div>
+                                    <div class="theme-name">${theme.name}</div>
                                 </div>
-                                <div class="theme-name">${theme.name}</div>
                             </div>
                         `)}
                     </div>
