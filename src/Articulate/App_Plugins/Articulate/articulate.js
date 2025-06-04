@@ -1,9 +1,11 @@
-// Main entry point for Articulate property editors
+// Main entry point for Articulate extensions
 import { manifests as themePickerManifests } from './PropertyEditors/theme-picker/manifests.js';
+import { manifests as dashboardManifests } from './Dashboards/articulate-dashboard/manifests.js';
 
 // Register all manifests with Umbraco
 const allManifests = [
-    ...themePickerManifests
+    ...themePickerManifests,
+    ...dashboardManifests
 ];
 
 // Export for Umbraco to consume
