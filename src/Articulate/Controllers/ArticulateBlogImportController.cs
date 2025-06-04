@@ -74,16 +74,13 @@ namespace Articulate.Controllers
                 count = count,
                 tempFile = fileName
             });
-        }
-
-        public ImportModel PostExportBlogMl(ExportBlogMlModel model)
+        }        public ImportModel PostExportBlogMl(ExportBlogMlModel model)
         {
             _blogMlExporter.Export(model.ArticulateNodeId, model.ExportImagesAsBase64);
 
             return new ImportModel
             {
                 DownloadUrl = "/umbraco/articulate/import/GetBlogMlExport"
-                //Url.GetUmbracoApiService<ArticulateBlogImportController>(_umbracoApiControllerTypeCollection, "GetBlogMlExport")
             };
         }
 
@@ -119,11 +116,9 @@ namespace Articulate.Controllers
             if (!successful)
             {
                 return Problem("Importing failed, see umbraco log for details");
-            }
-
-            return new ImportModel
+            }            return new ImportModel
             {
-                // DownloadUrl = Url.GetUmbracoApiService<ArticulateBlogImportController>(_umbracoApiControllerTypeCollection, "GetDisqusExport")
+                DownloadUrl = "/umbraco/articulate/import/GetDisqusExport"
             };
         }
 
