@@ -181,10 +181,21 @@ export default class ArticulateDashboardElement extends UmbElementMixin(LitEleme
         this.selectedGroup = group;
         
         // Dynamically load the component if needed
-        if (group.component === 'articulate-blog-importer') {
-            await import('../components/blog-importer.element.js');
+        try {
+            switch (group.component) {
+                case 'articulate-blog-importer':
+                    await import('../components/blog-importer.element.js');
+                    break;
+                case 'articulate-blog-exporter':
+                    await import('../components/blog-exporter.element.js');
+                    break;
+                case 'articulate-themes-manager':
+                    await import('../components/themes-manager.element.js');
+                    break;
+            }
+        } catch (error) {
+            console.error('Failed to load component:', error);
         }
-        // Add other component imports as needed
     }
 
     setViewState(state) {
@@ -257,15 +268,9 @@ export default class ArticulateDashboardElement extends UmbElementMixin(LitEleme
             case 'articulate-blog-importer':
                 return html`<articulate-blog-importer></articulate-blog-importer>`;
             case 'articulate-blog-exporter':
-                return html`
-                    <p>Blog Exporter component</p>
-                    <p><em>This would be the blog exporter component - not implemented in this demo</em></p>
-                `;
+                return html`<articulate-blog-exporter></articulate-blog-exporter>`;
             case 'articulate-themes-manager':
-                return html`
-                    <p>Themes Manager component</p>
-                    <p><em>This would be the themes manager component - not implemented in this demo</em></p>
-                `;
+                return html`<articulate-themes-manager></articulate-themes-manager>`;
             default:
                 return html`<p>Component not found: ${group.component}</p>`;
         }
