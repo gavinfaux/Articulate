@@ -37,9 +37,10 @@ namespace Articulate.Components
 
             e.ServerVariables[ArticulateConstants.ArticulateContentTypeAlias] = new Dictionary<string, object>
             {
-                // {"articulateImportBaseUrl", _linkGenerator.GetUmbracoApiServiceBaseUrl<ArticulateBlogImportController>(controller => controller.PostImportBlogMl(null))},
-                // {"articulatePropertyEditorsBaseUrl", _linkGenerator.GetUmbracoApiServiceBaseUrl<ArticulatePropertyEditorsController>(controller => controller.GetThemes())},
-                // {"articulateThemeEditorBaseUrl", _linkGenerator.GetUmbracoApiServiceBaseUrl<ThemeEditorController>(controller => controller.GetThemes())}
+                // TODO: Don't hard code these
+                { "articulateImportBaseUrl", "/umbraco/articulate/import"},
+                {"articulatePropertyEditorsBaseUrl", "/umbraco/articulate/editors"},
+                {"articulateThemeEditorBaseUrl", "/umbraco/articulate/themes"}
             };
         }
     }

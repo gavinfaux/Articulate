@@ -10,7 +10,7 @@ using Umbraco.Cms.Core.Hosting;
 
 namespace Articulate.Controllers
 {
-    [VersionedApiBackOfficeRoute("articulate/import")]
+    [VersionedApiBackOfficeRoute("articulate/editors")]
     [ApiExplorerSettings(GroupName = "Articulate")]
     public class ArticulatePropertyEditorsController : ManagementApiControllerBase
     {

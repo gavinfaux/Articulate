@@ -25,15 +25,13 @@ namespace Articulate.Controllers
             : base(logger, compositeViewEngine, umbracoContextAccessor)
         {
             _linkGenerator = linkGenerator;
-        }
-
-        [HttpGet]
+        }        [HttpGet]
         public IActionResult NewPost()
         {
             var vm = new MarkdownEditorInitModel
             {
                 ArticulateNodeId = CurrentPage.Id,
-                // PostUrl = _linkGenerator.GetUmbracoApiService<MardownEditorApiController>(controller => controller.PostNew()),
+                PostUrl = "/umbraco/articulate/anew/PostNew",
                 // IsAuthUrl = _linkGenerator.GetUmbracoControllerUrl(nameof(AuthenticationController.IsAuthenticated), typeof(AuthenticationController)),
                 // DoAuthUrl = _linkGenerator.GetUmbracoControllerUrl(
                 //     nameof(AuthenticationController.PostLogin),
