@@ -36,7 +36,7 @@ namespace Articulate.Components
             var saved = notification.SavedEntities.ToList();
             if (saved.Count == 0) return;
 
-            var contentTypes = _contentTypeService.GetAll(saved.Select(x => x.ContentTypeId).ToArray()).ToDictionary(x => x.Id);
+            var contentTypes = _contentTypeService.GetMany(saved.Select(x => x.ContentTypeId).ToArray()).ToDictionary(x => x.Id);
 
             foreach (var content in saved)
             {

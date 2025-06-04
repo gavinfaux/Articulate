@@ -81,7 +81,7 @@ namespace Articulate
 
             var result = searchResult
                 .Skip(pageIndex * pageSize)
-                .ToPublishedSearchResults(_umbracoContextAccessor.GetRequiredUmbracoContext().PublishedSnapshot.Content);
+                .ToPublishedSearchResults(_umbracoContextAccessor.GetRequiredUmbracoContext().Content);
 
             totalResults = searchResult.TotalItemCount;
 

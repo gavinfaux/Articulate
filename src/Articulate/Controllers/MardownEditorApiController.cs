@@ -22,16 +22,19 @@ using Umbraco.Cms.Core.PropertyEditors;
 using Umbraco.Cms.Core.Security;
 using Umbraco.Cms.Core.Serialization;
 using Umbraco.Cms.Core.Services;
-using Umbraco.Cms.Web.BackOffice.Controllers;
+using Umbraco.Cms.Api.Management.Controllers;
 using Umbraco.Cms.Web.Common;
 using Umbraco.Extensions;
+using Umbraco.Cms.Api.Management.Routing;
 
 namespace Articulate.Controllers
 {
     /// <summary>
     /// Controller for handling the a-new markdown editor endpoint for creating blog posts
     /// </summary>
-    public class MardownEditorApiController : UmbracoAuthorizedApiController
+    [VersionedApiBackOfficeRoute("articulate/anew")]
+    [ApiExplorerSettings(GroupName = "Articulate")]
+    public class MardownEditorApiController : ManagementApiControllerBase
     {
         private readonly ServiceContext _services;
         private readonly IBackOfficeSecurityAccessor _backOfficeSecurityAccessor;
@@ -113,7 +116,7 @@ namespace Articulate.Controllers
                 return BadRequest("No Articulate Archive node found for the specified id");
             }
 
-            var list = new List<char> { ActionNew.ActionLetter, ActionUpdate.ActionLetter };
+            var list = new List<string> { ActionNew.ActionLetter, ActionUpdate.ActionLetter };
             var hasPermission = CheckPermissions(
                 _backOfficeSecurityAccessor.BackOfficeSecurity.CurrentUser,
                 _services.UserService,
@@ -233,7 +236,7 @@ namespace Articulate.Controllers
             return new ParseImageResponse { BodyText = bodyText, FirstImage = firstImage };
         }
 
-        private static bool CheckPermissions(IUser user, IUserService userService, char[] permissionsToCheck, IContent contentItem)
+        private static bool CheckPermissions(IUser user, IUserService userService, string[] permissionsToCheck, IContent contentItem)
         {
 
             if (permissionsToCheck == null || !permissionsToCheck.Any())
@@ -246,7 +249,7 @@ namespace Articulate.Controllers
             var flag = true;
             foreach (var ch in permissionsToCheck)
             {
-                if (entityPermission == null || !entityPermission.AssignedPermissions.Contains(ch.ToString(CultureInfo.InvariantCulture)))
+                if (entityPermission == null || !entityPermission.AssignedPermissions.Contains(ch))
                 {
                     flag = false;
                 }

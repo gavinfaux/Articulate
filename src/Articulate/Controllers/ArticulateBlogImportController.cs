@@ -8,7 +8,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using Articulate.ImportExport;
-using Umbraco.Cms.Web.BackOffice.Controllers;
+using Umbraco.Cms.Api.Management.Controllers;
 using Umbraco.Cms.Core.Hosting;
 using Umbraco.Extensions;
 using Umbraco.Cms.Core;
@@ -16,10 +16,13 @@ using Umbraco.Cms.Core.Security;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Hosting;
 using Umbraco.Cms.Core.Extensions;
+using Umbraco.Cms.Api.Management.Routing;
 
 namespace Articulate.Controllers
 {
-    public class ArticulateBlogImportController : UmbracoAuthorizedApiController
+    [VersionedApiBackOfficeRoute("articulate/import")]
+    [ApiExplorerSettings(GroupName = "Articulate")]
+    public class ArticulateBlogImportController : ManagementApiControllerBase
     {
         private readonly BlogMlImporter _blogMlImporter;
         private readonly UmbracoApiControllerTypeCollection _umbracoApiControllerTypeCollection;
@@ -59,7 +62,7 @@ namespace Articulate.Controllers
 
             var fileName = Path.GetRandomFileName();
             using (var stream = new MemoryStream())
-            {                
+            {
                 Request.Form.Files[0].CopyTo(stream);
                 _articulateTempFileSystem.AddFile(fileName, stream);
             }
@@ -79,7 +82,8 @@ namespace Articulate.Controllers
 
             return new ImportModel
             {
-                DownloadUrl = Url.GetUmbracoApiService<ArticulateBlogImportController>(_umbracoApiControllerTypeCollection, "GetBlogMlExport")
+                DownloadUrl = "/umbraco/articulate/import/GetBlogMlExport"
+                //Url.GetUmbracoApiService<ArticulateBlogImportController>(_umbracoApiControllerTypeCollection, "GetBlogMlExport")
             };
         }
 
@@ -119,7 +123,7 @@ namespace Articulate.Controllers
 
             return new ImportModel
             {
-                DownloadUrl = Url.GetUmbracoApiService<ArticulateBlogImportController>(_umbracoApiControllerTypeCollection, "GetDisqusExport")
+                // DownloadUrl = Url.GetUmbracoApiService<ArticulateBlogImportController>(_umbracoApiControllerTypeCollection, "GetDisqusExport")
             };
         }
 

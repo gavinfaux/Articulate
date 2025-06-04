@@ -32,17 +32,21 @@ namespace Articulate.Models
             IVariationContextAccessor variationContextAccessor)
             : base(content, publishedValueFallback, variationContextAccessor)
         {
-            
-            if (content == null) throw new ArgumentNullException(nameof(content));
-            if (listItems == null) throw new ArgumentNullException(nameof(listItems));
-            if (pager == null) throw new ArgumentNullException(nameof(pager));
+
+            ArgumentNullException.ThrowIfNull(content);
+            ArgumentNullException.ThrowIfNull(listItems);
+            ArgumentNullException.ThrowIfNull(pager);
 
             Pages = pager;
             _listItems = listItems;
             if (content.ContentType.Alias.Equals(ArticulateConstants.ArticulateArchiveContentTypeAlias))
+            {
                 PageTitle = BlogTitle + " - " + BlogDescription;
+            }
             else
+            {
                 PageTags = Name;
+            }
         }        
 
         public ListModel(IPublishedContent content, IPublishedValueFallback publishedValueFallback, IVariationContextAccessor variationContextAccessor)
@@ -66,11 +70,13 @@ namespace Articulate.Models
             {
 
                 if (_resolvedList != null)
+                {
                     return _resolvedList;
+                }
 
                 if (_listItems == null)
                 {
-                    _resolvedList = base.ChildrenForAllCultures.Select(x => new PostModel(x, PublishedValueFallback, VariationContextAccessor)).ToArray();
+                    _resolvedList = ChildrenForAllCultures.Select(x => new PostModel(x, PublishedValueFallback, VariationContextAccessor)).ToArray();
                     return _resolvedList;
                 }
 
@@ -96,6 +102,6 @@ namespace Articulate.Models
         /// </summary>
         public override IEnumerable<IPublishedContent> Children => Posts;
 
-        public override IEnumerable<IPublishedContent> ChildrenForAllCultures => Posts;
+        public IEnumerable<IPublishedContent> ChildrenForAllCultures => Posts;
     }
 }

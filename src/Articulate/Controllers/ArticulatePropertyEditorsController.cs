@@ -1,14 +1,18 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Hosting;
+using Umbraco.Cms.Api.Management.Controllers;
+using Umbraco.Cms.Api.Management.Routing;
 using Umbraco.Cms.Core.Extensions;
 using Umbraco.Cms.Core.Hosting;
-using Umbraco.Cms.Web.BackOffice.Controllers;
 
 namespace Articulate.Controllers
 {
-    public class ArticulatePropertyEditorsController : UmbracoAuthorizedApiController
+    [VersionedApiBackOfficeRoute("articulate/import")]
+    [ApiExplorerSettings(GroupName = "Articulate")]
+    public class ArticulatePropertyEditorsController : ManagementApiControllerBase
     {
         private readonly IHostEnvironment _hostingEnvironment;
 

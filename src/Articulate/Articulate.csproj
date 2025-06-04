@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net8.0</TargetFrameworks>
+    <TargetFrameworks>net9.0</TargetFrameworks>
     <OutputType>Library</OutputType>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
     <RestorePackages>true</RestorePackages>
@@ -89,9 +89,10 @@
   <!-- Nuget Package Dependencies -->
   <ItemGroup>
     <PackageReference Include="Markdig" Version="0.31.0" />
+    <PackageReference Include="Smidge" Version="4.5.1" />
     <PackageReference Include="Argotic.Core" Version="3000.0.3" />
-    <PackageReference Include="Umbraco.Cms.Web.BackOffice" Version="13.8.1" />
-    <PackageReference Include="Umbraco.Cms.Web.Website" Version="13.8.1" />
+    <PackageReference Include="Umbraco.Cms.Api.Management" Version="15.4.2" />
+    <PackageReference Include="Umbraco.Cms.Web.Website" Version="15.4.2" />
     <PackageReference Include="System.ServiceModel.Syndication" Version="6.0.0" />
     <PackageReference Include="WilderMinds.MetaWeblog" Version="5.1.1" />
   </ItemGroup>
