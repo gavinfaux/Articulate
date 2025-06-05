@@ -8,6 +8,7 @@ using Articulate.Syndication;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Smidge;
 using Umbraco.Cms.Core.Composing;
 using Umbraco.Cms.Core.DependencyInjection;
 using Umbraco.Cms.Core.Notifications;
@@ -40,10 +41,11 @@ namespace Articulate.Components
             services.AddSingleton<ArticulateFrontEndFilterConvention>();
             builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<MatcherPolicy, ArticulateDynamicRouteSelectorPolicy>());
 
-            builder.UrlProviders().InsertBefore<DefaultUrlProvider, DateFormattedUrlProvider>();
+            builder.UrlProviders().InsertBefore<NewDefaultUrlProvider, DateFormattedUrlProvider>();
 
-            builder.ContentFinders().InsertBefore<ContentFinderByUrl, DateFormattedPostContentFinder>();
+            builder.ContentFinders().InsertBefore<ContentFinderByUrlNew, DateFormattedPostContentFinder>();
 
+            services.AddSingleton<IBundleManager, BundleManager>();
             services.AddOptions<ArticulateOptions>();
 
             builder.AddNotificationHandler<ContentSavingNotification, ContentSavingHandler>();
