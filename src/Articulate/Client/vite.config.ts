@@ -11,7 +11,7 @@ export default defineConfig({
       formats: ["es"],
       fileName: (format, entryName) => `${entryName}.js`,
     },
-    outDir: "../wwwroot/App_Plugins/Articulate/BackOffice/",
+    outDir: "../App_Plugins/Articulate/BackOffice/",
     emptyOutDir: true,
     sourcemap: true,
     rollupOptions: {
