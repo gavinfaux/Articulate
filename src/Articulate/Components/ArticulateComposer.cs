@@ -27,9 +27,10 @@ namespace Articulate.Components
             services.AddSingleton<BlogMlExporter>();
             services.AddSingleton<ArticulateTempFileSystem>();
             services.AddSingleton<IRssFeedGenerator, RssFeedGenerator>();
-            services.AddSingleton<IBundleManager, BundleManager>();
+
             services.AddSingleton<IArticulateTagRepository, ArticulateTagRepository>();
             services.AddSingleton<ArticulateTagService>();
+
             services.AddSingleton<DisqusXmlExporter>();
             services.AddSingleton<BlogMlImporter>();
             services.AddSingleton<IArticulateSearcher, DefaultArticulateSearcher>();
@@ -42,6 +43,7 @@ namespace Articulate.Components
             builder.UrlProviders().InsertBefore<NewDefaultUrlProvider, DateFormattedUrlProvider>();
             builder.ContentFinders().InsertBefore<ContentFinderByUrlNew, DateFormattedPostContentFinder>();
 
+            services.AddSingleton<IBundleManager, BundleManager>();
             services.AddOptions<ArticulateOptions>();
 
             builder.AddNotificationHandler<ContentSavingNotification, ContentSavingHandler>();
