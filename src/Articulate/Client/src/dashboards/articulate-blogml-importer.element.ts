@@ -17,15 +17,16 @@ import {
 import { UmbLitElement } from "@umbraco-cms/backoffice/lit-element";
 import { UMB_MODAL_MANAGER_CONTEXT, UmbModalManagerContext } from "@umbraco-cms/backoffice/modal";
 import { UmbTextStyles } from "@umbraco-cms/backoffice/style";
-import { ArticulateService } from "../api/core";
-import type {
-  ImportBlogMlModel,
-  ImportModel,
-  PagedProblemDetailsModel,
-  PostResponseModel,
-} from "../api/core/types.gen";
+import { ArticulateService, ProblemDetails } from "../api/core";
+import type { ImportBlogMlModel, ImportModel, PostResponseModel } from "../api/core/types.gen";
+import { extractErrorMessage } from "../utils/error-utils";
+import { showUmbracoNotification } from "../utils/notification-utils";
 import { formStyles } from "./form-styles";
 
+// TODO: Import tests
+// TODO: Polish UX / CSS
+// TODO: Use utils error handling and notification patterns
+// TODO: See if theres an API to resolve UDI by alias
 const ARTICULATE_ARCHIVE_DOCTYPE_UDI = "umb://document-type/ce9e1f75-6428-46b1-8711-84829b9b3d1c";
 
 @customElement("articulate-blogml-importer")
@@ -79,9 +80,11 @@ export default class ArticulateBlogMlImporterElement extends UmbLitElement {
           this.requestUpdate("_selectedBlogNodeUdi");
         }
       }
-    } catch (error) {
+    } catch (error: unknown) {
       // Modal was closed without a selection or an error occurred
       console.info("Document picker modal closed without selection or with error:", error);
+      // Optionally, notify the user if this is considered an error scenario needing feedback
+      // await showUmbracoNotification(this, "Document selection was cancelled.", "warning");
     }
   }
 
@@ -104,9 +107,14 @@ export default class ArticulateBlogMlImporterElement extends UmbLitElement {
         this._selectedBlogNodeName = `Node (UDI: ${udi.substring(udi.lastIndexOf("/") + 1)})`;
         console.warn("Could not determine node name from response for UDI:", udi, response);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error(`Error fetching node name for UDI ${udi}:`, error);
       this._selectedBlogNodeName = `Error fetching name`;
+      const errorMessage = extractErrorMessage(
+        error,
+        "Could not fetch node name. Please check logs.",
+      );
+      await showUmbracoNotification(this, errorMessage, "danger");
     }
     this.requestUpdate("_selectedBlogNodeName");
   }
@@ -146,13 +154,30 @@ export default class ArticulateBlogMlImporterElement extends UmbLitElement {
       const formDataUpload = new FormData();
       formDataUpload.append(importFile.name, importFile);
 
-      const initResponse = await ArticulateService.postUmbracoManagementApiV1ArticulateBlogPostInit(
-        {
-          body: formDataUpload as any,
-        },
-      );
+      const initResult = await ArticulateService.postUmbracoManagementApiV1ArticulateBlogPostInit({
+        body: formDataUpload as any, // hey-api handles FormData directly
+        throwOnError: true,
+      });
 
-      const initData = initResponse.data as PostResponseModel;
+      if (!initResult.response.ok) {
+        let errorToThrow;
+        try {
+          const problemDetails: ProblemDetails = await initResult.response.json();
+          errorToThrow = problemDetails;
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (_) {
+          // Explicitly ignore the caught error object from response.json() parsing,
+          // as we create a new generic error based on HTTP status instead.
+          errorToThrow = new Error(
+            `File Upload API Error: ${initResult.response.status} ${initResult.response.statusText}`,
+          );
+        }
+        throw errorToThrow;
+      }
+
+      const initData = initResult.data as PostResponseModel;
+
+      // const initData = initResponse.data as PostResponseModel; // Moved up
       if (!initData || !initData.temporaryFileName) {
         throw new Error("File upload initialization failed: No temporary file name returned.");
       }
@@ -171,13 +196,32 @@ export default class ArticulateBlogMlImporterElement extends UmbLitElement {
         importFirstImage: formData.get("importImage") === "on",
       };
 
-      const importCallResponse =
+      const importCallResult =
         await ArticulateService.postUmbracoManagementApiV1ArticulateBlogPostImport({
           body: importPayload,
+          throwOnError: true,
         });
 
+      if (!importCallResult.response.ok) {
+        let errorToThrow;
+        try {
+          const problemDetails: ProblemDetails = await importCallResult.response.json();
+          errorToThrow = problemDetails;
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (_) {
+          // Explicitly ignore the caught error object from response.json() parsing,
+          // as we create a new generic error based on HTTP status instead.
+          errorToThrow = new Error(
+            `Import API Error: ${importCallResult.response.status} ${importCallResult.response.statusText}`,
+          );
+        }
+        throw errorToThrow;
+      }
+
+      const importResponseData = importCallResult.data as ImportModel;
+
       let successMessage = "BlogML import completed successfully.";
-      const importResponseData = importCallResponse.data as ImportModel;
+      // const importResponseData = importCallResponse.data as ImportModel; // Moved up
       if (importResponseData && importResponseData.downloadUrl) {
         const downloadLink = importResponseData.downloadUrl.startsWith("http")
           ? importResponseData.downloadUrl
@@ -190,23 +234,13 @@ export default class ArticulateBlogMlImporterElement extends UmbLitElement {
       this._selectedBlogNodeUdi = null;
       this._selectedBlogNodeName = null;
       this.requestUpdate();
-    } catch (error: any) {
-      let errorMessage = "Import failed. Please check the console for details.";
+    } catch (error: unknown) {
       console.error("BlogML Import Error:", error);
-
-      if (error && typeof error.status === "number" && error.body) {
-        const problemDetails = error.body as PagedProblemDetailsModel | undefined;
-        if (problemDetails && typeof (problemDetails as any).detail === "string") {
-          errorMessage = (problemDetails as any).detail;
-        } else if (problemDetails && typeof (problemDetails as any).title === "string") {
-          errorMessage = (problemDetails as any).title;
-        } else {
-          errorMessage = `Import failed with status: ${error.status}${error.statusText ? ` - ${error.statusText}` : ""}`;
-        }
-      } else if (error instanceof Error) {
-        errorMessage = error.message;
-      }
-      this._showMessage("error", errorMessage);
+      const errorMessage = extractErrorMessage(
+        error,
+        "Import failed. Please check the logs for more details.",
+      );
+      await showUmbracoNotification(this, errorMessage, "danger");
     } finally {
       this._isSubmitting = false;
       submitButton.setAttribute("state", "default");
@@ -215,7 +249,7 @@ export default class ArticulateBlogMlImporterElement extends UmbLitElement {
 
   override render() {
     if (!this.routerPath) {
-      return html`<uui-loader></uui-loader>`;
+      return html`<uui-loader-bar animationDuration="1.5" style="color: blue"></uui-loader-bar>`;
     }
     return html`
       <uui-box headline="BlogML Importer">

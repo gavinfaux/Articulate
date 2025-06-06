@@ -17,14 +17,16 @@ import {
 import { UmbLitElement } from "@umbraco-cms/backoffice/lit-element";
 import { UMB_MODAL_MANAGER_CONTEXT, UmbModalManagerContext } from "@umbraco-cms/backoffice/modal";
 import { UmbTextStyles } from "@umbraco-cms/backoffice/style";
-import { ArticulateService } from "../api/core";
-import type {
-  ExportBlogMlModel,
-  ImportModel,
-  PagedProblemDetailsModel,
-} from "../api/core/types.gen";
+import { ArticulateService, ProblemDetails } from "../api/core";
+import type { ExportBlogMlModel, ImportModel } from "../api/core/types.gen"; // Consolidate and remove PagedProblemDetailsModel
+import { extractErrorMessage } from "../utils/error-utils";
+import { showUmbracoNotification } from "../utils/notification-utils";
 import { formStyles } from "./form-styles";
 
+// TODO: Export tests
+// TODO: Polish UX / CSS
+// TODO: Use utils error handling and notification patterns
+// TODO: See if theres an API to resolve UDI by alias
 const ARTICULATE_ARCHIVE_DOCTYPE_UDI = "umb://document-type/ce9e1f75-6428-46b1-8711-84829b9b3d1c";
 
 @customElement("articulate-blogml-exporter")
@@ -91,6 +93,8 @@ export default class ArticulateBlogMlExporterElement extends UmbLitElement {
       return;
     }
     try {
+      // Note: DocumentService.getDocumentById might not support throwOnError or return response.ok
+      // We'll assume it throws on error or returns a problematic structure we can catch.
       const response: DocumentResponseModel = await DocumentService.getDocumentById({ id: udi });
       if (
         response &&
@@ -103,9 +107,16 @@ export default class ArticulateBlogMlExporterElement extends UmbLitElement {
         this._selectedBlogNodeName = `Node (UDI: ${udi.substring(udi.lastIndexOf("/") + 1)})`;
         console.warn("Could not determine node name from response for UDI:", udi, response);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error(`Error fetching node name for UDI ${udi}:`, error);
       this._selectedBlogNodeName = `Error fetching name`;
+      const errorMessage = extractErrorMessage(
+        error,
+        // Consider localization
+        "Could not fetch node name. Please check logs.",
+      );
+      // Using await here as showUmbracoNotification is async
+      await showUmbracoNotification(this, errorMessage, "danger");
     }
     this.requestUpdate("_selectedBlogNodeName");
   }
@@ -137,11 +148,29 @@ export default class ArticulateBlogMlExporterElement extends UmbLitElement {
       this._isSubmitting = true;
       submitButton.setAttribute("state", "waiting");
 
-      const response = await ArticulateService.postUmbracoManagementApiV1ArticulateBlogPostExport({
+      const result = await ArticulateService.postUmbracoManagementApiV1ArticulateBlogPostExport({
         body: payload,
+        throwOnError: true, // Ensure this is set
       });
 
-      const responseData = response.data as ImportModel;
+      if (!result.response.ok) {
+        let errorToThrow;
+        try {
+          const problemDetails: ProblemDetails = await result.response.json();
+          errorToThrow = problemDetails;
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (_) {
+          // Explicitly ignore the caught error object from response.json() parsing,
+          // as we create a new generic error based on HTTP status instead.
+          errorToThrow = new Error(
+            `API Error: ${result.response.status} ${result.response.statusText}`,
+          );
+        }
+        throw errorToThrow;
+      }
+
+      // If response.ok, proceed with result.data
+      const responseData = result.data as ImportModel; // Corrected type to ImportModel
       let successMessage = "BlogML export completed successfully.";
       if (responseData && responseData.downloadUrl) {
         const downloadLink = responseData.downloadUrl.startsWith("http")
@@ -156,18 +185,17 @@ export default class ArticulateBlogMlExporterElement extends UmbLitElement {
       // this._selectedBlogNodeUdi = null;
       // this._selectedBlogNodeName = "No node selected";
       // this.requestUpdate();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("BlogML Export Error:", error);
-      let errorMessage = "Export failed. Please check the console for details.";
-      if (error && typeof error.status === "number" && error.body) {
-        const problemDetails = error.body as PagedProblemDetailsModel | undefined;
-        if (problemDetails && typeof (problemDetails as any).detail === "string") {
-          errorMessage = (problemDetails as any).detail;
-        } else if (problemDetails && typeof (problemDetails as any).title === "string") {
-          errorMessage = (problemDetails as any).title;
-        }
-      }
-      this._showMessage("error", errorMessage);
+      const errorMessage = extractErrorMessage(
+        error,
+        // Consider localization
+        "Export failed. Please check the logs for more details.",
+      );
+      // We'll use the global notification. You can keep _showMessage for inline form messages if desired.
+      await showUmbracoNotification(this, errorMessage, "danger");
+      // If you want to keep the inline message as well:
+      // this._showMessage("error", errorMessage);
     } finally {
       this._isSubmitting = false;
       submitButton.setAttribute("state", "default");
@@ -176,7 +204,7 @@ export default class ArticulateBlogMlExporterElement extends UmbLitElement {
 
   override render() {
     if (!this.routerPath) {
-      return html`<uui-loader></uui-loader>`;
+      return html`<uui-loader-bar animationDuration="1.5" style="color: blue"></uui-loader-bar>`;
     }
 
     return html`

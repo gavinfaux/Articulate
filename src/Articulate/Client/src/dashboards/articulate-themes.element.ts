@@ -1,14 +1,15 @@
 import { css, html } from "@umbraco-cms/backoffice/external/lit";
-import { UMB_NOTIFICATION_CONTEXT } from "@umbraco-cms/backoffice/notification";
-import { customElement, property, state } from "lit/decorators.js";
-
 import { UmbLitElement } from "@umbraco-cms/backoffice/lit-element";
 import { UmbTextStyles } from "@umbraco-cms/backoffice/style";
+import { customElement, property, state } from "lit/decorators.js";
 import {
   ArticulateService,
   PostUmbracoManagementApiV1ArticulateThemeCopyData,
   ProblemDetails,
+  Theme,
 } from "../api/core";
+import { extractErrorMessage } from "../utils/error-utils.ts";
+import { showUmbracoNotification } from "../utils/notification-utils.ts";
 
 @customElement("articulate-themes")
 export default class ArticulateThemesElement extends UmbLitElement {
@@ -28,28 +29,44 @@ export default class ArticulateThemesElement extends UmbLitElement {
   async #loadThemes() {
     this._isLoading = true;
     try {
-      const { data } = await ArticulateService.getUmbracoManagementApiV1ArticulateThemeThemes();
+      const result = await ArticulateService.getUmbracoManagementApiV1ArticulateThemeThemes({
+        throwOnError: true,
+      });
+
+      if (!result.response.ok) {
+        let errorToThrow: Error | ProblemDetails;
+        try {
+          const problemDetails: ProblemDetails = await result.response.json();
+          errorToThrow = problemDetails;
+        } catch {
+          errorToThrow = new Error(
+            `API Error: ${result.response.status} ${result.response.statusText}`,
+          );
+        }
+        throw errorToThrow;
+      }
+      const data = await result.data;
+      if (!data) {
+        throw new Error("Failed to load themes. Review back office logs for more details.");
+      }
+
       this._themes = data?.map((theme) => theme.name) ?? [];
-    } catch {
+    } catch (error) {
       this._themes = [];
-      this._showNotification("Failed to load themes. Please try again later.", "error");
+      const extractedMessage = extractErrorMessage(
+        error,
+        "Could not load themes. Please check the logs for more details.",
+      );
+      await showUmbracoNotification(this, extractedMessage, "danger");
     } finally {
       this._isLoading = false;
       this.requestUpdate();
     }
   }
 
-  private async _showNotification(message: string, type: "positive" | "error") {
-    const notificationContext = await this.getContext(UMB_NOTIFICATION_CONTEXT);
-    if (notificationContext) {
-      notificationContext.peek(type === "positive" ? "positive" : "danger", {
-        data: { message },
-      });
-    }
-  }
-
   private _selectTheme(theme: string) {
     this._selectedTheme = theme;
+    this._newThemeName = `${theme} - Copy`;
     this.requestUpdate();
   }
 
@@ -93,57 +110,53 @@ export default class ArticulateThemesElement extends UmbLitElement {
     };
     try {
       this._isLoading = true;
-      const { data: newTheme } =
-        await ArticulateService.postUmbracoManagementApiV1ArticulateThemeCopy({
-          ...payload,
-          throwOnError: true,
-        });
+      const result = await ArticulateService.postUmbracoManagementApiV1ArticulateThemeCopy({
+        ...payload,
+        throwOnError: true,
+      });
+
+      if (!result.response.ok) {
+        let errorToThrow: Error | ProblemDetails;
+        try {
+          const problemDetails: ProblemDetails = await result.response.json();
+          errorToThrow = problemDetails;
+        } catch {
+          errorToThrow = new Error(
+            `API Error: ${result.response.status} ${result.response.statusText}`,
+          );
+        }
+        throw errorToThrow;
+      }
+
+      const newTheme: Theme = await result.data;
 
       if (!newTheme) {
         throw new Error("Failed to duplicate theme. Review back office logs for more details.");
       }
 
-      await this._showNotification(
+      await showUmbracoNotification(
+        this,
         `Theme '${this._selectedTheme}' duplicated to 'wwwroot/Views/Articulate/${newTheme.name}'`,
         "positive",
       );
 
       this._selectedTheme = null;
       this._newThemeName = "";
+      this.requestUpdate();
     } catch (error: unknown) {
-      await this._extractAndNotifyError(
+      const extractedMessage = extractErrorMessage(
         error,
         "Failed to duplicate theme. Review back office logs for more details.",
       );
+      await showUmbracoNotification(this, extractedMessage, "danger");
     } finally {
       this._isLoading = false;
     }
   }
 
-  private async _extractAndNotifyError(error: unknown, defaultMessage: string) {
-    let message = defaultMessage;
-
-    if (error && typeof error === "object" && "response" in error) {
-      const response = (error as any).response;
-      if (response?.data) {
-        const problem = response.data as ProblemDetails;
-        message = problem.title || message;
-        if (problem.detail) {
-          message += `: ${problem.detail}`;
-        }
-      }
-    } else if (error instanceof Error) {
-      message = error.message;
-    } else if (typeof error === "string") {
-      message = error;
-    }
-
-    await this._showNotification(message, "error");
-  }
-
   private _renderThemeGrid() {
     if (this._isLoading && !(this._themes?.length ?? 0)) {
-      return html`<uui-loader></uui-loader>`;
+      return html`<uui-loader-bar animationDuration="1.5" style="color: blue"></uui-loader-bar>`;
     }
 
     if ((this._themes?.length ?? 0) > 0) {

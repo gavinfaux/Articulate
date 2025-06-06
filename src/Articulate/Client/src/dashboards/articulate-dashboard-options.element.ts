@@ -30,7 +30,7 @@ export class ArticulateDashboardOptionsElement extends UmbLitElement {
 
   override render() {
     if (!this.routerPath) {
-      return html`<uui-loader></uui-loader>`;
+      return html`<uui-loader-bar animationDuration="1.5" style="color: blue"></uui-loader-bar>`;
     }
     return html`
       <uui-box headline="Options">
