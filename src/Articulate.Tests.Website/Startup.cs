@@ -82,6 +82,7 @@ namespace Articulate.Tests.Website
                 {
                     u.EndpointRouteBuilder.MapRazorPages();
 
+                    u.UseUmbracoPreviewEndpoints();
                     u.UseBackOfficeEndpoints();
                     u.UseWebsiteEndpoints();
                 });
