@@ -6,9 +6,11 @@
   "scripts": {
     "watch": "npx chokidar \"src/**/*\" -c \"npm run build\"",
     "build": "tsc && vite build && node scripts/copy-articulate-output.cjs",
+    "build:copy": "tsc && vite build && node scripts/copy-articulate-output.cjs --copy",
     "generate-client": "node scripts/generate-openapi.js https://localhost:44366/umbraco/swagger/management/swagger.json?urls.primaryName=Umbraco+Management+API",
     "format": "prettier --write .",
-    "lint": "eslint . --ext .ts,.js,.tsx,.jsx"
+    "lint": "eslint . --ext .ts,.js,.tsx,.jsx",
+    "typecheck": "npx tsc --noEmit"
   },
   "devDependencies": {
     "@eslint/compat": "^1.2.9",
