@@ -1,3 +1,4 @@
+using System;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http.Features;
@@ -5,7 +6,7 @@ using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using System;
+using Smidge;
 using Umbraco.Cms.Core.DependencyInjection;
 using Umbraco.Extensions;
 
@@ -48,6 +49,7 @@ namespace Articulate.Tests.Website
 #pragma warning restore IDE0022 // Use expression body for methods
 
             services.AddRazorPages();
+            services.AddSmidge(_config.GetSection("smidge"));
 
             services.Configure<IISServerOptions>(options =>
             {
@@ -91,6 +93,9 @@ namespace Articulate.Tests.Website
                     u.UseBackOfficeEndpoints();
                     u.UseWebsiteEndpoints();
                 });
+
+            app.UseSmidge();
+
         }
     }
 }
