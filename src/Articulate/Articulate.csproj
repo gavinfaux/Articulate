@@ -97,6 +97,7 @@
 
   <!-- Nuget Package Dependencies -->
   <ItemGroup>
+    <PackageReference Include="Markdig" Version="0.41.2" />
     <PackageReference Include="Umbraco.Cms.Web.Website" Version="15.4.2" />
     <PackageReference Include="Umbraco.Cms.Web.Common" Version="15.4.2" />
     <PackageReference Include="Umbraco.Cms.Api.Common" Version="15.4.2" />

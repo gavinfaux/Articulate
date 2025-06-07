@@ -87,10 +87,8 @@ namespace Articulate.Components
                                 {
                                     var markdownProperty = ct.CompositionPropertyTypes.First(x => x.Alias == "markdown");
                                     var val = c.GetValue<string>("markdown", markdownProperty.VariesByCulture() ? culture?.Culture : null);
-                                    // TODO: Check with using Umbraco.MarkdownEditor ?
-                                    // var html = MarkdownHelper.ToHtml(val);
-                                    // return _articulateOptions.GenerateExcerpt(html);
-                                    return _articulateOptions.GenerateExcerpt(val);
+                                    var html = MarkdownHelper.ToHtml(val);
+                                    return _articulateOptions.GenerateExcerpt(html);
                                 }
                             });
 
