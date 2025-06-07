@@ -51,10 +51,9 @@ namespace Articulate.Components
             builder.AddNotificationHandler<ContentSavingNotification, ContentSavingHandler>();
             builder.AddNotificationHandler<ContentSavedNotification, ContentSavedHandler>();
             // builder.AddNotificationHandler<ContentTypeSavingNotification, ContentTypeSavingHandler>();
-            builder.AddNotificationHandler<ServerVariablesParsingNotification, ServerVariablesParsingHandler>();
+            //builder.AddNotificationHandler<ServerVariablesParsingNotification, ServerVariablesParsingHandler>();
             builder.AddNotificationHandler<ContentCacheRefresherNotification, ContentCacheRefresherHandler>();
             builder.AddNotificationHandler<DomainCacheRefresherNotification, DomainCacheRefresherHandler>();
-            // builder.AddNotificationHandler<SendingContentNotification, SendingContentHandler>();
 
             builder.Services.ConfigureOptions<ArticulatePipelineStartupFilter>();
             builder.Services.ConfigureOptions<ConfigureArticulateMvcOptions>();

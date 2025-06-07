@@ -37,11 +37,11 @@ namespace Articulate.Components
             if (saved.Count == 0) return;
 
             var contentTypes = _contentTypeService.GetMany(saved.Select(x => x.ContentTypeId).ToArray()).ToDictionary(x => x.Id);
-
             foreach (var content in saved)
             {
                 if (content.ContentType.Alias.InvariantEquals("ArticulateRichText")
                     || content.ContentType.Alias.InvariantEquals("ArticulateMarkdown"))
+
                 {
                     content.SetAllPropertyCultureValues(
                         "publishedDate",
@@ -114,6 +114,139 @@ namespace Articulate.Components
                         }
                     }
                 }
+
+                if (content.ContentType.Alias.InvariantEquals(ArticulateConstants.ArticulateContentTypeAlias))
+                {
+                    if (content.HasProperty("theme"))
+                    {
+                        content.SetAllPropertyCultureValues(
+                            "theme",
+                            contentTypes[content.ContentTypeId],
+                            (c, ct, culture) =>
+                            {
+                                // don't set it if it's already set
+                                var current = c.GetValue("theme", culture?.Culture)?.ToString();
+                                if (!current.IsNullOrWhiteSpace())
+                                    return null;
+
+                                return "VAPOR";
+                            });
+                    }
+
+                    if (content.HasProperty("pageSize"))
+                    {
+                        content.SetAllPropertyCultureValues(
+                            "pageSize",
+                            contentTypes[content.ContentTypeId],
+                            (c, ct, culture) =>
+                            {
+                                // don't set it if it's already set
+                                var current = c.GetValue("pageSize", culture?.Culture)?.ToString();
+                                if (!current.IsNullOrWhiteSpace())
+                                    return null;
+
+                                return 10;
+                            });
+                    }
+
+                    if (content.HasProperty("categoriesUrlName"))
+                    {
+                        content.SetAllPropertyCultureValues(
+                            "categoriesUrlName",
+                            contentTypes[content.ContentTypeId],
+                            (c, ct, culture) =>
+                            {
+                                // don't set it if it's already set
+                                var current = c.GetValue("categoriesUrlName", culture?.Culture)?.ToString();
+                                if (!current.IsNullOrWhiteSpace())
+                                    return null;
+
+                                return "categories";
+                            });
+                    }
+
+                    if (content.HasProperty("tagsUrlName"))
+                    {
+                        content.SetAllPropertyCultureValues(
+                            "tagsUrlName",
+                            contentTypes[content.ContentTypeId],
+                            (c, ct, culture) =>
+                            {
+                                // don't set it if it's already set
+                                var current = c.GetValue("tagsUrlName", culture?.Culture)?.ToString();
+                                if (!current.IsNullOrWhiteSpace())
+                                    return null;
+
+                                return "tags";
+                            });
+                    }
+
+                    if (content.HasProperty("searchUrlName"))
+                    {
+                        content.SetAllPropertyCultureValues(
+                            "searchUrlName",
+                            contentTypes[content.ContentTypeId],
+                            (c, ct, culture) =>
+                            {
+                                // don't set it if it's already set
+                                var current = c.GetValue("searchUrlName", culture?.Culture)?.ToString();
+                                if (!current.IsNullOrWhiteSpace())
+                                    return null;
+
+                                return "search";
+                            });
+                    }
+
+                    if (content.HasProperty("categoriesPageName"))
+                    {
+                        content.SetAllPropertyCultureValues(
+                            "categoriesPageName",
+                            contentTypes[content.ContentTypeId],
+                            (c, ct, culture) =>
+                            {
+                                // don't set it if it's already set
+                                var current = c.GetValue("categoriesPageName", culture?.Culture)?.ToString();
+                                if (!current.IsNullOrWhiteSpace())
+                                    return null;
+
+                                return "Categories";
+                            });
+                    }
+
+                    if (content.HasProperty("tagsPageName"))
+                    {
+                        content.SetAllPropertyCultureValues(
+                            "tagsPageName",
+                            contentTypes[content.ContentTypeId],
+                            (c, ct, culture) =>
+                            {
+                                // don't set it if it's already set
+                                var current = c.GetValue("tagsPageName", culture?.Culture)?.ToString();
+                                if (!current.IsNullOrWhiteSpace())
+                                    return null;
+
+                                return "Tags";
+                            });
+                    }
+
+                    if (content.HasProperty("searchPageName"))
+                    {
+                        content.SetAllPropertyCultureValues(
+                            "searchPageName",
+                            contentTypes[content.ContentTypeId],
+                            (c, ct, culture) =>
+                            {
+                                // don't set it if it's already set
+                                var current = c.GetValue("searchPageName", culture?.Culture)?.ToString();
+                                if (!current.IsNullOrWhiteSpace())
+                                    return null;
+
+                                return "Search results";
+                            });
+                    }
+
+                }
+
             }
         }
     }
