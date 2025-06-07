@@ -1,24 +1,75 @@
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Smidge;
+using SQLitePCL;
 
-namespace Articulate.Tests.Website
+var builder = WebApplication.CreateBuilder(args);
+
+builder.CreateUmbracoBuilder()
+    .AddBackOffice()
+    .AddWebsite()
+    .AddComposers()
+    .Build();
+
+builder.Services.AddSmidge(builder.Configuration.GetSection("smidge"));
+
+builder.Services.Configure<IISServerOptions>(options => options.MaxRequestBodySize = int.MaxValue);
+
+builder.Services.Configure<KestrelServerOptions>(options => options.Limits.MaxRequestBodySize = int.MaxValue);
+
+builder.Services.Configure<FormOptions>(x =>
 {
-    public class Program
-    {
-        public static void Main(string[] args)
-            => CreateHostBuilder(args)
-                .Build()
-                .Run();
+    x.ValueLengthLimit = int.MaxValue;
+    x.MultipartBodyLengthLimit = int.MaxValue;
+    x.MultipartHeadersLengthLimit = int.MaxValue;
+});
 
-        public static IHostBuilder CreateHostBuilder(string[] args) =>
-            Host.CreateDefaultBuilder(args)
-                .ConfigureUmbracoDefaults()
-                .ConfigureWebHostDefaults(webBuilder =>
-                {
-                    webBuilder.UseStaticWebAssets();
-                    webBuilder.UseStartup<Startup>();
-                });
-    }
+builder.Services.AddRazorPages();
+
+var app = builder.Build();
+
+await app.BootUmbracoAsync();
+
+if (app.Environment.IsDevelopment())
+{
+    _ = app.UseDeveloperExceptionPage();
 }
+
+app.UseUmbraco()
+    .WithMiddleware(u =>
+    {
+        _ = u.UseBackOffice();
+        _ = u.UseWebsite();
+    })
+    .WithEndpoints(u =>
+    {
+        if (app.Environment.IsDevelopment())
+        {
+            _ = u.EndpointRouteBuilder.MapGet("/debug/routes", (IEnumerable<EndpointDataSource> endpointSources) =>
+            {
+                var endpoints = endpointSources
+                    .SelectMany(es => es.Endpoints)
+                    .OfType<RouteEndpoint>();
+
+                var output = endpoints.Select(e => new
+                {
+                    Priority = e.Order,
+                    Name = e.DisplayName,
+                    Route = e.RoutePattern.RawText,
+                    Method = e.Metadata.OfType<HttpMethodMetadata>().FirstOrDefault()?.HttpMethods.FirstOrDefault()
+                })
+                .OrderBy(e => e.Priority)
+                .ToList();
+
+                return Results.Ok(output);
+            });
+        }
+        _ = u.EndpointRouteBuilder.MapRazorPages();
+        _ = u.UseUmbracoPreviewEndpoints();
+        _ = u.UseBackOfficeEndpoints();
+        _ = u.UseWebsiteEndpoints();
+    });
+
+app.UseSmidge();
+
+app.Run();
