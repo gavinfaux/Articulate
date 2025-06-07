@@ -13,14 +13,14 @@
     },
     {
       "type": "propertyEditorUi",
-      "alias": "Articulate.ThemePicker.UI",
+      "alias": "ArticulateThemePicker.UI",
       "name": "Articulate Theme Picker UI",
       "elementName": "articulate-theme-picker-element",
       "element": "/App_Plugins/Articulate/BackOffice/theme-picker.element.js",
       "meta": {
         "label": "Articulate Theme Picker",
         "propertyEditorSchemaAlias": "Umbraco.Plain.String",
-        "icon": "icon-layout",
+        "icon": "icon-palette",
         "group": "Pickers"
       }
     }

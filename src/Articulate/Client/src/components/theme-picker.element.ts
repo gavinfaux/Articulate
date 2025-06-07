@@ -23,7 +23,10 @@ export class ArticulateThemePickerElement
   config?: UmbPropertyEditorConfigCollection;
 
   @state()
-  private _themes: string[] = [];
+  private _themeSelectOptions: Array<{ name: string; value: string; selected?: boolean }> = [];
+
+  @state()
+  private _themeData: Array<{ name: string; value: string }> = [];
 
   @state()
   private _loading = false;
@@ -34,6 +37,17 @@ export class ArticulateThemePickerElement
   constructor() {
     super();
     this._fetchThemes();
+  }
+
+  override updated(changedProperties: Map<PropertyKey, unknown>) {
+    super.updated(changedProperties);
+
+    const valueChanged = changedProperties.has("value");
+    const themeDataChanged = changedProperties.has("_themeData");
+
+    if (this._themeData.length > 0 && (valueChanged || themeDataChanged)) {
+      this._rebuildAndSetSelectOptions();
+    }
   }
 
   private async _fetchThemes() {
@@ -61,11 +75,15 @@ export class ArticulateThemePickerElement
       if (!data) {
         throw new Error("Failed to load themes. Review back office logs for more details.");
       }
-      this._themes = data?.map((theme) => theme.name) ?? [];
+      this._themeData =
+        data?.map((apiTheme) => ({
+          name: apiTheme.name,
+          value: apiTheme.name,
+        })) ?? [];
+      this._rebuildAndSetSelectOptions();
     } catch (error: unknown) {
       const extractedMessage = extractErrorMessage(
         error,
-        // Consider using a localization term like this.localize.term("articulate_errorLoadThemesPickerDefault")
         "Could not load themes. Please check the logs for details.",
       );
       this._error = extractedMessage;
@@ -75,10 +93,48 @@ export class ArticulateThemePickerElement
     }
   }
 
+  private _rebuildAndSetSelectOptions() {
+    if (this._themeData.length === 0) {
+      if (this._themeSelectOptions.length > 0) {
+        this._themeSelectOptions = [];
+      }
+      return;
+    }
+
+    const valueToSelect = this.value;
+    const newProposedOptions = this._themeData.map((theme) => ({
+      name: theme.name,
+      value: theme.value,
+      selected: !!valueToSelect && theme.value === valueToSelect,
+    }));
+
+    let needsReassignment = false;
+    if (this._themeSelectOptions.length !== newProposedOptions.length) {
+      needsReassignment = true;
+    } else {
+      for (let i = 0; i < newProposedOptions.length; i++) {
+        if (
+          this._themeSelectOptions[i].value !== newProposedOptions[i].value ||
+          !!this._themeSelectOptions[i].selected !== newProposedOptions[i].selected
+        ) {
+          needsReassignment = true;
+          break;
+        }
+      }
+    }
+
+    if (needsReassignment) {
+      this._themeSelectOptions = newProposedOptions;
+    }
+  }
+
   private _handleInput(event: Event) {
-    const target = event.target as HTMLSelectElement;
-    this.value = target.value;
-    this.dispatchEvent(new UmbChangeEvent());
+    const newValue = (event.target as any).value as string | undefined;
+
+    if (this.value !== newValue) {
+      this.value = newValue;
+      this.dispatchEvent(new UmbChangeEvent());
+    }
   }
 
   override render() {
@@ -91,14 +147,12 @@ export class ArticulateThemePickerElement
     }
 
     return html`
-      <uui-select .value=${this.value} @change=${this._handleInput} label="Select a theme">
-        ${this._themes.map(
-          (theme) =>
-            html`<uui-select-option .value=${theme} .displayValue=${theme}
-              >${theme}</uui-select-option
-            >`,
-        )}
-      </uui-select>
+      <uui-select
+        .options=${this._themeSelectOptions}
+        .value=${this.value}
+        @change=${this._handleInput}
+        label="Select a theme"
+      ></uui-select>
     `;
   }
 
