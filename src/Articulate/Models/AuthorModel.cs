@@ -1,8 +1,6 @@
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Extensions;
-using Umbraco.Cms.Core.Services.Navigation;
-using Umbraco.Cms.Core.PublishedCache;
 namespace Articulate.Models
 {
     public class AuthorModel : ListModel, IImageModel
@@ -15,10 +13,8 @@ namespace Articulate.Models
             PagerModel pager,
             int postCount,
             IPublishedValueFallback publishedValueFallback,
-            IVariationContextAccessor variationContextAccessor,
-            IDocumentNavigationQueryService navigationQueryService,
-            IPublishedContentStatusFilteringService publishedContentStatusFilteringService)
-            : base(content, pager, listItems, publishedValueFallback, variationContextAccessor, navigationQueryService, publishedContentStatusFilteringService)
+            IVariationContextAccessor variationContextAccessor)
+            : base(content, pager, listItems, publishedValueFallback, variationContextAccessor)
         {
             PostCount = postCount;
         }

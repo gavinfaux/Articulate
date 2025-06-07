@@ -7,7 +7,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Primitives;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.Routing;
-using Umbraco.Cms.Core.Services.Navigation;
 using Umbraco.Cms.Core.Web;
 using Umbraco.Cms.Web.Common.Controllers;
 using Umbraco.Cms.Web.Website.ActionResults;
@@ -26,22 +25,18 @@ namespace Articulate.Controllers
             IUmbracoContextAccessor umbracoContextAccessor,
             IPublishedUrlProvider publishedUrlProvider,
             IPublishedValueFallback publishedValueFallback,
-            IVariationContextAccessor variationContextAccessor, IDocumentNavigationQueryService documentNavigationQueryService, IPublishedContentStatusFilteringService publishedContentStatusFilteringService)
+            IVariationContextAccessor variationContextAccessor)
             : base(logger, compositeViewEngine, umbracoContextAccessor)
         {
             UmbracoContextAccessor = umbracoContextAccessor;
             PublishedUrlProvider = publishedUrlProvider;
             PublishedValueFallback = publishedValueFallback;
             VariationContextAccessor = variationContextAccessor;
-            DocumentNavigationQueryService = documentNavigationQueryService;
-            PublishedContentStatusFilteringService = publishedContentStatusFilteringService;
         }
         public IUmbracoContextAccessor UmbracoContextAccessor { get; }
         public IPublishedUrlProvider PublishedUrlProvider { get; }
         public IPublishedValueFallback PublishedValueFallback { get; }
         public IVariationContextAccessor VariationContextAccessor { get; }
-        public IDocumentNavigationQueryService DocumentNavigationQueryService { get; }
-        public IPublishedContentStatusFilteringService PublishedContentStatusFilteringService { get; }
 
         /// <summary>
         /// Gets a paged list view for a given posts by author/tags/categories model
@@ -60,7 +55,7 @@ namespace Articulate.Controllers
                     UmbracoContextAccessor);
             }
 
-            var listModel = new ListModel(pageNode, pager, listItems, PublishedValueFallback, VariationContextAccessor, DocumentNavigationQueryService, PublishedContentStatusFilteringService);
+            var listModel = new ListModel(pageNode, pager, listItems, PublishedValueFallback, VariationContextAccessor);
             return View(PathHelper.GetThemeViewPath(listModel, "List"), listModel);
         }
 
@@ -73,6 +68,7 @@ namespace Articulate.Controllers
 
             var pageSize = masterModel.PageSize;
             var totalPages = totalPosts == 0 ? 1 : Convert.ToInt32(Math.Ceiling((double)totalPosts / pageSize));
+            var totalPages2 = totalPosts == 0 ? 1 : (int)Math.Clamp(Math.Ceiling((double)totalPosts / pageSize), int.MinValue, int.MaxValue);
 
             //Invalid page, redirect without pages
             if (totalPages < p)

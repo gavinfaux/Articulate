@@ -6,7 +6,6 @@ using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.Routing;
-using Umbraco.Cms.Core.Services.Navigation;
 using Umbraco.Cms.Core.Web;
 using Umbraco.Cms.Web.Common;
 using Umbraco.Cms.Web.Common.Controllers;
@@ -26,10 +25,8 @@ namespace Articulate.Controllers
             IPublishedUrlProvider publishedUrlProvider,
             IPublishedValueFallback publishedValueFallback,
             IVariationContextAccessor variationContextAccessor,
-            IDocumentNavigationQueryService documentNavigationQueryService,
-            IPublishedContentStatusFilteringService publishedContentStatusFilteringService,
             UmbracoHelper umbraco)
-            : base(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider, publishedValueFallback, variationContextAccessor, documentNavigationQueryService, publishedContentStatusFilteringService)
+            : base(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider, publishedValueFallback, variationContextAccessor)
         {
             Umbraco = umbraco;
         }
@@ -75,9 +72,7 @@ namespace Articulate.Controllers
                 1,
                 pageSize,
                 PublishedValueFallback,
-                VariationContextAccessor,
-                DocumentNavigationQueryService,
-                PublishedContentStatusFilteringService);
+                VariationContextAccessor);
 
             return GetPagedListView(archive, archive, posts, count, null);          
         }

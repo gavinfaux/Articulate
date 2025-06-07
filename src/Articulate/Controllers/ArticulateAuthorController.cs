@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.Routing;
-using Umbraco.Cms.Core.Services.Navigation;
 using Umbraco.Cms.Core.Web;
 using Umbraco.Cms.Web.Common;
 using Umbraco.Cms.Web.Common.Controllers;
@@ -17,8 +16,6 @@ namespace Articulate.Controllers
     public class ArticulateAuthorController : ListControllerBase
     {
         private readonly UmbracoHelper _umbracoHelper;
-        private readonly IPublishedContentStatusFilteringService _publishedContentStatusFilteringService;
-        private readonly IDocumentNavigationQueryService _navigationQueryService;
 
         public ArticulateAuthorController(
             ILogger<RenderController> logger,
@@ -27,10 +24,8 @@ namespace Articulate.Controllers
             IPublishedUrlProvider publishedUrlProvider,
             IPublishedValueFallback publishedValueFallback,
             IVariationContextAccessor variationContextAccessor,
-            UmbracoHelper umbracoHelper,
-            IDocumentNavigationQueryService documentNavigationQueryService,
-            IPublishedContentStatusFilteringService publishedContentStatusFilteringService)
-            : base(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider, publishedValueFallback, variationContextAccessor, documentNavigationQueryService, publishedContentStatusFilteringService)
+            UmbracoHelper umbracoHelper)
+            : base(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider, publishedValueFallback, variationContextAccessor)
         {
             _umbracoHelper = umbracoHelper;
         }
@@ -69,7 +64,7 @@ namespace Articulate.Controllers
                 CurrentPage.Name,
                 pager,
                 PublishedValueFallback,
-                VariationContextAccessor, base.DocumentNavigationQueryService, base.PublishedContentStatusFilteringService);
+                VariationContextAccessor);
 
             var author = new AuthorModel(
                 CurrentPage,
@@ -77,7 +72,7 @@ namespace Articulate.Controllers
                 pager,
                 totalPosts,
                 PublishedValueFallback,
-                VariationContextAccessor, _navigationQueryService, _publishedContentStatusFilteringService);
+                VariationContextAccessor);
 
             return View(PathHelper.GetThemeViewPath(author, "Author"), author);
         }

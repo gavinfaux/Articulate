@@ -1,7 +1,5 @@
 using Umbraco.Cms.Core.Media;
 using Umbraco.Cms.Core.Models.PublishedContent;
-using Umbraco.Cms.Core.Services.Navigation;
-using Umbraco.Extensions;
 
 namespace Articulate.Models
 {
@@ -12,8 +10,6 @@ namespace Articulate.Models
     {
         private readonly IEnumerable<IPublishedContent> _listItems;
         private IEnumerable<PostModel> _resolvedList;
-        private readonly IDocumentNavigationQueryService _navigationQueryService;
-        private readonly IPublishedContentStatusFilteringService _publishedContentStatusFilteringService;
 
         /// <summary>
         /// Constructor accepting an explicit list of child items
@@ -30,20 +26,13 @@ namespace Articulate.Models
             PagerModel pager,
             IEnumerable<IPublishedContent> listItems,
             IPublishedValueFallback publishedValueFallback,
-            IVariationContextAccessor variationContextAccessor,
-            IDocumentNavigationQueryService navigationQueryService,
-            IPublishedContentStatusFilteringService publishedContentStatusFilteringService)
+            IVariationContextAccessor variationContextAccessor)
             : base(content, publishedValueFallback, variationContextAccessor)
         {
             
             if (content == null) throw new ArgumentNullException(nameof(content));
             if (listItems == null) throw new ArgumentNullException(nameof(listItems));
             if (pager == null) throw new ArgumentNullException(nameof(pager));
-            if (navigationQueryService == null) throw new ArgumentNullException(nameof(navigationQueryService));
-            if (publishedContentStatusFilteringService == null) throw new ArgumentNullException(nameof(publishedContentStatusFilteringService));
-
-            _navigationQueryService = navigationQueryService;
-            _publishedContentStatusFilteringService = publishedContentStatusFilteringService;
 
             Pages = pager;
             _listItems = listItems;
@@ -73,10 +62,7 @@ namespace Articulate.Models
 
                 if (_listItems == null)
                 {
-                    _resolvedList = base.Unwrap()
-                        .Children(_navigationQueryService, _publishedContentStatusFilteringService, culture: "*")
-                        .Select(x => new PostModel(x, PublishedValueFallback, VariationContextAccessor))
-                        .ToArray();
+                    _resolvedList = ChildrenForAllCultures.Select(x => new PostModel(x, PublishedValueFallback, VariationContextAccessor)).ToArray();
                     return _resolvedList;
                 }
 
@@ -100,8 +86,9 @@ namespace Articulate.Models
         /// <summary>
         /// The list of blog posts
         /// </summary>
-        [Obsolete]
         public override IEnumerable<IPublishedContent> Children => Posts;
+
+        public IEnumerable<IPublishedContent> ChildrenForAllCultures => Posts;
 
     }
 }

@@ -7,7 +7,6 @@ using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.PublishedCache;
 using Umbraco.Cms.Core.Routing;
-using Umbraco.Cms.Core.Services.Navigation;
 using Umbraco.Cms.Core.Web;
 using Umbraco.Cms.Web.Common;
 using Umbraco.Cms.Web.Common.Controllers;
@@ -41,12 +40,10 @@ namespace Articulate.Controllers
             IPublishedUrlProvider publishedUrlProvider,
             IPublishedValueFallback publishedValueFallback,
             IVariationContextAccessor variationContextAccessor,
-            IDocumentNavigationQueryService documentNavigationQueryService,
-            IPublishedContentStatusFilteringService publishedContentStatusFilteringService,
             UmbracoHelper umbracoHelper,
             ArticulateTagService articulateTagService,
             ITagQuery tagQuery)
-             : base(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider, publishedValueFallback, variationContextAccessor, documentNavigationQueryService, publishedContentStatusFilteringService)
+             : base(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider, publishedValueFallback, variationContextAccessor)
          {
             _umbracoHelper = umbracoHelper;
             _articulateTagService = articulateTagService;

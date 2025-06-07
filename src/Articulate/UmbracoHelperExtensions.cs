@@ -3,7 +3,6 @@ using Articulate.Models;
 using Articulate.Services;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.PublishedCache;
-using Umbraco.Cms.Core.Services.Navigation;
 using Umbraco.Cms.Web.Common;
 using Umbraco.Extensions;
 
@@ -110,9 +109,7 @@ namespace Articulate
             IMasterModel masterModel,
             int count,
             IPublishedValueFallback publishedValueFallback,
-            IVariationContextAccessor variationContextAccessor,
-            IDocumentNavigationQueryService documentNavigationQueryService,
-            IPublishedContentStatusFilteringService publishedContentStatusFilteringService)
+            IVariationContextAccessor variationContextAccessor)
         {
             var listNodes = GetListNodes(masterModel);
 
@@ -122,7 +119,7 @@ namespace Articulate
 
             var listItems = helper.GetPostsSortedByPublishedDate(pager, null, listNodeIds);
 
-            var rootPageModel = new ListModel(listNodes[0], pager, listItems, publishedValueFallback, variationContextAccessor, documentNavigationQueryService, publishedContentStatusFilteringService);
+            var rootPageModel = new ListModel(listNodes[0], pager, listItems, publishedValueFallback, variationContextAccessor);
             return rootPageModel.Posts;
         }
 
@@ -140,9 +137,7 @@ namespace Articulate
             int page,
             int pageSize,
             IPublishedValueFallback publishedValueFallback,
-            IVariationContextAccessor variationContextAccessor,
-            IDocumentNavigationQueryService documentNavigationQueryService,
-            IPublishedContentStatusFilteringService publishedContentStatusFilteringService)
+            IVariationContextAccessor variationContextAccessor)
 
         {
             var listNodes = GetListNodes(masterModel);
@@ -153,7 +148,7 @@ namespace Articulate
 
             var listItems = helper.GetPostsSortedByPublishedDate(pager, null, listNodeIds);
 
-            var rootPageModel = new ListModel(listNodes[0], pager, listItems, publishedValueFallback, variationContextAccessor, documentNavigationQueryService, publishedContentStatusFilteringService);
+            var rootPageModel = new ListModel(listNodes[0], pager, listItems, publishedValueFallback, variationContextAccessor);
             return rootPageModel.Posts;
         }
 
@@ -171,16 +166,14 @@ namespace Articulate
             int page,
             int pageSize,
             IPublishedValueFallback publishedValueFallback,
-            IVariationContextAccessor variationContextAccessor,
-            IDocumentNavigationQueryService documentNavigationQueryService,
-            IPublishedContentStatusFilteringService publishedContentStatusFilteringService)
+            IVariationContextAccessor variationContextAccessor)
 
         {
             var pager = new PagerModel(pageSize, page - 1, 1);
 
             var listItems = helper.GetPostsSortedByPublishedDate(pager, null, masterModel.Id);
 
-            var rootPageModel = new ListModel(masterModel, pager, listItems, publishedValueFallback, variationContextAccessor, documentNavigationQueryService, publishedContentStatusFilteringService);
+            var rootPageModel = new ListModel(masterModel, pager, listItems, publishedValueFallback, variationContextAccessor);
             return rootPageModel.Posts;
         }
 
@@ -190,16 +183,14 @@ namespace Articulate
             string authorName,
             PagerModel pager,
             IPublishedValueFallback publishedValueFallback,
-            IVariationContextAccessor variationContextAccessor,
-            IDocumentNavigationQueryService documentNavigationQueryService,
-            IPublishedContentStatusFilteringService publishedContentStatusFilteringService
+            IVariationContextAccessor variationContextAccessor
             )
         {
             var listNodeIds = listNodes.Select(x => x.Id).ToArray();           
 
             var postWithAuthor = helper.GetPostsSortedByPublishedDate(pager, x => string.Equals(x.Value<string>("author"), authorName.Replace("-", " "), StringComparison.InvariantCultureIgnoreCase), listNodeIds);
 
-            var rootPageModel = new ListModel(listNodes[0], pager, postWithAuthor, publishedValueFallback, variationContextAccessor, documentNavigationQueryService, publishedContentStatusFilteringService);
+            var rootPageModel = new ListModel(listNodes[0], pager, postWithAuthor, publishedValueFallback, variationContextAccessor);
             return rootPageModel.Posts;
         }
 
