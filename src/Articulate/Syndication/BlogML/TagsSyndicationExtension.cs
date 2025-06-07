@@ -1,3 +1,5 @@
+using System;
+using System.IO;
 using System.Xml;
 using System.Xml.XPath;
 using Argotic.Common;
@@ -84,6 +86,7 @@ namespace Articulate.Syndication.BlogML
                 {
                     WriteTo(writer);
                 }
+
                 memoryStream.Seek(0L, SeekOrigin.Begin);
                 using (var streamReader = new StreamReader(memoryStream))
                 {

@@ -64,6 +64,7 @@ app.UseUmbraco()
                 return Results.Ok(output);
             });
         }
+
         _ = u.EndpointRouteBuilder.MapRazorPages();
         _ = u.UseUmbracoPreviewEndpoints();
         _ = u.UseBackOfficeEndpoints();

@@ -18,7 +18,6 @@ namespace Articulate.Components
         private readonly AppCaches _appCaches;
         private readonly ICoreScopeProvider _scopeProvider;
 
-
         public ContentCacheRefresherHandler(
             IUmbracoContextAccessor umbracoContextAccessor,
             AppCaches appCaches, ICoreScopeProvider scopeProvider)
@@ -78,6 +77,7 @@ namespace Articulate.Components
             {
                 return;
             }
+
             using (var scope = _scopeProvider.CreateCoreScope(autoComplete: true))
             {
                 var item = umbracoContext.Content.GetById(id);

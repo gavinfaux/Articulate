@@ -1,4 +1,7 @@
+using System;
+using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.ServiceModel.Syndication;
 using System.Text.RegularExpressions;
 using Articulate.Models;
@@ -66,6 +69,7 @@ namespace Articulate.Syndication
                 {
                     return $" href=\"{rootUrl.TrimEnd('/')}{match.Groups[1].Value.EnsureStartsWith('/')}\"";
                 }
+
                 return null;
             });
             content = _relativeMediaSrc.Replace(content, match =>
@@ -74,6 +78,7 @@ namespace Articulate.Syndication
                 {
                     return $" src=\"{mediaRoot}{match.Groups[1].Value.EnsureStartsWith('/')}\"";
                 }
+
                 return null;
             });            
 
@@ -120,6 +125,7 @@ namespace Articulate.Syndication
             {
                 _logger.LogError(ex, "Could not convert the blog logo path to a Uri");
             }
+
             return logoUri;
         }
 

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.ObjectModel;
 using System.Xml;
 using System.Xml.XPath;
@@ -20,8 +21,6 @@ namespace Articulate.Syndication.BlogML
             get { return _extensionTags; }
             set { _extensionTags = value; }
         }
-
-
         public bool Load(XPathNavigator source, XmlNamespaceManager manager)
         {
             var flag = false;
@@ -42,10 +41,12 @@ namespace Articulate.Syndication.BlogML
                                 if (!string.IsNullOrEmpty(tag))
                                     Tags.Add(tag);
                             }
+
                             flag = true;
                         }
                 }
             }
+
             return flag;
         }
 
@@ -61,6 +62,7 @@ namespace Articulate.Syndication.BlogML
                 writer.WriteAttributeString("ref", tag);
                 writer.WriteEndElement();
             }
+
             writer.WriteEndElement();
         }
     }

@@ -1,11 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk.Razor">
   <PropertyGroup>
     <TargetFrameworks>net9.0</TargetFrameworks>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>false</ImplicitUsings>
     <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
     <StaticWebAssetBasePath>/</StaticWebAssetBasePath>
-    <!--<OutputType>Library</OutputType>-->
+    <OutputType>Library</OutputType>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
     <EnableDefaultContentItems>false</EnableDefaultContentItems>
     <RestorePackages>true</RestorePackages>

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Articulate.Models;
 using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Core.Events;

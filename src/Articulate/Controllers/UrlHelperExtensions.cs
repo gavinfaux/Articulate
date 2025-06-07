@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Text;
 using System.Web;
 using Microsoft.AspNetCore.Mvc;
@@ -33,6 +34,7 @@ namespace Articulate.Controllers
                     sb.Append(path);
                 }
             }
+
             return sb.ToString().TrimEnd(',');
         }
     }

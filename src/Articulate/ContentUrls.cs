@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Linq;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.Routing;
 using Umbraco.Cms.Core.Web;
@@ -44,6 +46,7 @@ namespace Articulate
                     publishedContent.Url()
                 };
             }
+
             return allUrls;
         }
     }

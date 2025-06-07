@@ -1,5 +1,7 @@
+using System.IO;
 using System.ServiceModel.Syndication;
 using System.Text;
+using System.Threading.Tasks;
 using System.Xml;
 using Articulate.Models;
 using Microsoft.AspNetCore.Http;
@@ -19,8 +21,6 @@ namespace Articulate.Syndication
             _feed = feed;
             _model = model;
         }
-
-
         public override async Task ExecuteResultAsync(ActionContext context)
         {
             context.HttpContext.Response.ContentType = "application/xml";

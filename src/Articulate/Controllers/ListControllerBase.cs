@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using System.Text;
 
 using Articulate.Models;
@@ -68,7 +70,6 @@ namespace Articulate.Controllers
 
             var pageSize = masterModel.PageSize;
             var totalPages = totalPosts == 0 ? 1 : Convert.ToInt32(Math.Ceiling((double)totalPosts / pageSize));
-            var totalPages2 = totalPosts == 0 ? 1 : (int)Math.Clamp(Math.Ceiling((double)totalPosts / pageSize), int.MinValue, int.MaxValue);
 
             //Invalid page, redirect without pages
             if (totalPages < p)

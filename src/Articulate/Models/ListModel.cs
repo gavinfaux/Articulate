@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using Umbraco.Cms.Core.Media;
 using Umbraco.Cms.Core.Models.PublishedContent;
 
@@ -30,16 +33,24 @@ namespace Articulate.Models
             : base(content, publishedValueFallback, variationContextAccessor)
         {
             
-            if (content == null) throw new ArgumentNullException(nameof(content));
-            if (listItems == null) throw new ArgumentNullException(nameof(listItems));
-            if (pager == null) throw new ArgumentNullException(nameof(pager));
+            ArgumentNullException.ThrowIfNull(content);
+            ArgumentNullException.ThrowIfNull(listItems);
+            ArgumentNullException.ThrowIfNull(pager);
 
             Pages = pager;
             _listItems = listItems;
             if (content.ContentType.Alias.Equals(ArticulateConstants.ArticulateArchiveContentTypeAlias))
+            {
                 PageTitle = BlogTitle + " - " + BlogDescription;
+            }
             else
+            {
                 PageTags = Name;
+            }
+        }        
+        public ListModel(IPublishedContent content, IPublishedValueFallback publishedValueFallback, IVariationContextAccessor variationContextAccessor)
+            : base(content, publishedValueFallback, variationContextAccessor)
+        {
         }
 
         public IImageUrlGenerator ImageUrlGenerator { get; }
@@ -58,7 +69,9 @@ namespace Articulate.Models
             {
 
                 if (_resolvedList != null)
+                {
                     return _resolvedList;
+                }
 
                 if (_listItems == null)
                 {
