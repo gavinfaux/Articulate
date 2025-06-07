@@ -34,7 +34,7 @@ namespace Articulate.Controllers
     /// </summary>
     [VersionedApiBackOfficeRoute("articulate/anew")]
     [ApiExplorerSettings(GroupName = "Articulate")]
-    public class MardownEditorApiController : ManagementApiControllerBase
+    public class MarkdownEditorApiController : ManagementApiControllerBase
     {
         private readonly ServiceContext _services;
         private readonly IBackOfficeSecurityAccessor _backOfficeSecurityAccessor;
@@ -45,7 +45,7 @@ namespace Articulate.Controllers
         private readonly GlobalSettings _globalSettings;
         private readonly IHostingEnvironment _hostingEnvironment;
 
-        public MardownEditorApiController(
+        public MarkdownEditorApiController(
             ServiceContext services,
             IBackOfficeSecurityAccessor backOfficeSecurityAccessor,
             UmbracoHelper umbracoHelper,

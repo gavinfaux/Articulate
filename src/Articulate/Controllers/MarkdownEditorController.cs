@@ -14,7 +14,6 @@ namespace Articulate.Controllers
     [ArticulateDynamicRoute]
     public class MarkdownEditorController : RenderController
     {
-        private readonly UmbracoApiControllerTypeCollection _apiControllers;
         private readonly LinkGenerator _linkGenerator;
 
         public MarkdownEditorController(
@@ -28,10 +27,17 @@ namespace Articulate.Controllers
         }        [HttpGet]
         public IActionResult NewPost()
         {
+            // Work around? to resolve "Cannot resolve action 'PostNew' and cannot resolve controller 'MarkdownEditorApiController'." errors
+            var actionName = nameof(MarkdownEditorApiController.PostNew);
+            var controllerName = "MarkdownEditorApiController";
+
             var vm = new MarkdownEditorInitModel
             {
                 ArticulateNodeId = CurrentPage.Id,
-                PostUrl = "/umbraco/articulate/anew/PostNew",
+                PostUrl = _linkGenerator.GetPathByAction(action: actionName, controller: controllerName, values: null),
+
+                // hmm... unsure how to handle this in Umbraco 15+ - unsure we can use the link generator here, or redirect to login and back again, or use BackOfficeSignInManager
+
                 // IsAuthUrl = _linkGenerator.GetUmbracoControllerUrl(nameof(AuthenticationController.IsAuthenticated), typeof(AuthenticationController)),
                 // DoAuthUrl = _linkGenerator.GetUmbracoControllerUrl(
                 //     nameof(AuthenticationController.PostLogin),
