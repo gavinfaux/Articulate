@@ -2,6 +2,7 @@ import { ProblemDetails } from "../api/core";
 
 /**
  * Extracts an error message from various error types.
+ * Fetch API does not throw on HTTP errors, so we need to check for that.
  * This function prioritizes errors with a `response.data` structure (like ProblemDetails),
  * then standard `Error` objects, then plain strings.
  * @param error The error object (unknown type).
@@ -24,30 +25,6 @@ export function extractErrorMessage(error: unknown, defaultMessage: string): str
     }
     // If neither title nor detail, defaultMessage is used (already set)
     return message; // Return early if ProblemDetails found at top level
-  }
-
-  // 2. Check for errors nested under error.response.data (e.g., Axios)
-  if (
-    error &&
-    typeof error === "object" &&
-    "response" in error &&
-    (error as any).response &&
-    typeof (error as any).response === "object" &&
-    "data" in (error as any).response &&
-    (error as any).response.data &&
-    typeof (error as any).response.data === "object"
-  ) {
-    const problem = (error as any).response.data as Partial<ProblemDetails>;
-    if (problem.title) {
-      message = problem.title;
-      if (problem.detail) {
-        message += `: ${problem.detail}`;
-      }
-    } else if (problem.detail) {
-      message = problem.detail;
-    }
-    // If neither title nor detail, defaultMessage is used (already set)
-    return message; // Return early if ProblemDetails found in response.data
   }
 
   // 3. Check for standard Error objects

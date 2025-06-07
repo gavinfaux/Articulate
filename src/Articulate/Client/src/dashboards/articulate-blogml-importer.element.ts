@@ -95,15 +95,15 @@ export default class ArticulateBlogMlImporterElement extends UmbLitElement {
       return;
     }
     try {
+      // Note: DocumentService.getDocumentById does not support throwOnError or return response.ok
+      // Can we assume it throws on error or returns a problematic structure we can catch.
       const response: DocumentResponseModel = await DocumentService.getDocumentById({ id: udi });
-      if (
-        response &&
-        response.variants &&
-        response.variants.length > 0 &&
-        response.variants[0].name
-      ) {
-        this._selectedBlogNodeName = response.variants[0].name;
+      // Check if we have a valid response
+      const firstVariant = response?.variants?.[0];
+      if (firstVariant?.name) {
+        this._selectedBlogNodeName = firstVariant.name;
       } else {
+        // Should we throw an error here?
         this._selectedBlogNodeName = `Node (UDI: ${udi.substring(udi.lastIndexOf("/") + 1)})`;
         console.warn("Could not determine node name from response for UDI:", udi, response);
       }
@@ -177,7 +177,6 @@ export default class ArticulateBlogMlImporterElement extends UmbLitElement {
 
       const initData = initResult.data as PostResponseModel;
 
-      // const initData = initResponse.data as PostResponseModel; // Moved up
       if (!initData || !initData.temporaryFileName) {
         throw new Error("File upload initialization failed: No temporary file name returned.");
       }
@@ -221,7 +220,6 @@ export default class ArticulateBlogMlImporterElement extends UmbLitElement {
       const importResponseData = importCallResult.data as ImportModel;
 
       let successMessage = "BlogML import completed successfully.";
-      // const importResponseData = importCallResponse.data as ImportModel; // Moved up
       if (importResponseData && importResponseData.downloadUrl) {
         const downloadLink = importResponseData.downloadUrl.startsWith("http")
           ? importResponseData.downloadUrl
@@ -230,6 +228,7 @@ export default class ArticulateBlogMlImporterElement extends UmbLitElement {
       }
 
       this._showMessage("positive", successMessage);
+      // reset form fields or selections here?
       form.reset();
       this._selectedBlogNodeUdi = null;
       this._selectedBlogNodeName = null;

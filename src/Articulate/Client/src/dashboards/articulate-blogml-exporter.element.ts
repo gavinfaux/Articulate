@@ -81,8 +81,11 @@ export default class ArticulateBlogMlExporterElement extends UmbLitElement {
           this.requestUpdate("_selectedBlogNodeUdi");
         }
       }
-    } catch (error) {
+    } catch (error: unknown) {
+      // Modal was closed without a selection or an error occurred
       console.info("Document picker modal closed without selection or with error:", error);
+      // Optionally, notify the user if this is considered an error scenario needing feedback
+      // await showUmbracoNotification(this, "Document selection was cancelled.", "warning");
     }
   }
 
@@ -93,17 +96,17 @@ export default class ArticulateBlogMlExporterElement extends UmbLitElement {
       return;
     }
     try {
-      // Note: DocumentService.getDocumentById might not support throwOnError or return response.ok
-      // We'll assume it throws on error or returns a problematic structure we can catch.
-      const response: DocumentResponseModel = await DocumentService.getDocumentById({ id: udi });
-      if (
-        response &&
-        response.variants &&
-        response.variants.length > 0 &&
-        response.variants[0].name
-      ) {
-        this._selectedBlogNodeName = response.variants[0].name;
+      // Note: DocumentService.getDocumentById does not support throwOnError or return response.ok
+      // Can we assume it throws on error or returns a problematic structure we can catch.
+      const response: DocumentResponseModel = await DocumentService.getDocumentById({
+        id: udi,
+      });
+      // Check if we have a valid response
+      const firstVariant = response?.variants?.[0];
+      if (firstVariant?.name) {
+        this._selectedBlogNodeName = firstVariant.name;
       } else {
+        // Should we throw an error here?
         this._selectedBlogNodeName = `Node (UDI: ${udi.substring(udi.lastIndexOf("/") + 1)})`;
         console.warn("Could not determine node name from response for UDI:", udi, response);
       }
@@ -112,10 +115,8 @@ export default class ArticulateBlogMlExporterElement extends UmbLitElement {
       this._selectedBlogNodeName = `Error fetching name`;
       const errorMessage = extractErrorMessage(
         error,
-        // Consider localization
         "Could not fetch node name. Please check logs.",
       );
-      // Using await here as showUmbracoNotification is async
       await showUmbracoNotification(this, errorMessage, "danger");
     }
     this.requestUpdate("_selectedBlogNodeName");
@@ -150,7 +151,6 @@ export default class ArticulateBlogMlExporterElement extends UmbLitElement {
 
       const result = await ArticulateService.postUmbracoManagementApiV1ArticulateBlogPostExport({
         body: payload,
-        throwOnError: true, // Ensure this is set
       });
 
       if (!result.response.ok) {
@@ -169,8 +169,7 @@ export default class ArticulateBlogMlExporterElement extends UmbLitElement {
         throw errorToThrow;
       }
 
-      // If response.ok, proceed with result.data
-      const responseData = result.data as ImportModel; // Corrected type to ImportModel
+      const responseData = result.data as ImportModel;
       let successMessage = "BlogML export completed successfully.";
       if (responseData && responseData.downloadUrl) {
         const downloadLink = responseData.downloadUrl.startsWith("http")
@@ -180,22 +179,19 @@ export default class ArticulateBlogMlExporterElement extends UmbLitElement {
       }
 
       this._showMessage("positive", successMessage);
-      // Optionally reset form fields or selections here if desired
-      // form.reset();
-      // this._selectedBlogNodeUdi = null;
-      // this._selectedBlogNodeName = "No node selected";
-      // this.requestUpdate();
+      // reset form fields or selections here?
+      form.reset();
+      this._selectedBlogNodeUdi = null;
+      this._selectedBlogNodeName = "No node selected";
+      this.requestUpdate();
     } catch (error: unknown) {
       console.error("BlogML Export Error:", error);
       const errorMessage = extractErrorMessage(
         error,
-        // Consider localization
         "Export failed. Please check the logs for more details.",
       );
-      // We'll use the global notification. You can keep _showMessage for inline form messages if desired.
       await showUmbracoNotification(this, errorMessage, "danger");
-      // If you want to keep the inline message as well:
-      // this._showMessage("error", errorMessage);
+      this._showMessage("error", errorMessage);
     } finally {
       this._isSubmitting = false;
       submitButton.setAttribute("state", "default");

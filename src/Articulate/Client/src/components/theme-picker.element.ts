@@ -113,9 +113,17 @@ export class ArticulateThemePickerElement
       needsReassignment = true;
     } else {
       for (let i = 0; i < newProposedOptions.length; i++) {
+        const currentOpt = this._themeSelectOptions[i];
+        const proposedOpt = newProposedOptions[i];
+
+        if (!currentOpt || !proposedOpt) {
+          needsReassignment = true;
+          break;
+        }
+
         if (
-          this._themeSelectOptions[i].value !== newProposedOptions[i].value ||
-          !!this._themeSelectOptions[i].selected !== newProposedOptions[i].selected
+          currentOpt.value !== proposedOpt.value ||
+          !!currentOpt.selected !== proposedOpt.selected
         ) {
           needsReassignment = true;
           break;
