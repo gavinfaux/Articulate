@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Api.Management.Controllers;
 using Umbraco.Cms.Api.Management.Routing;
 using Umbraco.Cms.Core.Security;
@@ -22,11 +23,17 @@ namespace Articulate.Controllers
     public class ArticulateBlogImportController : ManagementApiControllerBase
     {
 
+        public enum ArticulateBlogImportOperationStatus
+        {
+            InvalidRequest
+        }
+
         private readonly BlogMlImporter _blogMlImporter;
         private readonly IBackOfficeSecurityAccessor _backOfficeSecurityAccessor;
         private readonly ArticulateTempFileSystem _articulateTempFileSystem;
         private readonly BlogMlExporter _blogMlExporter;
         private readonly LinkGenerator _linkGenerator;
+        private readonly ILogger<ArticulateBlogImportController> _logger;
 
         [Obsolete]
         public ArticulateBlogImportController(BlogMlExporter blogMlExporter,
@@ -49,7 +56,8 @@ namespace Articulate.Controllers
         {
             if ((!Request.HasFormContentType && !Request.Form.Files.Any()) || !Path.GetExtension(Request.Form.Files[0].FileName.Trim('\"')).InvariantEquals(".xml"))
             {
-                return StatusCode((int)HttpStatusCode.UnsupportedMediaType);
+                _logger.LogWarning("Not a form post, no files provided; or first file was not an XML file");
+                return OperationStatusResult(ArticulateBlogImportOperationStatus.InvalidRequest, builder => StatusCode(StatusCodes.Status415UnsupportedMediaType, builder.WithTitle("Invalid request").WithDetail("The request must be a form upload, and the first file must be an XML file.").Build()));
             }
 
             var fileName = Path.GetRandomFileName();
@@ -119,7 +127,11 @@ namespace Articulate.Controllers
 
             if (!successful)
             {
-                return Problem("Importing failed, see umbraco log for details", statusCode: 500, title: "Internal Server Error");
+                return StatusCode(StatusCodes.Status500InternalServerError, new ProblemDetails
+                {
+                    Title = "Server error",
+                    Detail = "Import failed, see back office logs for details"
+                });
             }
 
             var downloadUrl = _linkGenerator.GetPathByAction(

@@ -40,7 +40,7 @@ namespace Articulate.Controllers
             if (sourceTheme == null)
             {
                 logger.LogError("Theme directory not found: {ThemeName}", model.ThemeName);
-                return OperationStatusResult(ThemeEditorOperationStatus.NotFound, builder => NotFound(builder.WithTitle("Theme directory not found").Build()));
+                return OperationStatusResult(ThemeEditorOperationStatus.NotFound, builder => NotFound(builder.WithTitle("Server error").WithDetail($"{model.ThemeName} not found.").Build()));
             }
 
             var articulateUserThemesDirectory = hostingEnvironment.MapPathContentRoot(PathHelper.UserVirtualThemePath);
@@ -56,7 +56,7 @@ namespace Articulate.Controllers
             if (destTheme != null)
             {
                 logger.LogWarning("Theme name is already is use: {ThemeName}", model.ThemeName);
-                return OperationStatusResult(ThemeEditorOperationStatus.DuplicateThemeName, builder => BadRequest(builder.WithTitle("Theme name is already used").WithDetail("The theme name must be unique").Build()));
+                return OperationStatusResult(ThemeEditorOperationStatus.DuplicateThemeName, builder => BadRequest(builder.WithTitle($"Theme {model.ThemeName} is already used").WithDetail("The theme name must be unique.").Build()));
             }
 
             try 
@@ -68,7 +68,7 @@ namespace Articulate.Controllers
                 if (e.Message == "Theme already exists")
                 {
                     logger.LogWarning(e,"Theme name is already is use: {ThemeName}", model.NewThemeName);
-                    return OperationStatusResult(ThemeEditorOperationStatus.DuplicateThemeName, builder => BadRequest(builder.WithTitle("Theme name is already used").WithDetail("The theme name must be unique").Build()));
+                    return OperationStatusResult(ThemeEditorOperationStatus.DuplicateThemeName, builder => BadRequest(builder.WithTitle($"Theme {model.ThemeName} is already used").WithDetail("The theme name must be unique.").Build()));
                 }
 
                 throw;
