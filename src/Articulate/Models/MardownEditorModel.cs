@@ -9,7 +9,7 @@ namespace Articulate.Models
     {
         [Required]
         [DataMember(Name = "articulateNodeId", IsRequired = true)]
-        public Guid? ArticulateNodeId { get; set; }
+        public int? ArticulateNodeId { get; set; }
 
         [Required]
         [DataMember(Name = "title", IsRequired = true)]
