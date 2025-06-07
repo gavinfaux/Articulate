@@ -9,6 +9,7 @@ using System.Linq;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.PublishedCache;
 using Umbraco.Cms.Core.Routing;
+using Umbraco.Cms.Core.Scoping;
 using Umbraco.Cms.Core.Web;
 using Umbraco.Cms.Web.Common.Controllers;
 using Umbraco.Cms.Web.Website.Routing;
@@ -30,14 +31,16 @@ namespace Articulate.Routing
 
         private readonly Dictionary<ArticulateRouteTemplate, ArticulateRootNodeCache> _routeCache = new();
         private readonly IControllerActionSearcher _controllerActionSearcher;
+        private readonly ICoreScopeProvider _coreScopeProvider;
 
         /// <summary>
         /// Constructor
         /// </summary>
         /// <param name="controllerActionSearcher"></param>
-        public ArticulateRouter(IControllerActionSearcher controllerActionSearcher)
+        public ArticulateRouter(IControllerActionSearcher controllerActionSearcher, ICoreScopeProvider coreScopeProvider )
         {
             _controllerActionSearcher = controllerActionSearcher;
+            _coreScopeProvider = coreScopeProvider;
         }
 
         public bool TryMatch(PathString path, RouteValueDictionary routeValues, out ArticulateRootNodeCache articulateRootNodeCache)
@@ -66,6 +69,8 @@ namespace Articulate.Routing
         {
             lock (s_locker)
             {
+              using (var scope = _coreScopeProvider.CreateCoreScope(autoComplete: true))
+              {
                 IPublishedContentCache contentCache = umbracoContext.Content;
 
                 IPublishedContentType articulateCt = contentCache.GetContentType("Articulate");
@@ -123,6 +128,7 @@ namespace Articulate.Routing
                         MapTagsAndCategoriesRoute(httpContext, rootNodePath, articulateRootNode, domains);
                     }
                 }
+              }
             }
         }
 

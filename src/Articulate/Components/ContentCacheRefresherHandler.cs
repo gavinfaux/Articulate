@@ -2,6 +2,7 @@ using Umbraco.Cms.Core.Cache;
 using Umbraco.Cms.Core.Events;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Notifications;
+using Umbraco.Cms.Core.Scoping;
 using Umbraco.Cms.Core.Services.Changes;
 using Umbraco.Cms.Core.Sync;
 using Umbraco.Cms.Core.Web;
@@ -15,13 +16,15 @@ namespace Articulate.Components
         
         private readonly IUmbracoContextAccessor _umbracoContextAccessor;
         private readonly AppCaches _appCaches;
+        private readonly ICoreScopeProvider _scopeProvider;
 
         public ContentCacheRefresherHandler(
             IUmbracoContextAccessor umbracoContextAccessor,
-            AppCaches appCaches)
+            AppCaches appCaches, ICoreScopeProvider scopeProvider)
         {
             _umbracoContextAccessor = umbracoContextAccessor;
             _appCaches = appCaches;
+            _scopeProvider = scopeProvider;
         }
 
         /// <summary>
@@ -75,20 +78,22 @@ namespace Articulate.Components
                 return;
             }
 
-            var item = umbracoContext.Content.GetById(id);
-
-            // if it's directly related to an articulate node
-            if (item != null && item.ContentType.Alias.InvariantEquals(ArticulateConstants.ArticulateContentTypeAlias))
+            using (var scope = _scopeProvider.CreateCoreScope(autoComplete: true))
             {
+              var item = umbracoContext.Content.GetById(id);
+
+              // if it's directly related to an articulate node
+              if (item != null && item.ContentType.Alias.InvariantEquals(ArticulateConstants.ArticulateContentTypeAlias))
+              {
                 //ensure routes are rebuilt
                 _appCaches.RequestCache.GetCacheItem(ArticulateConstants.RefreshRoutesToken, () => true);
                 return;
-            }
+              }
 
-            // We need to handle cases where the state of siblings at a lower sort order directly affect an Articulate node's routing.
-            // This will happen on copy, move, sort, unpublish, delete
-            if (item == null)
-            {
+              // We need to handle cases where the state of siblings at a lower sort order directly affect an Articulate node's routing.
+              // This will happen on copy, move, sort, unpublish, delete
+              if (item == null)
+              {
                 item = umbracoContext.Content.GetById(true, id);
 
                 // This will occur on delete, then what?
@@ -99,11 +104,11 @@ namespace Articulate.Components
                     _appCaches.RequestCache.GetCacheItem(ArticulateConstants.RefreshRoutesToken, () => true);
                     return;
                 }
-            }
+              }
 
-            var articulateContentType = umbracoContext.Content.GetContentType(ArticulateConstants.ArticulateContentTypeAlias);
-            if (articulateContentType != null)
-            {
+              var articulateContentType = umbracoContext.Content.GetContentType(ArticulateConstants.ArticulateContentTypeAlias);
+              if (articulateContentType != null)
+              {
                 var articulateNodes = umbracoContext.Content.GetByContentType(articulateContentType);
                 foreach (var node in articulateNodes)
                 {
@@ -115,6 +120,7 @@ namespace Articulate.Components
                         return;
                     }
                 }
+              }
             }
         }
     }

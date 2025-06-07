@@ -15,13 +15,14 @@ using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.IO;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.PropertyEditors;
+using Umbraco.Cms.Core.Scoping;
 using Umbraco.Cms.Core.Serialization;
 using Umbraco.Cms.Core.Services;
 using Umbraco.Cms.Core.Strings;
 using Umbraco.Cms.Infrastructure.Persistence;
-using Umbraco.Cms.Infrastructure.Scoping;
 using Umbraco.Extensions;
 using File = System.IO.File;
+using IScopeProvider = Umbraco.Cms.Infrastructure.Scoping.IScopeProvider;
 using Task = System.Threading.Tasks.Task;
 
 namespace Articulate.ImportExport
@@ -37,7 +38,7 @@ namespace Articulate.ImportExport
         private readonly ILogger<BlogMlImporter> _logger;
         private readonly IDataTypeService _dataTypeService;
         private readonly ISqlContext _sqlContext;
-        private readonly IScopeProvider _scopeProvider;
+        private readonly ICoreScopeProvider _scopeProvider;
         private readonly ILocalizationService _localizationService;
         private readonly IShortStringHelper _shortStringHelper;
         private readonly MediaFileManager _mediaFileManager;
@@ -57,7 +58,7 @@ namespace Articulate.ImportExport
             ILogger<BlogMlImporter> logger,
             IDataTypeService dataTypeService,
             ISqlContext sqlContext,
-            IScopeProvider scopeProvider,
+            ICoreScopeProvider scopeProvider,
             ILocalizationService localizationService,
             IShortStringHelper shortStringHelper,
             MediaFileManager mediaFileManager,
@@ -112,7 +113,7 @@ namespace Articulate.ImportExport
             bool importFirstImage = false)
         {
             // wrap entire operation in scope
-            using (var scope = _scopeProvider.CreateScope())
+            using (var scope = _scopeProvider.CreateCoreScope())
             {
                 try
                 {
