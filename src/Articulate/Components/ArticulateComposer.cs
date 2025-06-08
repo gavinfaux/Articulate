@@ -52,7 +52,6 @@ namespace Articulate.Components
             builder.AddNotificationHandler<ServerVariablesParsingNotification, ServerVariablesParsingHandler>();
             builder.AddNotificationHandler<ContentCacheRefresherNotification, ContentCacheRefresherHandler>();
             builder.AddNotificationHandler<DomainCacheRefresherNotification, DomainCacheRefresherHandler>();
-            //builder.AddNotificationHandler<SendingContentNotification, SendingContentHandler>(); -- TODO: Replaced with Property Preset Value
 
             builder.Services.ConfigureOptions<ArticulatePipelineStartupFilter>();
             builder.Services.ConfigureOptions<ConfigureArticulateMvcOptions>();
