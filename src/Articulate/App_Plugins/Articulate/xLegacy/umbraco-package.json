@@ -1,0 +1,12 @@
+{
+  "$schema": "../../umbraco-package-schema.json",
+  "name": "Articulate",
+  "extensions": [
+    {
+      "type": "bundle",
+      "alias": "Articulate.Bundle",
+      "name": "Articulate Bundle",
+      "js": "/App_Plugins/Articulate/articulate.js"
+    }
+  ]
+}

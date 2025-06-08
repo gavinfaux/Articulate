@@ -126,6 +126,14 @@
     <Folder Include="wwwroot\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Don't include xLegacy folder in build or pack -->
+    <Compile Remove="App_Plugins\Articulate\xLegacy\**" />
+    <Content Remove="App_Plugins\Articulate\xLegacy\**" />
+    <None Remove="App_Plugins\Articulate\xLegacy\**" />
+    <EmbeddedResource Remove="App_Plugins\Articulate\xLegacy\**" />
+  </ItemGroup>
+
   <!-- Restore and build Client files -->
   <Target Name="RestoreClient" Inputs="Client\package.json;Client\package-lock.json" Outputs="Client\node_modules\.package-lock.json">
     <Message Importance="high" Text="Restoring Client NPM packages..." />
