@@ -1,13 +1,24 @@
-﻿$(document).ready(function () {
+$(function () {
 
-    function getFeedContent(df) {
-        $.get(df.data("feed-base-url") + "ArticulateFeeds/" + df.data("feed-action") + "/" + df.data("feed-id"), function (data) {
-            df.html(data);
-        });
-    }
+  const getFeedContent = function ($feedElement) {
+    const baseUrl = $feedElement.data("feed-base-url");
+    const action = $feedElement.data("feed-action");
+    const id = $feedElement.data("feed-id");
+    const feedUrl = `${baseUrl}ArticulateFeeds/${action}/${id}`;
 
-    var feeds = $("#feeds .feed");
-    feeds.each(function(i, f) {
-        getFeedContent($(f));
-    });
+    $.get(feedUrl)
+      .done(function (data) {
+        $feedElement.html(data);
+      })
+      .fail(function () {
+        $feedElement.html("<p class='text-danger'>Sorry, this feed could not be loaded.</p>");
+      });
+  };
+
+  const feeds = $("#feeds .feed");
+
+  feeds.each(function () {
+    getFeedContent($(this));
+  });
+
 });
