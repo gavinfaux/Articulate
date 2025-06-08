@@ -1,7 +1,9 @@
 using System;
+using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Runtime.Serialization;
 using System.Threading.Tasks;
 using Articulate.ImportExport;
 using Articulate.Models;
@@ -26,6 +28,14 @@ namespace Articulate.Controllers
     [ApiExplorerSettings(GroupName = "Articulate")]
     public class ArticulateBlogImportController : ManagementApiControllerBase
     {
+
+        public class PostResponseModel
+        {
+            public required string TemporaryFileName { get; set; }
+
+            public int PostCount { get; set; }
+
+        }
 
         public enum ArticulateBlogImportOperationStatus
         {
