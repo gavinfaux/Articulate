@@ -26,7 +26,10 @@ namespace Articulate.Routing
         private static readonly string s_wlwControllerName = ControllerExtensions.GetControllerName<WlwManifestController>();
         private static readonly string s_tagsControllerName = ControllerExtensions.GetControllerName<ArticulateTagsController>();
         private static readonly string s_rssControllerName = ControllerExtensions.GetControllerName<ArticulateRssController>();
-        private static readonly string s_markdownEditorControllerName = ControllerExtensions.GetControllerName<MarkdownEditorController>();
+
+        // // TODO: Deprecated for now. See the comment in the MarkdownEditorController.cs file
+        //private static readonly string s_markdownEditorControllerName = ControllerExtensions.GetControllerName<MarkdownEditorController>();
+
         private static readonly string s_metaWeblogControllerName = ControllerExtensions.GetControllerName<MetaWeblogController>();
 
         private readonly Dictionary<ArticulateRouteTemplate, ArticulateRootNodeCache> _routeCache = new();
@@ -115,7 +118,10 @@ namespace Articulate.Routing
                         foreach (IPublishedContent articulateRootNode in nodeByPathGroup)
                         {
                             MapRssRoute(httpContext, rootNodePath, articulateRootNode, domains);
-                            MapMarkdownEditorRoute(httpContext, rootNodePath, articulateRootNode, domains);
+
+                            // // TODO: Deprecated for now. See the comment in the MarkdownEditorController.cs file
+                            // MapMarkdownEditorRoute(httpContext, rootNodePath, articulateRootNode, domains);
+
                             MapAuthorsRssRoute(httpContext, rootNodePath, articulateRootNode, domains);
 
                             MapSearchRoute(httpContext, rootNodePath, articulateRootNode, domains);
@@ -128,7 +134,7 @@ namespace Articulate.Routing
                             MapTagsAndCategoriesRoute(httpContext, rootNodePath, articulateRootNode, domains);
                         }
                     }
-                }
+              }
 
             }
         }
@@ -258,17 +264,18 @@ namespace Articulate.Routing
                 domains);
         }
 
-        private void MapMarkdownEditorRoute(HttpContext httpContext, string rootNodePath, IPublishedContent articulateRootNode, IReadOnlyList<Domain> domains)
-        {
-            RouteTemplate template = TemplateParser.Parse($"{rootNodePath}a-new");
-            MapRoute(
-                s_markdownEditorControllerName,
-                nameof(MarkdownEditorController.NewPost),
-                template,
-                httpContext,
-                articulateRootNode,
-                domains);
-        }
+        // // TODO: Deprecated for now. See the comment in the MarkdownEditorController.cs file
+        //private void MapMarkdownEditorRoute(HttpContext httpContext, string rootNodePath, IPublishedContent articulateRootNode, IReadOnlyList<Domain> domains)
+        //{
+        //    RouteTemplate template = TemplateParser.Parse($"{rootNodePath}a-new");
+        //    MapRoute(
+        //        s_markdownEditorControllerName,
+        //        nameof(MarkdownEditorController.NewPost),
+        //        template,
+        //        httpContext,
+        //        articulateRootNode,
+        //        domains);
+        //}
 
         private void MapSearchRoute(HttpContext httpContext, string rootNodePath, IPublishedContent articulateRootNode, IReadOnlyList<Domain> domains)
         {
