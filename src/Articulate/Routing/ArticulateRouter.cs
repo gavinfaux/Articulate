@@ -26,22 +26,21 @@ namespace Articulate.Routing
         private static readonly string s_wlwControllerName = ControllerExtensions.GetControllerName<WlwManifestController>();
         private static readonly string s_tagsControllerName = ControllerExtensions.GetControllerName<ArticulateTagsController>();
         private static readonly string s_rssControllerName = ControllerExtensions.GetControllerName<ArticulateRssController>();
-        // TODO: Replaced by Umbraco.MarkdownEditor ?
-        // private static readonly string s_markdownEditorControllerName = ControllerExtensions.GetControllerName<MarkdownEditorController>();
+        private static readonly string s_markdownEditorControllerName = ControllerExtensions.GetControllerName<MarkdownEditorController>();
         private static readonly string s_metaWeblogControllerName = ControllerExtensions.GetControllerName<MetaWeblogController>();
 
         private readonly Dictionary<ArticulateRouteTemplate, ArticulateRootNodeCache> _routeCache = new();
         private readonly IControllerActionSearcher _controllerActionSearcher;
-        private readonly ICoreScopeProvider _scopeProvider;
+        private readonly ICoreScopeProvider _coreScopeProvider;
 
         /// <summary>
         /// Constructor
         /// </summary>
         /// <param name="controllerActionSearcher"></param>
-        public ArticulateRouter(IControllerActionSearcher controllerActionSearcher, ICoreScopeProvider scopeProvider)
+        public ArticulateRouter(IControllerActionSearcher controllerActionSearcher, ICoreScopeProvider coreScopeProvider )
         {
             _controllerActionSearcher = controllerActionSearcher;
-            _scopeProvider = scopeProvider;
+            _coreScopeProvider = coreScopeProvider;
         }
 
         public bool TryMatch(PathString path, RouteValueDictionary routeValues, out ArticulateRootNodeCache articulateRootNodeCache)
@@ -70,9 +69,9 @@ namespace Articulate.Routing
         {
             lock (s_locker)
             {
-                using (var scope = _scopeProvider.CreateCoreScope(autoComplete: true))
-                {
-                    IPublishedContentCache contentCache = umbracoContext.Content;
+              using (var scope = _coreScopeProvider.CreateCoreScope(autoComplete: true))
+              {
+                IPublishedContentCache contentCache = umbracoContext.Content;
 
                     IPublishedContentType articulateCt = contentCache.GetContentType("Articulate");
                     if (articulateCt == null)
@@ -116,8 +115,7 @@ namespace Articulate.Routing
                         foreach (IPublishedContent articulateRootNode in nodeByPathGroup)
                         {
                             MapRssRoute(httpContext, rootNodePath, articulateRootNode, domains);
-                            // TODO: Replaced by Umbraco.MarkdownEditor ?
-                            // MapMarkdownEditorRoute(httpContext, rootNodePath, articulateRootNode, domains);
+                            MapMarkdownEditorRoute(httpContext, rootNodePath, articulateRootNode, domains);
                             MapAuthorsRssRoute(httpContext, rootNodePath, articulateRootNode, domains);
 
                             MapSearchRoute(httpContext, rootNodePath, articulateRootNode, domains);
@@ -260,18 +258,17 @@ namespace Articulate.Routing
                 domains);
         }
 
-        // TODO: Replaced by Umbraco.MarkdownEditor ?
-        //private void MapMarkdownEditorRoute(HttpContext httpContext, string rootNodePath, IPublishedContent articulateRootNode, IReadOnlyList<Domain> domains)
-        //{
-        //    RouteTemplate template = TemplateParser.Parse($"{rootNodePath}a-new");
-        //    MapRoute(
-        //        s_markdownEditorControllerName,
-        //        nameof(MarkdownEditorController.NewPost),
-        //        template,
-        //        httpContext,
-        //        articulateRootNode,
-        //        domains);
-        //}
+        private void MapMarkdownEditorRoute(HttpContext httpContext, string rootNodePath, IPublishedContent articulateRootNode, IReadOnlyList<Domain> domains)
+        {
+            RouteTemplate template = TemplateParser.Parse($"{rootNodePath}a-new");
+            MapRoute(
+                s_markdownEditorControllerName,
+                nameof(MarkdownEditorController.NewPost),
+                template,
+                httpContext,
+                articulateRootNode,
+                domains);
+        }
 
         private void MapSearchRoute(HttpContext httpContext, string rootNodePath, IPublishedContent articulateRootNode, IReadOnlyList<Domain> domains)
         {
