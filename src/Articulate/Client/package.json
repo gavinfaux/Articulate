@@ -4,20 +4,21 @@
   "version": "6.0.0",
   "type": "module",
   "scripts": {
-    "watch": "npx chokidar \"src/**/*\" -c \"npm run build\"",
+    "watch": "npx chokidar \"src/**/*\" -c \"npm run build:copy\"",
     "build": "tsc && vite build && node scripts/copy-articulate-output.cjs",
     "build:copy": "tsc && vite build && node scripts/copy-articulate-output.cjs --copy",
-    "generate-client": "node scripts/generate-openapi.js https://localhost:44366/umbraco/swagger/management/swagger.json?urls.primaryName=Umbraco+Management+API",
+    "generate-client": "node scripts/generate-openapi.js https://localhost:44366/umbraco/swagger/articulate-api/swagger.json",
     "format": "prettier --write .",
-    "lint": "eslint . --ext .ts,.js,.tsx,.jsx",
-    "typecheck": "npx tsc --noEmit"
+    "lint": "eslint . --ext .ts,.js,.tsx,.jsx"
+  },
+  "dependencies": {
+    "@hey-api/client-fetch": "^0.12.0"
   },
   "devDependencies": {
     "@eslint/compat": "^1.2.9",
     "@eslint/js": "^9.28.0",
-    "@hey-api/client-fetch": "^0.11.0",
-    "@hey-api/openapi-ts": "^0.69.2",
-    "@rollup/rollup-win32-x64-msvc": "^4.41.1",
+    "@hey-api/openapi-ts": "^0.71.1",
+    "@rollup/rollup-win32-x64-msvc": "^4.42.0",
     "@umbraco-cms/backoffice": "^15.4.1",
     "chalk": "^5.4.1",
     "chokidar-cli": "^3.0.0",

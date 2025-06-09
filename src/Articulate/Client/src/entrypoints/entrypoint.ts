@@ -1,6 +1,6 @@
 import { UMB_AUTH_CONTEXT } from "@umbraco-cms/backoffice/auth";
 import type { UmbEntryPointOnInit } from "@umbraco-cms/backoffice/extension-api";
-import { client } from "../api/core/client.gen";
+import { client } from "../api/articulate/client.gen";
 import { manifest } from "../dashboards/manifests";
 
 export const onInit: UmbEntryPointOnInit = (host, extensionRegistry) => {

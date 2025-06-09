@@ -7,12 +7,12 @@ import type {
   UmbPropertyEditorUiElement,
 } from "@umbraco-cms/backoffice/property-editor";
 import { UmbTextStyles } from "@umbraco-cms/backoffice/style";
-import { ArticulateService, ProblemDetails } from "../api/core";
+import { Articulate } from "../api/articulate/sdk.gen";
 import { extractErrorMessage } from "../utils/error-utils";
 import { showUmbracoNotification } from "../utils/notification-utils";
 
 @customElement("articulate-theme-picker-element")
-export class ArticulateThemePickerElement
+export default class ArticulateThemePickerElement
   extends UmbElementMixin(UmbLitElement)
   implements UmbPropertyEditorUiElement
 {
@@ -53,15 +53,16 @@ export class ArticulateThemePickerElement
   private async _fetchThemes() {
     this._loading = true;
     this._error = "";
+
     try {
-      const result = await ArticulateService.getUmbracoManagementApiV1ArticulateThemeThemes({
+      const result = await Articulate.getUmbracoManagementApiV1ArticulateEditorsThemes({
         throwOnError: true,
       });
 
       if (!result.response.ok) {
         let errorToThrow;
         try {
-          const problemDetails: ProblemDetails = await result.response.json();
+          const problemDetails = await result.response.json();
           errorToThrow = problemDetails;
         } catch {
           errorToThrow = new Error(
@@ -71,30 +72,30 @@ export class ArticulateThemePickerElement
         throw errorToThrow;
       }
 
-      const data = await result.data;
+      const data = result.data;
       if (!data) {
-        throw new Error("Failed to load themes. Review back office logs for more details.");
+        throw new Error("No theme data returned from the server.");
       }
-      this._themeData =
-        data?.map((apiTheme) => ({
-          name: apiTheme.name,
-          value: apiTheme.name,
-        })) ?? [];
+
+      this._themeData = data.map((theme) => ({
+        name: theme,
+        value: theme,
+      }));
       this._rebuildAndSetSelectOptions();
     } catch (error: unknown) {
-      const extractedMessage = extractErrorMessage(
+      const errorMessage = extractErrorMessage(
         error,
-        "Could not load themes. Please check the logs for details.",
+        "Failed to load themes. Please check the logs for more details.",
       );
-      this._error = extractedMessage;
-      await showUmbracoNotification(this, extractedMessage, "danger");
+      this._error = errorMessage;
+      await showUmbracoNotification(this, errorMessage, "danger");
     } finally {
       this._loading = false;
     }
   }
 
   private _rebuildAndSetSelectOptions() {
-    if (this._themeData.length === 0) {
+    if (!this._themeData || this._themeData.length === 0) {
       if (this._themeSelectOptions.length > 0) {
         this._themeSelectOptions = [];
       }
@@ -102,38 +103,13 @@ export class ArticulateThemePickerElement
     }
 
     const valueToSelect = this.value;
-    const newProposedOptions = this._themeData.map((theme) => ({
+    const newOptions = this._themeData.map((theme) => ({
       name: theme.name,
       value: theme.value,
       selected: !!valueToSelect && theme.value === valueToSelect,
     }));
 
-    let needsReassignment = false;
-    if (this._themeSelectOptions.length !== newProposedOptions.length) {
-      needsReassignment = true;
-    } else {
-      for (let i = 0; i < newProposedOptions.length; i++) {
-        const currentOpt = this._themeSelectOptions[i];
-        const proposedOpt = newProposedOptions[i];
-
-        if (!currentOpt || !proposedOpt) {
-          needsReassignment = true;
-          break;
-        }
-
-        if (
-          currentOpt.value !== proposedOpt.value ||
-          !!currentOpt.selected !== proposedOpt.selected
-        ) {
-          needsReassignment = true;
-          break;
-        }
-      }
-    }
-
-    if (needsReassignment) {
-      this._themeSelectOptions = newProposedOptions;
-    }
+    this._themeSelectOptions = newOptions;
   }
 
   private _handleInput(event: Event) {
@@ -147,7 +123,7 @@ export class ArticulateThemePickerElement
 
   override render() {
     if (this._loading) {
-      return html`<uui-loader-bar></uui-loader-bar>`;
+      return html`<uui-loader></uui-loader>`;
     }
 
     if (this._error) {
@@ -173,8 +149,6 @@ export class ArticulateThemePickerElement
     `,
   ];
 }
-
-export default ArticulateThemePickerElement;
 
 declare global {
   interface HTMLElementTagNameMap {

@@ -1,46 +1,47 @@
-using System;
-using System.Collections.Generic;
-using Articulate.Controllers;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Routing;
-using Umbraco.Cms.Core.Events;
-using Umbraco.Cms.Core.Notifications;
+// // TODO: Likely no longer needed as OpenAPI is now used for API endpoints, but leaving for reference - this was used by legacy AngularJS code to build URLs for API endpoints
 
-namespace Articulate.Components
-{
-    public class ServerVariablesParsingHandler : INotificationHandler<ServerVariablesParsingNotification>
-    {
-        private readonly IHttpContextAccessor _httpContextAccessor;
-        private readonly LinkGenerator _linkGenerator;
+//using System;
+//using System.Collections.Generic;
+//using Articulate.Controllers;
+//using Microsoft.AspNetCore.Http;
+//using Microsoft.AspNetCore.Routing;
+//using Umbraco.Cms.Core.Events;
+//using Umbraco.Cms.Core.Notifications;
 
-        public ServerVariablesParsingHandler(
-            IHttpContextAccessor httpContextAccessor,
-            LinkGenerator linkGenerator)
-        {
-            _httpContextAccessor = httpContextAccessor;
-            _linkGenerator = linkGenerator;
-        }
-        public void Handle(ServerVariablesParsingNotification notification)
-        {
-            var e = notification;
+//namespace Articulate.Components
+//{
+//    public class ServerVariablesParsingHandler : INotificationHandler<ServerVariablesParsingNotification>
+//    {
+//        private readonly IHttpContextAccessor _httpContextAccessor;
+//        private readonly LinkGenerator _linkGenerator;
 
-            if (_httpContextAccessor.HttpContext == null)
-            {
-                throw new InvalidOperationException("HttpContext is null");
-            }
+//        public ServerVariablesParsingHandler(
+//            IHttpContextAccessor httpContextAccessor,
+//            LinkGenerator linkGenerator)
+//        {
+//            _httpContextAccessor = httpContextAccessor;
+//            _linkGenerator = linkGenerator;
+//        }
+//        public void Handle(ServerVariablesParsingNotification notification)
+//        {
+//            var e = notification;
 
-            if (e.ServerVariables.ContainsKey(ArticulateConstants.ArticulateContentTypeAlias))
-            {
-                return;
-            }
+//            if (_httpContextAccessor.HttpContext == null)
+//            {
+//                throw new InvalidOperationException("HttpContext is null");
+//            }
 
-            // TODO: Review for Umbraco 14+ 
-            e.ServerVariables[ArticulateConstants.ArticulateContentTypeAlias] = new Dictionary<string, object>
-            {
-                {"articulateImportBaseUrl", _linkGenerator.GetPathByAction(action: nameof(ArticulateBlogImportController.PostImportBlogMl), controller: "ArticulateBlogImport", values: null)},
-                {"articulatePropertyEditorsBaseUrl", _linkGenerator.GetPathByAction(action: nameof(ArticulatePropertyEditorsController.GetThemes), controller: "ArticulatePropertyEditorsController", values: null)},
-                {"articulateThemeEditorBaseUrl", _linkGenerator.GetPathByAction(action: nameof(ThemeEditorController.GetThemes), controller: "ThemeEditorController", values: null)},
-            };
-        }
-    }
-}
+//            if (e.ServerVariables.ContainsKey(ArticulateConstants.ArticulateContentTypeAlias))
+//            {
+//                return;
+//            }
+
+//            e.ServerVariables[ArticulateConstants.ArticulateContentTypeAlias] = new Dictionary<string, object>
+//            {
+//                {"articulateImportBaseUrl", _linkGenerator.GetPathByAction(action: nameof(ArticulateBlogImportController.PostImportBlogMl), controller: "ArticulateBlogImport", values: null)},
+//                {"articulatePropertyEditorsBaseUrl", _linkGenerator.GetPathByAction(action: nameof(ArticulatePropertyEditorsController.GetThemes), controller: "ArticulatePropertyEditorsController", values: null)},
+//                {"articulateThemeEditorBaseUrl", _linkGenerator.GetPathByAction(action: nameof(ThemeEditorController.GetThemes), controller: "ThemeEditorController", values: null)},
+//            };
+//        }
+//    }
+//}

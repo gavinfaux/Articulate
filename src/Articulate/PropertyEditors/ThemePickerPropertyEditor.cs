@@ -1,14 +1,33 @@
-// TODO : Review how to implement this - Bellissima?
+// // TODO: This should not be needed as Bellissima Theme Picker editor just use Umbraco.Plain.String for schema definition, therefore core already handles?
 
 //using Umbraco.Cms.Core.PropertyEditors;
+//using Umbraco.Cms.Core.IO;
 
 //namespace Articulate.PropertyEditors
 //{
-//    [DataEditor("ArticulateThemePicker", EditorType.PropertyValue, "Articulate Theme Picker", "../App_Plugins/Articulate/BackOffice/PropertyEditors/ThemePicker.html")]
+//    [DataEditor("ArticulateThemePicker", ValueType = ValueTypes.Text,
+//        ValueEditorIsReusable = true)]
 //    public class ThemePickerPropertyEditor : DataEditor
 //    {
-//        public ThemePickerPropertyEditor(IDataValueEditorFactory dataValueEditorFactory, EditorType type = EditorType.PropertyValue) : base(dataValueEditorFactory, type)
+//        private readonly IIOHelper _ioHelper;
+
+//        public ThemePickerPropertyEditor(IDataValueEditorFactory dataValueEditorFactory, IIOHelper ioHelper)
+//            : base(dataValueEditorFactory)
 //        {
+//            _ioHelper = ioHelper;
+//        }
+
+//        protected override IConfigurationEditor CreateConfigurationEditor()
+//        {
+//            return new ThemePickerConfigurationEditor(_ioHelper);
+//        }
+//    }
+
+//    public class ThemePickerConfigurationEditor : ConfigurationEditor
+//    {
+//        public ThemePickerConfigurationEditor(IIOHelper ioHelper) : base()
+//        {
+//            // No specific configuration needed for theme picker
 //        }
 //    }
 //}

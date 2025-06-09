@@ -1,4 +1,4 @@
-import { ProblemDetails } from "../api/core";
+import { ProblemDetails } from "../api/articulate";
 
 /**
  * Extracts an error message from various error types.
@@ -42,8 +42,3 @@ export function extractErrorMessage(error: unknown, defaultMessage: string): str
   // 5. Fallback to default message
   return message;
 }
-
-// Original content of the function is replaced by the above logic.
-// The following is a placeholder to ensure the chunk replacement targets the function body.
-// It will be effectively removed by replacing the entire function's opening brace.
-// Ensure the actual function content starting from its opening brace is replaced.

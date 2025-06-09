@@ -1,34 +1,35 @@
-using System.ComponentModel.DataAnnotations;
-using System.Runtime.Serialization;
-using Umbraco.Cms.Core;
+// // TODO: Deprecated for now. See the comment in the MarkdownEditorController.cs file
 
-namespace Articulate.Models
-{
-    [DataContract]
-    public class MardownEditorModel
-    {
-        [Required]
-        [DataMember(Name = "articulateNodeId", IsRequired = true)]
-        public int? ArticulateNodeId { get; set; }
+//using System.ComponentModel.DataAnnotations;
+//using System.Runtime.Serialization;
 
-        [Required]
-        [DataMember(Name = "title", IsRequired = true)]
-        public string Title { get; set; }
+//namespace Articulate.Models
+//{
+//    [DataContract]
+//    public class MardownEditorModel
+//    {
+//        [Required]
+//        [DataMember(Name = "articulateNodeId", IsRequired = true)]
+//        public int? ArticulateNodeId { get; set; }
 
-        [Required]
-        [DataMember(Name = "body", IsRequired = true)]
-        public string Body { get; set; }
+//        [Required]
+//        [DataMember(Name = "title", IsRequired = true)]
+//        public string Title { get; set; }
 
-        [DataMember(Name = "tags")]
-        public string Tags { get; set; }
+//        [Required]
+//        [DataMember(Name = "body", IsRequired = true)]
+//        public string Body { get; set; }
 
-        [DataMember(Name = "categories")]
-        public string Categories { get; set; }
+//        [DataMember(Name = "tags")]
+//        public string Tags { get; set; }
 
-        [DataMember(Name = "slug")]
-        public string Slug { get; set; }
+//        [DataMember(Name = "categories")]
+//        public string Categories { get; set; }
 
-        [DataMember(Name = "excerpt")]
-        public string Excerpt { get; set; }
-    }
-}
+//        [DataMember(Name = "slug")]
+//        public string Slug { get; set; }
+
+//        [DataMember(Name = "excerpt")]
+//        public string Excerpt { get; set; }
+//    }
+//}

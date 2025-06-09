@@ -24,7 +24,13 @@
     <Company>Shannon Deminick</Company>
     <Copyright>Copyright © $(Company) $([System.DateTime]::Now.Year)</Copyright>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <GenerateDocumentationFile>False</GenerateDocumentationFile>
+    <GenerateDocumentationFile>True</GenerateDocumentationFile>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net9.0|AnyCPU'">
+    <NoWarn>1701;1702;1572;1573;1591</NoWarn>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net9.0|AnyCPU'">
+    <NoWarn>1701;1702;1572;1573;1591</NoWarn>
   </PropertyGroup>
     
   <!--
@@ -140,8 +146,20 @@
     <Exec Command="npm i" WorkingDirectory="Client" />
   </Target>
 
-  <Target Name="BuildClient" BeforeTargets="AssignTargetPaths" DependsOnTargets="RestoreClient" Inputs="@(ClientAssetsInputs)" Outputs="$(IntermediateOutputPath)client.complete.txt">
-    <Message Importance="high" Text="Executing Client NPM build script..." />
+  <Target Name="BuildClientWarn" BeforeTargets="Build" DependsOnTargets="RestoreClient" Inputs="@(ClientAssetsInputs)" Condition="'$(IsPacking)' != 'true'" Outputs="$(IntermediateOutputPath)client.complete.txt">
+    <Message Importance="high" Text="Executing Client NPM build script (warnings only)..." />
+    <Exec Command="npm run build" WorkingDirectory="Client" ContinueOnError="true">
+      <Output TaskParameter="ExitCode" PropertyName="ClientBuildExitCode" />
+    </Exec>
+    <Warning Text="Client build failed (API/client out of sync). Regenerate client before packaging." Condition="'$(ClientBuildExitCode)' != '0'" />
+    <ItemGroup>
+      <_ClientAssetsBuildOutput Include="App_Plugins\BackOffice\**" />
+    </ItemGroup>
+    <WriteLinesToFile File="$(IntermediateOutputPath)client.complete.txt" Lines="@(_ClientAssetsBuildOutput)" Overwrite="true" />
+  </Target>
+
+  <Target Name="BuildClientError" BeforeTargets="Pack" DependsOnTargets="RestoreClient" Inputs="@(ClientAssetsInputs)" Condition="'$(IsPacking)' == 'true'" Outputs="$(IntermediateOutputPath)client.complete.txt">
+    <Message Importance="high" Text="Executing Client NPM build script (error on failure for pack)..." />
     <Exec Command="npm run build" WorkingDirectory="Client" />
     <ItemGroup>
       <_ClientAssetsBuildOutput Include="App_Plugins\BackOffice\**" />

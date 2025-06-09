@@ -3,13 +3,13 @@ import { UmbLitElement } from "@umbraco-cms/backoffice/lit-element";
 import type { UmbRoute, UmbRouterSlotInitEvent } from "@umbraco-cms/backoffice/router";
 
 import { UmbTextStyles } from "@umbraco-cms/backoffice/style";
-import ArticulateBlogMlExporterElement from "./articulate-blogml-exporter.element.js";
-import ArticulateBlogMlImporterElement from "./articulate-blogml-importer.element.js";
-import { ArticulateDashboardOptionsElement } from "./articulate-dashboard-options.element.js";
-import ArticulateThemesElement from "./articulate-themes.element.js";
+import ArticulateBlogMlExporterElement from "../components/articulate-blogml-exporter.element.js";
+import ArticulateBlogMlImporterElement from "../components/articulate-blogml-importer.element.js";
+import ArticulateDashboardOptionsElement from "../components/articulate-dashboard-options.element.js";
+import ArticulateDuplicateThemeElement from "../components/articulate-duplicate-theme.element.js";
 
 @customElement("articulate-dashboard-root")
-export class ArticulateDashboardRootElement extends UmbLitElement {
+export default class ArticulateDashboardRootElement extends UmbLitElement {
   @state() private _routerBasePath?: string;
   @state() private _routes: UmbRoute[];
 
@@ -34,9 +34,9 @@ export class ArticulateDashboardRootElement extends UmbLitElement {
       },
       {
         path: "theme/collection",
-        component: ArticulateThemesElement,
+        component: ArticulateDuplicateThemeElement,
         setup: (el) => {
-          if (this._routerBasePath && el instanceof ArticulateThemesElement)
+          if (this._routerBasePath && el instanceof ArticulateDuplicateThemeElement)
             el.routerPath = this._routerBasePath;
         },
       },

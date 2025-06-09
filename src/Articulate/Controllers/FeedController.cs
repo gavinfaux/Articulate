@@ -1,4 +1,4 @@
-// TODO : Review how to implement this - no macros anymore
+// TODO : Review how to implement this - no macros anymore - razor partial / block view?
 
 //using Articulate.Models;
 //using Microsoft.AspNetCore.Mvc;

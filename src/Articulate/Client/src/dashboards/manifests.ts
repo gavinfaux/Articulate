@@ -1,4 +1,4 @@
-import { ArticulateDashboardRootElement } from "./articulate-dashboard-root.element";
+import ArticulateDashboardRootElement from "./articulate-dashboard-root.element";
 
 const dashboardManifest: UmbExtensionManifest = {
   type: "dashboard",

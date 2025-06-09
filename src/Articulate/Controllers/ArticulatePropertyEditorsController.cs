@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Hosting;
+using Umbraco.Cms.Api.Common.Attributes;
 using Umbraco.Cms.Api.Management.Controllers;
 using Umbraco.Cms.Api.Management.Routing;
 using Umbraco.Cms.Core.Extensions;
@@ -13,12 +14,29 @@ using Umbraco.Cms.Web.Common.Authorization;
 
 namespace Articulate.Controllers
 {
+    /// <summary>
+    /// Provides API endpoints for Articulate property editors, such as retrieving available themes.
+    /// </summary>
+    /// <example>
+    /// This controller is used by the backoffice to fetch theme names for Articulate.
+    /// </example>
     [ApiVersion("1.0")]
     [Authorize(Policy = AuthorizationPolicies.SectionAccessSettings)]
     [VersionedApiBackOfficeRoute("articulate/editors")]
     [ApiExplorerSettings(GroupName = "Articulate")]
+    [MapToApi("articulate-api")]
     public class ArticulatePropertyEditorsController(IHostEnvironment hostingEnvironment) : ManagementApiControllerBase
     {
+        /// <summary>
+        /// Gets the list of available Articulate themes, consumed by Articulate Theme Picker property editor.
+        /// </summary>
+        /// <remarks>
+        /// This endpoint returns the names of all available themes, including both default and user-defined themes.
+        /// </remarks>
+        /// <returns>
+        /// A collection of theme names as strings.
+        /// </returns>
+        /// <response code="200">Returns the list of available theme names.</response>
         [HttpGet("themes")]
         [ProducesResponseType<IEnumerable<string>>(StatusCodes.Status200OK)]
         public ActionResult<IEnumerable<string>> GetThemes()

@@ -7,8 +7,10 @@ using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Umbraco.Cms.Api.Common.Attributes;
 using Umbraco.Cms.Api.Management.Controllers;
 using Umbraco.Cms.Api.Management.Routing;
 using Umbraco.Cms.Core.Extensions;
@@ -17,24 +19,52 @@ using Umbraco.Extensions;
 
 namespace Articulate.Controllers
 {
+    /// <summary>
+    /// Provides API endpoints for managing Articulate themes, including listing and copying default themes.
+    /// </summary>
+    /// <example>
+    /// Use this controller to retrieve available default themes or to copy an existing theme to a new name.
+    /// </example>
     [ApiVersion("1.0")]
     [Authorize(Policy = AuthorizationPolicies.SectionAccessSettings)]
-    [VersionedApiBackOfficeRoute("articulate/theme")]
+    [VersionedApiBackOfficeRoute("articulate/themes")]
+    [MapToApi("articulate-api")]
     [ApiExplorerSettings(GroupName = "Articulate")]
     public class ThemeEditorController(IHostEnvironment hostingEnvironment, ILogger<ThemeEditorController> logger) : ManagementApiControllerBase
     {
+        /// <summary>
+        /// Represents the possible operation statuses for theme editing actions.
+        /// </summary>
+        /// <example>NotFound</example>
         public enum ThemeEditorOperationStatus
         {
+            /// <summary>
+            /// The requested theme was not found.
+            /// </summary>
             NotFound,
+            /// <summary>
+            /// The new theme name is already in use.
+            /// </summary>
             DuplicateThemeName
         }
 
+        /// <summary>
+        /// Copies an existing theme to a new theme with a specified name.
+        /// </summary>
+        /// <remarks>
+        /// This endpoint creates a copy of an existing theme under a new name. The new theme name must be unique.
+        /// </remarks>
+        /// <param name="model">The model containing the source theme name and the new theme name.</param>
+        /// <response code="200">Returns the name of the newly created theme.</response>
+        /// <response code="400">The new theme name is already in use or the request is invalid.</response>
+        /// <response code="404">The source theme was not found.</response>
+        /// <response code="500">An internal server error occurred while copying the theme.</response>
         [HttpPost("copy")]
-        [ProducesResponseType<Theme>(StatusCodes.Status200OK)]
+        [ProducesResponseType<string>(StatusCodes.Status200OK)]
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status500InternalServerError)]
-        public IActionResult PostCopyTheme([FromBody] PostCopyThemeModel model)
+        public IActionResult PostCopyTheme([FromBody, BindRequired] PostCopyThemeModel model)
         {
             // ManagementApiControllerBase [ApiController] attribute will automatically validate the model
 
@@ -78,33 +108,44 @@ namespace Articulate.Controllers
                 throw;
             }
 
-            return Ok(new Theme
-            {
-                Name = model.NewThemeName
-            });
+            return Ok(model.NewThemeName);
         }
 
-        private List<Theme> AllThemes()
+        /// <summary>
+        /// Retrieves the list of available default Articulate themes.
+        /// </summary>
+        /// <remarks>
+        /// This endpoint returns the names of default themes available for Articulate.
+        /// </remarks>
+        /// <returns>
+        /// A list of theme names as strings.
+        /// </returns>
+        /// <response code="200">Returns the list of available theme names.</response>
+        [HttpGet("all")]
+        [ProducesResponseType<List<string>>(StatusCodes.Status200OK)]
+        public IActionResult GetThemes()
+            =>  Ok(
+                AllThemes()
+            );
+
+        /// <summary>
+        /// Gets all default theme directory names.
+        /// </summary>
+        /// <returns>A list of theme names.</returns>
+        private List<string> AllThemes()
         {
             var themeFolderDirectories = GetThemeDirectories();
 
             var themes = themeFolderDirectories
-                .Select(x => new Theme
-                {
-                    Name = x.Name,
-                });
+                .Select(x => x.Name);
 
             return [.. themes];
         }
 
-        [HttpGet("themes")]
-        [ProducesResponseType<List<Theme>>(StatusCodes.Status200OK)]
-        public IActionResult GetThemes()
-            =>  Ok(
-                AllThemes()
-
-            );
-
+        /// <summary>
+        /// Gets the directories for default themes.
+        /// </summary>
+        /// <returns>An array of <see cref="DirectoryInfo"/> objects representing theme directories.</returns>
         private DirectoryInfo[] GetThemeDirectories()
         {
             var themeFolder = hostingEnvironment.MapPathContentRoot(PathHelper.VirtualThemePath);
@@ -112,6 +153,12 @@ namespace Articulate.Controllers
             return themeFolderDirectories;
         }
 
+        /// <summary>
+        /// Recursively copies the contents of a source directory to a destination directory.
+        /// </summary>
+        /// <param name="source">The source directory.</param>
+        /// <param name="destination">The destination directory.</param>
+        /// <exception cref="InvalidOperationException">Thrown if the destination directory already exists.</exception>
         private static void CopyDirectory(DirectoryInfo source, DirectoryInfo destination)
         {
             if (destination.Exists)

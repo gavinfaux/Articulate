@@ -49,6 +49,7 @@
 //    [Authorize(Policy = AuthorizationPolicies.SectionAccessSettings)]
 //    [VersionedApiBackOfficeRoute("articulate/anew")]
 //    [ApiExplorerSettings(GroupName = "Articulate")]
+//    [MapToApi("articulate-api")]
 //    public class MarkdownEditorApiController : ManagementApiControllerBase
 //    {
 
