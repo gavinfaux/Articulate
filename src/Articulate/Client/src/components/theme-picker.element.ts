@@ -55,9 +55,7 @@ export default class ArticulateThemePickerElement
     this._error = "";
 
     try {
-      const result = await Articulate.getUmbracoManagementApiV1ArticulateEditorsThemes({
-        throwOnError: true,
-      });
+      const result = await Articulate.getUmbracoManagementApiV1ArticulateEditorsThemes();
 
       if (!result.response.ok) {
         let errorToThrow;
@@ -83,10 +81,7 @@ export default class ArticulateThemePickerElement
       }));
       this._rebuildAndSetSelectOptions();
     } catch (error: unknown) {
-      const errorMessage = extractErrorMessage(
-        error,
-        "Failed to load themes. Please check the logs for more details.",
-      );
+      const errorMessage = extractErrorMessage(error, "Failed to load themes");
       this._error = errorMessage;
       await showUmbracoNotification(this, errorMessage, "danger");
     } finally {

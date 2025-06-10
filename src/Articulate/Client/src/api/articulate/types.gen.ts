@@ -137,7 +137,7 @@ export type GetUmbracoManagementApiV1ArticulateBlogArchiveUdiErrors = {
 
 export type GetUmbracoManagementApiV1ArticulateBlogArchiveUdiResponses = {
     /**
-     * Returns the UDI string.
+     * The UDI as a string, example: umb://document/4fed18d8c5e34d5e88cfff3a5b457bf2
      */
     200: string;
 };
@@ -164,7 +164,7 @@ export type GetUmbracoManagementApiV1ArticulateBlogDownloadErrors = {
 
 export type GetUmbracoManagementApiV1ArticulateBlogDownloadResponses = {
     /**
-     * Returns the BlogML XML file.
+     * Returns the BlogML XML file, example: BlogMlExport.xml
      */
     200: Blob | File;
 };
@@ -175,7 +175,7 @@ export type PostUmbracoManagementApiV1ArticulateBlogExportData = {
     /**
      * Represents the options for exporting blog data in BlogML format.
      */
-    body: ExportBlogMlModel;
+    body?: ExportBlogMlModel;
     path?: never;
     query?: never;
     url: '/umbraco/management/api/v1/articulate/blog/export';
@@ -221,7 +221,7 @@ export type GetUmbracoManagementApiV1ArticulateBlogExportDisqusErrors = {
 
 export type GetUmbracoManagementApiV1ArticulateBlogExportDisqusResponses = {
     /**
-     * Returns the Disqus XML file.
+     * Returns the Disqus XML file, example: DisqusXmlExport.xml
      */
     200: Blob | File;
 };
@@ -232,7 +232,7 @@ export type PostUmbracoManagementApiV1ArticulateBlogImportData = {
     /**
      * Represents the options for importing blog data from a BlogML file.
      */
-    body: ImportBlogMlModel;
+    body?: ImportBlogMlModel;
     path?: never;
     query?: never;
     url: '/umbraco/management/api/v1/articulate/blog/import';
@@ -322,38 +322,11 @@ export type GetUmbracoManagementApiV1ArticulateEditorsThemesResponses = {
 
 export type GetUmbracoManagementApiV1ArticulateEditorsThemesResponse = GetUmbracoManagementApiV1ArticulateEditorsThemesResponses[keyof GetUmbracoManagementApiV1ArticulateEditorsThemesResponses];
 
-export type GetUmbracoManagementApiV1ArticulateThemesAllData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/umbraco/management/api/v1/articulate/themes/all';
-};
-
-export type GetUmbracoManagementApiV1ArticulateThemesAllErrors = {
-    /**
-     * The resource is protected and requires an authentication token
-     */
-    401: unknown;
-    /**
-     * The authenticated user does not have access to this resource
-     */
-    403: unknown;
-};
-
-export type GetUmbracoManagementApiV1ArticulateThemesAllResponses = {
-    /**
-     * Returns the list of available theme names.
-     */
-    200: Array<string>;
-};
-
-export type GetUmbracoManagementApiV1ArticulateThemesAllResponse = GetUmbracoManagementApiV1ArticulateThemesAllResponses[keyof GetUmbracoManagementApiV1ArticulateThemesAllResponses];
-
 export type PostUmbracoManagementApiV1ArticulateThemesCopyData = {
     /**
      * Represents the data required to copy an existing theme to a new theme name.
      */
-    body: PostCopyThemeModel;
+    body?: PostCopyThemeModel;
     path?: never;
     query?: never;
     url: '/umbraco/management/api/v1/articulate/themes/copy';
@@ -392,6 +365,33 @@ export type PostUmbracoManagementApiV1ArticulateThemesCopyResponses = {
 };
 
 export type PostUmbracoManagementApiV1ArticulateThemesCopyResponse = PostUmbracoManagementApiV1ArticulateThemesCopyResponses[keyof PostUmbracoManagementApiV1ArticulateThemesCopyResponses];
+
+export type GetUmbracoManagementApiV1ArticulateThemesListData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/umbraco/management/api/v1/articulate/themes/list';
+};
+
+export type GetUmbracoManagementApiV1ArticulateThemesListErrors = {
+    /**
+     * The resource is protected and requires an authentication token
+     */
+    401: unknown;
+    /**
+     * The authenticated user does not have access to this resource
+     */
+    403: unknown;
+};
+
+export type GetUmbracoManagementApiV1ArticulateThemesListResponses = {
+    /**
+     * Returns the list of available theme names.
+     */
+    200: Array<string>;
+};
+
+export type GetUmbracoManagementApiV1ArticulateThemesListResponse = GetUmbracoManagementApiV1ArticulateThemesListResponses[keyof GetUmbracoManagementApiV1ArticulateThemesListResponses];
 
 export type ClientOptions = {
     baseUrl: 'https://localhost:44366' | (string & {});

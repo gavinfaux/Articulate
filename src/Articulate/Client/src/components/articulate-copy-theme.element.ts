@@ -2,65 +2,30 @@ import { css, html } from "@umbraco-cms/backoffice/external/lit";
 import { UmbLitElement } from "@umbraco-cms/backoffice/lit-element";
 import { UmbTextStyles } from "@umbraco-cms/backoffice/style";
 import { customElement, property, state } from "lit/decorators.js";
-import { Articulate } from "../api/articulate/sdk.gen";
+import { Articulate } from "../api/articulate/sdk.gen.ts";
+import { ProblemDetails } from "../api/articulate/types.gen.ts";
 import { extractErrorMessage } from "../utils/error-utils.ts";
 import { showUmbracoNotification } from "../utils/notification-utils.ts";
+import { renderHeaderActions } from "../utils/template-utils.ts";
 
 /**
  * A component for duplicating Articulate themes with a new name.
  * Provides a form to select an existing theme and specify a new name for the duplicate.
  *
- * @element articulate-duplicate-theme
+ * @element articulate-copy-theme
  * @extends UmbLitElement
  */
-@customElement("articulate-duplicate-theme")
-export default class ArticulateDuplicateThemeElement extends UmbLitElement {
-  /**
-   * The base router path for navigation. Used to construct navigation links.
-   * @type {string}
-   */
+@customElement("articulate-copy-theme")
+export default class ArticulateCopyThemeElement extends UmbLitElement {
   @property({ type: String })
   routerPath?: string;
 
-  /**
-   * Indicates if the component is currently loading theme data.
-   * @type {boolean}
-   */
-  @state() private _isLoading = false;
-
-  /**
-   * Indicates if the form is currently being submitted.
-   * @type {boolean}
-   */
-  @state()
-  private _isSubmitting = false;
-
-  /**
-   * List of available theme names.
-   * @type {string[]}
-   */
+  @state() private _isLoading = true;
+  @state() private _isSubmitting = false;
   @state() private _themes: string[] = [];
 
-  /**
-   * The name for the new duplicated theme.
-   * @type {string}
-   */
-  @state() private _newThemeName = "";
-
-  /**
-   * The name of the currently selected theme to duplicate.
-   * @type {string}
-   */
+  private _newThemeName = "";
   @state() private _selectedTheme: string | null = null;
-
-  /**
-   * Resets the form to its initial state.
-   * @private
-   */
-  private _onCancelClick() {
-    this._selectedTheme = null;
-    this._newThemeName = "";
-  }
 
   /**
    * Fetches the list of available themes.
@@ -69,29 +34,36 @@ export default class ArticulateDuplicateThemeElement extends UmbLitElement {
   async connectedCallback() {
     super.connectedCallback();
     await this._loadThemes();
+    this._isLoading = false;
+    this.requestUpdate();
   }
 
   private async _loadThemes() {
-    this._isLoading = true;
     try {
-      const result = await Articulate.getUmbracoManagementApiV1ArticulateThemesAll({
-        throwOnError: true,
-      });
+      const result = await Articulate.getUmbracoManagementApiV1ArticulateThemesList();
 
       if (!result.response.ok) {
-        throw new Error(`Failed to load themes: ${result.response.statusText}`);
+        let errorToThrow: Error | ProblemDetails;
+        try {
+          const problemDetails: ProblemDetails = await result.response.json();
+          errorToThrow = problemDetails;
+        } catch {
+          errorToThrow = new Error(
+            `API Error: ${result.response.status} ${result.response.statusText}`,
+          );
+        }
+        throw errorToThrow;
+      }
+      const data = await result.data;
+      if (!data) {
+        throw new Error("Failed to load themes.");
       }
 
-      this._themes = result.data || [];
+      this._themes = data?.map((theme) => theme) ?? [];
     } catch (error) {
-      console.error("Error loading themes:", error);
-      await showUmbracoNotification(
-        this,
-        "Failed to load themes. Please try again later.",
-        "danger",
-      );
-    } finally {
-      this._isLoading = false;
+      this._themes = [];
+      const extractedMessage = extractErrorMessage(error, "Could not load themes.");
+      await showUmbracoNotification(this, extractedMessage, "danger");
     }
   }
 
@@ -106,27 +78,34 @@ export default class ArticulateDuplicateThemeElement extends UmbLitElement {
     this.requestUpdate();
   }
 
-  /**
-   * Handles theme selection from the dropdown.
-   * @private
-   * @param {Event} e - The input change event.
-   */
-  private _handleThemeSelect(e: Event) {
-    const card = e.target as HTMLElement;
+  private _handleSelectThemeButtonClick(event: Event, themeName: string) {
+    event.stopPropagation();
+    this._selectTheme(themeName);
+  }
+
+  private _onCardSelected(event: Event) {
+    const card = event.target as HTMLElement;
     const theme = card.getAttribute("data-theme");
     if (theme) {
       this._selectTheme(theme);
     }
   }
 
-  /**
-   * Handles new theme name input change.
-   * @private
-   * @param {Event} e - The input change event.
-   */
-  private _onNewThemeNameChange(e: Event) {
-    this._newThemeName = (e.target as HTMLInputElement).value;
+  private _onCardDeselected(event: Event) {
+    const card = event.target as HTMLElement;
+    const theme = card.getAttribute("data-theme");
+    if (theme && theme === this._selectedTheme) {
+      this._selectedTheme = null;
+    }
   }
+
+  #onNewThemeNameChange = (e: Event) => {
+    this._newThemeName = (e.target as HTMLInputElement).value;
+  };
+
+  #onCancelClick = () => {
+    this._selectedTheme = null;
+  };
 
   /**
    * Handles form submission for duplicating a theme.
@@ -135,16 +114,15 @@ export default class ArticulateDuplicateThemeElement extends UmbLitElement {
    * @returns {Promise<void>}
    */
   private async _duplicateTheme() {
-    if (!this._selectedTheme || !this._newThemeName) return;
-
-    this._isSubmitting = true;
+    if (this._isSubmitting || !this._selectedTheme || !this._newThemeName) return;
     try {
+      this._isSubmitting = true;
+      this.requestUpdate();
       const result = await Articulate.postUmbracoManagementApiV1ArticulateThemesCopy({
         body: {
           themeName: this._selectedTheme,
           newThemeName: this._newThemeName,
         },
-        throwOnError: true,
       });
 
       if (!result.response.ok) {
@@ -152,7 +130,9 @@ export default class ArticulateDuplicateThemeElement extends UmbLitElement {
       }
 
       await showUmbracoNotification(this, "Theme duplicated successfully!", "positive");
-      this._resetForm();
+      this._selectedTheme = null;
+      this._newThemeName = "";
+      this.requestUpdate();
     } catch (error) {
       console.error("Error duplicating theme:", error);
       const errorMessage = extractErrorMessage(
@@ -162,16 +142,8 @@ export default class ArticulateDuplicateThemeElement extends UmbLitElement {
       await showUmbracoNotification(this, errorMessage, "danger");
     } finally {
       this._isSubmitting = false;
+      this.requestUpdate();
     }
-  }
-
-  /**
-   * Resets the form to its initial state.
-   * @private
-   */
-  private _resetForm() {
-    this._selectedTheme = null;
-    this._newThemeName = "";
   }
 
   /**
@@ -180,10 +152,6 @@ export default class ArticulateDuplicateThemeElement extends UmbLitElement {
    * @returns {TemplateResult} The theme grid template.
    */
   private _renderThemeGrid() {
-    if (this._isLoading && !(this._themes?.length ?? 0)) {
-      return html`<uui-loader-bar animationDuration="1.5" style="color: blue"></uui-loader-bar>`;
-    }
-
     if ((this._themes?.length ?? 0) > 0) {
       return html`
         <div class="theme-grid">
@@ -195,8 +163,8 @@ export default class ArticulateDuplicateThemeElement extends UmbLitElement {
                 ?selectable=${true}
                 ?selected=${this._selectedTheme === theme}
                 selectOnly
-                @selected=${this._handleThemeSelect}
-                @deselected=${this._handleThemeSelect}
+                @selected=${this._onCardSelected}
+                @deselected=${this._onCardDeselected}
                 data-theme=${theme}
               >
                 <img
@@ -223,7 +191,7 @@ export default class ArticulateDuplicateThemeElement extends UmbLitElement {
                   <uui-button
                     look="primary"
                     label="Select Theme ${theme}"
-                    @click=${(e: Event) => this._handleThemeSelect(e)}
+                    @click=${(e: Event) => this._handleSelectThemeButtonClick(e, theme)}
                   >
                     Select
                   </uui-button>
@@ -255,7 +223,7 @@ export default class ArticulateDuplicateThemeElement extends UmbLitElement {
       return html``;
     }
 
-    const duplicateButtonLabel = this._isLoading ? "Duplicating..." : "Duplicate";
+    const duplicateButtonLabel = this._isSubmitting ? "Duplicating..." : "Duplicate";
 
     return html`
       <div class="duplicate-form">
@@ -265,10 +233,11 @@ export default class ArticulateDuplicateThemeElement extends UmbLitElement {
         <uui-form-layout-item>
           <uui-label for="newThemeName" slot="label" required>New theme name</uui-label>
           <uui-input
-            @input=${(e: Event) => this._onNewThemeNameChange(e)}
-            .value=${this._newThemeName || ""}
+            id="newThemeName"
+            .value=${this._newThemeName}
+            @input=${this.#onNewThemeNameChange}
             required
-            ?disabled=${this._isLoading}
+            ?disabled=${this._isSubmitting}
           ></uui-input>
         </uui-form-layout-item>
 
@@ -279,8 +248,8 @@ export default class ArticulateDuplicateThemeElement extends UmbLitElement {
             label="Duplicate"
             type="button"
             @click=${() => this._duplicateTheme()}
-            ?disabled=${!this._newThemeName || this._isLoading}
-            .state=${this._isLoading ? "waiting" : ""}
+            ?disabled=${!this._newThemeName || this._isSubmitting}
+            .state=${this._isSubmitting ? "waiting" : "undefined"}
           >
             ${duplicateButtonLabel}
           </uui-button>
@@ -288,8 +257,8 @@ export default class ArticulateDuplicateThemeElement extends UmbLitElement {
           <uui-button
             look="secondary"
             label="Cancel"
-            @click=${() => this._onCancelClick()}
-            ?disabled=${this._isLoading}
+            @click=${this.#onCancelClick}
+            ?disabled=${this._isSubmitting}
           >
             Cancel
           </uui-button>
@@ -299,22 +268,13 @@ export default class ArticulateDuplicateThemeElement extends UmbLitElement {
   }
 
   override render() {
-    if (!this.routerPath) {
-      return html`<uui-loader></uui-loader>`;
+    if (this._isLoading) {
+      return html`<uui-loader-bar></uui-loader-bar>`;
     }
 
     return html`
-      <uui-box headline="Theme Customization">
-        <div slot="header-actions">
-          <uui-button
-            label="Back to Articulate dashboard options"
-            look="outline"
-            compact
-            .href=${this.routerPath || "/umbraco/section/settings/dashboard/articulate"}
-          >
-            ← Back
-          </uui-button>
-        </div>
+      <uui-box headline="Theme Duplication">
+        ${renderHeaderActions(this.routerPath)}
         <div class="container">
           <p>
             You can duplicate any of Articulate's built-in themes to customize them yourself. The
@@ -404,6 +364,6 @@ export default class ArticulateDuplicateThemeElement extends UmbLitElement {
 }
 declare global {
   interface HTMLElementTagNameMap {
-    "articulate-duplicate-theme": ArticulateDuplicateThemeElement;
+    "articulate-copy-theme": ArticulateCopyThemeElement;
   }
 }

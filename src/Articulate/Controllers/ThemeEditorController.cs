@@ -20,11 +20,8 @@ using Umbraco.Extensions;
 namespace Articulate.Controllers
 {
     /// <summary>
-    /// Provides API endpoints for managing Articulate themes, including listing and copying default themes.
+    /// Provides API endpoints for copying an Articulate default theme to a new theme name to allow customisation.
     /// </summary>
-    /// <example>
-    /// Use this controller to retrieve available default themes or to copy an existing theme to a new name.
-    /// </example>
     [ApiVersion("1.0")]
     [Authorize(Policy = AuthorizationPolicies.SectionAccessSettings)]
     [VersionedApiBackOfficeRoute("articulate/themes")]
@@ -64,7 +61,7 @@ namespace Articulate.Controllers
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status500InternalServerError)]
-        public IActionResult PostCopyTheme([FromBody, BindRequired] PostCopyThemeModel model)
+        public IActionResult PostCopyTheme(PostCopyThemeModel model)
         {
             // ManagementApiControllerBase [ApiController] attribute will automatically validate the model
 
@@ -121,7 +118,7 @@ namespace Articulate.Controllers
         /// A list of theme names as strings.
         /// </returns>
         /// <response code="200">Returns the list of available theme names.</response>
-        [HttpGet("all")]
+        [HttpGet("list")]
         [ProducesResponseType<List<string>>(StatusCodes.Status200OK)]
         public IActionResult GetThemes()
             =>  Ok(

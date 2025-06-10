@@ -13,20 +13,22 @@ namespace Articulate.Options
     {
         public void Configure(SwaggerGenOptions options)
         {
+            var year = DateTime.Now.Year.ToString();
             options.SwaggerDoc(
                 "articulate-api",
                 new OpenApiInfo
                 {
-                    Title = "Articulate BackOffice Management API",
-                    Description = "A wonderful Blog engine built on Umbraco",
+                    Title = "Articulate Management API",
+                    Description = "API for the back office dashboard section Articulate, a wonderful Blog engine built on Umbraco. ",
                     Version = "1.0",
                     Contact = new OpenApiContact
                     {
+                        Name = "https://github.com/Shazwazza/Articulate",
                         Url = new Uri("https://github.com/Shazwazza/Articulate"),
                     },
                     License = new OpenApiLicense
                     {
-                        Name = "© 2023 by Shannon Deminick, MIT License(MIT)",
+                        Name = $"© 2014 - {year} by Shannon Deminick, MIT License (MIT)",
                         Url = new Uri("https://opensource.org/license/MIT")
                     }
                 });

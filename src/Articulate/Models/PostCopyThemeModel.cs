@@ -27,7 +27,7 @@ namespace Articulate.Models
         /// <remarks>
         /// This value must not be empty.
         /// </remarks>
-        /// <example>CleanBlog</example>
+        /// <example>VAPOR</example>
         [Required(AllowEmptyStrings = false)]
         public string ThemeName { get; set; }
 

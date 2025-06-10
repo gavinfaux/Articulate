@@ -6,21 +6,21 @@ import { UmbTextStyles } from "@umbraco-cms/backoffice/style";
 const dashboards = [
   {
     path: "blogml/import",
-    name: "BlogML Importer",
-    icon: "sync",
+    name: "BlogML Import",
+    icon: "add",
     description: "Import content from any BlogML compatible platform",
   },
   {
     path: "blogml/export",
-    name: "BlogML Exporter",
+    name: "BlogML Export",
     icon: "download",
     description: "Export content to any BlogML compatible platform",
   },
   {
-    path: "theme/collection",
-    name: "Themes",
-    icon: "wand",
-    description: "Manage customization of Articulate themes",
+    path: "theme/copy",
+    name: "Copy Theme",
+    icon: "copy",
+    description: "Copy Articulate themes for customization",
   },
 ];
 
@@ -33,40 +33,34 @@ const dashboards = [
  */
 @customElement("articulate-dashboard-options")
 export default class ArticulateDashboardOptionsElement extends UmbLitElement {
-  /**
-   * The base router path for navigation. Used to construct navigation links.
-   * @type {string}
-   */
   @property({ type: String })
   routerPath = "";
 
   /**
    * Renders a navigation card with the specified details.
    * @private
-   * @param {string} title - The title of the card.
+   * @param {string} name - The name of the card.
    * @param {string} description - The description text for the card.
    * @param {string} icon - The icon to display on the card.
-   * @param {string} route - The path to navigate to when the card is clicked.
-   * @param {boolean} [disabled=false] - Whether the card should be disabled.
+   * @param {string} fullHref - The path to navigate to when the card is clicked.
    * @returns {TemplateResult} The rendered card template.
    */
-  private _renderCard(
-    title: string,
-    description: string,
-    icon: string,
-    route: string,
-    disabled = false,
-  ): TemplateResult {
+  private _renderCards(): TemplateResult {
     return html`
-      <uui-card-block-type
-        class="tool-card"
-        ?disabled=${disabled}
-        name="${title}"
-        description="${description}"
-        href=${route}
-      >
-        <uui-icon name="${icon}"></uui-icon>
-      </uui-card-block-type>
+      ${dashboards.map((d) => {
+        const basePath = this.routerPath?.replace(/\/$/, "");
+        const fullHref = `${basePath}/${d.path}`;
+        return html`
+          <uui-card-block-type
+            class="tool-card"
+            name="${d.name}"
+            description="${d.description}"
+            href=${fullHref}
+          >
+            <uui-icon name="${d.icon}"></uui-icon>
+          </uui-card-block-type>
+        `;
+      })}
     `;
   }
 
@@ -76,34 +70,9 @@ export default class ArticulateDashboardOptionsElement extends UmbLitElement {
    * @returns {TemplateResult} The rendered dashboard options template.
    */
   render() {
-    if (!this.routerPath) {
-      return html`<uui-loader-bar></uui-loader-bar>`;
-    }
     return html`
-      <uui-box headline="" class="dashboard-options">
-        <div class="dashboard-options__grid">
-          ${this._renderCard(
-            "BlogML Import",
-            "Import blog posts from a BlogML file",
-            "document",
-            this.routerPath + "blogml-import",
-            false,
-          )}
-          ${this._renderCard(
-            "BlogML Export",
-            "Export blog posts to a BlogML file",
-            "download-alt",
-            this.routerPath + "blogml-export",
-            false,
-          )}
-          ${this._renderCard(
-            "Duplicate Theme",
-            "Create a copy of an existing theme",
-            "copy",
-            this.routerPath + "duplicate-theme",
-            false,
-          )}
-        </div>
+      <uui-box headline="Options">
+        <div class="tools-grid">${this._renderCards()}</div>
       </uui-box>
     `;
   }
@@ -111,7 +80,6 @@ export default class ArticulateDashboardOptionsElement extends UmbLitElement {
   static readonly styles = [
     UmbTextStyles,
     css`
-      .dashboard-options__grid {
       .tools-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));

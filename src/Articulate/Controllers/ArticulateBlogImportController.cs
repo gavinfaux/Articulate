@@ -7,7 +7,6 @@ using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Api.Common.Attributes;
@@ -26,9 +25,6 @@ namespace Articulate.Controllers
     /// <remarks>
     /// This controller allows initialization, import, and export of blog data, as well as retrieval of Articulate information required for feature.
     /// </remarks>
-    /// <example>
-    /// Use this controller to upload BlogML files, export blog data, or retrieve ArticulateArchive document type UDI.
-    /// </example>
     [ApiVersion("1.0")]
     [Authorize(Policy = AuthorizationPolicies.SectionAccessSettings)]
     [VersionedApiBackOfficeRoute("articulate/blog")]
@@ -52,11 +48,13 @@ namespace Articulate.Controllers
             /// <summary>
             /// Gets or sets the temporary file name used for the uploaded BlogML file.
             /// </summary>
+            /// <example>n4v8p7c1.7gk</example>
             public string TemporaryFileName { get; set; }
 
             /// <summary>
             /// Gets or sets the number of posts detected in the BlogML file.
             /// </summary>
+            /// <example>42</example>
             public int PostCount { get; set; }
         }
 
@@ -78,8 +76,8 @@ namespace Articulate.Controllers
 
         /// <summary>
         /// Begins the BlogML import process by accepting an uploaded XML file, storing it temporarily, and returning a temporary file name along with the detected post count.
-        /// This endpoint must be called before performing a blog export using `import`.
-        /// /// </summary>
+        /// This endpoint must be called before performing a blog export using the articulate/blog/import endpoint.
+        /// </summary>
         /// <remarks>
         /// The request must be a form upload, and the first file must be an XML file.
         /// </remarks>
@@ -114,14 +112,14 @@ namespace Articulate.Controllers
 
         /// <summary>
         /// Exports blog data as a BlogML XML file.
-        /// This endpoint must be called to generate the export before downloading it using the download endpoint.
+        /// This endpoint must be called to generate the export before downloading it using the articulate/blog/download endpoint.
         /// </summary>
         /// <param name="model">The export options including the Articulate node ID and image export settings.</param>
         /// <returns>An <see cref="ImportModel"/> containing the download URL for the exported file.</returns>
         /// <response code="200">Returns the download URL for the exported BlogML file.</response>
         [HttpPost("export")]
         [ProducesResponseType<ImportModel>(StatusCodes.Status200OK)]
-        public IActionResult PostExportBlogMl([FromBody, BindRequired] ExportBlogMlModel model)
+        public IActionResult PostExportBlogMl(ExportBlogMlModel model)
         {
             blogMlExporter.Export(model.ArticulateNodeId, model.ExportImagesAsBase64);
             var downloadUrl = linkGenerator.GetPathByAction(
@@ -138,10 +136,10 @@ namespace Articulate.Controllers
 
         /// <summary>
         /// Downloads the exported BlogML XML file.
-        /// The export endpoint must be called first to generate the file before downloading.
+        /// The articulate/blog/export endpoint must be called first to generate the file before downloading.
         /// </summary>
         /// <returns>The exported BlogML file as a stream.</returns>
-        /// <response code="200">Returns the BlogML XML file.</response>
+        /// <response code="200">Returns the BlogML XML file, example: BlogMlExport.xml</response>
         [HttpGet("download")]
         [ProducesResponseType(typeof(FileStreamResult), StatusCodes.Status200OK, "application/xml")]
         public IActionResult GetBlogMlExport()
@@ -152,16 +150,16 @@ namespace Articulate.Controllers
 
         /// <summary>
         /// Imports blog data from a previously uploaded BlogML XML file.
-        /// This endpoint should be called after initializing the import with `import/begin`.
+        /// This endpoint should be called after initializing the import with the articulate/blog/import/begin endpoint.
         /// </summary>
         /// <param name="model">The import options including the temporary file name, Articulate node ID, and import settings.</param>
         /// <returns>An <see cref="ImportModel"/> containing the download URL for the Disqus export, if applicable.</returns>
-        /// <response code="200">Returns the download URL for the Disqus export file.</response>
+        /// <response code="200">Returns the download URL for the comment export file for upload to Disqus.</response>
         /// <response code="500">Import failed due to a server error.</response>
         [HttpPost("import")]
         [ProducesResponseType<ImportModel>(StatusCodes.Status200OK)]
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<ImportModel>> PostImportBlogMl([FromBody, BindRequired] ImportBlogMlModel model)
+        public async Task<ActionResult<ImportModel>> PostImportBlogMl(ImportBlogMlModel model)
         {
             // ManagementApiControllerBase [ApiController] attribute will automatically validate the model
 
@@ -198,10 +196,10 @@ namespace Articulate.Controllers
         }
 
         /// <summary>
-        /// Downloads the exported Disqus XML file.
+        /// Downloads the exported Disqus comment XML file.
         /// </summary>
         /// <returns>The exported Disqus XML file as a stream.</returns>
-        /// <response code="200">Returns the Disqus XML file.</response>
+        /// <response code="200">Returns the Disqus XML file, example: DisqusXmlExport.xml</response>
         [HttpGet("export/disqus")]
         [ProducesResponseType<FileStreamResult>(StatusCodes.Status200OK)]
         public IActionResult GetDisqusExport()
@@ -215,7 +213,7 @@ namespace Articulate.Controllers
         /// This endpoint is used to retrieve the UDI for the back office import and export features.
         /// </summary>
         /// <returns>The UDI as a string.</returns>
-        /// <response code="200">Returns the UDI string.</response>
+        /// <response code="200">The UDI as a string, example: umb://document/4fed18d8c5e34d5e88cfff3a5b457bf2</response>
         /// <response code="404">The Articulate archive content type was not found.</response>
         [HttpGet("archive/udi")]
         [ProducesResponseType<string>(StatusCodes.Status200OK)]

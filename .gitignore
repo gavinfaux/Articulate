@@ -495,4 +495,4 @@ package-lock.json
 build
 !build/build.ps1
 
-
+!**/[Pp]ackages/markdown-editor/

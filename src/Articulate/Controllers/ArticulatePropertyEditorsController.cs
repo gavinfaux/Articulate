@@ -17,9 +17,6 @@ namespace Articulate.Controllers
     /// <summary>
     /// Provides API endpoints for Articulate property editors, such as retrieving available themes.
     /// </summary>
-    /// <example>
-    /// This controller is used by the backoffice to fetch theme names for Articulate.
-    /// </example>
     [ApiVersion("1.0")]
     [Authorize(Policy = AuthorizationPolicies.SectionAccessSettings)]
     [VersionedApiBackOfficeRoute("articulate/editors")]

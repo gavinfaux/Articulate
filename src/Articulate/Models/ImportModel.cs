@@ -11,7 +11,7 @@ namespace Articulate.Models
     /// <example>
     /// <code>
     /// {
-    ///   "downloadUrl": "/umbraco/backoffice/articulate-api/articulate/blog/export"
+    ///   "downloadUrl": "/umbraco/management/api/v1/articulate/blog/download"
     /// }
     /// </code>
     /// </example>
@@ -21,7 +21,7 @@ namespace Articulate.Models
         /// <summary>
         /// Gets or sets the URL where the client can download the exported or processed file.
         /// </summary>
-        /// <example>/umbraco/backoffice/articulate-api/articulate/blog/export</example>
+        /// <example>/umbraco/management/api/v1/articulate/blog/download</example>
         [DataMember(Name = "downloadUrl")]
         public string DownloadUrl { get; set; }
     }

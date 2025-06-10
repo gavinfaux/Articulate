@@ -1,15 +1,15 @@
-import { UmbElementMixin as m } from "@umbraco-cms/backoffice/element-api";
-import { UmbChangeEvent as p } from "@umbraco-cms/backoffice/event";
-import { html as u, css as _, property as c, state as l, customElement as d } from "@umbraco-cms/backoffice/external/lit";
+import { UmbElementMixin as p } from "@umbraco-cms/backoffice/element-api";
+import { UmbChangeEvent as c } from "@umbraco-cms/backoffice/event";
+import { html as u, css as _, property as m, state as l, customElement as d } from "@umbraco-cms/backoffice/external/lit";
 import { UmbLitElement as f } from "@umbraco-cms/backoffice/lit-element";
 import { UmbTextStyles as v } from "@umbraco-cms/backoffice/style";
-import { A as g, e as w, s as b } from "./notification-utils-CG569HlO.js";
-var O = Object.defineProperty, S = Object.getOwnPropertyDescriptor, o = (e, t, r, i) => {
-  for (var a = i > 1 ? void 0 : i ? S(t, r) : t, n = e.length - 1, h; n >= 0; n--)
-    (h = e[n]) && (a = (i ? h(t, r, a) : h(a)) || a);
-  return i && a && O(t, r, a), a;
+import { A as g, e as b, s as w } from "./notification-utils-D7uwENxV.js";
+var S = Object.defineProperty, O = Object.getOwnPropertyDescriptor, o = (e, t, r, i) => {
+  for (var s = i > 1 ? void 0 : i ? O(t, r) : t, n = e.length - 1, h; n >= 0; n--)
+    (h = e[n]) && (s = (i ? h(t, r, s) : h(s)) || s);
+  return i && s && S(t, r, s), s;
 };
-let s = class extends m(f) {
+let a = class extends p(f) {
   constructor() {
     super(), this._themeSelectOptions = [], this._themeData = [], this._loading = !1, this._error = "", this._fetchThemes();
   }
@@ -21,9 +21,7 @@ let s = class extends m(f) {
   async _fetchThemes() {
     this._loading = !0, this._error = "";
     try {
-      const e = await g.getUmbracoManagementApiV1ArticulateEditorsThemes({
-        throwOnError: !0
-      });
+      const e = await g.getUmbracoManagementApiV1ArticulateEditorsThemes();
       if (!e.response.ok) {
         let r;
         try {
@@ -35,19 +33,16 @@ let s = class extends m(f) {
         }
         throw r;
       }
-      const t = await e.data;
+      const t = e.data;
       if (!t)
-        throw new Error("Failed to load themes. Review back office logs for more details.");
-      this._themeData = (t == null ? void 0 : t.map((r) => ({
+        throw new Error("No theme data returned from the server.");
+      this._themeData = t.map((r) => ({
         name: r,
         value: r
-      }))) ?? [], this._rebuildAndSetSelectOptions();
+      })), this._rebuildAndSetSelectOptions();
     } catch (e) {
-      const t = w(
-        e,
-        "Could not load themes. Please check the logs for details."
-      );
-      this._error = t, await b(this, t, "danger");
+      const t = b(e, "Failed to load themes");
+      this._error = t, await w(this, t, "danger");
     } finally {
       this._loading = !1;
     }
@@ -66,7 +61,7 @@ let s = class extends m(f) {
   }
   _handleInput(e) {
     const t = e.target.value;
-    this.value !== t && (this.value = t, this.dispatchEvent(new p()));
+    this.value !== t && (this.value = t, this.dispatchEvent(new c()));
   }
   render() {
     return this._loading ? u`<uui-loader></uui-loader>` : this._error ? u` <uui-tag color="danger">Could not load themes: ${this._error}</uui-tag> ` : u`
@@ -79,7 +74,7 @@ let s = class extends m(f) {
     `;
   }
 };
-s.styles = [
+a.styles = [
   v,
   _`
       uui-select {
@@ -88,27 +83,27 @@ s.styles = [
     `
 ];
 o([
-  c()
-], s.prototype, "value", 2);
+  m()
+], a.prototype, "value", 2);
 o([
-  c({ attribute: !1 })
-], s.prototype, "config", 2);
-o([
-  l()
-], s.prototype, "_themeSelectOptions", 2);
+  m({ attribute: !1 })
+], a.prototype, "config", 2);
 o([
   l()
-], s.prototype, "_themeData", 2);
+], a.prototype, "_themeSelectOptions", 2);
 o([
   l()
-], s.prototype, "_loading", 2);
+], a.prototype, "_themeData", 2);
 o([
   l()
-], s.prototype, "_error", 2);
-s = o([
+], a.prototype, "_loading", 2);
+o([
+  l()
+], a.prototype, "_error", 2);
+a = o([
   d("articulate-theme-picker-element")
-], s);
+], a);
 export {
-  s as default
+  a as default
 };
 //# sourceMappingURL=theme-picker.element.js.map

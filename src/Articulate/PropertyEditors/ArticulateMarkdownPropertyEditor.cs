@@ -1,4 +1,6 @@
-// TODO: Replace with Umbraco.MarkdownEditor if/when #19500 #19501 accepted and merged into Umbraco.Cms.Core
+// // TODO: Replace with Umbraco.MarkdownEditor if/when #19500 #19501 accepted and merged into Umbraco.Cms.Core
+
+// // TODO: Copy \Umbraco.Web.UI.Client\src\packages\markdown-editor as our own 'Articulate' editor, else this does nothing by itself
 
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.PropertyEditors;

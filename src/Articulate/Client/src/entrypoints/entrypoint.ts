@@ -2,9 +2,11 @@ import { UMB_AUTH_CONTEXT } from "@umbraco-cms/backoffice/auth";
 import type { UmbEntryPointOnInit } from "@umbraco-cms/backoffice/extension-api";
 import { client } from "../api/articulate/client.gen";
 import { manifest } from "../dashboards/manifests";
+import { manifests } from "../packages/markdown-editor/manifests";
 
 export const onInit: UmbEntryPointOnInit = (host, extensionRegistry) => {
   extensionRegistry.register(manifest);
+  extensionRegistry.registerMany(manifests);
   host.consumeContext(UMB_AUTH_CONTEXT, (authContext) => {
     const config = authContext?.getOpenApiConfiguration();
 

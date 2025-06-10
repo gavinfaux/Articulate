@@ -1,5 +1,7 @@
 import { ProblemDetails } from "../api/articulate";
 
+export const reviewLogsMessage = "Review back office logs for more details.";
+
 /**
  * Extracts an error message from various error types.
  * Fetch API does not throw on HTTP errors, so we need to check for that.
@@ -24,21 +26,27 @@ export function extractErrorMessage(error: unknown, defaultMessage: string): str
       message = problem.detail;
     }
     // If neither title nor detail, defaultMessage is used (already set)
-    return message; // Return early if ProblemDetails found at top level
+    return `${message}. ${reviewLogsMessage}`; // Return early if ProblemDetails found at top level
   }
 
   // 3. Check for standard Error objects
   if (error instanceof Error) {
     message = error.message;
-    return message; // Return early
+    return `${message}. ${reviewLogsMessage}`; // Return early
   }
 
   // 4. Check for plain string errors
   if (typeof error === "string") {
     message = error;
-    return message; // Return early
+    return `${message}. ${reviewLogsMessage}`; // Return early
   }
 
   // 5. Fallback to default message
-  return message;
+  return `${message}. ${reviewLogsMessage}`;
+}
+
+export function isErrorWithMessage(error: unknown): error is { message: string } {
+  return (
+    error instanceof Error || (typeof error === "object" && error !== null && "message" in error)
+  );
 }
