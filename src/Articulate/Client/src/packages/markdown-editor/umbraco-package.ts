@@ -1,8 +1,8 @@
-export const name = "Articulate.MarkdownEditor";
+export const name = "Umbraco.Core.MarkdownEditor";
 export const extensions = [
   {
-    name: "Articulate Markdown Editor Bundle",
-    alias: "Articulate.MarkdownEditor.Bundle",
+    name: "Markdown Editor Bundle",
+    alias: "Umb.Bundle.MarkdownEditor",
     type: "bundle",
     js: () => import("./manifests.js"),
   },

@@ -4,6 +4,7 @@ using Articulate.Models;
 using Articulate.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
+using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.PublishedCache;
@@ -12,9 +13,6 @@ using Umbraco.Cms.Core.Web;
 using Umbraco.Cms.Web.Common;
 using Umbraco.Cms.Web.Common.Controllers;
 using Umbraco.Extensions;
-#if !DEBUG
-using Microsoft.AspNetCore.OutputCaching;
-#endif
 
 namespace Articulate.Controllers
 {
@@ -24,9 +22,7 @@ namespace Articulate.Controllers
     /// <remarks>
     /// Cached for one minute
     /// </remarks>
-#if !DEBUG
     [OutputCache(PolicyName = "Articulate60")]
-#endif
     [ArticulateDynamicRoute]
     public class ArticulateTagsController : ListControllerBase
     {

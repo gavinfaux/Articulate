@@ -249,7 +249,7 @@ export default class ArticulateCopyThemeElement extends UmbLitElement {
             type="button"
             @click=${() => this._duplicateTheme()}
             ?disabled=${!this._newThemeName || this._isSubmitting}
-            .state=${this._isSubmitting ? "waiting" : "undefined"}
+            .state=${this._isSubmitting ? "waiting" : ""}
           >
             ${duplicateButtonLabel}
           </uui-button>

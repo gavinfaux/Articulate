@@ -1,1 +1,1 @@
-export type ArticulateMarkdownPropertyEditorUiValue = string | undefined;
+export type UmbMarkdownPropertyEditorUiValue = string | undefined;

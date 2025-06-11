@@ -1,3 +1,4 @@
+using System;
 using Articulate.ImportExport;
 using Articulate.Options;
 using Articulate.Routing;
@@ -56,7 +57,6 @@ namespace Articulate.Components
             builder.Services.ConfigureOptions<ConfigureArticulateMvcOptions>();
             builder.Services.ConfigureOptions<ArticulateApiSwaggerOptions>();
 
-#if !DEBUG
             builder.Services.AddOutputCache(options =>
             {               
                 options.AddPolicy("Articulate120", builder =>
@@ -66,7 +66,6 @@ namespace Articulate.Components
                 options.AddPolicy("Articulate60", builder =>
                     builder.Expire(TimeSpan.FromSeconds(60)));
             });
-#endif
         }
     }
 }

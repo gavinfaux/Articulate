@@ -1,21 +1,21 @@
-import { manifest as schemaManifest } from "./Articulate.MarkdownEditor.js";
+import { manifest as schemaManifest } from "./Umbraco.MarkdownEditor.js";
 
 export const manifests: Array<UmbExtensionManifest> = [
   {
     type: "propertyValuePreset",
-    forPropertyEditorSchemaAlias: "Articulate.MarkdownEditor",
-    alias: "Articulate.PropertyValuePreset.MarkdownEditor",
-    name: "Articulate Markdown Editor Property Value Preset",
+    forPropertyEditorSchemaAlias: "Umbraco.MarkdownEditor",
+    alias: "Umb.PropertyValuePreset.MarkdownEditor",
+    name: "Markdown Editor Property Value Preset",
     api: () => import("./markdown-editor-property-value-preset.js"),
   },
   {
     type: "propertyEditorUi",
-    alias: "Articulate.PropertyEditorUi.MarkdownEditor",
-    name: "ArticulateMarkdown Editor Property Editor UI",
+    alias: "Umb.PropertyEditorUi.MarkdownEditor",
+    name: "Markdown Editor Property Editor UI",
     element: () => import("./property-editor-ui-markdown-editor.element.js"),
     meta: {
-      label: "Articulate Markdown Editor",
-      propertyEditorSchemaAlias: "Articulate.MarkdownEditor",
+      label: "Markdown Editor",
+      propertyEditorSchemaAlias: "Umbraco.MarkdownEditor",
       icon: "icon-code",
       group: "richContent",
       supportsReadOnly: true,
@@ -31,7 +31,7 @@ export const manifests: Array<UmbExtensionManifest> = [
             alias: "defaultValue",
             label: "Default value",
             description: "If value is blank, the editor will show this",
-            propertyEditorUiAlias: "Articulate.PropertyEditorUi.MarkdownEditor",
+            propertyEditorUiAlias: "Umb.PropertyEditorUi.MarkdownEditor",
           },
           {
             alias: "overlaySize",

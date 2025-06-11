@@ -226,7 +226,7 @@ export default class ArticulateBlogMlImporterElement extends UmbLitElement {
       const errorMessage = extractErrorMessage(error, "Import failed.");
       await showUmbracoNotification(this, errorMessage, "danger");
     } finally {
-      submitButton?.setAttribute("state", "undefined");
+      submitButton?.setAttribute("state", "");
       this._isSubmitting = false;
       this.requestUpdate();
     }

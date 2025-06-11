@@ -5,16 +5,16 @@ import type {
   UmbPropertyEditorConfigCollection,
   UmbPropertyEditorUiElement,
 } from "@umbraco-cms/backoffice/property-editor";
-import type { ArticulateInputMarkdownElement } from "../../components/input-markdown-editor/index.js";
+import type { UmbInputMarkdownElement } from "../../components/input-markdown-editor/index.js";
 
 import { UmbChangeEvent } from "@umbraco-cms/backoffice/event";
 import "../../components/input-markdown-editor/index.js";
 
 /**
- * @element umb-property-editor-ui-markdown-editor
+ * @element articulate-property-editor-ui-markdown-editor
  */
 @customElement("articulate-property-editor-ui-markdown-editor")
-export class ArticulatePropertyEditorUIMarkdownEditorElement
+export class UmbPropertyEditorUIArticulateMarkdownEditorElement
   extends UmbLitElement
   implements UmbPropertyEditorUiElement
 {
@@ -43,7 +43,7 @@ export class ArticulatePropertyEditorUIMarkdownEditorElement
     this._overlaySize = config.getValueByAlias("overlaySize") ?? "small";
   }
 
-  #onChange(event: Event & { target: ArticulateInputMarkdownElement }) {
+  #onChange(event: Event & { target: UmbInputMarkdownElement }) {
     this.value = event.target.value as string;
     this.dispatchEvent(new UmbChangeEvent());
   }
@@ -61,10 +61,10 @@ export class ArticulatePropertyEditorUIMarkdownEditorElement
   }
 }
 
-export { ArticulatePropertyEditorUIMarkdownEditorElement as element };
+export { UmbPropertyEditorUIArticulateMarkdownEditorElement as element };
 
 declare global {
   interface HTMLElementTagNameMap {
-    "umb-property-editor-ui-markdown-editor": ArticulatePropertyEditorUIMarkdownEditorElement;
+    "articulate-property-editor-ui-markdown-editor": UmbPropertyEditorUIArticulateMarkdownEditorElement;
   }
 }

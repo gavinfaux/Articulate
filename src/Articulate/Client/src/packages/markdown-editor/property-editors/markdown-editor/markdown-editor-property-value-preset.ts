@@ -1,12 +1,12 @@
 import type { UmbPropertyValuePreset } from "@umbraco-cms/backoffice/property";
 import type { UmbPropertyEditorConfig } from "@umbraco-cms/backoffice/property-editor";
-import type { ArticulateMarkdownPropertyEditorUiValue } from "./types.js";
+import type { UmbMarkdownPropertyEditorUiValue } from "./types.js";
 
-export class ArticulateMarkdownPropertyValuePreset
-  implements UmbPropertyValuePreset<ArticulateMarkdownPropertyEditorUiValue>
+export class UmbMarkdownPropertyValuePreset
+  implements UmbPropertyValuePreset<UmbMarkdownPropertyEditorUiValue>
 {
   async processValue(
-    value: undefined | ArticulateMarkdownPropertyEditorUiValue,
+    value: undefined | UmbMarkdownPropertyEditorUiValue,
     config: UmbPropertyEditorConfig,
   ) {
     const defaultValue = config.find((x) => x.alias === "defaultValue")?.value as
@@ -18,4 +18,4 @@ export class ArticulateMarkdownPropertyValuePreset
   destroy(): void {}
 }
 
-export { ArticulateMarkdownPropertyValuePreset as api };
+export { UmbMarkdownPropertyValuePreset as api };

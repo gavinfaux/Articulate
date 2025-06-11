@@ -182,7 +182,7 @@ export default class ArticulateBlogMlExporterElement extends UmbLitElement {
       const errorMessage = extractErrorMessage(error, "Export failed.");
       await showUmbracoNotification(this, errorMessage, "danger");
     } finally {
-      submitButton?.setAttribute("state", "undefined");
+      submitButton?.setAttribute("state", "");
       this._isSubmitting = false;
       this.requestUpdate();
     }

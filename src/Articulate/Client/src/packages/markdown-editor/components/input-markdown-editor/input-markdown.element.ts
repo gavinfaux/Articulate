@@ -29,18 +29,19 @@ import { UmbFormControlMixin } from "@umbraco-cms/backoffice/validation";
 
 interface UmbMarkdownEditorAction extends monaco.editor.IActionDescriptor {
   id: string;
-  icon?: string;
-  keybindings?: number[];
   label: string;
+  keybindings?: number[];
+  contextMenuGroupId?: string;
   run(editor: monaco.editor.ICodeEditor, ...args: any[]): void | Promise<void>;
+  icon?: string | null;
 }
 
 /**
  * @element umb-input-markdown
  * @fires change - when the value of the input changes
  */
-@customElement("articulate-input-markdown")
-export class ArticulateInputMarkdownElement extends UmbFormControlMixin<
+@customElement("umb-input-markdown")
+export class UmbInputMarkdownElement extends UmbFormControlMixin<
   string,
   typeof UmbLitElement,
   undefined
@@ -99,7 +100,7 @@ export class ArticulateInputMarkdownElement extends UmbFormControlMixin<
           const action: UmbMarkdownEditorAction = {
             id: manifest.alias ?? api.getUnique(),
             label: this.localize.string(manifest.meta?.label ?? api.getLabel()),
-            icon: manifest.meta?.icon ?? undefined,
+            icon: manifest.meta?.icon,
             keybindings: api.getKeybindings(),
             run: async () =>
               await api.execute({ editor: this.#editor, overlaySize: this.overlaySize }),
@@ -702,10 +703,10 @@ export class ArticulateInputMarkdownElement extends UmbFormControlMixin<
     `,
   ];
 }
-export default ArticulateInputMarkdownElement;
+export default UmbInputMarkdownElement;
 
 declare global {
   interface HTMLElementTagNameMap {
-    "articulate-input-markdown": ArticulateInputMarkdownElement;
+    "umb-input-markdown": UmbInputMarkdownElement;
   }
 }

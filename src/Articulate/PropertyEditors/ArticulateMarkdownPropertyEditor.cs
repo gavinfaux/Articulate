@@ -11,7 +11,7 @@ using Umbraco.Cms.Core.Templates;
 namespace Articulate.PropertyEditors
 {
 
-    [DataEditor("Articulate.MarkdownEditor", ValueType = ValueTypes.Text,
+    [DataEditor("Articulate.PropertyEditorUi.MarkdownEditor", ValueType = ValueTypes.Text,
         ValueEditorIsReusable = true)]
     public class ArticulateMarkdownPropertyEditor(IDataValueEditorFactory dataValueEditorFactor)
         : MarkdownPropertyEditor(dataValueEditorFactor)
@@ -23,7 +23,7 @@ namespace Articulate.PropertyEditors
         : MarkdownEditorValueConverter(localLinkParser, urlParser)
     {
         public override bool IsConverter(IPublishedPropertyType propertyType)
-            => "Articulate.MarkdownEditor" == propertyType.EditorAlias;
+            => "Articulate.PropertyEditorUi.MarkdownEditor" == propertyType.EditorUiAlias;
 
         public override object ConvertIntermediateToObject(
             IPublishedElement owner,

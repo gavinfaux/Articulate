@@ -1,3 +1,3 @@
-import { manifests as markdownManifest } from "./markdown-editor/manifests.js";
+import { manifests as articulateMarkdownManifest } from "./markdown-editor/articulate-manifests.js";
 
-export const manifests: Array<UmbExtensionManifest> = [...markdownManifest];
+export const manifests: Array<UmbExtensionManifest> = [...articulateMarkdownManifest];

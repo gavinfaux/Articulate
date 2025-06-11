@@ -2,7 +2,7 @@ import { UMB_AUTH_CONTEXT as le } from "@umbraco-cms/backoffice/auth";
 import { A as w, i as Q, e as v, s as _, c as ue } from "./notification-utils-D7uwENxV.js";
 import { html as u, css as U, property as j, state as d, customElement as B } from "@umbraco-cms/backoffice/external/lit";
 import { UmbLitElement as D } from "@umbraco-cms/backoffice/lit-element";
-import { UmbTextStyles as k } from "@umbraco-cms/backoffice/style";
+import { UmbTextStyles as T } from "@umbraco-cms/backoffice/style";
 import { UMB_MODAL_MANAGER_CONTEXT as Z } from "@umbraco-cms/backoffice/modal";
 import { DocumentService as de } from "@umbraco-cms/backoffice/external/backend-api";
 async function ee() {
@@ -185,7 +185,7 @@ let c = class extends D {
       const l = v(n, "Export failed.");
       await _(this, l, "danger");
     } finally {
-      r == null || r.setAttribute("state", "undefined"), this._isSubmitting = !1, this.requestUpdate();
+      r == null || r.setAttribute("state", ""), this._isSubmitting = !1, this.requestUpdate();
     }
   }
   _closeModal() {
@@ -271,7 +271,7 @@ let c = class extends D {
   }
 };
 c.styles = [
-  k,
+  T,
   oe,
   U`
       .node-picker-container {
@@ -411,11 +411,11 @@ let h = class extends D {
         }
         throw g;
       }
-      const A = P.data;
-      if (!A)
+      const S = P.data;
+      if (!S)
         throw new Error("Import completed but no response data was returned.");
-      if (A.downloadUrl) {
-        const g = A.downloadUrl.startsWith("http") ? A.downloadUrl : `${window.location.origin}${A.downloadUrl}`;
+      if (S.downloadUrl) {
+        const g = S.downloadUrl.startsWith("http") ? S.downloadUrl : `${window.location.origin}${S.downloadUrl}`;
         this._downloadUrl = u`<a href="${g}" target="_blank">Download</a>.`;
       }
       e.reset(), this._selectedBlogNodeUdi = null, this._selectedBlogNodeName = "No node selected", this.requestUpdate();
@@ -423,7 +423,7 @@ let h = class extends D {
       const l = v(n, "Import failed.");
       await _(this, l, "danger");
     } finally {
-      r == null || r.setAttribute("state", "undefined"), this._isSubmitting = !1, this.requestUpdate();
+      r == null || r.setAttribute("state", ""), this._isSubmitting = !1, this.requestUpdate();
     }
   }
   _closeModal() {
@@ -558,7 +558,7 @@ let h = class extends D {
   }
 };
 h.styles = [
-  k,
+  T,
   oe,
   U`
       .node-picker-container {
@@ -607,7 +607,7 @@ const ge = (t) => (e, i) => {
  * Copyright 2019 Google LLC
  * SPDX-License-Identifier: BSD-3-Clause
  */
-const M = globalThis, F = M.ShadowRoot && (M.ShadyCSS === void 0 || M.ShadyCSS.nativeShadow) && "adoptedStyleSheets" in Document.prototype && "replace" in CSSStyleSheet.prototype, re = Symbol(), X = /* @__PURE__ */ new WeakMap();
+const k = globalThis, F = k.ShadowRoot && (k.ShadyCSS === void 0 || k.ShadyCSS.nativeShadow) && "adoptedStyleSheets" in Document.prototype && "replace" in CSSStyleSheet.prototype, re = Symbol(), X = /* @__PURE__ */ new WeakMap();
 let fe = class {
   constructor(e, i, o) {
     if (this._$cssResult$ = !0, o !== re) throw Error("CSSResult is not constructable. Use `unsafeCSS` or `css` instead.");
@@ -629,7 +629,7 @@ let fe = class {
 const be = (t) => new fe(typeof t == "string" ? t : t + "", void 0, re), ye = (t, e) => {
   if (F) t.adoptedStyleSheets = e.map((i) => i instanceof CSSStyleSheet ? i : i.styleSheet);
   else for (const i of e) {
-    const o = document.createElement("style"), r = M.litNonce;
+    const o = document.createElement("style"), r = k.litNonce;
     r !== void 0 && o.setAttribute("nonce", r), o.textContent = i.cssText, t.appendChild(o);
   }
 }, H = F ? (t) => t : (t) => t instanceof CSSStyleSheet ? ((e) => {
@@ -642,7 +642,7 @@ const be = (t) => new fe(typeof t == "string" ? t : t + "", void 0, re), ye = (t
  * Copyright 2017 Google LLC
  * SPDX-License-Identifier: BSD-3-Clause
  */
-const { is: _e, defineProperty: we, getOwnPropertyDescriptor: ve, getOwnPropertyNames: $e, getOwnPropertySymbols: Ee, getPrototypeOf: Ue } = Object, f = globalThis, G = f.trustedTypes, xe = G ? G.emptyScript : "", L = f.reactiveElementPolyfillSupport, C = (t, e) => t, T = { toAttribute(t, e) {
+const { is: _e, defineProperty: we, getOwnPropertyDescriptor: ve, getOwnPropertyNames: $e, getOwnPropertySymbols: Ee, getPrototypeOf: Ue } = Object, f = globalThis, G = f.trustedTypes, xe = G ? G.emptyScript : "", L = f.reactiveElementPolyfillSupport, C = (t, e) => t, M = { toAttribute(t, e) {
   switch (e) {
     case Boolean:
       t = t ? xe : null;
@@ -670,9 +670,9 @@ const { is: _e, defineProperty: we, getOwnPropertyDescriptor: ve, getOwnProperty
       }
   }
   return i;
-} }, V = (t, e) => !_e(t, e), K = { attribute: !0, type: String, converter: T, reflect: !1, useDefault: !1, hasChanged: V };
+} }, V = (t, e) => !_e(t, e), K = { attribute: !0, type: String, converter: M, reflect: !1, useDefault: !1, hasChanged: V };
 Symbol.metadata ?? (Symbol.metadata = Symbol("metadata")), f.litPropertyMetadata ?? (f.litPropertyMetadata = /* @__PURE__ */ new WeakMap());
-class S extends HTMLElement {
+class A extends HTMLElement {
   static addInitializer(e) {
     this._$Ei(), (this.l ?? (this.l = [])).push(e);
   }
@@ -781,7 +781,7 @@ class S extends HTMLElement {
     var a;
     const o = this.constructor.elementProperties.get(e), r = this.constructor._$Eu(e, o);
     if (r !== void 0 && o.reflect === !0) {
-      const s = (((a = o.converter) == null ? void 0 : a.toAttribute) !== void 0 ? o.converter : T).toAttribute(i, o.type);
+      const s = (((a = o.converter) == null ? void 0 : a.toAttribute) !== void 0 ? o.converter : M).toAttribute(i, o.type);
       this._$Em = e, s == null ? this.removeAttribute(r) : this.setAttribute(r, s), this._$Em = null;
     }
   }
@@ -789,7 +789,7 @@ class S extends HTMLElement {
     var a, s;
     const o = this.constructor, r = o._$Eh.get(e);
     if (r !== void 0 && this._$Em !== r) {
-      const n = o.getPropertyOptions(r), l = typeof n.converter == "function" ? { fromAttribute: n.converter } : ((a = n.converter) == null ? void 0 : a.fromAttribute) !== void 0 ? n.converter : T;
+      const n = o.getPropertyOptions(r), l = typeof n.converter == "function" ? { fromAttribute: n.converter } : ((a = n.converter) == null ? void 0 : a.fromAttribute) !== void 0 ? n.converter : M;
       this._$Em = r, this[r] = l.fromAttribute(i, n.type) ?? ((s = this._$Ej) == null ? void 0 : s.get(r)) ?? null, this._$Em = null;
     }
   }
@@ -873,13 +873,13 @@ class S extends HTMLElement {
   firstUpdated(e) {
   }
 }
-S.elementStyles = [], S.shadowRootOptions = { mode: "open" }, S[C("elementProperties")] = /* @__PURE__ */ new Map(), S[C("finalized")] = /* @__PURE__ */ new Map(), L == null || L({ ReactiveElement: S }), (f.reactiveElementVersions ?? (f.reactiveElementVersions = [])).push("2.1.0");
+A.elementStyles = [], A.shadowRootOptions = { mode: "open" }, A[C("elementProperties")] = /* @__PURE__ */ new Map(), A[C("finalized")] = /* @__PURE__ */ new Map(), L == null || L({ ReactiveElement: A }), (f.reactiveElementVersions ?? (f.reactiveElementVersions = [])).push("2.1.0");
 /**
  * @license
  * Copyright 2017 Google LLC
  * SPDX-License-Identifier: BSD-3-Clause
  */
-const Pe = { attribute: !0, type: String, converter: T, reflect: !1, hasChanged: V }, Ae = (t = Pe, e, i) => {
+const Pe = { attribute: !0, type: String, converter: M, reflect: !1, hasChanged: V }, Se = (t = Pe, e, i) => {
   const { kind: o, metadata: r } = i;
   let a = globalThis.litPropertyMetadata.get(r);
   if (a === void 0 && globalThis.litPropertyMetadata.set(r, a = /* @__PURE__ */ new Map()), o === "setter" && ((t = Object.create(t)).wrapped = !0), a.set(i.name, t), o === "accessor") {
@@ -901,7 +901,7 @@ const Pe = { attribute: !0, type: String, converter: T, reflect: !1, hasChanged:
   throw Error("Unsupported decorator location: " + o);
 };
 function ae(t) {
-  return (e, i) => typeof i == "object" ? Ae(t, e, i) : ((o, r, a) => {
+  return (e, i) => typeof i == "object" ? Se(t, e, i) : ((o, r, a) => {
     const s = r.hasOwnProperty(a);
     return r.constructor.createProperty(a, o), s ? Object.getOwnPropertyDescriptor(r, a) : void 0;
   })(t, e, i);
@@ -914,12 +914,12 @@ function ae(t) {
 function O(t) {
   return ae({ ...t, state: !0, attribute: !1 });
 }
-var Se = Object.defineProperty, Ce = Object.getOwnPropertyDescriptor, se = (t) => {
+var Ae = Object.defineProperty, Ce = Object.getOwnPropertyDescriptor, se = (t) => {
   throw TypeError(t);
 }, x = (t, e, i, o) => {
   for (var r = o > 1 ? void 0 : o ? Ce(e, i) : e, a = t.length - 1, s; a >= 0; a--)
     (s = t[a]) && (r = (o ? s(e, i, r) : s(r)) || r);
-  return o && r && Se(e, i, r), r;
+  return o && r && Ae(e, i, r), r;
 }, Ne = (t, e, i) => e.has(t) || se("Cannot " + i), Y = (t, e, i) => (Ne(t, e, "read from private field"), i ? i.call(t) : e.get(t)), J = (t, e, i) => e.has(t) ? se("Cannot add the same private member more than once") : e instanceof WeakSet ? e.add(t) : e.set(t, i), I, R;
 let p = class extends D {
   constructor() {
@@ -1100,7 +1100,7 @@ let p = class extends D {
             type="button"
             @click=${() => this._duplicateTheme()}
             ?disabled=${!this._newThemeName || this._isSubmitting}
-            .state=${this._isSubmitting ? "waiting" : "undefined"}
+            .state=${this._isSubmitting ? "waiting" : ""}
           >
             ${t}
           </uui-button>
@@ -1137,7 +1137,7 @@ let p = class extends D {
 I = /* @__PURE__ */ new WeakMap();
 R = /* @__PURE__ */ new WeakMap();
 p.styles = [
-  k,
+  T,
   U`
       .theme-grid {
         display: grid;
@@ -1227,12 +1227,12 @@ x([
 p = x([
   ge("articulate-copy-theme")
 ], p);
-var De = Object.defineProperty, ke = Object.getOwnPropertyDescriptor, ne = (t, e, i, o) => {
-  for (var r = o > 1 ? void 0 : o ? ke(e, i) : e, a = t.length - 1, s; a >= 0; a--)
+var De = Object.defineProperty, Te = Object.getOwnPropertyDescriptor, ne = (t, e, i, o) => {
+  for (var r = o > 1 ? void 0 : o ? Te(e, i) : e, a = t.length - 1, s; a >= 0; a--)
     (s = t[a]) && (r = (o ? s(e, i, r) : s(r)) || r);
   return o && r && De(e, i, r), r;
 };
-const Me = [
+const ke = [
   {
     path: "blogml/import",
     name: "BlogML Import",
@@ -1267,7 +1267,7 @@ let $ = class extends D {
    */
   _renderCards() {
     return u`
-      ${Me.map((t) => {
+      ${ke.map((t) => {
       var o;
       const i = `${(o = this.routerPath) == null ? void 0 : o.replace(/\/$/, "")}/${t.path}`;
       return u`
@@ -1297,7 +1297,7 @@ let $ = class extends D {
   }
 };
 $.styles = [
-  k,
+  T,
   U`
       .tools-grid {
         display: grid;
@@ -1331,10 +1331,10 @@ ne([
 $ = ne([
   B("articulate-dashboard-options")
 ], $);
-var Te = Object.defineProperty, Be = Object.getOwnPropertyDescriptor, W = (t, e, i, o) => {
+var Me = Object.defineProperty, Be = Object.getOwnPropertyDescriptor, W = (t, e, i, o) => {
   for (var r = o > 1 ? void 0 : o ? Be(e, i) : e, a = t.length - 1, s; a >= 0; a--)
     (s = t[a]) && (r = (o ? s(e, i, r) : s(r)) || r);
-  return o && r && Te(e, i, r), r;
+  return o && r && Me(e, i, r), r;
 };
 let E = class extends D {
   constructor() {
@@ -1395,7 +1395,7 @@ let E = class extends D {
   }
 };
 E.styles = [
-  k,
+  T,
   U`
       :host {
         display: block;
@@ -1479,29 +1479,15 @@ const Oe = {
       match: "Umb.Section.Settings"
     }
   ]
-}, ze = Oe, qe = {
-  type: "propertyEditorSchema",
-  name: "ArticulateMarkdown Editor",
-  alias: "Articulate.MarkdownEditor",
-  meta: {
-    defaultPropertyEditorUiAlias: "Articulate.PropertyEditorUi.MarkdownEditor"
-  }
-}, Le = [
-  {
-    type: "propertyValuePreset",
-    forPropertyEditorSchemaAlias: "Articulate.MarkdownEditor",
-    alias: "Articulate.PropertyValuePreset.MarkdownEditor",
-    name: "Articulate Markdown Editor Property Value Preset",
-    api: () => import("./markdown-editor-property-value-preset-eqYzivpW.js")
-  },
+}, ze = Oe, qe = [
   {
     type: "propertyEditorUi",
     alias: "Articulate.PropertyEditorUi.MarkdownEditor",
-    name: "ArticulateMarkdown Editor Property Editor UI",
-    element: () => import("./property-editor-ui-markdown-editor.element-DHdDCQLk.js"),
+    name: "Articulate Markdown Editor",
+    element: () => import("./property-editor-ui-markdown-editor.element-ByRKICRp.js"),
     meta: {
       label: "Articulate Markdown Editor",
-      propertyEditorSchemaAlias: "Articulate.MarkdownEditor",
+      propertyEditorSchemaAlias: "Umbraco.MarkdownEditor",
       icon: "icon-code",
       group: "richContent",
       supportsReadOnly: !0,
@@ -1512,26 +1498,14 @@ const Oe = {
             label: "Preview",
             description: "Display a live preview",
             propertyEditorUiAlias: "Umb.PropertyEditorUi.Toggle"
-          },
-          {
-            alias: "defaultValue",
-            label: "Default value",
-            description: "If value is blank, the editor will show this",
-            propertyEditorUiAlias: "Articulate.PropertyEditorUi.MarkdownEditor"
-          },
-          {
-            alias: "overlaySize",
-            label: "Overlay Size",
-            description: "Select the width of the overlay.",
-            propertyEditorUiAlias: "Umb.PropertyEditorUi.OverlaySize"
+            // Required field
           }
         ]
       }
     }
-  },
-  qe
-], Ie = [...Le], Re = [...Ie], Ye = (t, e) => {
-  e.register(ze), e.registerMany(Re), t.consumeContext(le, (i) => {
+  }
+], Le = [...qe], Ie = [...Le], Ke = (t, e) => {
+  e.register(ze), e.registerMany(Ie), t.consumeContext(le, (i) => {
     const o = i == null ? void 0 : i.getOpenApiConfiguration();
     ue.setConfig({
       auth: (o == null ? void 0 : o.token) ?? void 0,
@@ -1541,6 +1515,6 @@ const Oe = {
   });
 };
 export {
-  Ye as onInit
+  Ke as onInit
 };
 //# sourceMappingURL=articulate.js.map
