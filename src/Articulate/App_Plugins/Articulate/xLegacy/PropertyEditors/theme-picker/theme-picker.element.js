@@ -1,7 +1,10 @@
-import { LitElement, html, css } from 'lit';
+import { html, css } from '@umbraco-cms/backoffice/external/lit';
 import { UmbElementMixin } from '@umbraco-cms/backoffice/element-api';
+import { UmbLitElement } from "@umbraco-cms/backoffice/lit-element";
 
-export default class ArticulateThemePickerElement extends UmbElementMixin(LitElement) {
+// should maybe implement UmbPropertyEditorUiElement
+
+export default class ArticulateThemePickerElement extends UmbElementMixin(UmbLitElement)  {
     static styles = css`
         :host {
             display: block;
@@ -39,7 +42,7 @@ export default class ArticulateThemePickerElement extends UmbElementMixin(LitEle
     async loadThemes() {
         try {
             // Get the base URL from server variables or fallback
-            const baseUrl = window.Umbraco?.Sys?.ServerVariables?.articulate?.articulatePropertyEditorsBaseUrl || '/umbraco/backoffice/api/ArticulatePropertyEditors/';
+          const baseUrl = window.Umbraco?.Sys?.ServerVariables?.articulate?.articulatePropertyEditorsBaseUrl || '/umbraco/management/api/v1/articulate/editors/';
             
             const response = await fetch(`${baseUrl}GetThemes`);
             if (response.ok) {

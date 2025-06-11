@@ -14,7 +14,7 @@ namespace Articulate.Components
 
         public void Initialize()
         {
-            foreach(var theme in DefaultThemes.AllThemes)
+            foreach (var theme in DefaultThemes.AllThemes)
             {
                 theme.CreateBundles(_bundleManager);
             }
@@ -24,7 +24,7 @@ namespace Articulate.Components
         {
         }
 
-        
+
     }
 
 }

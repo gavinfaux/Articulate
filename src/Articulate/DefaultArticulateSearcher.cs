@@ -46,7 +46,7 @@ namespace Articulate
             foreach (var field in fields)
             {
                 //full exact match (which has a higher boost)
-                fieldQuery.Append($"{field.Key}:{"\"" + term + "\""}^{field.Value*exactMatch}");
+                fieldQuery.Append($"{field.Key}:{"\"" + term + "\""}^{field.Value * exactMatch}");
                 fieldQuery.Append(" ");
                 //NOTE: Phrase match wildcard isn't really supported unless you use the Lucene
                 // API like ComplexPhraseWildcardSomethingOrOther...
@@ -54,7 +54,7 @@ namespace Articulate
                 foreach (var s in splitSearch)
                 {
                     //match on each term, no wildcard, higher boost
-                    fieldQuery.Append($"{field.Key}:{s}^{field.Value*termMatch}");
+                    fieldQuery.Append($"{field.Key}:{s}^{field.Value * termMatch}");
                     fieldQuery.Append(" ");
 
                     //match on each term, with wildcard 

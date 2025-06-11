@@ -58,7 +58,7 @@ namespace Articulate
         /// <param name="filter"></param>
         /// <returns></returns>
         public static IEnumerable<IPublishedContent> GetPostsSortedByPublishedDate(
-            this UmbracoHelper helper, 
+            this UmbracoHelper helper,
             PagerModel pager,
             Func<IPublishedContent, bool> filter,
             params int[] articulateArchiveIds)
@@ -67,7 +67,7 @@ namespace Articulate
                 .Select(helper.Content)
                 .WhereNotNull()
                 .SelectMany(x => x.Descendants());
-            
+
             //apply a filter if there is one
             if (filter != null)
             {
@@ -189,7 +189,7 @@ namespace Articulate
             IVariationContextAccessor variationContextAccessor
             )
         {
-            var listNodeIds = listNodes.Select(x => x.Id).ToArray();           
+            var listNodeIds = listNodes.Select(x => x.Id).ToArray();
 
             var postWithAuthor = helper.GetPostsSortedByPublishedDate(pager, x => string.Equals(x.Value<string>("author"), authorName.Replace("-", " "), StringComparison.InvariantCultureIgnoreCase), listNodeIds);
 
@@ -208,9 +208,9 @@ namespace Articulate
 
             return listNodes;
         }
-        
-        
-        
+
+
+
 
     }
 }

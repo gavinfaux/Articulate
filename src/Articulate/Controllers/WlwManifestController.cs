@@ -13,7 +13,7 @@ namespace Articulate.Controllers
     {
         private readonly UmbracoHelper _umbraco;
 
-        public WlwManifestController(            
+        public WlwManifestController(
             UmbracoHelper umbraco,
             ILogger<RenderController> logger,
             ICompositeViewEngine compositeViewEngine,

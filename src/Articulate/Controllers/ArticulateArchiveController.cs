@@ -31,7 +31,7 @@ namespace Articulate.Controllers
         {
             Umbraco = umbraco;
         }
-        
+
         public UmbracoHelper Umbraco { get; }
 
         /// <summary>
@@ -75,7 +75,7 @@ namespace Articulate.Controllers
                 PublishedValueFallback,
                 VariationContextAccessor);
 
-            return GetPagedListView(archive, archive, posts, count, null);          
+            return GetPagedListView(archive, archive, posts, count, null);
         }
     }
 }

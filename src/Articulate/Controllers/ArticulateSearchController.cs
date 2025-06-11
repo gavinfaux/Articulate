@@ -56,7 +56,7 @@ namespace Articulate.Controllers
             if (term == null)
             {
                 //nothing to search, just render the view
-                var emptyList =new ListModel(
+                var emptyList = new ListModel(
                     CurrentPage,
                     new PagerModel(masterModel.PageSize, 0, 0),
                     Enumerable.Empty<IPublishedContent>(),

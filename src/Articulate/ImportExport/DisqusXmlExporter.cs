@@ -54,7 +54,8 @@ namespace Articulate.ImportExport
                 }
 
                 //no comments to import
-                if (blogMlPost.Comments.Any() == false) continue;
+                if (blogMlPost.Comments.Any() == false)
+                    continue;
 
                 var body = post.GetValue<string>("richText");
                 if (body.IsNullOrWhiteSpace())

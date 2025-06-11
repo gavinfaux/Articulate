@@ -34,7 +34,8 @@ namespace Articulate.Components
         public void Handle(ContentSavingNotification notification)
         {
             var saved = notification.SavedEntities.ToList();
-            if (saved.Count == 0) return;
+            if (saved.Count == 0)
+                return;
 
             var contentTypes = _contentTypeService.GetMany(saved.Select(x => x.ContentTypeId).ToArray()).ToDictionary(x => x.Id);
             foreach (var content in saved)
@@ -79,7 +80,8 @@ namespace Articulate.Components
                             {
                                 // don't set it if it's already set
                                 var currentExcerpt = c.GetValue("excerpt", culture?.Culture)?.ToString();
-                                if (!currentExcerpt.IsNullOrWhiteSpace()) return null;
+                                if (!currentExcerpt.IsNullOrWhiteSpace())
+                                    return null;
 
                                 if (content.HasProperty("richText"))
                                 {
@@ -106,7 +108,8 @@ namespace Articulate.Components
                                 {
                                     // don't set it if it's already set
                                     var currentSocialDescription = c.GetValue("socialDescription", culture?.Culture)?.ToString();
-                                    if (!currentSocialDescription.IsNullOrWhiteSpace()) return null;
+                                    if (!currentSocialDescription.IsNullOrWhiteSpace())
+                                        return null;
 
                                     var excerptProperty = ct.CompositionPropertyTypes.First(x => x.Alias == "excerpt");
                                     return content.GetValue<string>("excerpt", excerptProperty.VariesByCulture() ? culture?.Culture : null);

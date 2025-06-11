@@ -40,7 +40,7 @@ namespace Articulate.Routing
         /// Constructor
         /// </summary>
         /// <param name="controllerActionSearcher"></param>
-        public ArticulateRouter(IControllerActionSearcher controllerActionSearcher, ICoreScopeProvider coreScopeProvider )
+        public ArticulateRouter(IControllerActionSearcher controllerActionSearcher, ICoreScopeProvider coreScopeProvider)
         {
             _controllerActionSearcher = controllerActionSearcher;
             _coreScopeProvider = coreScopeProvider;
@@ -72,9 +72,9 @@ namespace Articulate.Routing
         {
             lock (s_locker)
             {
-              using (var scope = _coreScopeProvider.CreateCoreScope(autoComplete: true))
-              {
-                IPublishedContentCache contentCache = umbracoContext.Content;
+                using (var scope = _coreScopeProvider.CreateCoreScope(autoComplete: true))
+                {
+                    IPublishedContentCache contentCache = umbracoContext.Content;
 
                     IPublishedContentType articulateCt = contentCache.GetContentType("Articulate");
                     if (articulateCt == null)
@@ -134,7 +134,7 @@ namespace Articulate.Routing
                             MapTagsAndCategoriesRoute(httpContext, rootNodePath, articulateRootNode, domains);
                         }
                     }
-              }
+                }
 
             }
         }

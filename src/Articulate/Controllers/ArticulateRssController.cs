@@ -56,7 +56,8 @@ namespace Articulate.Controllers
 
         public IActionResult Index(int? maxItems)
         {
-            if (!maxItems.HasValue) maxItems = 25;
+            if (!maxItems.HasValue)
+                maxItems = 25;
 
             var listNodes = CurrentPage.Children
                 .Where(x => x.ContentType.Alias.InvariantEquals(ArticulateConstants.ArticulateArchiveContentTypeAlias))
@@ -87,9 +88,11 @@ namespace Articulate.Controllers
         public IActionResult Author(int authorId, int? maxItems)
         {
             var author = _umbracoHelper.Content(authorId);
-            if (author == null) throw new ArgumentNullException(nameof(author));
+            if (author == null)
+                throw new ArgumentNullException(nameof(author));
 
-            if (!maxItems.HasValue) maxItems = 25;
+            if (!maxItems.HasValue)
+                maxItems = 25;
 
             //create a master model
             var masterModel = new MasterModel(author, _publishedValueFallback, _variationContextAccessor);
@@ -110,18 +113,22 @@ namespace Articulate.Controllers
 
         public IActionResult Categories(string tag, int? maxItems)
         {
-            if (tag == null) throw new ArgumentNullException(nameof(tag));
+            if (tag == null)
+                throw new ArgumentNullException(nameof(tag));
 
-            if (!maxItems.HasValue) maxItems = 25;
+            if (!maxItems.HasValue)
+                maxItems = 25;
 
             return RenderTagsOrCategoriesRss("ArticulateCategories", "categories", maxItems.Value, tag);
         }
 
         public IActionResult Tags(string tag, int? maxItems)
         {
-            if (tag == null) throw new ArgumentNullException(nameof(tag));
+            if (tag == null)
+                throw new ArgumentNullException(nameof(tag));
 
-            if (!maxItems.HasValue) maxItems = 25;
+            if (!maxItems.HasValue)
+                maxItems = 25;
 
             return RenderTagsOrCategoriesRss("ArticulateTags", "tags", maxItems.Value, tag);
         }

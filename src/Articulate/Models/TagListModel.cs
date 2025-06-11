@@ -4,7 +4,7 @@ namespace Articulate.Models
 {
     public class TagListModel : MasterModel
     {
-        public TagListModel(            
+        public TagListModel(
             IMasterModel masterModel,
             string name,
             int pageSize,

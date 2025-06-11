@@ -1,13 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <Nullable>disable</Nullable>
     <CompressionEnabled>false</CompressionEnabled> <!-- Disable compression. E.g. for umbraco backoffice files. These files should be precompressed by node and not let dotnet handle it -->
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Umbraco.Cms" Version="15.4.2" />
+    <PackageReference Include="Umbraco.Cms" Version="15.4.3" />
   </ItemGroup>
 
   <Import Project="..\Articulate\build\Articulate.targets" />
@@ -23,35 +24,17 @@
     <!-- Razor files are needed for the backoffice to work correctly -->
     <CopyRazorGenerateFilesToPublishDirectory>true</CopyRazorGenerateFilesToPublishDirectory>
   </PropertyGroup>
-  
-  <!-- TODO: Review this for netcore / Umbraco 14+ -->
   <ItemGroup>
-    <Compile Remove="umbraco\Data\**" />
-    <Compile Remove="umbraco\logs\**" />
-    <Compile Remove="umbraco\MediaCache\**" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Remove="umbraco\Data\**" />
-    <EmbeddedResource Remove="umbraco\logs\**" />
-    <EmbeddedResource Remove="umbraco\MediaCache\**" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Remove="umbraco\Data\**" />
-    <None Remove="umbraco\logs\**" />
-    <None Remove="umbraco\MediaCache\**" />
     <None Include="config\**\*.*">
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
       <CopyToPublishDirectory>Always</CopyToPublishDirectory>
     </None>
-    <None Include="umbraco\**\*.*">
-      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-      <CopyToPublishDirectory>Always</CopyToPublishDirectory>
-    </None>
   </ItemGroup>
   <ItemGroup>
-    <Content Remove="umbraco\Data\**" />
-    <Content Remove="umbraco\logs\**" />
-    <Content Remove="umbraco\MediaCache\**" />
+    <Compile Remove="umbraco\**" />
+    <Content Remove="umbraco\**" />
+    <EmbeddedResource Remove="umbraco\**" />
+    <None Remove="umbraco\**" />
   </ItemGroup>
 
   <PropertyGroup>

@@ -7,7 +7,6 @@ using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Api.Common.Attributes;
@@ -90,7 +89,7 @@ namespace Articulate.Controllers
                 return OperationStatusResult(ThemeEditorOperationStatus.DuplicateThemeName, builder => BadRequest(builder.WithTitle($"Theme {model.ThemeName} is already used").WithDetail("The theme name must be unique.").Build()));
             }
 
-            try 
+            try
             {
                 CopyDirectory(sourceTheme, new DirectoryInfo(Path.Combine(articulateUserThemesDirectory, model.NewThemeName)));
             }
@@ -98,7 +97,7 @@ namespace Articulate.Controllers
             {
                 if (e.Message == "Theme already exists")
                 {
-                    logger.LogWarning(e,"Theme name is already is use: {ThemeName}", model.NewThemeName);
+                    logger.LogWarning(e, "Theme name is already is use: {ThemeName}", model.NewThemeName);
                     return OperationStatusResult(ThemeEditorOperationStatus.DuplicateThemeName, builder => BadRequest(builder.WithTitle($"Theme {model.ThemeName} is already used").WithDetail("The theme name must be unique.").Build()));
                 }
 
@@ -121,7 +120,7 @@ namespace Articulate.Controllers
         [HttpGet("list")]
         [ProducesResponseType<List<string>>(StatusCodes.Status200OK)]
         public IActionResult GetThemes()
-            =>  Ok(
+            => Ok(
                 AllThemes()
             );
 

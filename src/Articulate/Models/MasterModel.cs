@@ -16,7 +16,7 @@ namespace Articulate.Models
             PublishedValueFallback = publishedValueFallback;
             VariationContextAccessor = variationContextAccessor;
         }
-        
+
         /// <summary>
         /// Returns the current theme
         /// </summary>
@@ -93,7 +93,7 @@ namespace Articulate.Models
         {
             get => _customRssFeed ?? (_customRssFeed = RootBlogNode.Value<string>("customRssFeedUrl"));
             protected set => _customRssFeed = value;
-        }        
+        }
 
         public string BlogLogo
         {

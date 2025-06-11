@@ -1,7 +1,6 @@
-import { LitElement, html, css } from 'lit';
-import { UmbElementMixin } from '@umbraco-cms/backoffice/element-api';
-
-export default class ThemesManagerElement extends UmbElementMixin(LitElement) {
+import { html, css } from '@umbraco-cms/backoffice/external/lit';
+import { UmbLitElement } from "@umbraco-cms/backoffice/lit-element";
+export default class ThemesManagerElement extends UmbLitElement {
     static styles = css`
         :host {
             display: block;
@@ -224,7 +223,7 @@ export default class ThemesManagerElement extends UmbElementMixin(LitElement) {
     async loadThemes() {
         try {
             // Get the base URL from server variables or fallback
-            const baseUrl = window.Umbraco?.Sys?.ServerVariables?.articulate?.articulateThemeEditorBaseUrl || '/umbraco/backoffice/api/ArticulateThemeEditor/';
+          const baseUrl = window.Umbraco?.Sys?.ServerVariables?.articulate?.articulateThemeEditorBaseUrl || '/umbraco/management/api/v1/articulate/themes/';
             
             const response = await fetch(`${baseUrl}GetThemes`, {
                 method: 'POST',
@@ -293,7 +292,7 @@ export default class ThemesManagerElement extends UmbElementMixin(LitElement) {
         this.status = '';
 
         try {
-            const baseUrl = window.Umbraco?.Sys?.ServerVariables?.articulate?.articulateThemeEditorBaseUrl || '/umbraco/backoffice/api/ArticulateThemeEditor/';
+          const baseUrl = window.Umbraco?.Sys?.ServerVariables?.articulate?.articulateThemeEditorBaseUrl || '/umbraco/management/api/v1/articulate/themes/';
             
             const response = await fetch(`${baseUrl}PostCopyTheme`, {
                 method: 'POST',

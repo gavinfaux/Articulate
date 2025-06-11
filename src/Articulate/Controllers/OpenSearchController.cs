@@ -24,7 +24,7 @@ namespace Articulate.Controllers
             ILogger<RenderController> logger,
             ICompositeViewEngine compositeViewEngine,
             IUmbracoContextAccessor umbracoContextAccessor)
-            :base(logger, compositeViewEngine, umbracoContextAccessor)
+            : base(logger, compositeViewEngine, umbracoContextAccessor)
         {
             _publishedValueFallback = publishedValueFallback;
             _variationContextAccessor = variationContextAccessor;
@@ -71,8 +71,8 @@ namespace Articulate.Controllers
             }
 
             var model = new MasterModel(node, _publishedValueFallback, _variationContextAccessor);
-            
-            var searchTemplateUrl = Url.ArticulateSearchUrl(model, includeDomain:true) + "?term={searchTerms}";
+
+            var searchTemplateUrl = Url.ArticulateSearchUrl(model, includeDomain: true) + "?term={searchTerms}";
 
             XNamespace ns = "http://a9.com/-/spec/opensearch/1.1/";
 
@@ -84,7 +84,7 @@ namespace Articulate.Controllers
                     new XAttribute("type", "text/html"),
                     new XAttribute("method", "get"),
                     new XAttribute("template", searchTemplateUrl)));
-            
+
             return new XmlResult(new XDocument(rsd));
         }
     }

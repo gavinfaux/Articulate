@@ -54,7 +54,8 @@ namespace Articulate.Syndication.BlogML
         {
             Guard.ArgumentNotNull(writer, "writer");
             Guard.ArgumentNotNullOrEmptyString(xmlNamespace, "xmlNamespace");
-            if (Tags.Count <= 0) return;
+            if (Tags.Count <= 0)
+                return;
             writer.WriteStartElement("tags");
             foreach (var tag in Tags)
             {

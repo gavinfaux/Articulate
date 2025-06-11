@@ -96,7 +96,7 @@ namespace Articulate
                 };
                 openGraphImage.Attributes["property"] = "og:image";
                 openGraphImage.Attributes["content"] = PathHelper.GetDomain(html.ViewContext.HttpContext.Request) + model.CroppedPostImageUrl;
-                
+
                 builder.AppendHtml(openGraphImage);
             }
 
@@ -188,7 +188,7 @@ namespace Articulate
 
         public static IHtmlContent MetaTags(this IHtmlHelper html, IMasterModel model)
         {
-            var htmlContent = new HtmlContentBuilder();            
+            var htmlContent = new HtmlContentBuilder();
 
             var metaDescriptionTag = new TagBuilder("meta")
             {

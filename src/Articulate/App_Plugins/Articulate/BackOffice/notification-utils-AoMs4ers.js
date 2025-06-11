@@ -1,6 +1,6 @@
-var O = Object.defineProperty;
-var I = (t, e, r) => e in t ? O(t, e, { enumerable: !0, configurable: !0, writable: !0, value: r }) : t[e] = r;
-var A = (t, e, r) => I(t, typeof e != "symbol" ? e + "" : e, r);
+var I = Object.defineProperty;
+var O = (t, e, r) => e in t ? I(t, e, { enumerable: !0, configurable: !0, writable: !0, value: r }) : t[e] = r;
+var x = (t, e, r) => O(t, typeof e != "symbol" ? e + "" : e, r);
 import { UMB_NOTIFICATION_CONTEXT as E } from "@umbraco-cms/backoffice/notification";
 var R = async (t, e) => {
   let r = typeof e == "function" ? await e(t) : e;
@@ -16,7 +16,7 @@ var R = async (t, e) => {
     default:
       return "&";
   }
-}, W = (t) => {
+}, V = (t) => {
   switch (t) {
     case "form":
       return ",";
@@ -38,10 +38,10 @@ var R = async (t, e) => {
     default:
       return "&";
   }
-}, $ = ({ allowReserved: t, explode: e, name: r, style: n, value: s }) => {
+}, $ = ({ allowReserved: t, explode: e, name: r, style: s, value: i }) => {
   if (!e) {
-    let a = (t ? s : s.map((u) => encodeURIComponent(u))).join(W(n));
-    switch (n) {
+    let a = (t ? i : i.map((c) => encodeURIComponent(c))).join(V(s));
+    switch (s) {
       case "label":
         return `.${a}`;
       case "matrix":
@@ -52,123 +52,123 @@ var R = async (t, e) => {
         return `${r}=${a}`;
     }
   }
-  let i = M(n), l = s.map((a) => n === "label" || n === "simple" ? t ? a : encodeURIComponent(a) : w({ allowReserved: t, name: r, value: a })).join(i);
-  return n === "label" || n === "matrix" ? i + l : l;
+  let n = M(s), l = i.map((a) => s === "label" || s === "simple" ? t ? a : encodeURIComponent(a) : w({ allowReserved: t, name: r, value: a })).join(n);
+  return s === "label" || s === "matrix" ? n + l : l;
 }, w = ({ allowReserved: t, name: e, value: r }) => {
   if (r == null) return "";
   if (typeof r == "object") throw new Error("Deeply-nested arrays/objects aren’t supported. Provide your own `querySerializer()` to handle these.");
   return `${e}=${t ? r : encodeURIComponent(r)}`;
-}, U = ({ allowReserved: t, explode: e, name: r, style: n, value: s }) => {
-  if (s instanceof Date) return `${r}=${s.toISOString()}`;
-  if (n !== "deepObject" && !e) {
+}, U = ({ allowReserved: t, explode: e, name: r, style: s, value: i }) => {
+  if (i instanceof Date) return `${r}=${i.toISOString()}`;
+  if (s !== "deepObject" && !e) {
     let a = [];
-    Object.entries(s).forEach(([d, m]) => {
+    Object.entries(i).forEach(([d, m]) => {
       a = [...a, d, t ? m : encodeURIComponent(m)];
     });
-    let u = a.join(",");
-    switch (n) {
+    let c = a.join(",");
+    switch (s) {
       case "form":
-        return `${r}=${u}`;
+        return `${r}=${c}`;
       case "label":
-        return `.${u}`;
+        return `.${c}`;
       case "matrix":
-        return `;${r}=${u}`;
+        return `;${r}=${c}`;
       default:
-        return u;
+        return c;
     }
   }
-  let i = z(n), l = Object.entries(s).map(([a, u]) => w({ allowReserved: t, name: n === "deepObject" ? `${r}[${a}]` : a, value: u })).join(i);
-  return n === "label" || n === "matrix" ? i + l : l;
+  let n = z(s), l = Object.entries(i).map(([a, c]) => w({ allowReserved: t, name: s === "deepObject" ? `${r}[${a}]` : a, value: c })).join(n);
+  return s === "label" || s === "matrix" ? n + l : l;
 }, B = /\{[^{}]+\}/g, N = ({ path: t, url: e }) => {
-  let r = e, n = e.match(B);
-  if (n) for (let s of n) {
-    let i = !1, l = s.substring(1, s.length - 1), a = "simple";
-    l.endsWith("*") && (i = !0, l = l.substring(0, l.length - 1)), l.startsWith(".") ? (l = l.substring(1), a = "label") : l.startsWith(";") && (l = l.substring(1), a = "matrix");
-    let u = t[l];
-    if (u == null) continue;
-    if (Array.isArray(u)) {
-      r = r.replace(s, $({ explode: i, name: l, style: a, value: u }));
+  let r = e, s = e.match(B);
+  if (s) for (let i of s) {
+    let n = !1, l = i.substring(1, i.length - 1), a = "simple";
+    l.endsWith("*") && (n = !0, l = l.substring(0, l.length - 1)), l.startsWith(".") ? (l = l.substring(1), a = "label") : l.startsWith(";") && (l = l.substring(1), a = "matrix");
+    let c = t[l];
+    if (c == null) continue;
+    if (Array.isArray(c)) {
+      r = r.replace(i, $({ explode: n, name: l, style: a, value: c }));
       continue;
     }
-    if (typeof u == "object") {
-      r = r.replace(s, U({ explode: i, name: l, style: a, value: u }));
+    if (typeof c == "object") {
+      r = r.replace(i, U({ explode: n, name: l, style: a, value: c }));
       continue;
     }
     if (a === "matrix") {
-      r = r.replace(s, `;${w({ name: l, value: u })}`);
+      r = r.replace(i, `;${w({ name: l, value: c })}`);
       continue;
     }
-    let d = encodeURIComponent(a === "label" ? `.${u}` : u);
-    r = r.replace(s, d);
+    let d = encodeURIComponent(a === "label" ? `.${c}` : c);
+    r = r.replace(i, d);
   }
   return r;
-}, C = ({ allowReserved: t, array: e, object: r } = {}) => (n) => {
-  let s = [];
-  if (n && typeof n == "object") for (let i in n) {
-    let l = n[i];
+}, C = ({ allowReserved: t, array: e, object: r } = {}) => (s) => {
+  let i = [];
+  if (s && typeof s == "object") for (let n in s) {
+    let l = s[n];
     if (l != null) if (Array.isArray(l)) {
-      let a = $({ allowReserved: t, explode: !0, name: i, style: "form", value: l, ...e });
-      a && s.push(a);
+      let a = $({ allowReserved: t, explode: !0, name: n, style: "form", value: l, ...e });
+      a && i.push(a);
     } else if (typeof l == "object") {
-      let a = U({ allowReserved: t, explode: !0, name: i, style: "deepObject", value: l, ...r });
-      a && s.push(a);
+      let a = U({ allowReserved: t, explode: !0, name: n, style: "deepObject", value: l, ...r });
+      a && i.push(a);
     } else {
-      let a = w({ allowReserved: t, name: i, value: l });
-      a && s.push(a);
+      let a = w({ allowReserved: t, name: n, value: l });
+      a && i.push(a);
     }
   }
-  return s.join("&");
-}, V = (t) => {
+  return i.join("&");
+}, W = (t) => {
   var r;
   if (!t) return "stream";
   let e = (r = t.split(";")[0]) == null ? void 0 : r.trim();
   if (e) {
     if (e.startsWith("application/json") || e.endsWith("+json")) return "json";
     if (e === "multipart/form-data") return "formData";
-    if (["application/", "audio/", "image/", "video/"].some((n) => e.startsWith(n))) return "blob";
+    if (["application/", "audio/", "image/", "video/"].some((s) => e.startsWith(s))) return "blob";
     if (e.startsWith("text/")) return "text";
   }
-}, D = async ({ security: t, ...e }) => {
+}, k = async ({ security: t, ...e }) => {
   for (let r of t) {
-    let n = await R(r, e.auth);
-    if (!n) continue;
-    let s = r.name ?? "Authorization";
+    let s = await R(r, e.auth);
+    if (!s) continue;
+    let i = r.name ?? "Authorization";
     switch (r.in) {
       case "query":
-        e.query || (e.query = {}), e.query[s] = n;
+        e.query || (e.query = {}), e.query[i] = s;
         break;
       case "cookie":
-        e.headers.append("Cookie", `${s}=${n}`);
+        e.headers.append("Cookie", `${i}=${s}`);
         break;
       case "header":
       default:
-        e.headers.set(s, n);
+        e.headers.set(i, s);
         break;
     }
     return;
   }
-}, x = (t) => k({ baseUrl: t.baseUrl, path: t.path, query: t.query, querySerializer: typeof t.querySerializer == "function" ? t.querySerializer : C(t.querySerializer), url: t.url }), k = ({ baseUrl: t, path: e, query: r, querySerializer: n, url: s }) => {
-  let i = s.startsWith("/") ? s : `/${s}`, l = (t ?? "") + i;
+}, A = (t) => D({ baseUrl: t.baseUrl, path: t.path, query: t.query, querySerializer: typeof t.querySerializer == "function" ? t.querySerializer : C(t.querySerializer), url: t.url }), D = ({ baseUrl: t, path: e, query: r, querySerializer: s, url: i }) => {
+  let n = i.startsWith("/") ? i : `/${i}`, l = (t ?? "") + n;
   e && (l = N({ path: e, url: l }));
-  let a = r ? n(r) : "";
+  let a = r ? s(r) : "";
   return a.startsWith("?") && (a = a.substring(1)), a && (l += `?${a}`), l;
 }, j = (t, e) => {
-  var n;
+  var s;
   let r = { ...t, ...e };
-  return (n = r.baseUrl) != null && n.endsWith("/") && (r.baseUrl = r.baseUrl.substring(0, r.baseUrl.length - 1)), r.headers = T(t.headers, e.headers), r;
+  return (s = r.baseUrl) != null && s.endsWith("/") && (r.baseUrl = r.baseUrl.substring(0, r.baseUrl.length - 1)), r.headers = T(t.headers, e.headers), r;
 }, T = (...t) => {
   let e = new Headers();
   for (let r of t) {
     if (!r || typeof r != "object") continue;
-    let n = r instanceof Headers ? r.entries() : Object.entries(r);
-    for (let [s, i] of n) if (i === null) e.delete(s);
-    else if (Array.isArray(i)) for (let l of i) e.append(s, l);
-    else i !== void 0 && e.set(s, typeof i == "object" ? JSON.stringify(i) : i);
+    let s = r instanceof Headers ? r.entries() : Object.entries(r);
+    for (let [i, n] of s) if (n === null) e.delete(i);
+    else if (Array.isArray(n)) for (let l of n) e.append(i, l);
+    else n !== void 0 && e.set(i, typeof n == "object" ? JSON.stringify(n) : n);
   }
   return e;
 }, v = class {
   constructor() {
-    A(this, "_fns");
+    x(this, "_fns");
     this._fns = [];
   }
   clear() {
@@ -192,35 +192,35 @@ var R = async (t, e) => {
   use(t) {
     return this._fns = [...this._fns, t], this._fns.length - 1;
   }
-}, P = () => ({ error: new v(), request: new v(), response: new v() }), H = C({ allowReserved: !1, array: { explode: !0, style: "form" }, object: { explode: !0, style: "deepObject" } }), J = { "Content-Type": "application/json" }, S = (t = {}) => ({ ..._, headers: J, parseAs: "auto", querySerializer: H, ...t }), L = (t = {}) => {
-  let e = j(S(), t), r = () => ({ ...e }), n = (l) => (e = j(e, l), r()), s = P(), i = async (l) => {
+}, L = () => ({ error: new v(), request: new v(), response: new v() }), P = C({ allowReserved: !1, array: { explode: !0, style: "form" }, object: { explode: !0, style: "deepObject" } }), H = { "Content-Type": "application/json" }, S = (t = {}) => ({ ..._, headers: H, parseAs: "auto", querySerializer: P, ...t }), J = (t = {}) => {
+  let e = j(S(), t), r = () => ({ ...e }), s = (l) => (e = j(e, l), r()), i = L(), n = async (l) => {
     let a = { ...e, ...l, fetch: l.fetch ?? e.fetch ?? globalThis.fetch, headers: T(e.headers, l.headers) };
-    a.security && await D({ ...a, security: a.security }), a.body && a.bodySerializer && (a.body = a.bodySerializer(a.body)), (a.body === void 0 || a.body === "") && a.headers.delete("Content-Type");
-    let u = x(a), d = { redirect: "follow", ...a }, m = new Request(u, d);
-    for (let o of s.request._fns) o && (m = await o(m, a));
-    let q = a.fetch, c = await q(m);
-    for (let o of s.response._fns) o && (c = await o(c, m, a));
-    let b = { request: m, response: c };
-    if (c.ok) {
-      if (c.status === 204 || c.headers.get("Content-Length") === "0") return a.responseStyle === "data" ? {} : { data: {}, ...b };
-      let o = (a.parseAs === "auto" ? V(c.headers.get("Content-Type")) : a.parseAs) ?? "json";
-      if (o === "stream") return a.responseStyle === "data" ? c.body : { data: c.body, ...b };
-      let p = await c[o]();
+    a.security && await k({ ...a, security: a.security }), a.body && a.bodySerializer && (a.body = a.bodySerializer(a.body)), (a.body === void 0 || a.body === "") && a.headers.delete("Content-Type");
+    let c = A(a), d = { redirect: "follow", ...a }, m = new Request(c, d);
+    for (let o of i.request._fns) o && (m = await o(m, a));
+    let q = a.fetch, u = await q(m);
+    for (let o of i.response._fns) o && (u = await o(u, m, a));
+    let b = { request: m, response: u };
+    if (u.ok) {
+      if (u.status === 204 || u.headers.get("Content-Length") === "0") return a.responseStyle === "data" ? {} : { data: {}, ...b };
+      let o = (a.parseAs === "auto" ? W(u.headers.get("Content-Type")) : a.parseAs) ?? "json";
+      if (o === "stream") return a.responseStyle === "data" ? u.body : { data: u.body, ...b };
+      let p = await u[o]();
       return o === "json" && (a.responseValidator && await a.responseValidator(p), a.responseTransformer && (p = await a.responseTransformer(p))), a.responseStyle === "data" ? p : { data: p, ...b };
     }
-    let y = await c.text();
+    let y = await u.text();
     try {
       y = JSON.parse(y);
     } catch {
     }
     let h = y;
-    for (let o of s.error._fns) o && (h = await o(y, c, m, a));
+    for (let o of i.error._fns) o && (h = await o(y, u, m, a));
     if (h = h || {}, a.throwOnError) throw h;
     return a.responseStyle === "data" ? void 0 : { error: h, ...b };
   };
-  return { buildUrl: x, connect: (l) => i({ ...l, method: "CONNECT" }), delete: (l) => i({ ...l, method: "DELETE" }), get: (l) => i({ ...l, method: "GET" }), getConfig: r, head: (l) => i({ ...l, method: "HEAD" }), interceptors: s, options: (l) => i({ ...l, method: "OPTIONS" }), patch: (l) => i({ ...l, method: "PATCH" }), post: (l) => i({ ...l, method: "POST" }), put: (l) => i({ ...l, method: "PUT" }), request: i, setConfig: n, trace: (l) => i({ ...l, method: "TRACE" }) };
+  return { buildUrl: A, connect: (l) => n({ ...l, method: "CONNECT" }), delete: (l) => n({ ...l, method: "DELETE" }), get: (l) => n({ ...l, method: "GET" }), getConfig: r, head: (l) => n({ ...l, method: "HEAD" }), interceptors: i, options: (l) => n({ ...l, method: "OPTIONS" }), patch: (l) => n({ ...l, method: "PATCH" }), post: (l) => n({ ...l, method: "POST" }), put: (l) => n({ ...l, method: "PUT" }), request: n, setConfig: s, trace: (l) => n({ ...l, method: "TRACE" }) };
 };
-const f = L(S({
+const f = J(S({
   baseUrl: "https://localhost:44366"
 }));
 class Q {
@@ -385,8 +385,8 @@ const g = "Review back office logs for more details.";
 function X(t, e) {
   let r = e;
   if (t && typeof t == "object" && "title" in t && "status" in t) {
-    const n = t;
-    return n.title ? (r = n.title, n.detail && (r += `: ${n.detail}`)) : n.detail && (r = n.detail), `${r}. ${g}`;
+    const s = t;
+    return s.title ? (r = s.title, s.detail && (r += `: ${s.detail}`)) : s.detail && (r = s.detail), `${r}. ${g}`;
   }
   return t instanceof Error ? (r = t.message, `${r}. ${g}`) : typeof t == "string" ? (r = t, `${r}. ${g}`) : `${r}. ${g}`;
 }
@@ -405,4 +405,4 @@ export {
   K as i,
   Y as s
 };
-//# sourceMappingURL=notification-utils-D7uwENxV.js.map
+//# sourceMappingURL=notification-utils-AoMs4ers.js.map

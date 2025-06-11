@@ -163,7 +163,7 @@ namespace Articulate
 
                 content.SetValue(propertyAlias, propertyValue);
             }
-            
+
         }
 
         private static bool VariesByCulture(string propertyTypeAlias, IContentTypeComposition contentType)

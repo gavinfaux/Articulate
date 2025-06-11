@@ -58,8 +58,8 @@ namespace Articulate
                 urlPath.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries)
                     .Select(x => HttpUtility.UrlEncode(x).Replace("+", "%20"))
                     .WhereNotNull()
-                //we are not supporting dots in our URLs it's just too difficult to
-                // support across the board with all the different config options
+                    //we are not supporting dots in our URLs it's just too difficult to
+                    // support across the board with all the different config options
                     .Select(x => x.Replace('.', '-')));
         }
     }

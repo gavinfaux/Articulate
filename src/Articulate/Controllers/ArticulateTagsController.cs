@@ -41,7 +41,7 @@ namespace Articulate.Controllers
             ArticulateTagService articulateTagService,
             ITagQuery tagQuery)
              : base(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider, publishedValueFallback, variationContextAccessor)
-         {
+        {
             _umbracoHelper = umbracoHelper;
             _articulateTagService = articulateTagService;
             _tagQuery = tagQuery;

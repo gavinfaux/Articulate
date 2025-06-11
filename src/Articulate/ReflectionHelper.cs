@@ -61,7 +61,8 @@ namespace Articulate
                 }
                 catch (AmbiguousMatchException)
                 {
-                    if (filter == null) throw;
+                    if (filter == null)
+                        throw;
 
                     methodInfo = filter(
                         type.GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static)
@@ -86,7 +87,8 @@ namespace Articulate
                 }
                 catch (AmbiguousMatchException)
                 {
-                    if (filter == null) throw;
+                    if (filter == null)
+                        throw;
 
                     propInfo = filter(type.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static)
                         .Where(x => x.Name == propertyName));

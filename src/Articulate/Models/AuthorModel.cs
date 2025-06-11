@@ -7,7 +7,7 @@ using Umbraco.Extensions;
 namespace Articulate.Models
 {
     public class AuthorModel : ListModel, IImageModel
-    {        
+    {
         private DateTime? _lastPostDate;
 
         public AuthorModel(
@@ -28,7 +28,7 @@ namespace Articulate.Models
 
         private MediaWithCrops _image;
         public MediaWithCrops Image => (_image ??= base.Unwrap().Value<MediaWithCrops>("authorImage"));
-       
+
         public int PostCount { get; }
 
         //We know the list of posts passed in is already ordered descending so get the first

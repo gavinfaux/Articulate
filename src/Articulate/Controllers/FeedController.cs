@@ -1,10 +1,8 @@
-// TODO : Review how to implement this - no macros anymore - razor partial / block view?
+// TODO : Review how to implement this - no macros anymore - razor partial or?
 
 //using Articulate.Models;
 //using Microsoft.AspNetCore.Mvc;
-//#if !DEBUG
 //using Microsoft.AspNetCore.OutputCaching;
-//#endif
 //using Umbraco.Cms.Core.Cache;
 //using Umbraco.Cms.Core.Logging;
 //using Umbraco.Cms.Core.Macros;
@@ -51,9 +49,7 @@
 //        }
 
 //        [HttpGet]
-//#if !DEBUG
 //        [OutputCache(PolicyName = "Articulate120")]
-//#endif
 //        public IActionResult RenderGitHub(int id)
 //        {
 //            var content = _umbracoHelper.Content(id);
@@ -64,7 +60,7 @@
 
 //            var articulateModel = new MasterModel(content, _publishedValueFallback, _variationContextAccessor);
 //            var viewPath = PathHelper.GetThemePartialViewPath(articulateModel, "FeedGitHub");
-            
+
 //            return Content(RenderViewToString(content, this, viewPath));
 //        }        
 

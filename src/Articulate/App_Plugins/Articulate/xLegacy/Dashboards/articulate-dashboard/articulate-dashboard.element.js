@@ -1,8 +1,7 @@
-import { LitElement, html, css } from 'lit';
-import { UmbElementMixin } from '@umbraco-cms/backoffice/element-api';
-
-export default class ArticulateDashboardElement extends UmbElementMixin(LitElement) {
-    static styles = css`
+import { html, css } from '@umbraco-cms/backoffice/external/lit';
+import { UmbLitElement } from "@umbraco-cms/backoffice/lit-element";
+export default class ArticulateDashboardElement extends UmbLitElement {
+  static styles = css`
         :host {
             display: block;
             padding: 20px;
@@ -136,77 +135,85 @@ export default class ArticulateDashboardElement extends UmbElementMixin(LitEleme
         }
     `;
 
-    static properties = {
-        viewState: { type: String },
-        selectedGroup: { type: Object },
-        justInstalled: { type: Boolean }
-    };
+  static properties = {
+    viewState: { type: String },
+    selectedGroup: { type: Object },
+    justInstalled: { type: Boolean }
+  };
 
-    constructor() {
-        super();
-        this.viewState = 'list';
-        this.selectedGroup = null;
-        this.justInstalled = this.checkIfJustInstalled();
-        
-        this.groups = [
-            {
-                name: "Articulate BlogMl Importer",
-                icon: "icon-download-alt",
-                description: "Import blog content from BlogML format",
-                component: "articulate-blog-importer"
-            },
-            {
-                name: "Articulate BlogMl Exporter", 
-                icon: "icon-out",
-                description: "Export blog content to BlogML format",
-                component: "articulate-blog-exporter"
-            },
-            {
-                name: "Articulate Themes",
-                icon: "icon-color-bucket", 
-                description: "Manage and configure blog themes",
-                component: "articulate-themes-manager"
-            }
-        ];
+  constructor() {
+    super();
+    this.viewState = 'list';
+    this.selectedGroup = null;
+    this.justInstalled = this.checkIfJustInstalled();
+
+    this.groups = [
+      {
+        name: "Articulate BlogMl Importer",
+        icon: "icon-download-alt",
+        description: "Import blog content from BlogML format",
+        component: "articulate-blog-importer"
+      },
+      {
+        name: "Articulate BlogMl Exporter",
+        icon: "icon-out",
+        description: "Export blog content to BlogML format",
+        component: "articulate-blog-exporter"
+      },
+      {
+        name: "Articulate Themes",
+        icon: "icon-color-bucket",
+        description: "Manage and configure blog themes",
+        component: "articulate-themes-manager"
+      }
+    ];
+  }
+
+  checkIfJustInstalled() {
+    // Check URL parameters or local storage for installation status
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.has('packageId');
+  }
+
+  async openGroup(group) {
+    this.viewState = 'details';
+    this.selectedGroup = group;
+
+    // Dynamically load the component if needed
+    try {
+      switch (group.component) {
+        case 'articulate-blog-importer':
+          await import('../components/blog-importer.element.js');
+          break;
+        case 'articulate-blog-exporter':
+          await import('../components/blog-exporter.element.js');
+          break;
+        case 'articulate-themes-manager':
+          await import('../components/themes-manager.element.js');
+          break;
+      }
+    } catch (error) {
+      console.error('Failed to load component:', error);
     }
+  }
 
-    checkIfJustInstalled() {
-        // Check URL parameters or local storage for installation status
-        const urlParams = new URLSearchParams(window.location.search);
-        return urlParams.has('packageId');
+  setViewState(state) {
+    this.viewState = state;
+    if (state === 'list') {
+      this.selectedGroup = null;
+      if (
+        navigation.entries()[navigation.currentEntry.index - 1]?.url ===
+        "/umbraco/section/settings/dashboard/articulate"
+      ) {
+        navigation.back();
+      } else {
+        navigation.navigate("/umbraco/section/settings/dashboard/articulate", { history: "replace" });
+      }
     }
+  }
 
-    async openGroup(group) {
-        this.viewState = 'details';
-        this.selectedGroup = group;
-        
-        // Dynamically load the component if needed
-        try {
-            switch (group.component) {
-                case 'articulate-blog-importer':
-                    await import('../components/blog-importer.element.js');
-                    break;
-                case 'articulate-blog-exporter':
-                    await import('../components/blog-exporter.element.js');
-                    break;
-                case 'articulate-themes-manager':
-                    await import('../components/themes-manager.element.js');
-                    break;
-            }
-        } catch (error) {
-            console.error('Failed to load component:', error);
-        }
-    }
-
-    setViewState(state) {
-        this.viewState = state;
-        if (state === 'list') {
-            this.selectedGroup = null;
-        }
-    }
-
-    renderWelcomeBox() {
-        return html`
+  renderWelcomeBox() {
+    return html`
             <div class="welcome-box">
                 <img src="https://raw.githubusercontent.com/Shandem/Articulate/master/assets/Icon.png" alt="Articulate" />
                 <h3 class="welcome-title">Articulate installed</h3>
@@ -229,10 +236,10 @@ export default class ArticulateDashboardElement extends UmbElementMixin(LitEleme
                 </p>
             </div>
         `;
-    }
+  }
 
-    renderManagementGrid() {
-        return html`
+  renderManagementGrid() {
+    return html`
             <div class="management-grid">
                 ${this.groups.map(group => html`
                     <div class="management-card" @click=${() => this.openGroup(group)}>
@@ -243,12 +250,12 @@ export default class ArticulateDashboardElement extends UmbElementMixin(LitEleme
                 `)}
             </div>
         `;
-    }
+  }
 
-    renderDetailView() {
-        if (!this.selectedGroup) return '';
-        
-        return html`
+  renderDetailView() {
+    if (!this.selectedGroup) return '';
+
+    return html`
             <a href="#" class="back-link" @click=${(e) => { e.preventDefault(); this.setViewState('list'); }}>
                 ← Back to overview
             </a>
@@ -261,23 +268,23 @@ export default class ArticulateDashboardElement extends UmbElementMixin(LitEleme
                 </div>
             </div>
         `;
-    }
+  }
 
-    renderComponentForGroup(group) {
-        switch (group.component) {
-            case 'articulate-blog-importer':
-                return html`<articulate-blog-importer></articulate-blog-importer>`;
-            case 'articulate-blog-exporter':
-                return html`<articulate-blog-exporter></articulate-blog-exporter>`;
-            case 'articulate-themes-manager':
-                return html`<articulate-themes-manager></articulate-themes-manager>`;
-            default:
-                return html`<p>Component not found: ${group.component}</p>`;
-        }
+  renderComponentForGroup(group) {
+    switch (group.component) {
+      case 'articulate-blog-importer':
+        return html`<articulate-blog-importer></articulate-blog-importer>`;
+      case 'articulate-blog-exporter':
+        return html`<articulate-blog-exporter></articulate-blog-exporter>`;
+      case 'articulate-themes-manager':
+        return html`<articulate-themes-manager></articulate-themes-manager>`;
+      default:
+        return html`<p>Component not found: ${group.component}</p>`;
     }
+  }
 
-    render() {
-        return html`
+  render() {
+    return html`
             ${this.viewState === 'list' ? html`
                 <div class="dashboard-header">
                     <img src="https://raw.githubusercontent.com/Shandem/Articulate/master/assets/Icon.png" alt="Articulate" />
@@ -290,7 +297,7 @@ export default class ArticulateDashboardElement extends UmbElementMixin(LitEleme
                 
             ` : this.renderDetailView()}
         `;
-    }
+  }
 }
 
 customElements.define('articulate-dashboard', ArticulateDashboardElement);

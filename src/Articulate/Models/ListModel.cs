@@ -32,7 +32,7 @@ namespace Articulate.Models
             IVariationContextAccessor variationContextAccessor)
             : base(content, publishedValueFallback, variationContextAccessor)
         {
-            
+
             ArgumentNullException.ThrowIfNull(content);
             ArgumentNullException.ThrowIfNull(listItems);
             ArgumentNullException.ThrowIfNull(pager);
@@ -47,7 +47,7 @@ namespace Articulate.Models
             {
                 PageTags = Name;
             }
-        }        
+        }
         public ListModel(IPublishedContent content, IPublishedValueFallback publishedValueFallback, IVariationContextAccessor variationContextAccessor)
             : base(content, publishedValueFallback, variationContextAccessor)
         {

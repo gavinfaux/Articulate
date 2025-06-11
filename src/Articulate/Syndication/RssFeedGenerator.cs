@@ -80,7 +80,7 @@ namespace Articulate.Syndication
                 }
 
                 return null;
-            });            
+            });
 
             var item = new SyndicationItem(
                 post.Name,
@@ -129,6 +129,6 @@ namespace Articulate.Syndication
             return logoUri;
         }
 
-        
+
     }
 }

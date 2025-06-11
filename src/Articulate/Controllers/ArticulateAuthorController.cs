@@ -58,7 +58,7 @@ namespace Articulate.Controllers
             {
                 return new RedirectToUmbracoPageResult(
                     CurrentPage.Parent,
-                    PublishedUrlProvider,                    
+                    PublishedUrlProvider,
                     UmbracoContextAccessor);
             }
 
@@ -80,6 +80,6 @@ namespace Articulate.Controllers
             return View(PathHelper.GetThemeViewPath(author, "Author"), author);
         }
 
-        
+
     }
 }

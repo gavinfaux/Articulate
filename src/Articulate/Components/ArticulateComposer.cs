@@ -58,7 +58,7 @@ namespace Articulate.Components
             builder.Services.ConfigureOptions<ArticulateApiSwaggerOptions>();
 
             builder.Services.AddOutputCache(options =>
-            {               
+            {
                 options.AddPolicy("Articulate120", builder =>
                     builder.Expire(TimeSpan.FromSeconds(120)));
                 options.AddPolicy("Articulate300", builder =>

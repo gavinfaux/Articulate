@@ -45,9 +45,12 @@ namespace Articulate.Controllers
         /// </summary>
         protected IActionResult GetPagedListView(IMasterModel masterModel, IPublishedContent pageNode, IEnumerable<IPublishedContent> listItems, long totalPosts, int? p)
         {
-            if (masterModel == null) throw new ArgumentNullException(nameof(masterModel));
-            if (pageNode == null) throw new ArgumentNullException(nameof(pageNode));
-            if (listItems == null) throw new ArgumentNullException(nameof(listItems));
+            if (masterModel == null)
+                throw new ArgumentNullException(nameof(masterModel));
+            if (pageNode == null)
+                throw new ArgumentNullException(nameof(pageNode));
+            if (listItems == null)
+                throw new ArgumentNullException(nameof(listItems));
 
             if (!GetPagerModel(masterModel, totalPosts, p, out var pager))
             {
@@ -82,7 +85,8 @@ namespace Articulate.Controllers
             var queryStrings = new StringBuilder();
             foreach (var key in Request.Query.Keys)
             {
-                if (key == "p") continue;
+                if (key == "p")
+                    continue;
                 if (Request.Query.TryGetValue(key, out StringValues val))
                 {
                     foreach (var v in val)
