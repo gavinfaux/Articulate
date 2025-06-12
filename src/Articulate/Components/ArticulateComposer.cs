@@ -59,7 +59,6 @@ namespace Articulate.Components
             builder.Services.ConfigureOptions<ConfigureArticulateMvcOptions>();
             builder.Services.ConfigureOptions<ArticulateApiSwaggerOptions>();
 
-#if NET7_0_OR_GREATER
             builder.Services.AddOutputCache(options =>
             {               
                 options.AddPolicy("Articulate120", builder =>
@@ -69,7 +68,6 @@ namespace Articulate.Components
                 options.AddPolicy("Articulate60", builder =>
                     builder.Expire(TimeSpan.FromSeconds(60)));
             });
-#endif
         }
     }
 }
