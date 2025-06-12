@@ -57,6 +57,7 @@ namespace Articulate.Components
 
             builder.Services.ConfigureOptions<ArticulatePipelineStartupFilter>();
             builder.Services.ConfigureOptions<ConfigureArticulateMvcOptions>();
+            builder.Services.ConfigureOptions<ArticulateApiSwaggerOptions>();
 
 #if NET7_0_OR_GREATER
             builder.Services.AddOutputCache(options =>

@@ -104,7 +104,7 @@ namespace Articulate.ImportExport
         public async Task<bool> Import(
             int userId,
             string fileName,
-            int blogRootNode,
+            Guid blogRootNode,
             bool overwrite,
             string regexMatch,
             string regexReplace,
@@ -535,7 +535,7 @@ namespace Articulate.ImportExport
             xmlPost ??= xdoc.Descendants(XName.Get("post", xdoc.Root.Name.NamespaceName))
                                 .SingleOrDefault(x => x.Descendants(XName.Get("post-name", xdoc.Root.Name.NamespaceName))
                                 .SingleOrDefault(s => s.Value == post.Name.Content) != null
-                                );;
+                                );
 
             if (xmlPost == null)
             {
