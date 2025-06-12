@@ -32,8 +32,6 @@ builder.Services.Configure<FormOptions>(x =>
     x.MultipartHeadersLengthLimit = int.MaxValue;
 });
 
-builder.Services.AddRazorPages();
-
 var app = builder.Build();
 
 await app.BootUmbracoAsync();
@@ -73,7 +71,6 @@ app.UseUmbraco()
             });
         }
 
-        _ = u.EndpointRouteBuilder.MapRazorPages();
         _ = u.UseUmbracoPreviewEndpoints();
         _ = u.UseBackOfficeEndpoints();
         _ = u.UseWebsiteEndpoints();
