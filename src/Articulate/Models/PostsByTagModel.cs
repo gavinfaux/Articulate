@@ -45,6 +45,7 @@ namespace Articulate.Models
                 {
                     _count = Posts.Count();
                 }
+
                 return _count.Value;
             }
         }

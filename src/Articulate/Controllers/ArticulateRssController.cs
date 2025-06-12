@@ -92,7 +92,6 @@ namespace Articulate.Controllers
              
 			 // ?! 
 
-
             var feed = _feedGenerator.GetFeed(rootPageModel, rootPageModel.Children<PostModel>());
 
             return new RssResult(feed, rootPageModel);

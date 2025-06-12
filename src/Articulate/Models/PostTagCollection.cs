@@ -28,6 +28,7 @@ namespace Articulate.Models
             {
                 _maxCount = this.Max(x => x.PostCount);
             }
+
             return Convert.ToInt32(Math.Ceiling(postsByTag.PostCount * maxWeight / _maxCount.Value));
         }
 

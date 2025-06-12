@@ -46,6 +46,7 @@ namespace Articulate
                     publishedContent.Url()
                 };
             }
+
             return allUrls;
         }
     }

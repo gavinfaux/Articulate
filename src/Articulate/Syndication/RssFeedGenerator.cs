@@ -70,6 +70,7 @@ namespace Articulate.Syndication
                 {
                     return $" href=\"{rootUrl.TrimEnd('/')}{match.Groups[1].Value.EnsureStartsWith('/')}\"";
                 }
+
                 return null;
             });
             content = _relativeMediaSrc.Replace(content, match =>
@@ -78,6 +79,7 @@ namespace Articulate.Syndication
                 {
                     return $" src=\"{mediaRoot}{match.Groups[1].Value.EnsureStartsWith('/')}\"";
                 }
+
                 return null;
             });            
 
@@ -113,6 +115,7 @@ namespace Articulate.Syndication
                 // TODO: posts collection is empty - passed from RSS controller Index?
                 return new List<SyndicationItem>(); 
             }
+
             return posts.Select(post => GetFeedItem(model, post, rootUrl)).WhereNotNull().ToList();
         }
 
@@ -129,6 +132,7 @@ namespace Articulate.Syndication
             {
                 _logger.LogError(ex, "Could not convert the blog logo path to a Uri");
             }
+
             return logoUri;
         }
 

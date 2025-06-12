@@ -86,6 +86,7 @@ namespace Articulate.Syndication.BlogML
                 {
                     WriteTo(writer);
                 }
+
                 memoryStream.Seek(0L, SeekOrigin.Begin);
                 using (var streamReader = new StreamReader(memoryStream))
                 {

@@ -34,6 +34,7 @@ namespace Articulate.Controllers
                     sb.Append(path);
                 }
             }
+
             return sb.ToString().TrimEnd(',');
         }
     }

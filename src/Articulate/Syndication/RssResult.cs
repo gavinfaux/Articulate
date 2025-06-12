@@ -21,8 +21,6 @@ namespace Articulate.Syndication
             _feed = feed;
             _model = model;
         }
-
-
         public override async Task ExecuteResultAsync(ActionContext context)
         {
             context.HttpContext.Response.ContentType = "application/xml";
