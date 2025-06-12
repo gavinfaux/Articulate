@@ -2,9 +2,9 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Models.PublishedContent;
-using Umbraco.Cms.Core.PropertyEditors.ValueConverters;
 using Umbraco.Extensions;
 
 namespace Articulate.Models
@@ -117,5 +117,65 @@ namespace Articulate.Models
             return false; // < count
         }
 
+        /// <summary>
+        ///     Shuffles a span of elements in-place using a provided Random instance.
+        /// </summary>
+        public static void Shuffle<T>(this Span<T> span, Random rng)
+        {
+            if (rng == null)
+            {
+                throw new ArgumentNullException(nameof(rng));
+            }
+
+            var n = span.Length;
+            while (n > 1)
+            {
+                n--;
+                var k = rng.Next(n + 1);
+                (span[k], span[n]) = (span[n], span[k]);
+            }
+        }
+
+        /// <summary>
+        ///     Shuffles an array in-place.
+        /// </summary>
+        public static void Shuffle<T>(this T[] array)
+        {
+            if (array == null)
+            {
+                throw new ArgumentNullException(nameof(array));
+            }
+
+            array.AsSpan().Shuffle(Random.Shared);
+        }
+
+        /// <summary>
+        ///     Shuffles a List<T> in-place.
+        /// </summary>
+        public static void Shuffle<T>(this List<T> list)
+        {
+            if (list == null)
+            {
+                throw new ArgumentNullException(nameof(list));
+            }
+
+            CollectionsMarshal.AsSpan(list).Shuffle(Random.Shared);
+        }
+
+
+        /// <summary>
+        ///     Returns a new list containing the elements of a source sequence in random order.
+        /// </summary>
+        public static List<T> InRandomOrder<T>(this IEnumerable<T> source)
+        {
+            if (source == null)
+            {
+                throw new ArgumentNullException(nameof(source));
+            }
+
+            var list = source.ToList();
+            list.Shuffle();
+            return list;
+        }
     }
 }

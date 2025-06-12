@@ -10,8 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Razor;
 using Umbraco.Extensions;
 using Umbraco.Cms.Core.Models.PublishedContent;
-using System.Threading.Tasks;
-using System.Text.Encodings.Web;
+using Umbraco.Extensions;
 
 namespace Articulate
 {
@@ -269,8 +268,7 @@ namespace Articulate
         {
             var tagsAndWeight = model.Select(x => new { tag = x, weight = model.GetTagWeight(x, maxWeight) })
                 .OrderByDescending(x => x.weight)
-                .Take(maxResults);
-            //.RandomOrder(); //TODO: WB this is not in V8 & would need to be implemented in Articulate
+                .Take(maxResults).InRandomOrder();
 
             var ul = new TagBuilder("ul");
             ul.AddCssClass("tag-cloud");
@@ -296,8 +294,7 @@ namespace Articulate
                 {
                     var tagsAndWeight = model.Select(x => new { tag = x, weight = model.GetTagWeight(x, maxWeight) })
                         .OrderByDescending(x => x.weight)
-                        .Take(maxResults);
-                    //.RandomOrder(); //TODO: WB this is not in V8 & would need to be implemented in Articulate
+                        .Take(maxResults).InRandomOrder();
 
                     var ul = new TagBuilder("ul");
                     ul.AddCssClass("tag-cloud");
