@@ -1,0 +1,28 @@
+{
+  "$schema": "../umbraco-package-schema.json",
+  "id": "Articulate",
+  "name": "Articulate",
+  "version": "6.0.0",
+  "allowTelemetry": true,
+  "extensions": [
+    {
+      "type": "backofficeEntryPoint",
+      "name": "Articulate",
+      "alias": "Articulate.BackOffice",
+      "js": "/App_Plugins/Articulate/BackOffice/articulate.js"
+    },
+    {
+      "type": "propertyEditorUi",
+      "alias": "ArticulateThemePicker.UI",
+      "name": "Articulate Theme Picker UI",
+      "elementName": "articulate-theme-picker-element",
+      "element": "/App_Plugins/Articulate/BackOffice/theme-picker.element.js",
+      "meta": {
+        "label": "Articulate Theme Picker",
+        "propertyEditorSchemaAlias": "Umbraco.Plain.String",
+        "icon": "icon-palette",
+        "group": "pickers"
+      }
+    }
+  ]
+}
