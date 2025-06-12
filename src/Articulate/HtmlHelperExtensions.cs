@@ -269,8 +269,7 @@ namespace Articulate
         {
             var tagsAndWeight = model.Select(x => new { tag = x, weight = model.GetTagWeight(x, maxWeight) })
                 .OrderByDescending(x => x.weight)
-                .Take(maxResults);
-            //.RandomOrder(); //TODO: WB this is not in V8 & would need to be implemented in Articulate
+                .Take(maxResults).InRandomOrder();
 
             var ul = new TagBuilder("ul");
             ul.AddCssClass("tag-cloud");
@@ -296,8 +295,7 @@ namespace Articulate
                 {
                     var tagsAndWeight = model.Select(x => new { tag = x, weight = model.GetTagWeight(x, maxWeight) })
                         .OrderByDescending(x => x.weight)
-                        .Take(maxResults);
-                    //.RandomOrder(); //TODO: WB this is not in V8 & would need to be implemented in Articulate
+                        .Take(maxResults).InRandomOrder();
 
                     var ul = new TagBuilder("ul");
                     ul.AddCssClass("tag-cloud");
