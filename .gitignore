@@ -497,3 +497,10 @@ build
 
 !**/[Pp]ackages/markdown-editor/
 
+# Temporary Test Sites for v14 & v16
+Umbraco16/*
+/src/Articulate.Tests.Website/Smidge
+src/Articulate/Client/Client.code-workspace
+src/Articulate/Client/.windsurfrules
+src/Articulate/Articulate.csproj.DotSettings
+.coderabbit.yaml
