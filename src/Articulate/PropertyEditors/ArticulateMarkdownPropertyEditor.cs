@@ -1,4 +1,4 @@
-// // TODO: Replace with Umbraco.MarkdownEditor if/when #19500 #19501 accepted and merged into Umbraco.Cms.Core
+// // TODO: Replace with Umbraco.MarkdownEditor if/when #19500 PR made and accepted and merged into Umbraco.Cms.Core (v17+)
 
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.PropertyEditors;
