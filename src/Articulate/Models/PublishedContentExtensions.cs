@@ -149,9 +149,9 @@ namespace Articulate.Models
             array.AsSpan().Shuffle(Random.Shared);
         }
 
-        /// <summary>
-        ///     Shuffles a List<T> in-place.
-        /// </summary>
+        // <summary>
+        //     Shuffles a List<T> in-place.
+        // </summary>
         public static void Shuffle<T>(this List<T> list)
         {
             if (list == null)

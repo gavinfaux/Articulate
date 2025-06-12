@@ -44,10 +44,10 @@ namespace Articulate.Controllers
         public IActionResult Index(int? p) => RenderView(new ContentModel(CurrentPage), p);
 
         // <summary>
-        /// Override and declare a NonAction so that we get routed to the Index action with the optional page route
-        /// </summary>
-        /// <param name="model"></param>
-        /// <returns></returns>
+        // Override and declare a NonAction so that we get routed to the Index action with the optional page route
+        // </summary>
+        // <param name="model"></param>
+        // <returns></returns>
         [NonAction]
         public override IActionResult Index() => Index(0);
 
