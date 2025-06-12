@@ -1,3 +1,5 @@
+// TODO: Deprecated code, please update or remove. Export to Disqus is no longer supported as the API has changed and is not documented correctly.
+
 //using System;
 //using System.IO;
 //using System.Net;

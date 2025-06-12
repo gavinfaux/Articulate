@@ -50,8 +50,8 @@ namespace Articulate.Components
 
             builder.AddNotificationHandler<ContentSavingNotification, ContentSavingHandler>();
             builder.AddNotificationHandler<ContentSavedNotification, ContentSavedHandler>();
-            //builder.AddNotificationHandler<ServerVariablesParsingNotification, ServerVariablesParsingHandler>();
             builder.AddNotificationHandler<ContentTypeSavingNotification, ContentTypeSavingHandler>();
+            // TODO: Deprecated: builder.AddNotificationHandler<ServerVariablesParsingNotification, ServerVariablesParsingHandler>();
             builder.AddNotificationHandler<ContentCacheRefresherNotification, ContentCacheRefresherHandler>();
             builder.AddNotificationHandler<DomainCacheRefresherNotification, DomainCacheRefresherHandler>();
 

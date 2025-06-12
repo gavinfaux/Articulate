@@ -1,47 +1,49 @@
-using Umbraco.Cms.Core.Events;
-using Umbraco.Cms.Core.Notifications;
-using Umbraco.Extensions;
-using Microsoft.AspNetCore.Http;
-using System;
-using Microsoft.AspNetCore.Routing;
-using System.Collections.Generic;
-using Articulate.Controllers;
+// TODO : Deprecated, legacy back office 
 
-namespace Articulate.Components
-{
-    public class ServerVariablesParsingHandler : INotificationHandler<ServerVariablesParsingNotification>
-    {
-        private readonly IHttpContextAccessor _httpContextAccessor;
-        private readonly LinkGenerator _linkGenerator;
+//using Umbraco.Cms.Core.Events;
+//using Umbraco.Cms.Core.Notifications;
+//using Umbraco.Extensions;
+//using Microsoft.AspNetCore.Http;
+//using System;
+//using Microsoft.AspNetCore.Routing;
+//using System.Collections.Generic;
+//using Articulate.Controllers;
 
-        public ServerVariablesParsingHandler(
-            IHttpContextAccessor httpContextAccessor,
-            LinkGenerator linkGenerator)
-        {
-            _httpContextAccessor = httpContextAccessor;
-            _linkGenerator = linkGenerator;
-        }
-        public void Handle(ServerVariablesParsingNotification notification)
-        {
-            var e = notification;
+//namespace Articulate.Components
+//{
+//    public class ServerVariablesParsingHandler : INotificationHandler<ServerVariablesParsingNotification>
+//    {
+//        private readonly IHttpContextAccessor _httpContextAccessor;
+//        private readonly LinkGenerator _linkGenerator;
 
-            if (_httpContextAccessor.HttpContext == null)
-            {
-                throw new InvalidOperationException("HttpContext is null");
-            }
+//        public ServerVariablesParsingHandler(
+//            IHttpContextAccessor httpContextAccessor,
+//            LinkGenerator linkGenerator)
+//        {
+//            _httpContextAccessor = httpContextAccessor;
+//            _linkGenerator = linkGenerator;
+//        }
+//        public void Handle(ServerVariablesParsingNotification notification)
+//        {
+//            var e = notification;
 
-            if (e.ServerVariables.ContainsKey(ArticulateConstants.ArticulateContentTypeAlias))
-            {
-                return;
-            }
+//            if (_httpContextAccessor.HttpContext == null)
+//            {
+//                throw new InvalidOperationException("HttpContext is null");
+//            }
 
-            e.ServerVariables[ArticulateConstants.ArticulateContentTypeAlias] = new Dictionary<string, object>
-            {
-                // TODO: Don't hard code these
-                { "articulateImportBaseUrl", "/umbraco/articulate/import"},
-                {"articulatePropertyEditorsBaseUrl", "/umbraco/articulate/editors"},
-                {"articulateThemeEditorBaseUrl", "/umbraco/articulate/themes"}
-            };
-        }
-    }
-}
+//            if (e.ServerVariables.ContainsKey(ArticulateConstants.ArticulateContentTypeAlias))
+//            {
+//                return;
+//            }
+
+//            e.ServerVariables[ArticulateConstants.ArticulateContentTypeAlias] = new Dictionary<string, object>
+//            {
+//                // TODO: Don't hard code these
+//                { "articulateImportBaseUrl", "/umbraco/articulate/import"},
+//                {"articulatePropertyEditorsBaseUrl", "/umbraco/articulate/editors"},
+//                {"articulateThemeEditorBaseUrl", "/umbraco/articulate/themes"}
+//            };
+//        }
+//    }
+//}

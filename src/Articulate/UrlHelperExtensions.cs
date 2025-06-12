@@ -33,13 +33,14 @@ namespace Articulate
                 ? model.RootBlogNode.Url(mode: UrlMode.Absolute).EnsureEndsWith('/') + "rss"
                 : model.CustomRssFeed;
         }
-
-        public static string ArticulateCreateBlogEntryUrl(this IUrlHelper url, IMasterModel model)
-        {
-            return model.RootBlogNode == null
-                ? null
-                : model.RootBlogNode.Url().EnsureEndsWith('/') + "a-new/";
-        }
+		
+		// TODO: Deprecated code, please update or remove. Front end markdown editor (a-new)
+        //public static string ArticulateCreateBlogEntryUrl(this IUrlHelper url, IMasterModel model)
+        //{
+        //    return model.RootBlogNode == null
+        //        ? null
+        //        : model.RootBlogNode.Url().EnsureEndsWith('/') + "a-new/";
+        //}
 
         /// <summary>
         /// Returns an RSS feed URL specific to this tag

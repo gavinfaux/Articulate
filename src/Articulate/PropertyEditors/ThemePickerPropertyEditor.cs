@@ -1,30 +1,32 @@
-using Umbraco.Cms.Core.PropertyEditors;
-using Umbraco.Cms.Core.IO;
+// TODO: Deprecated code, please update or remove. Theme picker schema using Umbraco.Plain.String which core handles without DataEditor.
 
-namespace Articulate.PropertyEditors
-{
-    [DataEditor("ArticulateThemePicker")]
-    public class ThemePickerPropertyEditor : DataEditor
-    {
-        private readonly IIOHelper _ioHelper;
+//using Umbraco.Cms.Core.PropertyEditors;
+//using Umbraco.Cms.Core.IO;
 
-        public ThemePickerPropertyEditor(IDataValueEditorFactory dataValueEditorFactory, IIOHelper ioHelper) 
-            : base(dataValueEditorFactory)
-        {
-            _ioHelper = ioHelper;
-        }
+//namespace Articulate.PropertyEditors
+//{
+//    [DataEditor("ArticulateThemePicker")]
+//    public class ThemePickerPropertyEditor : DataEditor
+//    {
+//        private readonly IIOHelper _ioHelper;
 
-        protected override IConfigurationEditor CreateConfigurationEditor()
-        {
-            return new ThemePickerConfigurationEditor(_ioHelper);
-        }
-    }
+//        public ThemePickerPropertyEditor(IDataValueEditorFactory dataValueEditorFactory, IIOHelper ioHelper) 
+//            : base(dataValueEditorFactory)
+//        {
+//            _ioHelper = ioHelper;
+//        }
 
-    public class ThemePickerConfigurationEditor : ConfigurationEditor
-    {
-        public ThemePickerConfigurationEditor(IIOHelper ioHelper) : base()
-        {
-            // No specific configuration needed for theme picker
-        }
-    }
-}
+//        protected override IConfigurationEditor CreateConfigurationEditor()
+//        {
+//            return new ThemePickerConfigurationEditor(_ioHelper);
+//        }
+//    }
+
+//    public class ThemePickerConfigurationEditor : ConfigurationEditor
+//    {
+//        public ThemePickerConfigurationEditor(IIOHelper ioHelper) : base()
+//        {
+//            // No specific configuration needed for theme picker
+//        }
+//    }
+//}

@@ -1,14 +1,16 @@
-using System.Runtime.Serialization;
+// TODO: Deprecated code, theme name is just a string
 
-namespace Articulate.Models
-{
-    [DataContract(Name = "theme")]
-    public class Theme
-    {
-        [DataMember(Name = "name")]
-        public string Name { get; set; }
+//using System.Runtime.Serialization;
 
-        [DataMember(Name = "path")]
-        public string Path { get; set; }
-    }
-}
+//namespace Articulate.Models
+//{
+//    [DataContract(Name = "theme")]
+//    public class Theme
+//    {
+//        [DataMember(Name = "name")]
+//        public string Name { get; set; }
+
+//        [DataMember(Name = "path")]
+//        public string Path { get; set; }
+//    }
+//}
