@@ -33,14 +33,6 @@ namespace Articulate
                 : model.CustomRssFeed;
         }
 
-        // // TODO: Deprecated for now. See the comment in the MarkdownEditorController.cs file
-        //public static string ArticulateCreateBlogEntryUrl(this IUrlHelper url, IMasterModel model)
-        //{
-        //    return model.RootBlogNode == null
-        //        ? null
-        //        : model.RootBlogNode.Url().EnsureEndsWith('/') + "a-new/";
-        //}
-
         /// <summary>
         /// Returns an RSS feed URL specific to this tag
         /// </summary>

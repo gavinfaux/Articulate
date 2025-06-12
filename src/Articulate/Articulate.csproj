@@ -169,10 +169,6 @@
 
   <!-- Uses Package Icon on disk in repo -->
   <ItemGroup>
-    <None Include="..\..\assets\Icon-transparent.png">
-      <Pack>True</Pack>
-      <PackagePath>\</PackagePath>
-    </None>
     <None Include="..\..\README.md">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
