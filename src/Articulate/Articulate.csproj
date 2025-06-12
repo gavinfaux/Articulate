@@ -1,8 +1,13 @@
-<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk.Razor">
   <PropertyGroup>
     <TargetFrameworks>net9.0</TargetFrameworks>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>false</ImplicitUsings>
+    <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
+    <StaticWebAssetBasePath>/</StaticWebAssetBasePath>
     <OutputType>Library</OutputType>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
+    <EnableDefaultContentItems>false</EnableDefaultContentItems>
     <RestorePackages>true</RestorePackages>
   </PropertyGroup>
 
@@ -19,8 +24,16 @@
     <Company>Shannon Deminick</Company>
     <Copyright>Copyright © $(Company) $([System.DateTime]::Now.Year)</Copyright>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <GenerateDocumentationFile>True</GenerateDocumentationFile>
+    <ApplicationIcon>favicon.ico</ApplicationIcon>
   </PropertyGroup>
-  
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net9.0|AnyCPU'">
+    <NoWarn>1701;1702;1572;1573;1591</NoWarn>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net9.0|AnyCPU'">
+    <NoWarn>1701;1702;1572;1573;1591</NoWarn>
+  </PropertyGroup>
+    
   <!--
   Nuget - Dotnet SourceLink & Symbol Package
   https://github.com/dotnet/sourcelink#using-source-link-in-net-projects
@@ -33,7 +46,7 @@
   https://github.com/dotnet/reproducible-builds  
   -->
   <ItemGroup>
-    <PackageReference Include="DotNet.ReproducibleBuilds" Version="1.1.1">
+    <PackageReference Include="DotNet.ReproducibleBuilds" Version="1.2.25">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
@@ -47,7 +60,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Remove="App_Plugins\Articulate\BackOffice\assets\themes.css" />
     <None Remove="Packaging\package.zip" />
   </ItemGroup>
 
@@ -75,39 +87,100 @@
     <EmbeddedResource Include="Packaging\post2.jpg" />
   </ItemGroup>
 
+
   <ItemGroup>
     <Content Include="App_Plugins/**/*.*">
       <Pack>true</Pack>
       <PackagePath>App_Plugins</PackagePath>
     </Content>
   </ItemGroup>
-  
   <ItemGroup>
-    <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
+    <Content Update="App_Plugins\Themes\**\*.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Pack>true</Pack>
+      <PackagePath>App_Plugins\Themes\</PackagePath>
+    </Content>
   </ItemGroup>
 
   <!-- Nuget Package Dependencies -->
   <ItemGroup>
-    <PackageReference Include="Markdig" Version="0.31.0" />
+    <PackageReference Include="Markdig" Version="0.41.2" />
+    <PackageReference Include="Umbraco.Cms.Web.Website" Version="15.4.3" />
+    <PackageReference Include="Umbraco.Cms.Web.Common" Version="15.4.3" />
+    <PackageReference Include="Umbraco.Cms.Api.Common" Version="15.4.3" />
+    <PackageReference Include="Umbraco.Cms.Api.Management" Version="15.4.3" />
+    <PackageReference Include="Argotic.Core" Version="3001.0.0" />
+    <PackageReference Include="Lucene.Net.Replicator" Version="4.8.0-beta00017" />
     <PackageReference Include="Smidge" Version="4.5.1" />
-    <PackageReference Include="Argotic.Core" Version="3000.0.3" />
-    <PackageReference Include="Umbraco.Cms.Api.Management" Version="15.4.2" />
-    <PackageReference Include="Umbraco.Cms.Web.Website" Version="15.4.2" />
-    <PackageReference Include="System.ServiceModel.Syndication" Version="6.0.0" />
-    <PackageReference Include="WilderMinds.MetaWeblog" Version="5.1.1" />
+    <PackageReference Include="System.ServiceModel.Syndication" Version="9.0.5" />
+    <PackageReference Include="System.Text.Json" Version="9.0.5" />
+    <PackageReference Include="WilderMinds.MetaWeblog" Version="5.1.3" />
   </ItemGroup>
   
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ClientAssetsInputs Include="Client\**" Exclude="$(DefaultItemExcludes)" />
+    <!-- Dont include the client folder as part of packaging nuget build -->
+    <Content Remove="Client\**" />
+    <!-- However make the Umbraco-package.json included for dotnet pack or nuget package and visible to the solution -->
+    <None Include="Client\public\umbraco-package.json" Pack="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="wwwroot\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Don't include xLegacy folder in build or pack -->
+    <Compile Remove="App_Plugins\Articulate\xLegacy\**" />
+    <Content Remove="App_Plugins\Articulate\xLegacy\**" />
+    <None Remove="App_Plugins\Articulate\xLegacy\**" />
+    <EmbeddedResource Remove="App_Plugins\Articulate\xLegacy\**" />
+  </ItemGroup>
+
+  <!-- Restore and build Client files -->
+  <Target Name="RestoreClient" Inputs="Client\package.json;Client\package-lock.json" Outputs="Client\node_modules\.package-lock.json">
+    <Message Importance="high" Text="Restoring Client NPM packages..." />
+    <Exec Command="npm i" WorkingDirectory="Client" />
+  </Target>
+
+  <Target Name="BuildClientWarn" BeforeTargets="Build" DependsOnTargets="RestoreClient" Inputs="@(ClientAssetsInputs)" Condition="'$(IsPacking)' != 'true'" Outputs="$(IntermediateOutputPath)client.complete.txt">
+    <Message Importance="high" Text="Executing Client NPM build script (warnings only)..." />
+    <Exec Command="npm run build" WorkingDirectory="Client" ContinueOnError="true">
+      <Output TaskParameter="ExitCode" PropertyName="ClientBuildExitCode" />
+    </Exec>
+    <Warning Text="Client build failed (API/client out of sync). Regenerate client before packaging." Condition="'$(ClientBuildExitCode)' != '0'" />
+    <ItemGroup>
+      <_ClientAssetsBuildOutput Include="App_Plugins\BackOffice\**" />
+    </ItemGroup>
+    <WriteLinesToFile File="$(IntermediateOutputPath)client.complete.txt" Lines="@(_ClientAssetsBuildOutput)" Overwrite="true" />
+  </Target>
+
+  <Target Name="BuildClientError" BeforeTargets="Pack" DependsOnTargets="RestoreClient" Inputs="@(ClientAssetsInputs)" Condition="'$(IsPacking)' == 'true'" Outputs="$(IntermediateOutputPath)client.complete.txt">
+    <Message Importance="high" Text="Executing Client NPM build script (error on failure for pack)..." />
+    <Exec Command="npm run build" WorkingDirectory="Client" />
+    <ItemGroup>
+      <_ClientAssetsBuildOutput Include="App_Plugins\BackOffice\**" />
+    </ItemGroup>
+    <WriteLinesToFile File="$(IntermediateOutputPath)client.complete.txt" Lines="@(_ClientAssetsBuildOutput)" Overwrite="true" />
+  </Target>
+
+  <ItemGroup>
+    <Content Include="favicon.ico" />
+  </ItemGroup>
+
   <!-- Uses Package Icon on disk in repo -->
   <ItemGroup>
-    <None Include="..\..\assets\Icon-transparent.png">
+    <None Include="..\..\README.md">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
     </None>
-    <None Include="..\..\README.md">
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="Icon-transparent.png">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
     </None>
