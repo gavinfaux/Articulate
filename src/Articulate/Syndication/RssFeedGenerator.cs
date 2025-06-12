@@ -108,6 +108,11 @@ namespace Articulate.Syndication
         private IEnumerable<SyndicationItem> GetFeedItems(IMasterModel model, IEnumerable<PostModel> posts)
         {
             var rootUrl = model.RootBlogNode.Url(mode: UrlMode.Absolute);
+            if (!posts.Any())
+            {
+                // TODO: posts collection is empty - passed from RSS controller Index?
+                return new List<SyndicationItem>(); 
+            }
             return posts.Select(post => GetFeedItem(model, post, rootUrl)).WhereNotNull().ToList();
         }
 
@@ -118,7 +123,6 @@ namespace Articulate.Syndication
             {
                 logoUri = rootPageModel.BlogLogo.IsNullOrWhiteSpace()
                     ? null
-                    : new Uri(rootPageModel.BlogLogo);
                     : new Uri(rootPageModel.BlogLogo, UriKind.RelativeOrAbsolute);
             }
             catch (Exception ex)

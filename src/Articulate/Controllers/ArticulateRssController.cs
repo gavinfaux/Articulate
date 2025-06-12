@@ -1,3 +1,5 @@
+//TODO: Broken, not returning anything see comments in Index method
+
 using Articulate.Models;
 using Articulate.Syndication;
 using System;
@@ -82,7 +84,19 @@ namespace Articulate.Controllers
                 listItems,
                 _publishedValueFallback,
                 _variationContextAccessor);
-            
+            //TODO: This returns null, when it should be two with the default content installed
+            //TODO: This calls Umbraco.Web.Common.Extensions.FriendlyPublishedContentExtensions as below
+
+            /*     public static IEnumerable<T>? Children<T>(this IPublishedContent content, string? culture = null)
+            *         where T : class, IPublishedContent
+            *         => content.Children<T>(GetNavigationQueryService(content), GetPublishedStatusFilteringService(content), culture);
+            */
+
+            var x = rootPageModel.Children<PostModel>().ToList();
+             
+			 // ?! 
+
+
             var feed = _feedGenerator.GetFeed(rootPageModel, rootPageModel.Children<PostModel>());
 
             return new RssResult(feed, rootPageModel);
