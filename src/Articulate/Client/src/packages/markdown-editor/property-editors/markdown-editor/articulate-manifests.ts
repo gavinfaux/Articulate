@@ -1,7 +1,7 @@
 export const manifests: Array<UmbExtensionManifest> = [
   {
     type: "propertyEditorUi",
-    alias: "Articulate.PropertyEditorUi.MarkdownEditor",
+    alias: "Articulate.MarkdownEditor",
     name: "Articulate Markdown Editor",
     element: () => import("./property-editor-ui-markdown-editor.element.js"),
     meta: {
@@ -16,7 +16,13 @@ export const manifests: Array<UmbExtensionManifest> = [
             alias: "preview",
             label: "Preview",
             description: "Display a live preview",
-            propertyEditorUiAlias: "Umb.PropertyEditorUi.Toggle", // Required field
+            propertyEditorUiAlias: "Umb.PropertyEditorUi.Toggle",
+          },
+          {
+            alias: "overlaySize",
+            label: "Overlay Size",
+            description: "Select the width of the overlay.",
+            propertyEditorUiAlias: "Umb.PropertyEditorUi.OverlaySize",
           },
         ],
       },

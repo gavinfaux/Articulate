@@ -74,10 +74,10 @@ export default class ArticulateBlogMlImporterElement extends UmbLitElement {
     if (this._archiveDoctypeUdi === null) {
       this._isDisabled = true;
       this._isLoading = false;
-      this.requestUpdate();
+      this.requestUpdate("_isLoading", "_isDisabled");
     }
     this._isLoading = false;
-    this.requestUpdate();
+    this.requestUpdate("_isLoading");
   }
 
   /**
@@ -91,14 +91,14 @@ export default class ArticulateBlogMlImporterElement extends UmbLitElement {
       const udi = await openNodePicker(this._modalManagerContext!, this._archiveDoctypeUdi!, this);
       if (udi) {
         this._selectedBlogNodeName = "Loading...";
-        this.requestUpdate();
+        this.requestUpdate("_selectedBlogNodeName");
         const variant = await fetchNodeByUdi(udi);
         if (!variant) {
           throw new Error(`Selected node ${udi} not found`);
         }
         this._selectedBlogNodeUdi = udi;
         this._selectedBlogNodeName = variant.name;
-        this.requestUpdate();
+        this.requestUpdate("_selectedBlogNodeName", "_selectedBlogNodeUdi");
       }
       // Modal was closed without a selection, no action needed
     } catch (error: unknown) {
@@ -110,7 +110,7 @@ export default class ArticulateBlogMlImporterElement extends UmbLitElement {
         "An error occurred while using the node picker.",
       );
       this._selectedBlogNodeName = "Error loading node";
-      this.requestUpdate();
+      this.requestUpdate("_selectedBlogNodeName");
       await showUmbracoNotification(this, errorMessage, "danger");
     }
   }
@@ -142,7 +142,7 @@ export default class ArticulateBlogMlImporterElement extends UmbLitElement {
     try {
       submitButton?.setAttribute("state", "waiting");
       this._isSubmitting = true;
-      this.requestUpdate();
+      this.requestUpdate("_isSubmitting");
 
       // Step 1: Initialize the import (upload file)
       const formDataUpload = new FormData();
@@ -221,20 +221,20 @@ export default class ArticulateBlogMlImporterElement extends UmbLitElement {
       form.reset();
       this._selectedBlogNodeUdi = null;
       this._selectedBlogNodeName = "No node selected";
-      this.requestUpdate();
+      this.requestUpdate("_selectedBlogNodeUdi", "_selectedBlogNodeName");
     } catch (error: unknown) {
       const errorMessage = extractErrorMessage(error, "Import failed.");
       await showUmbracoNotification(this, errorMessage, "danger");
     } finally {
       submitButton?.setAttribute("state", "");
       this._isSubmitting = false;
-      this.requestUpdate();
+      this.requestUpdate("_isSubmitting");
     }
   }
 
   private _closeModal() {
     this._downloadUrl = undefined;
-    this.requestUpdate();
+    this.requestUpdate("_downloadUrl");
   }
 
   override render() {

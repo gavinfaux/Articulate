@@ -5,6 +5,7 @@ public/
 scripts/
 src/api/
 docs/
+.vscode/
 
 *.min.js
 *.bundle.js
@@ -12,3 +13,9 @@ docs/
 *.css
 *.map
 umbraco-package-schema.json
+.prettierrc.cjs
+eslint.config.mjs
+eslint-local-rules.mjs
+vite.config.ts
+package-lock.json
+tsconfig.json

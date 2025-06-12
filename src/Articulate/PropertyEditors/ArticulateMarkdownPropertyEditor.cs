@@ -1,7 +1,5 @@
 // // TODO: Replace with Umbraco.MarkdownEditor if/when #19500 #19501 accepted and merged into Umbraco.Cms.Core
 
-// // TODO: Copy \Umbraco.Web.UI.Client\src\packages\markdown-editor as our own 'Articulate' editor, else this does nothing by itself
-
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.PropertyEditors;
 using Umbraco.Cms.Core.PropertyEditors.ValueConverters;
@@ -11,7 +9,7 @@ using Umbraco.Cms.Core.Templates;
 namespace Articulate.PropertyEditors
 {
 
-    [DataEditor("Articulate.PropertyEditorUi.MarkdownEditor", ValueType = ValueTypes.Text,
+    [DataEditor("Articulate.MarkdownEditor", ValueType = ValueTypes.Text,
         ValueEditorIsReusable = true)]
     public class ArticulateMarkdownPropertyEditor(IDataValueEditorFactory dataValueEditorFactor)
         : MarkdownPropertyEditor(dataValueEditorFactor)
@@ -23,7 +21,7 @@ namespace Articulate.PropertyEditors
         : MarkdownEditorValueConverter(localLinkParser, urlParser)
     {
         public override bool IsConverter(IPublishedPropertyType propertyType)
-            => "Articulate.PropertyEditorUi.MarkdownEditor" == propertyType.EditorUiAlias;
+            => "Articulate.MarkdownEditor" == propertyType.EditorUiAlias;
 
         public override object ConvertIntermediateToObject(
             IPublishedElement owner,

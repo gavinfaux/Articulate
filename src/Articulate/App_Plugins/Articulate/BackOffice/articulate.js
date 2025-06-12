@@ -1,5 +1,5 @@
 import { UMB_AUTH_CONTEXT as le } from "@umbraco-cms/backoffice/auth";
-import { A as w, i as Q, e as v, s as _, c as ue } from "./notification-utils-AoMs4ers.js";
+import { A as w, i as Q, e as v, s as y, c as ue } from "./notification-utils-AoMs4ers.js";
 import { html as u, css as U, property as j, state as d, customElement as B } from "@umbraco-cms/backoffice/external/lit";
 import { UmbLitElement as D } from "@umbraco-cms/backoffice/lit-element";
 import { UmbTextStyles as T } from "@umbraco-cms/backoffice/style";
@@ -58,7 +58,7 @@ async function ie(t, e, i) {
     );
   }
 }
-function N(t) {
+function C(t) {
   return u`
     <div slot="header-actions">
       <uui-button
@@ -113,7 +113,7 @@ let c = class extends D {
    * Fetches the Articulate Archive document type UDI.
    */
   async connectedCallback() {
-    super.connectedCallback(), this._archiveDoctypeUdi = await ee(), this._archiveDoctypeUdi === null && (this._isDisabled = !0, this._isLoading = !1, this.requestUpdate()), this._isLoading = !1, this.requestUpdate();
+    super.connectedCallback(), this._archiveDoctypeUdi = await ee(), this._archiveDoctypeUdi === null && (this._isDisabled = !0, this._isLoading = !1, this.requestUpdate("_isLoading", "_isDisabled")), this._isLoading = !1, this.requestUpdate("_isLoading");
   }
   /**
    * Opens the Umbraco document picker to select a blog node.
@@ -125,11 +125,11 @@ let c = class extends D {
     try {
       const t = await ie(this._modalManagerContext, this._archiveDoctypeUdi, this);
       if (t) {
-        this._selectedBlogNodeName = "Loading...", this.requestUpdate();
+        this._selectedBlogNodeName = "Loading...", this.requestUpdate("_selectedBlogNodeName");
         const e = await te(t);
         if (!e)
           throw new Error(`Selected node ${t} not found`);
-        this._selectedBlogNodeUdi = t, this._selectedBlogNodeName = e.name, this.requestUpdate();
+        this._selectedBlogNodeUdi = t, this._selectedBlogNodeName = e.name, this.requestUpdate("_selectedBlogNodeName", "_selectedBlogNodeUdi");
       }
     } catch (t) {
       if (Q(t) && t.message.includes("No node selected"))
@@ -138,7 +138,7 @@ let c = class extends D {
         t,
         "An error occurred while using the node picker."
       );
-      this._selectedBlogNodeName = "Error loading node", this.requestUpdate(), await _(this, e, "danger");
+      this._selectedBlogNodeName = "Error loading node", this.requestUpdate("_selectedBlogNodeName"), await y(this, e, "danger");
     }
   }
   /**
@@ -158,7 +158,7 @@ let c = class extends D {
       exportImagesAsBase64: a
     };
     try {
-      r == null || r.setAttribute("state", "waiting"), this._isSubmitting = !0, this.requestUpdate();
+      r == null || r.setAttribute("state", "waiting"), this._isSubmitting = !0, this.requestUpdate("_isSubmitting");
       const n = await w.postUmbracoManagementApiV1ArticulateBlogExport({
         body: s
       });
@@ -180,27 +180,27 @@ let c = class extends D {
         const m = l.downloadUrl.startsWith("http") ? l.downloadUrl : `${window.location.origin}${l.downloadUrl}`;
         this._downloadUrl = u`<a href="${m}" target="_blank">Download</a>.`;
       }
-      e.reset(), this._selectedBlogNodeUdi = null, this._selectedBlogNodeName = "No node selected", this.requestUpdate();
+      e.reset(), this._selectedBlogNodeUdi = null, this._selectedBlogNodeName = "No node selected", this.requestUpdate("_selectedBlogNodeUdi", "_selectedBlogNodeName");
     } catch (n) {
       const l = v(n, "Export failed.");
-      await _(this, l, "danger");
+      await y(this, l, "danger");
     } finally {
-      r == null || r.setAttribute("state", ""), this._isSubmitting = !1, this.requestUpdate();
+      r == null || r.setAttribute("state", ""), this._isSubmitting = !1, this.requestUpdate("_isSubmitting");
     }
   }
   _closeModal() {
-    this._downloadUrl = void 0, this.requestUpdate();
+    this._downloadUrl = void 0, this.requestUpdate("_downloadUrl");
   }
   render() {
     return this._isLoading ? u`<uui-loader-bar></uui-loader-bar>` : this._isDisabled ? u`<uui-box headline="BlogML Exporter">
-        ${N(this.routerPath)}
+        ${C(this.routerPath)}
         <span slot="header"><uui-tag look="danger">Disabled</uui-tag></span>
         <p>Could not retrieve Articulate Archive document type.</p>
         <p>Ensure that the Articulate package is installed and configured correctly.</p>
         <p>Check the Articulate documentation for more information.</p>
       </uui-box>` : u`
       <uui-box headline="BlogML Exporter">
-        ${N(this.routerPath)}
+        ${C(this.routerPath)}
         <uui-form-validation-message>
           <uui-form @submit=${this._handleSubmit}>
             <uui-form-layout-item>
@@ -305,7 +305,7 @@ b([
 c = b([
   B("articulate-blogml-exporter")
 ], c);
-var pe = Object.defineProperty, me = Object.getOwnPropertyDescriptor, y = (t, e, i, o) => {
+var pe = Object.defineProperty, me = Object.getOwnPropertyDescriptor, _ = (t, e, i, o) => {
   for (var r = o > 1 ? void 0 : o ? me(e, i) : e, a = t.length - 1, s; a >= 0; a--)
     (s = t[a]) && (r = (o ? s(e, i, r) : s(r)) || r);
   return o && r && pe(e, i, r), r;
@@ -325,7 +325,7 @@ let h = class extends D {
    * Fetches the Articulate Archive document type UDI.
    */
   async connectedCallback() {
-    super.connectedCallback(), this._archiveDoctypeUdi = await ee(), this._archiveDoctypeUdi === null && (this._isDisabled = !0, this._isLoading = !1, this.requestUpdate()), this._isLoading = !1, this.requestUpdate();
+    super.connectedCallback(), this._archiveDoctypeUdi = await ee(), this._archiveDoctypeUdi === null && (this._isDisabled = !0, this._isLoading = !1, this.requestUpdate("_isLoading", "_isDisabled")), this._isLoading = !1, this.requestUpdate("_isLoading");
   }
   /**
    * Opens the Umbraco document picker to select a blog node.
@@ -337,11 +337,11 @@ let h = class extends D {
     try {
       const t = await ie(this._modalManagerContext, this._archiveDoctypeUdi, this);
       if (t) {
-        this._selectedBlogNodeName = "Loading...", this.requestUpdate();
+        this._selectedBlogNodeName = "Loading...", this.requestUpdate("_selectedBlogNodeName");
         const e = await te(t);
         if (!e)
           throw new Error(`Selected node ${t} not found`);
-        this._selectedBlogNodeUdi = t, this._selectedBlogNodeName = e.name, this.requestUpdate();
+        this._selectedBlogNodeUdi = t, this._selectedBlogNodeName = e.name, this.requestUpdate("_selectedBlogNodeName", "_selectedBlogNodeUdi");
       }
     } catch (t) {
       if (Q(t) && t.message.includes("No node selected"))
@@ -350,7 +350,7 @@ let h = class extends D {
         t,
         "An error occurred while using the node picker."
       );
-      this._selectedBlogNodeName = "Error loading node", this.requestUpdate(), await _(this, e, "danger");
+      this._selectedBlogNodeName = "Error loading node", this.requestUpdate("_selectedBlogNodeName"), await y(this, e, "danger");
     }
   }
   /**
@@ -367,7 +367,7 @@ let h = class extends D {
       return;
     const o = new FormData(e), r = e.querySelector('uui-button[look="primary"]'), a = e.elements.namedItem("importFile"), s = a && a.files ? a.files[0] : null;
     try {
-      r == null || r.setAttribute("state", "waiting"), this._isSubmitting = !0, this.requestUpdate();
+      r == null || r.setAttribute("state", "waiting"), this._isSubmitting = !0, this.requestUpdate("_isSubmitting");
       const n = new FormData();
       n.append(s.name, s);
       const l = await w.postUmbracoManagementApiV1ArticulateBlogImportBegin({
@@ -397,48 +397,48 @@ let h = class extends D {
         tempFile: m.temporaryFileName,
         exportDisqusXml: o.get("disqusExport") === "on",
         importFirstImage: o.get("importImage") === "on"
-      }, P = await w.postUmbracoManagementApiV1ArticulateBlogImport({
+      }, S = await w.postUmbracoManagementApiV1ArticulateBlogImport({
         body: z
       });
-      if (!P.response.ok) {
+      if (!S.response.ok) {
         let g;
         try {
-          g = await P.response.json();
+          g = await S.response.json();
         } catch {
           g = new Error(
-            `Import API Error: ${P.response.status} ${P.response.statusText}`
+            `Import API Error: ${S.response.status} ${S.response.statusText}`
           );
         }
         throw g;
       }
-      const S = P.data;
-      if (!S)
+      const N = S.data;
+      if (!N)
         throw new Error("Import completed but no response data was returned.");
-      if (S.downloadUrl) {
-        const g = S.downloadUrl.startsWith("http") ? S.downloadUrl : `${window.location.origin}${S.downloadUrl}`;
+      if (N.downloadUrl) {
+        const g = N.downloadUrl.startsWith("http") ? N.downloadUrl : `${window.location.origin}${N.downloadUrl}`;
         this._downloadUrl = u`<a href="${g}" target="_blank">Download</a>.`;
       }
-      e.reset(), this._selectedBlogNodeUdi = null, this._selectedBlogNodeName = "No node selected", this.requestUpdate();
+      e.reset(), this._selectedBlogNodeUdi = null, this._selectedBlogNodeName = "No node selected", this.requestUpdate("_selectedBlogNodeUdi", "_selectedBlogNodeName");
     } catch (n) {
       const l = v(n, "Import failed.");
-      await _(this, l, "danger");
+      await y(this, l, "danger");
     } finally {
-      r == null || r.setAttribute("state", ""), this._isSubmitting = !1, this.requestUpdate();
+      r == null || r.setAttribute("state", ""), this._isSubmitting = !1, this.requestUpdate("_isSubmitting");
     }
   }
   _closeModal() {
-    this._downloadUrl = void 0, this.requestUpdate();
+    this._downloadUrl = void 0, this.requestUpdate("_downloadUrl");
   }
   render() {
     return this._isLoading ? u`<uui-loader-bar></uui-loader-bar>` : this._isDisabled ? u`<uui-box headline="BlogML Importer">
-        ${N(this.routerPath)}
+        ${C(this.routerPath)}
         <span slot="header"><uui-tag look="danger">Disabled</uui-tag></span>
         <p>Could not retrieve Articulate Archive document type.</p>
         <p>Ensure that the Articulate package is installed and configured correctly.</p>
         <p>Check the Articulate documentation for more information.</p>
       </uui-box>` : u`
       <uui-box headline="BlogML Importer">
-        ${N(this.routerPath)}
+        ${C(this.routerPath)}
         <uui-form-validation-message>
         <uui-form @submit=${this._handleSubmit}>
           <uui-form-layout-item>
@@ -568,28 +568,28 @@ h.styles = [
       }
     `
 ];
-y([
+_([
   j({ type: String })
 ], h.prototype, "routerPath", 2);
-y([
+_([
   d()
 ], h.prototype, "_isDisabled", 2);
-y([
+_([
   d()
 ], h.prototype, "_isLoading", 2);
-y([
+_([
   d()
 ], h.prototype, "_isSubmitting", 2);
-y([
+_([
   d()
 ], h.prototype, "_selectedBlogNodeUdi", 2);
-y([
+_([
   d()
 ], h.prototype, "_selectedBlogNodeName", 2);
-y([
+_([
   d()
 ], h.prototype, "_downloadUrl", 2);
-h = y([
+h = _([
   B("articulate-blogml-importer")
 ], h);
 /**
@@ -626,7 +626,7 @@ let fe = class {
     return this.cssText;
   }
 };
-const be = (t) => new fe(typeof t == "string" ? t : t + "", void 0, re), ye = (t, e) => {
+const be = (t) => new fe(typeof t == "string" ? t : t + "", void 0, re), _e = (t, e) => {
   if (F) t.adoptedStyleSheets = e.map((i) => i instanceof CSSStyleSheet ? i : i.styleSheet);
   else for (const i of e) {
     const o = document.createElement("style"), r = k.litNonce;
@@ -642,7 +642,7 @@ const be = (t) => new fe(typeof t == "string" ? t : t + "", void 0, re), ye = (t
  * Copyright 2017 Google LLC
  * SPDX-License-Identifier: BSD-3-Clause
  */
-const { is: _e, defineProperty: we, getOwnPropertyDescriptor: ve, getOwnPropertyNames: $e, getOwnPropertySymbols: Ee, getPrototypeOf: Ue } = Object, f = globalThis, G = f.trustedTypes, xe = G ? G.emptyScript : "", L = f.reactiveElementPolyfillSupport, C = (t, e) => t, M = { toAttribute(t, e) {
+const { is: ye, defineProperty: we, getOwnPropertyDescriptor: ve, getOwnPropertyNames: $e, getOwnPropertySymbols: Ee, getPrototypeOf: Ue } = Object, f = globalThis, G = f.trustedTypes, xe = G ? G.emptyScript : "", q = f.reactiveElementPolyfillSupport, A = (t, e) => t, M = { toAttribute(t, e) {
   switch (e) {
     case Boolean:
       t = t ? xe : null;
@@ -670,9 +670,9 @@ const { is: _e, defineProperty: we, getOwnPropertyDescriptor: ve, getOwnProperty
       }
   }
   return i;
-} }, V = (t, e) => !_e(t, e), K = { attribute: !0, type: String, converter: M, reflect: !1, useDefault: !1, hasChanged: V };
+} }, V = (t, e) => !ye(t, e), K = { attribute: !0, type: String, converter: M, reflect: !1, useDefault: !1, hasChanged: V };
 Symbol.metadata ?? (Symbol.metadata = Symbol("metadata")), f.litPropertyMetadata ?? (f.litPropertyMetadata = /* @__PURE__ */ new WeakMap());
-class A extends HTMLElement {
+class P extends HTMLElement {
   static addInitializer(e) {
     this._$Ei(), (this.l ?? (this.l = [])).push(e);
   }
@@ -700,13 +700,13 @@ class A extends HTMLElement {
     return this.elementProperties.get(e) ?? K;
   }
   static _$Ei() {
-    if (this.hasOwnProperty(C("elementProperties"))) return;
+    if (this.hasOwnProperty(A("elementProperties"))) return;
     const e = Ue(this);
     e.finalize(), e.l !== void 0 && (this.l = [...e.l]), this.elementProperties = new Map(e.elementProperties);
   }
   static finalize() {
-    if (this.hasOwnProperty(C("finalized"))) return;
-    if (this.finalized = !0, this._$Ei(), this.hasOwnProperty(C("properties"))) {
+    if (this.hasOwnProperty(A("finalized"))) return;
+    if (this.finalized = !0, this._$Ei(), this.hasOwnProperty(A("properties"))) {
       const i = this.properties, o = [...$e(i), ...Ee(i)];
       for (const r of o) this.createProperty(r, i[r]);
     }
@@ -756,7 +756,7 @@ class A extends HTMLElement {
   }
   createRenderRoot() {
     const e = this.shadowRoot ?? this.attachShadow(this.constructor.shadowRootOptions);
-    return ye(e, this.constructor.elementStyles), e;
+    return _e(e, this.constructor.elementStyles), e;
   }
   connectedCallback() {
     var e;
@@ -873,13 +873,13 @@ class A extends HTMLElement {
   firstUpdated(e) {
   }
 }
-A.elementStyles = [], A.shadowRootOptions = { mode: "open" }, A[C("elementProperties")] = /* @__PURE__ */ new Map(), A[C("finalized")] = /* @__PURE__ */ new Map(), L == null || L({ ReactiveElement: A }), (f.reactiveElementVersions ?? (f.reactiveElementVersions = [])).push("2.1.0");
+P.elementStyles = [], P.shadowRootOptions = { mode: "open" }, P[A("elementProperties")] = /* @__PURE__ */ new Map(), P[A("finalized")] = /* @__PURE__ */ new Map(), q == null || q({ ReactiveElement: P }), (f.reactiveElementVersions ?? (f.reactiveElementVersions = [])).push("2.1.0");
 /**
  * @license
  * Copyright 2017 Google LLC
  * SPDX-License-Identifier: BSD-3-Clause
  */
-const Pe = { attribute: !0, type: String, converter: M, reflect: !1, hasChanged: V }, Se = (t = Pe, e, i) => {
+const Se = { attribute: !0, type: String, converter: M, reflect: !1, hasChanged: V }, Ne = (t = Se, e, i) => {
   const { kind: o, metadata: r } = i;
   let a = globalThis.litPropertyMetadata.get(r);
   if (a === void 0 && globalThis.litPropertyMetadata.set(r, a = /* @__PURE__ */ new Map()), o === "setter" && ((t = Object.create(t)).wrapped = !0), a.set(i.name, t), o === "accessor") {
@@ -901,7 +901,7 @@ const Pe = { attribute: !0, type: String, converter: M, reflect: !1, hasChanged:
   throw Error("Unsupported decorator location: " + o);
 };
 function ae(t) {
-  return (e, i) => typeof i == "object" ? Se(t, e, i) : ((o, r, a) => {
+  return (e, i) => typeof i == "object" ? Ne(t, e, i) : ((o, r, a) => {
     const s = r.hasOwnProperty(a);
     return r.constructor.createProperty(a, o), s ? Object.getOwnPropertyDescriptor(r, a) : void 0;
   })(t, e, i);
@@ -914,13 +914,13 @@ function ae(t) {
 function O(t) {
   return ae({ ...t, state: !0, attribute: !1 });
 }
-var Ae = Object.defineProperty, Ce = Object.getOwnPropertyDescriptor, se = (t) => {
+var Pe = Object.defineProperty, Ae = Object.getOwnPropertyDescriptor, se = (t) => {
   throw TypeError(t);
 }, x = (t, e, i, o) => {
-  for (var r = o > 1 ? void 0 : o ? Ce(e, i) : e, a = t.length - 1, s; a >= 0; a--)
+  for (var r = o > 1 ? void 0 : o ? Ae(e, i) : e, a = t.length - 1, s; a >= 0; a--)
     (s = t[a]) && (r = (o ? s(e, i, r) : s(r)) || r);
-  return o && r && Ae(e, i, r), r;
-}, Ne = (t, e, i) => e.has(t) || se("Cannot " + i), Y = (t, e, i) => (Ne(t, e, "read from private field"), i ? i.call(t) : e.get(t)), J = (t, e, i) => e.has(t) ? se("Cannot add the same private member more than once") : e instanceof WeakSet ? e.add(t) : e.set(t, i), I, R;
+  return o && r && Pe(e, i, r), r;
+}, Ce = (t, e, i) => e.has(t) || se("Cannot " + i), Y = (t, e, i) => (Ce(t, e, "read from private field"), i ? i.call(t) : e.get(t)), J = (t, e, i) => e.has(t) ? se("Cannot add the same private member more than once") : e instanceof WeakSet ? e.add(t) : e.set(t, i), I, R;
 let p = class extends D {
   constructor() {
     super(...arguments), this._isLoading = !0, this._isSubmitting = !1, this._themes = [], this._newThemeName = "", this._selectedTheme = null, J(this, I, (t) => {
@@ -934,7 +934,7 @@ let p = class extends D {
    * @private
    */
   async connectedCallback() {
-    super.connectedCallback(), await this._loadThemes(), this._isLoading = !1, this.requestUpdate();
+    super.connectedCallback(), await this._loadThemes(), this._isLoading = !1, this.requestUpdate("_isLoading");
   }
   async _loadThemes() {
     try {
@@ -957,7 +957,7 @@ let p = class extends D {
     } catch (t) {
       this._themes = [];
       const e = v(t, "Could not load themes.");
-      await _(this, e, "danger");
+      await y(this, e, "danger");
     }
   }
   /**
@@ -966,7 +966,7 @@ let p = class extends D {
    * @param {string} theme - The name of the theme to select.
    */
   _selectTheme(t) {
-    this._selectedTheme = t, this._newThemeName = `${t} - Copy`, this.requestUpdate();
+    this._selectedTheme = t, this._newThemeName = `${t} - Copy`, this.requestUpdate("_selectedTheme", "_newThemeName");
   }
   _handleSelectThemeButtonClick(t, e) {
     t.stopPropagation(), this._selectTheme(e);
@@ -988,7 +988,7 @@ let p = class extends D {
   async _duplicateTheme() {
     if (!(this._isSubmitting || !this._selectedTheme || !this._newThemeName))
       try {
-        this._isSubmitting = !0, this.requestUpdate();
+        this._isSubmitting = !0, this.requestUpdate("_isSubmitting");
         const t = await w.postUmbracoManagementApiV1ArticulateThemesCopy({
           body: {
             themeName: this._selectedTheme,
@@ -997,16 +997,16 @@ let p = class extends D {
         });
         if (!t.response.ok)
           throw new Error(`Failed to duplicate theme: ${t.response.statusText}`);
-        await _(this, "Theme duplicated successfully!", "positive"), this._selectedTheme = null, this._newThemeName = "", this.requestUpdate();
+        await y(this, "Theme duplicated successfully!", "positive"), this._selectedTheme = null, this._newThemeName = "", this.requestUpdate("_selectedTheme", "_newThemeName");
       } catch (t) {
         console.error("Error duplicating theme:", t);
         const e = v(
           t,
           "Failed to duplicate theme. Please try again."
         );
-        await _(this, e, "danger");
+        await y(this, e, "danger");
       } finally {
-        this._isSubmitting = !1, this.requestUpdate();
+        this._isSubmitting = !1, this.requestUpdate("_isSubmitting");
       }
   }
   /**
@@ -1120,7 +1120,7 @@ let p = class extends D {
   render() {
     return this._isLoading ? u`<uui-loader-bar></uui-loader-bar>` : u`
       <uui-box headline="Theme Duplication">
-        ${N(this.routerPath)}
+        ${C(this.routerPath)}
         <div class="container">
           <p>
             You can duplicate any of Articulate's built-in themes to customize them yourself. The
@@ -1479,10 +1479,10 @@ const Oe = {
       match: "Umb.Section.Settings"
     }
   ]
-}, ze = Oe, qe = [
+}, ze = Oe, Le = [
   {
     type: "propertyEditorUi",
-    alias: "Articulate.PropertyEditorUi.MarkdownEditor",
+    alias: "Articulate.MarkdownEditor",
     name: "Articulate Markdown Editor",
     element: () => import("./property-editor-ui-markdown-editor.element-ByRKICRp.js"),
     meta: {
@@ -1498,13 +1498,18 @@ const Oe = {
             label: "Preview",
             description: "Display a live preview",
             propertyEditorUiAlias: "Umb.PropertyEditorUi.Toggle"
-            // Required field
+          },
+          {
+            alias: "overlaySize",
+            label: "Overlay Size",
+            description: "Select the width of the overlay.",
+            propertyEditorUiAlias: "Umb.PropertyEditorUi.OverlaySize"
           }
         ]
       }
     }
   }
-], Le = [...qe], Ie = [...Le], Ke = (t, e) => {
+], qe = [...Le], Ie = [...qe], Ke = (t, e) => {
   e.register(ze), e.registerMany(Ie), t.consumeContext(le, (i) => {
     const o = i == null ? void 0 : i.getOpenApiConfiguration();
     ue.setConfig({

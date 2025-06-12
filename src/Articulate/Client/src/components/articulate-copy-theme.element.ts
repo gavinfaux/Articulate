@@ -35,7 +35,7 @@ export default class ArticulateCopyThemeElement extends UmbLitElement {
     super.connectedCallback();
     await this._loadThemes();
     this._isLoading = false;
-    this.requestUpdate();
+    this.requestUpdate("_isLoading");
   }
 
   private async _loadThemes() {
@@ -75,7 +75,7 @@ export default class ArticulateCopyThemeElement extends UmbLitElement {
   private _selectTheme(theme: string) {
     this._selectedTheme = theme;
     this._newThemeName = `${theme} - Copy`;
-    this.requestUpdate();
+    this.requestUpdate("_selectedTheme", "_newThemeName");
   }
 
   private _handleSelectThemeButtonClick(event: Event, themeName: string) {
@@ -117,7 +117,7 @@ export default class ArticulateCopyThemeElement extends UmbLitElement {
     if (this._isSubmitting || !this._selectedTheme || !this._newThemeName) return;
     try {
       this._isSubmitting = true;
-      this.requestUpdate();
+      this.requestUpdate("_isSubmitting");
       const result = await Articulate.postUmbracoManagementApiV1ArticulateThemesCopy({
         body: {
           themeName: this._selectedTheme,
@@ -132,7 +132,7 @@ export default class ArticulateCopyThemeElement extends UmbLitElement {
       await showUmbracoNotification(this, "Theme duplicated successfully!", "positive");
       this._selectedTheme = null;
       this._newThemeName = "";
-      this.requestUpdate();
+      this.requestUpdate("_selectedTheme", "_newThemeName");
     } catch (error) {
       console.error("Error duplicating theme:", error);
       const errorMessage = extractErrorMessage(
@@ -142,7 +142,7 @@ export default class ArticulateCopyThemeElement extends UmbLitElement {
       await showUmbracoNotification(this, errorMessage, "danger");
     } finally {
       this._isSubmitting = false;
-      this.requestUpdate();
+      this.requestUpdate("_isSubmitting");
     }
   }
 
