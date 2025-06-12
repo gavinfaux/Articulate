@@ -1,8 +1,7 @@
-import { LitElement, html, css } from 'lit';
-import { UmbElementMixin } from '@umbraco-cms/backoffice/element-api';
-
-export default class ArticulateDashboardElement extends UmbElementMixin(LitElement) {
-    static styles = css`
+import { html, css } from '@umbraco-cms/backoffice/external/lit';
+import { UmbLitElement } from "@umbraco-cms/backoffice/lit-element";
+export default class ArticulateDashboardElement extends UmbLitElement {
+  static styles = css`
         :host {
             display: block;
             padding: 20px;
@@ -198,12 +197,20 @@ export default class ArticulateDashboardElement extends UmbElementMixin(LitEleme
         }
     }
 
-    setViewState(state) {
-        this.viewState = state;
-        if (state === 'list') {
-            this.selectedGroup = null;
-        }
+  setViewState(state) {
+    this.viewState = state;
+    if (state === 'list') {
+      this.selectedGroup = null;
+      if (
+        navigation.entries()[navigation.currentEntry.index - 1]?.url ===
+        "/umbraco/section/settings/dashboard/articulate"
+      ) {
+        navigation.back();
+      } else {
+        navigation.navigate("/umbraco/section/settings/dashboard/articulate", { history: "replace" });
+      }
     }
+  }
 
     renderWelcomeBox() {
         return html`

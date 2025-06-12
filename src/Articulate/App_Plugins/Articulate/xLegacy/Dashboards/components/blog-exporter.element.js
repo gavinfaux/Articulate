@@ -1,7 +1,6 @@
-import { LitElement, html, css } from 'lit';
-import { UmbElementMixin } from '@umbraco-cms/backoffice/element-api';
-
-export default class BlogExporterElement extends UmbElementMixin(LitElement) {
+import { html, css } from '@umbraco-cms/backoffice/external/lit';
+import { UmbLitElement } from "@umbraco-cms/backoffice/lit-element";
+export default class BlogExporterElement extends UmbLitElement {
     static styles = css`
         :host {
             display: block;
