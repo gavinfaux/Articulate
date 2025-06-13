@@ -2,10 +2,10 @@ using Umbraco.Cms.Core.Cache;
 using Umbraco.Cms.Core.Events;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Notifications;
-using Umbraco.Cms.Core.Scoping;
 using Umbraco.Cms.Core.Services.Changes;
 using Umbraco.Cms.Core.Sync;
 using Umbraco.Cms.Core.Web;
+using Umbraco.Cms.Infrastructure.Scoping;
 using Umbraco.Extensions;
 
 namespace Articulate.Components
@@ -16,11 +16,11 @@ namespace Articulate.Components
 
         private readonly IUmbracoContextAccessor _umbracoContextAccessor;
         private readonly AppCaches _appCaches;
-        private readonly ICoreScopeProvider _scopeProvider;
+        private readonly IScopeProvider _scopeProvider;
 
         public ContentCacheRefresherHandler(
             IUmbracoContextAccessor umbracoContextAccessor,
-            AppCaches appCaches, ICoreScopeProvider scopeProvider)
+            AppCaches appCaches, IScopeProvider scopeProvider)
         {
             _umbracoContextAccessor = umbracoContextAccessor;
             _appCaches = appCaches;
@@ -78,7 +78,7 @@ namespace Articulate.Components
                 return;
             }
 
-            using (var scope = _scopeProvider.CreateCoreScope(autoComplete: true))
+            using (var scope = _scopeProvider.CreateScope(autoComplete: true))
             {
                 var item = umbracoContext.Content.GetById(id);
 
