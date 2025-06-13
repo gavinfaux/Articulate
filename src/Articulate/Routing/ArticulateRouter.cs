@@ -1,16 +1,16 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using Articulate.Controllers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Routing.Template;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.PublishedCache;
 using Umbraco.Cms.Core.Routing;
-using Umbraco.Cms.Core.Scoping;
 using Umbraco.Cms.Core.Web;
+using Umbraco.Cms.Infrastructure.Scoping;
 using Umbraco.Cms.Web.Common.Controllers;
 using Umbraco.Cms.Web.Website.Routing;
 using Umbraco.Extensions;
@@ -26,22 +26,21 @@ namespace Articulate.Routing
         private static readonly string s_wlwControllerName = ControllerExtensions.GetControllerName<WlwManifestController>();
         private static readonly string s_tagsControllerName = ControllerExtensions.GetControllerName<ArticulateTagsController>();
         private static readonly string s_rssControllerName = ControllerExtensions.GetControllerName<ArticulateRssController>();
-		// TODO: Deprecated code, please update or remove. Front end markdown editor (a-new)
-        //private static readonly string s_markdownEditorControllerName = ControllerExtensions.GetControllerName<MarkdownEditorController>();
+
         private static readonly string s_metaWeblogControllerName = ControllerExtensions.GetControllerName<MetaWeblogController>();
 
         private readonly Dictionary<ArticulateRouteTemplate, ArticulateRootNodeCache> _routeCache = new();
         private readonly IControllerActionSearcher _controllerActionSearcher;
-        private readonly ICoreScopeProvider _coreScopeProvider;
+        private readonly IScopeProvider _scopeProvider;
 
         /// <summary>
         /// Constructor
         /// </summary>
         /// <param name="controllerActionSearcher"></param>
-        public ArticulateRouter(IControllerActionSearcher controllerActionSearcher, ICoreScopeProvider coreScopeProvider )
+        public ArticulateRouter(IControllerActionSearcher controllerActionSearcher, IScopeProvider scopeProvider)
         {
             _controllerActionSearcher = controllerActionSearcher;
-            _coreScopeProvider = coreScopeProvider;
+            _scopeProvider = scopeProvider;
         }
 
         public bool TryMatch(PathString path, RouteValueDictionary routeValues, out ArticulateRootNodeCache articulateRootNodeCache)
@@ -70,9 +69,9 @@ namespace Articulate.Routing
         {
             lock (s_locker)
             {
-              using (var scope = _coreScopeProvider.CreateCoreScope(autoComplete: true))
-              {
-                IPublishedContentCache contentCache = umbracoContext.Content;
+                using (var scope = _scopeProvider.CreateCoreScope(autoComplete: true))
+                {
+                    IPublishedContentCache contentCache = umbracoContext.Content;
 
                 IPublishedContentType articulateCt = contentCache.GetContentType("Articulate");
                 if (articulateCt == null)
