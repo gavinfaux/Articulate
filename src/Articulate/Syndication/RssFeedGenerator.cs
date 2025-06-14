@@ -114,6 +114,7 @@ namespace Articulate.Syndication
                 // posts collection is empty
                 return new List<SyndicationItem>(); // or throw an exception, depending on your requirements
             }
+
             return posts.Select(post => GetFeedItem(model, post, rootUrl)).WhereNotNull().ToList();
         }
 
@@ -133,7 +134,6 @@ namespace Articulate.Syndication
 
             return logoUri;
         }
-
 
     }
 }

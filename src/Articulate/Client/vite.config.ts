@@ -19,5 +19,4 @@ export default defineConfig({
     },
   },
   plugins: [tsconfigPaths()],
-  base: "/App_Plugins/Articulate/BackOffice/",
 });

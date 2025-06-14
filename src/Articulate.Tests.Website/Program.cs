@@ -76,6 +76,10 @@ app.UseUmbraco()
         _ = u.UseWebsiteEndpoints();
     });
 
-app.UseSmidge();
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 
+app.UseSmidge();
 app.Run();

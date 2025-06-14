@@ -24,6 +24,7 @@ import { formStyles } from "./form-styles";
 
 // TODO: Export tests
 // TODO: Polish UX / CSS
+// TODO: https://docs.umbraco.com/umbraco-cms/customizing/property-editors/integrate-validation
 
 /**
  * A LitElement-based component for exporting blog content in BlogML format.

@@ -1,19 +1,19 @@
 <Project Sdk="Microsoft.NET.Sdk.Razor">
   <PropertyGroup>
     <TargetFrameworks>net9.0</TargetFrameworks>
-    <Nullable>disable</Nullable>
-    <ImplicitUsings>false</ImplicitUsings>
+    <!-- Temporary, resolve in later PRs and enable-->
+    <Nullable>warnings</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
     <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
-    <StaticWebAssetBasePath>/</StaticWebAssetBasePath>
-    <OutputType>Library</OutputType>
-    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
+    <StaticWebAssetBasePath>App_Plugins/Articulate</StaticWebAssetBasePath>
     <EnableDefaultContentItems>false</EnableDefaultContentItems>
-    <RestorePackages>true</RestorePackages>
   </PropertyGroup>
 
   <!-- Nuget Package -->
   <PropertyGroup>
     <PackageId>Articulate</PackageId>
+    <Product>Articulate</Product>
+    <Title>Articulate</Title>
     <Authors>Shannon Deminick</Authors>
     <Description>A wonderful Blog engine built on Umbraco</Description>
     <PackageIcon>Icon-transparent.png</PackageIcon>
@@ -25,14 +25,17 @@
     <Copyright>Copyright © $(Company) $([System.DateTime]::Now.Year)</Copyright>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
+    <ApplicationIcon>..\..\assets\favicon.ico</ApplicationIcon>
   </PropertyGroup>
+
+  <!-- Disable warnings for missing XML documentation comments -->
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net9.0|AnyCPU'">
     <NoWarn>1701;1702;1572;1573;1591</NoWarn>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net9.0|AnyCPU'">
     <NoWarn>1701;1702;1572;1573;1591</NoWarn>
   </PropertyGroup>
-    
+
   <!--
   Nuget - Dotnet SourceLink & Symbol Package
   https://github.com/dotnet/sourcelink#using-source-link-in-net-projects
@@ -42,21 +45,72 @@
   Use package Dotnet.ReproducibleBuilds
   This sets the same properties as above URLs and a few additional build properties
   ie less work - just include this package & be done...
-  https://github.com/dotnet/reproducible-builds  
+  https://github.com/dotnet/reproducible-builds
   -->
   <ItemGroup>
     <PackageReference Include="DotNet.ReproducibleBuilds" Version="1.2.25">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
-  </ItemGroup>  
+  </ItemGroup>
 
   <ItemGroup>
-    <None Include="build\**\*.*">
-      <Pack>True</Pack>
-      <PackagePath>buildTransitive</PackagePath>
-    </None>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
+
+  <!-- Nuget Package Dependencies -->
+  <ItemGroup>
+    <PackageReference Include="Markdig" Version="0.41.2" />
+    <PackageReference Include="Umbraco.Cms.Web.Website" Version="15.4.3" />
+    <PackageReference Include="Umbraco.Cms.Web.Common" Version="15.4.3" />
+    <PackageReference Include="Umbraco.Cms.Api.Common" Version="15.4.3" />
+    <PackageReference Include="Umbraco.Cms.Api.Management" Version="15.4.3" />
+    <PackageReference Include="Argotic.Core" Version="3001.0.0" />
+    <PackageReference Include="Smidge" Version="4.5.1" />
+    <PackageReference Include="System.ServiceModel.Syndication" Version="9.0.5" />
+    <PackageReference Include="WilderMinds.MetaWeblog" Version="5.1.3" />
+  </ItemGroup>
+
+  <!-- RCL content to be compiled -->
+  <ItemGroup>
+    <Content Include="App_Plugins\Articulate\Themes\**\*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="App_Plugins\Articulate\BackOffice\**\*" Pack="true" PackagePath="contentFiles\any\any\App_Plugins\Articulate\BackOffice" />
+    <None Include="App_Plugins\Articulate\umbraco-package.json" Pack="true" PackagePath="contentFiles\any\any\App_Plugins\Articulate" />
+    <None Include="build\**\*" Pack="true" PackagePath="build\" />
+  </ItemGroup>
+
+
+
+  <ItemGroup>
+    <ClientAssetsInputs Include="Client\**" Exclude="$(DefaultItemExcludes);Client\dist\**\*" />
+  </ItemGroup>
+
+  <!-- Build backoffice client -->
+  <Target Name="RestoreClient" Inputs="Client\package.json;Client\package-lock.json" Outputs="Client\node_modules\.package-lock.json">
+    <Message Importance="high" Text="Restoring Client NPM packages..." />
+    <Exec Command="npm i" WorkingDirectory="Client" />
+  </Target>
+  <Target Name="BuildClient" DependsOnTargets="RestoreClient" BeforeTargets="CoreBuild" Inputs="@(ClientAssetsInputs)" Outputs="$(IntermediateOutputPath))client.build.timestamp">
+    <Message Importance="high" Text="[Articulate] Executing Client NPM build script..." />
+    <!-- For a regular build, continue on error to ensure updated build for Client generate -->
+    <Exec Command="npm run build" WorkingDirectory="Client" ContinueOnError="true" Condition="'$(IsPacking)' != 'true'">
+      <Output TaskParameter="ExitCode" PropertyName="ClientBuildExitCode" />
+    </Exec>
+    <Warning Text="Client build failed. The UI might be out of date." Condition="'$(IsPacking)' != 'true' AND '$(ClientBuildExitCode)' != '0'" />
+    <!-- For a 'dotnet pack' build, fail the build if the client build fails -->
+    <Exec Command="npm run build" WorkingDirectory="Client" Condition="'$(IsPacking)' == 'true'">
+      <Output TaskParameter="ExitCode" PropertyName="ClientBuildExitCode" />
+    </Exec>
+    <Warning Text="Client build failed. The UI might be out of date." Condition="'$(IsPacking)' != 'true' AND '$(ClientBuildExitCode)' != '0'" />
+    <Touch Files="$(IntermediateOutputPath)client.build.timestamp" AlwaysCreate="true" />
+    <ItemGroup>
+      <_ClientAssetsBuildOutput Include="wwwroot\App_Plugins\**" />
+    </ItemGroup>
+    <WriteLinesToFile File="$(IntermediateOutputPath)client.complete.txt" Lines="@(_ClientAssetsBuildOutput)" Overwrite="true" />
+  </Target>
 
   <ItemGroup>
     <None Remove="Packaging\package.zip" />
@@ -69,14 +123,14 @@
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
   </ItemGroup>
-  
+
   <ItemGroup>
     <EmbeddedResource Update="Controllers\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
-  
+
   <ItemGroup>
     <EmbeddedResource Include="Packaging\author.jpg" />
     <EmbeddedResource Include="Packaging\banner.jpg" />
@@ -86,93 +140,104 @@
     <EmbeddedResource Include="Packaging\post2.jpg" />
   </ItemGroup>
 
-
-  <ItemGroup>
-    <Content Include="App_Plugins/**/*.*">
-      <Pack>true</Pack>
-      <PackagePath>App_Plugins</PackagePath>
-    </Content>
-  </ItemGroup>
-  <ItemGroup>
-    <Content Update="App_Plugins\Themes\**\*.cshtml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Pack>true</Pack>
-      <PackagePath>App_Plugins\Themes\</PackagePath>
-    </Content>
-  </ItemGroup>
-
-  <!-- Nuget Package Dependencies -->
-  <ItemGroup>
-    <PackageReference Include="Markdig" Version="0.41.2" />
-    <PackageReference Include="Umbraco.Cms.Web.Website" Version="15.4.3" />
-    <PackageReference Include="Umbraco.Cms.Web.Common" Version="15.4.3" />
-    <PackageReference Include="Umbraco.Cms.Api.Common" Version="15.4.3" />
-    <PackageReference Include="Umbraco.Cms.Api.Management" Version="15.4.3" />
-    <PackageReference Include="Argotic.Core" Version="3001.0.0" />
-    <PackageReference Include="Lucene.Net.Replicator" Version="4.8.0-beta00017" />
-    <PackageReference Include="Smidge" Version="4.5.1" />
-    <PackageReference Include="System.ServiceModel.Syndication" Version="9.0.5" />
-    <PackageReference Include="System.Text.Json" Version="9.0.5" />
-    <PackageReference Include="WilderMinds.MetaWeblog" Version="5.1.3" />
-  </ItemGroup>
-  
-  <ItemGroup>
-    <FrameworkReference Include="Microsoft.AspNetCore.App" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ClientAssetsInputs Include="Client\**" Exclude="$(DefaultItemExcludes)" />
-    <!-- Dont include the client folder as part of packaging nuget build -->
-    <Content Remove="Client\**" />
-    <!-- However make the Umbraco-package.json included for dotnet pack or nuget package and visible to the solution -->
-    <None Include="Client\public\umbraco-package.json" Pack="false" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="wwwroot\" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <!-- Don't include xLegacy folder in build or pack -->
-    <Compile Remove="App_Plugins\Articulate\xLegacy\**" />
-    <Content Remove="App_Plugins\Articulate\xLegacy\**" />
-    <None Remove="App_Plugins\Articulate\xLegacy\**" />
-    <EmbeddedResource Remove="App_Plugins\Articulate\xLegacy\**" />
-  </ItemGroup>
-
-  <!-- Restore and build Client files -->
-  <Target Name="RestoreClient" Inputs="Client\package.json;Client\package-lock.json" Outputs="Client\node_modules\.package-lock.json">
-    <Message Importance="high" Text="Restoring Client NPM packages..." />
-    <Exec Command="npm i" WorkingDirectory="Client" />
-  </Target>
-
-  <Target Name="BuildClientWarn" BeforeTargets="Build" DependsOnTargets="RestoreClient" Inputs="@(ClientAssetsInputs)" Condition="'$(IsPacking)' != 'true'" Outputs="$(IntermediateOutputPath)client.complete.txt">
-    <Message Importance="high" Text="Executing Client NPM build script (warnings only)..." />
-    <Exec Command="npm run build" WorkingDirectory="Client" ContinueOnError="true">
-      <Output TaskParameter="ExitCode" PropertyName="ClientBuildExitCode" />
-    </Exec>
-    <Warning Text="Client build failed (API/client out of sync). Regenerate client before packaging." Condition="'$(ClientBuildExitCode)' != '0'" />
-    <ItemGroup>
-      <_ClientAssetsBuildOutput Include="App_Plugins\BackOffice\**" />
-    </ItemGroup>
-    <WriteLinesToFile File="$(IntermediateOutputPath)client.complete.txt" Lines="@(_ClientAssetsBuildOutput)" Overwrite="true" />
-  </Target>
-
-  <Target Name="BuildClientError" BeforeTargets="Pack" DependsOnTargets="RestoreClient" Inputs="@(ClientAssetsInputs)" Condition="'$(IsPacking)' == 'true'" Outputs="$(IntermediateOutputPath)client.complete.txt">
-    <Message Importance="high" Text="Executing Client NPM build script (error on failure for pack)..." />
-    <Exec Command="npm run build" WorkingDirectory="Client" />
-    <ItemGroup>
-      <_ClientAssetsBuildOutput Include="App_Plugins\BackOffice\**" />
-    </ItemGroup>
-    <WriteLinesToFile File="$(IntermediateOutputPath)client.complete.txt" Lines="@(_ClientAssetsBuildOutput)" Overwrite="true" />
-  </Target>
-
   <!-- Uses Package Icon on disk in repo -->
   <ItemGroup>
     <None Include="..\..\README.md">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\assets\Icon-transparent.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Remove="Client\**" />
+    <Compile Remove="Client\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Watch Remove="bin\**\*" />
+    <Watch Remove="obj\**\*" />
+    <Watch Remove="Client\**\*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Remove="App_Plugins\Articulate\Themes\Material\Assets\css\styles.css" />
+    <Content Remove="App_Plugins\Articulate\Themes\Material\Assets\css\styles_custom.css" />
+    <Content Remove="App_Plugins\Articulate\Themes\Material\Views\Author.cshtml" />
+    <Content Remove="App_Plugins\Articulate\Themes\Material\Views\List.cshtml" />
+    <Content Remove="App_Plugins\Articulate\Themes\Material\Views\Master.cshtml" />
+    <Content Remove="App_Plugins\Articulate\Themes\Material\Views\Partials\AuthorInfo.cshtml" />
+    <Content Remove="App_Plugins\Articulate\Themes\Material\Views\Partials\CommentsDisqus.cshtml" />
+    <Content Remove="App_Plugins\Articulate\Themes\Material\Views\Partials\CommentsFacebook.cshtml" />
+    <Content Remove="App_Plugins\Articulate\Themes\Material\Views\Partials\Footer.cshtml" />
+    <Content Remove="App_Plugins\Articulate\Themes\Material\Views\Partials\Menu.cshtml" />
+    <Content Remove="App_Plugins\Articulate\Themes\Material\Views\Partials\Pager.cshtml" />
+    <Content Remove="App_Plugins\Articulate\Themes\Material\Views\Partials\PostImageHeader.cshtml" />
+    <Content Remove="App_Plugins\Articulate\Themes\Material\Views\Partials\PostTags.cshtml" />
+    <Content Remove="App_Plugins\Articulate\Themes\Material\Views\Partials\SearchBox.cshtml" />
+    <Content Remove="App_Plugins\Articulate\Themes\Material\Views\Post.cshtml" />
+    <Content Remove="App_Plugins\Articulate\Themes\Material\Views\Tags.cshtml" />
+    <Content Remove="App_Plugins\Articulate\Themes\Mini\Assets\css\base.css" />
+    <Content Remove="App_Plugins\Articulate\Themes\Mini\Assets\css\style.css" />
+    <Content Remove="App_Plugins\Articulate\Themes\Mini\Views\Author.cshtml" />
+    <Content Remove="App_Plugins\Articulate\Themes\Mini\Views\List.cshtml" />
+    <Content Remove="App_Plugins\Articulate\Themes\Mini\Views\Master.cshtml" />
+    <Content Remove="App_Plugins\Articulate\Themes\Mini\Views\Partials\CommentsDisqus.cshtml" />
+    <Content Remove="App_Plugins\Articulate\Themes\Mini\Views\Partials\CommentsFacebook.cshtml" />
+    <Content Remove="App_Plugins\Articulate\Themes\Mini\Views\Partials\Footer.cshtml" />
+    <Content Remove="App_Plugins\Articulate\Themes\Mini\Views\Partials\Header.cshtml" />
+    <Content Remove="App_Plugins\Articulate\Themes\Mini\Views\Partials\Menu.cshtml" />
+    <Content Remove="App_Plugins\Articulate\Themes\Mini\Views\Partials\Pager.cshtml" />
+    <Content Remove="App_Plugins\Articulate\Themes\Mini\Views\Partials\PostTags.cshtml" />
+    <Content Remove="App_Plugins\Articulate\Themes\Mini\Views\Partials\Share.cshtml" />
+    <Content Remove="App_Plugins\Articulate\Themes\Mini\Views\Post.cshtml" />
+    <Content Remove="App_Plugins\Articulate\Themes\Phantom\Assets\css\normalize.css" />
+    <Content Remove="App_Plugins\Articulate\Themes\Phantom\Assets\css\site.css" />
+    <Content Remove="App_Plugins\Articulate\Themes\Phantom\Assets\fonts\config.json" />
+    <Content Remove="App_Plugins\Articulate\Themes\Phantom\Assets\fonts\phantom.eot" />
+    <Content Remove="App_Plugins\Articulate\Themes\Phantom\Assets\fonts\phantom.svg" />
+    <Content Remove="App_Plugins\Articulate\Themes\Phantom\Assets\fonts\phantom.ttf" />
+    <Content Remove="App_Plugins\Articulate\Themes\Phantom\Assets\fonts\phantom.woff" />
+    <Content Remove="App_Plugins\Articulate\Themes\Phantom\Views\Author.cshtml" />
+    <Content Remove="App_Plugins\Articulate\Themes\Phantom\Views\List.cshtml" />
+    <Content Remove="App_Plugins\Articulate\Themes\Phantom\Views\Master.cshtml" />
+    <Content Remove="App_Plugins\Articulate\Themes\Phantom\Views\Partials\CommentsDisqus.cshtml" />
+    <Content Remove="App_Plugins\Articulate\Themes\Phantom\Views\Partials\CommentsFacebook.cshtml" />
+    <Content Remove="App_Plugins\Articulate\Themes\Phantom\Views\Partials\Menu.cshtml" />
+    <Content Remove="App_Plugins\Articulate\Themes\Phantom\Views\Partials\Pager.cshtml" />
+    <Content Remove="App_Plugins\Articulate\Themes\Phantom\Views\Partials\PostTags.cshtml" />
+    <Content Remove="App_Plugins\Articulate\Themes\Phantom\Views\Partials\SearchBox.cshtml" />
+    <Content Remove="App_Plugins\Articulate\Themes\Phantom\Views\Partials\Sidebar.cshtml" />
+    <Content Remove="App_Plugins\Articulate\Themes\Phantom\Views\Post.cshtml" />
+    <Content Remove="App_Plugins\Articulate\Themes\VAPOR\Assets\css\normalize.css" />
+    <Content Remove="App_Plugins\Articulate\Themes\VAPOR\Assets\css\screen.css" />
+    <Content Remove="App_Plugins\Articulate\Themes\VAPOR\Assets\fonts\icons.eot" />
+    <Content Remove="App_Plugins\Articulate\Themes\VAPOR\Assets\fonts\icons.svg" />
+    <Content Remove="App_Plugins\Articulate\Themes\VAPOR\Assets\fonts\icons.ttf" />
+    <Content Remove="App_Plugins\Articulate\Themes\VAPOR\Assets\fonts\icons.woff" />
+    <Content Remove="App_Plugins\Articulate\Themes\VAPOR\Views\Author.cshtml" />
+    <Content Remove="App_Plugins\Articulate\Themes\VAPOR\Views\List.cshtml" />
+    <Content Remove="App_Plugins\Articulate\Themes\VAPOR\Views\Master.cshtml" />
+    <Content Remove="App_Plugins\Articulate\Themes\VAPOR\Views\Partials\CommentsDisqus.cshtml" />
+    <Content Remove="App_Plugins\Articulate\Themes\VAPOR\Views\Partials\CommentsFacebook.cshtml" />
+    <Content Remove="App_Plugins\Articulate\Themes\VAPOR\Views\Partials\FooterDescription.cshtml" />
+    <Content Remove="App_Plugins\Articulate\Themes\VAPOR\Views\Partials\HeaderDescription.cshtml" />
+    <Content Remove="App_Plugins\Articulate\Themes\VAPOR\Views\Partials\Menu.cshtml" />
+    <Content Remove="App_Plugins\Articulate\Themes\VAPOR\Views\Partials\Pager.cshtml" />
+    <Content Remove="App_Plugins\Articulate\Themes\VAPOR\Views\Partials\PostList.cshtml" />
+    <Content Remove="App_Plugins\Articulate\Themes\VAPOR\Views\Partials\PostTags.cshtml" />
+    <Content Remove="App_Plugins\Articulate\Themes\VAPOR\Views\Partials\SearchBox.cshtml" />
+    <Content Remove="App_Plugins\Articulate\Themes\VAPOR\Views\Post.cshtml" />
+    <Content Remove="App_Plugins\Articulate\Themes\VAPOR\Views\Tags.cshtml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="wwwroot\" />
   </ItemGroup>
 
 </Project>

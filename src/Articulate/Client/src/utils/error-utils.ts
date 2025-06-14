@@ -2,6 +2,8 @@ import { ProblemDetails } from "../api/articulate";
 
 export const reviewLogsMessage = "Review back office logs for more details.";
 
+// TODO: should be using try/catch with tryExecuteAndHandleError for fetches and dealing with errors the Umbraco way https://docs.umbraco.com/umbraco-cms/customizing/property-editors/integrate-validation
+
 /**
  * Extracts an error message from various error types.
  * Fetch API does not throw on HTTP errors, so we need to check for that.

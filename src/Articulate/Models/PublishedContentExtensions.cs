@@ -164,7 +164,7 @@ namespace Articulate.Models
         }
 
         /// <summary>
-        ///     Shuffles a List<T> in-place.
+        ///     Shuffles a List&lt;T&gt; in-place.
         /// </summary>
         public static void Shuffle<T>(this List<T> list)
         {
@@ -175,7 +175,6 @@ namespace Articulate.Models
 
             CollectionsMarshal.AsSpan(list).Shuffle(Random.Shared);
         }
-
 
         /// <summary>
         ///     Returns a new list containing the elements of a source sequence in random order.

@@ -28,6 +28,7 @@ import { formStyles } from "./form-styles";
 
 // TODO: Import tests
 // TODO: Polish UX / CSS
+// TODO: https://docs.umbraco.com/umbraco-cms/customizing/property-editors/integrate-validation
 
 /**
  * A LitElement-based component for importing blog content from BlogML format.
@@ -344,9 +345,8 @@ export default class ArticulateBlogMlImporterElement extends UmbLitElement {
           </uui-form-validation-message>
         </uui-form>
       </uui-box>
-      ${
-        this._downloadUrl
-          ? html`
+      ${this._downloadUrl
+        ? html`
               <uui-modal-container>
                 <uui-modal-dialog>
                   <uui-dialog>
@@ -372,7 +372,7 @@ export default class ArticulateBlogMlImporterElement extends UmbLitElement {
                 </uui-modal-dialog>
               </uui-modal-container>
             `
-          : html``
+        : html``
       }
     `;
   }

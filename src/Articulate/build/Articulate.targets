@@ -1,27 +1,41 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
+  <!-- 
+    This target will ONLY run during a normal build (like in VS),
+    and NOT during a 'pack' operation. The condition checks if the consuming
+    project is referencing this project directly via a ProjectReference.
+  -->
+  <Target Name="CopyArticulateAssetsForLocalDev" BeforeTargets="Build" Condition="'@(ProjectReference)' != ''">
+
     <PropertyGroup>
-        <ArticulateContentFilesPath>$(MSBuildThisFileDirectory)..\App_Plugins\Articulate\**\*.*</ArticulateContentFilesPath>
+      <!-- Define the source path relative to this .targets file -->
+      <_ArticulateSourceFolder>$(MSBuildThisFileDirectory)..\App_Plugins\Articulate</_ArticulateSourceFolder>
     </PropertyGroup>
 
-    <Target Name="CopyArticulateAssets" BeforeTargets="Build">
-        <ItemGroup>
-            <ArticulateContentFiles Include="$(ArticulateContentFilesPath)" />
-        </ItemGroup>
-        <Message Text="Copying Articulate files: $(ArticulateContentFilesPath) - #@(ArticulateContentFiles->Count()) files"  Importance="high" />
-        <Copy
-            SourceFiles="@(ArticulateContentFiles)"
-            DestinationFiles="@(ArticulateContentFiles->'$(MSBuildProjectDirectory)\App_Plugins\Articulate\%(RecursiveDir)%(Filename)%(Extension)')"
-            SkipUnchangedFiles="true" />
+    <ItemGroup>
+      <!-- Find the files to copy from the source project -->
+      <ArticulateContentFiles Include="$(_ArticulateSourceFolder)\BackOffice\**\*.*" />
+      <ArticulateContentFiles Include="$(_ArticulateSourceFolder)\umbraco-package.json" />
+    </ItemGroup>
 
-    </Target>
+    <Message Text="[Articulate LocalDev] Copying backoffice assets from '$(_ArticulateSourceFolder)'..." Importance="high" />
+    <Copy
+      SourceFiles="@(ArticulateContentFiles)"
+      DestinationFiles="@(ArticulateContentFiles->'$(MSBuildProjectDirectory)\App_Plugins\Articulate\%(RecursiveDir)%(Filename)%(Extension)')"
+      SkipUnchangedFiles="true"
+    />
+  </Target>
 
-    <Target Name="ClearArticulateAssets" BeforeTargets="Clean">
-        <ItemGroup>
-            <ArticulateDir Include="$(MSBuildProjectDirectory)\App_Plugins\Articulate\" />
-        </ItemGroup>
-        <Message Text="Clear old Articulate data"  Importance="high" />
-        <RemoveDir Directories="@(ArticulateDir)"  />
-    </Target>
+  <!-- 
+    The 'Clear' target is fine as is, but we can add the same condition
+    to ensure it only runs in a local development context.
+  -->
+  <Target Name="ClearArticulateAssets" BeforeTargets="Clean" Condition="'@(ProjectReference)' != ''">
+    <ItemGroup>
+      <ArticulateDir Include="$(MSBuildProjectDirectory)\App_Plugins\Articulate\" />
+    </ItemGroup>
+    <Message Text="[Articulate LocalDev] Clearing old assets..." Importance="high" />
+    <RemoveDir Directories="@(ArticulateDir)"  />
+  </Target>
 
 </Project>

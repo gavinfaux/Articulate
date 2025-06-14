@@ -1,5 +1,4 @@
-//TODO: Broken, not returning anything see comments in Index method
-
+//TODO: Broken only for posts /rss route, not returning anything see comments in Index method? tags, categories, authors are fine
 
 using System;
 using System.Linq;
@@ -188,6 +187,7 @@ namespace Articulate.Controllers
         /// <returns></returns>
         public IActionResult FeedXslt()
         {
+            
             var result = Resources.FeedXslt;
             return Content(result, "text/xml");
         }
