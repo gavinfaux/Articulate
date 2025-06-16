@@ -118,7 +118,7 @@ namespace Articulate.Syndication
             {
                 logoUri = rootPageModel.BlogLogo.IsNullOrWhiteSpace()
                     ? null
-                    : new Uri(rootPageModel.BlogLogo);
+                    : new Uri(rootPageModel.BlogLogo, UriKind.RelativeOrAbsolute);
             }
             catch (Exception ex)
             {
