@@ -112,7 +112,7 @@ namespace Articulate.Syndication
             if (!posts.Any())
             {
                 // posts collection is empty
-                return new List<SyndicationItem>(); // or throw an exception, depending on your requirements
+                return new List<SyndicationItem>();
             }
 
             return posts.Select(post => GetFeedItem(model, post, rootUrl)).WhereNotNull().ToList();
