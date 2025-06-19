@@ -6,7 +6,9 @@ using System.Text;
 using Argotic.Common;
 using Argotic.Syndication.Specialized;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Umbraco.Cms.Core;
+using Umbraco.Cms.Core.Configuration.Models;
 using Umbraco.Cms.Core.IO;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Models.PublishedContent;
@@ -30,6 +32,7 @@ namespace Articulate.ImportExport
         private readonly ILogger<BlogMlExporter> _logger;
         private readonly MediaFileManager _mediaFileManager;
         private readonly ArticulateTempFileSystem _articulateTempFileSystem;
+        private readonly IOptions<WebRoutingSettings> _routeSettings;
 
         public BlogMlExporter(
             IContentService contentService,
@@ -41,7 +44,7 @@ namespace Articulate.ImportExport
             ArticulateTempFileSystem articulateTempFileSystem,
             IPublishedUrlProvider urlProvider,
             ISqlContext sqlContext,
-            ILogger<BlogMlExporter> logger)
+            ILogger<BlogMlExporter> logger, IOptions<WebRoutingSettings> routeSettings)
         {
             _mediaFileManager = mediaFileSystem;
             _articulateTempFileSystem = articulateTempFileSystem;
@@ -53,6 +56,7 @@ namespace Articulate.ImportExport
             _urlProvider = urlProvider;
             _sqlContext = sqlContext;
             _logger = logger;
+            _routeSettings = routeSettings;
         }
 
         public void Export(
@@ -189,7 +193,7 @@ namespace Articulate.ImportExport
                     }
                     else if (child.ContentType.Alias.InvariantEquals("ArticulateMarkdown"))
                     {
-                        content = MarkdownHelper.ToHtml(child.GetValue<string>("markdown"));
+                        content = new MarkdownHelper(_routeSettings).ToHtml(child.GetValue<string>("markdown"));
                     }
 
                     var postUrl = new Uri(_urlProvider.GetUrl(child.Id), UriKind.RelativeOrAbsolute);

@@ -1,12 +1,12 @@
-<Project Sdk="Microsoft.NET.Sdk.Razor">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>net9.0</TargetFrameworks>
+    <OutputType>Library</OutputType>
     <!-- Temporary, resolve in later PRs and enable-->
     <Nullable>warnings</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
+    <ImplicitUsings>disable</ImplicitUsings>
     <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
-    <StaticWebAssetBasePath>App_Plugins/Articulate</StaticWebAssetBasePath>
-    <EnableDefaultContentItems>false</EnableDefaultContentItems>
+    <CompressionEnabled>false</CompressionEnabled>
   </PropertyGroup>
 
   <!-- Nuget Package -->
@@ -60,6 +60,8 @@
 
   <!-- Nuget Package Dependencies -->
   <ItemGroup>
+    <PackageReference Include="FileSignatures" Version="5.2.0" />
+    <PackageReference Include="HtmlSanitizer" Version="9.0.886" />
     <PackageReference Include="Markdig" Version="0.41.2" />
     <PackageReference Include="Umbraco.Cms.Web.Website" Version="15.4.3" />
     <PackageReference Include="Umbraco.Cms.Web.Common" Version="15.4.3" />
@@ -71,23 +73,17 @@
     <PackageReference Include="WilderMinds.MetaWeblog" Version="5.1.3" />
   </ItemGroup>
 
-  <!-- RCL content to be compiled -->
   <ItemGroup>
-    <Content Include="App_Plugins\Articulate\Themes\**\*" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="App_Plugins\Articulate\BackOffice\**\*" Pack="true" PackagePath="contentFiles\any\any\App_Plugins\Articulate\BackOffice" />
-    <None Include="App_Plugins\Articulate\umbraco-package.json" Pack="true" PackagePath="contentFiles\any\any\App_Plugins\Articulate" />
     <None Include="build\**\*" Pack="true" PackagePath="build\" />
   </ItemGroup>
-
-
-
   <ItemGroup>
-    <ClientAssetsInputs Include="Client\**" Exclude="$(DefaultItemExcludes);Client\dist\**\*" />
+    <None Include="App_Plugins\**\*" Pack="true" PackagePath="App_Plugins\" />
   </ItemGroup>
-
+  
+<ItemGroup>
+    <ClientAssetsInputs Include="Client\**" Exclude="$(DefaultItemExcludes)" />
+</ItemGroup>
+  
   <!-- Build backoffice client -->
   <Target Name="RestoreClient" Inputs="Client\package.json;Client\package-lock.json" Outputs="Client\node_modules\.package-lock.json">
     <Message Importance="high" Text="Restoring Client NPM packages..." />
@@ -106,10 +102,6 @@
     </Exec>
     <Warning Text="Client build failed. The UI might be out of date." Condition="'$(IsPacking)' != 'true' AND '$(ClientBuildExitCode)' != '0'" />
     <Touch Files="$(IntermediateOutputPath)client.build.timestamp" AlwaysCreate="true" />
-    <ItemGroup>
-      <_ClientAssetsBuildOutput Include="wwwroot\App_Plugins\**" />
-    </ItemGroup>
-    <WriteLinesToFile File="$(IntermediateOutputPath)client.complete.txt" Lines="@(_ClientAssetsBuildOutput)" Overwrite="true" />
   </Target>
 
   <ItemGroup>
@@ -152,92 +144,6 @@
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
     </None>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Remove="Client\**" />
-    <Compile Remove="Client\**" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Watch Remove="bin\**\*" />
-    <Watch Remove="obj\**\*" />
-    <Watch Remove="Client\**\*" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Remove="App_Plugins\Articulate\Themes\Material\Assets\css\styles.css" />
-    <Content Remove="App_Plugins\Articulate\Themes\Material\Assets\css\styles_custom.css" />
-    <Content Remove="App_Plugins\Articulate\Themes\Material\Views\Author.cshtml" />
-    <Content Remove="App_Plugins\Articulate\Themes\Material\Views\List.cshtml" />
-    <Content Remove="App_Plugins\Articulate\Themes\Material\Views\Master.cshtml" />
-    <Content Remove="App_Plugins\Articulate\Themes\Material\Views\Partials\AuthorInfo.cshtml" />
-    <Content Remove="App_Plugins\Articulate\Themes\Material\Views\Partials\CommentsDisqus.cshtml" />
-    <Content Remove="App_Plugins\Articulate\Themes\Material\Views\Partials\CommentsFacebook.cshtml" />
-    <Content Remove="App_Plugins\Articulate\Themes\Material\Views\Partials\Footer.cshtml" />
-    <Content Remove="App_Plugins\Articulate\Themes\Material\Views\Partials\Menu.cshtml" />
-    <Content Remove="App_Plugins\Articulate\Themes\Material\Views\Partials\Pager.cshtml" />
-    <Content Remove="App_Plugins\Articulate\Themes\Material\Views\Partials\PostImageHeader.cshtml" />
-    <Content Remove="App_Plugins\Articulate\Themes\Material\Views\Partials\PostTags.cshtml" />
-    <Content Remove="App_Plugins\Articulate\Themes\Material\Views\Partials\SearchBox.cshtml" />
-    <Content Remove="App_Plugins\Articulate\Themes\Material\Views\Post.cshtml" />
-    <Content Remove="App_Plugins\Articulate\Themes\Material\Views\Tags.cshtml" />
-    <Content Remove="App_Plugins\Articulate\Themes\Mini\Assets\css\base.css" />
-    <Content Remove="App_Plugins\Articulate\Themes\Mini\Assets\css\style.css" />
-    <Content Remove="App_Plugins\Articulate\Themes\Mini\Views\Author.cshtml" />
-    <Content Remove="App_Plugins\Articulate\Themes\Mini\Views\List.cshtml" />
-    <Content Remove="App_Plugins\Articulate\Themes\Mini\Views\Master.cshtml" />
-    <Content Remove="App_Plugins\Articulate\Themes\Mini\Views\Partials\CommentsDisqus.cshtml" />
-    <Content Remove="App_Plugins\Articulate\Themes\Mini\Views\Partials\CommentsFacebook.cshtml" />
-    <Content Remove="App_Plugins\Articulate\Themes\Mini\Views\Partials\Footer.cshtml" />
-    <Content Remove="App_Plugins\Articulate\Themes\Mini\Views\Partials\Header.cshtml" />
-    <Content Remove="App_Plugins\Articulate\Themes\Mini\Views\Partials\Menu.cshtml" />
-    <Content Remove="App_Plugins\Articulate\Themes\Mini\Views\Partials\Pager.cshtml" />
-    <Content Remove="App_Plugins\Articulate\Themes\Mini\Views\Partials\PostTags.cshtml" />
-    <Content Remove="App_Plugins\Articulate\Themes\Mini\Views\Partials\Share.cshtml" />
-    <Content Remove="App_Plugins\Articulate\Themes\Mini\Views\Post.cshtml" />
-    <Content Remove="App_Plugins\Articulate\Themes\Phantom\Assets\css\normalize.css" />
-    <Content Remove="App_Plugins\Articulate\Themes\Phantom\Assets\css\site.css" />
-    <Content Remove="App_Plugins\Articulate\Themes\Phantom\Assets\fonts\config.json" />
-    <Content Remove="App_Plugins\Articulate\Themes\Phantom\Assets\fonts\phantom.eot" />
-    <Content Remove="App_Plugins\Articulate\Themes\Phantom\Assets\fonts\phantom.svg" />
-    <Content Remove="App_Plugins\Articulate\Themes\Phantom\Assets\fonts\phantom.ttf" />
-    <Content Remove="App_Plugins\Articulate\Themes\Phantom\Assets\fonts\phantom.woff" />
-    <Content Remove="App_Plugins\Articulate\Themes\Phantom\Views\Author.cshtml" />
-    <Content Remove="App_Plugins\Articulate\Themes\Phantom\Views\List.cshtml" />
-    <Content Remove="App_Plugins\Articulate\Themes\Phantom\Views\Master.cshtml" />
-    <Content Remove="App_Plugins\Articulate\Themes\Phantom\Views\Partials\CommentsDisqus.cshtml" />
-    <Content Remove="App_Plugins\Articulate\Themes\Phantom\Views\Partials\CommentsFacebook.cshtml" />
-    <Content Remove="App_Plugins\Articulate\Themes\Phantom\Views\Partials\Menu.cshtml" />
-    <Content Remove="App_Plugins\Articulate\Themes\Phantom\Views\Partials\Pager.cshtml" />
-    <Content Remove="App_Plugins\Articulate\Themes\Phantom\Views\Partials\PostTags.cshtml" />
-    <Content Remove="App_Plugins\Articulate\Themes\Phantom\Views\Partials\SearchBox.cshtml" />
-    <Content Remove="App_Plugins\Articulate\Themes\Phantom\Views\Partials\Sidebar.cshtml" />
-    <Content Remove="App_Plugins\Articulate\Themes\Phantom\Views\Post.cshtml" />
-    <Content Remove="App_Plugins\Articulate\Themes\VAPOR\Assets\css\normalize.css" />
-    <Content Remove="App_Plugins\Articulate\Themes\VAPOR\Assets\css\screen.css" />
-    <Content Remove="App_Plugins\Articulate\Themes\VAPOR\Assets\fonts\icons.eot" />
-    <Content Remove="App_Plugins\Articulate\Themes\VAPOR\Assets\fonts\icons.svg" />
-    <Content Remove="App_Plugins\Articulate\Themes\VAPOR\Assets\fonts\icons.ttf" />
-    <Content Remove="App_Plugins\Articulate\Themes\VAPOR\Assets\fonts\icons.woff" />
-    <Content Remove="App_Plugins\Articulate\Themes\VAPOR\Views\Author.cshtml" />
-    <Content Remove="App_Plugins\Articulate\Themes\VAPOR\Views\List.cshtml" />
-    <Content Remove="App_Plugins\Articulate\Themes\VAPOR\Views\Master.cshtml" />
-    <Content Remove="App_Plugins\Articulate\Themes\VAPOR\Views\Partials\CommentsDisqus.cshtml" />
-    <Content Remove="App_Plugins\Articulate\Themes\VAPOR\Views\Partials\CommentsFacebook.cshtml" />
-    <Content Remove="App_Plugins\Articulate\Themes\VAPOR\Views\Partials\FooterDescription.cshtml" />
-    <Content Remove="App_Plugins\Articulate\Themes\VAPOR\Views\Partials\HeaderDescription.cshtml" />
-    <Content Remove="App_Plugins\Articulate\Themes\VAPOR\Views\Partials\Menu.cshtml" />
-    <Content Remove="App_Plugins\Articulate\Themes\VAPOR\Views\Partials\Pager.cshtml" />
-    <Content Remove="App_Plugins\Articulate\Themes\VAPOR\Views\Partials\PostList.cshtml" />
-    <Content Remove="App_Plugins\Articulate\Themes\VAPOR\Views\Partials\PostTags.cshtml" />
-    <Content Remove="App_Plugins\Articulate\Themes\VAPOR\Views\Partials\SearchBox.cshtml" />
-    <Content Remove="App_Plugins\Articulate\Themes\VAPOR\Views\Post.cshtml" />
-    <Content Remove="App_Plugins\Articulate\Themes\VAPOR\Views\Tags.cshtml" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="wwwroot\" />
   </ItemGroup>
 
 </Project>

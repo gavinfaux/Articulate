@@ -1,8 +1,11 @@
 // // TODO: Replace with Umbraco.MarkdownEditor if/when #19500 PR made and accepted and merged into Umbraco.Cms.Core (v17+)
-
+using Microsoft.Extensions.Options;
+using Umbraco.Cms.Core.Configuration.Models;
+using Umbraco.Cms.Core.IO;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.PropertyEditors;
 using Umbraco.Cms.Core.PropertyEditors.ValueConverters;
+using Umbraco.Cms.Core.Services;
 using Umbraco.Cms.Core.Strings;
 using Umbraco.Cms.Core.Templates;
 
@@ -17,9 +20,10 @@ namespace Articulate.PropertyEditors
     }
 
     // using a reasonable Markdown converter
-    public class ArticulateMarkdownEditorValueConverter(HtmlLocalLinkParser localLinkParser, HtmlUrlParser urlParser)
+    public class ArticulateMarkdownEditorValueConverter(HtmlLocalLinkParser localLinkParser, HtmlUrlParser urlParser, IOptions<WebRoutingSettings> routeSettings)
         : MarkdownEditorValueConverter(localLinkParser, urlParser)
     {
+        private readonly IOptions<WebRoutingSettings> _routeSettings;
         public override bool IsConverter(IPublishedPropertyType propertyType)
             => "Articulate.MarkdownEditor" == propertyType.EditorUiAlias;
 
@@ -31,7 +35,7 @@ namespace Articulate.PropertyEditors
             bool preview)
         {
             var md = (string)inter;
-            return new HtmlEncodedString((inter == null) ? string.Empty : MarkdownHelper.ToHtml(md));
+            return new HtmlEncodedString((inter == null) ? string.Empty : new MarkdownHelper(_routeSettings).ToHtml(md));
         }
     }
 }

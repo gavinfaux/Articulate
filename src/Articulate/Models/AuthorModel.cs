@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Umbraco.Cms.Core.Media;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Models.PublishedContent;
+using Umbraco.Cms.Core.PropertyEditors.ValueConverters;
 using Umbraco.Extensions;
 namespace Articulate.Models
 {
@@ -27,7 +29,24 @@ namespace Articulate.Models
         public string AuthorUrl => this.Value<string>("authorUrl");
 
         private MediaWithCrops _image;
-        public MediaWithCrops Image => (_image ??= base.Unwrap().Value<MediaWithCrops>("authorImage"));
+        public MediaWithCrops Image
+        {
+            get
+            {
+                if (_image != null)
+                {
+                    return _image;
+                }
+
+                var image = base.Unwrap().Value<MediaWithCrops>("authorImage");
+                if (image != null)
+                {
+                    _image = image;
+                }
+
+                return _image;
+            }
+        }
 
         public int PostCount { get; }
 
@@ -35,6 +54,7 @@ namespace Articulate.Models
         public DateTime? LastPostDate => _lastPostDate ?? (_lastPostDate = Children.FirstOrDefault()?.Value<DateTime>("publishedDate"));
 
         string IImageModel.Url => this.Url();
+        string IImageModel.ImageUrl => this.Image.MediaUrl();
     }
 
 }

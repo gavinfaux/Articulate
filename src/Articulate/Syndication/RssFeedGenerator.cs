@@ -111,8 +111,8 @@ namespace Articulate.Syndication
             var rootUrl = model.RootBlogNode.Url(mode: UrlMode.Absolute);
             if (!posts.Any())
             {
-                // posts collection is empty
-                return new List<SyndicationItem>();
+                // TODO: posts collection is empty - passed from RSS controller Index?
+                return new List<SyndicationItem>(); 
             }
 
             return posts.Select(post => GetFeedItem(model, post, rootUrl)).WhereNotNull().ToList();

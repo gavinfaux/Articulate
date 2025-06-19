@@ -3,8 +3,12 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
+using Microsoft.Extensions.DependencyInjection;
+using Umbraco.Cms.Core.DependencyInjection;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Models.PublishedContent;
+using Umbraco.Cms.Core.PropertyEditors;
+using Umbraco.Cms.Core.Services;
 using Umbraco.Extensions;
 
 namespace Articulate.Models
@@ -131,7 +135,67 @@ namespace Articulate.Models
             return false; // < count
         }
 
+        public static string GetBaseImageUrl(this IPublishedContent content, string propertyAlias)
+        {
+            if (content == null)
+            {
+                return null;
+            }
+
+            var url = content.Value<MediaWithCrops>(propertyAlias)?.Url();
+
+            if (string.IsNullOrWhiteSpace(url))
+            {
+                url = content.GetProperty(propertyAlias)?.GetSourceValue()?.ToString();
+                if (url==null || url.IsNullOrWhiteSpace() || url.Equals("[]"))
+                {
+                    url = string.Empty;
+                }
+            }
+
+            return url;
+        }
+
+        public static string GetCroppedImageUrl(this IPublishedContent content, string propertyAlias, string cropAlias, ImageCropMode imageCropMode = ImageCropMode.Max, string fallbackBgColor = "ffffff")
+        {
+            if (content == null || string.IsNullOrWhiteSpace(cropAlias) || string.IsNullOrWhiteSpace(propertyAlias))
+            {
+                return null;
+            }
+
+            var cropUrl = content.Value<MediaWithCrops>(propertyAlias)?.GetCropUrl(cropAlias);
+            if (string.IsNullOrWhiteSpace(cropUrl))
+            {
+                var baseUrl = content.GetBaseImageUrl(propertyAlias);
+
+                if (!string.IsNullOrWhiteSpace(baseUrl))
+                {
+                    var (width, height) = GetDimensionsForAlias(cropAlias);
+
+                    if (width > 0 && height > 0)
+                    {
+                        cropUrl = baseUrl.GetCropUrl(width, height, imageCropMode: imageCropMode, furtherOptions: $"bgColor={fallbackBgColor}");
+                    }
+                }
+            }
+
+            return cropUrl;
+        }
+
         /// <summary>
+        /// A private helper to map crop aliases to dimensions.
+        /// </summary>
+        private static (int, int) GetDimensionsForAlias(string cropAlias)
+        {
+            var dataTypeService = StaticServiceProvider.Instance.GetRequiredService<IDataTypeService>();
+            var picker = dataTypeService.GetDataType(ArticulateConstants.ArticulateImagePicker);
+            var config = picker?.ConfigurationAs<MediaPicker3Configuration>();
+            var crops = config?.Crops;
+            var crop = crops?.FirstOrDefault(x => x.Alias == cropAlias);
+            return crop == null ? (0, 0) : (crop.Width, crop.Height);
+        }
+		
+		        /// <summary>
         ///     Shuffles a span of elements in-place using a provided Random instance.
         /// </summary>
         public static void Shuffle<T>(this Span<T> span, Random rng)
@@ -192,3 +256,6 @@ namespace Articulate.Models
         }
     }
 }
+
+		
+		

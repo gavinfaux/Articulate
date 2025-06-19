@@ -5,8 +5,11 @@ using System.Text;
 using System.Xml.Linq;
 using Argotic.Syndication.Specialized;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Umbraco.Cms.Core.Configuration.Models;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Routing;
+using Umbraco.Cms.Core.Web;
 using Umbraco.Extensions;
 
 namespace Articulate.ImportExport
@@ -16,13 +19,16 @@ namespace Articulate.ImportExport
     {
         private readonly IPublishedUrlProvider _publishedUrlProvider;
         private readonly ILogger<DisqusXmlExporter> _logger;
+        private readonly IOptions<WebRoutingSettings> _routeSettings;
 
         public DisqusXmlExporter(
             IPublishedUrlProvider publishedUrlProvider,
-            ILogger<DisqusXmlExporter> logger)
+            ILogger<DisqusXmlExporter> logger,
+            IOptions<WebRoutingSettings> routeSettings)
         {
             _publishedUrlProvider = publishedUrlProvider;
             _logger = logger;
+            _routeSettings = routeSettings;
         }
 
         public XDocument Export(IEnumerable<IContent> posts, BlogMLDocument document)
@@ -59,8 +65,8 @@ namespace Articulate.ImportExport
 
                 var body = post.GetValue<string>("richText");
                 if (body.IsNullOrWhiteSpace())
-                {
-                    body = MarkdownHelper.ToHtml(post.GetValue<string>("markdown"));
+                {                    
+                    body = new MarkdownHelper(_routeSettings).ToHtml(post.GetValue<string>("markdown"));
                 }
 
                 var xItem = new XElement("item",

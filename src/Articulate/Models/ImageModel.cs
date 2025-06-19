@@ -1,4 +1,5 @@
 using Umbraco.Cms.Core.Models;
+using Umbraco.Cms.Core.PropertyEditors.ValueConverters;
 
 namespace Articulate.Models
 {
@@ -7,5 +8,6 @@ namespace Articulate.Models
         MediaWithCrops Image { get; }
         string Name { get; }
         string Url { get; }
+        string ImageUrl { get; }
     }
 }

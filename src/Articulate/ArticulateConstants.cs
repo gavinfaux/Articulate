@@ -8,5 +8,6 @@ namespace Articulate
         public const string ArticulateAuthorsContentTypeAlias = "ArticulateAuthors";
         public const string ArticlesDefaultName = "Articles";
         public const string AuthorsDefaultName = "Authors";
+        public const string ArticulateImagePicker= "Articulate Image Picker";
     }
 }

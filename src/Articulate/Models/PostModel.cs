@@ -83,6 +83,8 @@ namespace Articulate.Models
 
         private string _croppedPostImageUrl;
 
+        private string _imageUrl;
+
         /// <summary>
         /// Cropped version of the PostImageUrl
         /// </summary>
@@ -90,18 +92,7 @@ namespace Articulate.Models
         {
             get
             {
-                if (_croppedPostImageUrl != null)
-                {
-                    return _croppedPostImageUrl;
-                }
-
-                if (PostImage == null)
-                {
-                    return null;
-                }
-
-                var wideCropUrl = PostImage.GetCropUrl("wide");
-                _croppedPostImageUrl = (wideCropUrl ?? string.Empty) + ((wideCropUrl != null && wideCropUrl.Contains('?')) ? "&" : "?");
+                _croppedPostImageUrl = this.GetCroppedImageUrl("postImage", "wide");
                 return _croppedPostImageUrl;
             }
         }
@@ -129,6 +120,21 @@ namespace Articulate.Models
 
         string IImageModel.Name => Name;
         string IImageModel.Url => this.Url();
-    }
 
+        /// <summary>
+        /// Gets the base image URL.
+        /// </summary>
+        string IImageModel.ImageUrl
+        {
+            get
+            {
+                if (_imageUrl != null)
+                {
+                    return _imageUrl;
+                }
+
+                return _imageUrl = this.GetBaseImageUrl("postImage") ?? string.Empty;
+            }
+        }
+    }
 }

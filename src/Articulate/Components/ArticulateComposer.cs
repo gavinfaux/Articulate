@@ -1,9 +1,12 @@
 using System;
+using System.Linq;
 using Articulate.ImportExport;
 using Articulate.Options;
 using Articulate.Routing;
 using Articulate.Services;
 using Articulate.Syndication;
+using FileSignatures;
+using FileSignatures.Formats;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -12,6 +15,7 @@ using Umbraco.Cms.Core.Composing;
 using Umbraco.Cms.Core.DependencyInjection;
 using Umbraco.Cms.Core.Notifications;
 using Umbraco.Cms.Core.Routing;
+using Umbraco.Cms.Core.Security;
 
 namespace Articulate.Components
 {
@@ -20,10 +24,12 @@ namespace Articulate.Components
     {
         public override void Compose(IUmbracoBuilder builder)
         {
+            var recognised = FileFormatLocator.GetFormats().OfType<Image>().Where(f => !(f is Icon));
+            var inspector = new FileFormatInspector(recognised);
             base.Compose(builder);
 
             var services = builder.Services;
-
+            services.AddSingleton<IFileFormatInspector>(inspector);
             services.AddSingleton<ContentUrls>();
             services.AddSingleton<BlogMlExporter>();
             services.AddSingleton<ArticulateTempFileSystem>();
@@ -50,10 +56,8 @@ namespace Articulate.Components
             builder.AddNotificationHandler<ContentSavingNotification, ContentSavingHandler>();
             builder.AddNotificationHandler<ContentSavedNotification, ContentSavedHandler>();
             builder.AddNotificationHandler<ContentTypeSavingNotification, ContentTypeSavingHandler>();
-            builder.AddNotificationHandler<ServerVariablesParsingNotification, ServerVariablesParsingHandler>();
             builder.AddNotificationHandler<ContentCacheRefresherNotification, ContentCacheRefresherHandler>();
             builder.AddNotificationHandler<DomainCacheRefresherNotification, DomainCacheRefresherHandler>();
-            builder.AddNotificationHandler<SendingContentNotification, SendingContentHandler>();
 
             builder.Services.ConfigureOptions<ArticulatePipelineStartupFilter>();
             builder.Services.ConfigureOptions<ConfigureArticulateMvcOptions>();

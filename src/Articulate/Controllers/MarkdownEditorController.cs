@@ -14,7 +14,6 @@ namespace Articulate.Controllers
     [ArticulateDynamicRoute]
     public class MarkdownEditorController : RenderController
     {
-        private readonly UmbracoApiControllerTypeCollection _apiControllers;
         private readonly LinkGenerator _linkGenerator;
 
         public MarkdownEditorController(
@@ -25,18 +24,27 @@ namespace Articulate.Controllers
             : base(logger, compositeViewEngine, umbracoContextAccessor)
         {
             _linkGenerator = linkGenerator;
-        }        [HttpGet]
+        }
+
+        [HttpGet]
         public IActionResult NewPost()
         {
+            var method = nameof(MardownEditorApiController.PostNew);
+            var type = nameof(MardownEditorApiController);
+
             var vm = new MarkdownEditorInitModel
             {
                 ArticulateNodeId = CurrentPage.Id,
-                PostUrl = "/umbraco/articulate/anew/PostNew",
-                // IsAuthUrl = _linkGenerator.GetUmbracoControllerUrl(nameof(AuthenticationController.IsAuthenticated), typeof(AuthenticationController)),
-                // DoAuthUrl = _linkGenerator.GetUmbracoControllerUrl(
-                //     nameof(AuthenticationController.PostLogin),
-                //     typeof(AuthenticationController),
-                //     new Dictionary<string, object> { ["loginModel"] = null })
+
+
+                PostUrl = _linkGenerator.GetPathByAction(action: method, controller: type, values: null),
+                IsAuthUrl = "",
+                DoAuthUrl = "",
+                //IsAuthUrl = _linkGenerator.GetUmbracoControllerUrl(nameof(AuthenticationController.IsAuthenticated), typeof(AuthenticationController)),
+                //DoAuthUrl = _linkGenerator.GetUmbracoControllerUrl(
+                //    nameof(AuthenticationController.PostLogin),
+                //    typeof(AuthenticationController),
+                   // new Dictionary<string, object> { ["loginModel"] = null }
             };
             
             return View("~/App_Plugins/Articulate/Views/MarkdownEditor.cshtml", vm);

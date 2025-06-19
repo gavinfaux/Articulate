@@ -7,14 +7,7 @@ $SolutionRoot = Join-Path -Path $RepoRoot "src"
 $CodeProjFolder = Join-Path -Path $RepoRoot -ChildPath "src\Articulate"
 $CodeCSProj = Join-Path -Path $CodeProjFolder -ChildPath "Articulate.csproj"
 
-# Go get nuget.exe if we don't have it (optional, only needed if you use nuget.exe directly)
-# $NuGet = "$BuildFolder\nuget.exe"
-# $FileExists = Test-Path $NuGet 
-# If ($FileExists -eq $False) {
-#     Write-Host "Retrieving nuget.exe..."
-#     $SourceNugetExe = "https://dist.nuget.org/win-x86-commandline/latest/nuget.exe"
-#     Invoke-WebRequest $SourceNugetExe -OutFile $NuGet
-# }
+
 
 if ((Get-Item $ReleaseFolder -ErrorAction SilentlyContinue) -ne $null)
 {

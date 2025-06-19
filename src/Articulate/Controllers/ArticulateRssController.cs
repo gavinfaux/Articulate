@@ -89,7 +89,7 @@ namespace Articulate.Controllers
             *         => content.Children<T>(GetNavigationQueryService(content), GetPublishedStatusFilteringService(content), culture);
             */
 
-            var x = rootPageModel.Children<PostModel>().ToList();
+           // var x = rootPageModel.Children<PostModel>().ToList();
 
             var feed = _feedGenerator.GetFeed(rootPageModel, rootPageModel.Children<PostModel>());
 

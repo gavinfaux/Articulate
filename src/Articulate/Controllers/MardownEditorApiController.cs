@@ -11,6 +11,8 @@ using System.Linq;
 using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using FileSignatures;
+using FileSignatures.Formats;
 using Umbraco.Cms.Core.Actions;
 using Umbraco.Cms.Core.Configuration.Models;
 using Umbraco.Cms.Core.Hosting;
@@ -26,6 +28,8 @@ using Umbraco.Cms.Api.Management.Controllers;
 using Umbraco.Cms.Web.Common;
 using Umbraco.Extensions;
 using Umbraco.Cms.Api.Management.Routing;
+using Umbraco.Cms.Core;
+using Umbraco.Cms.Core.Strings;
 
 namespace Articulate.Controllers
 {
@@ -34,6 +38,7 @@ namespace Articulate.Controllers
     /// </summary>
     [VersionedApiBackOfficeRoute("articulate/anew")]
     [ApiExplorerSettings(GroupName = "Articulate")]
+    [AutoValidateAntiforgeryToken]	
     public class MardownEditorApiController : ManagementApiControllerBase
     {
         private readonly ServiceContext _services;
@@ -44,6 +49,12 @@ namespace Articulate.Controllers
         private readonly IJsonSerializer _jsonSerializer;
         private readonly GlobalSettings _globalSettings;
         private readonly IHostingEnvironment _hostingEnvironment;
+        private readonly IMediaService _mediaService;
+        private readonly MediaUrlGeneratorCollection _mediaUrlGenerators;
+        private readonly IContentTypeBaseServiceProvider _contentTypeBaseServiceProvider;
+        private readonly IShortStringHelper _shortStringHelper;
+        private readonly Lazy<IMedia> _articulateRootMediaFolder;
+        private readonly IFileFormatInspector _fileFormatInspector;
 
         public MardownEditorApiController(
             ServiceContext services,
@@ -53,7 +64,9 @@ namespace Articulate.Controllers
             PropertyEditorCollection propertyEditors,
             IJsonSerializer jsonSerializer,
             IOptions<GlobalSettings> globalSettings,
-            IHostingEnvironment hostingEnvironment)
+            IHostingEnvironment hostingEnvironment, IMediaService mediaService,
+            MediaUrlGeneratorCollection mediaUrlGenerators,
+            IContentTypeBaseServiceProvider contentTypeBaseServiceProvider, IShortStringHelper shortStringHelper, IFileFormatInspector fileFormatInspector)
         {
             _services = services;
             _backOfficeSecurityAccessor = backOfficeSecurityAccessor;
@@ -63,6 +76,16 @@ namespace Articulate.Controllers
             _jsonSerializer = jsonSerializer;
             _globalSettings = globalSettings.Value;
             _hostingEnvironment = hostingEnvironment;
+            _mediaService = mediaService;
+            _mediaUrlGenerators = mediaUrlGenerators;
+            _contentTypeBaseServiceProvider = contentTypeBaseServiceProvider;
+            _shortStringHelper = shortStringHelper;
+            _fileFormatInspector= fileFormatInspector;
+            _articulateRootMediaFolder = new Lazy<IMedia>(() =>
+            {
+                var root = _mediaService.GetRootMedia().FirstOrDefault(x => x.Name == "Articulate" && x.ContentType.Alias.InvariantEquals("folder"));
+                return root ?? _mediaService.CreateMediaWithIdentity("Articulate", Constants.System.Root, "folder");
+            });
         }
 
         public class ParseImageResponse
@@ -71,6 +94,7 @@ namespace Articulate.Controllers
             public string FirstImage { get; set; }
         }
 
+        [HttpPost]
         public async Task<ActionResult> PostNew()
         {
             await Task.CompletedTask;
@@ -193,8 +217,13 @@ namespace Articulate.Controllers
 
         private ParseImageResponse ParseImages(string body, IFormFileCollection formFiles, bool extractFirstImageAsProperty)
         {
+            var bodyTextRegex = new Regex(@"\[i:(\d+)\:(.*?)]",RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+            var reservedNames = new HashSet<string> {"con", "prn", "aux", "nul", "com1", "lpt1" };
+            FileFormat format;
+
             var firstImage = string.Empty;
-            var bodyText = Regex.Replace(body, @"\[i:(\d+)\:(.*?)]", m =>
+            var bodyText = bodyTextRegex.Replace(body, m =>
             {
                 var index = m.Groups[1].Value.TryConvertTo<int>();
                 if (index)
@@ -202,24 +231,58 @@ namespace Articulate.Controllers
                     //get the file at this index
                     var file = formFiles[index.Result];
 
-                    var rndId = Guid.NewGuid().ToString("N");
-
-                    using (var stream = new MemoryStream())
+                    using (var stream = file.OpenReadStream())
                     {
+                        format = _fileFormatInspector.DetermineFileFormat(stream);
+                    }
+
+                    if (format is not Image)
+                    {
+                        return string.Empty;
+                    }
+
+                    //normalize
+                    var untrustedFileName = Path.GetFullPath(file.FileName);
+                    if (untrustedFileName.StartsWith("..") || untrustedFileName.Contains("/.."))
+                    {
+                        // path traversal attempt
+                        return string.Empty;
+                    }
+
+                    var filename = Path.GetFileName(file.FileName);
+                    var fileExtension = Path.GetExtension(filename).ToLowerInvariant();
+
+                    //strip out any characters that are illegal in filenames
+                    var cleanFileName = string.Join("", filename.Split(Path.GetInvalidFileNameChars()));
+                    if (cleanFileName.IsNullOrWhiteSpace() || cleanFileName.Length > 100 || reservedNames.Contains(cleanFileName.ToLowerInvariant()))
+                    {
+                        return string.Empty;
+                    }
+
+                    var fileWithExtension = string.Concat(WebUtility.HtmlEncode(cleanFileName), ".",  fileExtension);
+
+                    if (extractFirstImageAsProperty && index.Result == 0)
+                    {
+                        var stream = new MemoryStream();
                         file.CopyTo(stream);
-
-                        var fileUrl = "articulate/" + rndId + "/" + file.FileName.TrimStart("\"").TrimEnd("\"");
-                        _mediaFileManager.FileSystem.AddFile(fileUrl, stream);
-
-                        // UmbracoMediaPath default setting = ~/media
-                        // Resolved mediaRootPath = /media
-                        var mediaRootPath = _hostingEnvironment.ToAbsolute(_globalSettings.UmbracoMediaPath);
-                        var mediaFilePath = $"{mediaRootPath}/{fileUrl}";
-                        var result = $"![{mediaFilePath}]({mediaFilePath})";
-
-                        if (extractFirstImageAsProperty && string.IsNullOrEmpty(firstImage))
+                        if (stream.Length is 0 or > 1024 *1024 * 10)
                         {
-                            firstImage = mediaFilePath;
+                            return string.Empty;
+                        }
+
+                        var mediaItem = _mediaService.CreateMedia(fileWithExtension, _articulateRootMediaFolder.Value, Constants.Conventions.MediaTypes.Image);
+                        mediaItem.SetValue(_mediaFileManager, _mediaUrlGenerators, _shortStringHelper, _contentTypeBaseServiceProvider, Constants.Conventions.Media.File, fileWithExtension, stream);
+                        _mediaService.Save(mediaItem);
+                        var media = _umbracoHelper.Media(mediaItem.Key);
+                        if (media == null)
+                        {
+                            return string.Empty;
+                        }
+
+                        var result = $"![{media.Name}]({media.Url()})"; // update bodyText with media item URL
+                        if (string.IsNullOrEmpty(firstImage))
+                        {
+                            firstImage =  Udi.Create(Constants.UdiEntityType.Media, media.Key).ToString();
 
                             //in this case, we've extracted the image, we don't want it to be displayed
                             // in the content too so don't return it.
@@ -227,6 +290,25 @@ namespace Articulate.Controllers
                         }
 
                         return result;
+                    }
+                    else
+                    {
+                        var rndId = Guid.NewGuid().ToString("N");
+
+                    using (var stream = new MemoryStream())
+                    {
+                        file.CopyTo(stream);
+
+                            var fileUrl = "articulate/" + rndId + "/" + cleanFileName.TrimStart("\"").TrimEnd("\"");
+                            _mediaFileManager.FileSystem.AddFile(fileUrl, stream);
+
+                            // UmbracoMediaPath default setting = ~/media
+                            // Resolved mediaRootPath = /media
+                            var mediaRootPath = _hostingEnvironment.ToAbsolute(_globalSettings.UmbracoMediaPath);
+                            var mediaFilePath = $"{mediaRootPath}/{fileUrl}";
+                            var result = $"![{mediaFilePath}]({mediaFilePath})";
+                            return result;
+                        }
                     }
                 }
                 

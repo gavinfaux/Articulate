@@ -5,8 +5,10 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Articulate.Models;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Umbraco.Cms.Core;
+using Umbraco.Cms.Core.Configuration.Models;
 using Umbraco.Cms.Core.IO;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Models.Membership;
@@ -25,6 +27,7 @@ namespace Articulate.MetaWeblog
 {
     public class ArticulateMetaWeblogProvider : IMetaWeblogProvider
     {
+        private readonly IOptions<WebRoutingSettings> _routeSettings;
         private readonly IUmbracoContextAccessor _umbracoContextAccessor;
         private readonly IUserService _userService;
         private readonly IContentTypeService _contentTypeService;
@@ -58,7 +61,8 @@ namespace Articulate.MetaWeblog
             IPublishedValueFallback publishedValueFallback,
             IVariationContextAccessor variationContextAccessor,
             ITagService tagService,
-            int articulateBlogRootNodeId)
+            int articulateBlogRootNodeId,
+            IOptions<WebRoutingSettings> routeSettings)
         {
             _umbracoContextAccessor = umbracoContextAccessor;
             _userService = userService;
@@ -75,6 +79,8 @@ namespace Articulate.MetaWeblog
             _variationContextAccessor = variationContextAccessor;
             _tagService = tagService;
             _articulateBlogRootNodeId = articulateBlogRootNodeId;
+            _routeSettings = routeSettings;
+
         }
 
         public Task<BlogInfo[]> GetUsersBlogsAsync(string key, string username, string password)
@@ -462,7 +468,7 @@ namespace Articulate.MetaWeblog
 
             description = post.ContentType.Alias == "ArticulateRichText"
             ? post.GetValue<string>("richText")
-            : MarkdownHelper.ToHtml(post.GetValue<string>("markdown")),
+            : new MarkdownHelper(_routeSettings).ToHtml(post.GetValue<string>("markdown")),
 
             permalink = post.GetValue<string>("umbracoUrlName").IsNullOrWhiteSpace()
             ? post.Name.ToUrlSegment(_shortStringHelper)
