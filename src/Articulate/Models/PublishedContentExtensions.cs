@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices;
 using Microsoft.Extensions.DependencyInjection;
 using Umbraco.Cms.Core.DependencyInjection;
 using Umbraco.Cms.Core.Models;
@@ -215,29 +214,23 @@ namespace Articulate.Models
         }
 
         /// <summary>
-        ///     Shuffles an array in-place.
-        /// </summary>
-        public static void Shuffle<T>(this T[] array)
-        {
-            if (array == null)
-            {
-                throw new ArgumentNullException(nameof(array));
-            }
-
-            array.AsSpan().Shuffle(Random.Shared);
-        }
-
-        /// <summary>
         ///     Shuffles a List&lt;T&gt; in-place.
         /// </summary>
-        public static void Shuffle<T>(this List<T> list)
+        public static void Shuffle<T>(this IList<T> list)
         {
-            if (list == null)
+            if (list != null)
+            {
+                var rng = Random.Shared;
+                for (var i = list.Count - 1; i >= 1; i--)
+                {
+                    var j = rng.Next(i + 1);
+                    (list[i], list[j]) = (list[j], list[i]);
+                }
+            }
+            else
             {
                 throw new ArgumentNullException(nameof(list));
             }
-
-            CollectionsMarshal.AsSpan(list).Shuffle(Random.Shared);
         }
 
         /// <summary>
@@ -245,14 +238,14 @@ namespace Articulate.Models
         /// </summary>
         public static List<T> InRandomOrder<T>(this IEnumerable<T> source)
         {
-            if (source == null)
+            if (source != null)
             {
-                throw new ArgumentNullException(nameof(source));
+                var list = source.ToList();
+                list.Shuffle();
+                return list;
             }
 
-            var list = source.ToList();
-            list.Shuffle();
-            return list;
+            throw new ArgumentNullException(nameof(source));
         }
     }
 }
