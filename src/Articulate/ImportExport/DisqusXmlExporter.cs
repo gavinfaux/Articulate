@@ -19,16 +19,13 @@ namespace Articulate.ImportExport
     {
         private readonly IPublishedUrlProvider _publishedUrlProvider;
         private readonly ILogger<DisqusXmlExporter> _logger;
-        private readonly IOptions<WebRoutingSettings> _routeSettings;
 
         public DisqusXmlExporter(
             IPublishedUrlProvider publishedUrlProvider,
-            ILogger<DisqusXmlExporter> logger,
-            IOptions<WebRoutingSettings> routeSettings)
+            ILogger<DisqusXmlExporter> logger)
         {
             _publishedUrlProvider = publishedUrlProvider;
             _logger = logger;
-            _routeSettings = routeSettings;
         }
 
         public XDocument Export(IEnumerable<IContent> posts, BlogMLDocument document)
@@ -66,7 +63,7 @@ namespace Articulate.ImportExport
                 var body = post.GetValue<string>("richText");
                 if (body.IsNullOrWhiteSpace())
                 {                    
-                    body = new MarkdownHelper(_routeSettings).ToHtml(post.GetValue<string>("markdown"));
+                    body = MarkdownHelper.ToHtml(post.GetValue<string>("markdown"));
                 }
 
                 var xItem = new XElement("item",

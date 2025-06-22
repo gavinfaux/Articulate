@@ -27,7 +27,6 @@ namespace Articulate.MetaWeblog
 {
     public class ArticulateMetaWeblogProvider : IMetaWeblogProvider
     {
-        private readonly IOptions<WebRoutingSettings> _routeSettings;
         private readonly IUmbracoContextAccessor _umbracoContextAccessor;
         private readonly IUserService _userService;
         private readonly IContentTypeService _contentTypeService;
@@ -61,8 +60,7 @@ namespace Articulate.MetaWeblog
             IPublishedValueFallback publishedValueFallback,
             IVariationContextAccessor variationContextAccessor,
             ITagService tagService,
-            int articulateBlogRootNodeId,
-            IOptions<WebRoutingSettings> routeSettings)
+            int articulateBlogRootNodeId)
         {
             _umbracoContextAccessor = umbracoContextAccessor;
             _userService = userService;
@@ -79,7 +77,6 @@ namespace Articulate.MetaWeblog
             _variationContextAccessor = variationContextAccessor;
             _tagService = tagService;
             _articulateBlogRootNodeId = articulateBlogRootNodeId;
-            _routeSettings = routeSettings;
 
         }
 
@@ -468,7 +465,7 @@ namespace Articulate.MetaWeblog
 
             description = post.ContentType.Alias == "ArticulateRichText"
             ? post.GetValue<string>("richText")
-            : new MarkdownHelper(_routeSettings).ToHtml(post.GetValue<string>("markdown")),
+            : MarkdownHelper.ToHtml(post.GetValue<string>("markdown")),
 
             permalink = post.GetValue<string>("umbracoUrlName").IsNullOrWhiteSpace()
             ? post.Name.ToUrlSegment(_shortStringHelper)

@@ -82,9 +82,7 @@ namespace Articulate.Models
         public MediaWithCrops PostImage => _postImage ??= base.Unwrap().Value<MediaWithCrops>("postImage");
 
         private string _croppedPostImageUrl;
-
-        private string _imageUrl;
-
+        
         /// <summary>
         /// Cropped version of the PostImageUrl
         /// </summary>
@@ -92,6 +90,15 @@ namespace Articulate.Models
         {
             get
             {
+                if (_croppedPostImageUrl != null)
+                {
+                    return _croppedPostImageUrl;
+                }
+
+                if (PostImage == null)
+                {
+                    return null;
+                }
                 _croppedPostImageUrl = this.GetCroppedImageUrl("postImage", "wide");
                 return _croppedPostImageUrl;
             }
@@ -120,21 +127,6 @@ namespace Articulate.Models
 
         string IImageModel.Name => Name;
         string IImageModel.Url => this.Url();
-
-        /// <summary>
-        /// Gets the base image URL.
-        /// </summary>
-        string IImageModel.ImageUrl
-        {
-            get
-            {
-                if (_imageUrl != null)
-                {
-                    return _imageUrl;
-                }
-
-                return _imageUrl = this.GetBaseImageUrl("postImage") ?? string.Empty;
-            }
-        }
     }
+
 }

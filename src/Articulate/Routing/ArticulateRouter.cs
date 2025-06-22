@@ -118,14 +118,14 @@ namespace Articulate.Routing
                         MapMarkdownEditorRoute(httpContext, rootNodePath, articulateRootNode, domains);
                         MapAuthorsRssRoute(httpContext, rootNodePath, articulateRootNode, domains);
 
-                            MapSearchRoute(httpContext, rootNodePath, articulateRootNode, domains);
-                            MapMetaWeblogRoute(httpContext, rootNodePath, articulateRootNode, domains);
-                            MapManifestRoute(httpContext, rootNodePath, articulateRootNode, domains);
-                            MapRsdRoute(httpContext, rootNodePath, articulateRootNode, domains);
-                            MapOpenSearchRoute(httpContext, rootNodePath, articulateRootNode, domains);
+                        MapSearchRoute(httpContext, rootNodePath, articulateRootNode, domains);
+                        MapMetaWeblogRoute(httpContext, rootNodePath, articulateRootNode, domains);
+                        MapManifestRoute(httpContext, rootNodePath, articulateRootNode, domains);
+                        MapRsdRoute(httpContext, rootNodePath, articulateRootNode, domains);
+                        MapOpenSearchRoute(httpContext, rootNodePath, articulateRootNode, domains);
 
-                            // tags/cats routes are the least specific
-                            MapTagsAndCategoriesRoute(httpContext, rootNodePath, articulateRootNode, domains);
+                        // tags/cats routes are the least specific
+                        MapTagsAndCategoriesRoute(httpContext, rootNodePath, articulateRootNode, domains);
                         }
                     }
                 }

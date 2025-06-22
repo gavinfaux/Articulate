@@ -60,8 +60,6 @@
 
   <!-- Nuget Package Dependencies -->
   <ItemGroup>
-    <PackageReference Include="FileSignatures" Version="5.2.0" />
-    <PackageReference Include="HtmlSanitizer" Version="9.0.886" />
     <PackageReference Include="Markdig" Version="0.41.2" />
     <PackageReference Include="Umbraco.Cms.Web.Website" Version="15.4.3" />
     <PackageReference Include="Umbraco.Cms.Web.Common" Version="15.4.3" />

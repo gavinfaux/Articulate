@@ -11,8 +11,6 @@ using System.Linq;
 using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using FileSignatures;
-using FileSignatures.Formats;
 using Umbraco.Cms.Core.Actions;
 using Umbraco.Cms.Core.Configuration.Models;
 using Umbraco.Cms.Core.Hosting;
@@ -54,7 +52,6 @@ namespace Articulate.Controllers
         private readonly IContentTypeBaseServiceProvider _contentTypeBaseServiceProvider;
         private readonly IShortStringHelper _shortStringHelper;
         private readonly Lazy<IMedia> _articulateRootMediaFolder;
-        private readonly IFileFormatInspector _fileFormatInspector;
 
         public MardownEditorApiController(
             ServiceContext services,
@@ -66,7 +63,7 @@ namespace Articulate.Controllers
             IOptions<GlobalSettings> globalSettings,
             IHostingEnvironment hostingEnvironment, IMediaService mediaService,
             MediaUrlGeneratorCollection mediaUrlGenerators,
-            IContentTypeBaseServiceProvider contentTypeBaseServiceProvider, IShortStringHelper shortStringHelper, IFileFormatInspector fileFormatInspector)
+            IContentTypeBaseServiceProvider contentTypeBaseServiceProvider, IShortStringHelper shortStringHelper)
         {
             _services = services;
             _backOfficeSecurityAccessor = backOfficeSecurityAccessor;
@@ -80,7 +77,6 @@ namespace Articulate.Controllers
             _mediaUrlGenerators = mediaUrlGenerators;
             _contentTypeBaseServiceProvider = contentTypeBaseServiceProvider;
             _shortStringHelper = shortStringHelper;
-            _fileFormatInspector= fileFormatInspector;
             _articulateRootMediaFolder = new Lazy<IMedia>(() =>
             {
                 var root = _mediaService.GetRootMedia().FirstOrDefault(x => x.Name == "Articulate" && x.ContentType.Alias.InvariantEquals("folder"));
@@ -220,7 +216,6 @@ namespace Articulate.Controllers
             var bodyTextRegex = new Regex(@"\[i:(\d+)\:(.*?)]",RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
             var reservedNames = new HashSet<string> {"con", "prn", "aux", "nul", "com1", "lpt1" };
-            FileFormat format;
 
             var firstImage = string.Empty;
             var bodyText = bodyTextRegex.Replace(body, m =>
@@ -231,16 +226,7 @@ namespace Articulate.Controllers
                     //get the file at this index
                     var file = formFiles[index.Result];
 
-                    using (var stream = file.OpenReadStream())
-                    {
-                        format = _fileFormatInspector.DetermineFileFormat(stream);
-                    }
-
-                    if (format is not Image)
-                    {
-                        return string.Empty;
-                    }
-
+                    
                     //normalize
                     var untrustedFileName = Path.GetFullPath(file.FileName);
                     if (untrustedFileName.StartsWith("..") || untrustedFileName.Contains("/.."))
@@ -251,6 +237,8 @@ namespace Articulate.Controllers
 
                     var filename = Path.GetFileName(file.FileName);
                     var fileExtension = Path.GetExtension(filename).ToLowerInvariant();
+
+                    // TODO: validate mime type / extension OR file signature
 
                     //strip out any characters that are illegal in filenames
                     var cleanFileName = string.Join("", filename.Split(Path.GetInvalidFileNameChars()));

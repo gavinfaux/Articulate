@@ -9,6 +9,7 @@ import {
 import { UmbLitElement } from "@umbraco-cms/backoffice/lit-element";
 import { UMB_MODAL_MANAGER_CONTEXT, UmbModalManagerContext } from "@umbraco-cms/backoffice/modal";
 import { UmbTextStyles } from "@umbraco-cms/backoffice/style";
+import { UmbValidationContext } from "@umbraco-cms/backoffice/validation";
 import { Articulate } from "../api/articulate/sdk.gen";
 import type {
   ImportBlogMlModel,
@@ -53,6 +54,8 @@ export default class ArticulateBlogMlImporterElement extends UmbLitElement {
 
   private _modalManagerContext?: UmbModalManagerContext;
   private _archiveDoctypeUdi: string | null = null;
+
+  #validation = new UmbValidationContext(this);
 
   /**
    * Creates an instance of ArticulateBlogMlImporterElement.
@@ -128,9 +131,10 @@ export default class ArticulateBlogMlImporterElement extends UmbLitElement {
     if (this._isSubmitting) return;
 
     const form = e.target as HTMLFormElement;
-    const isValid = form.checkValidity();
-
-    if (!isValid) {
+    if (!form) return;
+    await this.#validation.validate();
+    if (!this.#validation.isValid) {
+      this.#validation.focusFirstInvalidElement();
       return;
     }
 
@@ -264,6 +268,7 @@ export default class ArticulateBlogMlImporterElement extends UmbLitElement {
               <uui-input
                 id="blogNodeDisplay"
                 .value=${this._selectedBlogNodeName || "No node selected. Click 'Add' to choose."}
+                required
                 readonly
                 style="flex-grow: 1;"
               ></uui-input>
@@ -277,7 +282,6 @@ export default class ArticulateBlogMlImporterElement extends UmbLitElement {
             <input
               type="hidden"
               name="blogNodeValue"
-              required
               .value=${this._selectedBlogNodeUdi || ""}
             />
             <div slot="description">Choose the Articulate blog node to import to</div>

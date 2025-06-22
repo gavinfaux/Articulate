@@ -19,19 +19,17 @@ namespace Articulate.Components
         private readonly IUmbracoContextAccessor _umbracoContextAccessor;
         private readonly IBackOfficeSecurityAccessor _backOfficeSecurityAccessor;
         private readonly ArticulateOptions _articulateOptions;
-        private readonly IOptions<WebRoutingSettings> _routeSettings;
 
         public ContentSavingHandler(
             IContentTypeService contentTypeService,
             IUmbracoContextAccessor umbracoContextAccessor,
             IBackOfficeSecurityAccessor backOfficeSecurityAccessor,
-            IOptions<ArticulateOptions> articulateOptions, IOptions<WebRoutingSettings> routeSettings)
+            IOptions<ArticulateOptions> articulateOptions)
         {
             _contentTypeService = contentTypeService;
             _umbracoContextAccessor = umbracoContextAccessor;
             _backOfficeSecurityAccessor = backOfficeSecurityAccessor;
             _articulateOptions = articulateOptions.Value;
-            _routeSettings = routeSettings;
         }
 
         public void Handle(ContentSavingNotification notification)
@@ -96,7 +94,7 @@ namespace Articulate.Components
                                 {
                                     var markdownProperty = ct.CompositionPropertyTypes.First(x => x.Alias == "markdown");
                                     var val = c.GetValue<string>("markdown", markdownProperty.VariesByCulture() ? culture?.Culture : null);
-                                    var html = new MarkdownHelper(_routeSettings).ToHtml(val);
+                                    var html = MarkdownHelper.ToHtml(val);
                                     return _articulateOptions.GenerateExcerpt(html);
                                 }
                             });

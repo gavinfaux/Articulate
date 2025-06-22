@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -9,9 +10,11 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Logging;
+using Microsoft.Net.Http.Headers;
 using Umbraco.Cms.Api.Common.Attributes;
 using Umbraco.Cms.Api.Management.Controllers;
 using Umbraco.Cms.Api.Management.Routing;
+using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.Security;
 using Umbraco.Cms.Core.Services;
 using Umbraco.Cms.Web.Common.Authorization;
@@ -112,40 +115,18 @@ namespace Articulate.Controllers
 
         /// <summary>
         /// Exports blog data as a BlogML XML file.
-        /// This endpoint must be called to generate the export before downloading it using the articulate/blog/download endpoint.
         /// </summary>
         /// <param name="model">The export options including the Articulate node ID and image export settings.</param>
-        /// <returns>An <see cref="ImportModel"/> containing the download URL for the exported file.</returns>
-        /// <response code="200">Returns the download URL for the exported BlogML file.</response>
+        /// <returns>The exported BlogML file as a stream.</returns>
+        /// <response code="200">Returns the BlogML XML file, with the current date and time appended to the file name (yyyyMMddHHmmss), example: articulate-export-20250629135958.xml</response>
         [HttpPost("export")]
-        [ProducesResponseType<ImportModel>(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(FileStreamResult), StatusCodes.Status200OK, "application/xml")]
         public IActionResult PostExportBlogMl(ExportBlogMlModel model)
         {
             blogMlExporter.Export(model.ArticulateNodeId, model.ExportImagesAsBase64);
-            var downloadUrl = linkGenerator.GetPathByAction(
-                action: nameof(GetBlogMlExport),
-                controller: "ArticulateBlogImport",
-                values: null,
-                httpContext: HttpContext
-            );
-            return Ok(new ImportModel
-            {
-                DownloadUrl = downloadUrl ?? string.Empty
-            });
-        }
-
-        /// <summary>
-        /// Downloads the exported BlogML XML file.
-        /// The articulate/blog/export endpoint must be called first to generate the file before downloading.
-        /// </summary>
-        /// <returns>The exported BlogML file as a stream.</returns>
-        /// <response code="200">Returns the BlogML XML file, example: BlogMlExport.xml</response>
-        [HttpGet("download")]
-        [ProducesResponseType(typeof(FileStreamResult), StatusCodes.Status200OK, "application/xml")]
-        public IActionResult GetBlogMlExport()
-        {
             var fileStream = articulateTempFileSystem.OpenFile("BlogMlExport.xml");
-            return Ok(File(fileStream, "application/octet-stream", "BlogMlExport.xml"));
+            var downloadFileName = $"articulate-export-{DateTime.UtcNow:yyyyMMddHHmmss}.xml";
+            return Ok(new FileStreamResult(fileStream, new MediaTypeHeaderValue("application/octet-stream")) { FileDownloadName = downloadFileName });
         }
 
         /// <summary>
@@ -185,7 +166,7 @@ namespace Articulate.Controllers
                     Detail = "Import failed, see back office logs for details"
                 });
             }
-
+            //TODO: this will need to return file stream result if disqus export is enabled else?
             var downloadUrl = linkGenerator.GetPathByAction(
                 action: nameof(GetDisqusExport),
                 controller: "ArticulateBlogImport",
@@ -205,30 +186,30 @@ namespace Articulate.Controllers
         public IActionResult GetDisqusExport()
         {
             var fileStream = articulateTempFileSystem.OpenFile("DisqusXmlExport.xml");
-            return Ok(File(fileStream, "application/octet-stream", "DisqusXmlExport.xml"));
+            return Ok(new FileStreamResult(fileStream, new MediaTypeHeaderValue("application/octet-stream")) { FileDownloadName= "DisqusXmlExport.xml" });
         }
 
         /// <summary>
-        /// Gets the UDI (Unique Document Identifier) for the Articulate Archive content type.
-        /// This endpoint is used to retrieve the UDI for the back office import and export features.
+        /// Gets the Guid for the Articulate content type.
+        /// This endpoint is used to retrieve the Guid for the back office import and export features.
         /// </summary>
         /// <returns>The UDI as a string.</returns>
-        /// <response code="200">The UDI as a string, example: umb://document/4fed18d8c5e34d5e88cfff3a5b457bf2</response>
+        /// <response code="200">The Guid as a string, example: ce9e1f75-6428-46b1-8711-84829b9b3d1c</response>
         /// <response code="404">The Articulate archive content type was not found.</response>
-        [HttpGet("archive/udi")]
+        [HttpGet("articulate/guid")]
         [ProducesResponseType<string>(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public IActionResult ArticulateArchiveUdi()
+        public IActionResult ArticulateContentTypeGuid()
         {
-            var contentType = contentTypeService.Get(ArticulateConstants.ArticulateArchiveContentTypeAlias);
+            var contentType = contentTypeService.Get(ArticulateConstants.ArticulateContentTypeAlias);
             if (contentType == null)
             {
-                var message = $"Content type '{ArticulateConstants.ArticulateArchiveContentTypeAlias}' not found.";
+                var message = $"Content type '{ArticulateConstants.ArticulateContentTypeAlias}' not found.";
                 logger.LogWarning(message);
                 return OperationStatusResult(ArticulateBlogImportOperationStatus.NotFound, builder => NotFound(builder.WithTitle(message).WithDetail("See back office logs for details.").Build()));
             }
 
-            return Ok(contentType.GetUdi().ToString());
+            return Ok(contentType.Key.ToString());
         }
     }
 }

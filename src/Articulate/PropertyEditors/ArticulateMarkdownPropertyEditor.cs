@@ -20,10 +20,9 @@ namespace Articulate.PropertyEditors
     }
 
     // using a reasonable Markdown converter
-    public class ArticulateMarkdownEditorValueConverter(HtmlLocalLinkParser localLinkParser, HtmlUrlParser urlParser, IOptions<WebRoutingSettings> routeSettings)
+    public class ArticulateMarkdownEditorValueConverter(HtmlLocalLinkParser localLinkParser, HtmlUrlParser urlParser)
         : MarkdownEditorValueConverter(localLinkParser, urlParser)
     {
-        private readonly IOptions<WebRoutingSettings> _routeSettings;
         public override bool IsConverter(IPublishedPropertyType propertyType)
             => "Articulate.MarkdownEditor" == propertyType.EditorUiAlias;
 
@@ -35,7 +34,7 @@ namespace Articulate.PropertyEditors
             bool preview)
         {
             var md = (string)inter;
-            return new HtmlEncodedString((inter == null) ? string.Empty : new MarkdownHelper(_routeSettings).ToHtml(md));
+            return new HtmlEncodedString((inter == null) ? string.Empty : MarkdownHelper.ToHtml(md));
         }
     }
 }

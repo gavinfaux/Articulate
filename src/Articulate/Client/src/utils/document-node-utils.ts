@@ -1,5 +1,5 @@
 import type { UmbControllerHost } from "@umbraco-cms/backoffice/controller-api";
-import type { UmbDocumentItemModel } from "@umbraco-cms/backoffice/document";
+import { UMB_DOCUMENT_PICKER_MODAL, UmbDocumentPickerModalData, UmbDocumentPickerModalValue, type UmbDocumentItemModel } from "@umbraco-cms/backoffice/document";
 import type { UmbModalManagerContext } from "@umbraco-cms/backoffice/modal";
 import { Articulate } from "../api/articulate/sdk.gen";
 
@@ -15,31 +15,22 @@ import { DocumentService } from "@umbraco-cms/backoffice/external/backend-api";
  * @throws {Error} If the API request fails, an error is thrown with details from the response.
  */
 export async function fetchArchiveDoctypeUdi(): Promise<string | null> {
-  try {
-    const result = await Articulate.getUmbracoManagementApiV1ArticulateBlogArchiveUdi();
-
-    if (!result.response.ok) {
-      let errorDetails: ProblemDetails | string;
-      try {
-        errorDetails = (await result.response.json()) as ProblemDetails;
-      } catch {
-        errorDetails = `API Error: ${result.response.status} ${result.response.statusText}`;
-      }
-
-      throw typeof errorDetails === "string"
-        ? new Error(errorDetails)
-        : new Error(errorDetails.title || errorDetails.detail || "Unknown API error");
-    }
-
-    if (!result.data) {
-      throw new Error("API returned no data for Articulate Archive UDI");
-    }
+  const result = await Articulate.getUmbracoManagementApiV1ArticulateBlogArticulateGuid();
+  if (result.response.ok && result.data) {
     return result.data;
-  } catch (error) {
-    throw new Error(
-      `Could not retrieve Articulate Archive document type: ${error instanceof Error ? error.message : String(error)}`,
-    );
+  } else if (!result.data) {
+    console.error("API returned no data for Articulate Archive UDI");
+    return null;
   }
+  try {
+    let errorDetails = (await result.response.json()) as ProblemDetails;
+    console.error((errorDetails.title && errorDetails.detail
+      ? `${errorDetails.title}: ${errorDetails.detail}`
+      : errorDetails.title))
+  } catch {
+    console.error(`${result.response.status} ${result.response.statusText}`);
+  }
+  return null;
 }
 
 /**
@@ -52,9 +43,10 @@ export async function fetchNodeByUdi(udi: string): Promise<DocumentVariantRespon
     const response = await DocumentService.getDocumentById({ id: udi });
     return response?.variants?.[0] ?? null;
   } catch (error) {
-    throw new Error(
+    console.error(
       `Failed to fetch node: ${error instanceof Error ? error.message : String(error)}`,
     );
+    return null;
   }
 }
 
@@ -71,20 +63,27 @@ export async function openNodePicker(
   host: UmbControllerHost,
 ): Promise<string | null> {
   try {
-    const modalContext = modalManager.open(host, "UMB_DOCUMENT_PICKER_MODAL", {
+    // TODO: filter no longer works?
+    const modalContext = modalManager.open<
+      UmbDocumentPickerModalData,
+      UmbDocumentPickerModalValue
+    >(host, UMB_DOCUMENT_PICKER_MODAL, {
       data: {
         multiple: false,
-        filter: (doc: UmbDocumentItemModel) => doc.documentType?.unique === doctypeUdi,
+        pickableFilter: (doc: UmbDocumentItemModel): boolean => {
+          return doc.documentType?.unique === doctypeUdi;
+        },
       },
     });
-    const result = (await modalContext.onSubmit()) as { selection: string[] } | undefined;
-    if (!result?.selection?.[0]) {
-      throw new Error("No node selected or selection cancelled");
+    const result = await modalContext.onSubmit();
+    if (!result || !result.selection || !result.selection[0]) {
+      return null;
     }
     return result.selection[0];
   } catch (error) {
-    throw new Error(
+    console.error(
       `Node picker failed: ${error instanceof Error ? error.message : String(error)}`,
     );
+    return null;
   }
 }

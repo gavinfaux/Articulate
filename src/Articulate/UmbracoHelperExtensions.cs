@@ -186,10 +186,9 @@ namespace Articulate
             string authorName,
             PagerModel pager,
             IPublishedValueFallback publishedValueFallback,
-            IVariationContextAccessor variationContextAccessor
-            )
-        {
-            var listNodeIds = listNodes.Select(x => x.Id).ToArray();
+            IVariationContextAccessor variationContextAccessor)
+        {            
+            var listNodeIds = listNodes.Select(x => x.Id).ToArray();           
 
             var postWithAuthor = helper.GetPostsSortedByPublishedDate(pager, x => string.Equals(x.Value<string>("author"), authorName.Replace("-", " "), StringComparison.InvariantCultureIgnoreCase), listNodeIds);
 

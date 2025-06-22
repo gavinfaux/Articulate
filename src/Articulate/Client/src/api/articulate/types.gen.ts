@@ -113,14 +113,14 @@ export type ProblemDetails = {
     [key: string]: unknown | (string | null) | (string | null) | (number | null) | (string | null) | (string | null) | undefined;
 };
 
-export type GetUmbracoManagementApiV1ArticulateBlogArchiveUdiData = {
+export type GetUmbracoManagementApiV1ArticulateBlogArticulateGuidData = {
     body?: never;
     path?: never;
     query?: never;
-    url: '/umbraco/management/api/v1/articulate/blog/archive/udi';
+    url: '/umbraco/management/api/v1/articulate/blog/articulate/guid';
 };
 
-export type GetUmbracoManagementApiV1ArticulateBlogArchiveUdiErrors = {
+export type GetUmbracoManagementApiV1ArticulateBlogArticulateGuidErrors = {
     /**
      * The resource is protected and requires an authentication token
      */
@@ -135,41 +135,14 @@ export type GetUmbracoManagementApiV1ArticulateBlogArchiveUdiErrors = {
     404: unknown;
 };
 
-export type GetUmbracoManagementApiV1ArticulateBlogArchiveUdiResponses = {
+export type GetUmbracoManagementApiV1ArticulateBlogArticulateGuidResponses = {
     /**
-     * The UDI as a string, example: umb://document/4fed18d8c5e34d5e88cfff3a5b457bf2
+     * The Guid as a string, example: ce9e1f75-6428-46b1-8711-84829b9b3d1c
      */
     200: string;
 };
 
-export type GetUmbracoManagementApiV1ArticulateBlogArchiveUdiResponse = GetUmbracoManagementApiV1ArticulateBlogArchiveUdiResponses[keyof GetUmbracoManagementApiV1ArticulateBlogArchiveUdiResponses];
-
-export type GetUmbracoManagementApiV1ArticulateBlogDownloadData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/umbraco/management/api/v1/articulate/blog/download';
-};
-
-export type GetUmbracoManagementApiV1ArticulateBlogDownloadErrors = {
-    /**
-     * The resource is protected and requires an authentication token
-     */
-    401: unknown;
-    /**
-     * The authenticated user does not have access to this resource
-     */
-    403: unknown;
-};
-
-export type GetUmbracoManagementApiV1ArticulateBlogDownloadResponses = {
-    /**
-     * Returns the BlogML XML file, example: BlogMlExport.xml
-     */
-    200: Blob | File;
-};
-
-export type GetUmbracoManagementApiV1ArticulateBlogDownloadResponse = GetUmbracoManagementApiV1ArticulateBlogDownloadResponses[keyof GetUmbracoManagementApiV1ArticulateBlogDownloadResponses];
+export type GetUmbracoManagementApiV1ArticulateBlogArticulateGuidResponse = GetUmbracoManagementApiV1ArticulateBlogArticulateGuidResponses[keyof GetUmbracoManagementApiV1ArticulateBlogArticulateGuidResponses];
 
 export type PostUmbracoManagementApiV1ArticulateBlogExportData = {
     /**
@@ -194,9 +167,9 @@ export type PostUmbracoManagementApiV1ArticulateBlogExportErrors = {
 
 export type PostUmbracoManagementApiV1ArticulateBlogExportResponses = {
     /**
-     * Represents the result of a BlogML export or the Disqus export of and import operation, containing a download URL for the resulting file.
+     * Returns the BlogML XML file, with the current date and time appended to the file name (yyyyMMddHHmmss), example: articulate-export-20250629135958.xml
      */
-    200: ImportModel;
+    200: Blob | File;
 };
 
 export type PostUmbracoManagementApiV1ArticulateBlogExportResponse = PostUmbracoManagementApiV1ArticulateBlogExportResponses[keyof PostUmbracoManagementApiV1ArticulateBlogExportResponses];

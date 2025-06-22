@@ -5,8 +5,6 @@ using Articulate.Options;
 using Articulate.Routing;
 using Articulate.Services;
 using Articulate.Syndication;
-using FileSignatures;
-using FileSignatures.Formats;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -24,12 +22,9 @@ namespace Articulate.Components
     {
         public override void Compose(IUmbracoBuilder builder)
         {
-            var recognised = FileFormatLocator.GetFormats().OfType<Image>().Where(f => !(f is Icon));
-            var inspector = new FileFormatInspector(recognised);
             base.Compose(builder);
 
             var services = builder.Services;
-            services.AddSingleton<IFileFormatInspector>(inspector);
             services.AddSingleton<ContentUrls>();
             services.AddSingleton<BlogMlExporter>();
             services.AddSingleton<ArticulateTempFileSystem>();

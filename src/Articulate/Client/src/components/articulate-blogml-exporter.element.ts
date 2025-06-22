@@ -2,29 +2,26 @@ import {
   css,
   customElement,
   html,
+  nothing,
   property,
   state,
   TemplateResult,
 } from "@umbraco-cms/backoffice/external/lit";
+import { UUIButtonState } from "@umbraco-cms/backoffice/external/uui";
 import { UmbLitElement } from "@umbraco-cms/backoffice/lit-element";
 import { UMB_MODAL_MANAGER_CONTEXT, UmbModalManagerContext } from "@umbraco-cms/backoffice/modal";
 import { UmbTextStyles } from "@umbraco-cms/backoffice/style";
+import { umbBindToValidation, UmbValidationContext } from "@umbraco-cms/backoffice/validation";
 import { Articulate } from "../api/articulate/sdk.gen";
-import type { ExportBlogMlModel, ImportModel } from "../api/articulate/types.gen"; // Consolidate and remove PagedProblemDetailsModel
+import type { ExportBlogMlModel } from "../api/articulate/types.gen";
 import { ProblemDetails } from "../api/articulate/types.gen";
 import {
   fetchArchiveDoctypeUdi,
   fetchNodeByUdi,
-  openNodePicker,
+  openNodePicker
 } from "../utils/document-node-utils";
-import { extractErrorMessage, isErrorWithMessage } from "../utils/error-utils";
-import { showUmbracoNotification } from "../utils/notification-utils";
 import { renderHeaderActions } from "../utils/template-utils";
 import { formStyles } from "./form-styles";
-
-// TODO: Export tests
-// TODO: Polish UX / CSS
-// TODO: https://docs.umbraco.com/umbraco-cms/customizing/property-editors/integrate-validation
 
 /**
  * A LitElement-based component for exporting blog content in BlogML format.
@@ -38,17 +35,16 @@ export default class ArticulateBlogMlExporterElement extends UmbLitElement {
   @property({ type: String })
   routerPath?: string;
 
-  @state() private _isDisabled: boolean = false;
-  @state() private _isLoading: boolean = true;
-  @state() private _isSubmitting = false;
+  @state() private _formState: UUIButtonState = undefined;
+  @state() private _formError = '';
 
-  @state() private _selectedBlogNodeUdi: string | null = null;
-  @state() private _selectedBlogNodeName = "No node selected";
-
-  @state() private _downloadUrl: undefined | TemplateResult<1> = undefined;
+  @state() private _articulateNodeId: string | null = null;
+  @state() private _selectedBlogNodeName = "";
 
   private _modalManagerContext?: UmbModalManagerContext;
   private _archiveDoctypeUdi: string | null = null;
+
+  #validation = new UmbValidationContext(this);
 
   /**
    * Creates an instance of ArticulateBlogMlExporterElement.
@@ -69,12 +65,9 @@ export default class ArticulateBlogMlExporterElement extends UmbLitElement {
     super.connectedCallback();
     this._archiveDoctypeUdi = await fetchArchiveDoctypeUdi();
     if (this._archiveDoctypeUdi === null) {
-      this._isDisabled = true;
-      this._isLoading = false;
-      this.requestUpdate("_isLoading", "_isDisabled");
+      this._formError = 'Failed to retrieve Articulate Archive document type.';
+      return;
     }
-    this._isLoading = false;
-    this.requestUpdate("_isLoading");
   }
 
   /**
@@ -84,33 +77,32 @@ export default class ArticulateBlogMlExporterElement extends UmbLitElement {
    * @returns {Promise<void>}
    */
   private async _openNodePicker() {
-    try {
-      const udi = await openNodePicker(this._modalManagerContext!, this._archiveDoctypeUdi!, this);
-      if (udi) {
-        this._selectedBlogNodeName = "Loading...";
-        this.requestUpdate("_selectedBlogNodeName");
-        const variant = await fetchNodeByUdi(udi);
-        if (!variant) {
-          throw new Error(`Selected node ${udi} not found`);
-        }
-        this._selectedBlogNodeUdi = udi;
-        this._selectedBlogNodeName = variant.name;
-        this.requestUpdate("_selectedBlogNodeName", "_selectedBlogNodeUdi");
-      }
-      // Modal was closed without a selection, no action needed
-    } catch (error: unknown) {
-      if (isErrorWithMessage(error) && error.message.includes("No node selected")) {
+    if (!this._archiveDoctypeUdi) {
+      return;
+    }
+    const udi = await openNodePicker(this._modalManagerContext!, this._archiveDoctypeUdi, this);
+    if (udi) {
+      const variant = await fetchNodeByUdi(udi);
+      if (!variant) {
+        this._formError = 'Selected node not found.';
         return;
       }
-      const errorMessage = extractErrorMessage(
-        error,
-        "An error occurred while using the node picker.",
-      );
-      this._selectedBlogNodeName = "Error loading node";
-      this.requestUpdate("_selectedBlogNodeName");
-      await showUmbracoNotification(this, errorMessage, "danger");
+      this._articulateNodeId = udi;
+      this._selectedBlogNodeName = variant.name;
     }
   }
+
+  #downloadFile = (blob: Blob, fileName: string) => {
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    a.remove();
+  };
 
   /**
    * Handles the form submission for exporting blog content.
@@ -119,168 +111,125 @@ export default class ArticulateBlogMlExporterElement extends UmbLitElement {
    * @param {Event} e - The form submission event.
    * @returns {Promise<void>}
    */
-  private async _handleSubmit(e: Event) {
+  #handleSubmit = async (e: SubmitEvent) => {
     e.preventDefault();
-    if (this._isSubmitting) return;
-
     const form = e.target as HTMLFormElement;
-    const isValid = form.checkValidity();
+    if (!form) return;
 
-    if (!isValid) {
+    try {
+      await this.#validation.validate();
+    } catch (error) {
+      console.error("Validation error:", error);
+      this._formError = "Please select a blog node.";
       return;
     }
-    const formData = new FormData(form);
-    const submitButton = form.querySelector<HTMLElement>('uui-button[look="primary"]');
 
+    const formData = new FormData(form);
     const embedImages = formData.get("embedImages") === "on";
 
     const payload: ExportBlogMlModel = {
-      articulateNodeId: this._selectedBlogNodeUdi!,
+      articulateNodeId: this._articulateNodeId!,
       exportImagesAsBase64: embedImages,
     };
-
+    this._formState = "waiting";
+    this._formError = "";
     try {
-      submitButton?.setAttribute("state", "waiting");
-      this._isSubmitting = true;
-      this.requestUpdate("_isSubmitting");
       const result = await Articulate.postUmbracoManagementApiV1ArticulateBlogExport({
         body: payload,
       });
-
       if (!result.response.ok) {
-        let errorToThrow;
+        let errorDetails: ProblemDetails | { title: string; detail?: string };
         try {
-          const problemDetails: ProblemDetails = await result.response.json();
-          errorToThrow = problemDetails;
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        } catch (_) {
-          // Explicitly ignore the caught error object from response.json() parsing,
-          // as we create a new generic error based on HTTP status instead.
-          errorToThrow = new Error(
-            `API Error: ${result.response.status} ${result.response.statusText}`,
-          );
+          errorDetails = (await result.response.json()) as ProblemDetails;
+          console.error((errorDetails.title && errorDetails.detail
+            ? `${errorDetails.title}: ${errorDetails.detail}`
+            : errorDetails.title))
+        } catch {
+          errorDetails = { title: `${result.response.status} ${result.response.statusText}` };
         }
-        throw errorToThrow;
+        this._formError =
+          (errorDetails.title && errorDetails.detail
+            ? `${errorDetails.title}: ${errorDetails.detail}`
+            : errorDetails.title) ?? 'Failed to export blog content.';
+        this._formState = 'failed';
+        return;
       }
-
-      const responseData = result.data as ImportModel;
-
-      if (!responseData || !responseData.downloadUrl) {
-        throw new Error("Export completed but no response data was returned.");
+      // The API now returns the file content directly.
+      const blob = await result.response.blob();
+      const contentDisposition = result.response.headers.get('content-disposition');
+      let fileName = 'export.xml'; // Default filename
+      if (contentDisposition) {
+        const fileNameMatch = contentDisposition.match(/filename=\"?([^\"]+)\"?/);
+        if (fileNameMatch && fileNameMatch.length > 1 && fileNameMatch[1]) {
+          fileName = fileNameMatch[1];
+        }
       }
-
-      if (responseData.downloadUrl) {
-        const downloadLink = responseData.downloadUrl.startsWith("http")
-          ? responseData.downloadUrl
-          : `${window.location.origin}${responseData.downloadUrl}`;
-        this._downloadUrl = html`<a href="${downloadLink}" target="_blank">Download</a>.`;
-      }
+      this.#downloadFile(blob, fileName);
       form.reset();
-      this._selectedBlogNodeUdi = null;
-      this._selectedBlogNodeName = "No node selected";
-      this.requestUpdate("_selectedBlogNodeUdi", "_selectedBlogNodeName");
-    } catch (error: unknown) {
-      const errorMessage = extractErrorMessage(error, "Export failed.");
-      await showUmbracoNotification(this, errorMessage, "danger");
-    } finally {
-      submitButton?.setAttribute("state", "");
-      this._isSubmitting = false;
-      this.requestUpdate("_isSubmitting");
+      this._articulateNodeId = null;
+      this._selectedBlogNodeName = "";
+      this._formState = 'success';
+    } catch (error) {
+      this._formState = 'failed';
+      this._formError = `An unexpected error occurred: ${error instanceof Error ? error.message : String(error)
+        }`;
+      console.error(error);
     }
-  }
+  };
 
-  private _closeModal() {
-    this._downloadUrl = undefined;
-    this.requestUpdate("_downloadUrl");
-  }
+
 
   override render() {
-    if (this._isLoading) {
-      return html`<uui-loader-bar></uui-loader-bar>`;
-    }
-
-    if (this._isDisabled) {
-      return html`<uui-box headline="BlogML Exporter">
-        ${renderHeaderActions(this.routerPath)}
-        <span slot="header"><uui-tag look="danger">Disabled</uui-tag></span>
-        <p>Could not retrieve Articulate Archive document type.</p>
-        <p>Ensure that the Articulate package is installed and configured correctly.</p>
-        <p>Check the Articulate documentation for more information.</p>
-      </uui-box>`;
-    }
-
     return html`
       <uui-box headline="BlogML Exporter">
         ${renderHeaderActions(this.routerPath)}
         <uui-form-validation-message>
-          <uui-form @submit=${this._handleSubmit}>
-            <uui-form-layout-item>
-              <uui-label for="blogNodeDisplay" required>Articulate blog node</uui-label>
-              <div class="node-picker-container">
-                <uui-input
-                  id="blogNodeDisplay"
-                  name="blogNodeDisplay"
-                  .value=${this._selectedBlogNodeName}
-                  readonly
-                  style="flex-grow: 1;"
-                ></uui-input>
-                <uui-button
-                  look="outline"
-                  label=${this._selectedBlogNodeUdi ? "Change" : "Choose"}
-                  @click=${this._openNodePicker}
-                ></uui-button>
-              </div>
-              <input
-                type="hidden"
-                required
-                name="blogNodeId"
-                .value=${this._selectedBlogNodeUdi || ""}
-              />
-              <div slot="description">Choose the Articulate blog node to export from</div>
-            </uui-form-layout-item>
-            <uui-form-layout-item>
-              <uui-label for="embedImages">Embed images?</uui-label>
-              <uui-toggle id="embedImages" name="embedImages"></uui-toggle>
-              <div slot="description">
-                Check if you want to embed images as base64 data in the output file. Useful if your
-                site isn't going to be HTTP accessible to the site you will be importing on.
-              </div>
-            </uui-form-layout-item>
-            <uui-button-group>
-              <uui-button type="submit" look="primary">Submit</uui-button>
-            </uui-button-group>
+          <uui-form>
+            <form id="blogMlExportForm" @submit=${this.#handleSubmit}>
+              <uui-form-layout-item>
+                <div class="node-picker-container">
+                  <uui-label for="articulateNodeId" slot="label" required>Articulate blog node</uui-label>
+                  <uui-input
+                    id="articulateNodeId"
+                    name="articulateNodeId"
+                    placeholder="No node selected"
+                    .value=${this._selectedBlogNodeName}
+                    ${umbBindToValidation(this, '$.articulateNodeId', this._articulateNodeId || '')}
+                    readonly
+                    required
+                    required-message="You must select a blog node"
+                    style="flex-grow: 1;"
+                  ></uui-input>
+                  <uui-button
+                    look="outline"
+                    label=${this._articulateNodeId ? "Change" : "Choose"}
+                    @click=${this._openNodePicker}
+                  ></uui-button>
+                </div>
+                <div slot="description">Choose the Articulate blog node to export from</div>
+              </uui-form-layout-item>
+              <uui-form-layout-item>
+                <uui-label slot="label" for="embedImages">Embed images?</uui-label>
+                <uui-toggle id="embedImages" name="embedImages"></uui-toggle>
+                <div slot="description">
+                  Check if you want to embed images as base64 data in the output file. Useful if your
+                  site isn't going to be HTTP accessible to the site you will be importing on.
+                </div>
+              </uui-form-layout-item>
+              <uui-form-layout-item>${this.#renderErrorMessage()}</uui-form-layout-item>
+              <uui-button-group>
+                <uui-button type="submit" look="primary" .state=${this._formState}>Submit</uui-button>
+              </uui-button-group>
+            </form>
           </uui-form>
         </uui-form-validation-message>
       </uui-box>
-      ${this._downloadUrl
-        ? html`
-            <uui-modal-container>
-              <uui-modal-dialog>
-                <uui-dialog>
-                  <uui-dialog-layout>
-                    <span slot="headline">
-                      <uui-icon name="info" style="color: green;"></uui-icon> BlogML export
-                      completed</span
-                    >
-                    <p>Your BlogML export is ready to download.</p>
-                    <uui-button slot="actions" look="secondary" @click=${this._closeModal}
-                      >Cancel</uui-button
-                    >
-                    <uui-button
-                      slot="actions"
-                      look="primary"
-                      label="Download"
-                      href=${this._downloadUrl}
-                      target="_blank"
-                      ><uui-icon name="download"></uui-icon> Download</uui-button
-                    >
-                  </uui-dialog-layout>
-                </uui-dialog>
-              </uui-modal-dialog>
-            </uui-modal-container>
-          `
-        : html``}
     `;
+  }
+
+  #renderErrorMessage(): TemplateResult | typeof nothing {
+    if (!this._formError || this._formState !== 'failed') return nothing;
+    return html`<p class="text-danger">${this._formError}</p>`;
   }
 
   static override readonly styles = [

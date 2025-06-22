@@ -97,13 +97,13 @@ namespace Articulate.Models
 
         public string BlogLogo
         {
-            get => _blogLogo ?? (_blogLogo = RootBlogNode.GetArticulateCropUrl("blogLogo", VariationContextAccessor?.VariationContext));
+            get => _blogLogo ?? (_blogLogo = RootBlogNode.GetCroppedImageUrl("blogLogo", "square"));
             protected set => _blogLogo = value;
         }
 
         public string BlogBanner
         {
-            get => _blogBanner ?? (_blogBanner = RootBlogNode.GetArticulateCropUrl("blogBanner", VariationContextAccessor?.VariationContext));
+            get => _blogBanner ?? (_blogBanner = RootBlogNode.GetCroppedImageUrl("blogBanner", "wide"));
             protected set => _blogBanner = value;
         }
 
