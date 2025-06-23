@@ -18,7 +18,7 @@ import { ProblemDetails } from "../api/articulate/types.gen";
 import {
   fetchArchiveDoctypeUdi,
   fetchNodeByUdi,
-  openNodePicker
+  openNodePicker,
 } from "../utils/document-node-utils";
 import { renderHeaderActions } from "../utils/template-utils";
 import { formStyles } from "./form-styles";
@@ -36,7 +36,7 @@ export default class ArticulateBlogMlExporterElement extends UmbLitElement {
   routerPath?: string;
 
   @state() private _formState: UUIButtonState = undefined;
-  @state() private _formError = '';
+  @state() private _formError = "";
 
   @state() private _articulateNodeId: string | null = null;
   @state() private _selectedBlogNodeName = "";
@@ -65,7 +65,7 @@ export default class ArticulateBlogMlExporterElement extends UmbLitElement {
     super.connectedCallback();
     this._archiveDoctypeUdi = await fetchArchiveDoctypeUdi();
     if (this._archiveDoctypeUdi === null) {
-      this._formError = 'Failed to retrieve Articulate Archive document type.';
+      this._formError = "Failed to retrieve Articulate Archive document type.";
       return;
     }
   }
@@ -84,7 +84,7 @@ export default class ArticulateBlogMlExporterElement extends UmbLitElement {
     if (udi) {
       const variant = await fetchNodeByUdi(udi);
       if (!variant) {
-        this._formError = 'Selected node not found.';
+        this._formError = "Selected node not found.";
         return;
       }
       this._articulateNodeId = udi;
@@ -94,8 +94,8 @@ export default class ArticulateBlogMlExporterElement extends UmbLitElement {
 
   #downloadFile = (blob: Blob, fileName: string) => {
     const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.style.display = 'none';
+    const a = document.createElement("a");
+    a.style.display = "none";
     a.href = url;
     a.download = fileName;
     document.body.appendChild(a);
@@ -104,6 +104,9 @@ export default class ArticulateBlogMlExporterElement extends UmbLitElement {
     a.remove();
   };
 
+  #isBlob = (value: unknown): value is Blob => {
+    return value instanceof Blob;
+  };
   /**
    * Handles the form submission for exporting blog content.
    * Validates the form and initiates the export process.
@@ -141,43 +144,50 @@ export default class ArticulateBlogMlExporterElement extends UmbLitElement {
         let errorDetails: ProblemDetails | { title: string; detail?: string };
         try {
           errorDetails = (await result.response.json()) as ProblemDetails;
-          console.error((errorDetails.title && errorDetails.detail
-            ? `${errorDetails.title}: ${errorDetails.detail}`
-            : errorDetails.title))
+          console.error(
+            errorDetails.title && errorDetails.detail
+              ? `${errorDetails.title}: ${errorDetails.detail}`
+              : errorDetails.title,
+          );
         } catch {
           errorDetails = { title: `${result.response.status} ${result.response.statusText}` };
         }
         this._formError =
           (errorDetails.title && errorDetails.detail
             ? `${errorDetails.title}: ${errorDetails.detail}`
-            : errorDetails.title) ?? 'Failed to export blog content.';
-        this._formState = 'failed';
+            : errorDetails.title) ?? "Failed to export blog content.";
+        this._formState = "failed";
         return;
       }
       // The API now returns the file content directly.
-      const blob = await result.response.blob();
-      const contentDisposition = result.response.headers.get('content-disposition');
-      let fileName = 'export.xml'; // Default filename
+      const blob = result.data;
+      if (!this.#isBlob(blob)) {
+        this._formState = "failed";
+        this._formError = "Failed to receive a valid file from the server.";
+        console.error("API response was not a valid file blob.");
+        return;
+      }
+      const contentDisposition = result.response.headers.get("content-disposition");
+      let fileName = "export.xml"; // Default filename
       if (contentDisposition) {
         const fileNameMatch = contentDisposition.match(/filename=\"?([^\"]+)\"?/);
         if (fileNameMatch && fileNameMatch.length > 1 && fileNameMatch[1]) {
           fileName = fileNameMatch[1];
         }
       }
+      this._formState = "success";
       this.#downloadFile(blob, fileName);
       form.reset();
       this._articulateNodeId = null;
       this._selectedBlogNodeName = "";
-      this._formState = 'success';
     } catch (error) {
-      this._formState = 'failed';
-      this._formError = `An unexpected error occurred: ${error instanceof Error ? error.message : String(error)
-        }`;
+      this._formState = "failed";
+      this._formError = `An unexpected error occurred: ${
+        error instanceof Error ? error.message : String(error)
+      }`;
       console.error(error);
     }
   };
-
-
 
   override render() {
     return html`
@@ -188,13 +198,15 @@ export default class ArticulateBlogMlExporterElement extends UmbLitElement {
             <form id="blogMlExportForm" @submit=${this.#handleSubmit}>
               <uui-form-layout-item>
                 <div class="node-picker-container">
-                  <uui-label for="articulateNodeId" slot="label" required>Articulate blog node</uui-label>
+                  <uui-label for="articulateNodeId" slot="label" required
+                    >Articulate blog node</uui-label
+                  >
                   <uui-input
                     id="articulateNodeId"
                     name="articulateNodeId"
                     placeholder="No node selected"
                     .value=${this._selectedBlogNodeName}
-                    ${umbBindToValidation(this, '$.articulateNodeId', this._articulateNodeId || '')}
+                    ${umbBindToValidation(this, "$.articulateNodeId", this._articulateNodeId || "")}
                     readonly
                     required
                     required-message="You must select a blog node"
@@ -212,13 +224,15 @@ export default class ArticulateBlogMlExporterElement extends UmbLitElement {
                 <uui-label slot="label" for="embedImages">Embed images?</uui-label>
                 <uui-toggle id="embedImages" name="embedImages"></uui-toggle>
                 <div slot="description">
-                  Check if you want to embed images as base64 data in the output file. Useful if your
-                  site isn't going to be HTTP accessible to the site you will be importing on.
+                  Check if you want to embed images as base64 data in the output file. Useful if
+                  your site isn't going to be HTTP accessible to the site you will be importing on.
                 </div>
               </uui-form-layout-item>
               <uui-form-layout-item>${this.#renderErrorMessage()}</uui-form-layout-item>
               <uui-button-group>
-                <uui-button type="submit" look="primary" .state=${this._formState}>Submit</uui-button>
+                <uui-button type="submit" look="primary" .state=${this._formState}
+                  >Submit</uui-button
+                >
               </uui-button-group>
             </form>
           </uui-form>
@@ -228,7 +242,7 @@ export default class ArticulateBlogMlExporterElement extends UmbLitElement {
   }
 
   #renderErrorMessage(): TemplateResult | typeof nothing {
-    if (!this._formError || this._formState !== 'failed') return nothing;
+    if (!this._formError || this._formState !== "failed") return nothing;
     return html`<p class="text-danger">${this._formError}</p>`;
   }
 

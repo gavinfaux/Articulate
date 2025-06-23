@@ -349,8 +349,9 @@ export default class ArticulateBlogMlImporterElement extends UmbLitElement {
           </uui-form-validation-message>
         </uui-form>
       </uui-box>
-      ${this._downloadUrl
-        ? html`
+      ${
+        this._downloadUrl
+          ? html`
               <uui-modal-container>
                 <uui-modal-dialog>
                   <uui-dialog>
@@ -376,7 +377,7 @@ export default class ArticulateBlogMlImporterElement extends UmbLitElement {
                 </uui-modal-dialog>
               </uui-modal-container>
             `
-        : html``
+          : html``
       }
     `;
   }

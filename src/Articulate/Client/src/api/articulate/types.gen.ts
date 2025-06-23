@@ -167,9 +167,9 @@ export type PostUmbracoManagementApiV1ArticulateBlogExportErrors = {
 
 export type PostUmbracoManagementApiV1ArticulateBlogExportResponses = {
     /**
-     * Returns the BlogML XML file, with the current date and time appended to the file name (yyyyMMddHHmmss), example: articulate-export-20250629135958.xml
+     * Returns the BlogML XML file as an octet-stream. The filename in the Content-Disposition header will be in the format: articulate-export-yyyyMMddHHmmss.xml.
      */
-    200: Blob | File;
+    200: string;
 };
 
 export type PostUmbracoManagementApiV1ArticulateBlogExportResponse = PostUmbracoManagementApiV1ArticulateBlogExportResponses[keyof PostUmbracoManagementApiV1ArticulateBlogExportResponses];

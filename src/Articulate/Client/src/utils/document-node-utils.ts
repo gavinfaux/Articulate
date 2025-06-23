@@ -1,5 +1,10 @@
 import type { UmbControllerHost } from "@umbraco-cms/backoffice/controller-api";
-import { UMB_DOCUMENT_PICKER_MODAL, UmbDocumentPickerModalData, UmbDocumentPickerModalValue, type UmbDocumentItemModel } from "@umbraco-cms/backoffice/document";
+import {
+  UMB_DOCUMENT_PICKER_MODAL,
+  UmbDocumentPickerModalData,
+  UmbDocumentPickerModalValue,
+  type UmbDocumentItemModel,
+} from "@umbraco-cms/backoffice/document";
 import type { UmbModalManagerContext } from "@umbraco-cms/backoffice/modal";
 import { Articulate } from "../api/articulate/sdk.gen";
 
@@ -24,9 +29,11 @@ export async function fetchArchiveDoctypeUdi(): Promise<string | null> {
   }
   try {
     let errorDetails = (await result.response.json()) as ProblemDetails;
-    console.error((errorDetails.title && errorDetails.detail
-      ? `${errorDetails.title}: ${errorDetails.detail}`
-      : errorDetails.title))
+    console.error(
+      errorDetails.title && errorDetails.detail
+        ? `${errorDetails.title}: ${errorDetails.detail}`
+        : errorDetails.title,
+    );
   } catch {
     console.error(`${result.response.status} ${result.response.statusText}`);
   }
@@ -64,26 +71,25 @@ export async function openNodePicker(
 ): Promise<string | null> {
   try {
     // TODO: filter no longer works?
-    const modalContext = modalManager.open<
-      UmbDocumentPickerModalData,
-      UmbDocumentPickerModalValue
-    >(host, UMB_DOCUMENT_PICKER_MODAL, {
-      data: {
-        multiple: false,
-        pickableFilter: (doc: UmbDocumentItemModel): boolean => {
-          return doc.documentType?.unique === doctypeUdi;
+    const modalContext = modalManager.open<UmbDocumentPickerModalData, UmbDocumentPickerModalValue>(
+      host,
+      UMB_DOCUMENT_PICKER_MODAL,
+      {
+        data: {
+          multiple: false,
+          pickableFilter: (doc: UmbDocumentItemModel): boolean => {
+            return doc.documentType?.unique === doctypeUdi;
+          },
         },
       },
-    });
+    );
     const result = await modalContext.onSubmit();
     if (!result || !result.selection || !result.selection[0]) {
       return null;
     }
     return result.selection[0];
   } catch (error) {
-    console.error(
-      `Node picker failed: ${error instanceof Error ? error.message : String(error)}`,
-    );
+    console.error(`Node picker failed: ${error instanceof Error ? error.message : String(error)}`);
     return null;
   }
 }

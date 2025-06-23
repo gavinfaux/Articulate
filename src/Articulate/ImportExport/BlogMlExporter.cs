@@ -3,10 +3,17 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using Argotic.Common;
 using Argotic.Syndication.Specialized;
+using Articulate.Models;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using NPoco.fastJSON;
 using Umbraco.Cms.Core;
+using Umbraco.Cms.Core.Configuration.Models;
 using Umbraco.Cms.Core.IO;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Models.PublishedContent;
@@ -30,6 +37,7 @@ namespace Articulate.ImportExport
         private readonly ILogger<BlogMlExporter> _logger;
         private readonly MediaFileManager _mediaFileManager;
         private readonly ArticulateTempFileSystem _articulateTempFileSystem;
+        private readonly IOptions<GlobalSettings> _globalSettings;
 
         public BlogMlExporter(
             IContentService contentService,
@@ -41,7 +49,8 @@ namespace Articulate.ImportExport
             ArticulateTempFileSystem articulateTempFileSystem,
             IPublishedUrlProvider urlProvider,
             ISqlContext sqlContext,
-            ILogger<BlogMlExporter> logger)
+            ILogger<BlogMlExporter> logger,
+            IOptions<GlobalSettings> globalSettings)
         {
             _mediaFileManager = mediaFileSystem;
             _articulateTempFileSystem = articulateTempFileSystem;
@@ -53,6 +62,7 @@ namespace Articulate.ImportExport
             _urlProvider = urlProvider;
             _sqlContext = sqlContext;
             _logger = logger;
+            _globalSettings = globalSettings;
         }
 
         public void Export(
@@ -65,8 +75,6 @@ namespace Articulate.ImportExport
             {
                 throw new InvalidOperationException("The node with id " + blogRootNode + " is not an Articulate root node");
             }
-
-            // TODO: Fix issues with images and image picker json format, code expects a file path....
 
             var postType = _contentTypeService.Get("ArticulateRichText") ?? throw new InvalidOperationException("Articulate is not installed properly, the ArticulateRichText doc type could not be found");
 
@@ -238,59 +246,90 @@ namespace Articulate.ImportExport
                     {
                         try
                         {
-                            var mediaUdi = child.GetValue<string>("postImage");
-
-                            if (!string.IsNullOrWhiteSpace(mediaUdi))
+                            var mediaItem = child.GetValue<string>("postImage");
+                            if (mediaItem != null)
                             {
-                                var udi = (GuidUdi)UdiParser.Parse(mediaUdi);
-                                var media = _mediaService.GetById(udi.Guid)
-                                    ?? throw new InvalidOperationException("No media found by id " + udi);
-
-                                var mediaPath = _mediaFileManager.GetMediaPath(
-                                    media.GetValue(Constants.Conventions.Media.File).ToString(),
-                                    media.Key,
-                                    media.Properties[Constants.Conventions.Media.File].PropertyType.Key);
-
-                                var mime = BlogMlExporter.ImageMimeType(mediaPath);
-
-                                if (!mime.IsNullOrWhiteSpace())
+                                IMedia media;
+                                string mediaPath;
+                                if (!string.IsNullOrWhiteSpace(mediaItem) && !mediaItem.DetectIsJson())
                                 {
-                                    var imageUrl = new Uri(postAbsoluteUrl.GetLeftPart(UriPartial.Authority) + mediaPath.EnsureStartsWith('/'), UriKind.Absolute);
-
-                                    if (exportImagesAsBase64)
+                                    //post images uploaded via a-new (a property migration would negate this)!
+                                    mediaPath = mediaItem;
+                                    media = _mediaService.GetMediaByPath(mediaPath)
+                                            ?? throw new InvalidOperationException("No media found by id " + mediaPath);
+                                }
+                                else
+                                {
+                                    using var doc = JsonDocument.Parse(mediaItem);
+                                    var mediaKey = doc.RootElement[0].GetProperty("mediaKey").GetString();
+                                    if (mediaKey != null)
                                     {
-                                        using (var mediaFileStream = _mediaFileManager.GetFile(media, out _))
-                                        {
-                                            byte[] bytes;
-                                            using (var memoryStream = new MemoryStream())
-                                            {
-                                                mediaFileStream.CopyTo(memoryStream);
-                                                bytes = memoryStream.ToArray();
-                                            }
-
-                                            blogMlPost.Attachments.Add(new BlogMLAttachment
-                                            {
-                                                Content = Convert.ToBase64String(bytes),
-                                                Url = imageUrl,
-                                                ExternalUri = imageUrl,
-                                                IsEmbedded = true,
-                                                MimeType = mime
-                                            });
-                                        }
+                                        var id = Guid.Parse(mediaKey);
+                                        media = _mediaService.GetById(id)
+                                                ?? throw new InvalidOperationException("No media found by id " + id);
                                     }
                                     else
                                     {
-                                        blogMlPost.Attachments.Add(new BlogMLAttachment
-                                        {
-                                            Content = string.Empty,
-                                            Url = imageUrl,
-                                            ExternalUri = imageUrl,
-                                            IsEmbedded = false,
-                                            MimeType = mime
-                                        });
+                                        media = null;
                                     }
                                 }
+                                if (media != null)
+                                {
+                                    mediaPath = _mediaFileManager.GetMediaPath(
+                                        media.GetValue(Constants.Conventions.Media.File).ToString(),
+                                        media.Key,
+                                        media.Properties[Constants.Conventions.Media.File].PropertyType.Key);
+                                    if (!string.IsNullOrWhiteSpace(mediaPath))
+                                    {
+                                        var mediaDir = _globalSettings.Value.UmbracoMediaPhysicalRootPath.TrimStart("~/").EnsureEndsWith('/');
+                                        if (!mediaPath.StartsWith(mediaDir))
+                                        {
+                                            mediaPath = mediaDir + mediaPath;
+                                        }
+                                        var mime = BlogMlExporter.ImageMimeType(mediaPath);
+
+                                        if (!mime.IsNullOrWhiteSpace())
+                                        {
+                                            var imageUrl = new Uri(postAbsoluteUrl.GetLeftPart(UriPartial.Authority) + mediaPath.EnsureStartsWith('/'), UriKind.Absolute);
+
+                                            if (exportImagesAsBase64)
+                                            {
+                                                using (var mediaFileStream = _mediaFileManager.GetFile(media, out _))
+                                                {
+                                                    byte[] bytes;
+                                                    using (var memoryStream = new MemoryStream())
+                                                    {
+                                                        mediaFileStream.CopyTo(memoryStream);
+                                                        bytes = memoryStream.ToArray();
+                                                    }
+
+                                                    blogMlPost.Attachments.Add(new BlogMLAttachment
+                                                    {
+                                                        Content = Convert.ToBase64String(bytes),
+                                                        Url = imageUrl,
+                                                        ExternalUri = imageUrl,
+                                                        IsEmbedded = true,
+                                                        MimeType = mime
+                                                    });
+                                                }
+                                            }
+                                            else
+                                            {
+                                                blogMlPost.Attachments.Add(new BlogMLAttachment
+                                                {
+                                                    Content = string.Empty,
+                                                    Url = imageUrl,
+                                                    ExternalUri = imageUrl,
+                                                    IsEmbedded = false,
+                                                    MimeType = mime
+                                                });
+                                            }
+                                        }
+                                    }
+                                }
+
                             }
+
                         }
                         catch (Exception ex)
                         {

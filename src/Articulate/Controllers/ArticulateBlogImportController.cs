@@ -117,16 +117,23 @@ namespace Articulate.Controllers
         /// Exports blog data as a BlogML XML file.
         /// </summary>
         /// <param name="model">The export options including the Articulate node ID and image export settings.</param>
-        /// <returns>The exported BlogML file as a stream.</returns>
-        /// <response code="200">Returns the BlogML XML file, with the current date and time appended to the file name (yyyyMMddHHmmss), example: articulate-export-20250629135958.xml</response>
+        /// <returns>A file stream containing the BlogML XML file.</returns>
+        /// <response code="200">Returns the BlogML XML file as an octet-stream. The filename in the Content-Disposition header will be in the format: articulate-export-yyyyMMddHHmmss.xml.</response>
         [HttpPost("export")]
-        [ProducesResponseType(typeof(FileStreamResult), StatusCodes.Status200OK, "application/xml")]
-        public IActionResult PostExportBlogMl(ExportBlogMlModel model)
+        [ProducesResponseType(typeof(byte[]), StatusCodes.Status200OK, "application/octet-stream")]
+        public async Task< IActionResult> PostExportBlogMl(ExportBlogMlModel model)
         {
             blogMlExporter.Export(model.ArticulateNodeId, model.ExportImagesAsBase64);
-            var fileStream = articulateTempFileSystem.OpenFile("BlogMlExport.xml");
             var downloadFileName = $"articulate-export-{DateTime.UtcNow:yyyyMMddHHmmss}.xml";
-            return Ok(new FileStreamResult(fileStream, new MediaTypeHeaderValue("application/octet-stream")) { FileDownloadName = downloadFileName });
+            Response.Headers.Append("Content-Disposition", $"attachment; filename=\"{downloadFileName}\"");
+            Response.ContentType = "application/octet-stream";
+
+            await using (var fileStream = articulateTempFileSystem.OpenFile("BlogMlExport.xml"))
+            {
+                await fileStream.CopyToAsync(Response.Body);
+                await Response.Body.FlushAsync();
+            }
+            return new EmptyResult();
         }
 
         /// <summary>
