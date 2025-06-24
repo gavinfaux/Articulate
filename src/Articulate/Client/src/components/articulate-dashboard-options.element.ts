@@ -7,19 +7,19 @@ const dashboards = [
   {
     path: "blogml/import",
     name: "BlogML Import",
-    icon: "add",
+    icon: "icon-download-alt",
     description: "Import content from any BlogML compatible platform",
   },
   {
     path: "blogml/export",
     name: "BlogML Export",
-    icon: "download",
+    icon: "icon-out",
     description: "Export content to any BlogML compatible platform",
   },
   {
     path: "theme/copy",
     name: "Copy Theme",
-    icon: "copy",
+    icon: "icon-palette",
     description: "Copy Articulate themes for customization",
   },
 ];
@@ -82,13 +82,13 @@ export default class ArticulateDashboardOptionsElement extends UmbLitElement {
     css`
       .tools-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
-        gap: var(--uui-size-space-5);
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: var(--uui-size-space-6);
       }
 
       .tool-card {
         min-width: 0;
-        height: 128px;
+        height: 170px;
         display: flex;
         flex-direction: column;
         justify-content: center;

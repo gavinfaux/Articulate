@@ -1,10 +1,11 @@
-import { css, html } from "@umbraco-cms/backoffice/external/lit";
+import { css, html, nothing, TemplateResult } from "@umbraco-cms/backoffice/external/lit";
+import { UUIButtonState } from "@umbraco-cms/backoffice/external/uui";
 import { UmbLitElement } from "@umbraco-cms/backoffice/lit-element";
 import { UmbTextStyles } from "@umbraco-cms/backoffice/style";
+import { umbBindToValidation, UmbValidationContext } from "@umbraco-cms/backoffice/validation";
 import { customElement, property, state } from "lit/decorators.js";
 import { Articulate } from "../api/articulate/sdk.gen.ts";
-import { ProblemDetails } from "../api/articulate/types.gen.ts";
-import { extractErrorMessage } from "../utils/error-utils.ts";
+import { handleApiError } from "../utils/error-utils.ts";
 import { showUmbracoNotification } from "../utils/notification-utils.ts";
 import { renderHeaderActions } from "../utils/template-utils.ts";
 
@@ -20,12 +21,15 @@ export default class ArticulateCopyThemeElement extends UmbLitElement {
   @property({ type: String })
   routerPath?: string;
 
-  @state() private _isLoading = true;
-  @state() private _isSubmitting = false;
+  @state() private _formState: UUIButtonState = undefined;
+  @state() private _formError = "";
+
   @state() private _themes: string[] = [];
 
   private _newThemeName = "";
   @state() private _selectedTheme: string | null = null;
+
+  #validation = new UmbValidationContext(this);
 
   /**
    * Fetches the list of available themes.
@@ -34,37 +38,24 @@ export default class ArticulateCopyThemeElement extends UmbLitElement {
   async connectedCallback() {
     super.connectedCallback();
     await this._loadThemes();
-    this._isLoading = false;
-    this.requestUpdate("_isLoading");
   }
 
   private async _loadThemes() {
-    try {
-      const result = await Articulate.getUmbracoManagementApiV1ArticulateThemesList();
+    const result = await Articulate.getUmbracoManagementApiV1ArticulateThemesDefault();
 
-      if (!result.response.ok) {
-        let errorToThrow: Error | ProblemDetails;
-        try {
-          const problemDetails: ProblemDetails = await result.response.json();
-          errorToThrow = problemDetails;
-        } catch {
-          errorToThrow = new Error(
-            `API Error: ${result.response.status} ${result.response.statusText}`,
-          );
-        }
-        throw errorToThrow;
-      }
-      const data = await result.data;
-      if (!data) {
-        throw new Error("Failed to load themes.");
-      }
-
-      this._themes = data?.map((theme) => theme) ?? [];
-    } catch (error) {
-      this._themes = [];
-      const extractedMessage = extractErrorMessage(error, "Could not load themes.");
-      await showUmbracoNotification(this, extractedMessage, "danger");
+    if (!result.response.ok) {
+      this._formError = await handleApiError(result.response, "Failed to load themes.");
+      this._formState = "failed";
+      return;
     }
+    const data = result.data;
+    if (!data) {
+      this._formState = "failed";
+      this._formError = "Failed to load themes.";
+      return;
+    }
+
+    this._themes = data?.map((theme) => theme) ?? [];
   }
 
   /**
@@ -75,7 +66,6 @@ export default class ArticulateCopyThemeElement extends UmbLitElement {
   private _selectTheme(theme: string) {
     this._selectedTheme = theme;
     this._newThemeName = `${theme} - Copy`;
-    this.requestUpdate("_selectedTheme", "_newThemeName");
   }
 
   private _handleSelectThemeButtonClick(event: Event, themeName: string) {
@@ -114,36 +104,33 @@ export default class ArticulateCopyThemeElement extends UmbLitElement {
    * @returns {Promise<void>}
    */
   private async _duplicateTheme() {
-    if (this._isSubmitting || !this._selectedTheme || !this._newThemeName) return;
     try {
-      this._isSubmitting = true;
-      this.requestUpdate("_isSubmitting");
-      const result = await Articulate.postUmbracoManagementApiV1ArticulateThemesCopy({
-        body: {
-          themeName: this._selectedTheme,
-          newThemeName: this._newThemeName,
-        },
-      });
-
-      if (!result.response.ok) {
-        throw new Error(`Failed to duplicate theme: ${result.response.statusText}`);
-      }
-
-      await showUmbracoNotification(this, "Theme duplicated successfully!", "positive");
-      this._selectedTheme = null;
-      this._newThemeName = "";
-      this.requestUpdate("_selectedTheme", "_newThemeName");
-    } catch (error) {
-      console.error("Error duplicating theme:", error);
-      const errorMessage = extractErrorMessage(
-        error,
-        "Failed to duplicate theme. Please try again.",
-      );
-      await showUmbracoNotification(this, errorMessage, "danger");
-    } finally {
-      this._isSubmitting = false;
-      this.requestUpdate("_isSubmitting");
+      await this.#validation.validate();
+    } catch {
+      this._formError = "Please select a theme and enter a new theme name.";
+      return;
     }
+
+    if (!this._selectedTheme || !this._newThemeName) return;
+
+    this._formState = "waiting";
+    this._formError = "";
+    const result = await Articulate.postUmbracoManagementApiV1ArticulateThemesCopy({
+      body: {
+        themeName: this._selectedTheme,
+        newThemeName: this._newThemeName,
+      },
+    });
+
+    if (!result.response.ok) {
+      this._formError = await handleApiError(result.response, "Failed to duplicate theme.");
+      this._formState = "failed";
+      return;
+    }
+    this._formState = "success";
+    await showUmbracoNotification(this, "Theme duplicated successfully!", "positive");
+    this._selectedTheme = null;
+    this._newThemeName = "";
   }
 
   /**
@@ -223,7 +210,7 @@ export default class ArticulateCopyThemeElement extends UmbLitElement {
       return html``;
     }
 
-    const duplicateButtonLabel = this._isSubmitting ? "Duplicating..." : "Duplicate";
+    const duplicateButtonLabel = this._formState === "waiting" ? "Duplicating..." : "Duplicate";
 
     return html`
       <div class="duplicate-form">
@@ -237,19 +224,20 @@ export default class ArticulateCopyThemeElement extends UmbLitElement {
             .value=${this._newThemeName}
             @input=${this.#onNewThemeNameChange}
             required
-            ?disabled=${this._isSubmitting}
+            ?disabled=${this._formState === "waiting"}
+            ${umbBindToValidation(this, "$.themeName", this._newThemeName || "")}
           ></uui-input>
         </uui-form-layout-item>
+        <uui-form-layout-item>${this.#renderErrorMessage()}</uui-form-layout-item>
 
         <div class="form-actions">
           <uui-button
             look="primary"
-            color="positive"
-            label="Duplicate"
+            label=${duplicateButtonLabel}
             type="button"
             @click=${() => this._duplicateTheme()}
-            ?disabled=${!this._newThemeName || this._isSubmitting}
-            .state=${this._isSubmitting ? "waiting" : ""}
+            ?disabled=${!this._newThemeName || this._formState === "waiting"}
+            .state=${this._formState}
           >
             ${duplicateButtonLabel}
           </uui-button>
@@ -258,7 +246,7 @@ export default class ArticulateCopyThemeElement extends UmbLitElement {
             look="secondary"
             label="Cancel"
             @click=${this.#onCancelClick}
-            ?disabled=${this._isSubmitting}
+            ?disabled=${this._formState === "waiting"}
           >
             Cancel
           </uui-button>
@@ -268,10 +256,6 @@ export default class ArticulateCopyThemeElement extends UmbLitElement {
   }
 
   override render() {
-    if (this._isLoading) {
-      return html`<uui-loader-bar></uui-loader-bar>`;
-    }
-
     return html`
       <uui-box headline="Theme Duplication">
         ${renderHeaderActions(this.routerPath)}
@@ -286,6 +270,11 @@ export default class ArticulateCopyThemeElement extends UmbLitElement {
         <div class="container">${this._renderThemeGrid()} ${this._renderDuplicateForm()}</div>
       </uui-box>
     `;
+  }
+
+  #renderErrorMessage(): TemplateResult | typeof nothing {
+    if (!this._formError || this._formState !== "failed") return nothing;
+    return html`<p class="text-danger">${this._formError}</p>`;
   }
 
   static override readonly styles = [
@@ -358,6 +347,9 @@ export default class ArticulateCopyThemeElement extends UmbLitElement {
         color: var(--uui-color-text-alt);
         text-align: center;
         margin-block: var(--uui-size-layout-1);
+      }
+      .text-danger {
+        color: var(--uui-color-danger);
       }
     `,
   ];

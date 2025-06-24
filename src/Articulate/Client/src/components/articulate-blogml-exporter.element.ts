@@ -14,12 +14,13 @@ import { UmbTextStyles } from "@umbraco-cms/backoffice/style";
 import { umbBindToValidation, UmbValidationContext } from "@umbraco-cms/backoffice/validation";
 import { Articulate } from "../api/articulate/sdk.gen";
 import type { ExportBlogMlModel } from "../api/articulate/types.gen";
-import { ProblemDetails } from "../api/articulate/types.gen";
 import {
   fetchArchiveDoctypeUdi,
   fetchNodeByUdi,
   openNodePicker,
 } from "../utils/document-node-utils";
+import { handleApiError } from "../utils/error-utils";
+import { showUmbracoNotification } from "../utils/notification-utils";
 import { renderHeaderActions } from "../utils/template-utils";
 import { formStyles } from "./form-styles";
 
@@ -65,6 +66,7 @@ export default class ArticulateBlogMlExporterElement extends UmbLitElement {
     super.connectedCallback();
     this._archiveDoctypeUdi = await fetchArchiveDoctypeUdi();
     if (this._archiveDoctypeUdi === null) {
+      this._formState = "failed";
       this._formError = "Failed to retrieve Articulate Archive document type.";
       return;
     }
@@ -107,10 +109,10 @@ export default class ArticulateBlogMlExporterElement extends UmbLitElement {
   #isBlob = (value: unknown): value is Blob => {
     return value instanceof Blob;
   };
+
   /**
    * Handles the form submission for exporting blog content.
    * Validates the form and initiates the export process.
-   * @private
    * @param {Event} e - The form submission event.
    * @returns {Promise<void>}
    */
@@ -121,8 +123,7 @@ export default class ArticulateBlogMlExporterElement extends UmbLitElement {
 
     try {
       await this.#validation.validate();
-    } catch (error) {
-      console.error("Validation error:", error);
+    } catch {
       this._formError = "Please select a blog node.";
       return;
     }
@@ -136,57 +137,37 @@ export default class ArticulateBlogMlExporterElement extends UmbLitElement {
     };
     this._formState = "waiting";
     this._formError = "";
-    try {
-      const result = await Articulate.postUmbracoManagementApiV1ArticulateBlogExport({
-        body: payload,
-      });
-      if (!result.response.ok) {
-        let errorDetails: ProblemDetails | { title: string; detail?: string };
-        try {
-          errorDetails = (await result.response.json()) as ProblemDetails;
-          console.error(
-            errorDetails.title && errorDetails.detail
-              ? `${errorDetails.title}: ${errorDetails.detail}`
-              : errorDetails.title,
-          );
-        } catch {
-          errorDetails = { title: `${result.response.status} ${result.response.statusText}` };
-        }
-        this._formError =
-          (errorDetails.title && errorDetails.detail
-            ? `${errorDetails.title}: ${errorDetails.detail}`
-            : errorDetails.title) ?? "Failed to export blog content.";
-        this._formState = "failed";
-        return;
-      }
-      // The API now returns the file content directly.
-      const blob = result.data;
-      if (!this.#isBlob(blob)) {
-        this._formState = "failed";
-        this._formError = "Failed to receive a valid file from the server.";
-        console.error("API response was not a valid file blob.");
-        return;
-      }
-      const contentDisposition = result.response.headers.get("content-disposition");
-      let fileName = "export.xml"; // Default filename
-      if (contentDisposition) {
-        const fileNameMatch = contentDisposition.match(/filename=\"?([^\"]+)\"?/);
-        if (fileNameMatch && fileNameMatch.length > 1 && fileNameMatch[1]) {
-          fileName = fileNameMatch[1];
-        }
-      }
-      this._formState = "success";
-      this.#downloadFile(blob, fileName);
-      form.reset();
-      this._articulateNodeId = null;
-      this._selectedBlogNodeName = "";
-    } catch (error) {
+
+    const result = await Articulate.postUmbracoManagementApiV1ArticulateBlogExport({
+      body: payload,
+    });
+
+    if (!result.response.ok) {
+      this._formError = await handleApiError(result.response, "Failed to export blog content.");
       this._formState = "failed";
-      this._formError = `An unexpected error occurred: ${
-        error instanceof Error ? error.message : String(error)
-      }`;
-      console.error(error);
+      return;
     }
+
+    const blob = result.data;
+    if (!this.#isBlob(blob)) {
+      this._formState = "failed";
+      this._formError = "Failed to receive a valid file from the server.";
+      return;
+    }
+    const contentDisposition = result.response.headers.get("content-disposition");
+    let fileName = "blog-export.xml"; // Default filename
+    if (contentDisposition) {
+      const fileNameMatch = contentDisposition.match(/filename=\"?([^\"]+)\"?/);
+      if (fileNameMatch && fileNameMatch.length > 1 && fileNameMatch[1]) {
+        fileName = fileNameMatch[1];
+      }
+    }
+    this.#downloadFile(blob, fileName);
+    this._formState = "success";
+    await showUmbracoNotification(this, "BlogML exported successfully!", "positive");
+    form.reset();
+    this._articulateNodeId = null;
+    this._selectedBlogNodeName = "";
   };
 
   override render() {
@@ -230,7 +211,11 @@ export default class ArticulateBlogMlExporterElement extends UmbLitElement {
               </uui-form-layout-item>
               <uui-form-layout-item>${this.#renderErrorMessage()}</uui-form-layout-item>
               <uui-button-group>
-                <uui-button type="submit" look="primary" .state=${this._formState}
+                <uui-button
+                  type="submit"
+                  look="primary"
+                  .state=${this._formState}
+                  ?disabled=${this._formState === "waiting"}
                   >Submit</uui-button
                 >
               </uui-button-group>
@@ -254,6 +239,9 @@ export default class ArticulateBlogMlExporterElement extends UmbLitElement {
         display: flex;
         align-items: center;
         gap: var(--uui-size-space-3);
+      }
+      .text-danger {
+        color: var(--uui-color-danger);
       }
     `,
   ];

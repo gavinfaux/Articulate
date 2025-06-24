@@ -190,13 +190,17 @@ export type GetUmbracoManagementApiV1ArticulateBlogExportDisqusErrors = {
      * The authenticated user does not have access to this resource
      */
     403: unknown;
+    /**
+     * Not Found
+     */
+    404: unknown;
 };
 
 export type GetUmbracoManagementApiV1ArticulateBlogExportDisqusResponses = {
     /**
-     * Returns the Disqus XML file, example: DisqusXmlExport.xml
+     * Returns the Disqus comment XML file as an octet-stream. The filename in the Content-Disposition header will be in the format: articulate-disqus-comments-yyyyMMddHHmmss.xml.
      */
-    200: Blob | File;
+    200: string;
 };
 
 export type GetUmbracoManagementApiV1ArticulateBlogExportDisqusResponse = GetUmbracoManagementApiV1ArticulateBlogExportDisqusResponses[keyof GetUmbracoManagementApiV1ArticulateBlogExportDisqusResponses];
@@ -288,7 +292,7 @@ export type GetUmbracoManagementApiV1ArticulateEditorsThemesErrors = {
 
 export type GetUmbracoManagementApiV1ArticulateEditorsThemesResponses = {
     /**
-     * Returns the list of available theme names.
+     * Returns the list of all available theme names.
      */
     200: Array<string>;
 };
@@ -339,14 +343,14 @@ export type PostUmbracoManagementApiV1ArticulateThemesCopyResponses = {
 
 export type PostUmbracoManagementApiV1ArticulateThemesCopyResponse = PostUmbracoManagementApiV1ArticulateThemesCopyResponses[keyof PostUmbracoManagementApiV1ArticulateThemesCopyResponses];
 
-export type GetUmbracoManagementApiV1ArticulateThemesListData = {
+export type GetUmbracoManagementApiV1ArticulateThemesDefaultData = {
     body?: never;
     path?: never;
     query?: never;
-    url: '/umbraco/management/api/v1/articulate/themes/list';
+    url: '/umbraco/management/api/v1/articulate/themes/default';
 };
 
-export type GetUmbracoManagementApiV1ArticulateThemesListErrors = {
+export type GetUmbracoManagementApiV1ArticulateThemesDefaultErrors = {
     /**
      * The resource is protected and requires an authentication token
      */
@@ -357,14 +361,14 @@ export type GetUmbracoManagementApiV1ArticulateThemesListErrors = {
     403: unknown;
 };
 
-export type GetUmbracoManagementApiV1ArticulateThemesListResponses = {
+export type GetUmbracoManagementApiV1ArticulateThemesDefaultResponses = {
     /**
-     * Returns the list of available theme names.
+     * Returns the list of available default theme names.
      */
     200: Array<string>;
 };
 
-export type GetUmbracoManagementApiV1ArticulateThemesListResponse = GetUmbracoManagementApiV1ArticulateThemesListResponses[keyof GetUmbracoManagementApiV1ArticulateThemesListResponses];
+export type GetUmbracoManagementApiV1ArticulateThemesDefaultResponse = GetUmbracoManagementApiV1ArticulateThemesDefaultResponses[keyof GetUmbracoManagementApiV1ArticulateThemesDefaultResponses];
 
 export type ClientOptions = {
     baseUrl: 'https://localhost:44366' | (string & {});

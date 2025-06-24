@@ -1,17 +1,17 @@
-import { UmbElementMixin as p } from "@umbraco-cms/backoffice/element-api";
+import { UmbElementMixin as u } from "@umbraco-cms/backoffice/element-api";
 import { UmbChangeEvent as c } from "@umbraco-cms/backoffice/event";
-import { html as u, css as _, property as m, state as l, customElement as d } from "@umbraco-cms/backoffice/external/lit";
+import { html as m, css as _, property as p, state as l, customElement as d } from "@umbraco-cms/backoffice/external/lit";
 import { UmbLitElement as f } from "@umbraco-cms/backoffice/lit-element";
 import { UmbTextStyles as v } from "@umbraco-cms/backoffice/style";
-import { A as g, e as b, s as w } from "./notification-utils-DvHwRL3K.js";
-var S = Object.defineProperty, O = Object.getOwnPropertyDescriptor, o = (e, t, r, i) => {
-  for (var s = i > 1 ? void 0 : i ? O(t, r) : t, n = e.length - 1, h; n >= 0; n--)
-    (h = e[n]) && (s = (i ? h(t, r, s) : h(s)) || s);
-  return i && s && S(t, r, s), s;
+import { A as S, h as O } from "./error-utils-BqJ7wuVX.js";
+var b = Object.defineProperty, g = Object.getOwnPropertyDescriptor, i = (e, t, r, h) => {
+  for (var a = h > 1 ? void 0 : h ? g(t, r) : t, n = e.length - 1, o; n >= 0; n--)
+    (o = e[n]) && (a = (h ? o(t, r, a) : o(a)) || a);
+  return h && a && b(t, r, a), a;
 };
-let a = class extends p(f) {
+let s = class extends u(f) {
   constructor() {
-    super(), this._themeSelectOptions = [], this._themeData = [], this._loading = !1, this._error = "", this._fetchThemes();
+    super(), this._themeSelectOptions = [], this._themeData = [], this._error = "", this._fetchThemes();
   }
   updated(e) {
     super.updated(e);
@@ -19,33 +19,21 @@ let a = class extends p(f) {
     this._themeData.length > 0 && (t || r) && this._rebuildAndSetSelectOptions();
   }
   async _fetchThemes() {
-    this._loading = !0, this._error = "";
-    try {
-      const e = await g.getUmbracoManagementApiV1ArticulateEditorsThemes();
-      if (!e.response.ok) {
-        let r;
-        try {
-          r = await e.response.json();
-        } catch {
-          r = new Error(
-            `API Error: ${e.response.status} ${e.response.statusText}`
-          );
-        }
-        throw r;
-      }
-      const t = e.data;
-      if (!t)
-        throw new Error("No theme data returned from the server.");
-      this._themeData = t.map((r) => ({
-        name: r,
-        value: r
-      })), this._rebuildAndSetSelectOptions();
-    } catch (e) {
-      const t = b(e, "Failed to load themes");
-      this._error = t, await w(this, t, "danger");
-    } finally {
-      this._loading = !1;
+    this._error = "";
+    const e = await S.getUmbracoManagementApiV1ArticulateEditorsThemes();
+    if (!e.response.ok) {
+      this._error = await O(e.response, "Failed to load themes.");
+      return;
     }
+    const t = e.data;
+    if (!t) {
+      this._error = "No theme data returned from the server.";
+      return;
+    }
+    this._themeData = t.map((r) => ({
+      name: r,
+      value: r
+    })), this._rebuildAndSetSelectOptions();
   }
   _rebuildAndSetSelectOptions() {
     if (!this._themeData || this._themeData.length === 0) {
@@ -64,7 +52,7 @@ let a = class extends p(f) {
     this.value !== t && (this.value = t, this.dispatchEvent(new c()));
   }
   render() {
-    return this._loading ? u`<uui-loader></uui-loader>` : this._error ? u` <uui-tag color="danger">Could not load themes: ${this._error}</uui-tag> ` : u`
+    return this._error && this._error.length > 0 ? m`<span class="text-danger">${this._error}</span>` : m`
       <uui-select
         .options=${this._themeSelectOptions}
         .value=${this.value}
@@ -74,7 +62,7 @@ let a = class extends p(f) {
     `;
   }
 };
-a.styles = [
+s.styles = [
   v,
   _`
       uui-select {
@@ -82,28 +70,25 @@ a.styles = [
       }
     `
 ];
-o([
-  m()
-], a.prototype, "value", 2);
-o([
-  m({ attribute: !1 })
-], a.prototype, "config", 2);
-o([
+i([
+  p()
+], s.prototype, "value", 2);
+i([
+  p({ attribute: !1 })
+], s.prototype, "config", 2);
+i([
   l()
-], a.prototype, "_themeSelectOptions", 2);
-o([
+], s.prototype, "_themeSelectOptions", 2);
+i([
   l()
-], a.prototype, "_themeData", 2);
-o([
+], s.prototype, "_themeData", 2);
+i([
   l()
-], a.prototype, "_loading", 2);
-o([
-  l()
-], a.prototype, "_error", 2);
-a = o([
+], s.prototype, "_error", 2);
+s = i([
   d("articulate-theme-picker-element")
-], a);
+], s);
 export {
-  a as default
+  s as default
 };
 //# sourceMappingURL=theme-picker.element.js.map

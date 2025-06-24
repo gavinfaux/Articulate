@@ -8,8 +8,7 @@ import type {
 } from "@umbraco-cms/backoffice/property-editor";
 import { UmbTextStyles } from "@umbraco-cms/backoffice/style";
 import { Articulate } from "../api/articulate/sdk.gen";
-import { extractErrorMessage } from "../utils/error-utils";
-import { showUmbracoNotification } from "../utils/notification-utils";
+import { handleApiError } from "../utils/error-utils";
 
 @customElement("articulate-theme-picker-element")
 export default class ArticulateThemePickerElement
@@ -27,9 +26,6 @@ export default class ArticulateThemePickerElement
 
   @state()
   private _themeData: Array<{ name: string; value: string }> = [];
-
-  @state()
-  private _loading = false;
 
   @state()
   private _error = "";
@@ -51,42 +47,26 @@ export default class ArticulateThemePickerElement
   }
 
   private async _fetchThemes() {
-    this._loading = true;
     this._error = "";
 
-    try {
-      const result = await Articulate.getUmbracoManagementApiV1ArticulateEditorsThemes();
+    const result = await Articulate.getUmbracoManagementApiV1ArticulateEditorsThemes();
 
-      if (!result.response.ok) {
-        let errorToThrow;
-        try {
-          const problemDetails = await result.response.json();
-          errorToThrow = problemDetails;
-        } catch {
-          errorToThrow = new Error(
-            `API Error: ${result.response.status} ${result.response.statusText}`,
-          );
-        }
-        throw errorToThrow;
-      }
-
-      const data = result.data;
-      if (!data) {
-        throw new Error("No theme data returned from the server.");
-      }
-
-      this._themeData = data.map((theme) => ({
-        name: theme,
-        value: theme,
-      }));
-      this._rebuildAndSetSelectOptions();
-    } catch (error: unknown) {
-      const errorMessage = extractErrorMessage(error, "Failed to load themes");
-      this._error = errorMessage;
-      await showUmbracoNotification(this, errorMessage, "danger");
-    } finally {
-      this._loading = false;
+    if (!result.response.ok) {
+      this._error = await handleApiError(result.response, "Failed to load themes.");
+      return;
     }
+
+    const data = result.data;
+    if (!data) {
+      this._error = "No theme data returned from the server.";
+      return;
+    }
+
+    this._themeData = data.map((theme) => ({
+      name: theme,
+      value: theme,
+    }));
+    this._rebuildAndSetSelectOptions();
   }
 
   private _rebuildAndSetSelectOptions() {
@@ -117,12 +97,8 @@ export default class ArticulateThemePickerElement
   }
 
   override render() {
-    if (this._loading) {
-      return html`<uui-loader></uui-loader>`;
-    }
-
-    if (this._error) {
-      return html` <uui-tag color="danger">Could not load themes: ${this._error}</uui-tag> `;
+    if (this._error && this._error.length > 0) {
+      return html`<span class="text-danger">${this._error}</span>`;
     }
 
     return html`

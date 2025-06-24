@@ -1,44 +1,45 @@
-import { UMB_AUTH_CONTEXT as ve } from "@umbraco-cms/backoffice/auth";
-import { A as b, i as we, e as B, s as N, c as $e } from "./notification-utils-DvHwRL3K.js";
-import { html as l, css as w, property as Y, state as h, customElement as I, nothing as Ee } from "@umbraco-cms/backoffice/external/lit";
-import { UmbLitElement as T } from "@umbraco-cms/backoffice/lit-element";
-import { UmbTextStyles as D } from "@umbraco-cms/backoffice/style";
-import { UMB_MODAL_MANAGER_CONTEXT as se } from "@umbraco-cms/backoffice/modal";
-import { UmbValidationContext as ne, umbBindToValidation as xe } from "@umbraco-cms/backoffice/validation";
-import { UMB_DOCUMENT_PICKER_MODAL as Se } from "@umbraco-cms/backoffice/document";
-import { DocumentService as Ue } from "@umbraco-cms/backoffice/external/backend-api";
-async function le() {
-  const t = await b.getUmbracoManagementApiV1ArticulateBlogArticulateGuid();
-  if (t.response.ok && t.data)
-    return t.data;
-  if (!t.data)
+import { UMB_AUTH_CONTEXT as Oe } from "@umbraco-cms/backoffice/auth";
+import { A as g, h as b, c as De } from "./error-utils-BqJ7wuVX.js";
+import { html as l, css as w, property as te, state as d, customElement as I, nothing as ie } from "@umbraco-cms/backoffice/external/lit";
+import { UmbLitElement as A } from "@umbraco-cms/backoffice/lit-element";
+import { UmbTextStyles as N } from "@umbraco-cms/backoffice/style";
+import { UMB_MODAL_MANAGER_CONTEXT as _e } from "@umbraco-cms/backoffice/modal";
+import { UmbValidationContext as re, umbBindToValidation as oe } from "@umbraco-cms/backoffice/validation";
+import { UMB_DOCUMENT_PICKER_MODAL as Be } from "@umbraco-cms/backoffice/document";
+import { DocumentService as Ie } from "@umbraco-cms/backoffice/external/backend-api";
+import { UMB_NOTIFICATION_CONTEXT as ze } from "@umbraco-cms/backoffice/notification";
+async function be() {
+  const i = await g.getUmbracoManagementApiV1ArticulateBlogArticulateGuid();
+  if (i.response.ok && i.data)
+    return i.data;
+  if (!i.data)
     return console.error("API returned no data for Articulate Archive UDI"), null;
   try {
-    let e = await t.response.json();
+    let e = await i.response.json();
     console.error(
       e.title && e.detail ? `${e.title}: ${e.detail}` : e.title
     );
   } catch {
-    console.error(`${t.response.status} ${t.response.statusText}`);
+    console.error(`${i.response.status} ${i.response.statusText}`);
   }
   return null;
 }
-async function ue(t) {
+async function ye(i) {
   var e;
   try {
-    const i = await Ue.getDocumentById({ id: t });
-    return ((e = i == null ? void 0 : i.variants) == null ? void 0 : e[0]) ?? null;
-  } catch (i) {
+    const t = await Ie.getDocumentById({ id: i });
+    return ((e = t == null ? void 0 : t.variants) == null ? void 0 : e[0]) ?? null;
+  } catch (t) {
     return console.error(
-      `Failed to fetch node: ${i instanceof Error ? i.message : String(i)}`
+      `Failed to fetch node: ${t instanceof Error ? t.message : String(t)}`
     ), null;
   }
 }
-async function de(t, e, i) {
+async function ve(i, e, t) {
   try {
-    const r = await t.open(
-      i,
-      Se,
+    const o = await i.open(
+      t,
+      Be,
       {
         data: {
           multiple: !1,
@@ -49,26 +50,31 @@ async function de(t, e, i) {
         }
       }
     ).onSubmit();
-    return !r || !r.selection || !r.selection[0] ? null : r.selection[0];
-  } catch (o) {
-    return console.error(`Node picker failed: ${o instanceof Error ? o.message : String(o)}`), null;
+    return !o || !o.selection || !o.selection[0] ? null : o.selection[0];
+  } catch (r) {
+    return console.error(`Node picker failed: ${r instanceof Error ? r.message : String(r)}`), null;
   }
 }
-function O(t) {
+async function ae(i, e, t) {
+  (await i.getContext(ze)).peek(t, {
+    data: { message: e }
+  });
+}
+function se(i) {
   return l`
     <div slot="header-actions">
       <uui-button
         label="Back to Articulate dashboard options"
         look="outline"
         compact
-        href=${t || "/umbraco/section/settings/dashboard/articulate"}
+        href=${i || "/umbraco/section/settings/dashboard/articulate"}
       >
         ← Back
       </uui-button>
     </div>
   `;
 }
-const ce = w`
+const we = w`
   uui-box {
     margin-top: var(--uui-size-space-6);
     max-width: var(--uui-size-content);
@@ -89,70 +95,58 @@ const ce = w`
     text-align: right;
   }
 `;
-var Pe = Object.defineProperty, Ae = Object.getOwnPropertyDescriptor, he = (t) => {
-  throw TypeError(t);
-}, $ = (t, e, i, o) => {
-  for (var r = o > 1 ? void 0 : o ? Ae(e, i) : e, a = t.length - 1, s; a >= 0; a--)
-    (s = t[a]) && (r = (o ? s(e, i, r) : s(r)) || r);
-  return o && r && Pe(e, i, r), r;
-}, pe = (t, e, i) => e.has(t) || he("Cannot " + i), M = (t, e, i) => (pe(t, e, "read from private field"), i ? i.call(t) : e.get(t)), U = (t, e, i) => e.has(t) ? he("Cannot add the same private member more than once") : e instanceof WeakSet ? e.add(t) : e.set(t, i), Ne = (t, e, i) => (pe(t, e, "access private method"), i), j, W, V, G, X, me;
-let p = class extends T {
+var Re = Object.defineProperty, Fe = Object.getOwnPropertyDescriptor, $e = (i) => {
+  throw TypeError(i);
+}, $ = (i, e, t, r) => {
+  for (var o = r > 1 ? void 0 : r ? Fe(e, t) : e, a = i.length - 1, s; a >= 0; a--)
+    (s = i[a]) && (o = (r ? s(e, t, o) : s(o)) || o);
+  return r && o && Re(e, t, o), o;
+}, Ee = (i, e, t) => e.has(i) || $e("Cannot " + t), T = (i, e, t) => (Ee(i, e, "read from private field"), t ? t.call(i) : e.get(i)), x = (i, e, t) => e.has(i) ? $e("Cannot add the same private member more than once") : e instanceof WeakSet ? e.add(i) : e.set(i, t), qe = (i, e, t) => (Ee(i, e, "access private method"), t), q, L, j, W, V, xe;
+let h = class extends A {
   /**
    * Creates an instance of ArticulateBlogMlExporterElement.
    * Sets up the modal manager context.
    */
   constructor() {
-    super(), U(this, X), this._formState = void 0, this._formError = "", this._articulateNodeId = null, this._selectedBlogNodeName = "", this._archiveDoctypeUdi = null, U(this, j, new ne(this)), U(this, W, (t, e) => {
-      const i = window.URL.createObjectURL(t), o = document.createElement("a");
-      o.style.display = "none", o.href = i, o.download = e, document.body.appendChild(o), o.click(), window.URL.revokeObjectURL(i), o.remove();
-    }), U(this, V, (t) => t instanceof Blob), U(this, G, async (t) => {
-      t.preventDefault();
-      const e = t.target;
+    super(), x(this, V), this._formState = void 0, this._formError = "", this._articulateNodeId = null, this._selectedBlogNodeName = "", this._archiveDoctypeUdi = null, x(this, q, new re(this)), x(this, L, (i, e) => {
+      const t = window.URL.createObjectURL(i), r = document.createElement("a");
+      r.style.display = "none", r.href = t, r.download = e, document.body.appendChild(r), r.click(), window.URL.revokeObjectURL(t), r.remove();
+    }), x(this, j, (i) => i instanceof Blob), x(this, W, async (i) => {
+      i.preventDefault();
+      const e = i.target;
       if (!e) return;
       try {
-        await M(this, j).validate();
-      } catch (a) {
-        console.error("Validation error:", a), this._formError = "Please select a blog node.";
+        await T(this, q).validate();
+      } catch {
+        this._formError = "Please select a blog node.";
         return;
       }
-      const o = new FormData(e).get("embedImages") === "on", r = {
+      const r = new FormData(e).get("embedImages") === "on", o = {
         articulateNodeId: this._articulateNodeId,
-        exportImagesAsBase64: o
+        exportImagesAsBase64: r
       };
       this._formState = "waiting", this._formError = "";
-      try {
-        const a = await b.postUmbracoManagementApiV1ArticulateBlogExport({
-          body: r
-        });
-        if (!a.response.ok) {
-          let u;
-          try {
-            u = await a.response.json(), console.error(
-              u.title && u.detail ? `${u.title}: ${u.detail}` : u.title
-            );
-          } catch {
-            u = { title: `${a.response.status} ${a.response.statusText}` };
-          }
-          this._formError = (u.title && u.detail ? `${u.title}: ${u.detail}` : u.title) ?? "Failed to export blog content.", this._formState = "failed";
-          return;
-        }
-        const s = a.data;
-        if (!M(this, V).call(this, s)) {
-          this._formState = "failed", this._formError = "Failed to receive a valid file from the server.", console.error("API response was not a valid file blob.");
-          return;
-        }
-        const n = a.response.headers.get("content-disposition");
-        let d = "export.xml";
-        if (n) {
-          const u = n.match(/filename=\"?([^\"]+)\"?/);
-          u && u.length > 1 && u[1] && (d = u[1]);
-        }
-        this._formState = "success", M(this, W).call(this, s, d), e.reset(), this._articulateNodeId = null, this._selectedBlogNodeName = "";
-      } catch (a) {
-        this._formState = "failed", this._formError = `An unexpected error occurred: ${a instanceof Error ? a.message : String(a)}`, console.error(a);
+      const a = await g.postUmbracoManagementApiV1ArticulateBlogExport({
+        body: o
+      });
+      if (!a.response.ok) {
+        this._formError = await b(a.response, "Failed to export blog content."), this._formState = "failed";
+        return;
       }
-    }), this.consumeContext(se, (t) => {
-      this._modalManagerContext = t;
+      const s = a.data;
+      if (!T(this, j).call(this, s)) {
+        this._formState = "failed", this._formError = "Failed to receive a valid file from the server.";
+        return;
+      }
+      const n = a.response.headers.get("content-disposition");
+      let u = "blog-export.xml";
+      if (n) {
+        const m = n.match(/filename=\"?([^\"]+)\"?/);
+        m && m.length > 1 && m[1] && (u = m[1]);
+      }
+      T(this, L).call(this, s, u), this._formState = "success", await ae(this, "BlogML exported successfully!", "positive"), e.reset(), this._articulateNodeId = null, this._selectedBlogNodeName = "";
+    }), this.consumeContext(_e, (i) => {
+      this._modalManagerContext = i;
     });
   }
   /**
@@ -160,8 +154,8 @@ let p = class extends T {
    * Fetches the Articulate Archive document type UDI.
    */
   async connectedCallback() {
-    if (super.connectedCallback(), this._archiveDoctypeUdi = await le(), this._archiveDoctypeUdi === null) {
-      this._formError = "Failed to retrieve Articulate Archive document type.";
+    if (super.connectedCallback(), this._archiveDoctypeUdi = await be(), this._archiveDoctypeUdi === null) {
+      this._formState = "failed", this._formError = "Failed to retrieve Articulate Archive document type.";
       return;
     }
   }
@@ -174,23 +168,23 @@ let p = class extends T {
   async _openNodePicker() {
     if (!this._archiveDoctypeUdi)
       return;
-    const t = await de(this._modalManagerContext, this._archiveDoctypeUdi, this);
-    if (t) {
-      const e = await ue(t);
+    const i = await ve(this._modalManagerContext, this._archiveDoctypeUdi, this);
+    if (i) {
+      const e = await ye(i);
       if (!e) {
         this._formError = "Selected node not found.";
         return;
       }
-      this._articulateNodeId = t, this._selectedBlogNodeName = e.name;
+      this._articulateNodeId = i, this._selectedBlogNodeName = e.name;
     }
   }
   render() {
     return l`
       <uui-box headline="BlogML Exporter">
-        ${O(this.routerPath)}
+        ${se(this.routerPath)}
         <uui-form-validation-message>
           <uui-form>
-            <form id="blogMlExportForm" @submit=${M(this, G)}>
+            <form id="blogMlExportForm" @submit=${T(this, W)}>
               <uui-form-layout-item>
                 <div class="node-picker-container">
                   <uui-label for="articulateNodeId" slot="label" required
@@ -201,7 +195,7 @@ let p = class extends T {
                     name="articulateNodeId"
                     placeholder="No node selected"
                     .value=${this._selectedBlogNodeName}
-                    ${xe(this, "$.articulateNodeId", this._articulateNodeId || "")}
+                    ${oe(this, "$.articulateNodeId", this._articulateNodeId || "")}
                     readonly
                     required
                     required-message="You must select a blog node"
@@ -223,9 +217,13 @@ let p = class extends T {
                   your site isn't going to be HTTP accessible to the site you will be importing on.
                 </div>
               </uui-form-layout-item>
-              <uui-form-layout-item>${Ne(this, X, me).call(this)}</uui-form-layout-item>
+              <uui-form-layout-item>${qe(this, V, xe).call(this)}</uui-form-layout-item>
               <uui-button-group>
-                <uui-button type="submit" look="primary" .state=${this._formState}
+                <uui-button
+                  type="submit"
+                  look="primary"
+                  .state=${this._formState}
+                  ?disabled=${this._formState === "waiting"}
                   >Submit</uui-button
                 >
               </uui-button-group>
@@ -236,58 +234,150 @@ let p = class extends T {
     `;
   }
 };
+q = /* @__PURE__ */ new WeakMap();
+L = /* @__PURE__ */ new WeakMap();
 j = /* @__PURE__ */ new WeakMap();
 W = /* @__PURE__ */ new WeakMap();
-V = /* @__PURE__ */ new WeakMap();
-G = /* @__PURE__ */ new WeakMap();
-X = /* @__PURE__ */ new WeakSet();
-me = function() {
-  return !this._formError || this._formState !== "failed" ? Ee : l`<p class="text-danger">${this._formError}</p>`;
+V = /* @__PURE__ */ new WeakSet();
+xe = function() {
+  return !this._formError || this._formState !== "failed" ? ie : l`<p class="text-danger">${this._formError}</p>`;
 };
-p.styles = [
-  D,
-  ce,
+h.styles = [
+  N,
+  we,
   w`
       .node-picker-container {
         display: flex;
         align-items: center;
         gap: var(--uui-size-space-3);
       }
+      .text-danger {
+        color: var(--uui-color-danger);
+      }
     `
 ];
 $([
-  Y({ type: String })
-], p.prototype, "routerPath", 2);
+  te({ type: String })
+], h.prototype, "routerPath", 2);
 $([
-  h()
-], p.prototype, "_formState", 2);
+  d()
+], h.prototype, "_formState", 2);
 $([
-  h()
-], p.prototype, "_formError", 2);
+  d()
+], h.prototype, "_formError", 2);
 $([
-  h()
-], p.prototype, "_articulateNodeId", 2);
+  d()
+], h.prototype, "_articulateNodeId", 2);
 $([
-  h()
-], p.prototype, "_selectedBlogNodeName", 2);
-p = $([
+  d()
+], h.prototype, "_selectedBlogNodeName", 2);
+h = $([
   I("articulate-blogml-exporter")
-], p);
-var Ce = Object.defineProperty, Te = Object.getOwnPropertyDescriptor, fe = (t) => {
-  throw TypeError(t);
-}, _ = (t, e, i, o) => {
-  for (var r = o > 1 ? void 0 : o ? Te(e, i) : e, a = t.length - 1, s; a >= 0; a--)
-    (s = t[a]) && (r = (o ? s(e, i, r) : s(r)) || r);
-  return o && r && Ce(e, i, r), r;
-}, De = (t, e, i) => e.has(t) || fe("Cannot " + i), R = (t, e, i) => (De(t, e, "read from private field"), i ? i.call(t) : e.get(t)), Me = (t, e, i) => e.has(t) ? fe("Cannot add the same private member more than once") : e instanceof WeakSet ? e.add(t) : e.set(t, i), A;
-let c = class extends T {
+], h);
+var Le = Object.defineProperty, je = Object.getOwnPropertyDescriptor, Se = (i) => {
+  throw TypeError(i);
+}, _ = (i, e, t, r) => {
+  for (var o = r > 1 ? void 0 : r ? je(e, t) : e, a = i.length - 1, s; a >= 0; a--)
+    (s = i[a]) && (o = (r ? s(e, t, o) : s(o)) || o);
+  return r && o && Le(e, t, o), o;
+}, Ce = (i, e, t) => e.has(i) || Se("Cannot " + t), k = (i, e, t) => (Ce(i, e, "read from private field"), t ? t.call(i) : e.get(i)), S = (i, e, t) => e.has(i) ? Se("Cannot add the same private member more than once") : e instanceof WeakSet ? e.add(i) : e.set(i, t), We = (i, e, t) => (Ce(i, e, "access private method"), t), X, G, H, Y, K, Pe;
+let c = class extends A {
   /**
    * Creates an instance of ArticulateBlogMlImporterElement.
    * Sets up the modal manager context and file reader event handlers.
    */
   constructor() {
-    super(), this._isDisabled = !1, this._isLoading = !0, this._isSubmitting = !1, this._selectedBlogNodeUdi = null, this._selectedBlogNodeName = "No node selected", this._downloadUrl = void 0, this._archiveDoctypeUdi = null, Me(this, A, new ne(this)), this.consumeContext(se, (t) => {
-      this._modalManagerContext = t;
+    super(), S(this, K), this._formState = void 0, this._formError = "", this._articulateNodeId = null, this._selectedBlogNodeName = "", this._postCount = null, this._archiveDoctypeUdi = null, S(this, X, new re(this)), S(this, G, (i, e) => {
+      const t = window.URL.createObjectURL(i), r = document.createElement("a");
+      r.style.display = "none", r.href = t, r.download = e, document.body.appendChild(r), r.click(), window.URL.revokeObjectURL(t), r.remove();
+    }), S(this, H, (i) => i instanceof Blob), S(this, Y, async (i) => {
+      i.preventDefault();
+      const e = i.target;
+      if (!e) return;
+      try {
+        await k(this, X).validate();
+      } catch {
+        this._formError = "Please select a blog node.";
+        return;
+      }
+      const t = new FormData(e), r = t.get("importFile");
+      if (!r) {
+        this._formError = "Please select a file to import.";
+        return;
+      }
+      const o = new FormData();
+      o.append(r.name, r), this._formState = "waiting", this._formError = "";
+      const a = await g.postUmbracoManagementApiV1ArticulateBlogImportBegin({
+        body: o
+        // hey-api handles FormData directly
+      });
+      if (!a.response.ok) {
+        this._formError = await b(a.response, "Failed to upload blog content."), this._formState = "failed";
+        return;
+      }
+      const s = a.data;
+      if (!s || !s.temporaryFileName) {
+        this._formState = "failed", this._formError = "Failed to upload blog content.";
+        return;
+      }
+      if (this._postCount === 0) {
+        this._formError = "No posts found in the file.", this._formState = "failed";
+        return;
+      }
+      this._postCount = s.postCount;
+      const n = {
+        articulateNodeId: this._articulateNodeId,
+        overwrite: t.get("overwrite") === "on",
+        publish: t.get("publish") === "on",
+        regexMatch: t.get("regexMatch") || "",
+        regexReplace: t.get("regexReplace") || "",
+        tempFile: s.temporaryFileName,
+        exportDisqusXml: t.get("disqusExport") === "on",
+        importFirstImage: t.get("importImage") === "on"
+      }, u = await g.postUmbracoManagementApiV1ArticulateBlogImport({
+        body: n
+      });
+      if (!u.response.ok) {
+        this._formError = await b(
+          u.response,
+          "Failed to import blog content."
+        ), this._formState = "failed";
+        return;
+      }
+      const m = u.data;
+      if (!m) {
+        this._formState = "failed", this._formError = "Failed to import blog content.";
+        return;
+      }
+      if (t.get("disqusExport") === "on" && (!m.downloadUrl || m.downloadUrl === "")) {
+        this._formState = "failed", this._formError = "Import reported success but no Disqus comments XML file was returned.";
+        return;
+      }
+      if (t.get("disqusExport") === "on" && m.downloadUrl) {
+        const U = await g.getUmbracoManagementApiV1ArticulateBlogExportDisqus();
+        if (!U.response.ok) {
+          this._formError = await b(
+            U.response,
+            "Failed to export Disqus comments."
+          ), this._formState = "failed";
+          return;
+        }
+        const ce = U.data;
+        if (!k(this, H).call(this, ce)) {
+          this._formState = "failed", this._formError = "Failed to receive a valid file from the server.";
+          return;
+        }
+        const de = U.response.headers.get("content-disposition");
+        let he = "disqus-comments.xml";
+        if (de) {
+          const M = de.match(/filename=\"?([^\"]+)\"?/);
+          M && M.length > 1 && M[1] && (he = M[1]);
+        }
+        k(this, G).call(this, ce, he);
+      }
+      this._formState = "success", await ae(this, "BlogML imported successfully!", "positive"), e.reset(), this._articulateNodeId = null, this._selectedBlogNodeName = "", this._postCount = null;
+    }), this.consumeContext(_e, (i) => {
+      this._modalManagerContext = i;
     });
   }
   /**
@@ -295,7 +385,10 @@ let c = class extends T {
    * Fetches the Articulate Archive document type UDI.
    */
   async connectedCallback() {
-    super.connectedCallback(), this._archiveDoctypeUdi = await le(), this._archiveDoctypeUdi === null && (this._isDisabled = !0, this._isLoading = !1, this.requestUpdate("_isLoading", "_isDisabled")), this._isLoading = !1, this.requestUpdate("_isLoading");
+    if (super.connectedCallback(), this._archiveDoctypeUdi = await be(), this._archiveDoctypeUdi === null) {
+      this._formState = "failed", this._formError = "Failed to retrieve Articulate Archive document type.";
+      return;
+    }
   }
   /**
    * Opens the Umbraco document picker to select a blog node.
@@ -304,157 +397,68 @@ let c = class extends T {
    * @returns {Promise<void>}
    */
   async _openNodePicker() {
-    try {
-      const t = await de(this._modalManagerContext, this._archiveDoctypeUdi, this);
-      if (t) {
-        this._selectedBlogNodeName = "Loading...", this.requestUpdate("_selectedBlogNodeName");
-        const e = await ue(t);
-        if (!e)
-          throw new Error(`Selected node ${t} not found`);
-        this._selectedBlogNodeUdi = t, this._selectedBlogNodeName = e.name, this.requestUpdate("_selectedBlogNodeName", "_selectedBlogNodeUdi");
-      }
-    } catch (t) {
-      if (we(t) && t.message.includes("No node selected"))
-        return;
-      const e = B(
-        t,
-        "An error occurred while using the node picker."
-      );
-      this._selectedBlogNodeName = "Error loading node", this.requestUpdate("_selectedBlogNodeName"), await N(this, e, "danger");
-    }
-  }
-  /**
-   * Handles the form submission for importing blog content.
-   * Validates the form and initiates the import process.
-   * @private
-   * @param {Event} e - The form submission event.
-   * @returns {Promise<void>}
-   */
-  async _handleSubmit(t) {
-    if (t.preventDefault(), this._isSubmitting) return;
-    const e = t.target;
-    if (!e) return;
-    if (await R(this, A).validate(), !R(this, A).isValid) {
-      R(this, A).focusFirstInvalidElement();
+    if (!this._archiveDoctypeUdi)
       return;
+    const i = await ve(this._modalManagerContext, this._archiveDoctypeUdi, this);
+    if (i) {
+      const e = await ye(i);
+      if (!e) {
+        this._formError = "Selected node not found.";
+        return;
+      }
+      this._articulateNodeId = i, this._selectedBlogNodeName = e.name;
     }
-    const i = new FormData(e), o = e.querySelector('uui-button[look="primary"]'), r = e.elements.namedItem("importFile"), a = r && r.files ? r.files[0] : null;
-    try {
-      o == null || o.setAttribute("state", "waiting"), this._isSubmitting = !0, this.requestUpdate("_isSubmitting");
-      const s = new FormData();
-      s.append(a.name, a);
-      const n = await b.postUmbracoManagementApiV1ArticulateBlogImportBegin({
-        body: s
-        // hey-api handles FormData directly
-      });
-      if (!n.response.ok) {
-        let f;
-        try {
-          f = await n.response.json();
-        } catch {
-          f = new Error(
-            `File Upload API Error: ${n.response.status} ${n.response.statusText}`
-          );
-        }
-        throw f;
-      }
-      const d = n.data;
-      if (!d || !d.temporaryFileName)
-        throw new Error("Upload completed but no response data was returned.");
-      const u = {
-        articulateNodeId: this._selectedBlogNodeUdi,
-        overwrite: i.get("overwrite") === "on",
-        publish: i.get("publish") === "on",
-        regexMatch: i.get("regexMatch") || "",
-        regexReplace: i.get("regexReplace") || "",
-        tempFile: d.temporaryFileName,
-        exportDisqusXml: i.get("disqusExport") === "on",
-        importFirstImage: i.get("importImage") === "on"
-      }, x = await b.postUmbracoManagementApiV1ArticulateBlogImport({
-        body: u
-      });
-      if (!x.response.ok) {
-        let f;
-        try {
-          f = await x.response.json();
-        } catch {
-          f = new Error(
-            `Import API Error: ${x.response.status} ${x.response.statusText}`
-          );
-        }
-        throw f;
-      }
-      const S = x.data;
-      if (!S)
-        throw new Error("Import completed but no response data was returned.");
-      if (S.downloadUrl) {
-        const f = S.downloadUrl.startsWith("http") ? S.downloadUrl : `${window.location.origin}${S.downloadUrl}`;
-        this._downloadUrl = l`<a href="${f}" target="_blank">Download</a>.`;
-      }
-      e.reset(), this._selectedBlogNodeUdi = null, this._selectedBlogNodeName = "No node selected", this.requestUpdate("_selectedBlogNodeUdi", "_selectedBlogNodeName");
-    } catch (s) {
-      const n = B(s, "Import failed.");
-      await N(this, n, "danger");
-    } finally {
-      o == null || o.setAttribute("state", ""), this._isSubmitting = !1, this.requestUpdate("_isSubmitting");
-    }
-  }
-  _closeModal() {
-    this._downloadUrl = void 0, this.requestUpdate("_downloadUrl");
   }
   render() {
-    return this._isLoading ? l`<uui-loader-bar></uui-loader-bar>` : this._isDisabled ? l`<uui-box headline="BlogML Importer">
-        ${O(this.routerPath)}
-        <span slot="header"><uui-tag look="danger">Disabled</uui-tag></span>
-        <p>Could not retrieve Articulate Archive document type.</p>
-        <p>Ensure that the Articulate package is installed and configured correctly.</p>
-        <p>Check the Articulate documentation for more information.</p>
-      </uui-box>` : l`
+    return l`
       <uui-box headline="BlogML Importer">
-        ${O(this.routerPath)}
+        ${se(this.routerPath)}
         <uui-form-validation-message>
-        <uui-form @submit=${this._handleSubmit}>
-          <uui-form-layout-item>
-            <uui-label for="blogNodeDisplay" required>Articulate blog node</uui-label>
-            <div class="node-picker-container">
-              <uui-input
-                id="blogNodeDisplay"
-                .value=${this._selectedBlogNodeName || "No node selected. Click 'Add' to choose."}
-                required
-                readonly
-                style="flex-grow: 1;"
-              ></uui-input>
-              <uui-button
-                look="outline"
-                .label=${this._selectedBlogNodeUdi ? "Change" : "Add"}
-                @click=${this._openNodePicker}
-                style="margin-left: var(--uui-size-space-3);"
-              ></uui-button>
-            </div>
-            <input
-              type="hidden"
-              name="blogNodeValue"
-              .value=${this._selectedBlogNodeUdi || ""}
-            />
-            <div slot="description">Choose the Articulate blog node to import to</div>
+        <uui-form>
+        <form id="blogMlImportForm" @submit=${k(this, Y)}>
+        <uui-form-layout-item>
+                <div class="node-picker-container">
+                  <uui-label for="articulateNodeId" slot="label" required
+                    >Articulate blog node</uui-label
+                  >
+                  <uui-input
+                    id="articulateNodeId"
+                    name="articulateNodeId"
+                    placeholder="No node selected"
+                    .value=${this._selectedBlogNodeName}
+                    ${oe(this, "$.articulateNodeId", this._articulateNodeId || "")}
+                    readonly
+                    required
+                    required-message="You must select a blog node"
+                    style="flex-grow: 1;"
+                  ></uui-input>
+                  <uui-button
+                    look="outline"
+                    label=${this._articulateNodeId ? "Change" : "Choose"}
+                    @click=${this._openNodePicker}
+                  ></uui-button>
+                </div>
+                <div slot="description">Choose the Articulate blog node to export from</div>
           </uui-form-layout-item>
           <uui-form-layout-item>
-            <uui-label for="importFile" required>BlogML import file</uui-label>
+            <uui-label slot="label" for="importFile" required>BlogML import file</uui-label>
             <uui-input-file
               id="importFile"
               accept="text/xml"
               required
+              required-message="You must select a BlogML file to import"
               name="importFile"
             ></uui-input-file>
             <div slot="description">The XML file to upload for import</div>
+            <div slot="messages">${this._postCount ? `Found ${this._postCount} posts in the file.` : ""}</div>
           </uui-form-layout-item>
           <uui-form-layout-item>
-            <uui-label for="overwrite">Overwrite imported posts?</uui-label>
+            <uui-label slot="label" for="overwrite">Overwrite imported posts?</uui-label>
             <uui-toggle id="overwrite" name="overwrite"></uui-toggle>
             <div slot="description">Check if you want to overwrite posts already imported</div>
           </uui-form-layout-item>
           <uui-form-layout-item>
-            <uui-label for="publishAll">Publish all posts?</uui-label>
+            <uui-label slot="label" for="publishAll">Publish all posts?</uui-label>
             <uui-toggle id="publishAll" name="publishAll"></uui-toggle>
             <div slot="description">Check if you want all imported posts to be published</div>
           </uui-form-layout-item>
@@ -480,7 +484,7 @@ let c = class extends T {
             <div slot="description">Replacement statement used with the above match statement</div>
           </uui-form-layout-item>
           <uui-form-layout-item>
-            <uui-label for="disqusExport">Export Disqus Xml</uui-label>
+            <uui-label slot="label" for="disqusExport">Export Disqus Xml</uui-label>
             <uui-toggle id="disqusExport" name="disqusExport"></uui-toggle>
             <div slot="description">
               If you would like Articulate to output an XML file that you can use to import the
@@ -488,81 +492,65 @@ let c = class extends T {
             </div>
           </uui-form-layout-item>
           <uui-form-layout-item>
-            <uui-label for="importImage">Import First Image from Post Attachments</uui-label>
+            <uui-label slot="label" for="importImage">Import First Image from Post Attachments</uui-label>
             <uui-toggle id="importImage" name="importImage"></uui-toggle>
             <div slot="description">
               If you would like Articulate to try and import the first image url in the post
               attachments
             </div>
           </uui-form-layout-item>
+          <uui-form-layout-item>${We(this, K, Pe).call(this)}</uui-form-layout-item>
           <uui-button-group>
-            <uui-button type="submit" look="primary">Submit</uui-button>
+          <uui-button type="submit" look="primary" .state=${this._formState} ?disabled=${this._formState === "waiting"}
+          >Submit</uui-button>
           </uui-button-group>
-          </uui-form-validation-message>
+          </form>
+        </uui-form-validation-message>
         </uui-form>
       </uui-box>
-      ${this._downloadUrl ? l`
-              <uui-modal-container>
-                <uui-modal-dialog>
-                  <uui-dialog>
-                    <uui-dialog-layout>
-                      <span slot="headline">
-                        <uui-icon name="info" style="color: green;"></uui-icon> BlogML import
-                        completed</span
-                      >
-                      <p>Your Disqus XML import is ready to download.</p>
-                      <uui-button slot="actions" look="secondary" @click=${this._closeModal}
-                        >Cancel</uui-button
-                      >
-                      <uui-button
-                        slot="actions"
-                        look="primary"
-                        label="Download"
-                        href=${this._downloadUrl}
-                        target="_blank"
-                        ><uui-icon name="download"></uui-icon> Download</uui-button
-                      >
-                    </uui-dialog-layout>
-                  </uui-dialog>
-                </uui-modal-dialog>
-              </uui-modal-container>
-            ` : l``}
     `;
   }
 };
-A = /* @__PURE__ */ new WeakMap();
+X = /* @__PURE__ */ new WeakMap();
+G = /* @__PURE__ */ new WeakMap();
+H = /* @__PURE__ */ new WeakMap();
+Y = /* @__PURE__ */ new WeakMap();
+K = /* @__PURE__ */ new WeakSet();
+Pe = function() {
+  return !this._formError || this._formState !== "failed" ? ie : l`<p class="text-danger">${this._formError}</p>`;
+};
 c.styles = [
-  D,
-  ce,
+  N,
+  we,
   w`
       .node-picker-container {
         display: flex;
         align-items: center;
         gap: var(--uui-size-space-3);
       }
+      .text-danger {
+        color: var(--uui-color-danger);
+      }
     `
 ];
 _([
-  Y({ type: String })
+  te({ type: String })
 ], c.prototype, "routerPath", 2);
 _([
-  h()
-], c.prototype, "_isDisabled", 2);
+  d()
+], c.prototype, "_formState", 2);
 _([
-  h()
-], c.prototype, "_isLoading", 2);
+  d()
+], c.prototype, "_formError", 2);
 _([
-  h()
-], c.prototype, "_isSubmitting", 2);
+  d()
+], c.prototype, "_articulateNodeId", 2);
 _([
-  h()
-], c.prototype, "_selectedBlogNodeUdi", 2);
-_([
-  h()
+  d()
 ], c.prototype, "_selectedBlogNodeName", 2);
 _([
-  h()
-], c.prototype, "_downloadUrl", 2);
+  d()
+], c.prototype, "_postCount", 2);
 c = _([
   I("articulate-blogml-importer")
 ], c);
@@ -571,28 +559,28 @@ c = _([
  * Copyright 2017 Google LLC
  * SPDX-License-Identifier: BSD-3-Clause
  */
-const ke = (t) => (e, i) => {
-  i !== void 0 ? i.addInitializer(() => {
-    customElements.define(t, e);
-  }) : customElements.define(t, e);
+const Ve = (i) => (e, t) => {
+  t !== void 0 ? t.addInitializer(() => {
+    customElements.define(i, e);
+  }) : customElements.define(i, e);
 };
 /**
  * @license
  * Copyright 2019 Google LLC
  * SPDX-License-Identifier: BSD-3-Clause
  */
-const k = globalThis, J = k.ShadowRoot && (k.ShadyCSS === void 0 || k.ShadyCSS.nativeShadow) && "adoptedStyleSheets" in Document.prototype && "replace" in CSSStyleSheet.prototype, ge = Symbol(), ee = /* @__PURE__ */ new WeakMap();
-let Be = class {
-  constructor(e, i, o) {
-    if (this._$cssResult$ = !0, o !== ge) throw Error("CSSResult is not constructable. Use `unsafeCSS` or `css` instead.");
-    this.cssText = e, this.t = i;
+const D = globalThis, ne = D.ShadowRoot && (D.ShadyCSS === void 0 || D.ShadyCSS.nativeShadow) && "adoptedStyleSheets" in Document.prototype && "replace" in CSSStyleSheet.prototype, Ae = Symbol(), pe = /* @__PURE__ */ new WeakMap();
+let Xe = class {
+  constructor(e, t, r) {
+    if (this._$cssResult$ = !0, r !== Ae) throw Error("CSSResult is not constructable. Use `unsafeCSS` or `css` instead.");
+    this.cssText = e, this.t = t;
   }
   get styleSheet() {
     let e = this.o;
-    const i = this.t;
-    if (J && e === void 0) {
-      const o = i !== void 0 && i.length === 1;
-      o && (e = ee.get(i)), e === void 0 && ((this.o = e = new CSSStyleSheet()).replaceSync(this.cssText), o && ee.set(i, e));
+    const t = this.t;
+    if (ne && e === void 0) {
+      const r = t !== void 0 && t.length === 1;
+      r && (e = pe.get(t)), e === void 0 && ((this.o = e = new CSSStyleSheet()).replaceSync(this.cssText), r && pe.set(t, e));
     }
     return e;
   }
@@ -600,191 +588,191 @@ let Be = class {
     return this.cssText;
   }
 };
-const Oe = (t) => new Be(typeof t == "string" ? t : t + "", void 0, ge), ze = (t, e) => {
-  if (J) t.adoptedStyleSheets = e.map((i) => i instanceof CSSStyleSheet ? i : i.styleSheet);
-  else for (const i of e) {
-    const o = document.createElement("style"), r = k.litNonce;
-    r !== void 0 && o.setAttribute("nonce", r), o.textContent = i.cssText, t.appendChild(o);
+const Ge = (i) => new Xe(typeof i == "string" ? i : i + "", void 0, Ae), He = (i, e) => {
+  if (ne) i.adoptedStyleSheets = e.map((t) => t instanceof CSSStyleSheet ? t : t.styleSheet);
+  else for (const t of e) {
+    const r = document.createElement("style"), o = D.litNonce;
+    o !== void 0 && r.setAttribute("nonce", o), r.textContent = t.cssText, i.appendChild(r);
   }
-}, te = J ? (t) => t : (t) => t instanceof CSSStyleSheet ? ((e) => {
-  let i = "";
-  for (const o of e.cssRules) i += o.cssText;
-  return Oe(i);
-})(t) : t;
+}, me = ne ? (i) => i : (i) => i instanceof CSSStyleSheet ? ((e) => {
+  let t = "";
+  for (const r of e.cssRules) t += r.cssText;
+  return Ge(t);
+})(i) : i;
 /**
  * @license
  * Copyright 2017 Google LLC
  * SPDX-License-Identifier: BSD-3-Clause
  */
-const { is: Ie, defineProperty: Le, getOwnPropertyDescriptor: qe, getOwnPropertyNames: Re, getOwnPropertySymbols: Fe, getPrototypeOf: je } = Object, g = globalThis, ie = g.trustedTypes, We = ie ? ie.emptyScript : "", F = g.reactiveElementPolyfillSupport, C = (t, e) => t, z = { toAttribute(t, e) {
+const { is: Ye, defineProperty: Ke, getOwnPropertyDescriptor: Je, getOwnPropertyNames: Qe, getOwnPropertySymbols: Ze, getPrototypeOf: et } = Object, f = globalThis, fe = f.trustedTypes, tt = fe ? fe.emptyScript : "", R = f.reactiveElementPolyfillSupport, P = (i, e) => i, B = { toAttribute(i, e) {
   switch (e) {
     case Boolean:
-      t = t ? We : null;
+      i = i ? tt : null;
       break;
     case Object:
     case Array:
-      t = t == null ? t : JSON.stringify(t);
+      i = i == null ? i : JSON.stringify(i);
   }
-  return t;
-}, fromAttribute(t, e) {
-  let i = t;
+  return i;
+}, fromAttribute(i, e) {
+  let t = i;
   switch (e) {
     case Boolean:
-      i = t !== null;
+      t = i !== null;
       break;
     case Number:
-      i = t === null ? null : Number(t);
+      t = i === null ? null : Number(i);
       break;
     case Object:
     case Array:
       try {
-        i = JSON.parse(t);
+        t = JSON.parse(i);
       } catch {
-        i = null;
+        t = null;
       }
   }
-  return i;
-} }, Q = (t, e) => !Ie(t, e), oe = { attribute: !0, type: String, converter: z, reflect: !1, useDefault: !1, hasChanged: Q };
-Symbol.metadata ?? (Symbol.metadata = Symbol("metadata")), g.litPropertyMetadata ?? (g.litPropertyMetadata = /* @__PURE__ */ new WeakMap());
-class P extends HTMLElement {
+  return t;
+} }, le = (i, e) => !Ye(i, e), ge = { attribute: !0, type: String, converter: B, reflect: !1, useDefault: !1, hasChanged: le };
+Symbol.metadata ?? (Symbol.metadata = Symbol("metadata")), f.litPropertyMetadata ?? (f.litPropertyMetadata = /* @__PURE__ */ new WeakMap());
+class C extends HTMLElement {
   static addInitializer(e) {
     this._$Ei(), (this.l ?? (this.l = [])).push(e);
   }
   static get observedAttributes() {
     return this.finalize(), this._$Eh && [...this._$Eh.keys()];
   }
-  static createProperty(e, i = oe) {
-    if (i.state && (i.attribute = !1), this._$Ei(), this.prototype.hasOwnProperty(e) && ((i = Object.create(i)).wrapped = !0), this.elementProperties.set(e, i), !i.noAccessor) {
-      const o = Symbol(), r = this.getPropertyDescriptor(e, o, i);
-      r !== void 0 && Le(this.prototype, e, r);
+  static createProperty(e, t = ge) {
+    if (t.state && (t.attribute = !1), this._$Ei(), this.prototype.hasOwnProperty(e) && ((t = Object.create(t)).wrapped = !0), this.elementProperties.set(e, t), !t.noAccessor) {
+      const r = Symbol(), o = this.getPropertyDescriptor(e, r, t);
+      o !== void 0 && Ke(this.prototype, e, o);
     }
   }
-  static getPropertyDescriptor(e, i, o) {
-    const { get: r, set: a } = qe(this.prototype, e) ?? { get() {
-      return this[i];
+  static getPropertyDescriptor(e, t, r) {
+    const { get: o, set: a } = Je(this.prototype, e) ?? { get() {
+      return this[t];
     }, set(s) {
-      this[i] = s;
+      this[t] = s;
     } };
-    return { get: r, set(s) {
-      const n = r == null ? void 0 : r.call(this);
-      a == null || a.call(this, s), this.requestUpdate(e, n, o);
+    return { get: o, set(s) {
+      const n = o == null ? void 0 : o.call(this);
+      a == null || a.call(this, s), this.requestUpdate(e, n, r);
     }, configurable: !0, enumerable: !0 };
   }
   static getPropertyOptions(e) {
-    return this.elementProperties.get(e) ?? oe;
+    return this.elementProperties.get(e) ?? ge;
   }
   static _$Ei() {
-    if (this.hasOwnProperty(C("elementProperties"))) return;
-    const e = je(this);
+    if (this.hasOwnProperty(P("elementProperties"))) return;
+    const e = et(this);
     e.finalize(), e.l !== void 0 && (this.l = [...e.l]), this.elementProperties = new Map(e.elementProperties);
   }
   static finalize() {
-    if (this.hasOwnProperty(C("finalized"))) return;
-    if (this.finalized = !0, this._$Ei(), this.hasOwnProperty(C("properties"))) {
-      const i = this.properties, o = [...Re(i), ...Fe(i)];
-      for (const r of o) this.createProperty(r, i[r]);
+    if (this.hasOwnProperty(P("finalized"))) return;
+    if (this.finalized = !0, this._$Ei(), this.hasOwnProperty(P("properties"))) {
+      const t = this.properties, r = [...Qe(t), ...Ze(t)];
+      for (const o of r) this.createProperty(o, t[o]);
     }
     const e = this[Symbol.metadata];
     if (e !== null) {
-      const i = litPropertyMetadata.get(e);
-      if (i !== void 0) for (const [o, r] of i) this.elementProperties.set(o, r);
+      const t = litPropertyMetadata.get(e);
+      if (t !== void 0) for (const [r, o] of t) this.elementProperties.set(r, o);
     }
     this._$Eh = /* @__PURE__ */ new Map();
-    for (const [i, o] of this.elementProperties) {
-      const r = this._$Eu(i, o);
-      r !== void 0 && this._$Eh.set(r, i);
+    for (const [t, r] of this.elementProperties) {
+      const o = this._$Eu(t, r);
+      o !== void 0 && this._$Eh.set(o, t);
     }
     this.elementStyles = this.finalizeStyles(this.styles);
   }
   static finalizeStyles(e) {
-    const i = [];
+    const t = [];
     if (Array.isArray(e)) {
-      const o = new Set(e.flat(1 / 0).reverse());
-      for (const r of o) i.unshift(te(r));
-    } else e !== void 0 && i.push(te(e));
-    return i;
+      const r = new Set(e.flat(1 / 0).reverse());
+      for (const o of r) t.unshift(me(o));
+    } else e !== void 0 && t.push(me(e));
+    return t;
   }
-  static _$Eu(e, i) {
-    const o = i.attribute;
-    return o === !1 ? void 0 : typeof o == "string" ? o : typeof e == "string" ? e.toLowerCase() : void 0;
+  static _$Eu(e, t) {
+    const r = t.attribute;
+    return r === !1 ? void 0 : typeof r == "string" ? r : typeof e == "string" ? e.toLowerCase() : void 0;
   }
   constructor() {
     super(), this._$Ep = void 0, this.isUpdatePending = !1, this.hasUpdated = !1, this._$Em = null, this._$Ev();
   }
   _$Ev() {
     var e;
-    this._$ES = new Promise((i) => this.enableUpdating = i), this._$AL = /* @__PURE__ */ new Map(), this._$E_(), this.requestUpdate(), (e = this.constructor.l) == null || e.forEach((i) => i(this));
+    this._$ES = new Promise((t) => this.enableUpdating = t), this._$AL = /* @__PURE__ */ new Map(), this._$E_(), this.requestUpdate(), (e = this.constructor.l) == null || e.forEach((t) => t(this));
   }
   addController(e) {
-    var i;
-    (this._$EO ?? (this._$EO = /* @__PURE__ */ new Set())).add(e), this.renderRoot !== void 0 && this.isConnected && ((i = e.hostConnected) == null || i.call(e));
+    var t;
+    (this._$EO ?? (this._$EO = /* @__PURE__ */ new Set())).add(e), this.renderRoot !== void 0 && this.isConnected && ((t = e.hostConnected) == null || t.call(e));
   }
   removeController(e) {
-    var i;
-    (i = this._$EO) == null || i.delete(e);
+    var t;
+    (t = this._$EO) == null || t.delete(e);
   }
   _$E_() {
-    const e = /* @__PURE__ */ new Map(), i = this.constructor.elementProperties;
-    for (const o of i.keys()) this.hasOwnProperty(o) && (e.set(o, this[o]), delete this[o]);
+    const e = /* @__PURE__ */ new Map(), t = this.constructor.elementProperties;
+    for (const r of t.keys()) this.hasOwnProperty(r) && (e.set(r, this[r]), delete this[r]);
     e.size > 0 && (this._$Ep = e);
   }
   createRenderRoot() {
     const e = this.shadowRoot ?? this.attachShadow(this.constructor.shadowRootOptions);
-    return ze(e, this.constructor.elementStyles), e;
+    return He(e, this.constructor.elementStyles), e;
   }
   connectedCallback() {
     var e;
-    this.renderRoot ?? (this.renderRoot = this.createRenderRoot()), this.enableUpdating(!0), (e = this._$EO) == null || e.forEach((i) => {
-      var o;
-      return (o = i.hostConnected) == null ? void 0 : o.call(i);
+    this.renderRoot ?? (this.renderRoot = this.createRenderRoot()), this.enableUpdating(!0), (e = this._$EO) == null || e.forEach((t) => {
+      var r;
+      return (r = t.hostConnected) == null ? void 0 : r.call(t);
     });
   }
   enableUpdating(e) {
   }
   disconnectedCallback() {
     var e;
-    (e = this._$EO) == null || e.forEach((i) => {
-      var o;
-      return (o = i.hostDisconnected) == null ? void 0 : o.call(i);
+    (e = this._$EO) == null || e.forEach((t) => {
+      var r;
+      return (r = t.hostDisconnected) == null ? void 0 : r.call(t);
     });
   }
-  attributeChangedCallback(e, i, o) {
-    this._$AK(e, o);
+  attributeChangedCallback(e, t, r) {
+    this._$AK(e, r);
   }
-  _$ET(e, i) {
+  _$ET(e, t) {
     var a;
-    const o = this.constructor.elementProperties.get(e), r = this.constructor._$Eu(e, o);
-    if (r !== void 0 && o.reflect === !0) {
-      const s = (((a = o.converter) == null ? void 0 : a.toAttribute) !== void 0 ? o.converter : z).toAttribute(i, o.type);
-      this._$Em = e, s == null ? this.removeAttribute(r) : this.setAttribute(r, s), this._$Em = null;
+    const r = this.constructor.elementProperties.get(e), o = this.constructor._$Eu(e, r);
+    if (o !== void 0 && r.reflect === !0) {
+      const s = (((a = r.converter) == null ? void 0 : a.toAttribute) !== void 0 ? r.converter : B).toAttribute(t, r.type);
+      this._$Em = e, s == null ? this.removeAttribute(o) : this.setAttribute(o, s), this._$Em = null;
     }
   }
-  _$AK(e, i) {
+  _$AK(e, t) {
     var a, s;
-    const o = this.constructor, r = o._$Eh.get(e);
-    if (r !== void 0 && this._$Em !== r) {
-      const n = o.getPropertyOptions(r), d = typeof n.converter == "function" ? { fromAttribute: n.converter } : ((a = n.converter) == null ? void 0 : a.fromAttribute) !== void 0 ? n.converter : z;
-      this._$Em = r, this[r] = d.fromAttribute(i, n.type) ?? ((s = this._$Ej) == null ? void 0 : s.get(r)) ?? null, this._$Em = null;
+    const r = this.constructor, o = r._$Eh.get(e);
+    if (o !== void 0 && this._$Em !== o) {
+      const n = r.getPropertyOptions(o), u = typeof n.converter == "function" ? { fromAttribute: n.converter } : ((a = n.converter) == null ? void 0 : a.fromAttribute) !== void 0 ? n.converter : B;
+      this._$Em = o, this[o] = u.fromAttribute(t, n.type) ?? ((s = this._$Ej) == null ? void 0 : s.get(o)) ?? null, this._$Em = null;
     }
   }
-  requestUpdate(e, i, o) {
-    var r;
+  requestUpdate(e, t, r) {
+    var o;
     if (e !== void 0) {
       const a = this.constructor, s = this[e];
-      if (o ?? (o = a.getPropertyOptions(e)), !((o.hasChanged ?? Q)(s, i) || o.useDefault && o.reflect && s === ((r = this._$Ej) == null ? void 0 : r.get(e)) && !this.hasAttribute(a._$Eu(e, o)))) return;
-      this.C(e, i, o);
+      if (r ?? (r = a.getPropertyOptions(e)), !((r.hasChanged ?? le)(s, t) || r.useDefault && r.reflect && s === ((o = this._$Ej) == null ? void 0 : o.get(e)) && !this.hasAttribute(a._$Eu(e, r)))) return;
+      this.C(e, t, r);
     }
     this.isUpdatePending === !1 && (this._$ES = this._$EP());
   }
-  C(e, i, { useDefault: o, reflect: r, wrapped: a }, s) {
-    o && !(this._$Ej ?? (this._$Ej = /* @__PURE__ */ new Map())).has(e) && (this._$Ej.set(e, s ?? i ?? this[e]), a !== !0 || s !== void 0) || (this._$AL.has(e) || (this.hasUpdated || o || (i = void 0), this._$AL.set(e, i)), r === !0 && this._$Em !== e && (this._$Eq ?? (this._$Eq = /* @__PURE__ */ new Set())).add(e));
+  C(e, t, { useDefault: r, reflect: o, wrapped: a }, s) {
+    r && !(this._$Ej ?? (this._$Ej = /* @__PURE__ */ new Map())).has(e) && (this._$Ej.set(e, s ?? t ?? this[e]), a !== !0 || s !== void 0) || (this._$AL.has(e) || (this.hasUpdated || r || (t = void 0), this._$AL.set(e, t)), o === !0 && this._$Em !== e && (this._$Eq ?? (this._$Eq = /* @__PURE__ */ new Set())).add(e));
   }
   async _$EP() {
     this.isUpdatePending = !0;
     try {
       await this._$ES;
-    } catch (i) {
-      Promise.reject(i);
+    } catch (t) {
+      Promise.reject(t);
     }
     const e = this.scheduleUpdate();
     return e != null && await e, !this.isUpdatePending;
@@ -793,38 +781,38 @@ class P extends HTMLElement {
     return this.performUpdate();
   }
   performUpdate() {
-    var o;
+    var r;
     if (!this.isUpdatePending) return;
     if (!this.hasUpdated) {
       if (this.renderRoot ?? (this.renderRoot = this.createRenderRoot()), this._$Ep) {
         for (const [a, s] of this._$Ep) this[a] = s;
         this._$Ep = void 0;
       }
-      const r = this.constructor.elementProperties;
-      if (r.size > 0) for (const [a, s] of r) {
-        const { wrapped: n } = s, d = this[a];
-        n !== !0 || this._$AL.has(a) || d === void 0 || this.C(a, void 0, s, d);
+      const o = this.constructor.elementProperties;
+      if (o.size > 0) for (const [a, s] of o) {
+        const { wrapped: n } = s, u = this[a];
+        n !== !0 || this._$AL.has(a) || u === void 0 || this.C(a, void 0, s, u);
       }
     }
     let e = !1;
-    const i = this._$AL;
+    const t = this._$AL;
     try {
-      e = this.shouldUpdate(i), e ? (this.willUpdate(i), (o = this._$EO) == null || o.forEach((r) => {
+      e = this.shouldUpdate(t), e ? (this.willUpdate(t), (r = this._$EO) == null || r.forEach((o) => {
         var a;
-        return (a = r.hostUpdate) == null ? void 0 : a.call(r);
-      }), this.update(i)) : this._$EM();
-    } catch (r) {
-      throw e = !1, this._$EM(), r;
+        return (a = o.hostUpdate) == null ? void 0 : a.call(o);
+      }), this.update(t)) : this._$EM();
+    } catch (o) {
+      throw e = !1, this._$EM(), o;
     }
-    e && this._$AE(i);
+    e && this._$AE(t);
   }
   willUpdate(e) {
   }
   _$AE(e) {
-    var i;
-    (i = this._$EO) == null || i.forEach((o) => {
-      var r;
-      return (r = o.hostUpdated) == null ? void 0 : r.call(o);
+    var t;
+    (t = this._$EO) == null || t.forEach((r) => {
+      var o;
+      return (o = r.hostUpdated) == null ? void 0 : o.call(r);
     }), this.hasUpdated || (this.hasUpdated = !0, this.firstUpdated(e)), this.updated(e);
   }
   _$EM() {
@@ -840,66 +828,66 @@ class P extends HTMLElement {
     return !0;
   }
   update(e) {
-    this._$Eq && (this._$Eq = this._$Eq.forEach((i) => this._$ET(i, this[i]))), this._$EM();
+    this._$Eq && (this._$Eq = this._$Eq.forEach((t) => this._$ET(t, this[t]))), this._$EM();
   }
   updated(e) {
   }
   firstUpdated(e) {
   }
 }
-P.elementStyles = [], P.shadowRootOptions = { mode: "open" }, P[C("elementProperties")] = /* @__PURE__ */ new Map(), P[C("finalized")] = /* @__PURE__ */ new Map(), F == null || F({ ReactiveElement: P }), (g.reactiveElementVersions ?? (g.reactiveElementVersions = [])).push("2.1.0");
+C.elementStyles = [], C.shadowRootOptions = { mode: "open" }, C[P("elementProperties")] = /* @__PURE__ */ new Map(), C[P("finalized")] = /* @__PURE__ */ new Map(), R == null || R({ ReactiveElement: C }), (f.reactiveElementVersions ?? (f.reactiveElementVersions = [])).push("2.1.0");
 /**
  * @license
  * Copyright 2017 Google LLC
  * SPDX-License-Identifier: BSD-3-Clause
  */
-const Ve = { attribute: !0, type: String, converter: z, reflect: !1, hasChanged: Q }, Ge = (t = Ve, e, i) => {
-  const { kind: o, metadata: r } = i;
-  let a = globalThis.litPropertyMetadata.get(r);
-  if (a === void 0 && globalThis.litPropertyMetadata.set(r, a = /* @__PURE__ */ new Map()), o === "setter" && ((t = Object.create(t)).wrapped = !0), a.set(i.name, t), o === "accessor") {
-    const { name: s } = i;
+const it = { attribute: !0, type: String, converter: B, reflect: !1, hasChanged: le }, rt = (i = it, e, t) => {
+  const { kind: r, metadata: o } = t;
+  let a = globalThis.litPropertyMetadata.get(o);
+  if (a === void 0 && globalThis.litPropertyMetadata.set(o, a = /* @__PURE__ */ new Map()), r === "setter" && ((i = Object.create(i)).wrapped = !0), a.set(t.name, i), r === "accessor") {
+    const { name: s } = t;
     return { set(n) {
-      const d = e.get.call(this);
-      e.set.call(this, n), this.requestUpdate(s, d, t);
+      const u = e.get.call(this);
+      e.set.call(this, n), this.requestUpdate(s, u, i);
     }, init(n) {
-      return n !== void 0 && this.C(s, void 0, t, n), n;
+      return n !== void 0 && this.C(s, void 0, i, n), n;
     } };
   }
-  if (o === "setter") {
-    const { name: s } = i;
+  if (r === "setter") {
+    const { name: s } = t;
     return function(n) {
-      const d = this[s];
-      e.call(this, n), this.requestUpdate(s, d, t);
+      const u = this[s];
+      e.call(this, n), this.requestUpdate(s, u, i);
     };
   }
-  throw Error("Unsupported decorator location: " + o);
+  throw Error("Unsupported decorator location: " + r);
 };
-function _e(t) {
-  return (e, i) => typeof i == "object" ? Ge(t, e, i) : ((o, r, a) => {
-    const s = r.hasOwnProperty(a);
-    return r.constructor.createProperty(a, o), s ? Object.getOwnPropertyDescriptor(r, a) : void 0;
-  })(t, e, i);
+function Ne(i) {
+  return (e, t) => typeof t == "object" ? rt(i, e, t) : ((r, o, a) => {
+    const s = o.hasOwnProperty(a);
+    return o.constructor.createProperty(a, r), s ? Object.getOwnPropertyDescriptor(o, a) : void 0;
+  })(i, e, t);
 }
 /**
  * @license
  * Copyright 2017 Google LLC
  * SPDX-License-Identifier: BSD-3-Clause
  */
-function L(t) {
-  return _e({ ...t, state: !0, attribute: !1 });
+function z(i) {
+  return Ne({ ...i, state: !0, attribute: !1 });
 }
-var Xe = Object.defineProperty, He = Object.getOwnPropertyDescriptor, be = (t) => {
-  throw TypeError(t);
-}, E = (t, e, i, o) => {
-  for (var r = o > 1 ? void 0 : o ? He(e, i) : e, a = t.length - 1, s; a >= 0; a--)
-    (s = t[a]) && (r = (o ? s(e, i, r) : s(r)) || r);
-  return o && r && Xe(e, i, r), r;
-}, Ke = (t, e, i) => e.has(t) || be("Cannot " + i), re = (t, e, i) => (Ke(t, e, "read from private field"), i ? i.call(t) : e.get(t)), ae = (t, e, i) => e.has(t) ? be("Cannot add the same private member more than once") : e instanceof WeakSet ? e.add(t) : e.set(t, i), H, K;
-let m = class extends T {
+var ot = Object.defineProperty, at = Object.getOwnPropertyDescriptor, Ue = (i) => {
+  throw TypeError(i);
+}, E = (i, e, t, r) => {
+  for (var o = r > 1 ? void 0 : r ? at(e, t) : e, a = i.length - 1, s; a >= 0; a--)
+    (s = i[a]) && (o = (r ? s(e, t, o) : s(o)) || o);
+  return r && o && ot(e, t, o), o;
+}, Me = (i, e, t) => e.has(i) || Ue("Cannot " + t), F = (i, e, t) => (Me(i, e, "read from private field"), t ? t.call(i) : e.get(i)), O = (i, e, t) => e.has(i) ? Ue("Cannot add the same private member more than once") : e instanceof WeakSet ? e.add(i) : e.set(i, t), st = (i, e, t) => (Me(i, e, "access private method"), t), J, Q, Z, ee, Te;
+let p = class extends A {
   constructor() {
-    super(...arguments), this._isLoading = !0, this._isSubmitting = !1, this._themes = [], this._newThemeName = "", this._selectedTheme = null, ae(this, H, (t) => {
-      this._newThemeName = t.target.value;
-    }), ae(this, K, () => {
+    super(...arguments), O(this, ee), this._formState = void 0, this._formError = "", this._themes = [], this._newThemeName = "", this._selectedTheme = null, O(this, J, new re(this)), O(this, Q, (i) => {
+      this._newThemeName = i.target.value;
+    }), O(this, Z, () => {
       this._selectedTheme = null;
     });
   }
@@ -908,50 +896,39 @@ let m = class extends T {
    * @private
    */
   async connectedCallback() {
-    super.connectedCallback(), await this._loadThemes(), this._isLoading = !1, this.requestUpdate("_isLoading");
+    super.connectedCallback(), await this._loadThemes();
   }
   async _loadThemes() {
-    try {
-      const t = await b.getUmbracoManagementApiV1ArticulateThemesList();
-      if (!t.response.ok) {
-        let i;
-        try {
-          i = await t.response.json();
-        } catch {
-          i = new Error(
-            `API Error: ${t.response.status} ${t.response.statusText}`
-          );
-        }
-        throw i;
-      }
-      const e = await t.data;
-      if (!e)
-        throw new Error("Failed to load themes.");
-      this._themes = (e == null ? void 0 : e.map((i) => i)) ?? [];
-    } catch (t) {
-      this._themes = [];
-      const e = B(t, "Could not load themes.");
-      await N(this, e, "danger");
+    const i = await g.getUmbracoManagementApiV1ArticulateThemesDefault();
+    if (!i.response.ok) {
+      this._formError = await b(i.response, "Failed to load themes."), this._formState = "failed";
+      return;
     }
+    const e = i.data;
+    if (!e) {
+      this._formState = "failed", this._formError = "Failed to load themes.";
+      return;
+    }
+    this._themes = (e == null ? void 0 : e.map((t) => t)) ?? [];
   }
   /**
    * Selects a theme to duplicate.
    * @private
    * @param {string} theme - The name of the theme to select.
    */
-  _selectTheme(t) {
-    this._selectedTheme = t, this._newThemeName = `${t} - Copy`, this.requestUpdate("_selectedTheme", "_newThemeName");
+  _selectTheme(i) {
+    this._selectedTheme = i, this._newThemeName = `${i} - Copy`;
   }
-  _handleSelectThemeButtonClick(t, e) {
-    t.stopPropagation(), this._selectTheme(e);
+  _handleSelectThemeButtonClick(i, e) {
+    i.stopPropagation(), this._selectTheme(e);
   }
-  _onCardSelected(t) {
-    const i = t.target.getAttribute("data-theme");
-    i && this._selectTheme(i);
+  _onCardSelected(i) {
+    const t = i.target.getAttribute("data-theme");
+    t && this._selectTheme(t);
   }
-  _onCardDeselected(t) {
-    const i = t.target.getAttribute("data-theme");
-    i && i === this._selectedTheme && (this._selectedTheme = null);
+  _onCardDeselected(i) {
+    const t = i.target.getAttribute("data-theme");
+    t && t === this._selectedTheme && (this._selectedTheme = null);
   }
   /**
    * Handles form submission for duplicating a theme.
@@ -960,28 +937,25 @@ let m = class extends T {
    * @returns {Promise<void>}
    */
   async _duplicateTheme() {
-    if (!(this._isSubmitting || !this._selectedTheme || !this._newThemeName))
-      try {
-        this._isSubmitting = !0, this.requestUpdate("_isSubmitting");
-        const t = await b.postUmbracoManagementApiV1ArticulateThemesCopy({
-          body: {
-            themeName: this._selectedTheme,
-            newThemeName: this._newThemeName
-          }
-        });
-        if (!t.response.ok)
-          throw new Error(`Failed to duplicate theme: ${t.response.statusText}`);
-        await N(this, "Theme duplicated successfully!", "positive"), this._selectedTheme = null, this._newThemeName = "", this.requestUpdate("_selectedTheme", "_newThemeName");
-      } catch (t) {
-        console.error("Error duplicating theme:", t);
-        const e = B(
-          t,
-          "Failed to duplicate theme. Please try again."
-        );
-        await N(this, e, "danger");
-      } finally {
-        this._isSubmitting = !1, this.requestUpdate("_isSubmitting");
+    try {
+      await F(this, J).validate();
+    } catch {
+      this._formError = "Please select a theme and enter a new theme name.";
+      return;
+    }
+    if (!this._selectedTheme || !this._newThemeName) return;
+    this._formState = "waiting", this._formError = "";
+    const i = await g.postUmbracoManagementApiV1ArticulateThemesCopy({
+      body: {
+        themeName: this._selectedTheme,
+        newThemeName: this._newThemeName
       }
+    });
+    if (!i.response.ok) {
+      this._formError = await b(i.response, "Failed to duplicate theme."), this._formState = "failed";
+      return;
+    }
+    this._formState = "success", await ae(this, "Theme duplicated successfully!", "positive"), this._selectedTheme = null, this._newThemeName = "";
   }
   /**
    * Renders the theme grid.
@@ -989,8 +963,8 @@ let m = class extends T {
    * @returns {TemplateResult} The theme grid template.
    */
   _renderThemeGrid() {
-    var t;
-    return (((t = this._themes) == null ? void 0 : t.length) ?? 0) > 0 ? l`
+    var i;
+    return (((i = this._themes) == null ? void 0 : i.length) ?? 0) > 0 ? l`
         <div class="theme-grid">
           ${(this._themes ?? []).map(
       (e) => l`
@@ -1009,13 +983,13 @@ let m = class extends T {
                   src="/App_Plugins/Articulate/BackOffice/assets/theme-${e.toLowerCase()}.png"
                   alt="${e} theme preview"
                   loading="lazy"
-                  @error=${(i) => {
-        const o = i.target;
-        o.style.display = "none";
-        const r = o.parentElement;
-        if (r && !r.querySelector(":scope > .theme-fallback-initial")) {
+                  @error=${(t) => {
+        const r = t.target;
+        r.style.display = "none";
+        const o = r.parentElement;
+        if (o && !o.querySelector(":scope > .theme-fallback-initial")) {
           const a = document.createElement("span");
-          a.className = "theme-fallback-initial", a.textContent = e.charAt(0).toUpperCase(), r.appendChild(a);
+          a.className = "theme-fallback-initial", a.textContent = e.charAt(0).toUpperCase(), o.appendChild(a);
         }
       }}
                 />
@@ -1023,7 +997,7 @@ let m = class extends T {
                   <uui-button
                     look="primary"
                     label="Select Theme ${e}"
-                    @click=${(i) => this._handleSelectThemeButtonClick(i, e)}
+                    @click=${(t) => this._handleSelectThemeButtonClick(t, e)}
                   >
                     Select
                   </uui-button>
@@ -1049,7 +1023,7 @@ let m = class extends T {
   _renderDuplicateForm() {
     if (!this._selectedTheme)
       return l``;
-    const t = this._isSubmitting ? "Duplicating..." : "Duplicate";
+    const i = this._formState === "waiting" ? "Duplicating..." : "Duplicate";
     return l`
       <div class="duplicate-form">
         <h3>Duplicate '${this._selectedTheme}' Theme</h3>
@@ -1060,30 +1034,31 @@ let m = class extends T {
           <uui-input
             id="newThemeName"
             .value=${this._newThemeName}
-            @input=${re(this, H)}
+            @input=${F(this, Q)}
             required
-            ?disabled=${this._isSubmitting}
+            ?disabled=${this._formState === "waiting"}
+            ${oe(this, "$.themeName", this._newThemeName || "")}
           ></uui-input>
         </uui-form-layout-item>
+        <uui-form-layout-item>${st(this, ee, Te).call(this)}</uui-form-layout-item>
 
         <div class="form-actions">
           <uui-button
             look="primary"
-            color="positive"
-            label="Duplicate"
+            label=${i}
             type="button"
             @click=${() => this._duplicateTheme()}
-            ?disabled=${!this._newThemeName || this._isSubmitting}
-            .state=${this._isSubmitting ? "waiting" : ""}
+            ?disabled=${!this._newThemeName || this._formState === "waiting"}
+            .state=${this._formState}
           >
-            ${t}
+            ${i}
           </uui-button>
 
           <uui-button
             look="secondary"
             label="Cancel"
-            @click=${re(this, K)}
-            ?disabled=${this._isSubmitting}
+            @click=${F(this, Z)}
+            ?disabled=${this._formState === "waiting"}
           >
             Cancel
           </uui-button>
@@ -1092,9 +1067,9 @@ let m = class extends T {
     `;
   }
   render() {
-    return this._isLoading ? l`<uui-loader-bar></uui-loader-bar>` : l`
+    return l`
       <uui-box headline="Theme Duplication">
-        ${O(this.routerPath)}
+        ${se(this.routerPath)}
         <div class="container">
           <p>
             You can duplicate any of Articulate's built-in themes to customize them yourself. The
@@ -1108,10 +1083,15 @@ let m = class extends T {
     `;
   }
 };
-H = /* @__PURE__ */ new WeakMap();
-K = /* @__PURE__ */ new WeakMap();
-m.styles = [
-  D,
+J = /* @__PURE__ */ new WeakMap();
+Q = /* @__PURE__ */ new WeakMap();
+Z = /* @__PURE__ */ new WeakMap();
+ee = /* @__PURE__ */ new WeakSet();
+Te = function() {
+  return !this._formError || this._formState !== "failed" ? ie : l`<p class="text-danger">${this._formError}</p>`;
+};
+p.styles = [
+  N,
   w`
       .theme-grid {
         display: grid;
@@ -1181,52 +1161,55 @@ m.styles = [
         text-align: center;
         margin-block: var(--uui-size-layout-1);
       }
+      .text-danger {
+        color: var(--uui-color-danger);
+      }
     `
 ];
 E([
-  _e({ type: String })
-], m.prototype, "routerPath", 2);
+  Ne({ type: String })
+], p.prototype, "routerPath", 2);
 E([
-  L()
-], m.prototype, "_isLoading", 2);
+  z()
+], p.prototype, "_formState", 2);
 E([
-  L()
-], m.prototype, "_isSubmitting", 2);
+  z()
+], p.prototype, "_formError", 2);
 E([
-  L()
-], m.prototype, "_themes", 2);
+  z()
+], p.prototype, "_themes", 2);
 E([
-  L()
-], m.prototype, "_selectedTheme", 2);
-m = E([
-  ke("articulate-copy-theme")
-], m);
-var Ye = Object.defineProperty, Je = Object.getOwnPropertyDescriptor, ye = (t, e, i, o) => {
-  for (var r = o > 1 ? void 0 : o ? Je(e, i) : e, a = t.length - 1, s; a >= 0; a--)
-    (s = t[a]) && (r = (o ? s(e, i, r) : s(r)) || r);
-  return o && r && Ye(e, i, r), r;
+  z()
+], p.prototype, "_selectedTheme", 2);
+p = E([
+  Ve("articulate-copy-theme")
+], p);
+var nt = Object.defineProperty, lt = Object.getOwnPropertyDescriptor, ke = (i, e, t, r) => {
+  for (var o = r > 1 ? void 0 : r ? lt(e, t) : e, a = i.length - 1, s; a >= 0; a--)
+    (s = i[a]) && (o = (r ? s(e, t, o) : s(o)) || o);
+  return r && o && nt(e, t, o), o;
 };
-const Qe = [
+const ut = [
   {
     path: "blogml/import",
     name: "BlogML Import",
-    icon: "add",
+    icon: "icon-download-alt",
     description: "Import content from any BlogML compatible platform"
   },
   {
     path: "blogml/export",
     name: "BlogML Export",
-    icon: "download",
+    icon: "icon-out",
     description: "Export content to any BlogML compatible platform"
   },
   {
     path: "theme/copy",
     name: "Copy Theme",
-    icon: "copy",
+    icon: "icon-palette",
     description: "Copy Articulate themes for customization"
   }
 ];
-let y = class extends T {
+let y = class extends A {
   constructor() {
     super(...arguments), this.routerPath = "";
   }
@@ -1241,17 +1224,17 @@ let y = class extends T {
    */
   _renderCards() {
     return l`
-      ${Qe.map((t) => {
-      var o;
-      const i = `${(o = this.routerPath) == null ? void 0 : o.replace(/\/$/, "")}/${t.path}`;
+      ${ut.map((i) => {
+      var r;
+      const t = `${(r = this.routerPath) == null ? void 0 : r.replace(/\/$/, "")}/${i.path}`;
       return l`
           <uui-card-block-type
             class="tool-card"
-            name="${t.name}"
-            description="${t.description}"
-            href=${i}
+            name="${i.name}"
+            description="${i.description}"
+            href=${t}
           >
-            <uui-icon name="${t.icon}"></uui-icon>
+            <uui-icon name="${i.icon}"></uui-icon>
           </uui-card-block-type>
         `;
     })}
@@ -1271,17 +1254,17 @@ let y = class extends T {
   }
 };
 y.styles = [
-  D,
+  N,
   w`
       .tools-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
-        gap: var(--uui-size-space-5);
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: var(--uui-size-space-6);
       }
 
       .tool-card {
         min-width: 0;
-        height: 128px;
+        height: 170px;
         display: flex;
         flex-direction: column;
         justify-content: center;
@@ -1299,46 +1282,46 @@ y.styles = [
       }
     `
 ];
-ye([
-  Y({ type: String })
+ke([
+  te({ type: String })
 ], y.prototype, "routerPath", 2);
-y = ye([
+y = ke([
   I("articulate-dashboard-options")
 ], y);
-var Ze = Object.defineProperty, et = Object.getOwnPropertyDescriptor, Z = (t, e, i, o) => {
-  for (var r = o > 1 ? void 0 : o ? et(e, i) : e, a = t.length - 1, s; a >= 0; a--)
-    (s = t[a]) && (r = (o ? s(e, i, r) : s(r)) || r);
-  return o && r && Ze(e, i, r), r;
+var ct = Object.defineProperty, dt = Object.getOwnPropertyDescriptor, ue = (i, e, t, r) => {
+  for (var o = r > 1 ? void 0 : r ? dt(e, t) : e, a = i.length - 1, s; a >= 0; a--)
+    (s = i[a]) && (o = (r ? s(e, t, o) : s(o)) || o);
+  return r && o && ct(e, t, o), o;
 };
-let v = class extends T {
+let v = class extends A {
   constructor() {
     super(), this._routes = [
       {
         path: "blogml/import",
         component: c,
-        setup: (t) => {
-          this._routerBasePath && t instanceof c && (t.routerPath = this._routerBasePath);
+        setup: (i) => {
+          this._routerBasePath && i instanceof c && (i.routerPath = this._routerBasePath);
         }
       },
       {
         path: "blogml/export",
-        component: p,
-        setup: (t) => {
-          this._routerBasePath && t instanceof p && (t.routerPath = this._routerBasePath);
+        component: h,
+        setup: (i) => {
+          this._routerBasePath && i instanceof h && (i.routerPath = this._routerBasePath);
         }
       },
       {
         path: "theme/copy",
-        component: m,
-        setup: (t) => {
-          this._routerBasePath && t instanceof m && (t.routerPath = this._routerBasePath);
+        component: p,
+        setup: (i) => {
+          this._routerBasePath && i instanceof p && (i.routerPath = this._routerBasePath);
         }
       },
       {
         path: "",
         component: y,
-        setup: (t) => {
-          this._routerBasePath && t instanceof y && (t.routerPath = this._routerBasePath);
+        setup: (i) => {
+          this._routerBasePath && i instanceof y && (i.routerPath = this._routerBasePath);
         }
       },
       {
@@ -1359,8 +1342,8 @@ let v = class extends T {
         <div class="dashboard-container">
           <umb-router-slot
             .routes=${this._routes}
-            @init=${(t) => {
-      this._routerBasePath = t.target.absoluteRouterPath;
+            @init=${(i) => {
+      this._routerBasePath = i.target.absoluteRouterPath;
     }}
           ></umb-router-slot>
         </div>
@@ -1369,7 +1352,7 @@ let v = class extends T {
   }
 };
 v.styles = [
-  D,
+  N,
   w`
       :host {
         display: block;
@@ -1428,16 +1411,16 @@ v.styles = [
       }
     `
 ];
-Z([
-  h()
+ue([
+  d()
 ], v.prototype, "_routerBasePath", 2);
-Z([
-  h()
+ue([
+  d()
 ], v.prototype, "_routes", 2);
-v = Z([
+v = ue([
   I("articulate-dashboard-root")
 ], v);
-const tt = {
+const ht = {
   type: "dashboard",
   alias: "Articulate.BackOffice.Dashboard",
   name: "Articulate Dashboard",
@@ -1453,7 +1436,7 @@ const tt = {
       match: "Umb.Section.Settings"
     }
   ]
-}, it = tt, ot = [
+}, pt = ht, mt = [
   {
     type: "propertyEditorUi",
     alias: "Articulate.MarkdownEditor",
@@ -1483,17 +1466,17 @@ const tt = {
       }
     }
   }
-], rt = [...ot], at = [...rt], gt = (t, e) => {
-  e.register(it), e.registerMany(at), t.consumeContext(ve, (i) => {
-    const o = i == null ? void 0 : i.getOpenApiConfiguration();
-    $e.setConfig({
-      auth: (o == null ? void 0 : o.token) ?? void 0,
-      baseUrl: (o == null ? void 0 : o.base) ?? "",
-      credentials: (o == null ? void 0 : o.credentials) ?? "same-origin"
+], ft = [...mt], gt = [...ft], At = (i, e) => {
+  e.register(pt), e.registerMany(gt), i.consumeContext(Oe, (t) => {
+    const r = t == null ? void 0 : t.getOpenApiConfiguration();
+    De.setConfig({
+      auth: (r == null ? void 0 : r.token) ?? void 0,
+      baseUrl: (r == null ? void 0 : r.base) ?? "",
+      credentials: (r == null ? void 0 : r.credentials) ?? "same-origin"
     });
   });
 };
 export {
-  gt as onInit
+  At as onInit
 };
 //# sourceMappingURL=articulate.js.map
