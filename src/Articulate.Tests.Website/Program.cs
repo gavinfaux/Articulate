@@ -51,27 +51,28 @@ app.UseUmbraco()
     })
     .WithEndpoints(u =>
     {
-        if (app.Environment.IsDevelopment())
-        {
-            _ = u.EndpointRouteBuilder.MapGet("/debug/routes", (IEnumerable<EndpointDataSource> endpointSources) =>
-            {
-                var endpoints = endpointSources
-                    .SelectMany(es => es.Endpoints)
-                    .OfType<RouteEndpoint>();
+        // // NOTE: Only enable this in development for debugging route issues
+        //if (app.Environment.IsDevelopment())
+        //{
+        //    _ = u.EndpointRouteBuilder.MapGet("/debug/routes", (IEnumerable<EndpointDataSource> endpointSources) =>
+        //    {
+        //        var endpoints = endpointSources
+        //            .SelectMany(es => es.Endpoints)
+        //            .OfType<RouteEndpoint>();
 
-                var output = endpoints.Select(e => new
-                {
-                    Priority = e.Order,
-                    Name = e.DisplayName,
-                    Route = e.RoutePattern.RawText,
-                    Method = e.Metadata.OfType<HttpMethodMetadata>().FirstOrDefault()?.HttpMethods.FirstOrDefault()
-                })
-                .OrderBy(e => e.Priority)
-                .ToList();
+        //        var output = endpoints.Select(e => new
+        //        {
+        //            Priority = e.Order,
+        //            Name = e.DisplayName,
+        //            Route = e.RoutePattern.RawText,
+        //            Method = e.Metadata.OfType<HttpMethodMetadata>().FirstOrDefault()?.HttpMethods.FirstOrDefault()
+        //        })
+        //        .OrderBy(e => e.Priority)
+        //        .ToList();
 
-                return Results.Ok(output);
-            });
-        }
+        //        return Results.Ok(output);
+        //    });
+        //}
 
         _ = u.EndpointRouteBuilder.MapRazorPages();
         _ = u.UseUmbracoPreviewEndpoints();
