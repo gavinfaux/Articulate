@@ -18,14 +18,17 @@ using Umbraco.Extensions;
 
 namespace Articulate.Controllers
 {
+    // NOTE: ManagementApiControllerBase [ApiController] attribute will automatically validate the model
+    // [ApiController] attribute also infers [FromBody] for model binding
+
     /// <summary>
     /// Provides API endpoints for copying an Articulate default theme to a new theme name to allow customisation.
     /// </summary>
     [ApiVersion("1.0")]
     [Authorize(Policy = AuthorizationPolicies.SectionAccessSettings)]
     [VersionedApiBackOfficeRoute("articulate/themes")]
-    [MapToApi("articulate-api")]
-    [ApiExplorerSettings(GroupName = "Articulate")]
+    [MapToApi(ArticulateConstants.ApiName)]
+    [ApiExplorerSettings(GroupName = ArticulateConstants.ApiGroupName)]
     public class ThemeEditorController(IHostEnvironment hostingEnvironment, ILogger<ThemeEditorController> logger) : ManagementApiControllerBase
     {
         /// <summary>
@@ -62,8 +65,6 @@ namespace Articulate.Controllers
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status500InternalServerError)]
         public IActionResult PostCopyTheme(PostCopyThemeModel model)
         {
-            // ManagementApiControllerBase [ApiController] attribute will automatically validate the model
-
             var themeFolderDirectories = GetThemeDirectories();
 
             var sourceTheme = themeFolderDirectories.FirstOrDefault(x => x.Name.InvariantEquals(model.ThemeName));
@@ -116,10 +117,10 @@ namespace Articulate.Controllers
         /// <returns>
         /// A list of theme names as strings.
         /// </returns>
-        /// <response code="200">Returns the list of available theme names.</response>
-        [HttpGet("list")]
+        /// <response code="200">Returns the list of available default theme names.</response>
+        [HttpGet("default")]
         [ProducesResponseType<List<string>>(StatusCodes.Status200OK)]
-        public IActionResult GetThemes()
+        public IActionResult GetDefaultThemes()
             => Ok(
                 AllThemes()
             );

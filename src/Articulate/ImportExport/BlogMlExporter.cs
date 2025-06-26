@@ -273,6 +273,7 @@ namespace Articulate.ImportExport
                                         media = null;
                                     }
                                 }
+
                                 if (media != null)
                                 {
                                     mediaPath = _mediaFileManager.GetMediaPath(
@@ -286,6 +287,7 @@ namespace Articulate.ImportExport
                                         {
                                             mediaPath = mediaDir + mediaPath;
                                         }
+
                                         var mime = BlogMlExporter.ImageMimeType(mediaPath);
 
                                         if (!mime.IsNullOrWhiteSpace())

@@ -9,5 +9,7 @@ namespace Articulate
         public const string ArticlesDefaultName = "Articles";
         public const string AuthorsDefaultName = "Authors";
         public const string ArticulateImagePicker = "Articulate Image Picker";
+        public const string ApiName = "articulate";
+        public const string ApiGroupName = "Articulate";
     }
 }

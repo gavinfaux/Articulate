@@ -1,8 +1,3 @@
-using Articulate.Models;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -11,6 +6,17 @@ using System.Linq;
 using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Articulate.Models;
+using Asp.Versioning;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
+using Umbraco.Cms.Api.Common.Attributes;
+using Umbraco.Cms.Api.Management.Controllers;
+using Umbraco.Cms.Api.Management.Routing;
+using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.Actions;
 using Umbraco.Cms.Core.Configuration.Models;
 using Umbraco.Cms.Core.Hosting;
@@ -22,20 +28,25 @@ using Umbraco.Cms.Core.PropertyEditors;
 using Umbraco.Cms.Core.Security;
 using Umbraco.Cms.Core.Serialization;
 using Umbraco.Cms.Core.Services;
-using Umbraco.Cms.Api.Management.Controllers;
-using Umbraco.Cms.Web.Common;
-using Umbraco.Extensions;
-using Umbraco.Cms.Api.Management.Routing;
-using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.Strings;
+using Umbraco.Cms.Web.Common;
+using Umbraco.Cms.Web.Common.Authorization;
+using Umbraco.Extensions;
 
 namespace Articulate.Controllers
 {
+    // NOTE: ManagementApiControllerBase [ApiController] attribute will automatically validate the model
+    // [ApiController] attribute also infers [FromBody] for model binding
+
     /// <summary>
     /// Controller for handling the a-new markdown editor endpoint for creating blog posts
     /// </summary>
+    [ApiVersion("1.0")]
+    [Authorize(AuthorizationPolicies.ContentPermissionByResource)]
+    [Authorize(AuthorizationPolicies.MediaPermissionByResource)]
+    [MapToApi(ArticulateConstants.ApiName)]
     [VersionedApiBackOfficeRoute("articulate/anew")]
-    [ApiExplorerSettings(GroupName = "Articulate")]
+    [ApiExplorerSettings(GroupName = ArticulateConstants.ApiGroupName)]
     [AutoValidateAntiforgeryToken]	
     public class MardownEditorApiController : ManagementApiControllerBase
     {
@@ -90,7 +101,7 @@ namespace Articulate.Controllers
             public string FirstImage { get; set; }
         }
 
-        [HttpPost]
+        [HttpPost("post")]
         public async Task<ActionResult> PostNew()
         {
             await Task.CompletedTask;
@@ -136,7 +147,7 @@ namespace Articulate.Controllers
                 return BadRequest("No Articulate Archive node found for the specified id");
             }
 
-            var list = new List<string> { ActionNew.ActionLetter, ActionUpdate.ActionLetter };
+            var list = new List<string> { ActionNew.ActionLetter, ActionUpdate.ActionLetter, ActionPublish.ActionLetter };
             var hasPermission = CheckPermissions(
                 _backOfficeSecurityAccessor.BackOfficeSecurity.CurrentUser,
                 _services.UserService,
@@ -198,7 +209,7 @@ namespace Articulate.Controllers
             //author is required
             content.SetInvariantOrDefaultCultureValue("author", _backOfficeSecurityAccessor.BackOfficeSecurity.CurrentUser.Name ?? "Unknown", contentType, _services.LocalizationService);
 
-            var status = _services.ContentService.SaveAndPublish(content, userId: _backOfficeSecurityAccessor.BackOfficeSecurity.GetUserId().Result);
+            var status = _services.ContentService.Save(content, userId: _backOfficeSecurityAccessor.BackOfficeSecurity.GetUserId().Result);
             if (status.Success == false)
             {
                 ModelState.AddModelError("server", "Publishing failed: " + status.Result);

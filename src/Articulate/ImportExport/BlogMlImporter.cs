@@ -9,6 +9,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Argotic.Syndication.Specialized;
+using Articulate.Models;
 using Microsoft.AspNetCore.Html;
 using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Core;
@@ -98,8 +99,8 @@ namespace Articulate.ImportExport
         /// <summary>
         /// Imports the blogml file to articulate
         /// </summary>
-        /// <returns>Returns true if successful</returns>
-        public async Task<bool> Import(
+        /// <returns>An <see cref="ImportModel"/> containing import statistics and the download URL for the Disqus export, if applicable.</returns>
+        public async Task<ImportModel> Import(
             int userId,
             string fileName,
             Guid blogRootNode,
@@ -110,24 +111,28 @@ namespace Articulate.ImportExport
             bool exportDisqusXml = false,
             bool importFirstImage = false)
         {
+            // not inside try block because we don't want to proceed further, and caller should handle 
+
+            if (!_articulateTempFileSystem.FileExists(fileName))
+            {
+                throw new FileNotFoundException("File not found: " + fileName);
+            }
+
+            var root = _contentService.GetById(blogRootNode)
+                       ?? throw new InvalidOperationException("No node found with id " + blogRootNode);
+
+            if (!root.ContentType.Alias.InvariantEquals("Articulate"))
+            {
+                throw new InvalidOperationException("The node with id " + blogRootNode + " is not an Articulate root node");
+            }
+
             // wrap entire operation in scope
             using (var scope = _scopeProvider.CreateScope())
             {
+                var returnModel = new ImportModel();
+
                 try
                 {
-                    if (!_articulateTempFileSystem.FileExists(fileName))
-                    {
-                        throw new FileNotFoundException("File not found: " + fileName);
-                    }
-
-                    var root = _contentService.GetById(blogRootNode)
-                        ?? throw new InvalidOperationException("No node found with id " + blogRootNode);
-
-                    if (!root.ContentType.Alias.InvariantEquals("Articulate"))
-                    {
-                        throw new InvalidOperationException("The node with id " + blogRootNode + " is not an Articulate root node");
-                    }
-
                     using (var stream = _articulateTempFileSystem.OpenFile(fileName))
                     {
                         var document = new BlogMLDocument();
@@ -137,13 +142,15 @@ namespace Articulate.ImportExport
                         var xdoc = XDocument.Load(stream);
 
                         var authorIdsToName = ImportAuthors(userId, root, document.Authors);
-
+                        returnModel.AuthorCount = authorIdsToName.Count;
                         var imported = await ImportPosts(userId, xdoc, root, document.Posts, document.Authors.ToArray(), document.Categories.ToArray(), authorIdsToName, overwrite, regexMatch, regexReplace, publishAll, importFirstImage);
+                        returnModel.PostCount = imported.Count();
 
                         if (exportDisqusXml)
                         {
                             var xDoc = _disqusXmlExporter.Export(imported, document);
-
+                            var nsWp = "http://wordpress.org/export/1.0/";
+                            returnModel.CommentCount = xDoc.Descendants(XName.Get("comment", nsWp)).Count();
                             using (var memStream = new MemoryStream())
                             {
                                 xDoc.Save(memStream);
@@ -154,12 +161,14 @@ namespace Articulate.ImportExport
 
                     // commit
                     scope.Complete();
-                    return true;
+                    returnModel.Completed = true;
+                    return returnModel;
                 }
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Importing failed with errors");
-                    return false;
+                    returnModel.Completed = false;
+                    return returnModel;
                 }
             }
         }
@@ -203,7 +212,8 @@ namespace Articulate.ImportExport
                 //create the authors node
                 authorsNode = _contentService.CreateWithInvariantOrDefaultCultureName(ArticulateConstants.AuthorsDefaultName, rootNode, authorsType, _localizationService);
 
-                _contentService.SaveAndPublish(authorsNode, userId: userId);
+                _contentService.Save(authorsNode, userId: userId);
+             var x=   _contentService.Publish(authorsNode, ["*"], userId: userId);
             }
 
             // get the authors nodes for this authors container
@@ -230,7 +240,8 @@ namespace Articulate.ImportExport
                         // name to posts later on
                         authorNode = _contentService.CreateWithInvariantOrDefaultCultureName(found.Name, authorsNode, authorType, _localizationService);
 
-                        _contentService.SaveAndPublish(authorNode, userId: userId);
+                        _contentService.Save(authorNode, userId: userId);
+                  var x=      _contentService.Publish(authorNode, ["*"], userId: userId);
                     }
 
                     result.Add(author.Id, authorNode.Name);
@@ -246,7 +257,8 @@ namespace Articulate.ImportExport
                         //create a new author node with this title
                         authorNode = _contentService.CreateWithInvariantOrDefaultCultureName(author.Title.Content, authorsNode, authorType, _localizationService);
 
-                        _contentService.SaveAndPublish(authorNode, userId: userId);
+                        _contentService.Save(authorNode, userId: userId);
+                  var x=      _contentService.Publish(authorNode, ["*"], userId: userId);
                     }
 
                     result.Add(author.Id, authorNode.Name);
@@ -404,7 +416,8 @@ namespace Articulate.ImportExport
 
                 if (publishAll)
                 {
-                    _contentService.SaveAndPublish(postNode, userId: userId);
+                    _contentService.Save(postNode, userId: userId);
+                var x=    _contentService.Publish(postNode, ["*"], userId);
                 }
                 else
                 {

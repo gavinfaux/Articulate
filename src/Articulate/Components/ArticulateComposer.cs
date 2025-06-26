@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 using Articulate.ImportExport;
 using Articulate.Options;
 using Articulate.Routing;
@@ -13,7 +12,6 @@ using Umbraco.Cms.Core.Composing;
 using Umbraco.Cms.Core.DependencyInjection;
 using Umbraco.Cms.Core.Notifications;
 using Umbraco.Cms.Core.Routing;
-using Umbraco.Cms.Core.Security;
 
 namespace Articulate.Components
 {
@@ -56,7 +54,6 @@ namespace Articulate.Components
 
             builder.Services.ConfigureOptions<ArticulatePipelineStartupFilter>();
             builder.Services.ConfigureOptions<ConfigureArticulateMvcOptions>();
-            builder.Services.ConfigureOptions<ArticulateApiSwaggerOptions>();
 
             builder.Services.AddOutputCache(options =>
             {

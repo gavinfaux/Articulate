@@ -415,7 +415,8 @@ namespace Articulate.MetaWeblog
                     content.SetInvariantOrDefaultCultureValue("publishedDate", post.dateCreated, contentType, _localizationService);
                 }
 
-                _contentService.SaveAndPublish(content, userId: user.Id);
+                _contentService.Save(content, userId: user.Id);
+                _contentService.Publish(content, ["*"], user.Id);
             }
             else
             {

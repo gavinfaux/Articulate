@@ -3,15 +3,18 @@ using System.Runtime.Serialization;
 namespace Articulate.Models
 {
     /// <summary>
-    /// Represents the result of a BlogML export or the Disqus export of and import operation, containing a download URL for the resulting file.
+    /// Represents the result of a BlogML import with operation statistics.
     /// </summary>
     /// <remarks>
-    /// This model is typically returned by API endpoints after a successful import or export, providing a URL to download the generated file (such as BlogML or Disqus XML).
+    /// This model is returned by API endpoint after an import.
     /// </remarks>
     /// <example>
     /// <code>
     /// {
-    ///   "downloadUrl": "/umbraco/management/api/v1/articulate/blog/download"
+    ///   "authorCount": 1,
+    ///   "commentCount": 42,
+    ///   "completed": true,
+    ///   "postCount": 12
     /// }
     /// </code>
     /// </example>
@@ -19,10 +22,31 @@ namespace Articulate.Models
     public class ImportModel
     {
         /// <summary>
-        /// Gets or sets the URL where the client can download the exported or processed file.
+        /// Gets or sets the number of Posts that were imported.
         /// </summary>
-        /// <example>/umbraco/management/api/v1/articulate/blog/download</example>
-        [DataMember(Name = "downloadUrl")]
-        public string DownloadUrl { get; set; }
+        /// <example>20</example>
+        [DataMember(Name = "postCount")]
+        public long PostCount { get; set; }
+
+        /// <summary>
+        /// Gets or sets the number of Authors that were imported.
+        /// </summary>
+        /// <example>1</example>
+        [DataMember(Name = "authorCount")]
+        public long AuthorCount { get; set; }
+
+        /// <summary>
+        /// Gets or sets the number of comments that were written to the Disqus comments XML export file.
+        /// </summary>
+        /// <example>0</example>
+        [DataMember(Name = "commentCount")]
+        public long CommentCount { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the import completed successfully (true) or if it failed (false).
+        /// </summary>
+        /// <example>true</example>
+        [DataMember(Name = "completed")]
+        public bool Completed { get; set; }
     }
 }

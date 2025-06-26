@@ -16,25 +16,25 @@ namespace Articulate.Models
 {
     public static class PublishedContentExtensions
     {
-        //public static string GetArticulateCropUrl(this IPublishedContent content, string propertyAlias, VariationContext variationContext)
-        //{
-        //    if (!content.ContentType.VariesByCulture())
-        //    {
-        //        return content.Value<MediaWithCrops>(propertyAlias)?.GetCropUrl(imageCropMode: ImageCropMode.Max) ?? string.Empty;
-        //    }
+        public static string GetArticulateCropUrl(this IPublishedContent content, string propertyAlias, VariationContext variationContext)
+        {
+            if (!content.ContentType.VariesByCulture())
+            {
+                return content.Value<MediaWithCrops>(propertyAlias)?.GetCropUrl(imageCropMode: ImageCropMode.Max) ?? string.Empty;
+            }
 
-        //    var property = content.GetProperty(propertyAlias);
-        //    if (property == null)
-        //    {
-        //        return string.Empty;
-        //    }
+            var property = content.GetProperty(propertyAlias);
+            if (property == null)
+            {
+                return string.Empty;
+            }
 
-        //    var culture = property.PropertyType.VariesByCulture()
-        //        ? variationContext?.Culture
-        //        : string.Empty; // must be string empty, not null since that won't work :/ 
+            var culture = property.PropertyType.VariesByCulture()
+                ? variationContext?.Culture
+                : string.Empty; // must be string empty, not null since that won't work :/ 
 
-        //    return content.Value<MediaWithCrops>(propertyAlias, culture)?.GetCropUrl(imageCropMode: ImageCropMode.Max) ?? string.Empty;
-        //}
+            return content.Value<MediaWithCrops>(propertyAlias, culture)?.GetCropUrl(imageCropMode: ImageCropMode.Max) ?? string.Empty;
+        }
 
         public static IPublishedContent Next(this IPublishedContent content)
         {
