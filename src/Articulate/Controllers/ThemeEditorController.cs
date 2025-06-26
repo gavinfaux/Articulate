@@ -65,44 +65,56 @@ namespace Articulate.Controllers
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status500InternalServerError)]
         public IActionResult PostCopyTheme(PostCopyThemeModel model)
         {
-            var themeFolderDirectories = GetThemeDirectories();
-
-            var sourceTheme = themeFolderDirectories.FirstOrDefault(x => x.Name.InvariantEquals(model.ThemeName));
-            if (sourceTheme == null)
-            {
-                logger.LogError("Theme directory not found: {ThemeName}", model.ThemeName);
-                return OperationStatusResult(ThemeEditorOperationStatus.NotFound, builder => NotFound(builder.WithTitle("Server error").WithDetail($"{model.ThemeName} not found.").Build()));
-            }
-
-            var articulateUserThemesDirectory = hostingEnvironment.MapPathContentRoot(PathHelper.UserVirtualThemePath);
-            if (!Directory.Exists(articulateUserThemesDirectory))
-            {
-                _ = Directory.CreateDirectory(articulateUserThemesDirectory);
-            }
-
-            var articulateUserThemesDirectories = new DirectoryInfo(articulateUserThemesDirectory).GetDirectories();
-
-            var destTheme = articulateUserThemesDirectories.FirstOrDefault(x => x.Name.InvariantEquals(model.NewThemeName));
-
-            if (destTheme != null)
-            {
-                logger.LogWarning("Theme name is already is use: {ThemeName}", model.ThemeName);
-                return OperationStatusResult(ThemeEditorOperationStatus.DuplicateThemeName, builder => BadRequest(builder.WithTitle($"Theme {model.ThemeName} is already used").WithDetail("The theme name must be unique.").Build()));
-            }
-
             try
             {
-                CopyDirectory(sourceTheme, new DirectoryInfo(Path.Combine(articulateUserThemesDirectory, model.NewThemeName)));
-            }
-            catch (InvalidOperationException e)
-            {
-                if (e.Message == "Theme already exists")
+                var themeFolderDirectories = GetThemeDirectories();
+
+                var sourceTheme = themeFolderDirectories.FirstOrDefault(x => x.Name.InvariantEquals(model.ThemeName));
+                if (sourceTheme == null)
                 {
-                    logger.LogWarning(e, "Theme name is already is use: {ThemeName}", model.NewThemeName);
+                    logger.LogError("Theme directory not found: {ThemeName}", model.ThemeName);
+                    return OperationStatusResult(ThemeEditorOperationStatus.NotFound, builder => NotFound(builder.WithTitle("Server error").WithDetail($"{model.ThemeName} not found.").Build()));
+                }
+
+                var articulateUserThemesDirectory = hostingEnvironment.MapPathContentRoot(PathHelper.UserVirtualThemePath);
+                if (!Directory.Exists(articulateUserThemesDirectory))
+                {
+                    _ = Directory.CreateDirectory(articulateUserThemesDirectory);
+                }
+
+                var articulateUserThemesDirectories = new DirectoryInfo(articulateUserThemesDirectory).GetDirectories();
+
+                var destTheme = articulateUserThemesDirectories.FirstOrDefault(x => x.Name.InvariantEquals(model.NewThemeName));
+
+                if (destTheme != null)
+                {
+                    logger.LogWarning("Theme name is already is use: {ThemeName}", model.ThemeName);
                     return OperationStatusResult(ThemeEditorOperationStatus.DuplicateThemeName, builder => BadRequest(builder.WithTitle($"Theme {model.ThemeName} is already used").WithDetail("The theme name must be unique.").Build()));
                 }
 
-                throw;
+                try
+                {
+                    CopyDirectory(sourceTheme, new DirectoryInfo(Path.Combine(articulateUserThemesDirectory, model.NewThemeName)));
+                }
+                catch (InvalidOperationException e)
+                {
+                    if (e.Message == "Theme already exists")
+                    {
+                        logger.LogWarning(e, "Theme name is already is use: {ThemeName}", model.NewThemeName);
+                        return OperationStatusResult(ThemeEditorOperationStatus.DuplicateThemeName, builder => BadRequest(builder.WithTitle($"Theme {model.ThemeName} is already used").WithDetail("The theme name must be unique.").Build()));
+                    }
+
+                    throw;
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Theme copy failed with errors");
+                return StatusCode(StatusCodes.Status500InternalServerError, new ProblemDetails
+                {
+                    Title = "Server error",
+                    Detail = ex.Message
+                });
             }
 
             return Ok(model.NewThemeName);

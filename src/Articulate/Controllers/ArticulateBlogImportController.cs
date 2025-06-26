@@ -87,31 +87,45 @@ namespace Articulate.Controllers
         /// </remarks>
         /// <response code="200">Returns the temporary file name and post count.</response>
         /// <response code="415">The request was not a valid form file or the file was not XML.</response>
+        /// <response code="500">Upload failed due to a server error.</response>
         [HttpPost("import/begin")]
         [ProducesResponseType<PostResponseModel>(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status415UnsupportedMediaType)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public IActionResult PostInitialize(IFormFile importFile)
         {
-            if (importFile == null || !Path.GetExtension(importFile.FileName.Trim("\"").ToLowerInvariant()).InvariantEquals(".xml"))
+            try
             {
-                logger.LogWarning("The request was not a valid form file or the file was not XML");
-                return OperationStatusResult(ArticulateBlogImportOperationStatus.InvalidRequest, builder => StatusCode(StatusCodes.Status415UnsupportedMediaType, builder.WithTitle("Invalid request").WithDetail("The request was not a valid form file or the file was not XML.").Build()));
+                if (importFile == null || !Path.GetExtension(importFile.FileName.Trim("\"").ToLowerInvariant()).InvariantEquals(".xml"))
+                {
+                    logger.LogWarning("The request was not a valid form file or the file was not XML");
+                    return OperationStatusResult(ArticulateBlogImportOperationStatus.InvalidRequest, builder => StatusCode(StatusCodes.Status415UnsupportedMediaType, builder.WithTitle("Invalid request").WithDetail("The request was not a valid form file or the file was not XML.").Build()));
+                }
+
+                var fileName = Path.GetRandomFileName();
+                using (var stream = new MemoryStream())
+                {
+                    Request.Form.Files[0].CopyTo(stream);
+                    articulateTempFileSystem.AddFile(fileName, stream);
+                }
+
+                var count = blogMlImporter.GetPostCount(fileName);
+
+                return Ok(new PostResponseModel
+                {
+                    PostCount = count,
+                    TemporaryFileName = fileName
+                });
             }
-
-            var fileName = Path.GetRandomFileName();
-            using (var stream = new MemoryStream())
+            catch (Exception ex)
             {
-                Request.Form.Files[0].CopyTo(stream);
-                articulateTempFileSystem.AddFile(fileName, stream);
+                logger.LogError(ex, "Export failed with errors");
+                return StatusCode(StatusCodes.Status500InternalServerError, new ProblemDetails
+                {
+                    Title = "Server error",
+                    Detail = ex.Message
+                });
             }
-
-            var count = blogMlImporter.GetPostCount(fileName);
-
-            return Ok(new PostResponseModel
-            {
-                PostCount = count,
-                TemporaryFileName = fileName
-            });
         }
 
         /// <summary>
@@ -120,23 +134,50 @@ namespace Articulate.Controllers
         /// <param name="model">The export options including the Articulate node ID and image export settings.</param>
         /// <returns>A file stream containing the BlogML XML file.</returns>
         /// <response code="200">Returns the BlogML XML file as an octet-stream. The filename in the Content-Disposition header will be in the format: articulate-export-yyyyMMddHHmmss.xml.</response>
+        /// <response code="400">The chosen node is not an Articulate root node, or node does not exist, or Articulate is not installed correctly.</response>
+        /// <response code="500">Export failed due to a server error.</response>
         [HttpPost("export")]
         [ProducesResponseType(typeof(byte[]), StatusCodes.Status200OK, "application/octet-stream")]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> PostExportBlogMl(ExportBlogMlModel model)
         {
-            blogMlExporter.Export(model.ArticulateNodeId, model.ExportImagesAsBase64);
-            var downloadFileName = $"articulate-export-{DateTime.UtcNow:yyyyMMddHHmmss}.xml";
-            Response.Headers.Append("Content-Disposition", $"attachment; filename=\"{downloadFileName}\"");
-            Response.ContentType = "application/octet-stream";
-
-            await using (var fileStream = articulateTempFileSystem.OpenFile("BlogMlExport.xml"))
+            try
             {
-                await fileStream.CopyToAsync(Response.Body);
-                await Response.Body.FlushAsync();
-            }
 
-            articulateTempFileSystem.DeleteFile("BlogMlExport.xml");
-            return new EmptyResult();
+                blogMlExporter.Export(model.ArticulateNodeId, model.ExportImagesAsBase64);
+                var downloadFileName = $"articulate-export-{DateTime.UtcNow:yyyyMMddHHmmss}.xml";
+                Response.Headers.Append("Content-Disposition", $"attachment; filename=\"{downloadFileName}\"");
+                Response.ContentType = "application/octet-stream";
+
+                await using (var fileStream = articulateTempFileSystem.OpenFile("BlogMlExport.xml"))
+                {
+                    await fileStream.CopyToAsync(Response.Body);
+                    await Response.Body.FlushAsync();
+                }
+
+                articulateTempFileSystem.DeleteFile("BlogMlExport.xml");
+                return new EmptyResult();
+            }
+            catch (InvalidOperationException ex)
+            {
+                logger.LogError(ex, "Export failed with errors");
+                return StatusCode(StatusCodes.Status400BadRequest, new ProblemDetails
+                {
+                    Title = "Bad Request",
+                    Detail = ex.Message
+                });
+
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Export failed with errors");
+                return StatusCode(StatusCodes.Status500InternalServerError, new ProblemDetails
+                {
+                    Title = "Server error",
+                    Detail = ex.Message
+                });
+            }
         }
 
         /// <summary>
@@ -207,7 +248,7 @@ namespace Articulate.Controllers
             }
             catch (FileNotFoundException ex)
             {
-                logger.LogWarning(ex, "Importing failed with errors");
+                logger.LogError(ex, "Importing failed with errors");
                 return StatusCode(StatusCodes.Status404NotFound, new ProblemDetails
                 {
                     Title = "File Not Found",
@@ -216,7 +257,7 @@ namespace Articulate.Controllers
             }
             catch (InvalidOperationException ex)
             {
-                logger.LogWarning(ex, "Importing failed with errors");
+                logger.LogError(ex, "Importing failed with errors");
                 return StatusCode(StatusCodes.Status400BadRequest, new ProblemDetails
                 {
                     Title = "Bad Request",
@@ -249,7 +290,7 @@ namespace Articulate.Controllers
         {
             if (!articulateTempFileSystem.FileExists("DisqusXmlExport.xml"))
             {
-                var message = $"Disqus comments export file not found.";
+                var message = "Disqus comments export file not found.";
                 logger.LogWarning(message);
                 return OperationStatusResult(ArticulateBlogImportOperationStatus.NotFound, builder => NotFound(builder.WithTitle(message).Build()));
             }
