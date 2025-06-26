@@ -1,342 +1,342 @@
-using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.IO;
-using System.Linq;
-using System.Net;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using Articulate.Models;
-using Asp.Versioning;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
-using Umbraco.Cms.Api.Common.Attributes;
-using Umbraco.Cms.Api.Management.Controllers;
-using Umbraco.Cms.Api.Management.Routing;
-using Umbraco.Cms.Core;
-using Umbraco.Cms.Core.Actions;
-using Umbraco.Cms.Core.Configuration.Models;
-using Umbraco.Cms.Core.Hosting;
-using Umbraco.Cms.Core.IO;
-using Umbraco.Cms.Core.Models;
-using Umbraco.Cms.Core.Models.Membership;
-using Umbraco.Cms.Core.Models.PublishedContent;
-using Umbraco.Cms.Core.PropertyEditors;
-using Umbraco.Cms.Core.Security;
-using Umbraco.Cms.Core.Serialization;
-using Umbraco.Cms.Core.Services;
-using Umbraco.Cms.Core.Strings;
-using Umbraco.Cms.Web.Common;
-using Umbraco.Cms.Web.Common.Authorization;
-using Umbraco.Extensions;
+//using System;
+//using System.Collections.Generic;
+//using System.Globalization;
+//using System.IO;
+//using System.Linq;
+//using System.Net;
+//using System.Text.RegularExpressions;
+//using System.Threading.Tasks;
+//using Articulate.Models;
+//using Asp.Versioning;
+//using Microsoft.AspNetCore.Authorization;
+//using Microsoft.AspNetCore.Http;
+//using Microsoft.AspNetCore.Mvc;
+//using Microsoft.Extensions.Options;
+//using Newtonsoft.Json;
+//using Umbraco.Cms.Api.Common.Attributes;
+//using Umbraco.Cms.Api.Management.Controllers;
+//using Umbraco.Cms.Api.Management.Routing;
+//using Umbraco.Cms.Core;
+//using Umbraco.Cms.Core.Actions;
+//using Umbraco.Cms.Core.Configuration.Models;
+//using Umbraco.Cms.Core.Hosting;
+//using Umbraco.Cms.Core.IO;
+//using Umbraco.Cms.Core.Models;
+//using Umbraco.Cms.Core.Models.Membership;
+//using Umbraco.Cms.Core.Models.PublishedContent;
+//using Umbraco.Cms.Core.PropertyEditors;
+//using Umbraco.Cms.Core.Security;
+//using Umbraco.Cms.Core.Serialization;
+//using Umbraco.Cms.Core.Services;
+//using Umbraco.Cms.Core.Strings;
+//using Umbraco.Cms.Web.Common;
+//using Umbraco.Cms.Web.Common.Authorization;
+//using Umbraco.Extensions;
 
-namespace Articulate.Controllers
-{
-    // NOTE: ManagementApiControllerBase [ApiController] attribute will automatically validate the model
-    // [ApiController] attribute also infers [FromBody] for model binding
+//namespace Articulate.Controllers
+//{
+//    // NOTE: ManagementApiControllerBase [ApiController] attribute will automatically validate the model
+//    // [ApiController] attribute also infers [FromBody] for model binding
 
-    /// <summary>
-    /// Controller for handling the a-new markdown editor endpoint for creating blog posts
-    /// </summary>
-    [ApiVersion("1.0")]
-    [Authorize(AuthorizationPolicies.ContentPermissionByResource)]
-    [Authorize(AuthorizationPolicies.MediaPermissionByResource)]
-    [MapToApi(ArticulateConstants.ApiName)]
-    [VersionedApiBackOfficeRoute("articulate/anew")]
-    [ApiExplorerSettings(GroupName = ArticulateConstants.ApiGroupName)]
-    [AutoValidateAntiforgeryToken]	
-    public class MardownEditorApiController : ManagementApiControllerBase
-    {
-        private readonly ServiceContext _services;
-        private readonly IBackOfficeSecurityAccessor _backOfficeSecurityAccessor;
-        private readonly UmbracoHelper _umbracoHelper;
-        private readonly MediaFileManager _mediaFileManager;
-        private readonly PropertyEditorCollection _propertyEditors;
-        private readonly IJsonSerializer _jsonSerializer;
-        private readonly GlobalSettings _globalSettings;
-        private readonly IHostingEnvironment _hostingEnvironment;
-        private readonly IMediaService _mediaService;
-        private readonly MediaUrlGeneratorCollection _mediaUrlGenerators;
-        private readonly IContentTypeBaseServiceProvider _contentTypeBaseServiceProvider;
-        private readonly IShortStringHelper _shortStringHelper;
-        private readonly Lazy<IMedia> _articulateRootMediaFolder;
+//    /// <summary>
+//    /// Controller for handling the a-new markdown editor endpoint for creating blog posts
+//    /// </summary>
+//    [ApiVersion("1.0")]
+//    [Authorize(AuthorizationPolicies.ContentPermissionByResource)]
+//    [Authorize(AuthorizationPolicies.MediaPermissionByResource)]
+//    [MapToApi(ArticulateConstants.ApiName)]
+//    [VersionedApiBackOfficeRoute("articulate/anew")]
+//    [ApiExplorerSettings(GroupName = ArticulateConstants.ApiGroupName)]
+//    [AutoValidateAntiforgeryToken]	
+//    public class MardownEditorApiController : ManagementApiControllerBase
+//    {
+//        private readonly ServiceContext _services;
+//        private readonly IBackOfficeSecurityAccessor _backOfficeSecurityAccessor;
+//        private readonly UmbracoHelper _umbracoHelper;
+//        private readonly MediaFileManager _mediaFileManager;
+//        private readonly PropertyEditorCollection _propertyEditors;
+//        private readonly IJsonSerializer _jsonSerializer;
+//        private readonly GlobalSettings _globalSettings;
+//        private readonly IHostingEnvironment _hostingEnvironment;
+//        private readonly IMediaService _mediaService;
+//        private readonly MediaUrlGeneratorCollection _mediaUrlGenerators;
+//        private readonly IContentTypeBaseServiceProvider _contentTypeBaseServiceProvider;
+//        private readonly IShortStringHelper _shortStringHelper;
+//        private readonly Lazy<IMedia> _articulateRootMediaFolder;
 
-        public MardownEditorApiController(
-            ServiceContext services,
-            IBackOfficeSecurityAccessor backOfficeSecurityAccessor,
-            UmbracoHelper umbracoHelper,
-            MediaFileManager mediaFileManager,
-            PropertyEditorCollection propertyEditors,
-            IJsonSerializer jsonSerializer,
-            IOptions<GlobalSettings> globalSettings,
-            IHostingEnvironment hostingEnvironment, IMediaService mediaService,
-            MediaUrlGeneratorCollection mediaUrlGenerators,
-            IContentTypeBaseServiceProvider contentTypeBaseServiceProvider, IShortStringHelper shortStringHelper)
-        {
-            _services = services;
-            _backOfficeSecurityAccessor = backOfficeSecurityAccessor;
-            _umbracoHelper = umbracoHelper;
-            _mediaFileManager = mediaFileManager;
-            _propertyEditors = propertyEditors;
-            _jsonSerializer = jsonSerializer;
-            _globalSettings = globalSettings.Value;
-            _hostingEnvironment = hostingEnvironment;
-            _mediaService = mediaService;
-            _mediaUrlGenerators = mediaUrlGenerators;
-            _contentTypeBaseServiceProvider = contentTypeBaseServiceProvider;
-            _shortStringHelper = shortStringHelper;
-            _articulateRootMediaFolder = new Lazy<IMedia>(() =>
-            {
-                var root = _mediaService.GetRootMedia().FirstOrDefault(x => x.Name == "Articulate" && x.ContentType.Alias.InvariantEquals("folder"));
-                return root ?? _mediaService.CreateMediaWithIdentity("Articulate", Constants.System.Root, "folder");
-            });
-        }
+//        public MardownEditorApiController(
+//            ServiceContext services,
+//            IBackOfficeSecurityAccessor backOfficeSecurityAccessor,
+//            UmbracoHelper umbracoHelper,
+//            MediaFileManager mediaFileManager,
+//            PropertyEditorCollection propertyEditors,
+//            IJsonSerializer jsonSerializer,
+//            IOptions<GlobalSettings> globalSettings,
+//            IHostingEnvironment hostingEnvironment, IMediaService mediaService,
+//            MediaUrlGeneratorCollection mediaUrlGenerators,
+//            IContentTypeBaseServiceProvider contentTypeBaseServiceProvider, IShortStringHelper shortStringHelper)
+//        {
+//            _services = services;
+//            _backOfficeSecurityAccessor = backOfficeSecurityAccessor;
+//            _umbracoHelper = umbracoHelper;
+//            _mediaFileManager = mediaFileManager;
+//            _propertyEditors = propertyEditors;
+//            _jsonSerializer = jsonSerializer;
+//            _globalSettings = globalSettings.Value;
+//            _hostingEnvironment = hostingEnvironment;
+//            _mediaService = mediaService;
+//            _mediaUrlGenerators = mediaUrlGenerators;
+//            _contentTypeBaseServiceProvider = contentTypeBaseServiceProvider;
+//            _shortStringHelper = shortStringHelper;
+//            _articulateRootMediaFolder = new Lazy<IMedia>(() =>
+//            {
+//                var root = _mediaService.GetRootMedia().FirstOrDefault(x => x.Name == "Articulate" && x.ContentType.Alias.InvariantEquals("folder"));
+//                return root ?? _mediaService.CreateMediaWithIdentity("Articulate", Constants.System.Root, "folder");
+//            });
+//        }
 
-        public class ParseImageResponse
-        {
-            public string BodyText { get; set; }
-            public string FirstImage { get; set; }
-        }
+//        public class ParseImageResponse
+//        {
+//            public string BodyText { get; set; }
+//            public string FirstImage { get; set; }
+//        }
 
-        [HttpPost("post")]
-        public async Task<ActionResult> PostNew()
-        {
-            await Task.CompletedTask;
+//        [HttpPost("post")]
+//        public async Task<ActionResult> PostNew()
+//        {
+//            await Task.CompletedTask;
 
-            if (!Request.HasFormContentType && !Request.Form.Files.Any())
-            {
-                return StatusCode((int)HttpStatusCode.UnsupportedMediaType);
-            }
+//            if (!Request.HasFormContentType && !Request.Form.Files.Any())
+//            {
+//                return StatusCode((int)HttpStatusCode.UnsupportedMediaType);
+//            }
 
-            if (Request.Form.ContainsKey("model") == false)
-            {
-                return BadRequest("The request was not formatted correctly and is missing the 'model' parameter");
-            }
+//            if (Request.Form.ContainsKey("model") == false)
+//            {
+//                return BadRequest("The request was not formatted correctly and is missing the 'model' parameter");
+//            }
 
-            var model = JsonConvert.DeserializeObject<MardownEditorModel>(Request.Form["model"]);
+//            var model = JsonConvert.DeserializeObject<MardownEditorModel>(Request.Form["model"]);
 
-            if (model.ArticulateNodeId.HasValue == false)
-            {
-                return BadRequest("No id specified");
-            }
+//            if (model.ArticulateNodeId.HasValue == false)
+//            {
+//                return BadRequest("No id specified");
+//            }
 
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+//            if (!ModelState.IsValid)
+//            {
+//                return BadRequest(ModelState);
+//            }
 
-            var articulateNode = _services.ContentService.GetById(model.ArticulateNodeId.Value);
-            if (articulateNode == null)
-            {
-                return BadRequest("No Articulate node found with the specified id");
-            }
+//            var articulateNode = _services.ContentService.GetById(model.ArticulateNodeId.Value);
+//            if (articulateNode == null)
+//            {
+//                return BadRequest("No Articulate node found with the specified id");
+//            }
 
-            var extractFirstImageAsProperty = true;
-            if (articulateNode.HasProperty("extractFirstImage"))
-            {
-                extractFirstImageAsProperty = articulateNode.GetValue<bool>("extractFirstImage");
-            }
+//            var extractFirstImageAsProperty = true;
+//            if (articulateNode.HasProperty("extractFirstImage"))
+//            {
+//                extractFirstImageAsProperty = articulateNode.GetValue<bool>("extractFirstImage");
+//            }
 
-            var archive = _services.ContentService.GetPagedChildren(model.ArticulateNodeId.Value, 0, int.MaxValue, out long totalArchiveNodes)
-                .FirstOrDefault(x => x.ContentType.Alias.InvariantEquals(ArticulateConstants.ArticulateArchiveContentTypeAlias));
-            if (archive == null)
-            {
-                return BadRequest("No Articulate Archive node found for the specified id");
-            }
+//            var archive = _services.ContentService.GetPagedChildren(model.ArticulateNodeId.Value, 0, int.MaxValue, out long totalArchiveNodes)
+//                .FirstOrDefault(x => x.ContentType.Alias.InvariantEquals(ArticulateConstants.ArticulateArchiveContentTypeAlias));
+//            if (archive == null)
+//            {
+//                return BadRequest("No Articulate Archive node found for the specified id");
+//            }
 
-            var list = new List<string> { ActionNew.ActionLetter, ActionUpdate.ActionLetter, ActionPublish.ActionLetter };
-            var hasPermission = CheckPermissions(
-                _backOfficeSecurityAccessor.BackOfficeSecurity.CurrentUser,
-                _services.UserService,
-                list.ToArray(),
-                archive);
+//            var list = new List<string> { ActionNew.ActionLetter, ActionUpdate.ActionLetter, ActionPublish.ActionLetter };
+//            var hasPermission = CheckPermissions(
+//                _backOfficeSecurityAccessor.BackOfficeSecurity.CurrentUser,
+//                _services.UserService,
+//                list.ToArray(),
+//                archive);
 
-            if (hasPermission == false)
-            {
-                return BadRequest("Cannot create content at this level");
-            }
+//            if (hasPermission == false)
+//            {
+//                return BadRequest("Cannot create content at this level");
+//            }
 
-            //parse out the images, we may be posting more than is in the body
-            var parsedImageResponse = ParseImages(model.Body, Request.Form.Files, extractFirstImageAsProperty);
+//            //parse out the images, we may be posting more than is in the body
+//            var parsedImageResponse = ParseImages(model.Body, Request.Form.Files, extractFirstImageAsProperty);
 
-            model.Body = parsedImageResponse.BodyText;
+//            model.Body = parsedImageResponse.BodyText;
 
-            var contentType = _services.ContentTypeService.Get("ArticulateMarkdown");
-            if (contentType == null)
-            {
-                return BadRequest("No ArticulateMarkdown content type found");
-            }
+//            var contentType = _services.ContentTypeService.Get("ArticulateMarkdown");
+//            if (contentType == null)
+//            {
+//                return BadRequest("No ArticulateMarkdown content type found");
+//            }
 
-            var content = _services.ContentService.CreateWithInvariantOrDefaultCultureName(
-                model.Title,
-                archive,
-                contentType,
-                _services.LocalizationService,
-                _backOfficeSecurityAccessor.BackOfficeSecurity.GetUserId().Result);
+//            var content = _services.ContentService.CreateWithInvariantOrDefaultCultureName(
+//                model.Title,
+//                archive,
+//                contentType,
+//                _services.LocalizationService,
+//                _backOfficeSecurityAccessor.BackOfficeSecurity.GetUserId().Result);
 
-            content.SetInvariantOrDefaultCultureValue("markdown", model.Body, contentType, _services.LocalizationService);
+//            content.SetInvariantOrDefaultCultureValue("markdown", model.Body, contentType, _services.LocalizationService);
 
-            if (!string.IsNullOrEmpty(parsedImageResponse.FirstImage))
-            {
-                content.SetInvariantOrDefaultCultureValue("postImage", parsedImageResponse.FirstImage, contentType, _services.LocalizationService);
-            }
+//            if (!string.IsNullOrEmpty(parsedImageResponse.FirstImage))
+//            {
+//                content.SetInvariantOrDefaultCultureValue("postImage", parsedImageResponse.FirstImage, contentType, _services.LocalizationService);
+//            }
 
-            if (model.Excerpt.IsNullOrWhiteSpace() == false)
-            {
-                content.SetInvariantOrDefaultCultureValue("excerpt", model.Excerpt, contentType, _services.LocalizationService);
-            }
+//            if (model.Excerpt.IsNullOrWhiteSpace() == false)
+//            {
+//                content.SetInvariantOrDefaultCultureValue("excerpt", model.Excerpt, contentType, _services.LocalizationService);
+//            }
 
-            if (model.Tags.IsNullOrWhiteSpace() == false)
-            {
-                var tags = model.Tags.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim());
-                content.AssignInvariantOrDefaultCultureTags("tags", tags, contentType, _services.LocalizationService, _services.DataTypeService, _propertyEditors, _jsonSerializer);
-            }
+//            if (model.Tags.IsNullOrWhiteSpace() == false)
+//            {
+//                var tags = model.Tags.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim());
+//                content.AssignInvariantOrDefaultCultureTags("tags", tags, contentType, _services.LocalizationService, _services.DataTypeService, _propertyEditors, _jsonSerializer);
+//            }
 
-            if (model.Categories.IsNullOrWhiteSpace() == false)
-            {
-                var cats = model.Categories.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim());
-                content.AssignInvariantOrDefaultCultureTags("categories", cats, contentType, _services.LocalizationService, _services.DataTypeService, _propertyEditors, _jsonSerializer);
-            }
+//            if (model.Categories.IsNullOrWhiteSpace() == false)
+//            {
+//                var cats = model.Categories.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim());
+//                content.AssignInvariantOrDefaultCultureTags("categories", cats, contentType, _services.LocalizationService, _services.DataTypeService, _propertyEditors, _jsonSerializer);
+//            }
 
-            if (model.Slug.IsNullOrWhiteSpace() == false)
-            {
-                content.SetInvariantOrDefaultCultureValue("umbracoUrlName", model.Slug, contentType, _services.LocalizationService);
-            }
+//            if (model.Slug.IsNullOrWhiteSpace() == false)
+//            {
+//                content.SetInvariantOrDefaultCultureValue("umbracoUrlName", model.Slug, contentType, _services.LocalizationService);
+//            }
 
-            //author is required
-            content.SetInvariantOrDefaultCultureValue("author", _backOfficeSecurityAccessor.BackOfficeSecurity.CurrentUser.Name ?? "Unknown", contentType, _services.LocalizationService);
+//            //author is required
+//            content.SetInvariantOrDefaultCultureValue("author", _backOfficeSecurityAccessor.BackOfficeSecurity.CurrentUser.Name ?? "Unknown", contentType, _services.LocalizationService);
 
-            var status = _services.ContentService.Save(content, userId: _backOfficeSecurityAccessor.BackOfficeSecurity.GetUserId().Result);
-            if (status.Success == false)
-            {
-                ModelState.AddModelError("server", "Publishing failed: " + status.Result);
-                //probably  need to send back more info than that...
-                return BadRequest(ModelState);                
-            }
+//            var status = _services.ContentService.Save(content, userId: _backOfficeSecurityAccessor.BackOfficeSecurity.GetUserId().Result);
+//            if (status.Success == false)
+//            {
+//                ModelState.AddModelError("server", "Publishing failed: " + status.Result);
+//                //probably  need to send back more info than that...
+//                return BadRequest(ModelState);                
+//            }
 
-            IPublishedContent published = _umbracoHelper.Content(content.Id);
-            return Ok(new { url = published.Url() });
-        }
+//            IPublishedContent published = _umbracoHelper.Content(content.Id);
+//            return Ok(new { url = published.Url() });
+//        }
         
 
-        private ParseImageResponse ParseImages(string body, IFormFileCollection formFiles, bool extractFirstImageAsProperty)
-        {
-            var bodyTextRegex = new Regex(@"\[i:(\d+)\:(.*?)]",RegexOptions.IgnoreCase | RegexOptions.Compiled);
+//        private ParseImageResponse ParseImages(string body, IFormFileCollection formFiles, bool extractFirstImageAsProperty)
+//        {
+//            var bodyTextRegex = new Regex(@"\[i:(\d+)\:(.*?)]",RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
-            var reservedNames = new HashSet<string> {"con", "prn", "aux", "nul", "com1", "lpt1" };
+//            var reservedNames = new HashSet<string> {"con", "prn", "aux", "nul", "com1", "lpt1" };
 
-            var firstImage = string.Empty;
-            var bodyText = bodyTextRegex.Replace(body, m =>
-            {
-                var index = m.Groups[1].Value.TryConvertTo<int>();
-                if (index)
-                {
-                    //get the file at this index
-                    var file = formFiles[index.Result];
+//            var firstImage = string.Empty;
+//            var bodyText = bodyTextRegex.Replace(body, m =>
+//            {
+//                var index = m.Groups[1].Value.TryConvertTo<int>();
+//                if (index)
+//                {
+//                    //get the file at this index
+//                    var file = formFiles[index.Result];
 
                     
-                    //normalize
-                    var untrustedFileName = Path.GetFullPath(file.FileName);
-                    if (untrustedFileName.StartsWith("..") || untrustedFileName.Contains("/.."))
-                    {
-                        // path traversal attempt
-                        return string.Empty;
-                    }
+//                    //normalize
+//                    var untrustedFileName = Path.GetFullPath(file.FileName);
+//                    if (untrustedFileName.StartsWith("..") || untrustedFileName.Contains("/.."))
+//                    {
+//                        // path traversal attempt
+//                        return string.Empty;
+//                    }
 
-                    var filename = Path.GetFileName(file.FileName);
-                    var fileExtension = Path.GetExtension(filename).ToLowerInvariant();
+//                    var filename = Path.GetFileName(file.FileName);
+//                    var fileExtension = Path.GetExtension(filename).ToLowerInvariant();
 
-                    // TODO: validate mime type / extension OR file signature
+//                    // TODO: validate mime type / extension OR file signature
 
-                    //strip out any characters that are illegal in filenames
-                    var cleanFileName = string.Join("", filename.Split(Path.GetInvalidFileNameChars()));
-                    if (cleanFileName.IsNullOrWhiteSpace() || cleanFileName.Length > 100 || reservedNames.Contains(cleanFileName.ToLowerInvariant()))
-                    {
-                        return string.Empty;
-                    }
+//                    //strip out any characters that are illegal in filenames
+//                    var cleanFileName = string.Join("", filename.Split(Path.GetInvalidFileNameChars()));
+//                    if (cleanFileName.IsNullOrWhiteSpace() || cleanFileName.Length > 100 || reservedNames.Contains(cleanFileName.ToLowerInvariant()))
+//                    {
+//                        return string.Empty;
+//                    }
 
-                    var fileWithExtension = string.Concat(WebUtility.HtmlEncode(cleanFileName), ".",  fileExtension);
+//                    var fileWithExtension = string.Concat(WebUtility.HtmlEncode(cleanFileName), ".",  fileExtension);
 
-                    if (extractFirstImageAsProperty && index.Result == 0)
-                    {
-                        var stream = new MemoryStream();
-                        file.CopyTo(stream);
-                        if (stream.Length is 0 or > 1024 *1024 * 10)
-                        {
-                            return string.Empty;
-                        }
+//                    if (extractFirstImageAsProperty && index.Result == 0)
+//                    {
+//                        var stream = new MemoryStream();
+//                        file.CopyTo(stream);
+//                        if (stream.Length is 0 or > 1024 *1024 * 10)
+//                        {
+//                            return string.Empty;
+//                        }
 
-                        var mediaItem = _mediaService.CreateMedia(fileWithExtension, _articulateRootMediaFolder.Value, Constants.Conventions.MediaTypes.Image);
-                        mediaItem.SetValue(_mediaFileManager, _mediaUrlGenerators, _shortStringHelper, _contentTypeBaseServiceProvider, Constants.Conventions.Media.File, fileWithExtension, stream);
-                        _mediaService.Save(mediaItem);
-                        var media = _umbracoHelper.Media(mediaItem.Key);
-                        if (media == null)
-                        {
-                            return string.Empty;
-                        }
+//                        var mediaItem = _mediaService.CreateMedia(fileWithExtension, _articulateRootMediaFolder.Value, Constants.Conventions.MediaTypes.Image);
+//                        mediaItem.SetValue(_mediaFileManager, _mediaUrlGenerators, _shortStringHelper, _contentTypeBaseServiceProvider, Constants.Conventions.Media.File, fileWithExtension, stream);
+//                        _mediaService.Save(mediaItem);
+//                        var media = _umbracoHelper.Media(mediaItem.Key);
+//                        if (media == null)
+//                        {
+//                            return string.Empty;
+//                        }
 
-                        var result = $"![{media.Name}]({media.Url()})"; // update bodyText with media item URL
-                        if (string.IsNullOrEmpty(firstImage))
-                        {
-                            firstImage =  Udi.Create(Constants.UdiEntityType.Media, media.Key).ToString();
+//                        var result = $"![{media.Name}]({media.Url()})"; // update bodyText with media item URL
+//                        if (string.IsNullOrEmpty(firstImage))
+//                        {
+//                            firstImage =  Udi.Create(Constants.UdiEntityType.Media, media.Key).ToString();
 
-                            //in this case, we've extracted the image, we don't want it to be displayed
-                            // in the content too so don't return it.
-                            return string.Empty;
-                        }
+//                            //in this case, we've extracted the image, we don't want it to be displayed
+//                            // in the content too so don't return it.
+//                            return string.Empty;
+//                        }
 
-                        return result;
-                    }
-                    else
-                    {
-                        var rndId = Guid.NewGuid().ToString("N");
+//                        return result;
+//                    }
+//                    else
+//                    {
+//                        var rndId = Guid.NewGuid().ToString("N");
 
-                    using (var stream = new MemoryStream())
-                    {
-                        file.CopyTo(stream);
+//                    using (var stream = new MemoryStream())
+//                    {
+//                        file.CopyTo(stream);
 
-                            var fileUrl = "articulate/" + rndId + "/" + cleanFileName.TrimStart("\"").TrimEnd("\"");
-                            _mediaFileManager.FileSystem.AddFile(fileUrl, stream);
+//                            var fileUrl = "articulate/" + rndId + "/" + cleanFileName.TrimStart("\"").TrimEnd("\"");
+//                            _mediaFileManager.FileSystem.AddFile(fileUrl, stream);
 
-                            // UmbracoMediaPath default setting = ~/media
-                            // Resolved mediaRootPath = /media
-                            var mediaRootPath = _hostingEnvironment.ToAbsolute(_globalSettings.UmbracoMediaPath);
-                            var mediaFilePath = $"{mediaRootPath}/{fileUrl}";
-                            var result = $"![{mediaFilePath}]({mediaFilePath})";
-                            return result;
-                        }
-                    }
-                }
+//                            // UmbracoMediaPath default setting = ~/media
+//                            // Resolved mediaRootPath = /media
+//                            var mediaRootPath = _hostingEnvironment.ToAbsolute(_globalSettings.UmbracoMediaPath);
+//                            var mediaFilePath = $"{mediaRootPath}/{fileUrl}";
+//                            var result = $"![{mediaFilePath}]({mediaFilePath})";
+//                            return result;
+//                        }
+//                    }
+//                }
                 
-                return m.Value;
-            });
+//                return m.Value;
+//            });
 
-            return new ParseImageResponse { BodyText = bodyText, FirstImage = firstImage };
-        }
+//            return new ParseImageResponse { BodyText = bodyText, FirstImage = firstImage };
+//        }
 
-        private static bool CheckPermissions(IUser user, IUserService userService, string[] permissionsToCheck, IContent contentItem)
-        {
+//        private static bool CheckPermissions(IUser user, IUserService userService, string[] permissionsToCheck, IContent contentItem)
+//        {
 
-            if (permissionsToCheck == null || !permissionsToCheck.Any())
-            {
-                return true;
-            }
+//            if (permissionsToCheck == null || !permissionsToCheck.Any())
+//            {
+//                return true;
+//            }
 
-            var entityPermission = userService.GetPermissions(user, new[] { contentItem.Id }).FirstOrDefault();
+//            var entityPermission = userService.GetPermissions(user, new[] { contentItem.Id }).FirstOrDefault();
 
-            var flag = true;
-            foreach (var ch in permissionsToCheck)
-            {
-                if (entityPermission == null || !entityPermission.AssignedPermissions.Contains(ch))
-                {
-                    flag = false;
-                }
-            }
+//            var flag = true;
+//            foreach (var ch in permissionsToCheck)
+//            {
+//                if (entityPermission == null || !entityPermission.AssignedPermissions.Contains(ch))
+//                {
+//                    flag = false;
+//                }
+//            }
 
-            return flag;
-        }
-    }
-}
+//            return flag;
+//        }
+//    }
+//}
