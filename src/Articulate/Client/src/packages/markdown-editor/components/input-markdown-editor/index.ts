@@ -1,1 +1,1 @@
-export * from "./input-markdown.element.js";
+export * from './input-markdown.element.js';

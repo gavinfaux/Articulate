@@ -1,12 +1,12 @@
 import { UMB_AUTH_CONTEXT } from "@umbraco-cms/backoffice/auth";
-import type { UmbEntryPointOnInit } from "@umbraco-cms/backoffice/extension-api";
-import { client } from "../api/articulate/client.gen";
-import { manifest } from "../dashboards/manifests";
-import { manifests } from "../packages/markdown-editor/manifests";
+import type {
+  UmbEntryPointOnInit,
+  UmbEntryPointOnUnload,
+} from "@umbraco-cms/backoffice/extension-api";
+import { client } from "../api/client.gen";
 
-export const onInit: UmbEntryPointOnInit = (host, extensionRegistry) => {
-  extensionRegistry.register(manifest);
-  extensionRegistry.registerMany(manifests);
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const onInit: UmbEntryPointOnInit = (host, _extensionRegistry) => {
   host.consumeContext(UMB_AUTH_CONTEXT, (authContext) => {
     const config = authContext?.getOpenApiConfiguration();
 
@@ -17,3 +17,6 @@ export const onInit: UmbEntryPointOnInit = (host, extensionRegistry) => {
     });
   });
 };
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const onUnload: UmbEntryPointOnUnload = (_host, _extensionRegistry) => {};

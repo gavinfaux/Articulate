@@ -1,17 +1,17 @@
 import { UmbElementMixin } from "@umbraco-cms/backoffice/element-api";
-import { UmbChangeEvent } from "@umbraco-cms/backoffice/event";
 import { css, customElement, html, property, state } from "@umbraco-cms/backoffice/external/lit";
 import { UmbLitElement } from "@umbraco-cms/backoffice/lit-element";
-import type {
-  UmbPropertyEditorConfigCollection,
-  UmbPropertyEditorUiElement,
+import {
+  UmbPropertyValueChangeEvent,
+  type UmbPropertyEditorConfigCollection,
+  type UmbPropertyEditorUiElement,
 } from "@umbraco-cms/backoffice/property-editor";
 import { UmbTextStyles } from "@umbraco-cms/backoffice/style";
-import { Articulate } from "../api/articulate/sdk.gen";
-import { handleApiError } from "../utils/error-utils";
+import { Articulate } from "../api/sdk.gen";
+import { formatApiError } from "../utils/error-utils";
 
-@customElement("articulate-theme-picker-element")
-export default class ArticulateThemePickerElement
+@customElement("theme-picker-element")
+export default class ThemePickerElement
   extends UmbElementMixin(UmbLitElement)
   implements UmbPropertyEditorUiElement
 {
@@ -28,10 +28,14 @@ export default class ArticulateThemePickerElement
   private _themeData: Array<{ name: string; value: string }> = [];
 
   @state()
-  private _error = "";
+  private _error: string[] = [];
 
   constructor() {
     super();
+  }
+
+  async connectedCallback() {
+    super.connectedCallback();
     this._fetchThemes();
   }
 
@@ -47,18 +51,18 @@ export default class ArticulateThemePickerElement
   }
 
   private async _fetchThemes() {
-    this._error = "";
+    this._error = [];
 
-    const result = await Articulate.getUmbracoManagementApiV1ArticulateEditorsThemes();
+    const result = await Articulate.getArticulateEditorsThemesV1();
 
     if (!result.response.ok) {
-      this._error = await handleApiError(result.response, "Failed to load themes.");
+      this._error = formatApiError(result.error, "Failed to load themes.");
       return;
     }
 
     const data = result.data;
     if (!data) {
-      this._error = "No theme data returned from the server.";
+      this._error = ["No theme data returned from the server."];
       return;
     }
 
@@ -92,13 +96,13 @@ export default class ArticulateThemePickerElement
 
     if (this.value !== newValue) {
       this.value = newValue;
-      this.dispatchEvent(new UmbChangeEvent());
+      this.dispatchEvent(new UmbPropertyValueChangeEvent());
     }
   }
 
   override render() {
     if (this._error && this._error.length > 0) {
-      return html`<span class="text-danger">${this._error}</span>`;
+      return html`<span style="color: var(--uui-color-danger);">${this._error[0]}</span>`;
     }
 
     return html`
@@ -123,6 +127,6 @@ export default class ArticulateThemePickerElement
 
 declare global {
   interface HTMLElementTagNameMap {
-    "articulate-theme-picker-element": ArticulateThemePickerElement;
+    "theme-picker-element": ThemePickerElement;
   }
 }

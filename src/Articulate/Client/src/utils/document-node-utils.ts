@@ -6,7 +6,7 @@ import {
   type UmbDocumentItemModel,
 } from "@umbraco-cms/backoffice/document";
 import type { UmbModalManagerContext } from "@umbraco-cms/backoffice/modal";
-import { Articulate } from "../api/articulate/sdk.gen";
+import { Articulate } from "../api";
 
 import type {
   DocumentVariantResponseModel,
@@ -20,7 +20,7 @@ import { DocumentService } from "@umbraco-cms/backoffice/external/backend-api";
  * @throws {Error} If the API request fails, an error is thrown with details from the response.
  */
 export async function fetchArchiveDoctypeUdi(): Promise<string | null> {
-  const result = await Articulate.getUmbracoManagementApiV1ArticulateBlogArticulateGuid();
+  const result = await Articulate.getArticulateBlogArticulateGuidV1();
   if (result.response.ok && result.data) {
     return result.data;
   } else if (!result.data) {

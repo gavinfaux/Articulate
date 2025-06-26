@@ -19,7 +19,7 @@ const dashboards = [
   {
     path: "theme/copy",
     name: "Copy Theme",
-    icon: "icon-palette",
+    icon: "icon-color-bucket",
     description: "Copy Articulate themes for customization",
   },
 ];
@@ -28,11 +28,11 @@ const dashboards = [
  * A dashboard component that displays navigation options for Articulate features.
  * Provides a grid of cards for accessing different Articulate management sections.
  *
- * @element articulate-dashboard-options
+ * @element dashboard-options
  * @extends UmbLitElement
  */
-@customElement("articulate-dashboard-options")
-export default class ArticulateDashboardOptionsElement extends UmbLitElement {
+@customElement("dashboard-options")
+export default class DashboardOptionsElement extends UmbLitElement {
   @property({ type: String })
   routerPath = "";
 
@@ -110,6 +110,6 @@ export default class ArticulateDashboardOptionsElement extends UmbLitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    "articulate-dashboard-options": ArticulateDashboardOptionsElement;
+    "dashboard-options": DashboardOptionsElement;
   }
 }

@@ -1,22 +1,17 @@
 import { defineConfig } from "vite";
-import tsconfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig({
   build: {
     lib: {
-      entry: {
-        articulate: "src/entrypoints/entrypoint.ts",
-        "theme-picker.element": "src/components/theme-picker.element.ts",
-      },
+      entry: "src/bundle.manifests.ts",
       formats: ["es"],
-      fileName: (format, entryName) => `${entryName}.js`,
+      fileName: "articulate",
     },
     outDir: "../App_Plugins/Articulate/BackOffice/",
     emptyOutDir: true,
     sourcemap: true,
     rollupOptions: {
-      external: [/^@umbraco-cms/],
+      external: [/^@umbraco/],
     },
   },
-  plugins: [tsconfigPaths()],
 });

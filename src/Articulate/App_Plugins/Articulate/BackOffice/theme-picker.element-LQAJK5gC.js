@@ -1,17 +1,20 @@
 import { UmbElementMixin as u } from "@umbraco-cms/backoffice/element-api";
-import { UmbChangeEvent as c } from "@umbraco-cms/backoffice/event";
-import { html as m, css as _, property as p, state as l, customElement as d } from "@umbraco-cms/backoffice/external/lit";
-import { UmbLitElement as f } from "@umbraco-cms/backoffice/lit-element";
+import { html as m, css as c, property as p, state as h, customElement as _ } from "@umbraco-cms/backoffice/external/lit";
+import { UmbLitElement as d } from "@umbraco-cms/backoffice/lit-element";
+import { UmbPropertyValueChangeEvent as f } from "@umbraco-cms/backoffice/property-editor";
 import { UmbTextStyles as v } from "@umbraco-cms/backoffice/style";
-import { A as S, h as O } from "./error-utils-BqJ7wuVX.js";
-var b = Object.defineProperty, g = Object.getOwnPropertyDescriptor, i = (e, t, r, h) => {
-  for (var a = h > 1 ? void 0 : h ? g(t, r) : t, n = e.length - 1, o; n >= 0; n--)
-    (o = e[n]) && (a = (h ? o(t, r, a) : o(a)) || a);
-  return h && a && b(t, r, a), a;
+import { A as S, f as O } from "./error-utils-CM2ch-oG.js";
+var b = Object.defineProperty, y = Object.getOwnPropertyDescriptor, o = (e, t, r, i) => {
+  for (var a = i > 1 ? void 0 : i ? y(t, r) : t, l = e.length - 1, n; l >= 0; l--)
+    (n = e[l]) && (a = (i ? n(t, r, a) : n(a)) || a);
+  return i && a && b(t, r, a), a;
 };
-let s = class extends u(f) {
+let s = class extends u(d) {
   constructor() {
-    super(), this._themeSelectOptions = [], this._themeData = [], this._error = "", this._fetchThemes();
+    super(), this._themeSelectOptions = [], this._themeData = [], this._error = [];
+  }
+  async connectedCallback() {
+    super.connectedCallback(), this._fetchThemes();
   }
   updated(e) {
     super.updated(e);
@@ -19,15 +22,15 @@ let s = class extends u(f) {
     this._themeData.length > 0 && (t || r) && this._rebuildAndSetSelectOptions();
   }
   async _fetchThemes() {
-    this._error = "";
-    const e = await S.getUmbracoManagementApiV1ArticulateEditorsThemes();
+    this._error = [];
+    const e = await S.getArticulateEditorsThemesV1();
     if (!e.response.ok) {
-      this._error = await O(e.response, "Failed to load themes.");
+      this._error = O(e.error, "Failed to load themes.");
       return;
     }
     const t = e.data;
     if (!t) {
-      this._error = "No theme data returned from the server.";
+      this._error = ["No theme data returned from the server."];
       return;
     }
     this._themeData = t.map((r) => ({
@@ -49,10 +52,10 @@ let s = class extends u(f) {
   }
   _handleInput(e) {
     const t = e.target.value;
-    this.value !== t && (this.value = t, this.dispatchEvent(new c()));
+    this.value !== t && (this.value = t, this.dispatchEvent(new f()));
   }
   render() {
-    return this._error && this._error.length > 0 ? m`<span class="text-danger">${this._error}</span>` : m`
+    return this._error && this._error.length > 0 ? m`<span style="color: var(--uui-color-danger);">${this._error[0]}</span>` : m`
       <uui-select
         .options=${this._themeSelectOptions}
         .value=${this.value}
@@ -64,31 +67,31 @@ let s = class extends u(f) {
 };
 s.styles = [
   v,
-  _`
+  c`
       uui-select {
         width: 100%;
       }
     `
 ];
-i([
+o([
   p()
 ], s.prototype, "value", 2);
-i([
+o([
   p({ attribute: !1 })
 ], s.prototype, "config", 2);
-i([
-  l()
+o([
+  h()
 ], s.prototype, "_themeSelectOptions", 2);
-i([
-  l()
+o([
+  h()
 ], s.prototype, "_themeData", 2);
-i([
-  l()
+o([
+  h()
 ], s.prototype, "_error", 2);
-s = i([
-  d("articulate-theme-picker-element")
+s = o([
+  _("theme-picker-element")
 ], s);
 export {
   s as default
 };
-//# sourceMappingURL=theme-picker.element.js.map
+//# sourceMappingURL=theme-picker.element-LQAJK5gC.js.map

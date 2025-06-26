@@ -1,15 +1,14 @@
 import { css, customElement, html, state } from "@umbraco-cms/backoffice/external/lit";
 import { UmbLitElement } from "@umbraco-cms/backoffice/lit-element";
 import type { UmbRoute, UmbRouterSlotInitEvent } from "@umbraco-cms/backoffice/router";
-
 import { UmbTextStyles } from "@umbraco-cms/backoffice/style";
-import ArticulateBlogMlExporterElement from "../components/articulate-blogml-exporter.element.js";
-import ArticulateBlogMlImporterElement from "../components/articulate-blogml-importer.element.js";
-import ArticulateCopyThemeElement from "../components/articulate-copy-theme.element.js";
-import ArticulateDashboardOptionsElement from "../components/articulate-dashboard-options.element.js";
+import BlogMlExporterElement from "../components/blogml-exporter.element.js";
+import BlogMlImporterElement from "../components/blogml-importer.element.js";
+import CopyThemeElement from "../components/copy-theme.element.js";
+import DashboardOptionsElement from "../components/dashboard-options.element.js";
 
-@customElement("articulate-dashboard-root")
-export default class ArticulateDashboardRootElement extends UmbLitElement {
+@customElement("articulate-dashboard")
+export default class ArticulateDashboardElement extends UmbLitElement {
   @state() private _routerBasePath?: string;
   @state() private _routes: UmbRoute[];
 
@@ -18,33 +17,33 @@ export default class ArticulateDashboardRootElement extends UmbLitElement {
     this._routes = [
       {
         path: "blogml/import",
-        component: ArticulateBlogMlImporterElement,
+        component: BlogMlImporterElement,
         setup: (el) => {
-          if (this._routerBasePath && el instanceof ArticulateBlogMlImporterElement)
+          if (this._routerBasePath && el instanceof BlogMlImporterElement)
             el.routerPath = this._routerBasePath;
         },
       },
       {
         path: "blogml/export",
-        component: ArticulateBlogMlExporterElement,
+        component: BlogMlExporterElement,
         setup: (el) => {
-          if (this._routerBasePath && el instanceof ArticulateBlogMlExporterElement)
+          if (this._routerBasePath && el instanceof BlogMlExporterElement)
             el.routerPath = this._routerBasePath;
         },
       },
       {
         path: "theme/copy",
-        component: ArticulateCopyThemeElement,
+        component: CopyThemeElement,
         setup: (el) => {
-          if (this._routerBasePath && el instanceof ArticulateCopyThemeElement)
+          if (this._routerBasePath && el instanceof CopyThemeElement)
             el.routerPath = this._routerBasePath;
         },
       },
       {
         path: "",
-        component: ArticulateDashboardOptionsElement,
+        component: DashboardOptionsElement,
         setup: (el) => {
-          if (this._routerBasePath && el instanceof ArticulateDashboardOptionsElement)
+          if (this._routerBasePath && el instanceof DashboardOptionsElement)
             el.routerPath = this._routerBasePath;
         },
       },
@@ -141,6 +140,6 @@ export default class ArticulateDashboardRootElement extends UmbLitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    "articulate-dashboard-root": ArticulateDashboardRootElement;
+    "articulate-dashboard": ArticulateDashboardElement;
   }
 }

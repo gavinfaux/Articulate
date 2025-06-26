@@ -14,9 +14,16 @@ export async function showUmbracoNotification(
   contextHost: UmbLitElement,
   message: string,
   type: UmbNotificationColor,
+  stay: boolean = false,
 ): Promise<void> {
   const notificationContext = await contextHost.getContext(UMB_NOTIFICATION_CONTEXT);
-  notificationContext.peek(type, {
-    data: { message },
-  });
+  if (!stay) {
+    notificationContext.peek(type, {
+      data: { message },
+    });
+  } else {
+    notificationContext.stay(type, {
+      data: { message },
+    });
+  }
 }

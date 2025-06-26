@@ -1,16 +1,16 @@
 import { html as _, nothing as at, when as dt, unsafeHTML as lt, css as ct, property as k, query as mt, state as M, customElement as Y } from "@umbraco-cms/backoffice/external/lit";
 import { UmbLitElement as G } from "@umbraco-cms/backoffice/lit-element";
-import { UmbChangeEvent as X } from "@umbraco-cms/backoffice/event";
-import { UmbCodeEditorLoadedEvent as ht } from "@umbraco-cms/backoffice/code-editor";
-import { createExtensionApi as bt } from "@umbraco-cms/backoffice/extension-api";
-import { umbExtensionsRegistry as pt } from "@umbraco-cms/backoffice/extension-registry";
-import { marked as gt } from "@umbraco-cms/backoffice/external/marked";
+import { createExtensionApi as ht } from "@umbraco-cms/backoffice/extension-api";
+import { marked as bt } from "@umbraco-cms/backoffice/external/marked";
 import { monaco as d } from "@umbraco-cms/backoffice/external/monaco-editor";
-import { UmbMediaUrlRepository as ft, UMB_MEDIA_PICKER_MODAL as yt } from "@umbraco-cms/backoffice/media";
-import { UMB_MODAL_MANAGER_CONTEXT as Ct } from "@umbraco-cms/backoffice/modal";
-import { UmbTextStyles as vt } from "@umbraco-cms/backoffice/style";
-import { sanitizeHTML as _t } from "@umbraco-cms/backoffice/utils";
-import { UmbFormControlMixin as Et } from "@umbraco-cms/backoffice/validation";
+import { umbExtensionsRegistry as pt } from "@umbraco-cms/backoffice/extension-registry";
+import { UmbChangeEvent as X } from "@umbraco-cms/backoffice/event";
+import { UmbTextStyles as gt } from "@umbraco-cms/backoffice/style";
+import { UMB_MODAL_MANAGER_CONTEXT as ft } from "@umbraco-cms/backoffice/modal";
+import { UmbMediaUrlRepository as yt, UMB_MEDIA_PICKER_MODAL as Ct } from "@umbraco-cms/backoffice/media";
+import { UmbCodeEditorLoadedEvent as vt } from "@umbraco-cms/backoffice/code-editor";
+import { UmbFormControlMixin as _t } from "@umbraco-cms/backoffice/validation";
+import { sanitizeHTML as Et } from "@umbraco-cms/backoffice/utils";
 var At = Object.defineProperty, Lt = Object.getOwnPropertyDescriptor, J = (t) => {
   throw TypeError(t);
 }, L = (t, e, i, o) => {
@@ -18,9 +18,11 @@ var At = Object.defineProperty, Lt = Object.getOwnPropertyDescriptor, J = (t) =>
     (a = t[u]) && (s = (o ? a(e, i, s) : a(s)) || s);
   return o && s && At(e, i, s), s;
 }, S = (t, e, i) => e.has(t) || J("Cannot " + i), n = (t, e, i) => (S(t, e, "read from private field"), i ? i.call(t) : e.get(t)), x = (t, e, i) => e.has(t) ? J("Cannot add the same private member more than once") : e instanceof WeakSet ? e.add(t) : e.set(t, i), Z = (t, e, i, o) => (S(t, e, "write to private field"), e.set(t, i), i), y = (t, e, i) => (S(t, e, "access private method"), i), E, r, $, p, j, V, tt, et, it, ot, nt, rt;
-let C = class extends Et(G) {
+let C = class extends _t(
+  G
+) {
   constructor() {
-    super(...arguments), x(this, p), this.preview = !1, x(this, E, !1), x(this, r), this._actionExtensions = [], x(this, $, new ft(this));
+    super(...arguments), x(this, p), this.preview = !1, x(this, E, !1), x(this, r), this._actionExtensions = [], x(this, $, new yt(this));
   }
   getFormElement() {
     return this._codeEditor;
@@ -64,10 +66,7 @@ let C = class extends Et(G) {
       startColumn: o.startColumn - t.length,
       endColumn: o.endColumn + e.length
     });
-    s != null && s.startsWith(t) && s.endsWith(e) && s.length > t.length + e.length ? ((l = n(this, r)) == null || l.select({
-      ...o,
-      startColumn: o.startColumn + t.length
-    }), (h = (c = n(this, r)) == null ? void 0 : c.monacoEditor) == null || h.executeEdits("", [
+    s != null && s.startsWith(t) && s.endsWith(e) && s.length > t.length + e.length ? ((l = n(this, r)) == null || l.select({ ...o, startColumn: o.startColumn + t.length }), (h = (c = n(this, r)) == null ? void 0 : c.monacoEditor) == null || h.executeEdits("", [
       {
         range: {
           startColumn: o.startColumn - t.length,
@@ -161,22 +160,21 @@ let C = class extends Et(G) {
   }
   render() {
     return _`
-      ${y(this, p, nt).call(this)}
+            ${y(this, p, nt).call(this)}
 
-      <umb-code-editor
-        language="markdown"
-        .code=${this.value}
-        disable-line-numbers
-        disable-minimap
-        disable-folding
-        @input=${y(this, p, ot)}
-        @keypress=${y(this, p, it)}
-        @loaded=${y(this, p, j)}
-      >
-      </umb-code-editor>
+            <umb-code-editor
+                language="markdown"
+                .code=${this.value}
+                disable-line-numbers
+                disable-minimap
+                disable-folding
+                @input=${y(this, p, ot)}
+                @keypress=${y(this, p, it)}
+                @loaded=${y(this, p, j)}>
+            </umb-code-editor>
 
-      ${y(this, p, rt).call(this)}
-    `;
+            ${y(this, p, rt).call(this)}
+        `;
   }
 };
 E = /* @__PURE__ */ new WeakMap();
@@ -185,12 +183,12 @@ $ = /* @__PURE__ */ new WeakMap();
 p = /* @__PURE__ */ new WeakSet();
 j = function(t) {
   var e, i, o;
-  if (t.type === ht.TYPE)
+  if (t.type === vt.TYPE)
     try {
       Z(this, r, (e = this._codeEditor) == null ? void 0 : e.editor), (o = (i = n(this, r)) == null ? void 0 : i.monacoEditor) == null || o.updateOptions({ readOnly: n(this, E) }), this.observe(pt.byType("monacoMarkdownEditorAction"), (s) => {
         s.forEach(async (u) => {
           var c, h, m, b;
-          const a = await bt(this, u, [this]), l = {
+          const a = await ht(this, u, [this]), l = {
             id: u.alias ?? a.getUnique(),
             label: this.localize.string(((c = u.meta) == null ? void 0 : c.label) ?? a.getLabel()),
             icon: (h = u.meta) == null ? void 0 : h.icon,
@@ -293,7 +291,7 @@ et = async function() {
   if (!t) return;
   const e = ((u = n(this, r)) == null ? void 0 : u.getValueInRange(t)) || "enter image description here";
   this._focusEditor();
-  const o = (await this.getContext(Ct)).open(this, yt);
+  const o = (await this.getContext(ft)).open(this, Ct);
   o == null || o.onSubmit().then(async (a) => {
     var m, b, g, f;
     if (!a) return;
@@ -340,259 +338,246 @@ ot = function(t) {
 };
 nt = function() {
   return this.readonly ? at : _`
-      <div id="toolbar">
-        <div id="buttons">
-          <uui-button-group>
-            <uui-button
-              compact
-              look="default"
-              label="Heading"
-              title="Heading, &lt;Ctrl+Shift+1&gt;"
-              @click=${() => {
+            <div id="toolbar">
+                <div id="buttons">
+                    <uui-button-group>
+                        <uui-button
+                            compact
+                            look="default"
+                            label="Heading"
+                            title="Heading, &lt;Ctrl+Shift+1&gt;"
+                            @click=${() => {
     var t, e, i;
     return (i = (e = (t = n(this, r)) == null ? void 0 : t.monacoEditor) == null ? void 0 : e.getAction("h1")) == null ? void 0 : i.run();
-  }}
-            >
-              <umb-icon name="icon-heading-1"></umb-icon>
-            </uui-button>
-            <uui-button
-              compact
-              look="default"
-              label="Bold"
-              title="Bold, &lt;Ctrl+B&gt;"
-              @click=${() => {
+  }}>
+                            <umb-icon name="icon-heading-1"></umb-icon>
+                        </uui-button>
+                        <uui-button
+                            compact
+                            look="default"
+                            label="Bold"
+                            title="Bold, &lt;Ctrl+B&gt;"
+                            @click=${() => {
     var t, e, i;
     return (i = (e = (t = n(this, r)) == null ? void 0 : t.monacoEditor) == null ? void 0 : e.getAction("b")) == null ? void 0 : i.run();
-  }}
-            >
-              <umb-icon name="icon-bold"></umb-icon>
-            </uui-button>
-            <uui-button
-              compact
-              look="default"
-              label="Italic"
-              title="Italic, &lt;Ctrl+I&gt;"
-              @click=${() => {
+  }}>
+                            <umb-icon name="icon-bold"></umb-icon>
+                        </uui-button>
+                        <uui-button
+                            compact
+                            look="default"
+                            label="Italic"
+                            title="Italic, &lt;Ctrl+I&gt;"
+                            @click=${() => {
     var t, e, i;
     return (i = (e = (t = n(this, r)) == null ? void 0 : t.monacoEditor) == null ? void 0 : e.getAction("i")) == null ? void 0 : i.run();
-  }}
-            >
-              <umb-icon name="icon-italic"></umb-icon>
-            </uui-button>
-          </uui-button-group>
+  }}>
+                            <umb-icon name="icon-italic"></umb-icon>
+                        </uui-button>
+                    </uui-button-group>
 
-          <uui-button-group>
-            <uui-button
-              compact
-              look="default"
-              label="Blockquote"
-              title="Blockquote, &lt;Ctrl+Shift+.&gt;"
-              @click=${() => {
+                    <uui-button-group>
+                        <uui-button
+                            compact
+                            look="default"
+                            label="Blockquote"
+                            title="Blockquote, &lt;Ctrl+Shift+.&gt;"
+                            @click=${() => {
     var t, e, i;
     return (i = (e = (t = n(this, r)) == null ? void 0 : t.monacoEditor) == null ? void 0 : e.getAction("q")) == null ? void 0 : i.run();
-  }}
-            >
-              <uui-icon name="icon-blockquote"></uui-icon>
-            </uui-button>
-            <uui-button
-              compact
-              look="default"
-              label="Ordered List"
-              title="Ordered List, &lt;Ctrl+Shift+7&gt;"
-              @click=${() => {
+  }}>
+                            <uui-icon name="icon-blockquote"></uui-icon>
+                        </uui-button>
+                        <uui-button
+                            compact
+                            look="default"
+                            label="Ordered List"
+                            title="Ordered List, &lt;Ctrl+Shift+7&gt;"
+                            @click=${() => {
     var t, e, i;
     return (i = (e = (t = n(this, r)) == null ? void 0 : t.monacoEditor) == null ? void 0 : e.getAction("ol")) == null ? void 0 : i.run();
-  }}
-            >
-              <uui-icon name="icon-ordered-list"></uui-icon>
-            </uui-button>
-            <uui-button
-              compact
-              look="default"
-              label="Unordered List"
-              title="Unordered List, &lt;Ctrl+Shift+8&gt;"
-              @click=${() => {
+  }}>
+                            <uui-icon name="icon-ordered-list"></uui-icon>
+                        </uui-button>
+                        <uui-button
+                            compact
+                            look="default"
+                            label="Unordered List"
+                            title="Unordered List, &lt;Ctrl+Shift+8&gt;"
+                            @click=${() => {
     var t, e, i;
     return (i = (e = (t = n(this, r)) == null ? void 0 : t.monacoEditor) == null ? void 0 : e.getAction("ul")) == null ? void 0 : i.run();
-  }}
-            >
-              <uui-icon name="icon-bulleted-list"></uui-icon>
-            </uui-button>
-          </uui-button-group>
-          <uui-button-group>
-            <uui-button
-              compact
-              look="default"
-              label="Code"
-              title="Code, &lt;Ctrl+E&gt;"
-              @click=${() => {
+  }}>
+                            <uui-icon name="icon-bulleted-list"></uui-icon>
+                        </uui-button>
+                    </uui-button-group>
+                    <uui-button-group>
+                        <uui-button
+                            compact
+                            look="default"
+                            label="Code"
+                            title="Code, &lt;Ctrl+E&gt;"
+                            @click=${() => {
     var t, e, i;
     return (i = (e = (t = n(this, r)) == null ? void 0 : t.monacoEditor) == null ? void 0 : e.getAction("code")) == null ? void 0 : i.run();
-  }}
-            >
-              <uui-icon name="icon-code"></uui-icon>
-            </uui-button>
-            <uui-button
-              compact
-              look="default"
-              label="Horizontal Rule"
-              title="Horizontal Rule"
-              @click=${() => {
+  }}>
+                            <uui-icon name="icon-code"></uui-icon>
+                        </uui-button>
+                        <uui-button
+                            compact
+                            look="default"
+                            label="Horizontal Rule"
+                            title="Horizontal Rule"
+                            @click=${() => {
     var t, e, i;
     return (i = (e = (t = n(this, r)) == null ? void 0 : t.monacoEditor) == null ? void 0 : e.getAction("line")) == null ? void 0 : i.run();
-  }}
-            >
-              <uui-icon name="icon-horizontal-rule"></uui-icon>
-            </uui-button>
-            <uui-button
-              compact
-              look="default"
-              label="Image"
-              title="Image"
-              @click=${() => {
+  }}>
+                            <uui-icon name="icon-horizontal-rule"></uui-icon>
+                        </uui-button>
+                        <uui-button
+                            compact
+                            look="default"
+                            label="Image"
+                            title="Image"
+                            @click=${() => {
     var t, e, i;
     return (i = (e = (t = n(this, r)) == null ? void 0 : t.monacoEditor) == null ? void 0 : e.getAction("image")) == null ? void 0 : i.run();
-  }}
-            >
-              <uui-icon name="icon-picture"></uui-icon>
-            </uui-button>
-          </uui-button-group>
+  }}>
+                            <uui-icon name="icon-picture"></uui-icon>
+                        </uui-button>
+                    </uui-button-group>
 
-          <uui-button-group>
-            ${this._actionExtensions.map(
+                    <uui-button-group>
+                        ${this._actionExtensions.map(
     (t) => _`
-                <uui-button
-                  compact
-                  look="default"
-                  label=${this.localize.string(t.label)}
-                  title=${this.localize.string(t.label)}
-                  @click=${(e) => y(this, p, tt).call(this, e, t)}
-                >
-                  ${dt(
+                                <uui-button
+                                    compact
+                                    look="default"
+                                    label=${this.localize.string(t.label)}
+                                    title=${this.localize.string(t.label)}
+                                    @click=${(e) => y(this, p, tt).call(this, e, t)}>
+                                    ${dt(
       t.icon,
       () => _`<uui-icon name=${t.icon}></uui-icon>`,
       () => _`<span>${this.localize.string(t.label)}</span>`
     )}
-                </uui-button>
-              `
+                                </uui-button>
+                            `
   )}
-          </uui-button-group>
-        </div>
-        <div id="actions">
-          <uui-button-group>
-            <uui-button
-              compact
-              label="Press F1 for all actions"
-              title="Press F1 for all actions"
-              @click=${() => {
+                    </uui-button-group>
+                </div>
+                <div id="actions">
+                    <uui-button-group>
+                        <uui-button
+                            compact
+                            label="Press F1 for all actions"
+                            title="Press F1 for all actions"
+                            @click=${() => {
     var t, e;
     this._focusEditor(), (e = (t = n(this, r)) == null ? void 0 : t.monacoEditor) == null || e.trigger("", "editor.action.quickCommand", "");
-  }}
-            >
-              <uui-key>F1</uui-key>
-            </uui-button>
-          </uui-button-group>
-        </div>
-      </div>
-    `;
+  }}>
+                            <uui-key>F1</uui-key>
+                        </uui-button>
+                    </uui-button-group>
+                </div>
+            </div>
+        `;
 };
 rt = function() {
   if (!this.preview || !this.value) return;
-  const t = gt.parse(this.value), e = t ? _t(t) : "";
-  return _`<uui-scroll-container id="preview"
-      >${lt(e)}</uui-scroll-container
-    >`;
+  const t = bt.parse(this.value), e = t ? Et(t) : "";
+  return _`<uui-scroll-container id="preview">${lt(e)}</uui-scroll-container>`;
 };
 C.styles = [
-  vt,
+  gt,
   ct`
-      :host {
-        display: flex;
-        flex-direction: column;
-      }
+            :host {
+                display: flex;
+                flex-direction: column;
+            }
 
-      #toolbar {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+            #toolbar {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
 
-        border-radius: var(--uui-border-radius);
-        border: 1px solid var(--uui-color-border);
-        border-bottom: 0;
-        border-bottom-left-radius: 0;
-        border-bottom-right-radius: 0;
-        box-shadow:
-          0 2px 2px -2px rgba(34, 47, 62, 0.1),
-          0 8px 8px -4px rgba(34, 47, 62, 0.07);
+                border-radius: var(--uui-border-radius);
+                border: 1px solid var(--uui-color-border);
+                border-bottom: 0;
+                border-bottom-left-radius: 0;
+                border-bottom-right-radius: 0;
+                box-shadow:
+                    0 2px 2px -2px rgba(34, 47, 62, 0.1),
+                    0 8px 8px -4px rgba(34, 47, 62, 0.07);
 
-        background-color: var(--uui-color-surface-alt);
-        color: var(--color-text);
+                background-color: var(--uui-color-surface-alt);
+                color: var(--color-text);
 
-        position: sticky;
-        top: -25px;
-        left: 0px;
-        right: 0px;
-        padding: var(--uui-size-3);
-        z-index: 9999999;
+                position: sticky;
+                top: -25px;
+                left: 0px;
+                right: 0px;
+                padding: var(--uui-size-3);
+                z-index: 9999999;
 
-        uui-key {
-          text-transform: uppercase;
-        }
-      }
+                uui-key {
+                    text-transform: uppercase;
+                }
+            }
 
-      #buttons {
-        flex: 1;
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
+            #buttons {
+                flex: 1;
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
 
-        uui-button-group:not(:last-child)::after {
-          content: "";
-          background-color: var(--uui-color-border);
-          width: 1px;
-          place-self: center;
-          height: 22px;
-          margin: 0 var(--uui-size-3);
-        }
-      }
+                uui-button-group:not(:last-child)::after {
+                    content: '';
+                    background-color: var(--uui-color-border);
+                    width: 1px;
+                    place-self: center;
+                    height: 22px;
+                    margin: 0 var(--uui-size-3);
+                }
+            }
 
-      umb-code-editor {
-        height: 200px;
-        border-radius: var(--uui-border-radius);
-        border: 1px solid var(--uui-color-border);
-        border-top: 0;
-        border-top-left-radius: 0;
-        border-top-right-radius: 0;
-        padding-top: var(--uui-size-3);
-      }
+            umb-code-editor {
+                height: 200px;
+                border-radius: var(--uui-border-radius);
+                border: 1px solid var(--uui-color-border);
+                border-top: 0;
+                border-top-left-radius: 0;
+                border-top-right-radius: 0;
+                padding-top: var(--uui-size-3);
+            }
 
-      #preview {
-        max-height: 400px;
-      }
+            #preview {
+                max-height: 400px;
+            }
 
-      #preview blockquote {
-        border-left: 2px solid var(--uui-color-default-emphasis);
-        margin-inline: 0;
-        padding-inline: var(--uui-size-3);
-      }
+            #preview blockquote {
+                border-left: 2px solid var(--uui-color-default-emphasis);
+                margin-inline: 0;
+                padding-inline: var(--uui-size-3);
+            }
 
-      #preview img {
-        max-width: 100%;
-      }
+            #preview img {
+                max-width: 100%;
+            }
 
-      #preview hr {
-        border: none;
-        border-bottom: 1px solid var(--uui-palette-cocoa-black);
-      }
+            #preview hr {
+                border: none;
+                border-bottom: 1px solid var(--uui-palette-cocoa-black);
+            }
 
-      #preview p > code,
-      #preview pre {
-        border: 1px solid var(--uui-color-divider-emphasis);
-        border-radius: var(--uui-border-radius);
-        padding: 0 var(--uui-size-1);
-        background-color: var(--uui-color-background);
-      }
-    `
+            #preview p > code,
+            #preview pre {
+                border: 1px solid var(--uui-color-divider-emphasis);
+                border-radius: var(--uui-border-radius);
+                padding: 0 var(--uui-size-1);
+                background-color: var(--uui-color-background);
+            }
+        `
 ];
 L([
   k({ type: Boolean })
@@ -628,14 +613,13 @@ let A = class extends G {
   }
   render() {
     return _`
-      <umb-input-markdown
-        .value=${this.value}
-        .overlaySize=${this._overlaySize}
-        ?preview=${this._preview}
-        @change=${Mt(this, N, ut)}
-        ?readonly=${this.readonly}
-      ></umb-input-markdown>
-    `;
+			<umb-input-markdown
+				.value=${this.value}
+				.overlaySize=${this._overlaySize}
+				?preview=${this._preview}
+				@change=${Mt(this, N, ut)}
+				?readonly=${this.readonly}></umb-input-markdown>
+		`;
   }
 };
 N = /* @__PURE__ */ new WeakSet();
@@ -661,4 +645,4 @@ export {
   A as UmbPropertyEditorUIArticulateMarkdownEditorElement,
   A as element
 };
-//# sourceMappingURL=property-editor-ui-markdown-editor.element-ByRKICRp.js.map
+//# sourceMappingURL=property-editor-ui-markdown-editor.element-DSAJGhWL.js.map

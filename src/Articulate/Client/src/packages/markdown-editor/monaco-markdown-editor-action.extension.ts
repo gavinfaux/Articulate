@@ -1,17 +1,17 @@
-import type { ManifestApi } from "@umbraco-cms/backoffice/extension-api";
+import type { ManifestApi } from '@umbraco-cms/backoffice/extension-api';
 
 export interface ManifestMonacoMarkdownEditorAction extends ManifestApi<any> {
-  type: "monacoMarkdownEditorAction";
-  meta?: MetaMonacoMarkdownEditorAction;
+	type: 'monacoMarkdownEditorAction';
+	meta?: MetaMonacoMarkdownEditorAction;
 }
 
 export type MetaMonacoMarkdownEditorAction = {
-  icon?: string | null;
-  label?: string | null;
+	icon?: string | null;
+	label?: string | null;
 };
 
 declare global {
-  interface UmbExtensionManifestMap {
-    umbMonacoMarkdownEditorAction: ManifestMonacoMarkdownEditorAction;
-  }
+	interface UmbExtensionManifestMap {
+		umbMonacoMarkdownEditorAction: ManifestMonacoMarkdownEditorAction;
+	}
 }

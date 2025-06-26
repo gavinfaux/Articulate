@@ -9,7 +9,7 @@ const swaggerUrl = process.argv[2];
 if (swaggerUrl === undefined) {
   console.error(chalk.red(`ERROR: Missing URL to OpenAPI spec`));
   console.error(`Please provide the URL to the OpenAPI spec as the first argument found in ${chalk.yellow('package.json')}`);
-  console.error(`Example: node generate-openapi.js ${chalk.yellow('https://localhost:44366/umbraco/swagger/articulate-api/swagger.json')}`);
+  console.error(`Example: node generate-openapi.js ${chalk.yellow('https://localhost:44366/umbraco/swagger/articulate/swagger.json')}`);
   process.exit();
 }
 
@@ -25,6 +25,7 @@ fetch(swaggerUrl).then(async (response) => {
     console.error(chalk.red(`ERROR: OpenAPI spec returned with a non OK (200) response: ${response.status} ${response.statusText}`));
     console.error(`The URL to your Umbraco instance may be wrong or the instance is not running`);
     console.error(`Please verify or change the URL in the ${chalk.yellow('package.json')} for the script ${chalk.yellow('generate-openapi')}`);
+    console.error(`Or review back office logs, ${chalk.yellow('Swagger')} may not be able to generate a valid schema due to ${chalk.yellow('route conflicts or duplicate API attributes')}; (e.g. multiple GET methods for the same route, or decorating methods with '[ProducesResponseType(StatusCodes.Status401Unauthorized)]' which Swagger already does).`);
     return;
   }
 
@@ -33,7 +34,11 @@ fetch(swaggerUrl).then(async (response) => {
 
   await createClient({
     input: swaggerUrl,
-    output: 'src/api/articulate',
+    output: {
+      format: 'prettier',
+      lint: 'eslint',
+      path: './src/api',
+    },
     plugins: [
       ...defaultPlugins,
       '@hey-api/client-fetch',

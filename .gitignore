@@ -486,12 +486,11 @@ umbraco-package-schema.json
 package-lock.json
 
 # Articulate specific files
-/src/Articulate.Tests.Website/umbraco
 /src/Articulate.Tests.Website/App_Plugins/Articulate
-/src/Articulate.Tests.Website/wwwroot/App_Plugins/Articulate
-/src/Articulate.Tests.Website/wwwroot/media
-/src/Articulate/wwwroot/App_Plugins/Articulate
 /src/Articulate.Tests.Website/Articulate/Temp
+/src/Articulate.Tests.Website/umbraco
+/src/Articulate.Tests.Website/Views/ArticulateThemes
+/src/Articulate.Tests.Website/wwwroot/media
 
 build
 !build/build.ps1

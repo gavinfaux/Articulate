@@ -6,6 +6,7 @@ scripts/
 src/api/
 docs/
 .vscode/
+src/packages/markdown-editor/
 
 *.min.js
 *.bundle.js

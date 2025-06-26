@@ -1,51 +1,40 @@
-import {
-  css,
-  customElement,
-  html,
-  nothing,
-  property,
-  state,
-  TemplateResult,
-} from "@umbraco-cms/backoffice/external/lit";
+import { css, customElement, html, property, state } from "@umbraco-cms/backoffice/external/lit";
 import { UUIButtonState } from "@umbraco-cms/backoffice/external/uui";
 import { UmbLitElement } from "@umbraco-cms/backoffice/lit-element";
 import { UMB_MODAL_MANAGER_CONTEXT, UmbModalManagerContext } from "@umbraco-cms/backoffice/modal";
 import { UmbTextStyles } from "@umbraco-cms/backoffice/style";
-import { umbBindToValidation, UmbValidationContext } from "@umbraco-cms/backoffice/validation";
-import { Articulate } from "../api/articulate/sdk.gen";
-import type { ExportBlogMlModel } from "../api/articulate/types.gen";
+import { Articulate } from "../api/sdk.gen";
+import type { ExportBlogMlModel } from "../api/types.gen";
 import {
   fetchArchiveDoctypeUdi,
   fetchNodeByUdi,
   openNodePicker,
 } from "../utils/document-node-utils";
-import { handleApiError } from "../utils/error-utils";
+import { formatApiError } from "../utils/error-utils";
+import { formStyles } from "../utils/form-styles";
 import { showUmbracoNotification } from "../utils/notification-utils";
-import { renderHeaderActions } from "../utils/template-utils";
-import { formStyles } from "./form-styles";
+import { renderErrorMessage, renderHeaderActions } from "../utils/template-utils";
 
 /**
  * A LitElement-based component for exporting blog content in BlogML format.
  * Provides a form to select a blog node and export its content.
  *
- * @element articulate-blogml-exporter
+ * @element blogml-exporter
  * @extends UmbLitElement
  */
-@customElement("articulate-blogml-exporter")
-export default class ArticulateBlogMlExporterElement extends UmbLitElement {
+@customElement("blogml-exporter")
+export default class BlogMlExporterElement extends UmbLitElement {
   @property({ type: String })
   routerPath?: string;
 
   @state() private _formState: UUIButtonState = undefined;
-  @state() private _formError = "";
+  @state() private _formError: string[] = [];
 
-  @state() private _articulateNodeId: string | null = null;
+  @state() private _articulateNodeId: string = "";
   @state() private _selectedBlogNodeName = "";
 
   private _modalManagerContext?: UmbModalManagerContext;
   private _archiveDoctypeUdi: string | null = null;
-
-  #validation = new UmbValidationContext(this);
 
   /**
    * Creates an instance of ArticulateBlogMlExporterElement.
@@ -67,7 +56,7 @@ export default class ArticulateBlogMlExporterElement extends UmbLitElement {
     this._archiveDoctypeUdi = await fetchArchiveDoctypeUdi();
     if (this._archiveDoctypeUdi === null) {
       this._formState = "failed";
-      this._formError = "Failed to retrieve Articulate Archive document type.";
+      this._formError = ["Failed to retrieve Articulate Archive document type."];
       return;
     }
   }
@@ -82,11 +71,12 @@ export default class ArticulateBlogMlExporterElement extends UmbLitElement {
     if (!this._archiveDoctypeUdi) {
       return;
     }
+    this._formError = [];
     const udi = await openNodePicker(this._modalManagerContext!, this._archiveDoctypeUdi, this);
     if (udi) {
       const variant = await fetchNodeByUdi(udi);
       if (!variant) {
-        this._formError = "Selected node not found.";
+        this._formError = ["Selected node not found."];
         return;
       }
       this._articulateNodeId = udi;
@@ -110,6 +100,10 @@ export default class ArticulateBlogMlExporterElement extends UmbLitElement {
     return value instanceof Blob;
   };
 
+  #clearError() {
+    this._formError = [];
+  }
+
   /**
    * Handles the form submission for exporting blog content.
    * Validates the form and initiates the export process.
@@ -118,32 +112,30 @@ export default class ArticulateBlogMlExporterElement extends UmbLitElement {
    */
   #handleSubmit = async (e: SubmitEvent) => {
     e.preventDefault();
-    const form = e.target as HTMLFormElement;
-    if (!form) return;
-
-    try {
-      await this.#validation.validate();
-    } catch {
-      this._formError = "Please select a blog node.";
+    this._formState = "waiting";
+    this._formError = [];
+    if (!this._articulateNodeId) {
+      this._formError = ["Please select a blog node before exporting."];
+      this._formState = "failed";
       return;
     }
 
+    const form = e.target as HTMLFormElement;
+    if (!form) return;
     const formData = new FormData(form);
     const embedImages = formData.get("embedImages") === "on";
 
     const payload: ExportBlogMlModel = {
-      articulateNodeId: this._articulateNodeId!,
+      articulateNodeId: this._articulateNodeId,
       exportImagesAsBase64: embedImages,
     };
-    this._formState = "waiting";
-    this._formError = "";
 
-    const result = await Articulate.postUmbracoManagementApiV1ArticulateBlogExport({
+    const result = await Articulate.postArticulateBlogExportV1({
       body: payload,
     });
 
-    if (!result.response.ok) {
-      this._formError = await handleApiError(result.response, "Failed to export blog content.");
+    if (!result.response.ok || !result.data) {
+      this._formError = formatApiError(result.error, "Failed to export blog content.");
       this._formState = "failed";
       return;
     }
@@ -151,7 +143,7 @@ export default class ArticulateBlogMlExporterElement extends UmbLitElement {
     const blob = result.data;
     if (!this.#isBlob(blob)) {
       this._formState = "failed";
-      this._formError = "Failed to receive a valid file from the server.";
+      this._formError = ["Failed to receive a valid file from the server."];
       return;
     }
     const contentDisposition = result.response.headers.get("content-disposition");
@@ -164,9 +156,9 @@ export default class ArticulateBlogMlExporterElement extends UmbLitElement {
     }
     this.#downloadFile(blob, fileName);
     this._formState = "success";
-    await showUmbracoNotification(this, "BlogML exported successfully!", "positive");
+    await showUmbracoNotification(this, "BlogML exported successfully!", "positive", true);
     form.reset();
-    this._articulateNodeId = null;
+    this._articulateNodeId = "";
     this._selectedBlogNodeName = "";
   };
 
@@ -174,61 +166,58 @@ export default class ArticulateBlogMlExporterElement extends UmbLitElement {
     return html`
       <uui-box headline="BlogML Exporter">
         ${renderHeaderActions(this.routerPath)}
-        <uui-form-validation-message>
-          <uui-form>
-            <form id="blogMlExportForm" @submit=${this.#handleSubmit}>
-              <uui-form-layout-item>
-                <div class="node-picker-container">
-                  <uui-label for="articulateNodeId" slot="label" required
-                    >Articulate blog node</uui-label
-                  >
-                  <uui-input
-                    id="articulateNodeId"
-                    name="articulateNodeId"
-                    placeholder="No node selected"
-                    .value=${this._selectedBlogNodeName}
-                    ${umbBindToValidation(this, "$.articulateNodeId", this._articulateNodeId || "")}
-                    readonly
-                    required
-                    required-message="You must select a blog node"
-                    style="flex-grow: 1;"
-                  ></uui-input>
-                  <uui-button
-                    look="outline"
-                    label=${this._articulateNodeId ? "Change" : "Choose"}
-                    @click=${this._openNodePicker}
-                  ></uui-button>
-                </div>
-                <div slot="description">Choose the Articulate blog node to export from</div>
-              </uui-form-layout-item>
-              <uui-form-layout-item>
-                <uui-label slot="label" for="embedImages">Embed images?</uui-label>
-                <uui-toggle id="embedImages" name="embedImages"></uui-toggle>
-                <div slot="description">
-                  Check if you want to embed images as base64 data in the output file. Useful if
-                  your site isn't going to be HTTP accessible to the site you will be importing on.
-                </div>
-              </uui-form-layout-item>
-              <uui-form-layout-item>${this.#renderErrorMessage()}</uui-form-layout-item>
-              <uui-button-group>
-                <uui-button
-                  type="submit"
-                  look="primary"
-                  .state=${this._formState}
-                  ?disabled=${this._formState === "waiting"}
-                  >Submit</uui-button
+        <uui-form>
+          <form id="blogMlExportForm" @submit=${this.#handleSubmit} @input=${this.#clearError}>
+            <uui-form-layout-item>
+              <div class="node-picker-container">
+                <uui-label for="articulateNodeId" slot="label" required
+                  >Articulate blog node</uui-label
                 >
-              </uui-button-group>
-            </form>
-          </uui-form>
-        </uui-form-validation-message>
+                <uui-input
+                  id="articulateNodeId"
+                  name="articulateNodeId"
+                  placeholder="No node selected"
+                  .value=${this._selectedBlogNodeName}
+                  readonly
+                  required
+                  required-message="You must select a blog node"
+                  style="flex-grow: 1;"
+                ></uui-input>
+                <uui-button
+                  look="outline"
+                  label=${this._articulateNodeId !== "" ? "Change" : "Choose"}
+                  @click=${this._openNodePicker}
+                  ?disabled=${this._formState === "waiting"}
+                ></uui-button>
+              </div>
+              <div slot="description">Choose the Articulate blog node to export from</div>
+            </uui-form-layout-item>
+            <uui-form-layout-item>
+              <uui-label slot="label" for="embedImages">Embed images?</uui-label>
+              <uui-toggle
+                id="embedImages"
+                name="embedImages"
+                ?disabled=${this._formState === "waiting"}
+              ></uui-toggle>
+              <div slot="description">
+                Check if you want to embed images as base64 data in the output file. Useful if your
+                site isn't going to be HTTP accessible to the site you will be importing on.
+              </div>
+            </uui-form-layout-item>
+            <uui-button-group>
+              <uui-button
+                type="submit"
+                look="primary"
+                .state=${this._formState}
+                ?disabled=${this._formState === "waiting"}
+                >Submit</uui-button
+              >
+            </uui-button-group>
+          </form>
+        </uui-form>
+        ${renderErrorMessage(this._formError)}
       </uui-box>
     `;
-  }
-
-  #renderErrorMessage(): TemplateResult | typeof nothing {
-    if (!this._formError || this._formState !== "failed") return nothing;
-    return html`<p class="text-danger">${this._formError}</p>`;
   }
 
   static override readonly styles = [
@@ -240,15 +229,12 @@ export default class ArticulateBlogMlExporterElement extends UmbLitElement {
         align-items: center;
         gap: var(--uui-size-space-3);
       }
-      .text-danger {
-        color: var(--uui-color-danger);
-      }
     `,
   ];
 }
 
 declare global {
   interface HTMLElementTagNameMap {
-    "articulate-blogml-exporter": ArticulateBlogMlExporterElement;
+    "blogml-exporter": BlogMlExporterElement;
   }
 }
