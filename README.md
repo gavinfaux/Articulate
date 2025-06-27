@@ -7,6 +7,71 @@
 ---
 _❤️ If you use and like Articulate please consider [becoming a GitHub Sponsor](https://github.com/sponsors/Shazwazza/) ❤️_
 
+## Installation
+
+Articulate uses the [Smidge](https://github.com/Shazwazza/Smidge) library for client-side asset bundling. To enable this, you need to configure Smidge in your Umbraco application.
+
+Articulate will not boot unless you have configured the application to work with Smidge as follows.
+
+  1. Configure Smidge in appsettings.json
+
+Add a "smidge" configuration section to your appsettings.json file. Here is a default configuration:
+
+```json
+{
+  "ConnectionStrings": { ... },
+  "Umbraco": { ... },
+  "smidge": {
+    "dataFolder": "Smidge",
+    "version": "1"
+  }
+}
+```
+
+  2. Register and Use Smidge in Program.cs
+
+In your Program.cs file, you need to add two lines: one to register Smidge's services and one to add its middleware to the request pipeline.
+
+```csharp
+// Program.cs
+
+var builder = WebApplication.CreateBuilder(args);
+
+builder.CreateUmbracoBuilder()
+    .AddBackOffice()
+    .AddWebsite()
+    .AddComposers()
+    .Build();
+
+// ... other services ...
+
+// 1. Add this line to register Smidge's services
+builder.Services.AddSmidge(builder.Configuration.GetSection("smidge"));
+
+// ...
+
+var app = builder.Build();
+
+await app.BootUmbracoAsync();
+
+app.UseUmbraco()
+    .WithMiddleware(u =>
+    {
+        u.UseBackOffice();
+        u.UseWebsite();
+    })
+    .WithEndpoints(u =>
+    {
+        u.UseBackOfficeEndpoints();
+        u.UseWebsiteEndpoints();
+    });
+
+// 2. Add this line to add the Smidge middleware to the pipeline
+app.UseSmidge();
+
+app.Run();
+```
+
 ## Features
 
 Supporting all the features you'd want in a blogging platform
@@ -27,6 +92,7 @@ Supporting all the features you'd want in a blogging platform
 ## Minimum requirements
 
 Articulate version 5+ is only compatible with Umbraco 10.1.0+
+Articulate version 6+ is only compatible with Umbraco 15.4.3+ and 16+
 
 ## [Documentation](https://github.com/Shazwazza/Articulate/wiki)
 
