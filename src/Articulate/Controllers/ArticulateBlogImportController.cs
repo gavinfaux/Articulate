@@ -12,8 +12,9 @@ using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Api.Common.Attributes;
 using Umbraco.Cms.Api.Management.Controllers;
 using Umbraco.Cms.Api.Management.Routing;
+using Umbraco.Cms.Core.Models.PublishedContent;
+using Umbraco.Cms.Core.PublishedCache;
 using Umbraco.Cms.Core.Security;
-using Umbraco.Cms.Core.Services;
 using Umbraco.Cms.Web.Common.Authorization;
 using Umbraco.Extensions;
 
@@ -40,7 +41,7 @@ namespace Articulate.Controllers
         ArticulateTempFileSystem articulateTempFileSystem,
         LinkGenerator linkGenerator,
         ILogger<ArticulateBlogImportController> logger,
-        IContentTypeService contentTypeService)
+        IPublishedContentTypeCache publishedContentTypeCache)
         : ManagementApiControllerBase
     {
         /// <summary>
@@ -321,7 +322,7 @@ namespace Articulate.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public IActionResult ArticulateContentTypeGuid()
         {
-            var contentType = contentTypeService.Get(ArticulateConstants.ArticulateContentTypeAlias);
+            var contentType = publishedContentTypeCache.Get(PublishedItemType.Content, ArticulateConstants.ArticulateContentTypeAlias);
             if (contentType == null)
             {
                 var message = $"Content type '{ArticulateConstants.ArticulateContentTypeAlias}' not found.";
