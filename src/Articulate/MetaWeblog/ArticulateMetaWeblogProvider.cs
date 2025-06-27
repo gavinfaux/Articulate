@@ -5,10 +5,8 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Articulate.Models;
-using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Umbraco.Cms.Core;
-using Umbraco.Cms.Core.Configuration.Models;
 using Umbraco.Cms.Core.IO;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Models.Membership;
@@ -80,9 +78,9 @@ namespace Articulate.MetaWeblog
 
         }
 
-        public Task<BlogInfo[]> GetUsersBlogsAsync(string key, string username, string password)
+        public async Task<BlogInfo[]> GetUsersBlogsAsync(string key, string username, string password)
         {
-            ValidateUser(username, password);
+            await ValidateUser(username, password).ConfigureAwait(false);
 
             var node = BlogRoot();
             var blogs = new BlogInfo[]
@@ -95,12 +93,12 @@ namespace Articulate.MetaWeblog
                 }
             };
 
-            return Task.FromResult(blogs);
+            return blogs;
         }
 
-        public Task<CategoryInfo[]> GetCategoriesAsync(string blogid, string username, string password)
+        public async Task<CategoryInfo[]> GetCategoriesAsync(string blogid, string username, string password)
         {
-            ValidateUser(username, password);
+            await ValidateUser(username, password).ConfigureAwait(false);
 
             // TODO: These would be across all Articulate Blog root nodes :S
             var tags = _tagService.GetAllTags("ArticulateCategories")
@@ -112,12 +110,12 @@ namespace Articulate.MetaWeblog
                     // TODO HTML & RSS URL ? (Wasnt used before)
                 }).ToArray();
 
-            return Task.FromResult(tags);
+            return tags;
         }
 
-        public Task<WilderMinds.MetaWeblog.Tag[]> GetTagsAsync(string blogid, string username, string password)
+        public async Task<WilderMinds.MetaWeblog.Tag[]> GetTagsAsync(string blogid, string username, string password)
         {
-            ValidateUser(username, password);
+             await ValidateUser(username, password).ConfigureAwait(false);
 
             // TODO: These would be across all Articulate Blog root nodes :S
             var tags = _tagService.GetAllTags("ArticulateTags")
@@ -127,12 +125,12 @@ namespace Articulate.MetaWeblog
                 })
                 .ToArray();
 
-            return Task.FromResult(tags);
+            return tags;
         }
 
-        public Task<Post[]> GetRecentPostsAsync(string blogid, string username, string password, int numberOfPosts)
+        public async Task<Post[]> GetRecentPostsAsync(string blogid, string username, string password, int numberOfPosts)
         {
-            ValidateUser(username, password);
+             await ValidateUser(username, password).ConfigureAwait(false);
 
             var node = BlogRoot().ChildrenOfType(ArticulateConstants.ArticulateArchiveContentTypeAlias).FirstOrDefault();
             if (node == null)
@@ -145,12 +143,12 @@ namespace Articulate.MetaWeblog
                     .Select(FromContent)
                     .ToArray();
 
-            return Task.FromResult(recent);
+            return recent;
         }
 
-        public Task<string> AddPostAsync(string blogid, string username, string password, Post post, bool publish)
+        public async Task<string> AddPostAsync(string blogid, string username, string password, Post post, bool publish)
         {
-            var user = ValidateUser(username, password).Result;
+            var user = await ValidateUser(username, password).ConfigureAwait(false);
 
             var root = BlogRoot();
 
@@ -177,36 +175,36 @@ namespace Articulate.MetaWeblog
 
             AddOrUpdateContent(content, contentType, post, user, publish, extractFirstImageAsProperty);
 
-            return Task.FromResult(content.Id.ToString(CultureInfo.InvariantCulture));
+            return content.Id.ToString(CultureInfo.InvariantCulture);
 
         }
 
-        public Task<bool> DeletePostAsync(string key, string postid, string username, string password, bool publish)
+        public async Task<bool> DeletePostAsync(string key, string postid, string username, string password, bool publish)
         {
-            var user = ValidateUser(username, password);
+            var user = await ValidateUser(username, password).ConfigureAwait(false);
             var userId = user.Id;
 
             var asInt = postid.TryConvertTo<int>();
             if (!asInt)
             {
-                return Task.FromResult(false);
+                return false;
             }
 
             //first see if it's published
             var content = _contentService.GetById(asInt.Result);
             if (content == null)
             {
-                return Task.FromResult(false);
+                return false;
             }
 
             // Put in recylce bin - rather than unpublish
             _contentService.MoveToRecycleBin(content, userId);
-            return Task.FromResult(true);
+            return true;
         }
 
-        public Task<Post> GetPostAsync(string postid, string username, string password)
+        public async Task<Post> GetPostAsync(string postid, string username, string password)
         {
-            ValidateUser(username, password);
+            await ValidateUser(username, password).ConfigureAwait(false);
 
             var asInt = postid.TryConvertTo<int>();
             if (!asInt)
@@ -219,7 +217,7 @@ namespace Articulate.MetaWeblog
             if (post != null)
             {
                 var fromPost = FromPost(new PostModel(post, _publishedValueFallback, _variationContextAccessor));
-                return Task.FromResult(fromPost);
+                return fromPost;
             }
 
             var content = _contentService.GetById(asInt.Result);
@@ -229,12 +227,12 @@ namespace Articulate.MetaWeblog
             }
 
             var fromContent = FromContent(content);
-            return Task.FromResult(fromContent);
+            return fromContent;
         }
 
-        public Task<MediaObjectInfo> NewMediaObjectAsync(string blogid, string username, string password, MediaObject mediaObject)
+        public async Task<MediaObjectInfo> NewMediaObjectAsync(string blogid, string username, string password, MediaObject mediaObject)
         {
-            ValidateUser(username, password);
+            await ValidateUser(username, password).ConfigureAwait(false);
 
             var bytes = Convert.FromBase64String(mediaObject.bits);
 
@@ -250,13 +248,13 @@ namespace Articulate.MetaWeblog
                     url = absUrl
                 };
 
-                return Task.FromResult(result);
+                return result;
             }
         }
 
         public async Task<bool> EditPostAsync(string postid, string username, string password, Post post, bool publish)
         {
-            var user = await ValidateUser(username, password);
+            var user = await ValidateUser(username, password).ConfigureAwait(false);
 
             var asInt = postid.TryConvertTo<int>();
             if (!asInt)
@@ -487,7 +485,7 @@ namespace Articulate.MetaWeblog
 
         private async Task<IUser> ValidateUser(string username, string password)
         {
-            if (await _backOfficeUserManager.ValidateCredentialsAsync(username, password) == false)
+            if (await _backOfficeUserManager.ValidateCredentialsAsync(username, password).ConfigureAwait(false) == false)
             {
                 // Throw some error if not valid credentials - so we exit out early of stuff
                 throw new InvalidOperationException("Credentials issue");
