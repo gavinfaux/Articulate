@@ -213,7 +213,7 @@ namespace Articulate.ImportExport
                 authorsNode = _contentService.CreateWithInvariantOrDefaultCultureName(ArticulateConstants.AuthorsDefaultName, rootNode, authorsType, _localizationService);
 
                 _contentService.Save(authorsNode, userId: userId);
-             var x=   _contentService.Publish(authorsNode, ["*"], userId: userId);
+                _contentService.Publish(authorsNode, ["*"], userId: userId);
             }
 
             // get the authors nodes for this authors container
@@ -241,7 +241,7 @@ namespace Articulate.ImportExport
                         authorNode = _contentService.CreateWithInvariantOrDefaultCultureName(found.Name, authorsNode, authorType, _localizationService);
 
                         _contentService.Save(authorNode, userId: userId);
-                  var x=      _contentService.Publish(authorNode, ["*"], userId: userId);
+                        _contentService.Publish(authorNode, ["*"], userId: userId);
                     }
 
                     result.Add(author.Id, authorNode.Name);
@@ -258,7 +258,7 @@ namespace Articulate.ImportExport
                         authorNode = _contentService.CreateWithInvariantOrDefaultCultureName(author.Title.Content, authorsNode, authorType, _localizationService);
 
                         _contentService.Save(authorNode, userId: userId);
-                  var x=      _contentService.Publish(authorNode, ["*"], userId: userId);
+                        _contentService.Publish(authorNode, ["*"], userId: userId);
                     }
 
                     result.Add(author.Id, authorNode.Name);
@@ -417,7 +417,7 @@ namespace Articulate.ImportExport
                 if (publishAll)
                 {
                     _contentService.Save(postNode, userId: userId);
-                var x=    _contentService.Publish(postNode, ["*"], userId);
+                    _contentService.Publish(postNode, ["*"], userId);
                 }
                 else
                 {
