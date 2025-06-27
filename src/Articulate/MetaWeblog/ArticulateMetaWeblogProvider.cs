@@ -150,7 +150,7 @@ namespace Articulate.MetaWeblog
 
         public Task<string> AddPostAsync(string blogid, string username, string password, Post post, bool publish)
         {
-            var user = ValidateUser(username, password);
+            var user = ValidateUser(username, password).Result;
 
             var root = BlogRoot();
 
@@ -254,9 +254,9 @@ namespace Articulate.MetaWeblog
             }
         }
 
-        public Task<bool> EditPostAsync(string postid, string username, string password, Post post, bool publish)
+        public async Task<bool> EditPostAsync(string postid, string username, string password, Post post, bool publish)
         {
-            var user = ValidateUser(username, password);
+            var user = await ValidateUser(username, password);
 
             var asInt = postid.TryConvertTo<int>();
             if (!asInt)
@@ -283,7 +283,7 @@ namespace Articulate.MetaWeblog
             AddOrUpdateContent(umbracoContent, contentType, post, user, publish, extractFirstImageAsProperty);
 
             // Bool - assume to notify if published with new updates
-            return Task.FromResult(true);
+            return true;
         }
 
         // Seems these are not used/supported
@@ -485,9 +485,9 @@ namespace Articulate.MetaWeblog
             return node;
         }
 
-        private IUser ValidateUser(string username, string password)
+        private async Task<IUser> ValidateUser(string username, string password)
         {
-            if (_backOfficeUserManager.ValidateCredentialsAsync(username, password).Result == false)
+            if (await _backOfficeUserManager.ValidateCredentialsAsync(username, password) == false)
             {
                 // Throw some error if not valid credentials - so we exit out early of stuff
                 throw new InvalidOperationException("Credentials issue");
