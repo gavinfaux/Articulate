@@ -21,7 +21,7 @@
     <ProjectReference Include="..\Articulate\Articulate.csproj" />
   </ItemGroup>
 
-  <Import Project="..\Articulate\build\Articulate.targets" />
+  <Import Project="..\Articulate\build\Articulate.props" />
 
   <PropertyGroup>
     <!-- Razor files are needed for the backoffice to work correctly -->
