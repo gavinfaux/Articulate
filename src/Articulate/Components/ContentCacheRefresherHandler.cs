@@ -1,7 +1,9 @@
 using Umbraco.Cms.Core.Cache;
 using Umbraco.Cms.Core.Events;
 using Umbraco.Cms.Core.Models;
+using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.Notifications;
+using Umbraco.Cms.Core.PublishedCache;
 using Umbraco.Cms.Core.Services.Changes;
 using Umbraco.Cms.Core.Sync;
 using Umbraco.Cms.Core.Web;
@@ -17,14 +19,19 @@ namespace Articulate.Components
         private readonly IUmbracoContextAccessor _umbracoContextAccessor;
         private readonly AppCaches _appCaches;
         private readonly IScopeProvider _scopeProvider;
+        private readonly IPublishedContentTypeCache _publishedContentTypeCache;
+        private readonly IDocumentCacheService _documentCacheService;
 
         public ContentCacheRefresherHandler(
             IUmbracoContextAccessor umbracoContextAccessor,
-            AppCaches appCaches, IScopeProvider scopeProvider)
+            AppCaches appCaches, IScopeProvider scopeProvider,
+            IPublishedContentTypeCache publishedContentTypeCache, IDocumentCacheService documentCacheService)
         {
             _umbracoContextAccessor = umbracoContextAccessor;
             _appCaches = appCaches;
             _scopeProvider = scopeProvider;
+            _publishedContentTypeCache = publishedContentTypeCache;
+            _documentCacheService = documentCacheService;
         }
 
         /// <summary>
@@ -106,10 +113,10 @@ namespace Articulate.Components
                     }
                 }
 
-                var articulateContentType = umbracoContext.Content.GetContentType(ArticulateConstants.ArticulateContentTypeAlias);
+                var articulateContentType = _publishedContentTypeCache.Get(PublishedItemType.Content, ArticulateConstants.ArticulateContentTypeAlias);
                 if (articulateContentType != null)
                 {
-                    var articulateNodes = umbracoContext.Content.GetByContentType(articulateContentType);
+                    var articulateNodes = _documentCacheService.GetByContentType(articulateContentType);
                     foreach (var node in articulateNodes)
                     {
                         // if the item is same level with a lower sort order it can directly affect the articulate node's route

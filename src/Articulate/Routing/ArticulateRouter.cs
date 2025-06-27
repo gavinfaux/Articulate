@@ -65,21 +65,20 @@ namespace Articulate.Routing
         /// <param name="httpContext"></param>
         /// <param name="umbracoContext"></param>
         /// <returns></returns>
-        public void MapRoutes(HttpContext httpContext, IUmbracoContext umbracoContext)
+        public void MapRoutes(HttpContext httpContext, IUmbracoContext umbracoContext, IPublishedContentTypeCache publishedContentTypeCache, IDocumentCacheService documentCacheService)
         {
             lock (s_locker)
             {
                 using (var scope = _scopeProvider.CreateCoreScope(autoComplete: true))
                 {
-                    IPublishedContentCache contentCache = umbracoContext.Content;
 
-                    IPublishedContentType articulateCt = contentCache.GetContentType("Articulate");
+                    IPublishedContentType articulateCt = publishedContentTypeCache.Get(PublishedItemType.Content, ArticulateConstants.ArticulateContentTypeAlias);
                     if (articulateCt == null)
                     {
                         return;
                     }
 
-                    var articulateNodes = contentCache.GetByContentType(articulateCt).ToList();
+                    var articulateNodes = documentCacheService.GetByContentType(articulateCt).ToList();
 
                     var domains = umbracoContext.Domains.GetAll(false).ToList();
 

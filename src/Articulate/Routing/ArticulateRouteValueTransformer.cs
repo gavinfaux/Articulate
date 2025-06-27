@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.Routing;
 using Umbraco.Cms.Core;
+using Umbraco.Cms.Core.PublishedCache;
 using Umbraco.Cms.Core.Routing;
 using Umbraco.Cms.Core.Services;
 using Umbraco.Cms.Core.Web;
@@ -31,6 +32,8 @@ namespace Articulate.Routing
         private bool _hasCache = false;
         private bool _disposedValue;
         private readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
+        private readonly IPublishedContentTypeCache _publishedContentTypeCache;
+        private readonly IDocumentCacheService _documentCacheService;
 
         public ArticulateRouteValueTransformer(
             IRuntimeState runtime,
@@ -38,7 +41,9 @@ namespace Articulate.Routing
             IPublishedRouter publishedRouter,
             IRoutableDocumentFilter routableDocumentFilter,
             ArticulateRouter articulateRouteBuilder,
-            UmbracoRouteValueTransformer umbracoRouteValueTransformer)
+            UmbracoRouteValueTransformer umbracoRouteValueTransformer,
+            IPublishedContentTypeCache publishedContentTypeCache,
+            IDocumentCacheService documentCacheService)
         {
             _runtime = runtime;
             _umbracoContextAccessor = umbracoContextAccessor;
@@ -46,6 +51,9 @@ namespace Articulate.Routing
             _routableDocumentFilter = routableDocumentFilter;
             _articulateRouter = articulateRouteBuilder;
             _umbracoRouteValueTransformer = umbracoRouteValueTransformer;
+            _publishedContentTypeCache = publishedContentTypeCache;
+            _documentCacheService = documentCacheService;
+
         }
 
         public override async ValueTask<RouteValueDictionary> TransformAsync(HttpContext httpContext, RouteValueDictionary values)
@@ -80,7 +88,7 @@ namespace Articulate.Routing
                 _lock.EnterWriteLock();
                 try
                 {
-                    _articulateRouter.MapRoutes(httpContext, umbracoContext);
+                    _articulateRouter.MapRoutes(httpContext, umbracoContext, _publishedContentTypeCache, _documentCacheService);
                     _hasCache = true;
                 }
                 finally

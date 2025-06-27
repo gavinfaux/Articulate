@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.DependencyInjection;
 using Umbraco.Cms.Core.Cache;
+using Umbraco.Cms.Core.PublishedCache;
 using Umbraco.Cms.Core.Web;
 using Umbraco.Extensions;
 
@@ -16,13 +17,22 @@ namespace Articulate.Routing
     /// </remarks>
     internal class RouteCacheRefresherFilter : IActionFilter
     {
+
+        private readonly IPublishedContentTypeCache _publishedContentTypeCache;
+        private readonly IDocumentCacheService _documentCacheService;
+
+        public RouteCacheRefresherFilter(IPublishedContentTypeCache publishedContentTypeCache, IDocumentCacheService documentCacheService)
+        {
+            _documentCacheService = documentCacheService;
+            _publishedContentTypeCache = publishedContentTypeCache;
+        }
         public void OnActionExecuted(ActionExecutedContext context) => PerformRefresh(context.HttpContext);
 
         public void OnActionExecuting(ActionExecutingContext context)
         {
         }
 
-        private static void PerformRefresh(HttpContext context)
+        private void PerformRefresh(HttpContext context)
         {
             var appCaches = context.RequestServices.GetRequiredService<AppCaches>();
 
@@ -36,7 +46,7 @@ namespace Articulate.Routing
                     var umbCtx = umbracoContextReference.UmbracoContext;
 
                     // Regenerate the generated routes
-                    articulateRouter.MapRoutes(context, umbCtx);
+                    articulateRouter.MapRoutes(context, umbCtx, _publishedContentTypeCache,_documentCacheService);
                 }
             }
         }
