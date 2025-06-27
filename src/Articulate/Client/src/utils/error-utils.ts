@@ -1,14 +1,14 @@
 import { ProblemDetails } from "../api";
 
 /**
- * Formats an error from an API call into a user-friendly string.
+ * Formats an error from an API call into a user-friendly object.
  * It intelligently handles ProblemDetails objects, standard Error objects, and strings.
  *
  * @param error The error object, typically from the `error` property of an API result.
  * @param defaultMessage A fallback message if the error object is not recognized.
- * @returns A user-friendly error message string.
+ * @returns A user-friendly error message object with a title and an array of details.
  */
-export function formatApiError(error: unknown, defaultMessage: string): string[] {
+export function formatApiError(error: unknown, defaultMessage: string): { title: string; details: string[] } {
   // Log the raw error for debugging purposes
   console.error("An API error occurred:", error);
 
@@ -33,26 +33,32 @@ export function formatApiError(error: unknown, defaultMessage: string): string[]
       });
 
       if (formattedErrors.length > 0) {
-        return [problem.title || "One or more validation errors occurred", ...formattedErrors];
+        return {
+          title: problem.title || "One or more validation errors occurred",
+          details: formattedErrors,
+        };
       }
     }
 
     // Fallback to title and detail if no specific validation errors are found
     if (problem.title) {
-      return [problem.detail ? `${problem.title}: ${problem.detail}` : problem.title];
+      return {
+        title: problem.title,
+        details: problem.detail ? [problem.detail] : [],
+      };
     }
   }
 
   // Fallback for standard JavaScript Error objects
   if (error instanceof Error) {
-    return [error.message];
+    return { title: error.message, details: [] };
   }
 
   // Fallback for simple string errors
   if (typeof error === "string" && error) {
-    return [error];
+    return { title: error, details: [] };
   }
 
   // If the error is unrecognizable, use the default message.
-  return [defaultMessage];
+  return { title: defaultMessage, details: [] };
 }

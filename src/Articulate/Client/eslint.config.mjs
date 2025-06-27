@@ -1,4 +1,5 @@
 import { includeIgnoreFile } from "@eslint/compat";
+import prettierConfig from "eslint-config-prettier";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import tseslint from "typescript-eslint";
@@ -28,4 +29,6 @@ export default [
     },
   },
   includeIgnoreFile(gitignorePath),
+  prettierConfig,
+
 ];

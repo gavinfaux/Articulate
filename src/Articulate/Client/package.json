@@ -4,7 +4,9 @@
   "version": "6.0.0",
   "type": "module",
   "scripts": {
-    "watch": "npx chokidar \"src/**/*\" -c \"npm run build\"",
+    "watch": "npm-run-all2 --parallel dev:*",
+    "dev:vite": "vite build --watch",
+    "dev:copy": "chokidar \"../App_Plugins/Articulate/BackOffice/**/*\" --ignore \"**/umbraco-package.json\" -c \"node scripts/post-build.js --copy\"",
     "build": "tsc && vite build && node scripts/post-build.js",
     "build:copy": "tsc && vite build && node scripts/post-build.js --copy",
     "generate-client": "node scripts/generate-openapi.js https://localhost:44366/umbraco/swagger/articulate/swagger.json",
@@ -17,18 +19,17 @@
     "@umbraco-cms/backoffice": "^15.4.3",
     "chalk": "^5.4.1",
     "chokidar-cli": "^3.0.0",
-    "cross-env": "^7.0.3",
     "eslint": "^9.29.0",
     "eslint-config-prettier": "^10.1.5",
     "eslint-plugin-local-rules": "3.0.2",
     "fs-extra": "^11.2.0",
     "monaco-editor": "^0.52.2",
     "node-fetch": "^3.3.2",
+    "npm-run-all2": "^8.0.4",
     "prettier": "^3.6.1",
     "prettier-plugin-organize-imports": "^4.1.0",
     "typescript": "^5.8.2",
     "typescript-eslint": "^8.35.0",
-    "vite": "^6.2.0",
-    "vite-tsconfig-paths": "^5.1.4"
+    "vite": "^6.2.0"
   }
 }

@@ -125,31 +125,6 @@ export type ProblemDetails = {
     [key: string]: unknown | (string | null) | (string | null) | (number | null) | (string | null) | (string | null) | undefined;
 };
 
-export type PostArticulateAnewPostV1Data = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/umbraco/management/api/v1/articulate/anew/post';
-};
-
-export type PostArticulateAnewPostV1Errors = {
-    /**
-     * The resource is protected and requires an authentication token
-     */
-    401: unknown;
-    /**
-     * The authenticated user does not have access to this resource
-     */
-    403: unknown;
-};
-
-export type PostArticulateAnewPostV1Responses = {
-    /**
-     * OK
-     */
-    200: unknown;
-};
-
 export type GetArticulateBlogArticulateGuidV1Data = {
     body?: never;
     path?: never;
@@ -193,6 +168,10 @@ export type PostArticulateBlogExportV1Data = {
 
 export type PostArticulateBlogExportV1Errors = {
     /**
+     * The chosen node is not an Articulate root node, or node does not exist, or Articulate is not installed correctly.
+     */
+    400: unknown;
+    /**
      * The resource is protected and requires an authentication token
      */
     401: unknown;
@@ -200,6 +179,10 @@ export type PostArticulateBlogExportV1Errors = {
      * The authenticated user does not have access to this resource
      */
     403: unknown;
+    /**
+     * Export failed due to a server error.
+     */
+    500: unknown;
 };
 
 export type PostArticulateBlogExportV1Responses = {
@@ -311,6 +294,10 @@ export type PostArticulateBlogImportBeginV1Errors = {
      * The request was not a valid form file or the file was not XML.
      */
     415: unknown;
+    /**
+     * Upload failed due to a server error.
+     */
+    500: unknown;
 };
 
 export type PostArticulateBlogImportBeginV1Responses = {

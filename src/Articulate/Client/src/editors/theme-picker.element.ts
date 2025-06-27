@@ -11,10 +11,7 @@ import { Articulate } from "../api/sdk.gen";
 import { formatApiError } from "../utils/error-utils";
 
 @customElement("theme-picker-element")
-export default class ThemePickerElement
-  extends UmbElementMixin(UmbLitElement)
-  implements UmbPropertyEditorUiElement
-{
+export default class ThemePickerElement extends UmbElementMixin(UmbLitElement) implements UmbPropertyEditorUiElement {
   @property()
   value?: string;
 
@@ -25,10 +22,7 @@ export default class ThemePickerElement
   private _themeSelectOptions: Array<{ name: string; value: string; selected?: boolean }> = [];
 
   @state()
-  private _themeData: Array<{ name: string; value: string }> = [];
-
-  @state()
-  private _error: string[] = [];
+  private _error: { title: string; details: string[] } | null = null;
 
   constructor() {
     super();
@@ -42,53 +36,31 @@ export default class ThemePickerElement
   override updated(changedProperties: Map<PropertyKey, unknown>) {
     super.updated(changedProperties);
 
-    const valueChanged = changedProperties.has("value");
-    const themeDataChanged = changedProperties.has("_themeData");
-
-    if (this._themeData.length > 0 && (valueChanged || themeDataChanged)) {
-      this._rebuildAndSetSelectOptions();
+    if (changedProperties.has("value") && this._themeSelectOptions.length > 0) {
+      this._themeSelectOptions = this._themeSelectOptions.map((option) => ({
+        ...option,
+        selected: !!this.value && option.value === this.value,
+      }));
     }
   }
 
   private async _fetchThemes() {
-    this._error = [];
+    this._error = null;
 
     const result = await Articulate.getArticulateEditorsThemesV1();
 
-    if (!result.response.ok) {
-      this._error = formatApiError(result.error, "Failed to load themes.");
+    if (!result.response.ok || !result.data) {
+      this._error = formatApiError(result.error, "Failed to load themes from the server.");
       return;
     }
 
     const data = result.data;
-    if (!data) {
-      this._error = ["No theme data returned from the server."];
-      return;
-    }
 
-    this._themeData = data.map((theme) => ({
+    this._themeSelectOptions = data.map((theme) => ({
       name: theme,
       value: theme,
+      selected: !!this.value && theme === this.value,
     }));
-    this._rebuildAndSetSelectOptions();
-  }
-
-  private _rebuildAndSetSelectOptions() {
-    if (!this._themeData || this._themeData.length === 0) {
-      if (this._themeSelectOptions.length > 0) {
-        this._themeSelectOptions = [];
-      }
-      return;
-    }
-
-    const valueToSelect = this.value;
-    const newOptions = this._themeData.map((theme) => ({
-      name: theme.name,
-      value: theme.value,
-      selected: !!valueToSelect && theme.value === valueToSelect,
-    }));
-
-    this._themeSelectOptions = newOptions;
   }
 
   private _handleInput(event: Event) {
@@ -101,8 +73,10 @@ export default class ThemePickerElement
   }
 
   override render() {
-    if (this._error && this._error.length > 0) {
-      return html`<span style="color: var(--uui-color-danger);">${this._error[0]}</span>`;
+    if (this._error) {
+      return html`
+        <span style="color: var(--uui-color-danger);">${this._error.title}</span>
+      `;
     }
 
     return html`

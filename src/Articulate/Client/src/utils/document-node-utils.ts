@@ -8,36 +8,22 @@ import {
 import type { UmbModalManagerContext } from "@umbraco-cms/backoffice/modal";
 import { Articulate } from "../api";
 
-import type {
-  DocumentVariantResponseModel,
-  ProblemDetails,
-} from "@umbraco-cms/backoffice/external/backend-api";
+import type { DocumentVariantResponseModel } from "@umbraco-cms/backoffice/external/backend-api";
 import { DocumentService } from "@umbraco-cms/backoffice/external/backend-api";
+import { formatApiError } from "./error-utils";
 
 /**
  * Fetches the UDI of the Articulate blog archive document type.
  * @returns A promise that resolves to the UDI string of the blog archive document type.
  * @throws {Error} If the API request fails, an error is thrown with details from the response.
  */
-export async function fetchArchiveDoctypeUdi(): Promise<string | null> {
+export async function fetchArchiveDoctypeUdi(): Promise<string | undefined> {
   const result = await Articulate.getArticulateBlogArticulateGuidV1();
   if (result.response.ok && result.data) {
     return result.data;
-  } else if (!result.data) {
-    console.error("API returned no data for Articulate Archive UDI");
-    return null;
   }
-  try {
-    let errorDetails = (await result.response.json()) as ProblemDetails;
-    console.error(
-      errorDetails.title && errorDetails.detail
-        ? `${errorDetails.title}: ${errorDetails.detail}`
-        : errorDetails.title,
-    );
-  } catch {
-    console.error(`${result.response.status} ${result.response.statusText}`);
-  }
-  return null;
+  console.error(formatApiError(result.error, "API request failed for Articulate Archive UDI"));
+  return undefined;
 }
 
 /**
@@ -50,9 +36,7 @@ export async function fetchNodeByUdi(udi: string): Promise<DocumentVariantRespon
     const response = await DocumentService.getDocumentById({ id: udi });
     return response?.variants?.[0] ?? null;
   } catch (error) {
-    console.error(
-      `Failed to fetch node: ${error instanceof Error ? error.message : String(error)}`,
-    );
+    console.error(formatApiError(error, "Failed to fetch node"));
     return null;
   }
 }
@@ -70,7 +54,7 @@ export async function openNodePicker(
   host: UmbControllerHost,
 ): Promise<string | null> {
   try {
-    // TODO: filter no longer works?
+    // TODO: filter: no longer works? using pickableFilter as a workaround
     const modalContext = modalManager.open<UmbDocumentPickerModalData, UmbDocumentPickerModalValue>(
       host,
       UMB_DOCUMENT_PICKER_MODAL,
@@ -89,7 +73,7 @@ export async function openNodePicker(
     }
     return result.selection[0];
   } catch (error) {
-    console.error(`Node picker failed: ${error instanceof Error ? error.message : String(error)}`);
+    console.error(formatApiError(error, "Node picker failed"));
     return null;
   }
 }

@@ -15,22 +15,28 @@ export function renderHeaderActions(routerPath?: string): TemplateResult {
   `;
 }
 
-export function renderErrorMessage(errors: string[] | null): TemplateResult | typeof nothing {
-  if (!errors || errors.length === 0) {
+export function renderErrorMessage(
+  errors: { title: string; details: string[] } | null,
+): TemplateResult | typeof nothing {
+  if (!errors) {
     return nothing;
   }
 
-  const [title, ...errorDetails] = errors;
+  const { title, details } = errors;
 
   return html`
     <div
       style="padding: var(--uui-size-space-4); margin-block: 1rem; border: 1px solid var(--uui-color-danger-standalone); color: var(--uui-color-danger); border-radius: var(--uui-border-radius);"
     >
       <strong>${title}</strong>
-      ${errorDetails.length > 0
+      ${details.length > 0
         ? html`
             <ul style="margin: 0; padding-left: 20px; list-style-position: inside;">
-              ${errorDetails.map((e) => html`<li>${e}</li>`)}
+              ${details.map(
+                (e) => html`
+                  <li>${e}</li>
+                `,
+              )}
             </ul>
           `
         : nothing}

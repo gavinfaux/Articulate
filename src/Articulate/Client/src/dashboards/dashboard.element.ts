@@ -14,43 +14,39 @@ export default class ArticulateDashboardElement extends UmbLitElement {
 
   constructor() {
     super();
+
+    const createSetup = <T extends UmbLitElement & { routerPath?: string }>(component: new () => T) => {
+      return (el: Element | undefined) => {
+        if (this._routerBasePath && el instanceof component) {
+          el.routerPath = this._routerBasePath;
+        }
+      };
+    };
+
     this._routes = [
       {
         path: "blogml/import",
         component: BlogMlImporterElement,
-        setup: (el) => {
-          if (this._routerBasePath && el instanceof BlogMlImporterElement)
-            el.routerPath = this._routerBasePath;
-        },
+        setup: createSetup(BlogMlImporterElement),
       },
       {
         path: "blogml/export",
         component: BlogMlExporterElement,
-        setup: (el) => {
-          if (this._routerBasePath && el instanceof BlogMlExporterElement)
-            el.routerPath = this._routerBasePath;
-        },
+        setup: createSetup(BlogMlExporterElement),
       },
       {
         path: "theme/copy",
         component: CopyThemeElement,
-        setup: (el) => {
-          if (this._routerBasePath && el instanceof CopyThemeElement)
-            el.routerPath = this._routerBasePath;
-        },
+        setup: createSetup(CopyThemeElement),
       },
       {
         path: "",
         component: DashboardOptionsElement,
-        setup: (el) => {
-          if (this._routerBasePath && el instanceof DashboardOptionsElement)
-            el.routerPath = this._routerBasePath;
-        },
+        setup: createSetup(DashboardOptionsElement),
       },
       {
         path: "**",
-        component: async () =>
-          (await import("@umbraco-cms/backoffice/router")).UmbRouteNotFoundElement,
+        component: async () => (await import("@umbraco-cms/backoffice/router")).UmbRouteNotFoundElement,
       },
     ];
   }

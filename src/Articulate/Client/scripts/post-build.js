@@ -1,6 +1,3 @@
-// To use this ES Module syntax, ensure you have "type": "module" in your package.json,
-// or rename this file to have a .mjs extension.
-
 import chalk from "chalk";
 import path from "path";
 import fse from "fs-extra";
@@ -48,7 +45,8 @@ async function movePackageJson() {
   console.log(`  Destination: ${chalk.yellow(packageJsonDestPath)}`);
 
   if (!(await fse.pathExists(packageJsonSourcePath))) {
-    throw new Error(`Source file not found: ${packageJsonSourcePath}`);
+    console.log(chalk.cyan(`  Source file not found, assuming it was already moved. Skipping.`));
+    return;
   }
 
   try {

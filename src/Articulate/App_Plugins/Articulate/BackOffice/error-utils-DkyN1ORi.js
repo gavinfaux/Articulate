@@ -1,17 +1,5 @@
-import { c as r, f as g } from "./client.gen-7oad9SSy.js";
-class y {
-  static postArticulateAnewPostV1(e) {
-    return ((e == null ? void 0 : e.client) ?? r).post({
-      security: [
-        {
-          scheme: "bearer",
-          type: "http"
-        }
-      ],
-      url: "/umbraco/management/api/v1/articulate/anew/post",
-      ...e
-    });
-  }
+import { c as r, f as h } from "./client.gen-7oad9SSy.js";
+class b {
   /**
    * Gets the Guid for the Articulate content type.
    * This endpoint is used to retrieve the Guid for the back office import and export features.
@@ -90,7 +78,7 @@ class y {
    */
   static postArticulateBlogImportBeginV1(e) {
     return ((e == null ? void 0 : e.client) ?? r).post({
-      ...g,
+      ...h,
       security: [
         {
           scheme: "bearer",
@@ -158,27 +146,33 @@ class y {
     });
   }
 }
-function d(t, e) {
+function s(t, e) {
   if (console.error("An API error occurred:", t), t && typeof t == "object" && "title" in t) {
     const a = t;
     if (a.errors) {
       const u = Object.entries(a.errors).flatMap(([l, m]) => {
         const i = l.startsWith("$.") ? l.substring(2) : l;
         return m.filter((c) => !!c).map((c) => {
-          const h = c.split(" Path: $.")[0] || c;
-          return `${i}: ${h}`;
+          const g = c.split(" Path: $.")[0] || c;
+          return `${i}: ${g}`;
         });
       });
       if (u.length > 0)
-        return [a.title || "One or more validation errors occurred", ...u];
+        return {
+          title: a.title || "One or more validation errors occurred",
+          details: u
+        };
     }
     if (a.title)
-      return [a.detail ? `${a.title}: ${a.detail}` : a.title];
+      return {
+        title: a.title,
+        details: a.detail ? [a.detail] : []
+      };
   }
-  return t instanceof Error ? [t.message] : typeof t == "string" && t ? [t] : [e];
+  return t instanceof Error ? { title: t.message, details: [] } : typeof t == "string" && t ? { title: t, details: [] } : { title: e, details: [] };
 }
 export {
-  y as A,
-  d as f
+  b as A,
+  s as f
 };
-//# sourceMappingURL=error-utils-CM2ch-oG.js.map
+//# sourceMappingURL=error-utils-DkyN1ORi.js.map

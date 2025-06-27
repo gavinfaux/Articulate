@@ -1,4 +1,3 @@
-import type { TemplateResult } from "@umbraco-cms/backoffice/external/lit";
 import { css, customElement, html, property } from "@umbraco-cms/backoffice/external/lit";
 import { UmbLitElement } from "@umbraco-cms/backoffice/lit-element";
 import { UmbTextStyles } from "@umbraco-cms/backoffice/style";
@@ -37,34 +36,6 @@ export default class DashboardOptionsElement extends UmbLitElement {
   routerPath = "";
 
   /**
-   * Renders a navigation card with the specified details.
-   * @private
-   * @param {string} name - The name of the card.
-   * @param {string} description - The description text for the card.
-   * @param {string} icon - The icon to display on the card.
-   * @param {string} fullHref - The path to navigate to when the card is clicked.
-   * @returns {TemplateResult} The rendered card template.
-   */
-  private _renderCards(): TemplateResult {
-    return html`
-      ${dashboards.map((d) => {
-        const basePath = this.routerPath?.replace(/\/$/, "");
-        const fullHref = `${basePath}/${d.path}`;
-        return html`
-          <uui-card-block-type
-            class="tool-card"
-            name="${d.name}"
-            description="${d.description}"
-            href=${fullHref}
-          >
-            <uui-icon name="${d.icon}"></uui-icon>
-          </uui-card-block-type>
-        `;
-      })}
-    `;
-  }
-
-  /**
    * Renders the dashboard options grid with navigation cards.
    * @override
    * @returns {TemplateResult} The rendered dashboard options template.
@@ -72,7 +43,17 @@ export default class DashboardOptionsElement extends UmbLitElement {
   render() {
     return html`
       <uui-box headline="Options">
-        <div class="tools-grid">${this._renderCards()}</div>
+        <div class="tools-grid">
+          ${dashboards.map((d) => {
+            const basePath = this.routerPath?.replace(/\/$/, "");
+            const fullHref = `${basePath}/${d.path}`;
+            return html`
+              <uui-card-block-type class="tool-card" name="${d.name}" description="${d.description}" href=${fullHref}>
+                <uui-icon name="${d.icon}"></uui-icon>
+              </uui-card-block-type>
+            `;
+          })}
+        </div>
       </uui-box>
     `;
   }
@@ -85,7 +66,6 @@ export default class DashboardOptionsElement extends UmbLitElement {
         grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
         gap: var(--uui-size-space-6);
       }
-
       .tool-card {
         min-width: 0;
         height: 170px;
@@ -94,7 +74,6 @@ export default class DashboardOptionsElement extends UmbLitElement {
         justify-content: center;
         text-align: center;
       }
-
       uui-card,
       uui-card-block-type {
         transition: var(--uui-animation-duration) var(--uui-animation-easing);

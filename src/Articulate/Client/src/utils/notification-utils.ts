@@ -1,8 +1,5 @@
 import type { UmbLitElement } from "@umbraco-cms/backoffice/lit-element";
-import {
-  UMB_NOTIFICATION_CONTEXT,
-  UmbNotificationColor,
-} from "@umbraco-cms/backoffice/notification";
+import { UMB_NOTIFICATION_CONTEXT, UmbNotificationColor } from "@umbraco-cms/backoffice/notification";
 
 /**
  * Shows a global Umbraco notification.
@@ -17,6 +14,13 @@ export async function showUmbracoNotification(
   stay: boolean = false,
 ): Promise<void> {
   const notificationContext = await contextHost.getContext(UMB_NOTIFICATION_CONTEXT);
+  if (!notificationContext) {
+    console.error("UMB_NOTIFICATION_CONTEXT not found. Could not display notification.", {
+      contextHost,
+      message,
+    });
+    return;
+  }
   if (!stay) {
     notificationContext.peek(type, {
       data: { message },

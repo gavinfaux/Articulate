@@ -1,7 +1,7 @@
 // Prettier config (modern JS format)
 /** @type {import('prettier').Config} */
 module.exports = {
-  printWidth: 100,
+  printWidth: 120,
   tabWidth: 2,
   singleQuote: false,
   trailingComma: "all",
@@ -9,5 +9,6 @@ module.exports = {
   arrowParens: "always",
   bracketSpacing: true,
   endOfLine: "lf",
+  htmlWhitespaceSensitivity: "ignore",
   plugins: ["prettier-plugin-organize-imports"],
 };
