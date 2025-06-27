@@ -7,6 +7,7 @@
     <ImplicitUsings>disable</ImplicitUsings>
     <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
     <CompressionEnabled>false</CompressionEnabled>
+    <IncludeContentInPack>true</IncludeContentInPack>    
   </PropertyGroup>
 
   <!-- Nuget Package -->
@@ -24,7 +25,7 @@
     <Company>Shannon Deminick</Company>
     <Copyright>Copyright © $(Company) $([System.DateTime]::Now.Year)</Copyright>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <GenerateDocumentationFile>True</GenerateDocumentationFile>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <ApplicationIcon>..\..\assets\favicon.ico</ApplicationIcon>
   </PropertyGroup>
 
@@ -72,12 +73,17 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="App_Plugins\**\*" Pack="true" PackagePath="App_Plugins\" />
+    <Content Include="App_Plugins\**">
+      <Pack>true</Pack>
+      <PackagePath>contentFiles\any\any\App_Plugins</PackagePath>
+      <CopyToOutput>true</CopyToOutput>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
   </ItemGroup>
   
-<ItemGroup>
+  <ItemGroup>
     <ClientAssetsInputs Include="Client\**" Exclude="$(DefaultItemExcludes)" />
-</ItemGroup>
+  </ItemGroup>
   
   <!-- Build backoffice client -->
   <Target Name="RestoreClient" Inputs="Client\package.json;Client\package-lock.json" Outputs="Client\node_modules\.package-lock.json">
@@ -103,6 +109,10 @@
     <None Remove="Packaging\package.zip" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="build\Articulate.props" Pack="true" PackagePath="build\" />
+  </ItemGroup>
+  
   <ItemGroup>
     <Compile Update="Controllers\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
