@@ -80,7 +80,7 @@ namespace Articulate.MetaWeblog
 
         public async Task<BlogInfo[]> GetUsersBlogsAsync(string key, string username, string password)
         {
-            await ValidateUser(username, password).ConfigureAwait(false);
+            await ValidateUser(username, password);
 
             var node = BlogRoot();
             var blogs = new BlogInfo[]
@@ -98,7 +98,7 @@ namespace Articulate.MetaWeblog
 
         public async Task<CategoryInfo[]> GetCategoriesAsync(string blogid, string username, string password)
         {
-            await ValidateUser(username, password).ConfigureAwait(false);
+            await ValidateUser(username, password);
 
             // TODO: These would be across all Articulate Blog root nodes :S
             var tags = _tagService.GetAllTags("ArticulateCategories")
@@ -115,7 +115,7 @@ namespace Articulate.MetaWeblog
 
         public async Task<WilderMinds.MetaWeblog.Tag[]> GetTagsAsync(string blogid, string username, string password)
         {
-             await ValidateUser(username, password).ConfigureAwait(false);
+             await ValidateUser(username, password);
 
             // TODO: These would be across all Articulate Blog root nodes :S
             var tags = _tagService.GetAllTags("ArticulateTags")
@@ -130,7 +130,7 @@ namespace Articulate.MetaWeblog
 
         public async Task<Post[]> GetRecentPostsAsync(string blogid, string username, string password, int numberOfPosts)
         {
-             await ValidateUser(username, password).ConfigureAwait(false);
+             await ValidateUser(username, password);
 
             var node = BlogRoot().ChildrenOfType(ArticulateConstants.ArticulateArchiveContentTypeAlias).FirstOrDefault();
             if (node == null)
@@ -148,7 +148,7 @@ namespace Articulate.MetaWeblog
 
         public async Task<string> AddPostAsync(string blogid, string username, string password, Post post, bool publish)
         {
-            var user = await ValidateUser(username, password).ConfigureAwait(false);
+            var user = await ValidateUser(username, password);
 
             var root = BlogRoot();
 
@@ -181,7 +181,7 @@ namespace Articulate.MetaWeblog
 
         public async Task<bool> DeletePostAsync(string key, string postid, string username, string password, bool publish)
         {
-            var user = await ValidateUser(username, password).ConfigureAwait(false);
+            var user = await ValidateUser(username, password);
             var userId = user.Id;
 
             var asInt = postid.TryConvertTo<int>();
@@ -204,7 +204,7 @@ namespace Articulate.MetaWeblog
 
         public async Task<Post> GetPostAsync(string postid, string username, string password)
         {
-            await ValidateUser(username, password).ConfigureAwait(false);
+            await ValidateUser(username, password);
 
             var asInt = postid.TryConvertTo<int>();
             if (!asInt)
@@ -232,7 +232,7 @@ namespace Articulate.MetaWeblog
 
         public async Task<MediaObjectInfo> NewMediaObjectAsync(string blogid, string username, string password, MediaObject mediaObject)
         {
-            await ValidateUser(username, password).ConfigureAwait(false);
+            await ValidateUser(username, password);
 
             var bytes = Convert.FromBase64String(mediaObject.bits);
 
@@ -254,7 +254,7 @@ namespace Articulate.MetaWeblog
 
         public async Task<bool> EditPostAsync(string postid, string username, string password, Post post, bool publish)
         {
-            var user = await ValidateUser(username, password).ConfigureAwait(false);
+            var user = await ValidateUser(username, password);
 
             var asInt = postid.TryConvertTo<int>();
             if (!asInt)
@@ -485,7 +485,7 @@ namespace Articulate.MetaWeblog
 
         private async Task<IUser> ValidateUser(string username, string password)
         {
-            if (await _backOfficeUserManager.ValidateCredentialsAsync(username, password).ConfigureAwait(false) == false)
+            if (await _backOfficeUserManager.ValidateCredentialsAsync(username, password) == false)
             {
                 // Throw some error if not valid credentials - so we exit out early of stuff
                 throw new InvalidOperationException("Credentials issue");
