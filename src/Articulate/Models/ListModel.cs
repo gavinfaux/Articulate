@@ -47,7 +47,8 @@ namespace Articulate.Models
             {
                 PageTags = Name;
             }
-        }
+        }        
+
         public ListModel(IPublishedContent content, IPublishedValueFallback publishedValueFallback, IVariationContextAccessor variationContextAccessor)
             : base(content, publishedValueFallback, variationContextAccessor)
         {
@@ -102,6 +103,5 @@ namespace Articulate.Models
         public override IEnumerable<IPublishedContent> Children => Posts;
 
         public IEnumerable<IPublishedContent> ChildrenForAllCultures => Posts;
-
     }
 }

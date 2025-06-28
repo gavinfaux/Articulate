@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-
 using Articulate.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
@@ -35,6 +34,7 @@ namespace Articulate.Controllers
             PublishedValueFallback = publishedValueFallback;
             VariationContextAccessor = variationContextAccessor;
         }
+
         public IUmbracoContextAccessor UmbracoContextAccessor { get; }
         public IPublishedUrlProvider PublishedUrlProvider { get; }
         public IPublishedValueFallback PublishedValueFallback { get; }
@@ -45,20 +45,9 @@ namespace Articulate.Controllers
         /// </summary>
         protected IActionResult GetPagedListView(IMasterModel masterModel, IPublishedContent pageNode, IEnumerable<IPublishedContent> listItems, long totalPosts, int? p)
         {
-            if (masterModel == null)
-            {
-                throw new ArgumentNullException(nameof(masterModel));
-            }
-
-            if (pageNode == null)
-            {
-                throw new ArgumentNullException(nameof(pageNode));
-            }
-
-            if (listItems == null)
-            {
-                throw new ArgumentNullException(nameof(listItems));
-            }
+            if (masterModel == null) throw new ArgumentNullException(nameof(masterModel));
+            if (pageNode == null) throw new ArgumentNullException(nameof(pageNode));
+            if (listItems == null) throw new ArgumentNullException(nameof(listItems));
 
             if (!GetPagerModel(masterModel, totalPosts, p, out var pager))
             {
@@ -69,6 +58,7 @@ namespace Articulate.Controllers
             }
 
             var listModel = new ListModel(pageNode, pager, listItems, PublishedValueFallback, VariationContextAccessor);
+
             return View(PathHelper.GetThemeViewPath(listModel, "List"), listModel);
         }
 
@@ -93,11 +83,7 @@ namespace Articulate.Controllers
             var queryStrings = new StringBuilder();
             foreach (var key in Request.Query.Keys)
             {
-                if (key == "p")
-                {
-                    continue;
-                }
-
+                if (key == "p") continue;
                 if (Request.Query.TryGetValue(key, out StringValues val))
                 {
                     foreach (var v in val)

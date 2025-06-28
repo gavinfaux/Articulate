@@ -1,4 +1,5 @@
-
+using Articulate.Models;
+using Articulate.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -58,7 +59,7 @@ namespace Articulate
         /// <param name="filter"></param>
         /// <returns></returns>
         public static IEnumerable<IPublishedContent> GetPostsSortedByPublishedDate(
-            this UmbracoHelper helper,
+            this UmbracoHelper helper, 
             PagerModel pager,
             Func<IPublishedContent, bool> filter,
             params int[] articulateArchiveIds)
@@ -67,7 +68,7 @@ namespace Articulate
                 .Select(helper.Content)
                 .WhereNotNull()
                 .SelectMany(x => x.Descendants());
-
+            
             //apply a filter if there is one
             if (filter != null)
             {
@@ -99,6 +100,8 @@ namespace Articulate
 
             return new PostTagCollection(contentByTags);
         }
+
+        
 
         /// <summary>
         /// Returns a list of the most recent posts
@@ -141,7 +144,6 @@ namespace Articulate
             int pageSize,
             IPublishedValueFallback publishedValueFallback,
             IVariationContextAccessor variationContextAccessor)
-
         {
             var listNodes = GetListNodes(masterModel);
 
@@ -170,7 +172,6 @@ namespace Articulate
             int pageSize,
             IPublishedValueFallback publishedValueFallback,
             IVariationContextAccessor variationContextAccessor)
-
         {
             var pager = new PagerModel(pageSize, page - 1, 1);
 
@@ -187,8 +188,8 @@ namespace Articulate
             PagerModel pager,
             IPublishedValueFallback publishedValueFallback,
             IVariationContextAccessor variationContextAccessor)
-        {
-            var listNodeIds = listNodes.Select(x => x.Id).ToArray();
+        {            
+            var listNodeIds = listNodes.Select(x => x.Id).ToArray();           
 
             var postWithAuthor = helper.GetPostsSortedByPublishedDate(pager, x => string.Equals(x.Value<string>("author"), authorName.Replace("-", " "), StringComparison.InvariantCultureIgnoreCase), listNodeIds);
 
@@ -207,5 +208,9 @@ namespace Articulate
 
             return listNodes;
         }
+        
+        
+        
+
     }
 }

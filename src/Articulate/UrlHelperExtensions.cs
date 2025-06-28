@@ -15,7 +15,10 @@ namespace Articulate
         /// <param name="model"></param>
         /// <param name="relativeAssetPath"></param>
         /// <returns></returns>
-        public static string ThemedAsset(this IUrlHelper url, IMasterModel model, string relativeAssetPath) => url.Content(PathHelper.GetThemePath(model)).EnsureEndsWith('/') + "assets/" + relativeAssetPath;
+        public static string ThemedAsset(this IUrlHelper url, IMasterModel model, string relativeAssetPath)
+        {
+            return url.Content(PathHelper.GetThemePath(model)).EnsureEndsWith('/') + "assets/" + relativeAssetPath;
+        }
 
         /// <summary>
         /// Returns the main rss feed url for this blog
@@ -43,7 +46,10 @@ namespace Articulate
         /// <param name="url"></param>
         /// <param name="model"></param>
         /// <returns></returns>
-        public static string ArticulateTagRssUrl(this IUrlHelper url, PostsByTagModel model) => model.TagUrl.EnsureEndsWith('/') + "rss";
+        public static string ArticulateTagRssUrl(this IUrlHelper url, PostsByTagModel model)
+        {
+            return model.TagUrl.EnsureEndsWith('/') + "rss";
+        }
 
         /// <summary>
         /// Returns an RSS feed URL specific to this author
@@ -78,7 +84,10 @@ namespace Articulate
         /// <summary>
         /// The Home Blog Url
         /// </summary>
-        public static string ArticulateRootUrl(this IUrlHelper url, IMasterModel model) => model.RootBlogNode?.Url();
+        public static string ArticulateRootUrl(this IUrlHelper url, IMasterModel model)
+        {
+            return model.RootBlogNode?.Url();
+        }
 
         /// <summary>
         /// Returns the default categories list URL for blog posts
@@ -94,7 +103,10 @@ namespace Articulate
         /// <summary>
         /// Returns the authors list URL
         /// </summary>
-        public static string ArticulateAuthorsUrl(this IUrlHelper url, IMasterModel model) => model.RootBlogNode?.ChildrenOfType(ArticulateConstants.ArticulateAuthorsContentTypeAlias).FirstOrDefault()?.Url();
+        public static string ArticulateAuthorsUrl(this IUrlHelper url, IMasterModel model)
+        {
+            return model.RootBlogNode?.ChildrenOfType(ArticulateConstants.ArticulateAuthorsContentTypeAlias).FirstOrDefault()?.Url();
+        }
 
         /// <summary>
         /// Returns the URL for the tag list

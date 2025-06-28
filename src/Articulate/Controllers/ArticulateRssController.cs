@@ -57,10 +57,7 @@ namespace Articulate.Controllers
 
         public IActionResult Index(int? maxItems)
         {
-            if (!maxItems.HasValue)
-            {
-                maxItems = 25;
-            }
+            if (!maxItems.HasValue) maxItems = 25;
 
             var listNodes = CurrentPage.Children
                 .Where(x => x.ContentType.Alias.InvariantEquals(ArticulateConstants.ArticulateArchiveContentTypeAlias))
@@ -91,7 +88,7 @@ namespace Articulate.Controllers
             *         => content.Children<T>(GetNavigationQueryService(content), GetPublishedStatusFilteringService(content), culture);
             */
 
-            // var x = rootPageModel.Children<PostModel>().ToList();
+           // var x = rootPageModel.Children<PostModel>().ToList();
 
             var feed = _feedGenerator.GetFeed(rootPageModel, rootPageModel.Children<PostModel>());
 
@@ -101,15 +98,9 @@ namespace Articulate.Controllers
         public IActionResult Author(int authorId, int? maxItems)
         {
             var author = _umbracoHelper.Content(authorId);
-            if (author == null)
-            {
                 throw new ArgumentNullException(nameof(author));
-            }
 
-            if (!maxItems.HasValue)
-            {
-                maxItems = 25;
-            }
+            if (!maxItems.HasValue) maxItems = 25;
 
             //create a master model
             var masterModel = new MasterModel(author, _publishedValueFallback, _variationContextAccessor);
@@ -130,30 +121,18 @@ namespace Articulate.Controllers
 
         public IActionResult Categories(string tag, int? maxItems)
         {
-            if (tag == null)
-            {
-                throw new ArgumentNullException(nameof(tag));
-            }
+            if (tag == null) throw new ArgumentNullException(nameof(tag));
 
-            if (!maxItems.HasValue)
-            {
-                maxItems = 25;
-            }
+            if (!maxItems.HasValue) maxItems = 25;
 
             return RenderTagsOrCategoriesRss("ArticulateCategories", "categories", maxItems.Value, tag);
         }
 
         public IActionResult Tags(string tag, int? maxItems)
         {
-            if (tag == null)
-            {
-                throw new ArgumentNullException(nameof(tag));
-            }
+            if (tag == null) throw new ArgumentNullException(nameof(tag));
 
-            if (!maxItems.HasValue)
-            {
-                maxItems = 25;
-            }
+            if (!maxItems.HasValue) maxItems = 25;
 
             return RenderTagsOrCategoriesRss("ArticulateTags", "tags", maxItems.Value, tag);
         }
@@ -201,7 +180,6 @@ namespace Articulate.Controllers
         /// <returns></returns>
         public IActionResult FeedXslt()
         {
-
             var result = Resources.FeedXslt;
             return Content(result, "text/xml");
         }
