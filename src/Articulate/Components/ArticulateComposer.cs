@@ -7,7 +7,6 @@ using Articulate.Syndication;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Smidge;
 using Umbraco.Cms.Core.Composing;
 using Umbraco.Cms.Core.DependencyInjection;
 using Umbraco.Cms.Core.Notifications;
@@ -43,7 +42,6 @@ namespace Articulate.Components
             builder.UrlProviders().InsertBefore<NewDefaultUrlProvider, DateFormattedUrlProvider>();
             builder.ContentFinders().InsertBefore<ContentFinderByUrlNew, DateFormattedPostContentFinder>();
 
-            services.AddSingleton<IBundleManager, BundleManager>();
             services.AddOptions<ArticulateOptions>();
 
             builder.AddNotificationHandler<ContentSavingNotification, ContentSavingHandler>();
