@@ -111,20 +111,20 @@ namespace Articulate.Routing
 
                         var rootNodePath = nodeByPathGroup.Key.EnsureEndsWith('/');
 
-                    foreach (IPublishedContent articulateRootNode in nodeByPathGroup)
-                    {
-                        MapRssRoute(httpContext, rootNodePath, articulateRootNode, domains);
-                        //MapMarkdownEditorRoute(httpContext, rootNodePath, articulateRootNode, domains);
-                        MapAuthorsRssRoute(httpContext, rootNodePath, articulateRootNode, domains);
+                        foreach (IPublishedContent articulateRootNode in nodeByPathGroup)
+                        {
+                            MapRssRoute(httpContext, rootNodePath, articulateRootNode, domains);
+                            //MapMarkdownEditorRoute(httpContext, rootNodePath, articulateRootNode, domains);
+                            MapAuthorsRssRoute(httpContext, rootNodePath, articulateRootNode, domains);
 
-                        MapSearchRoute(httpContext, rootNodePath, articulateRootNode, domains);
-                        MapMetaWeblogRoute(httpContext, rootNodePath, articulateRootNode, domains);
-                        MapManifestRoute(httpContext, rootNodePath, articulateRootNode, domains);
-                        MapRsdRoute(httpContext, rootNodePath, articulateRootNode, domains);
-                        MapOpenSearchRoute(httpContext, rootNodePath, articulateRootNode, domains);
+                            MapSearchRoute(httpContext, rootNodePath, articulateRootNode, domains);
+                            MapMetaWeblogRoute(httpContext, rootNodePath, articulateRootNode, domains);
+                            MapManifestRoute(httpContext, rootNodePath, articulateRootNode, domains);
+                            MapRsdRoute(httpContext, rootNodePath, articulateRootNode, domains);
+                            MapOpenSearchRoute(httpContext, rootNodePath, articulateRootNode, domains);
 
-                        // tags/cats routes are the least specific
-                        MapTagsAndCategoriesRoute(httpContext, rootNodePath, articulateRootNode, domains);
+                            // tags/cats routes are the least specific
+                            MapTagsAndCategoriesRoute(httpContext, rootNodePath, articulateRootNode, domains);
                         }
                     }
                 }

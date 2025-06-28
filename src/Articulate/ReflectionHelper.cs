@@ -11,43 +11,45 @@ namespace Articulate
     {
         public static object GetStaticProperty(this Type type, string propertyName, Func<IEnumerable<PropertyInfo>, PropertyInfo> filter = null)
         {
-            var propertyInfo = GetPropertyInfo(type, propertyName, filter);
-            if (propertyInfo == null)
-                throw new ArgumentOutOfRangeException("propertyName",
+            var propertyInfo = GetPropertyInfo(type, propertyName, filter) ?? throw new ArgumentOutOfRangeException("propertyName",
                     $"Couldn't find property {propertyName} in type {type.FullName}");
+
             return propertyInfo.GetValue(null, null);
         }
 
         public static object CallStaticMethod(this Type type, string methodName, params object[] parameters)
         {
-            var methodInfo = GetMethodInfo(type, methodName);
-            if (methodInfo == null)
-                throw new ArgumentOutOfRangeException("methodName",
+            var methodInfo = GetMethodInfo(type, methodName) ?? throw new ArgumentOutOfRangeException("methodName",
                     $"Couldn't find method {methodName} in type {type.FullName}");
+
             return methodInfo.Invoke(null, parameters);
         }
 
         public static object CallMethod(this object obj, string methodName, params object[] parameters)
         {
             if (obj == null)
+            {
                 throw new ArgumentNullException("obj");
+            }
+
             Type type = obj.GetType();
-            var methodInfo = GetMethodInfo(type, methodName);
-            if (methodInfo == null)
-                throw new ArgumentOutOfRangeException("methodName",
+            var methodInfo = GetMethodInfo(type, methodName) ?? throw new ArgumentOutOfRangeException("methodName",
                     $"Couldn't find method {methodName} in type {type.FullName}");
+
             return methodInfo.Invoke(obj, parameters);
         }
 
         public static object CallMethod(this object obj, string methodName, Func<IEnumerable<MethodInfo>, MethodInfo> filter = null, params object[] parameters)
         {
             if (obj == null)
+            {
                 throw new ArgumentNullException("obj");
+            }
+
             Type type = obj.GetType();
-            var methodInfo = GetMethodInfo(type, methodName, filter);
-            if (methodInfo == null)
-                throw new ArgumentOutOfRangeException("methodName",
+            var methodInfo = GetMethodInfo(type, methodName, filter) ?? throw new ArgumentOutOfRangeException("methodName",
                     $"Couldn't find method {methodName} in type {type.FullName}");
+
             return methodInfo.Invoke(obj, parameters);
         }
 
@@ -64,7 +66,9 @@ namespace Articulate
                 catch (AmbiguousMatchException)
                 {
                     if (filter == null)
+                    {
                         throw;
+                    }
 
                     methodInfo = filter(
                         type.GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static)
@@ -90,7 +94,9 @@ namespace Articulate
                 catch (AmbiguousMatchException)
                 {
                     if (filter == null)
+                    {
                         throw;
+                    }
 
                     propInfo = filter(type.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static)
                         .Where(x => x.Name == propertyName));
@@ -105,24 +111,28 @@ namespace Articulate
         public static object GetPropertyValue(this object obj, string propertyName)
         {
             if (obj == null)
+            {
                 throw new ArgumentNullException("obj");
+            }
+
             Type objType = obj.GetType();
-            PropertyInfo propInfo = GetPropertyInfo(objType, propertyName);
-            if (propInfo == null)
-                throw new ArgumentOutOfRangeException(nameof(propertyName),
+            PropertyInfo propInfo = GetPropertyInfo(objType, propertyName) ?? throw new ArgumentOutOfRangeException(nameof(propertyName),
                     $"Couldn't find property {propertyName} in type {objType.FullName}");
+
             return propInfo.GetValue(obj, null);
         }
 
         public static void SetPropertyValue(this object obj, string propertyName, object val)
         {
             if (obj == null)
+            {
                 throw new ArgumentNullException("obj");
+            }
+
             Type objType = obj.GetType();
-            PropertyInfo propInfo = GetPropertyInfo(objType, propertyName);
-            if (propInfo == null)
-                throw new ArgumentOutOfRangeException(nameof(propertyName),
+            PropertyInfo propInfo = GetPropertyInfo(objType, propertyName) ?? throw new ArgumentOutOfRangeException(nameof(propertyName),
                     $"Couldn't find property {propertyName} in type {objType.FullName}");
+
             propInfo.SetValue(obj, val, null);
         }
     }

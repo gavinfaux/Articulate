@@ -58,11 +58,13 @@ namespace Articulate.ImportExport
 
                 //no comments to import
                 if (blogMlPost.Comments.Any() == false)
+                {
                     continue;
+                }
 
                 var body = post.GetValue<string>("richText");
                 if (body.IsNullOrWhiteSpace())
-                {                    
+                {
                     body = MarkdownHelper.ToHtml(post.GetValue<string>("markdown"));
                 }
 
@@ -79,7 +81,9 @@ namespace Articulate.ImportExport
                     string commentText = comment.Content.Content;
 
                     if (comment.Content.ContentType == BlogMLContentType.Base64)
+                    {
                         commentText = Encoding.UTF8.GetString(Convert.FromBase64String(comment.Content.Content));
+                    }
 
                     var xComment = new XElement(nsWp + "comment",
                         new XElement(nsWp + "comment_id", comment.Id),

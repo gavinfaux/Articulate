@@ -7,20 +7,16 @@ namespace Articulate
 {
     public static class StringExtensions
     {
-        public static string NewLinesToSpaces(this string input)
-        {
-            return input.Replace("\r", " ").Replace("\n", " ").Replace("  ", "");
-        }
+        public static string NewLinesToSpaces(this string input) => input.Replace("\r", " ").Replace("\n", " ").Replace("  ", "");
 
-        public static string DecodeHtml(this string text)
-        {
-            return HttpUtility.HtmlDecode(text);
-        }
+        public static string DecodeHtml(this string text) => HttpUtility.HtmlDecode(text);
 
         public static string TruncateAtWord(this string text, int maxCharacters, string trailingStringIfTextCut = "&hellip;")
         {
             if (text == null || (text = text.Trim()).Length <= maxCharacters)
+            {
                 return text;
+            }
 
             int trailLength = trailingStringIfTextCut.StartsWith("&") ? 1
                                                                       : trailingStringIfTextCut.Length;
@@ -28,7 +24,9 @@ namespace Articulate
                                                              : 0;
             int pos = text.LastIndexOf(" ", maxCharacters, StringComparison.Ordinal);
             if (pos >= 0)
-                return text.Substring(0, pos) + trailingStringIfTextCut;
+            {
+                return text[..pos] + trailingStringIfTextCut;
+            }
 
             return string.Empty;
         }

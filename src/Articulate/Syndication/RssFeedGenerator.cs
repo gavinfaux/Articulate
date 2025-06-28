@@ -44,10 +44,7 @@ namespace Articulate.Syndication
             return feed;
         }
 
-        protected virtual string GetPostContent(PostModel model)
-        {
-            return model.Body.ToHtmlString();
-        }
+        protected virtual string GetPostContent(PostModel model) => model.Body.ToHtmlString();
 
         protected virtual SyndicationItem GetFeedItem(IMasterModel model, PostModel post, string rootUrl)
         {
@@ -112,7 +109,7 @@ namespace Articulate.Syndication
             if (!posts.Any())
             {
                 // TODO: posts collection is empty - passed from RSS controller Index?
-                return new List<SyndicationItem>(); 
+                return new List<SyndicationItem>();
             }
 
             return posts.Select(post => GetFeedItem(model, post, rootUrl)).WhereNotNull().ToList();

@@ -48,7 +48,9 @@ namespace Articulate.Controllers
 
             var action = ControllerContext.RouteData.Values["action"].ToString();
             if (!EnsurePhsyicalViewExists(action))
+            {
                 return new PublishedContentNotFoundResult(UmbracoContext);
+            }
 
             return View(action, new ContentModel(CurrentPage));
         }

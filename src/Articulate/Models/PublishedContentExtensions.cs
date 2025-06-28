@@ -171,7 +171,7 @@ namespace Articulate.Models
                     //var size = GetDimensionsForAlias(cropAlias);
                     //if (size.width > 0 && size.height > 0)
                     //{
-                        cropUrl = baseUrl.GetCropUrl(imageCropMode: imageCropMode);
+                    cropUrl = baseUrl.GetCropUrl(imageCropMode: imageCropMode);
                     //}
                 }
             }
@@ -182,7 +182,7 @@ namespace Articulate.Models
         ///// <summary>
         ///// A private helper to map crop aliases to dimensions.
         ///// </summary>
-        private static async Task<Size>GetDimensionsForAlias(this string cropAlias, IDataTypeService dataTypeService, Size fallBackSize = default)
+        private static async Task<Size> GetDimensionsForAlias(this string cropAlias, IDataTypeService dataTypeService, Size fallBackSize = default)
         {
             //var dataTypeService = StaticServiceProvider.Instance.GetRequiredService<IDataTypeService>();
             var picker = await dataTypeService.GetAsync(ArticulateConstants.ArticulateImagePicker);
@@ -229,5 +229,3 @@ namespace Articulate.Models
     }
 }
 
-		
-		

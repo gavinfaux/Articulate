@@ -20,10 +20,12 @@ namespace Articulate.Routing
                 : routePath).EnsureEndsWith('/');
 
             if (rootRoutePath == virtualPath)
+            {
                 return string.Empty;
+            }
 
             return rootRoutePath.StartsWith(virtualPath)
-                ? rootRoutePath.Substring(virtualPath.Length)
+                ? rootRoutePath[virtualPath.Length..]
                 : rootRoutePath.TrimStart('/');
         }
     }

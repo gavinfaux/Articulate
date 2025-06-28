@@ -62,7 +62,7 @@
 
 //            var articulateModel = new MasterModel(content, _publishedValueFallback, _variationContextAccessor);
 //            var viewPath = PathHelper.GetThemePartialViewPath(articulateModel, "FeedGitHub");
-            
+
 //            return Content(RenderViewToString(content, this, viewPath));
 //        }        
 

@@ -44,7 +44,9 @@ namespace Articulate
             ILocalizationService localizationService)
         {
             if (contentType is null)
+            {
                 throw new ArgumentNullException(nameof(contentType));
+            }
 
             var variesByCulure = contentType.VariesByCulture();
 
@@ -106,7 +108,9 @@ namespace Articulate
             bool merge = false)
         {
             if (contentType is null)
+            {
                 throw new ArgumentNullException(nameof(contentType));
+            }
 
             var variesByCulture = VariesByCulture(propertyTypeAlias, contentType);
 
@@ -137,20 +141,22 @@ namespace Articulate
             Func<IContentBase, IContentTypeComposition, ContentCultureInfos, object> propertyValueGetter)
         {
             if (contentType is null)
+            {
                 throw new ArgumentNullException(nameof(contentType));
+            }
 
             if (content.ContentType.VariesByCulture())
             {
                 // iterate over any existing cultures defined on the content item
                 foreach (var c in content.CultureInfos)
                 {
-                    var propertyType = contentType.CompositionPropertyTypes.FirstOrDefault(x => x.Alias == propertyAlias);
-                    if (propertyType == null)
-                        throw new InvalidOperationException($"No property type found by alias {propertyAlias}");
+                    var propertyType = contentType.CompositionPropertyTypes.FirstOrDefault(x => x.Alias == propertyAlias) ?? throw new InvalidOperationException($"No property type found by alias {propertyAlias}");
 
                     var valueToSet = propertyValueGetter(content, contentType, c);
                     if (valueToSet == null || (valueToSet is string propValAsString && string.IsNullOrWhiteSpace(propValAsString)))
+                    {
                         continue;
+                    }
 
                     content.SetValue(propertyAlias, valueToSet, propertyType.VariesByCulture() ? c.Culture : null);
                 }
@@ -159,7 +165,9 @@ namespace Articulate
             {
                 var propertyValue = propertyValueGetter(content, contentType, null);
                 if (propertyValue == null || (propertyValue is string propValAsString && string.IsNullOrWhiteSpace(propValAsString)))
+                {
                     return;
+                }
 
                 content.SetValue(propertyAlias, propertyValue);
             }

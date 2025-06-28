@@ -115,7 +115,7 @@ namespace Articulate.MetaWeblog
 
         public async Task<WilderMinds.MetaWeblog.Tag[]> GetTagsAsync(string blogid, string username, string password)
         {
-             await ValidateUser(username, password);
+            await ValidateUser(username, password);
 
             // TODO: These would be across all Articulate Blog root nodes :S
             var tags = _tagService.GetAllTags("ArticulateTags")
@@ -130,13 +130,9 @@ namespace Articulate.MetaWeblog
 
         public async Task<Post[]> GetRecentPostsAsync(string blogid, string username, string password, int numberOfPosts)
         {
-             await ValidateUser(username, password);
+            await ValidateUser(username, password);
 
-            var node = BlogRoot().ChildrenOfType(ArticulateConstants.ArticulateArchiveContentTypeAlias).FirstOrDefault();
-            if (node == null)
-            {
-                throw new InvalidOperationException("No Articulate Archive node found");
-            }
+            var node = BlogRoot().ChildrenOfType(ArticulateConstants.ArticulateArchiveContentTypeAlias).FirstOrDefault() ?? throw new InvalidOperationException("No Articulate Archive node found");
 
             var recent = _contentService
                     .GetPagedChildren(node.Id, 0, numberOfPosts, out long totalPosts, ordering: Ordering.By("updateDate", direction: Direction.Descending))
@@ -152,17 +148,9 @@ namespace Articulate.MetaWeblog
 
             var root = BlogRoot();
 
-            var node = root.ChildrenOfType(ArticulateConstants.ArticulateArchiveContentTypeAlias).FirstOrDefault();
-            if (node == null)
-            {
-                throw new InvalidOperationException("No Articulate Archive node found");
-            }
+            var node = root.ChildrenOfType(ArticulateConstants.ArticulateArchiveContentTypeAlias).FirstOrDefault() ?? throw new InvalidOperationException("No Articulate Archive node found");
 
-            var contentType = _contentTypeService.Get("ArticulateRichText");
-            if (contentType == null)
-            {
-                throw new InvalidOperationException("No content type found with alias 'ArticulateRichText'");
-            }
+            var contentType = _contentTypeService.Get("ArticulateRichText") ?? throw new InvalidOperationException("No content type found with alias 'ArticulateRichText'");
 
             var content = _contentService.CreateWithInvariantOrDefaultCultureName(
                 post.title, node.Id, contentType, _localizationService, user.Id);
@@ -220,11 +208,7 @@ namespace Articulate.MetaWeblog
                 return fromPost;
             }
 
-            var content = _contentService.GetById(asInt.Result);
-            if (content == null)
-            {
-                throw new InvalidOperationException("No post found with id " + postid);
-            }
+            var content = _contentService.GetById(asInt.Result) ?? throw new InvalidOperationException("No post found with id " + postid);
 
             var fromContent = FromContent(content);
             return fromContent;
@@ -264,11 +248,7 @@ namespace Articulate.MetaWeblog
 
             var umbracoContent = _contentService.GetById(asInt.Result);
 
-            var contentType = _contentTypeService.Get("ArticulateRichText");
-            if (contentType == null)
-            {
-                throw new InvalidOperationException("No content type found with alias 'ArticulateRichText'");
-            }
+            var contentType = _contentTypeService.Get("ArticulateRichText") ?? throw new InvalidOperationException("No content type found with alias 'ArticulateRichText'");
 
             var root = BlogRoot();
 
@@ -438,7 +418,7 @@ namespace Articulate.MetaWeblog
         {
             categories = post.Categories.ToArray(),
             description = post.Body.ToString(),
-            dateCreated = post.PublishedDate != default(DateTime) ? post.PublishedDate : post.UpdateDate,
+            dateCreated = post.PublishedDate != default ? post.PublishedDate : post.UpdateDate,
             postid = post.Id.ToString(CultureInfo.InvariantCulture),
             wp_slug = post.Url(),
             mt_excerpt = post.Excerpt,
@@ -473,12 +453,7 @@ namespace Articulate.MetaWeblog
 
         private IPublishedContent BlogRoot()
         {
-            var node = _umbracoContextAccessor.GetRequiredUmbracoContext().Content.GetById(_articulateBlogRootNodeId);
-
-            if (node == null)
-            {
-                throw new InvalidOperationException("No node found by route");
-            }
+            var node = _umbracoContextAccessor.GetRequiredUmbracoContext().Content.GetById(_articulateBlogRootNodeId) ?? throw new InvalidOperationException("No node found by route");
 
             return node;
         }

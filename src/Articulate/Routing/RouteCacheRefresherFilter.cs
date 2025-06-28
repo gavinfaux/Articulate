@@ -46,7 +46,7 @@ namespace Articulate.Routing
                     var umbCtx = umbracoContextReference.UmbracoContext;
 
                     // Regenerate the generated routes
-                    articulateRouter.MapRoutes(context, umbCtx, _publishedContentTypeCache,_documentCacheService);
+                    articulateRouter.MapRoutes(context, umbCtx, _publishedContentTypeCache, _documentCacheService);
                 }
             }
         }

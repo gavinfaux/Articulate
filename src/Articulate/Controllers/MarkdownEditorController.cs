@@ -50,7 +50,7 @@
 //                //    typeof(AuthenticationController),
 //                   // new Dictionary<string, object> { ["loginModel"] = null }
 //            };
-            
+
 //            return View("~/App_Plugins/Articulate/Views/MarkdownEditor.cshtml", vm);
 //        }
 //    }

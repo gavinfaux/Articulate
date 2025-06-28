@@ -220,7 +220,6 @@
 //            IPublishedContent published = _umbracoHelper.Content(content.Id);
 //            return Ok(new { url = published.Url() });
 //        }
-        
 
 //        private ParseImageResponse ParseImages(string body, IFormFileCollection formFiles, bool extractFirstImageAsProperty)
 //        {
@@ -237,7 +236,6 @@
 //                    //get the file at this index
 //                    var file = formFiles[index.Result];
 
-                    
 //                    //normalize
 //                    var untrustedFileName = Path.GetFullPath(file.FileName);
 //                    if (untrustedFileName.StartsWith("..") || untrustedFileName.Contains("/.."))
@@ -310,7 +308,7 @@
 //                        }
 //                    }
 //                }
-                
+
 //                return m.Value;
 //            });
 

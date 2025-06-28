@@ -313,15 +313,9 @@ namespace Articulate
                     return Task.CompletedTask;
                 });
 
-        public static IHtmlContent ListTags(this IHtmlHelper html, PostModel model, Func<string, HelperResult> tagLink, string delimiter = ", ")
-        {
-            return html.ListCategoriesOrTags(model.Tags.ToArray(), tagLink, delimiter);
-        }
+        public static IHtmlContent ListTags(this IHtmlHelper html, PostModel model, Func<string, HelperResult> tagLink, string delimiter = ", ") => html.ListCategoriesOrTags(model.Tags.ToArray(), tagLink, delimiter);
 
-        public static IHtmlContent ListCategories(this IHtmlHelper html, PostModel model, Func<string, HelperResult> tagLink, string delimiter = ", ")
-        {
-            return html.ListCategoriesOrTags(model.Categories.ToArray(), tagLink, delimiter);
-        }
+        public static IHtmlContent ListCategories(this IHtmlHelper html, PostModel model, Func<string, HelperResult> tagLink, string delimiter = ", ") => html.ListCategoriesOrTags(model.Categories.ToArray(), tagLink, delimiter);
 
         public static IHtmlContent ListCategoriesOrTags(this IHtmlHelper html, string[] items, Func<string, HelperResult> tagLink, string delimiter)
             => new HelperResult(writer =>
@@ -354,10 +348,7 @@ namespace Articulate
             IEnumerable<T> collection,
             string[] headers,
             string[] cssClasses,
-            params Func<T, HelperResult>[] cellTemplates) where T : class
-        {
-            return html.Table(collection, null, headers, cssClasses, cellTemplates);
-        }
+            params Func<T, HelperResult>[] cellTemplates) where T : class => html.Table(collection, null, headers, cssClasses, cellTemplates);
 
         /// <summary>
         /// Creates an Html table based on the collection

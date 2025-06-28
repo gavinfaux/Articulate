@@ -30,7 +30,9 @@ namespace Articulate.Components
             foreach (var c in e.SavedEntities)
             {
                 if (!c.WasPropertyDirty("Id") || !c.ContentType.Alias.InvariantEquals(ArticulateConstants.ArticulateContentTypeAlias))
+                {
                     continue;
+                }
 
                 //it's a root blog node, set up the required sub nodes (archive , authors) if they don't exist
 

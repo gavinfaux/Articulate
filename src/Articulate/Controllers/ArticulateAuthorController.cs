@@ -80,6 +80,5 @@ namespace Articulate.Controllers
             return View(PathHelper.GetThemeViewPath(author, "Author"), author);
         }
 
-
     }
 }

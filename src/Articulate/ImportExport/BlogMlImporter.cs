@@ -16,11 +16,11 @@ using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.IO;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.PropertyEditors;
-using Umbraco.Cms.Infrastructure.Scoping;
 using Umbraco.Cms.Core.Serialization;
 using Umbraco.Cms.Core.Services;
 using Umbraco.Cms.Core.Strings;
 using Umbraco.Cms.Infrastructure.Persistence;
+using Umbraco.Cms.Infrastructure.Scoping;
 using Umbraco.Extensions;
 using Task = System.Threading.Tasks.Task;
 
@@ -385,11 +385,11 @@ namespace Articulate.ImportExport
                     else
                     {
                         var slugArray = post.Url.OriginalString.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
-                        var fileNameAndQuery = slugArray[slugArray.Length - 1];
+                        var fileNameAndQuery = slugArray[^1];
                         var fileNameAndQueryArray = fileNameAndQuery.Split(new[] { '?' }, StringSplitOptions.RemoveEmptyEntries);
-                        var fileName = fileNameAndQueryArray[fileNameAndQueryArray.Length - 1];
+                        var fileName = fileNameAndQueryArray[^1];
                         var fileNameArray = fileName.Split(new[] { '.' }, StringSplitOptions.RemoveEmptyEntries);
-                        var ext = fileNameArray[fileNameArray.Length - 1];
+                        var ext = fileNameArray[^1];
                         slug = fileName.TrimEnd("." + ext);
                     }
 

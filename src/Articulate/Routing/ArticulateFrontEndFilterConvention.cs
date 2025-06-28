@@ -10,7 +10,7 @@ namespace Articulate.Routing
 
         public ArticulateFrontEndFilterConvention(IPublishedContentTypeCache publishedContentTypeCache, IDocumentCacheService documentCacheService)
         {
-            _documentCacheService =documentCacheService;
+            _documentCacheService = documentCacheService;
             _publishedContentTypeCache = publishedContentTypeCache;
         }
 

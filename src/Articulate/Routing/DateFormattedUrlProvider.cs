@@ -31,7 +31,9 @@ namespace Articulate.Routing
                 {
                     var useDateFormat = content.Parent.Parent.Value<bool>("useDateFormatForUrl");
                     if (!useDateFormat)
+                    {
                         return null;
+                    }
                 }
 
                 var date = content.Value<DateTime?>("publishedDate");

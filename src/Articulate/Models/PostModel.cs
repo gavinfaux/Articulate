@@ -82,7 +82,7 @@ namespace Articulate.Models
         public MediaWithCrops PostImage => _postImage ??= base.Unwrap().Value<MediaWithCrops>("postImage");
 
         private string _croppedPostImageUrl;
-        
+
         /// <summary>
         /// Cropped version of the PostImageUrl
         /// </summary>
@@ -99,6 +99,7 @@ namespace Articulate.Models
                 {
                     return null;
                 }
+
                 _croppedPostImageUrl = this.GetCroppedImageUrl("postImage", "wide");
                 return _croppedPostImageUrl;
             }
