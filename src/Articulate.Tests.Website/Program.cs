@@ -107,8 +107,8 @@ app.UseUmbraco()
         // u.EndpointRouteBuilder.MapRazorPages();
 
         // Enables the Umbraco Preview Hub for previewing content unpublished content
-        u.EndpointRouteBuilder.MapRazorPages();
-		
+        u.UseUmbracoPreviewEndpoints();
+
         u.UseBackOfficeEndpoints();
         u.UseWebsiteEndpoints();
     });

@@ -497,4 +497,3 @@ build
 !build/build.ps1
 !/src/Articulate/build/Articulate.props
 !**/[Pp]ackages/markdown-editor/
-
