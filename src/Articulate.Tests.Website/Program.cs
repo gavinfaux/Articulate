@@ -1,11 +1,8 @@
-using System.Collections.Generic;
-using System.Linq;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
-using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Smidge;
 using Umbraco.Cms.Core.DependencyInjection;
@@ -19,20 +16,38 @@ builder.CreateUmbracoBuilder()
     .AddComposers()
     .Build();
 
+/* 
+* Articulate requires Smidge
+*   add the following to your appsettings.json
+*   "smidge": {
+*   "dataFolder": "Smidge",
+*   "version": "1"
+*   }
+*/
+
 builder.Services.AddSmidge(builder.Configuration.GetSection("smidge"));
 
+// Articulate may require increasing the maximum request size in order to process large requests,
+// e.g. import BlogML files or multiple attachments in a single request (Mobile Markdown Editor and Live Writer)
+
+// Defaults to 30,000,000 bytes (~28.6 MB)
 builder.Services.Configure<IISServerOptions>(options => options.MaxRequestBodySize = int.MaxValue);
 
+// Defaults to 30,000,000 bytes (~28.6 MB)
 builder.Services.Configure<KestrelServerOptions>(options => options.Limits.MaxRequestBodySize = int.MaxValue);
 
 builder.Services.Configure<FormOptions>(x =>
 {
+    //  Defaults to 4,194,304 bytes, which is approximately 4MB.
     x.ValueLengthLimit = int.MaxValue;
+    // Defaults to 134,217,728 bytes, which is approximately 128MB.
     x.MultipartBodyLengthLimit = int.MaxValue;
+    // Defaults to 16,384 bytes, which is approximately 16KB.
     x.MultipartHeadersLengthLimit = int.MaxValue;
 });
 
-builder.Services.AddRazorPages();
+// Only required for Razor page support in Pages folder (just a Debug helper at present)
+// builder.Services.AddRazorPages();
 
 var app = builder.Build();
 
@@ -40,21 +55,21 @@ await app.BootUmbracoAsync();
 
 if (app.Environment.IsDevelopment())
 {
-    _ = app.UseDeveloperExceptionPage();
+    app.UseDeveloperExceptionPage();
 }
 
 app.UseUmbraco()
     .WithMiddleware(u =>
     {
-        _ = u.UseBackOffice();
-        _ = u.UseWebsite();
+        u.UseBackOffice();
+        u.UseWebsite();
     })
     .WithEndpoints(u =>
     {
         // // NOTE: Only enable this in development for debugging route issues
         //if (app.Environment.IsDevelopment())
         //{
-        //    _ = u.EndpointRouteBuilder.MapGet("/debug/routes", (IEnumerable<EndpointDataSource> endpointSources) =>
+        //    u.EndpointRouteBuilder.MapGet("/debug/routes", (IEnumerable<EndpointDataSource> endpointSources) =>
         //    {
         //        var endpoints = endpointSources
         //            .SelectMany(es => es.Endpoints)
@@ -74,10 +89,12 @@ app.UseUmbraco()
         //    });
         //}
 
-        _ = u.EndpointRouteBuilder.MapRazorPages();
-        _ = u.UseUmbracoPreviewEndpoints();
-        _ = u.UseBackOfficeEndpoints();
-        _ = u.UseWebsiteEndpoints();
+        // Enables the Umbraco Preview Hub for previewing content unpublished content
+        u.EndpointRouteBuilder.MapRazorPages();
+
+        u.UseUmbracoPreviewEndpoints();
+        u.UseBackOfficeEndpoints();
+        u.UseWebsiteEndpoints();
     });
 
 if (!app.Environment.IsDevelopment())
@@ -85,5 +102,7 @@ if (!app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 }
 
+// Articulate requires Smidge
 app.UseSmidge();
+
 app.Run();
