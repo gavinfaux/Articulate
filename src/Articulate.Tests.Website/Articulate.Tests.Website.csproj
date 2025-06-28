@@ -41,11 +41,9 @@
     <None Remove="umbraco\**" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Watch Remove="bin\**\*" />
-    <Watch Remove="obj\**\*" />
-    <Watch Remove="umbraco\**\*" />
-  </ItemGroup>
-
+  <PropertyGroup>
+    <!-- Files to watch -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);umbraco\**</DefaultItemExcludes>
+  </PropertyGroup>  
 
 </Project>

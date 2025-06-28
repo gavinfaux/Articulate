@@ -2,9 +2,10 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Smidge;
+using Smidge.Cache;
+using Smidge.Options;
 using Umbraco.Cms.Core.DependencyInjection;
 using Umbraco.Extensions;
 
@@ -25,7 +26,19 @@ builder.CreateUmbracoBuilder()
 *   }
 */
 
-builder.Services.AddSmidge(builder.Configuration.GetSection("smidge"));
+// DX: dotnet watch run --environment Development 
+builder.Services.AddSmidge(builder.Configuration.GetSection("smidge")).Configure<SmidgeOptions>(options =>
+{
+    if (builder.Environment.IsDevelopment())
+    {
+        options.CacheOptions.UseInMemoryCache = true;
+    }
+    //change some of the bundle options for rendering in Debug mode:
+    options.DefaultBundleOptions.DebugOptions.SetCacheBusterType<TimestampCacheBuster>();
+    options.DefaultBundleOptions.DebugOptions.FileWatchOptions.Enabled = true;
+    //change some of the bundle options for rendering in Production mode:
+    options.DefaultBundleOptions.ProductionOptions.SetCacheBusterType<AppDomainLifetimeCacheBuster>();
+});
 
 // Articulate may require increasing the maximum request size in order to process large requests,
 // e.g. import BlogML files or multiple attachments in a single request (Mobile Markdown Editor and Live Writer)
@@ -89,10 +102,13 @@ app.UseUmbraco()
         //    });
         //}
 
+
+        // Only required for Razor page support in Pages folder (just a Debug helper at present)
+        // u.EndpointRouteBuilder.MapRazorPages();
+
         // Enables the Umbraco Preview Hub for previewing content unpublished content
         u.EndpointRouteBuilder.MapRazorPages();
-
-        u.UseUmbracoPreviewEndpoints();
+		
         u.UseBackOfficeEndpoints();
         u.UseWebsiteEndpoints();
     });
