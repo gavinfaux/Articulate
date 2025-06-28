@@ -13,26 +13,25 @@
     @Html.AuthorRssFeed(Model, Url)
 }
 
-<main class="content" role="main">
 
     
     <article class="post">
 
         <header>
-            <h1 class="post-title"><a href="@Url.ArticulateAuthorRssUrl(Model)" class="fa fa-rss"><span>RSS</span></a>@Model.Name</h1>
+            <h1 class="post-title"><a href="@Url.ArticulateAuthorRssUrl(Model)" title="AuthorRSS feed"><i class="fa-solid fa-rss"></i><span class="hidden">RSS</span></a> @Model.Name</h1>
         </header>
         <section class="post-content">
 
             @if (Model.Image != null)
             {
                 var img = Model.Image.GetCropUrl("wide");
-                <img class="postImage" src="@img" />
+                <img class="postImage" src="@img" fetchpriority="high" width="625" height="320" alt="@Model.Name post image"/>
             }
             <p>@Model.Bio</p>
             @if (!Model.AuthorUrl.IsNullOrWhiteSpace())
             {
                 <p>
-                    Website: <a href="@Model.AuthorUrl">@Model.AuthorUrl</a>
+                    Website: <a href="@Model.AuthorUrl" title="View Author Website">@Model.AuthorUrl</a>
                 </p>
             }
 
@@ -46,7 +45,7 @@
         }
         else
         {
-            <div>
+            <div class="author-posts">
                 
                 <h3>Author's Posts</h3>
                 @await Html.ThemedPartialAsync(Model, "PostList", Model.Posts)
@@ -60,4 +59,3 @@
     
     
 
-</main>

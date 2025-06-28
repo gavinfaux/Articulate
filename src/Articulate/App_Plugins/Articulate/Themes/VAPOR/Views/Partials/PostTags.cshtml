@@ -12,7 +12,7 @@
 
                 @foreach (var category in Model.Categories)
                 {
-                    <a href="@Url.ArticulateCategoryUrl(Model, category)">@category</a>
+                    <a href="@Url.ArticulateCategoryUrl(Model, category)" title="View Posts in the category @category">@category</a>
                     if (category != Model.Categories.Last())
                     {
                         <span>, </span>
@@ -28,7 +28,7 @@
 
                 @foreach (var tag in Model.Tags)
                 {
-                    <a href="@Url.ArticulateTagUrl(Model, tag)">@tag</a>
+                    <a href="@Url.ArticulateTagUrl(Model, tag)" title="View Posts with the tag @tag">@tag</a>
                     if (tag != Model.Tags.Last())
                     {
                         <span>, </span>

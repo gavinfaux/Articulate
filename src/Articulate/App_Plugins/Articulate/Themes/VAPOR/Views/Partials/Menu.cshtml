@@ -2,10 +2,10 @@
 @using Articulate.Models
 @model global::Articulate.Models.IMasterModel
 
-<nav class="menu" role="navigation">
+<nav class="menu" role="navigation" aria-label="Main navigation">
     <ul>
-        <li><a href="@Url.ArticulateCategoriesUrl(Model)">Categories</a></li>
-        <li><a href="@Url.ArticulateTagsUrl(Model)">Tags</a></li>
+        <li><a title="View Categories" href="@Url.ArticulateCategoriesUrl(Model)">Categories</a></li>
+        <li><a title="View Tags" href="@Url.ArticulateTagsUrl(Model)">Tags</a></li>
         <li>
             @await Html.ThemedPartialAsync(Model, "SearchBox")
         </li>

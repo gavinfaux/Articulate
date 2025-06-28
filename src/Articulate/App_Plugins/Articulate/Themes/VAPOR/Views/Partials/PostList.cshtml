@@ -23,9 +23,9 @@
                     </time>
                 </div>
 
-                <a href="@post.Url()">@post.Name</a>
+                <a href="@post.Url()" title="View Post">@post.Name</a>
                 <div>
-                    <a data-disqus-identifier="@post.Key" class="comment-count" href="@post.Url()#disqus_thread"></a>
+                    <a data-disqus-identifier="@post.Key" class="comment-count" href="@post.Url()#disqus_thread" title="View Comments"></a>
                 </div>
             </li>
         }

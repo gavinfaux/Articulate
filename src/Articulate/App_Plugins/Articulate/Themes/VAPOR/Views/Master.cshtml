@@ -7,8 +7,8 @@
 <!DOCTYPE html >
 <html lang="en">
 <head>
-    <meta http-equiv="Content-Type" content="text/html" charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
 
     <title>@Model.PageTitle</title>
     @Html.MetaTags(Model)
@@ -16,19 +16,26 @@
     @Html.AdvertiseWeblogApi(Model)
     @Html.RssFeed(Model)
     @Html.RenderOpenSearch(Model)
-    <meta name="HandheldFriendly" content="True" />
-    <meta name="MobileOptimized" content="320" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />    
-
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous">
-    <link href="https://fonts.googleapis.com/css?subset=latin,cyrillic-ext,latin-ext,cyrillic&family=Open+Sans+Condensed:300|Open+Sans:400,600,400italic,600italic|Merriweather:400,300,300italic,400italic,700,700italic|Roboto+Slab:400,300&display=swap" rel="stylesheet" />
-    <link href="articulate-vapor-css" rel="stylesheet" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <environment names="Development">
+        <link href="articulate-vapor-css" rel="stylesheet" fetchpriority="high" debug="true"/>
+    </environment>
+    <environment names="Staging,Production">
+        <link href="articulate-vapor-css" rel="stylesheet" fetchpriority="high" />
+    </environment>
+    <!-- Google Fonts -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css?subset=latin,cyrillic-ext,latin-ext,cyrillic&family=Open+Sans+Condensed:300|Open+Sans:400,600,400italic,600italic|Merriweather:400,300,300italic,400italic,700,700italic|Roboto+Slab:400,300&display=swap" media="all" onload="this.rel='stylesheet'" />
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@@fortawesome/fontawesome-free@6.7.2/css/fontawesome.min.css" integrity="sha256-TBe0l9PhFaVR3DwHmA2jQbUf1y6yQ22RBgJKKkNkC50=" crossorigin="anonymous" media="print" onload="this.media='all'">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@@fortawesome/fontawesome-free@6.7.2/css/brands.min.css" integrity="sha256-lvqQzfgRxG8QBB5QMqpZGrljg5T/hNmC3vC7i3zntlI=" crossorigin="anonymous" media="print" onload="this.media='all'">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@@fortawesome/fontawesome-free@6.7.2/css/solid.min.css" integrity="sha256-ETbOOM9U8WfaXg2AkW2t+QbdpWYFRAO+HEXOth8EQbY=" crossorigin="anonymous" media="print" onload="this.media='all'">
 
     @RenderSection("Header", false)
 </head>
 <body class="@ViewBag.CssBodyClass">
+    <a href="#main-content" class="skip-link" title="Skip to main content">Skip to main content</a>
 
-    <header id="site-head">
+    <header id="site-head" role="banner">
 
         @if (!Model.BlogLogo.IsNullOrWhiteSpace())
         {
@@ -38,7 +45,7 @@
         }
 
         <h1 class="blog-title">
-            <a href="@Url.ArticulateRootUrl(Model)">
+            <a href="@Url.ArticulateRootUrl(Model)" title="Blog Home">
                 @Model.BlogTitle
             </a>
         </h1>
@@ -48,7 +55,10 @@
 
     </header>
 
-    @RenderBody()
+    <main id="main-content" role="main" tabindex="-1">
+        @RenderBody()
+    </main>
+
 
     <footer class="site-footer">
         <div class="inner">
@@ -57,15 +67,14 @@
 
             <section class="copyright">
                 &copy; @DateTime.Now.ToString("yyyy")
-                <a href="/">@Model.BlogTitle</a>. All rights reserved.
+                <a href="/" title="Blog Home">@Model.BlogTitle</a>. All rights reserved.
             </section>
-            <section>Vapor theme by <a href="http://sethlilly.com/">Seth Lilly</a></section>
+            <section>Vapor theme by <a href="http://sethlilly.com/" title="Theme Author Website">Seth Lilly</a></section>
 
         </div>
     </footer>
 
-    <!-- theme does not use scripts at this time-->
-    @* <script src="articulate-vapor-js" type="text/javascript"></script> *@
+    <script src="articulate-vapor-js" type="text/javascript"></script>
 
     @Html.GoogleAnalyticsTracking(Model)
 

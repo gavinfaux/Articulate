@@ -11,17 +11,15 @@
 
 @section header
 {
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.30.0/themes/prism.min.css" integrity="sha256-ko4j5rn874LF8dHwW29/xabhh8YBleWfvxb8nQce4Fc=" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.30.0/themes/prism.min.css" integrity="sha256-ko4j5rn874LF8dHwW29/xabhh8YBleWfvxb8nQce4Fc=" crossorigin="anonymous" media="print" onload="this.media='all'">
 }
 
-<main class="content" role="main">
-
-    <article class="post">
+    <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
 
         <header>
-            <h1 class="post-title">@Model.Name</h1>
-            <div class="post-meta">
-                <time datetime="@Model.PublishedDate.ToString("yyyy-MM-dd")">
+            <h1 class="post-title" itemprop="headline">@Model.Name</h1>
+            <div class="post-meta" aria-label="Post details">
+                <time datetime="@Model.PublishedDate.ToString("yyyy-MM-dd")" itemprop="datePublished">
                     @Model.PublishedDate.ToString("dddd, MMMM dd, yyyy")
                 </time>
             </div>
@@ -32,7 +30,7 @@
 
             @if (!Model.CroppedPostImageUrl.IsNullOrWhiteSpace())
             {
-                <img class="postImage" alt="@Model.Name" src="@Model.CroppedPostImageUrl" />
+                <img class="postImage" alt="@Model.Name" src="@Model.CroppedPostImageUrl" fetchpriority="high" width="625" height="320"/>
             }
 
             <div>
@@ -43,16 +41,22 @@
 
         <section class="share">
             <p class="info prompt">Share this post</p>
-            <a href="http://x.com/share?text=@Model.Name&url=@absUrl"
-               onclick="window.open(this.href, 'x-share', 'width=550,height=235');return false;">
-                <svg id="x-icon" xmlns="http://www.w3.org/2000/svg" x="0" y="0" width="30" height="30" viewBox="0 0 50 50">
-                    <path d="M 11 4 C 7.1456661 4 4 7.1456661 4 11 L 4 39 C 4 42.854334 7.1456661 46 11 46 L 39 46 C 42.854334 46 46 42.854334 46 39 L 46 11 C 46 7.1456661 42.854334 4 39 4 L 11 4 z M 11 6 L 39 6 C 41.773666 6 44 8.2263339 44 11 L 44 39 C 44 41.773666 41.773666 44 39 44 L 11 44 C 8.2263339 44 6 41.773666 6 39 L 6 11 C 6 8.2263339 8.2263339 6 11 6 z M 13.085938 13 L 22.308594 26.103516 L 13 37 L 15.5 37 L 23.4375 27.707031 L 29.976562 37 L 37.914062 37 L 27.789062 22.613281 L 36 13 L 33.5 13 L 26.660156 21.009766 L 21.023438 13 L 13.085938 13 z M 16.914062 15 L 19.978516 15 L 34.085938 35 L 31.021484 35 L 16.914062 15 z"></path>
-                </svg> <span class="hidden">X</span>
-            </a>
-            <a href="https://www.facebook.com/sharer/sharer.php?u=@absUrl"
-               onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
-                <i class="fa fa-2x fa-fw fa-facebook-square"></i> <span class="hidden">Facebook</span>
-            </a>
+            <div class="share-icons">
+                <a href="http://x.com/share?text=@Model.Name&url=@absUrl"
+                   onclick="window.open(this.href, 'x-share', 'width=550,height=235');return false;"
+                   aria-label="Share on X (opens in new window)"
+                   rel="noopener noreferrer" title="Share on X (opens in new window)">
+                    <i class="fa-brands fa-x-twitter" aria-hidden="true"></i>
+                    <span class="sr-only">Share on X (opens in new window)</span>
+                </a>
+                <a href="https://www.facebook.com/sharer/sharer.php?u=@absUrl"
+                   onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;"
+                   aria-label="Share on Facebook (opens in new window)"
+                   rel="noopener noreferrer" title="Share on Facebook (opens in new window)">
+                    <i class="fa-brands fa-facebook-f" aria-hidden="true"></i>
+                    <span class="sr-only">Share on Facebook (opens in new window)</span>
+                </a>
+            </div>
         </section>
 
         <footer class="post-footer">
@@ -72,7 +76,7 @@
                     <h4>
                         @if (!Model.Author.BlogUrl.IsNullOrWhiteSpace())
                         {
-                            <a href="@Model.Author.BlogUrl">@Model.Author.Name</a>
+                            <a href="@Model.Author.BlogUrl" title="View Author Blog">@Model.Author.Name</a>
                         }
                         else
                         {
@@ -96,7 +100,6 @@
 
     </article>
 
-</main>
 
 <script src="https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-core.min.js" integrity="sha256-bKrTFt2ZHyT4AE4LnBnAVctYKf9l6XP77kBvltgbjn4=" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/prismjs@1.30.0/plugins/autoloader/prism-autoloader.min.js" integrity="sha256-AjM0J5XIbiB590BrznLEgZGLnOQWrt62s3BEq65Q/I0=" crossorigin="anonymous"></script>
