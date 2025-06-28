@@ -102,7 +102,6 @@ app.UseUmbraco()
         //    });
         //}
 
-
         // Only required for Razor page support in Pages folder (just a Debug helper at present)
         // u.EndpointRouteBuilder.MapRazorPages();
 

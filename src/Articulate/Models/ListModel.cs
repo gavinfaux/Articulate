@@ -47,7 +47,7 @@ namespace Articulate.Models
             {
                 PageTags = Name;
             }
-        }        
+        }
 
         public ListModel(IPublishedContent content, IPublishedValueFallback publishedValueFallback, IVariationContextAccessor variationContextAccessor)
             : base(content, publishedValueFallback, variationContextAccessor)

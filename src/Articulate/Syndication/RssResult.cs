@@ -22,7 +22,6 @@ namespace Articulate.Syndication
             _model = model;
         }
 
-
         public override async Task ExecuteResultAsync(ActionContext context)
         {
             context.HttpContext.Response.ContentType = "application/xml";
@@ -51,7 +50,7 @@ namespace Articulate.Syndication
 
         public sealed class Utf8StringWriter : StringWriter
         {
-            public override Encoding Encoding { get { return Encoding.UTF8; } }
+            public override Encoding Encoding => Encoding.UTF8;
         }
     }
 }
