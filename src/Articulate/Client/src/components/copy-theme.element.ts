@@ -7,6 +7,7 @@ import { Articulate } from "../api/sdk.gen";
 import { formatApiError } from "../utils/error-utils";
 import { showUmbracoNotification } from "../utils/notification-utils";
 import { renderErrorMessage, renderHeaderActions } from "../utils/template-utils";
+import { formStyles } from "../utils/form-styles";
 
 /**
  * A component for duplicating Articulate themes with a new name.
@@ -241,6 +242,7 @@ export default class CopyThemeElement extends UmbLitElement {
 
   static override readonly styles = [
     UmbTextStyles,
+    formStyles,
     css`
       .theme-grid {
         display: grid;
