@@ -101,7 +101,10 @@ namespace Articulate.Controllers
         public IActionResult Author(int authorId, int? maxItems)
         {
             var author = _umbracoHelper.Content(authorId);
-            throw new ArgumentNullException(nameof(author));
+            if (author == null)
+            {
+                throw new ArgumentNullException(nameof(author));
+            }
 
             if (!maxItems.HasValue)
             {

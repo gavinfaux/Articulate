@@ -1,3 +1,4 @@
+
 using System.Linq;
 using Articulate.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -32,7 +33,6 @@ namespace Articulate.Controllers
         {
             _articulateSearcher = articulateSearcher;
         }
-
         protected override UmbracoRouteValues UmbracoRouteValues => base.UmbracoRouteValues;
 
         public override IActionResult Index() => base.Index();
@@ -62,7 +62,6 @@ namespace Articulate.Controllers
                     Enumerable.Empty<IPublishedContent>(),
                     PublishedValueFallback,
                     VariationContextAccessor);
-
                 return View(PathHelper.GetThemeViewPath(emptyList, "List"), emptyList);
             }
 

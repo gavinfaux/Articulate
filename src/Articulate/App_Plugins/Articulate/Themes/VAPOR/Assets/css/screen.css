@@ -162,8 +162,8 @@ a:visited {
   -webkit-transition: color ease 0.7s;
   transition: color ease 0.7s;
 }
-a:focus, 
-a:hover, #x-icon {
+a:focus,
+a:hover {
   color: #02090e;
 }
 p,
@@ -795,10 +795,6 @@ ul.recent-posts li {
     margin: 20px 0;
     min-height: 70px;
     clear: both;
-}
-
-#x-icon {
-  top: 2px;
 }
 
 /* === Media Queries === */

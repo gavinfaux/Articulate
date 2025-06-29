@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+
 using Articulate.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
@@ -34,7 +35,6 @@ namespace Articulate.Controllers
             PublishedValueFallback = publishedValueFallback;
             VariationContextAccessor = variationContextAccessor;
         }
-
         public IUmbracoContextAccessor UmbracoContextAccessor { get; }
         public IPublishedUrlProvider PublishedUrlProvider { get; }
         public IPublishedValueFallback PublishedValueFallback { get; }
@@ -69,7 +69,6 @@ namespace Articulate.Controllers
             }
 
             var listModel = new ListModel(pageNode, pager, listItems, PublishedValueFallback, VariationContextAccessor);
-
             return View(PathHelper.GetThemeViewPath(listModel, "List"), listModel);
         }
 
