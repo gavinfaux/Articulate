@@ -491,7 +491,7 @@ package-lock.json
 /src/Articulate.Tests.Website/umbraco
 /src/Articulate.Tests.Website/Views/ArticulateThemes
 /src/Articulate.Tests.Website/wwwroot/media
-/src/Articulate.Tests.Website/.vscode
+/src/Articulate.Tests.Website/.vscode/
 
 build
 !build/build.ps1
