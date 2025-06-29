@@ -1,5 +1,3 @@
-//TODO: Broken only for posts /rss route, not returning anything see comments in Index method? tags, categories, authors are fine
-
 using System;
 using System.Linq;
 using Articulate.Models;
@@ -83,17 +81,24 @@ namespace Articulate.Controllers
                 _publishedValueFallback,
                 _variationContextAccessor);
 
-            //TODO: This returns null, when it should be two with the default content installed
-            //TODO: This calls Umbraco.Web.Common.Extensions.FriendlyPublishedContentExtensions as below
+            /*
+              TODO: Raise issue / debug Umbraco Core - This returns null, when it should be two with the default content installed
 
-            /*     public static IEnumerable<T>? Children<T>(this IPublishedContent content, string? culture = null)
-            *         where T : class, IPublishedContent
-            *         => content.Children<T>(GetNavigationQueryService(content), GetPublishedStatusFilteringService(content), culture);
+              var feed = _feedGenerator.GetFeed(rootPageModel, rootPageModel.Children<PostModel>());
+
+              where .Children<PostModel>() calls this:
+              
+              public static IEnumerable<T>? Children<T>(this IPublishedContent content, string? culture = null)
+                 where T : class, IPublishedContent
+                    => content.Children<T>(GetNavigationQueryService(content), GetPublishedStatusFilteringService(content), culture);
             */
 
-            // var x = rootPageModel.Children<PostModel>().ToList();
+            // Work around for above issue
+            var posts = _umbracoHelper.GetPostsSortedByPublishedDate(
+                    pager, null, new[] { rootPageModel.Id })
+                .Select(x => new PostModel(x, _publishedValueFallback, _variationContextAccessor));
 
-            var feed = _feedGenerator.GetFeed(rootPageModel, rootPageModel.Children<PostModel>());
+            var feed = _feedGenerator.GetFeed(rootPageModel, posts);
 
             return new RssResult(feed, rootPageModel);
         }

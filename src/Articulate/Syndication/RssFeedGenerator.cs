@@ -106,9 +106,9 @@ namespace Articulate.Syndication
         private IEnumerable<SyndicationItem> GetFeedItems(IMasterModel model, IEnumerable<PostModel> posts)
         {
             var rootUrl = model.RootBlogNode.Url(mode: UrlMode.Absolute);
+
             if (!posts.Any())
             {
-                // TODO: posts collection is empty - passed from RSS controller Index?
                 return new List<SyndicationItem>();
             }
 
