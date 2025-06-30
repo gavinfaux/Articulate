@@ -21,7 +21,7 @@
     <ProjectReference Include="..\Articulate\Articulate.csproj" />
   </ItemGroup>
 
-  <Import Project="..\Articulate\build\Articulate.props" />
+  <Import Project="..\Articulate\buildTransitive\Articulate.targets" />
 
   <PropertyGroup>
     <!-- Razor files are needed for the backoffice to work correctly -->
@@ -41,9 +41,9 @@
     <None Remove="umbraco\**" />
   </ItemGroup>
 
-  <PropertyGroup>
-    <!-- Files to watch -->
-    <DefaultItemExcludes>$(DefaultItemExcludes);umbraco\**</DefaultItemExcludes>
-  </PropertyGroup>  
-
+  <ItemGroup>
+    <!-- tells 'dotnet watch' to ignore any file changes 
+       under the umbraco/ folder and its subdirectories. -->
+    <Watch Remove="umbraco\**\*" />
+  </ItemGroup>
 </Project>

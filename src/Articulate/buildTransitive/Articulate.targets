@@ -56,13 +56,13 @@
     <RemoveDir Directories="$(_ArticulateDestPath)" />
   </Target>
 
-
   <!--
   ========================================================================================
   == SECTION 2: NUGET PACKAGE CONSUMER - XML DOCUMENTATION COPY
   == This section copies the XML documentation file needed for Swagger meta data
   ========================================================================================
   -->
+
   <Target Name="Articulate_ForceCopyXmlToOutput" AfterTargets="PrepareForRun">
     <ItemGroup>
       <_ArticulateDllSourceItem Include="@(ReferenceCopyLocalPaths)" Condition="$([System.String]::new('%(Filename)').Equals('Articulate'))" />
