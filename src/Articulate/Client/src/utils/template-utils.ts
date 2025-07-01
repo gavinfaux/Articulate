@@ -18,11 +18,14 @@ export function renderHeaderActions(routerPath?: string): TemplateResult {
 export function renderErrorMessage(
   errors: { title: string; details: string[] } | null,
 ): TemplateResult | typeof nothing {
+  console.info(`At validation event: renderErrorMessage called with errors: ${JSON.stringify(errors)}`);
   if (!errors) {
+    console.info("At validation event: renderErrorMessage returning nothing as errors object is null");
     return nothing;
   }
 
   const { title, details } = errors;
+  console.info(`At validation event: renderErrorMessage rendering with title: '${title}' and ${details.length} details`);
 
   return html`
     <div
@@ -30,16 +33,16 @@ export function renderErrorMessage(
     >
       <strong>${title}</strong>
       ${details.length > 0
-        ? html`
+      ? html`
             <ul style="margin: 0; padding-left: 20px; list-style-position: inside;">
               ${details.map(
-                (e) => html`
+        (e) => html`
                   <li>${e}</li>
                 `,
-              )}
+      )}
             </ul>
           `
-        : nothing}
+      : nothing}
     </div>
   `;
 }

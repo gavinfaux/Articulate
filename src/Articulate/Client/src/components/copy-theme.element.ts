@@ -94,7 +94,14 @@ export default class CopyThemeElement extends UmbLitElement {
    * Handles form submission for duplicating a theme.
    * @private
    */
-  private async _duplicateTheme() {
+  private async _duplicateTheme(e: Event) {
+    e.preventDefault();
+    if (!this._form) return;
+    if (!this._form.reportValidity()) {
+      this._formState = "failed"; // Give feedback on the button
+      return;
+    }
+
     if (this._formState === "waiting") {
       return;
     }
@@ -141,7 +148,7 @@ export default class CopyThemeElement extends UmbLitElement {
     return html`
       <div class="theme-grid">
         ${(this._themes ?? []).map(
-          (theme: string) => html`
+      (theme: string) => html`
             <uui-card-media
               class="theme-card"
               .name=${theme}
@@ -162,19 +169,19 @@ export default class CopyThemeElement extends UmbLitElement {
                 alt="${theme} theme preview"
                 loading="lazy"
                 @error=${(e: Event) => {
-                  const img = e.target as HTMLImageElement;
-                  img.style.display = "none";
+          const img = e.target as HTMLImageElement;
+          img.style.display = "none";
 
-                  const parent = img.parentElement;
-                  if (!parent) return;
+          const parent = img.parentElement;
+          if (!parent) return;
 
-                  if (!parent.querySelector(":scope > .theme-fallback-initial")) {
-                    const span = document.createElement("span");
-                    span.className = "theme-fallback-initial";
-                    span.textContent = theme.charAt(0).toUpperCase();
-                    parent.appendChild(span);
-                  }
-                }}
+          if (!parent.querySelector(":scope > .theme-fallback-initial")) {
+            const span = document.createElement("span");
+            span.className = "theme-fallback-initial";
+            span.textContent = theme.charAt(0).toUpperCase();
+            parent.appendChild(span);
+          }
+        }}
               />
               <div slot="actions">
                 <uui-button
@@ -187,7 +194,7 @@ export default class CopyThemeElement extends UmbLitElement {
               </div>
             </uui-card-media>
           `,
-        )}
+    )}
       </div>
     `;
   }
@@ -242,16 +249,15 @@ export default class CopyThemeElement extends UmbLitElement {
     return html`
       <uui-box headline="Theme Duplication">
         ${renderHeaderActions(this.routerPath)}
-          <div class="container">
-            <p>
-              You can duplicate any of Articulate's built-in themes to customize them yourself. The duplicated theme
-              will be copied to the ~/Views/Articulate folder where you can edit it. Then you can select this theme from
-              the themes drop down on your Articulate root node to use it.
-            </p>
-          </div>
-          <div class="container">${this._renderThemeGrid()} ${this._renderDuplicateForm()}</div>
-          ${renderErrorMessage(this._formError)}
-
+        <div class="container">
+          <p>
+            You can duplicate any of Articulate's built-in themes to customize them yourself. The duplicated theme will
+            be copied to the ~/Views/Articulate folder where you can edit it. Then you can select this theme from the
+            themes drop down on your Articulate root node to use it.
+          </p>
+        </div>
+        <div class="container">${this._renderThemeGrid()} ${this._renderDuplicateForm()}</div>
+        ${renderErrorMessage(this._formError)}
       </uui-box>
     `;
   }

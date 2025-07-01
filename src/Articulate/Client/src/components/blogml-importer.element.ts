@@ -113,6 +113,26 @@ export default class BlogMlImporterElement extends UmbLitElement {
    */
   #handleSubmit = async (e: SubmitEvent) => {
     e.preventDefault();
+    console.info("At validation event: #handleSubmit started in blogml-importer");
+    if (!this._form) {
+      console.info("At validation event: #handleSubmit form not found in blogml-importer");
+      return;
+    }
+
+    console.info("At validation event: #handleSubmit calling reportValidity in blogml-importer");
+    // This causes a browser error: An invalid form control with name='importFile' is not focusable.
+    try {
+      if (!this._form.reportValidity()) {
+        console.info("At validation event: #handleSubmit reportValidity failed in blogml-importer reportValidity");
+        this._formState = "failed"; // Give feedback on the button
+        return;
+      }
+    } catch (error) {
+      console.error("At validation event: #handleSubmit error calling reportValidity in blogml-importer", error);
+      this._formState = "failed"; // Give feedback on the button
+      return;
+
+    }
     if (this._formState === "waiting") {
       return;
     }
@@ -124,7 +144,6 @@ export default class BlogMlImporterElement extends UmbLitElement {
       this._formState = "failed";
       return;
     }
-    if (!this._form) return;
     const formData = new FormData(this._form);
     const importFile = formData.get("importFile") as File | null;
     if (!importFile) {
@@ -226,8 +245,8 @@ export default class BlogMlImporterElement extends UmbLitElement {
         ${renderHeaderActions(this.routerPath)}
         <uui-form>
           ${keyed(
-            this._formRenderKey,
-            html`
+      this._formRenderKey,
+      html`
               <form id="blogMlImportForm" @submit=${this.#handleSubmit} @input=${this.#clearError()}>
                 <uui-validation-message>
                   <uui-form-layout-item>
@@ -259,6 +278,7 @@ export default class BlogMlImporterElement extends UmbLitElement {
                       required
                       required-message="You must select a BlogML file to import"
                       name="importFile"
+                      tabindex="0"
                     ></uui-input-file>
                     <div slot="description">The XML file to upload for import</div>
                   </uui-form-layout-item>
@@ -325,15 +345,15 @@ export default class BlogMlImporterElement extends UmbLitElement {
                 <uui-button type="button" look="secondary" @click=${this._handleReset}>Reset</uui-button>
               </form>
             `,
-          )}
+    )}
         </uui-form>
         ${this._postCount !== undefined && this._postCount > 0
-          ? html`
+        ? html`
               <div slot="message">
                 <uui-tag look="secondary" color="positive">${this._postCount} posts in uploaded file.</uui-tag>
               </div>
             `
-          : ""}
+        : ""}
         ${renderErrorMessage(this._formError)}
       </uui-box>
     `;

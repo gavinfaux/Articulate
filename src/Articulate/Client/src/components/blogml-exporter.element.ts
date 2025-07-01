@@ -109,23 +109,36 @@ export default class BlogMlExporterElement extends UmbLitElement {
    */
   #handleSubmit = async (e: SubmitEvent) => {
     e.preventDefault();
-    if (!this._form) return;
-    if (this._formState === "waiting") {
+    console.info("At validation event: #handleSubmit started in blogml-exporter");
+    if (!this._form) {
+      console.info("At validation event: #handleSubmit form not found in blogml-exporter");
       return;
     }
+
+    console.info("At validation event: #handleSubmit calling reportValidity in blogml-exporter");
+    if (!this._form.reportValidity()) {
+      console.info("At validation event: #handleSubmit reportValidity failed in blogml-exporter");
+      this._formState = "failed"; // Give feedback on the button
+      return;
+    }
+    console.info("At validation event: #handleSubmit reportValidity succeeded in blogml-exporter");
+
+    if (this._formState === "waiting") {
+      console.info("At validation event: #handleSubmit form state is waiting in blogml-exporter");
+      return;
+    }
+
     this._formState = "waiting";
     this._formError = null;
-    if (!this._articulateNodeId) {
-      this._formError = { title: "Please select a blog node before exporting.", details: [] };
-      this._formState = "failed";
-      return;
-    }
+
     try {
+      console.info("At validation event: #handleSubmit calling performExport in blogml-exporter");
       await this.#performExport();
       this._formState = "success";
       await showUmbracoNotification(this, "BlogML exported successfully!", "positive");
       this._handleReset(e);
     } catch (error) {
+      console.info("At validation event: #handleSubmit exception caught in blogml-exporter");
       this._formError = formatApiError(error, "Failed to export blog content.");
       this._formState = "failed";
     }
@@ -188,7 +201,7 @@ export default class BlogMlExporterElement extends UmbLitElement {
                   ></uui-input>
                   <uui-button
                     look="outline"
-                    label=${this._articulateNodeId !== "" ? "Change" : "Choose"}
+                    label=${this._articulateNodeId ? "Change" : "Choose"}
                     @click=${this._openNodePicker}
                   ></uui-button>
                 </div>
