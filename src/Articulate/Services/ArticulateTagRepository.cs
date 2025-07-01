@@ -34,7 +34,6 @@ namespace Articulate.Services
         /// <summary>
         /// Returns a list of all categories belonging to this articualte root
         /// </summary>
-        /// <param name="helper"></param>
         /// <param name="masterModel"></param>
         /// <returns></returns>
         public IEnumerable<string> GetAllCategories(
@@ -192,7 +191,6 @@ WHERE {Constants.DatabaseSchema.Tables.ContentType}.alias = @contentTypeAlias AN
         /// </summary>
         /// <param name="selectCols"></param>
         /// <param name="masterModel"></param>
-        /// <param name="sqlSyntax"></param>
         /// <param name="publishedDatePropertyTypeId">
         /// This is needed to perform the sorting on published date,  this is the PK of the property type for publishedDate on the ArticulatePost content type
         /// </param>
@@ -229,7 +227,6 @@ WHERE {Constants.DatabaseSchema.Tables.ContentType}.alias = @contentTypeAlias AN
         /// </summary>
         /// <param name="selectCols"></param>
         /// <param name="masterModel"></param>
-        /// <param name="sqlSyntax"></param>        
         /// <returns></returns>
         /// <remarks>
         /// TODO: We won't need this when this is fixed http://issues.umbraco.org/issue/U4-9290

@@ -129,6 +129,7 @@ namespace Articulate
         /// </summary>
         /// <param name="content">The content to set the values for</param>
         /// <param name="propertyAlias">The property alias to set the values for</param>
+        /// <param name="contentType"></param>
         /// <param name="propertyValueGetter">Callback to get the value to be set for the given culture</param>
         /// <remarks>
         /// This will only set property values for cultures that have been defined on the <see cref="IContentBase"/>, it will

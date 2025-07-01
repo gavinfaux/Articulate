@@ -20,6 +20,8 @@ namespace Articulate.Models
         /// <param name="content"></param>
         /// <param name="listItems"></param>
         /// <param name="pager"></param>
+        /// <param name="publishedValueFallback"></param>
+        /// <param name="variationContextAccessor"></param>
         /// <remarks>
         /// Default sorting by published date will be disabled for this list model, it is assumed that the list items will
         /// already be sorted.

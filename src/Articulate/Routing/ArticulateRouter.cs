@@ -37,6 +37,7 @@ namespace Articulate.Routing
         /// Constructor
         /// </summary>
         /// <param name="controllerActionSearcher"></param>
+        /// <param name="scopeProvider"></param>
         public ArticulateRouter(IControllerActionSearcher controllerActionSearcher, IScopeProvider scopeProvider)
         {
             _controllerActionSearcher = controllerActionSearcher;
@@ -64,6 +65,8 @@ namespace Articulate.Routing
         /// </summary>
         /// <param name="httpContext"></param>
         /// <param name="umbracoContext"></param>
+        /// <param name="publishedContentTypeCache"></param>
+        /// <param name="documentCacheService"></param>
         /// <returns></returns>
         public void MapRoutes(HttpContext httpContext, IUmbracoContext umbracoContext, IPublishedContentTypeCache publishedContentTypeCache, IDocumentCacheService documentCacheService)
         {

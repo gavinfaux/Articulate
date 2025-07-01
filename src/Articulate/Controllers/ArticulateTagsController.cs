@@ -50,7 +50,6 @@ namespace Articulate.Controllers
         /// <summary>
         /// Used to render the category listing (virtual node)
         /// </summary>
-        /// <param name="model"></param>
         /// <param name="tag">The category to display if supplied</param>
         /// <param name="p"></param>
         /// <returns></returns>
@@ -66,7 +65,6 @@ namespace Articulate.Controllers
         /// <summary>
         /// Used to render the tag listing (virtual node)
         /// </summary>
-        /// <param name="model"></param>
         /// <param name="tag">The tag to display if supplied</param>
         /// <param name="p"></param>
         /// <returns></returns>

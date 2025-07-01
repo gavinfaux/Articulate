@@ -105,6 +105,8 @@ namespace Articulate
         /// <param name="helper"></param>
         /// <param name="masterModel"></param>
         /// <param name="count"></param>
+        /// <param name="publishedValueFallback"></param>
+        /// <param name="variationContextAccessor"></param>
         /// <returns></returns>
         public static IEnumerable<PostModel> GetRecentPosts(
             this UmbracoHelper helper,
@@ -132,6 +134,8 @@ namespace Articulate
         /// <param name="masterModel"></param>
         /// <param name="page"></param>
         /// <param name="pageSize"></param>
+        /// <param name="publishedValueFallback"></param>
+        /// <param name="variationContextAccessor"></param>
         /// <returns></returns>
         public static IEnumerable<PostModel> GetRecentPosts(
             this UmbracoHelper helper,
@@ -160,6 +164,8 @@ namespace Articulate
         /// <param name="masterModel"></param>
         /// <param name="page"></param>
         /// <param name="pageSize"></param>
+        /// <param name="publishedValueFallback"></param>
+        /// <param name="variationContextAccessor"></param>
         /// <returns></returns>
         public static IEnumerable<PostModel> GetRecentPostsByArchive(
             this UmbracoHelper helper,

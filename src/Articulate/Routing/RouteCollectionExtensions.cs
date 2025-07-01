@@ -9,6 +9,7 @@ namespace Articulate.Routing
         /// <summary>
         /// Returns a route path from a given node's URL since a node's Url might contain a domain which we can't use in our routing.
         /// </summary>
+        /// <param name="httpContext"></param>
         /// <param name="routePath"></param>
         /// <returns></returns>
         internal static string RoutePathFromNodeUrl(HttpContext httpContext, string routePath)
