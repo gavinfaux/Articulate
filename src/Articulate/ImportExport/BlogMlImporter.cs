@@ -85,8 +85,8 @@ namespace Articulate.ImportExport
             _articulateTempFileSystem = articulateTempFileSystem;
             _articulateRootMediaFolder = new Lazy<IMedia>(() =>
             {
-                var root = _mediaService.GetRootMedia().FirstOrDefault(x => x.Name == "Articulate" && x.ContentType.Alias.InvariantEquals("folder"));
-                return root ??= _mediaService.CreateMediaWithIdentity("Articulate", Constants.System.Root, "folder");
+                var root = _mediaService.GetRootMedia().FirstOrDefault(x => x.Name == ArticulateConstants.Articulate && x.ContentType.Alias.InvariantEquals("folder"));
+                return root ??= _mediaService.CreateMediaWithIdentity(ArticulateConstants.Articulate, Constants.System.Root, "folder");
             });
         }
 
@@ -121,7 +121,7 @@ namespace Articulate.ImportExport
             var root = _contentService.GetById(blogRootNode)
                        ?? throw new InvalidOperationException("No node found with id " + blogRootNode);
 
-            if (!root.ContentType.Alias.InvariantEquals("Articulate"))
+            if (!root.ContentType.Alias.InvariantEquals(ArticulateConstants.Articulate))
             {
                 throw new InvalidOperationException("The node with id " + blogRootNode + " is not an Articulate root node");
             }
@@ -192,11 +192,11 @@ namespace Articulate.ImportExport
         {
             var result = new Dictionary<string, string>();
 
-            var authorType = _contentTypeService.Get("ArticulateAuthor")
-                ?? throw new InvalidOperationException("Articulate is not installed properly, the ArticulateAuthor doc type could not be found");
+            var authorType = _contentTypeService.Get(ArticulateConstants.ArticulateAuthor)
+                ?? throw new InvalidOperationException($"{ArticulateConstants.Articulate} is not installed properly, the {ArticulateConstants.ArticulateAuthor} doc type could not be found");
 
-            var authorsType = _contentTypeService.Get(ArticulateConstants.ArticulateAuthorsContentTypeAlias)
-                ?? throw new InvalidOperationException("Articulate is not installed properly, the ArticulateAuthors doc type could not be found");
+            var authorsType = _contentTypeService.Get(ArticulateConstants.ArticulateAuthors)
+                ?? throw new InvalidOperationException($"{ArticulateConstants.Articulate} is not installed properly, the {ArticulateConstants.ArticulateAuthors} doc type could not be found");
 
             // get the authors container node for this articulate root
             var allAuthorsNodes = _contentService.GetPagedOfType(
@@ -272,10 +272,10 @@ namespace Articulate.ImportExport
         {
             var result = new List<IContent>();
 
-            var postType = _contentTypeService.Get("ArticulateRichText")
-                ?? throw new InvalidOperationException("Articulate is not installed properly, the ArticulateRichText doc type could not be found");
+            var postType = _contentTypeService.Get(ArticulateConstants.ArticulateRichText)
+                ?? throw new InvalidOperationException($"{ArticulateConstants.Articulate} is not installed properly, the {ArticulateConstants.ArticulateRichText} doc type could not be found");
 
-            var archiveDocType = _contentTypeService.Get(ArticulateConstants.ArticulateArchiveContentTypeAlias);
+            var archiveDocType = _contentTypeService.Get(ArticulateConstants.ArticulateArchive);
 
             // get the archive container node for this articulate root
             var archive = _contentService.GetPagedOfType(

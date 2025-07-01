@@ -42,8 +42,8 @@ namespace Articulate.Components
             var contentTypes = _contentTypeService.GetMany(saved.Select(x => x.ContentTypeId).ToArray()).ToDictionary(x => x.Id);
             foreach (var content in saved)
             {
-                if (content.ContentType.Alias.InvariantEquals("ArticulateRichText")
-                    || content.ContentType.Alias.InvariantEquals("ArticulateMarkdown"))
+                if (content.ContentType.Alias.InvariantEquals(ArticulateConstants.ArticulateRichText)
+                    || content.ContentType.Alias.InvariantEquals(ArticulateConstants.ArticulateMarkdown))
 
                 {
                     content.SetAllPropertyCultureValues(
@@ -70,8 +70,8 @@ namespace Articulate.Components
 
                 if (_articulateOptions.AutoGenerateExcerpt)
                 {
-                    if (content.ContentType.Alias.InvariantEquals("ArticulateRichText")
-                        || content.ContentType.Alias.InvariantEquals("ArticulateMarkdown"))
+                    if (content.ContentType.Alias.InvariantEquals(ArticulateConstants.ArticulateRichText)
+                        || content.ContentType.Alias.InvariantEquals(ArticulateConstants.ArticulateMarkdown))
                     {
 
                         // fill in the excerpt if it is empty

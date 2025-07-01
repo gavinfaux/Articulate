@@ -56,7 +56,7 @@ namespace Articulate.Models
                 };
 
                 //look up assocated author node if we can
-                var authors = RootBlogNode?.Children(content => content.ContentType.Alias.InvariantEquals(ArticulateConstants.ArticulateAuthorsContentTypeAlias)).FirstOrDefault();
+                var authors = RootBlogNode?.Children(content => content.ContentType.Alias.InvariantEquals(ArticulateConstants.ArticulateAuthors)).FirstOrDefault();
                 var authorNode = authors?.Children(content => content.Name.InvariantEquals(_author.Name)).FirstOrDefault();
                 if (authorNode != null)
                 {

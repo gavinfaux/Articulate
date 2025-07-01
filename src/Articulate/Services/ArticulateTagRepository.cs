@@ -44,7 +44,7 @@ namespace Articulate.Services
             var sql = GetTagQuery($"{Constants.DatabaseSchema.Tables.Tag}.id, {Constants.DatabaseSchema.Tables.Tag}.tag, {Constants.DatabaseSchema.Tables.Tag}.[group], Count(*) as NodeCount", masterModel)
                 .Where($"{Constants.DatabaseSchema.Tables.Tag}." + SqlSyntax.GetQuotedColumnName("group") + " = @tagGroup", new
                 {
-                    tagGroup = "ArticulateCategories"
+                    tagGroup = ArticulateConstants.ArticulateCategories
                 })
                 .GroupBy($"{Constants.DatabaseSchema.Tables.Tag}.id", $"{Constants.DatabaseSchema.Tables.Tag}.tag", $"{Constants.DatabaseSchema.Tables.Tag}." + SqlSyntax.GetQuotedColumnName("group") + @"");
 
@@ -144,7 +144,7 @@ namespace Articulate.Services
                 //get the publishedDate property type id on the ArticulatePost content type
                 var publishedDatePropertyTypeId = Database.ExecuteScalar<int>($@"SELECT {Constants.DatabaseSchema.Tables.PropertyType}.id FROM {Constants.DatabaseSchema.Tables.ContentType}
 INNER JOIN {Constants.DatabaseSchema.Tables.PropertyType} ON {Constants.DatabaseSchema.Tables.PropertyType}.contentTypeId = {Constants.DatabaseSchema.Tables.ContentType}.nodeId
-WHERE {Constants.DatabaseSchema.Tables.ContentType}.alias = @contentTypeAlias AND {Constants.DatabaseSchema.Tables.PropertyType}.alias = @propertyTypeAlias", new { contentTypeAlias = "ArticulatePost", propertyTypeAlias = "publishedDate" });
+WHERE {Constants.DatabaseSchema.Tables.ContentType}.alias = @contentTypeAlias AND {Constants.DatabaseSchema.Tables.PropertyType}.alias = @propertyTypeAlias", new { contentTypeAlias = ArticulateConstants.ArticulatePost, propertyTypeAlias = "publishedDate" });
 
                 var sqlContent = GetContentByTagQueryForPaging($"{Constants.DatabaseSchema.Tables.Node}.id, {Constants.DatabaseSchema.Tables.PropertyData}.dateValue", masterModel, publishedDatePropertyTypeId);
 

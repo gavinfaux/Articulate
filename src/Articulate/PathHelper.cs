@@ -34,7 +34,7 @@ namespace Articulate
         {
             if (model.Theme.IsNullOrWhiteSpace())
             {
-                throw new InvalidOperationException("No theme has been set for this Articulate root, republish the root with a selected theme");
+                throw new InvalidOperationException($"No theme has been set for this {ArticulateConstants.Articulate} root, republish the root with a selected theme");
             }
 
             return GetThemePath(model.Theme);
@@ -44,7 +44,7 @@ namespace Articulate
         {
             if (model.Theme.IsNullOrWhiteSpace())
             {
-                throw new InvalidOperationException("No theme has been set for this Articulate root, republish the root with a selected theme");
+                throw new InvalidOperationException($"No theme has been set for this {ArticulateConstants.Articulate} root, republish the root with a selected theme");
             }
 
             return DefaultThemes.IsDefaultTheme(model.Theme)
@@ -56,7 +56,7 @@ namespace Articulate
         {
             if (model.Theme.IsNullOrWhiteSpace())
             {
-                throw new InvalidOperationException("No theme has been set for this Articulate root, republish the root with a selected theme");
+                throw new InvalidOperationException($"No theme has been set for this {ArticulateConstants.Articulate} root, republish the root with a selected theme");
             }
 
             return DefaultThemes.IsDefaultTheme(model.Theme)

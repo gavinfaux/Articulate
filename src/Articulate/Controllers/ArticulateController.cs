@@ -51,7 +51,7 @@ namespace Articulate.Controllers
 
         private IActionResult RenderView(ContentModel model, int? p = null)
         {
-            var listNodes = model.Content.ChildrenOfType(ArticulateConstants.ArticulateArchiveContentTypeAlias).ToArray();
+            var listNodes = model.Content.ChildrenOfType(ArticulateConstants.ArticulateArchive).ToArray();
             if (listNodes.Length == 0)
             {
                 throw new InvalidOperationException("An ArticulateArchive document must exist under the root Articulate document");

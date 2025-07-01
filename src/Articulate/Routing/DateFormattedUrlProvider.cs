@@ -25,7 +25,7 @@ namespace Articulate.Routing
 
         public override UrlInfo GetUrl(IPublishedContent content, UrlMode mode, string culture, Uri current)
         {
-            if (content != null && (content.ContentType.Alias == "ArticulateRichText" || content.ContentType.Alias == "ArticulateMarkdown") && content.Parent != null)
+            if (content != null && (content.ContentType.Alias == ArticulateConstants.ArticulateRichText || content.ContentType.Alias == ArticulateConstants.ArticulateMarkdown) && content.Parent != null)
             {
                 if (content.Parent.Parent != null)
                 {

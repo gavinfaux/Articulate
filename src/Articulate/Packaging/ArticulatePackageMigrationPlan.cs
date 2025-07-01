@@ -4,7 +4,7 @@ namespace Articulate.Packaging
 {
     public class ArticulatePackageMigrationPlan : AutomaticPackageMigrationPlan
     {
-        public ArticulatePackageMigrationPlan() : base("Articulate")
+        public ArticulatePackageMigrationPlan() : base(ArticulateConstants.Articulate)
         {
         }
     }

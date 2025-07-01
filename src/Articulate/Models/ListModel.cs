@@ -41,7 +41,7 @@ namespace Articulate.Models
 
             Pages = pager;
             _listItems = listItems;
-            if (content.ContentType.Alias.Equals(ArticulateConstants.ArticulateArchiveContentTypeAlias))
+            if (content.ContentType.Alias.Equals(ArticulateConstants.ArticulateArchive))
             {
                 PageTitle = BlogTitle + " - " + BlogDescription;
             }

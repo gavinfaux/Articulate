@@ -37,7 +37,7 @@ namespace Articulate.Components
         {
         }
 
-        protected override bool CanHandle(ApiDescription apiDescription, ControllerActionDescriptor controllerActionDescriptor) => controllerActionDescriptor.ControllerTypeInfo.Namespace?.StartsWith("Articulate.Controllers", comparisonType: StringComparison.InvariantCultureIgnoreCase) is true;
+        protected override bool CanHandle(ApiDescription apiDescription, ControllerActionDescriptor controllerActionDescriptor) => controllerActionDescriptor.ControllerTypeInfo.Namespace?.StartsWith($"{ArticulateConstants.Articulate}.Controllers", comparisonType: StringComparison.InvariantCultureIgnoreCase) is true;
 
         public override string Handle(ApiDescription apiDescription)
         {
@@ -90,8 +90,8 @@ namespace Articulate.Components
                 ArticulateConstants.ApiName,
                 new OpenApiInfo
                 {
-                    Title = "Articulate Management API",
-                    Description = "API for the back office dashboard section Articulate, a wonderful Blog engine built on Umbraco. ",
+                    Title = $"{ArticulateConstants.Articulate} Management API",
+                    Description = $"API for the back office dashboard section {ArticulateConstants.Articulate}, a wonderful Blog engine built on Umbraco. ",
                     Version = "1.0",
                     Contact = new OpenApiContact
                     {

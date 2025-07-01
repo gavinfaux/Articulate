@@ -22,7 +22,7 @@ namespace Articulate.Controllers
     /// <remarks>
     /// Cached for one minute
     /// </remarks>
-    [OutputCache(PolicyName = "Articulate60")]
+    [OutputCache(PolicyName = $"{ArticulateConstants.Articulate}60")]
     [ArticulateDynamicRoute]
     public class ArticulateTagsController : ListControllerBase
     {
@@ -58,8 +58,8 @@ namespace Articulate.Controllers
             var caturlName = CurrentPage.Value<string>("categoriesUrlName");
 
             return tag.IsNullOrWhiteSpace()
-                ? RenderTagsOrCategories("ArticulateCategories", caturlName)
-                : RenderByTagOrCategory(tag, p, "ArticulateCategories", caturlName);
+                ? RenderTagsOrCategories(ArticulateConstants.ArticulateCategories, caturlName)
+                : RenderByTagOrCategory(tag, p, ArticulateConstants.ArticulateCategories, caturlName);
         }
 
         /// <summary>
@@ -73,8 +73,8 @@ namespace Articulate.Controllers
             var tagurlName = CurrentPage.Value<string>("tagsUrlName");
 
             return tag.IsNullOrWhiteSpace()
-                ? RenderTagsOrCategories("ArticulateTags", tagurlName)
-                : RenderByTagOrCategory(tag, p, "ArticulateTags", tagurlName);
+                ? RenderTagsOrCategories(ArticulateConstants.ArticulateTags, tagurlName)
+                : RenderByTagOrCategory(tag, p, ArticulateConstants.ArticulateTags, tagurlName);
         }
 
         private IActionResult RenderTagsOrCategories(string tagGroup, string baseUrl)

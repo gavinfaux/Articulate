@@ -56,7 +56,7 @@ namespace Articulate.Routing
             var node = FindContent(contentRequest, newRoute);
 
             // If by chance something matches the format pattern I check again if there is sucn a node and if it's an articulate post
-            if (node == null || (node.ContentType.Alias != "ArticulateRichText" && node.ContentType.Alias != "ArticulateMarkdown"))
+            if (node == null || (node.ContentType.Alias != ArticulateConstants.ArticulateRichText && node.ContentType.Alias != ArticulateConstants.ArticulateMarkdown))
             {
                 return false;
             }

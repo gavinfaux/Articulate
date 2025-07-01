@@ -94,7 +94,7 @@ namespace Articulate
         /// <summary>
         /// Returns the authors list URL
         /// </summary>
-        public static string ArticulateAuthorsUrl(this IUrlHelper url, IMasterModel model) => model.RootBlogNode?.ChildrenOfType(ArticulateConstants.ArticulateAuthorsContentTypeAlias).FirstOrDefault()?.Url();
+        public static string ArticulateAuthorsUrl(this IUrlHelper url, IMasterModel model) => model.RootBlogNode?.ChildrenOfType(ArticulateConstants.ArticulateAuthors).FirstOrDefault()?.Url();
 
         /// <summary>
         /// Returns the URL for the tag list

@@ -67,19 +67,19 @@ namespace Articulate.ImportExport
         {
             var root = _contentService.GetById(blogRootNode) ?? throw new InvalidOperationException("No node found with id " + blogRootNode);
 
-            if (!root.ContentType.Alias.InvariantEquals("Articulate"))
+            if (!root.ContentType.Alias.InvariantEquals(ArticulateConstants.Articulate))
             {
-                throw new InvalidOperationException("The node with id " + blogRootNode + " is not an Articulate root node");
+                throw new InvalidOperationException($"The node with id {blogRootNode} is not an {ArticulateConstants.Articulate} root node");
             }
 
-            var postType = _contentTypeService.Get("ArticulateRichText") ?? throw new InvalidOperationException("Articulate is not installed properly, the ArticulateRichText doc type could not be found");
+            var postType = _contentTypeService.Get(ArticulateConstants.ArticulateRichText) ?? throw new InvalidOperationException($"{ArticulateConstants.Articulate} is not installed properly, the ArticulateRichText doc type could not be found");
 
-            var categoryDataType = _dataTypeService.GetDataType("Articulate Categories") ?? throw new InvalidOperationException("No Articulate Categories data type found");
+            var categoryDataType = _dataTypeService.GetDataType($"{ArticulateConstants.Articulate} Categories") ?? throw new InvalidOperationException("No Articulate Categories data type found");
 
             var categoryConfiguration = categoryDataType.ConfigurationAs<TagConfiguration>();
             var categoryGroup = categoryConfiguration.Group;
 
-            var tagDataType = _dataTypeService.GetDataType("Articulate Tags") ?? throw new InvalidOperationException("No Articulate Tags data type found");
+            var tagDataType = _dataTypeService.GetDataType($"{ArticulateConstants.Articulate} Tags") ?? throw new InvalidOperationException($"No Data Articulate Tags data type found");
 
             var tagConfiguration = tagDataType.ConfigurationAs<TagConfiguration>();
             var tagGroup = tagConfiguration.Group;
@@ -94,8 +94,8 @@ namespace Articulate.ImportExport
                 Subtitle = new BlogMLTextConstruct(root.GetValue<string>("blogDescription"))
             };
 
-            var authorsContentType = _contentTypeService.Get(ArticulateConstants.ArticulateAuthorsContentTypeAlias)
-                ?? throw new InvalidOperationException($"Articulate is not installed properly, the {ArticulateConstants.ArticulateAuthorsContentTypeAlias} doc type could not be found");
+            var authorsContentType = _contentTypeService.Get(ArticulateConstants.ArticulateAuthors)
+                ?? throw new InvalidOperationException($"{ArticulateConstants.Articulate} is not installed properly, the {ArticulateConstants.ArticulateAuthors} doc type could not be found");
             var authorsNodes = _contentService.GetPagedDescendants(root.Id, 0, int.MaxValue, out var total,
                     _sqlContext.Query<IContent>().Where(x => x.ContentTypeId == authorsContentType.Id),
                     Ordering.By("CreateDate", Umbraco.Cms.Core.Direction.Descending));
@@ -107,8 +107,8 @@ namespace Articulate.ImportExport
 
             AddBlogCategories(blogMlDoc, categoryGroup);
 
-            var archiveContentType = _contentTypeService.Get(ArticulateConstants.ArticulateArchiveContentTypeAlias)
-                ?? throw new InvalidOperationException($"Articulate is not installed properly, the {ArticulateConstants.ArticulateArchiveContentTypeAlias} doc type could not be found");
+            var archiveContentType = _contentTypeService.Get(ArticulateConstants.ArticulateArchive)
+                ?? throw new InvalidOperationException($"{ArticulateConstants.Articulate} is not installed properly, the {ArticulateConstants.ArticulateArchive} doc type could not be found");
             var archiveNodes = _contentService.GetPagedDescendants(root.Id, 0, int.MaxValue, out total,
                     _sqlContext.Query<IContent>().Where(x => x.ContentTypeId == archiveContentType.Id),
                     Ordering.By("CreateDate", Umbraco.Cms.Core.Direction.Descending));
@@ -188,12 +188,12 @@ namespace Articulate.ImportExport
                     }
 
                     string content = "";
-                    if (child.ContentType.Alias.InvariantEquals("ArticulateRichText"))
+                    if (child.ContentType.Alias.InvariantEquals(ArticulateConstants.ArticulateRichText))
                     {
                         //TODO: this would also need to export all macros
                         content = child.GetValue<string>("richText");
                     }
-                    else if (child.ContentType.Alias.InvariantEquals("ArticulateMarkdown"))
+                    else if (child.ContentType.Alias.InvariantEquals(ArticulateConstants.ArticulateMarkdown))
                     {
                         content = MarkdownHelper.ToHtml(child.GetValue<string>("markdown"));
                     }

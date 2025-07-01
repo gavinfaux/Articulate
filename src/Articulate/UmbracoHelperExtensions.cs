@@ -93,7 +93,7 @@ namespace Articulate
                 helper,
                 tagQuery,
                 masterModel,
-                "ArticulateTags",
+                ArticulateConstants.ArticulateTags,
                 tagsBaseUrl);
 
             return new PostTagCollection(contentByTags);
@@ -201,7 +201,7 @@ namespace Articulate
 
         private static IPublishedContent[] GetListNodes(IMasterModel masterModel)
         {
-            var listNodes = masterModel.RootBlogNode.ChildrenOfType(ArticulateConstants.ArticulateArchiveContentTypeAlias).ToArray();
+            var listNodes = masterModel.RootBlogNode.ChildrenOfType(ArticulateConstants.Articulate).ToArray();
             if (listNodes.Length == 0)
             {
                 throw new InvalidOperationException(

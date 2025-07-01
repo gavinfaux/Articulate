@@ -101,7 +101,7 @@ namespace Articulate.MetaWeblog
             await ValidateUser(username, password);
 
             // TODO: These would be across all Articulate Blog root nodes :S
-            var tags = _tagService.GetAllTags("ArticulateCategories")
+            var tags = _tagService.GetAllTags(ArticulateConstants.ArticulateCategories)
                 .Select(x => new CategoryInfo()
                 {
                     title = x.Text,
@@ -118,7 +118,7 @@ namespace Articulate.MetaWeblog
             await ValidateUser(username, password);
 
             // TODO: These would be across all Articulate Blog root nodes :S
-            var tags = _tagService.GetAllTags("ArticulateTags")
+            var tags = _tagService.GetAllTags(ArticulateConstants.ArticulateTags)
                 .Select(x => new WilderMinds.MetaWeblog.Tag()
                 {
                     name = x.Text
@@ -132,7 +132,7 @@ namespace Articulate.MetaWeblog
         {
             await ValidateUser(username, password);
 
-            var node = BlogRoot().ChildrenOfType(ArticulateConstants.ArticulateArchiveContentTypeAlias).FirstOrDefault() ?? throw new InvalidOperationException("No Articulate Archive node found");
+            var node = BlogRoot().ChildrenOfType(ArticulateConstants.ArticulateArchive).FirstOrDefault() ?? throw new InvalidOperationException("No Articulate Archive node found");
 
             var recent = _contentService
                     .GetPagedChildren(node.Id, 0, numberOfPosts, out long totalPosts, ordering: Ordering.By("updateDate", direction: Direction.Descending))
@@ -148,9 +148,9 @@ namespace Articulate.MetaWeblog
 
             var root = BlogRoot();
 
-            var node = root.ChildrenOfType(ArticulateConstants.ArticulateArchiveContentTypeAlias).FirstOrDefault() ?? throw new InvalidOperationException("No Articulate Archive node found");
+            var node = root.ChildrenOfType(ArticulateConstants.ArticulateArchive).FirstOrDefault() ?? throw new InvalidOperationException("No Articulate Archive node found");
 
-            var contentType = _contentTypeService.Get("ArticulateRichText") ?? throw new InvalidOperationException("No content type found with alias 'ArticulateRichText'");
+            var contentType = _contentTypeService.Get(ArticulateConstants.ArticulateRichText) ?? throw new InvalidOperationException("No content type found with alias 'ArticulateRichText'");
 
             var content = _contentService.CreateWithInvariantOrDefaultCultureName(
                 post.title, node.Id, contentType, _localizationService, user.Id);
@@ -248,7 +248,7 @@ namespace Articulate.MetaWeblog
 
             var umbracoContent = _contentService.GetById(asInt.Result);
 
-            var contentType = _contentTypeService.Get("ArticulateRichText") ?? throw new InvalidOperationException("No content type found with alias 'ArticulateRichText'");
+            var contentType = _contentTypeService.Get(ArticulateConstants.ArticulateRichText) ?? throw new InvalidOperationException("No content type found with alias 'ArticulateRichText'");
 
             var root = BlogRoot();
 
@@ -442,7 +442,7 @@ namespace Articulate.MetaWeblog
             ? post.GetValue<string>("categories").Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
             : Array.Empty<string>(),
 
-            description = post.ContentType.Alias == "ArticulateRichText"
+            description = post.ContentType.Alias == ArticulateConstants.ArticulateRichText
             ? post.GetValue<string>("richText")
             : MarkdownHelper.ToHtml(post.GetValue<string>("markdown")),
 

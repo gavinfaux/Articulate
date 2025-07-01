@@ -21,7 +21,7 @@ namespace Articulate.Controllers
     /// <remarks>
     /// Cached for one minute
     /// </remarks>
-    [OutputCache(PolicyName = "Articulate300")]
+    [OutputCache(PolicyName = $"{ArticulateConstants.Articulate}300")]
     [ArticulateDynamicRoute]
     public class ArticulateRssController : RenderController
     {
@@ -61,7 +61,7 @@ namespace Articulate.Controllers
             }
 
             var listNodes = CurrentPage.Children
-                .Where(x => x.ContentType.Alias.InvariantEquals(ArticulateConstants.ArticulateArchiveContentTypeAlias))
+                .Where(x => x.ContentType.Alias.InvariantEquals(ArticulateConstants.Articulate))
                 .ToArray();
             if (listNodes.Length == 0)
             {
@@ -119,7 +119,7 @@ namespace Articulate.Controllers
             //create a master model
             var masterModel = new MasterModel(author, _publishedValueFallback, _variationContextAccessor);
 
-            var listNodes = masterModel.RootBlogNode.ChildrenOfType(ArticulateConstants.ArticulateArchiveContentTypeAlias).ToArray();
+            var listNodes = masterModel.RootBlogNode.ChildrenOfType(ArticulateConstants.ArticulateArchive).ToArray();
 
             var authorContenet = _umbracoHelper.GetContentByAuthor(
                 listNodes,
@@ -145,7 +145,7 @@ namespace Articulate.Controllers
                 maxItems = 25;
             }
 
-            return RenderTagsOrCategoriesRss("ArticulateCategories", "categories", maxItems.Value, tag);
+            return RenderTagsOrCategoriesRss(ArticulateConstants.ArticulateCategories, "categories", maxItems.Value, tag);
         }
 
         public IActionResult Tags(string tag, int? maxItems)
@@ -160,7 +160,7 @@ namespace Articulate.Controllers
                 maxItems = 25;
             }
 
-            return RenderTagsOrCategoriesRss("ArticulateTags", "tags", maxItems.Value, tag);
+            return RenderTagsOrCategoriesRss(ArticulateConstants.ArticulateTags, "tags", maxItems.Value, tag);
         }
 
         public IActionResult RenderTagsOrCategoriesRss(string tagGroup, string baseUrl, int maxItems, string tag)

@@ -55,11 +55,11 @@ namespace Articulate.Components
 
             builder.Services.AddOutputCache(options =>
             {
-                options.AddPolicy("Articulate120", builder =>
+                options.AddPolicy($"{ArticulateConstants.Articulate}120", builder =>
                     builder.Expire(TimeSpan.FromSeconds(120)));
-                options.AddPolicy("Articulate300", builder =>
+                options.AddPolicy($"{ArticulateConstants.Articulate}300", builder =>
                     builder.Expire(TimeSpan.FromSeconds(300)));
-                options.AddPolicy("Articulate60", builder =>
+                options.AddPolicy($"{ArticulateConstants.Articulate}60", builder =>
                     builder.Expire(TimeSpan.FromSeconds(60)));
             });
         }
