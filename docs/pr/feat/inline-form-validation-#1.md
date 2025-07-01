@@ -1,5 +1,12 @@
 # Pull Request: [FEAT] Implement Inline Form Validation UI
 
+## NOTES: 
+
+  - For this to work, model property names that the server sends (paths) will need to be added to a data-attribute on the form control.
+  - The form will need to be passed in as an argument to the `formatApiError` function ?
+  - function finds matching  data-validation-for attribute and sets invalid
+
+
 ## Description
 
 This change introduces a more intuitive user experience for handling form validation errors. Instead of only showing a summary message, API validation errors are now displayed directly underneath the corresponding form fields.
