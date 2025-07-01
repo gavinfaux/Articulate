@@ -7,7 +7,6 @@ import { Articulate } from "../api/sdk.gen";
 import type { ExportBlogMlModel } from "../api/types.gen";
 import { fetchArchiveDoctypeUdi, fetchNodeByUdi, openNodePicker } from "../utils/document-node-utils";
 import { formatApiError } from "../utils/error-utils";
-import { formStyles } from "../utils/form-styles";
 import { showUmbracoNotification } from "../utils/notification-utils";
 import { renderErrorMessage, renderHeaderActions } from "../utils/template-utils";
 
@@ -173,35 +172,38 @@ export default class BlogMlExporterElement extends UmbLitElement {
         ${renderHeaderActions(this.routerPath)}
         <uui-form>
           <form id="blogMlExportForm" @submit=${this.#handleSubmit} @input=${this.#clearError}>
-            <uui-form-layout-item>
-              <div class="node-picker-container">
-                <uui-label for="articulateNodeId" slot="label" required>Articulate blog node</uui-label>
-                <uui-input
-                  id="articulateNodeId"
-                  name="articulateNodeId"
-                  placeholder="No node selected"
-                  .value=${this._selectedBlogNodeName}
-                  readonly
-                  required
-                  required-message="You must select a blog node"
-                  style="flex-grow: 1;"
-                ></uui-input>
-                <uui-button
-                  look="outline"
-                  label=${this._articulateNodeId !== "" ? "Change" : "Choose"}
-                  @click=${this._openNodePicker}
-                ></uui-button>
-              </div>
-              <div slot="description">Choose the Articulate blog node to export from</div>
-            </uui-form-layout-item>
-            <uui-form-layout-item>
-              <uui-label slot="label" for="embedImages">Embed images?</uui-label>
-              <uui-toggle id="embedImages" name="embedImages"></uui-toggle>
-              <div slot="description">
-                Check if you want to embed images as base64 data in the output file. Useful if your site isn't going to
-                be HTTP accessible to the site you will be importing on.
-              </div>
-            </uui-form-layout-item>
+            <uui-validation-message>
+              <uui-form-layout-item>
+                <div class="node-picker-container">
+                  <uui-label for="articulateNodeId" slot="label" required>Articulate blog node</uui-label>
+                  <uui-input
+                    id="articulateNodeId"
+                    name="articulateNodeId"
+                    placeholder="No node selected"
+                    .value=${this._selectedBlogNodeName}
+                    readonly
+                    required
+                    required-message="You must select a blog node"
+                    style="flex-grow: 1;"
+                  ></uui-input>
+                  <uui-button
+                    look="outline"
+                    label=${this._articulateNodeId !== "" ? "Change" : "Choose"}
+                    @click=${this._openNodePicker}
+                  ></uui-button>
+                </div>
+                <div slot="description">Choose the Articulate blog node to export from</div>
+              </uui-form-layout-item>
+              <uui-form-layout-item>
+                <uui-label slot="label" for="embedImages">Embed images?</uui-label>
+                <uui-toggle id="embedImages" name="embedImages"></uui-toggle>
+                <div slot="description">
+                  Check if you want to embed images as base64 data in the output file. Useful if your site isn't going
+                  to be HTTP accessible to the site you will be importing on.
+                </div>
+              </uui-form-layout-item>
+            </uui-validation-message>
+
             <uui-button type="submit" look="primary" .state=${this._formState}>Submit</uui-button>
             <uui-button type="button" look="secondary" @click=${this._handleReset}>Reset</uui-button>
           </form>
@@ -213,12 +215,10 @@ export default class BlogMlExporterElement extends UmbLitElement {
 
   static override readonly styles = [
     UmbTextStyles,
-    formStyles,
     css`
-      .node-picker-container {
-        display: flex;
-        align-items: center;
-        gap: var(--uui-size-space-3);
+      :host {
+        display: block;
+        padding: var(--uui-size-layout-1);
       }
     `,
   ];

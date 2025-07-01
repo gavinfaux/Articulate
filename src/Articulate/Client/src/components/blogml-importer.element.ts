@@ -8,7 +8,6 @@ import { Articulate } from "../api/sdk.gen";
 import type { ImportBlogMlModel, ImportModel, PostResponseModel } from "../api/types.gen";
 import { fetchArchiveDoctypeUdi, fetchNodeByUdi, openNodePicker } from "../utils/document-node-utils";
 import { formatApiError } from "../utils/error-utils";
-import { formStyles } from "../utils/form-styles";
 import { showUmbracoNotification } from "../utils/notification-utils";
 import { renderErrorMessage, renderHeaderActions } from "../utils/template-utils";
 
@@ -230,95 +229,98 @@ export default class BlogMlImporterElement extends UmbLitElement {
             this._formRenderKey,
             html`
               <form id="blogMlImportForm" @submit=${this.#handleSubmit} @input=${this.#clearError()}>
-                <uui-form-layout-item>
-                  <div class="node-picker-container">
-                    <uui-label for="articulateNodeId" slot="label" required>Articulate blog node</uui-label>
-                    <uui-input
-                      id="articulateNodeId"
-                      name="articulateNodeId"
-                      placeholder="No node selected"
-                      .value=${this._selectedBlogNodeName}
-                      readonly
+                <uui-validation-message>
+                  <uui-form-layout-item>
+                    <div class="node-picker-container">
+                      <uui-label for="articulateNodeId" slot="label" required>Articulate blog node</uui-label>
+                      <uui-input
+                        id="articulateNodeId"
+                        name="articulateNodeId"
+                        placeholder="No node selected"
+                        .value=${this._selectedBlogNodeName}
+                        readonly
+                        required
+                        required-message="You must select a blog node"
+                        style="flex-grow: 1;"
+                      ></uui-input>
+                      <uui-button
+                        look="outline"
+                        label=${this._articulateNodeId ? "Change" : "Choose"}
+                        @click=${this._openNodePicker}
+                      ></uui-button>
+                    </div>
+                    <div slot="description">Choose the Articulate blog node to export from</div>
+                  </uui-form-layout-item>
+                  <uui-form-layout-item>
+                    <uui-label slot="label" for="importFile" required>BlogML import file</uui-label>
+                    <uui-input-file
+                      id="importFile"
+                      accept="text/xml"
                       required
-                      required-message="You must select a blog node"
-                      style="flex-grow: 1;"
+                      required-message="You must select a BlogML file to import"
+                      name="importFile"
+                    ></uui-input-file>
+                    <div slot="description">The XML file to upload for import</div>
+                  </uui-form-layout-item>
+                  <uui-form-layout-item>
+                    <uui-label slot="label" for="overwrite">Overwrite imported posts?</uui-label>
+                    <uui-toggle id="overwrite" name="overwrite"></uui-toggle>
+                    <div slot="description">Check if you want to overwrite posts already imported</div>
+                  </uui-form-layout-item>
+                  <uui-form-layout-item>
+                    <uui-label slot="label" for="publish">Publish all posts?</uui-label>
+                    <uui-toggle id="publish" name="publish"></uui-toggle>
+                    <div slot="description">Check if you want all imported posts to be published</div>
+                  </uui-form-layout-item>
+                  <uui-form-layout-item>
+                    <uui-label for="regexMatch" slot="label">Regex match expression</uui-label>
+                    <uui-input
+                      id="regexMatch"
+                      style="--auto-width-text-margin-right: 20px"
+                      name="regexMatch"
+                      auto-width
+                      placeholder="Example to match: (@example.old)"
                     ></uui-input>
-                    <uui-button
-                      look="outline"
-                      label=${this._articulateNodeId ? "Change" : "Choose"}
-                      @click=${this._openNodePicker}
-                    ></uui-button>
-                  </div>
-                  <div slot="description">Choose the Articulate blog node to export from</div>
-                </uui-form-layout-item>
-                <uui-form-layout-item>
-                  <uui-label slot="label" for="importFile" required>BlogML import file</uui-label>
-                  <uui-input-file
-                    id="importFile"
-                    accept="text/xml"
-                    required
-                    required-message="You must select a BlogML file to import"
-                    name="importFile"
-                  ></uui-input-file>
-                  <div slot="description">The XML file to upload for import</div>
-                </uui-form-layout-item>
-                <uui-form-layout-item>
-                  <uui-label slot="label" for="overwrite">Overwrite imported posts?</uui-label>
-                  <uui-toggle id="overwrite" name="overwrite"></uui-toggle>
-                  <div slot="description">Check if you want to overwrite posts already imported</div>
-                </uui-form-layout-item>
-                <uui-form-layout-item>
-                  <uui-label slot="label" for="publish">Publish all posts?</uui-label>
-                  <uui-toggle id="publish" name="publish"></uui-toggle>
-                  <div slot="description">Check if you want all imported posts to be published</div>
-                </uui-form-layout-item>
-                <uui-form-layout-item>
-                  <uui-label for="regexMatch" slot="label">Regex match expression</uui-label>
-                  <uui-input
-                    id="regexMatch"
-                    style="--auto-width-text-margin-right: 20px"
-                    name="regexMatch"
-                    auto-width
-                    placeholder="Example to match: (@example.old)"
-                  ></uui-input>
-                  <div slot="description">
-                    Regex statement used to match content in the blog post to be replaced by the match statement. See
-                    the Articulate Wiki
-                    <a
-                      href="https://github.com/Shazwazza/Articulate/wiki/Importing#options"
-                      rel="noopener noreferrer nofollow"
-                    >
-                      Importing
-                    </a>
-                    page for more information.
-                  </div>
-                </uui-form-layout-item>
-                <uui-form-layout-item>
-                  <uui-label for="regexReplace" slot="label">Regex replacement statement</uui-label>
-                  <uui-input
-                    id="regexReplace"
-                    style="--auto-width-text-margin-right: 20px"
-                    name="regexReplace"
-                    auto-width
-                    placeholder="Example replacement: @example.new"
-                  ></uui-input>
-                  <div slot="description">Replacement statement used with the above match statement</div>
-                </uui-form-layout-item>
-                <uui-form-layout-item>
-                  <uui-label slot="label" for="exportDisqusXml">Export Disqus Xml</uui-label>
-                  <uui-toggle id="exportDisqusXml" name="exportDisqusXml"></uui-toggle>
-                  <div slot="description">
-                    If you would like Articulate to output an XML file that you can use to import the comments found in
-                    this file in to Disqus
-                  </div>
-                </uui-form-layout-item>
-                <uui-form-layout-item>
-                  <uui-label slot="label" for="importFirstImage">Import First Image from Post Attachments</uui-label>
-                  <uui-toggle id="importFirstImage" name="importFirstImage"></uui-toggle>
-                  <div slot="description">
-                    If you would like Articulate to try and import the first image url in the post attachments
-                  </div>
-                </uui-form-layout-item>
+                    <div slot="description">
+                      Regex statement used to match content in the blog post to be replaced by the match statement. See
+                      the Articulate Wiki
+                      <a
+                        href="https://github.com/Shazwazza/Articulate/wiki/Importing#options"
+                        rel="noopener noreferrer nofollow"
+                      >
+                        Importing
+                      </a>
+                      page for more information.
+                    </div>
+                  </uui-form-layout-item>
+                  <uui-form-layout-item>
+                    <uui-label for="regexReplace" slot="label">Regex replacement statement</uui-label>
+                    <uui-input
+                      id="regexReplace"
+                      style="--auto-width-text-margin-right: 20px"
+                      name="regexReplace"
+                      auto-width
+                      placeholder="Example replacement: @example.new"
+                    ></uui-input>
+                    <div slot="description">Replacement statement used with the above match statement</div>
+                  </uui-form-layout-item>
+                  <uui-form-layout-item>
+                    <uui-label slot="label" for="exportDisqusXml">Export Disqus Xml</uui-label>
+                    <uui-toggle id="exportDisqusXml" name="exportDisqusXml"></uui-toggle>
+                    <div slot="description">
+                      If you would like Articulate to output an XML file that you can use to import the comments found
+                      in this file in to Disqus
+                    </div>
+                  </uui-form-layout-item>
+                  <uui-form-layout-item>
+                    <uui-label slot="label" for="importFirstImage">Import First Image from Post Attachments</uui-label>
+                    <uui-toggle id="importFirstImage" name="importFirstImage"></uui-toggle>
+                    <div slot="description">
+                      If you would like Articulate to try and import the first image url in the post attachments
+                    </div>
+                  </uui-form-layout-item>
+                </uui-validation-message>
+
                 <uui-button type="submit" look="primary" .state=${this._formState}>Submit</uui-button>
                 <uui-button type="button" look="secondary" @click=${this._handleReset}>Reset</uui-button>
               </form>
@@ -339,12 +341,10 @@ export default class BlogMlImporterElement extends UmbLitElement {
 
   static override readonly styles = [
     UmbTextStyles,
-    formStyles,
     css`
-      .node-picker-container {
-        display: flex;
-        align-items: center;
-        gap: var(--uui-size-space-3);
+      :host {
+        display: block;
+        padding: var(--uui-size-layout-1);
       }
     `,
   ];

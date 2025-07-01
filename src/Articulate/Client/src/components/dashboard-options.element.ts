@@ -61,27 +61,36 @@ export default class DashboardOptionsElement extends UmbLitElement {
   static readonly styles = [
     UmbTextStyles,
     css`
+      :host {
+        display: block;
+      }
       .tools-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
         gap: var(--uui-size-space-6);
       }
       .tool-card {
-        min-width: 0;
-        height: 170px;
+        border: 1px solid var(--uui-color-border-emphasis);
+        width: 100%;
+        height: 250px;
+        aspect-ratio: 1;
+        box-sizing: border-box;
         display: flex;
         flex-direction: column;
         justify-content: center;
         text-align: center;
+        align-items: center;
+        justify-content: space-between;
+        padding: var(--uui-size-space-2);
       }
-      uui-card,
-      uui-card-block-type {
-        transition: var(--uui-animation-duration) var(--uui-animation-easing);
+      .tool-card uui-icon {
+        font-size: var(--uui-size-12, 36px);
+        margin-top: var(--uui-size-space-6);
       }
-      @media (max-width: 768px) {
-        .tools-grid {
-          gap: var(--uui-size-space-4);
-        }
+      .tool-card:hover {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+        transition: all 0.2s ease;
       }
     `,
   ];

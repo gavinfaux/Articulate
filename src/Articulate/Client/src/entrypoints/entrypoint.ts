@@ -4,6 +4,10 @@ import { client } from "../api/client.gen";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const onInit: UmbEntryPointOnInit = (host, _extensionRegistry) => {
+  const css = document.createElement("link");
+  css.rel = "stylesheet";
+  css.href = "/App_Plugins/Articulate/BackOffice/assets/css/backoffice.css";
+  document.head.appendChild(css);
   host.consumeContext(UMB_AUTH_CONTEXT, (authContext) => {
     const config = authContext?.getOpenApiConfiguration();
 
