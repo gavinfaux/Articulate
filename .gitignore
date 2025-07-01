@@ -482,8 +482,8 @@ umbraco-package-schema.json
 # Media files
 /wwwroot/media/
 
-# npm lock files
-package-lock.json
+# npm lock files - commented out for github node ci
+#package-lock.json
 
 # Articulate specific files
 /src/Articulate.Tests.Website/App_Plugins/Articulate
