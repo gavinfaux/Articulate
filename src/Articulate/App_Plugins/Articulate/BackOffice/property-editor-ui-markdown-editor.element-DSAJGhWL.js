@@ -645,4 +645,3 @@ export {
   A as UmbPropertyEditorUIArticulateMarkdownEditorElement,
   A as element
 };
-//# sourceMappingURL=property-editor-ui-markdown-editor.element-DSAJGhWL.js.map

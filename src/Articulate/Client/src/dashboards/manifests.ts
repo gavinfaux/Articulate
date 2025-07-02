@@ -1,3 +1,7 @@
+/**
+ * An array of extension manifests for the Articulate dashboard.
+ * @type {Array<UmbExtensionManifest>}
+ */
 export const manifests: Array<UmbExtensionManifest> = [
   {
     type: "dashboard",

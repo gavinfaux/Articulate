@@ -6,7 +6,7 @@ import {
   type UmbDocumentItemModel,
 } from "@umbraco-cms/backoffice/document";
 import type { UmbModalManagerContext } from "@umbraco-cms/backoffice/modal";
-import { Articulate } from "../api";
+import { Blog } from "../api";
 
 import type { DocumentVariantResponseModel } from "@umbraco-cms/backoffice/external/backend-api";
 import { DocumentService } from "@umbraco-cms/backoffice/external/backend-api";
@@ -14,11 +14,10 @@ import { formatApiError } from "./error-utils";
 
 /**
  * Fetches the UDI of the Articulate blog archive document type.
- * @returns A promise that resolves to the UDI string of the blog archive document type.
- * @throws {Error} If the API request fails, an error is thrown with details from the response.
+ * @returns {Promise<string | undefined>} A promise that resolves to the UDI string of the blog archive document type, or undefined if the request fails.
  */
 export async function fetchArchiveDoctypeUdi(): Promise<string | undefined> {
-  const result = await Articulate.getArticulateBlogArticulateGuidV1();
+  const result = await Blog.getArticulateBlogArticulateGuidV1();
   if (result.response.ok && result.data) {
     return result.data;
   }
@@ -27,9 +26,9 @@ export async function fetchArchiveDoctypeUdi(): Promise<string | undefined> {
 }
 
 /**
- * Fetches the node by its UDI.
- * @param udi - The UDI (Unique Data Identifier) of the node to fetch.
- * @returns A promise that resolves to the node or null if the node is not found.
+ * Fetches a document variant by its UDI.
+ * @param {string} udi The UDI (Unique Data Identifier) of the document to fetch.
+ * @returns {Promise<DocumentVariantResponseModel | null>} A promise that resolves to the first document variant, or null if not found or an error occurs.
  */
 export async function fetchNodeByUdi(udi: string): Promise<DocumentVariantResponseModel | null> {
   try {
@@ -42,11 +41,11 @@ export async function fetchNodeByUdi(udi: string): Promise<DocumentVariantRespon
 }
 
 /**
- * Opens a document picker modal and returns the selected node's UDI.
- * @param modalManager - The Umbraco modal manager context.
- * @param doctypeUdi - The UDI of the document type to filter the picker by.
- * @param host - The controller host instance.
- * @returns A promise that resolves to the selected node's UDI, or null if no node was selected.
+ * Opens a document picker modal to select a node and returns its UDI.
+ * @param {UmbModalManagerContext} modalManager The Umbraco modal manager context.
+ * @param {string} doctypeUdi The UDI of the document type to filter the picker by.
+ * @param {UmbControllerHost} host The controller host instance.
+ * @returns {Promise<string | null>} A promise that resolves to the selected node's UDI, or null if no node is selected or an error occurs.
  */
 export async function openNodePicker(
   modalManager: UmbModalManagerContext,

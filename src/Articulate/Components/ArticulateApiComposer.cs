@@ -1,4 +1,6 @@
+#nullable enable
 using System;
+using System.IO;
 using System.Linq;
 using Asp.Versioning;
 using Humanizer;
@@ -15,9 +17,15 @@ using Umbraco.Cms.Core.DependencyInjection;
 
 namespace Articulate.Components
 {
-
+    /// <summary>
+    /// Composes the Articulate API by registering Swagger/OpenAPI configuration and operation handlers.
+    /// </summary>
     public class ArticulateApiComposer : IComposer
     {
+        /// <summary>
+        /// Registers services and configures Swagger/OpenAPI for the Articulate API.
+        /// </summary>
+        /// <param name="builder">The Umbraco builder used for service registration.</param>
         public void Compose(IUmbracoBuilder builder)
         {
             _ = builder.Services.AddSingleton<IOperationIdHandler, ArticulateApiOperationHandler>();
@@ -26,25 +34,44 @@ namespace Articulate.Components
 
         }
     }
-    public class ArticulateApiOperationSecurityFilter : BackOfficeSecurityRequirementsOperationFilterBase
+
+    /// <summary>
+    /// Adds security requirements to Articulate API operations for Swagger documentation.
+    /// </summary>
+    internal class ArticulateApiOperationSecurityFilter : BackOfficeSecurityRequirementsOperationFilterBase
     {
+        /// <summary>
+        /// Gets the API name for which security requirements are applied.
+        /// </summary>
         protected override string ApiName => ArticulateConstants.ApiName;
     }
 
-    public class ArticulateApiOperationHandler : OperationIdHandler
+    /// <summary>
+    /// Handles the generation of operation IDs for Articulate API endpoints in Swagger.
+    /// </summary>
+    /// <param name="apiVersioningOptions">The API versioning options.</param>
+    internal class ArticulateApiOperationHandler(IOptions<ApiVersioningOptions> apiVersioningOptions)
+        : OperationIdHandler(apiVersioningOptions)
     {
-        public ArticulateApiOperationHandler(IOptions<ApiVersioningOptions> apiVersioningOptions) : base(apiVersioningOptions)
-        {
-        }
+        /// <summary>
+        /// Determines if this handler can process the given API description and controller action.
+        /// </summary>
+        /// <param name="apiDescription">The API description.</param>
+        /// <param name="controllerActionDescriptor">The controller action descriptor.</param>
+        /// <returns>True if the handler can process the API; otherwise, false.</returns>
+        protected override bool CanHandle(ApiDescription apiDescription, ControllerActionDescriptor controllerActionDescriptor)
+            => controllerActionDescriptor.ControllerTypeInfo.Namespace?.StartsWith("Articulate.Controllers", comparisonType: StringComparison.InvariantCultureIgnoreCase) is true;
 
-        protected override bool CanHandle(ApiDescription apiDescription, ControllerActionDescriptor controllerActionDescriptor) => controllerActionDescriptor.ControllerTypeInfo.Namespace?.StartsWith($"{ArticulateConstants.Articulate}.Controllers", comparisonType: StringComparison.InvariantCultureIgnoreCase) is true;
-
+        /// <summary>
+        /// Generates a unique operation ID for the given API description.
+        /// </summary>
+        /// <param name="apiDescription">The API description.</param>
+        /// <returns>The generated operation ID.</returns>
         public override string Handle(ApiDescription apiDescription)
         {
-
             var httpMethod = apiDescription.HttpMethod?.ToLowerInvariant();
             var version = apiDescription.GetApiVersion()?.ToString();
-            var majorVersion = version.Split('.')[0];
+            var majorVersion = version?.Split('.')[0];
             var versionPart = "V" + majorVersion;
 
             /*
@@ -63,8 +90,7 @@ namespace Articulate.Components
              */
 
             var route = apiDescription.RelativePath?.Split('?')[0];
-            var segments = route
-                .Split('/', StringSplitOptions.RemoveEmptyEntries)
+            var segments = route?.Split('/', StringSplitOptions.RemoveEmptyEntries)
                 .Select(s => s.Replace("{", "").Replace("}", ""))
                 .Where(s =>
                     !s.Equals("umbraco", StringComparison.OrdinalIgnoreCase) &&
@@ -73,16 +99,29 @@ namespace Articulate.Components
                     !s.Equals($"v{majorVersion}", StringComparison.OrdinalIgnoreCase)
                 ).Select(s => s.Transform(To.TitleCase).Replace("-", "").Replace(" ", ""))
                 .ToArray();
-            var routePart = string.Concat(segments);
+            if (segments != null)
+            {
+                var routePart = string.Concat(segments);
 
-            // previously default was "postUmbracoManagementApiV1ArticulateBlogImportBegin"
-            // "umbraco/management/api/v1/articulate/blog/import/begin" becomes "postArticulateBlogImportBeginV1"
+                // previously default was "postUmbracoManagementApiV1ArticulateBlogImportBegin"
+                // "umbraco/management/api/v1/articulate/blog/import/begin" becomes "postArticulateBlogImportBeginV1"
 
-            return $"{httpMethod}{routePart}{versionPart}";
+                return $"{httpMethod}{routePart}{versionPart}";
+            }
+
+            return apiDescription.RelativePath ?? throw new InvalidOperationException();
         }
     }
-    public class ArticulateApiSwaggerOptions : IConfigureOptions<SwaggerGenOptions>
+
+    /// <summary>
+    /// Configures SwaggerGen options for the Articulate API, including documentation, tags, and XML comments.
+    /// </summary>
+    internal class ArticulateApiSwaggerOptions : IConfigureOptions<SwaggerGenOptions>
     {
+        /// <summary>
+        /// Configures SwaggerGen options for the Articulate API.
+        /// </summary>
+        /// <param name="options">The SwaggerGen options to configure.</param>
         public void Configure(SwaggerGenOptions options)
         {
             var year = DateTime.Now.Year.ToString();
@@ -90,8 +129,8 @@ namespace Articulate.Components
                 ArticulateConstants.ApiName,
                 new OpenApiInfo
                 {
-                    Title = $"{ArticulateConstants.Articulate} Management API",
-                    Description = $"API for the back office dashboard section {ArticulateConstants.Articulate}, a wonderful Blog engine built on Umbraco. ",
+                    Title = "Articulate Management API",
+                    Description = "API for the back office dashboard section Articulate, a wonderful Blog engine built on Umbraco. ",
                     Version = "1.0",
                     Contact = new OpenApiContact
                     {
@@ -105,9 +144,28 @@ namespace Articulate.Components
                     }
                 });
 
-            options.IncludeXmlComments(typeof(Controllers.ArticulatePropertyEditorsController).Assembly);
+            var assembly = typeof(Controllers.ArticulatePropertyEditorsController).Assembly;
+            var xmlFile = $"{assembly.GetName().Name}.xml";
+            var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+
+            // if the xml file exists then add it, otherwise ignore since a runtime exception will be thrown and Umbraco will not start
+            if (File.Exists(xmlPath))
+            {
+                options.IncludeXmlComments(typeof(Controllers.ArticulatePropertyEditorsController).Assembly);
+            }
 
             options.OperationFilter<ArticulateApiOperationSecurityFilter>();
+
+            options.TagActionsBy(api =>
+            {
+                return api.GroupName != null
+                    ? new[] { api.GroupName }
+                    : api.ActionDescriptor is ControllerActionDescriptor controllerActionDescriptor
+                        ? new[] { controllerActionDescriptor.ControllerName }
+                        : throw new InvalidOperationException("Unable to determine tag for endpoint.");
+            });
+
+            options.DocInclusionPredicate((name, api) => true);
         }
     }
 }

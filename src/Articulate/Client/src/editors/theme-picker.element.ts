@@ -7,20 +7,44 @@ import {
   type UmbPropertyEditorUiElement,
 } from "@umbraco-cms/backoffice/property-editor";
 import { UmbTextStyles } from "@umbraco-cms/backoffice/style";
-import { Articulate } from "../api/sdk.gen";
+import { Editors } from "../api/sdk.gen";
 import { formatApiError } from "../utils/error-utils";
 
+/**
+ * A custom element for picking an Articulate theme.
+ * @element theme-picker-element
+ * @extends UmbElementMixin(UmbLitElement)
+ * @implements {UmbPropertyEditorUiElement}
+ */
 @customElement("theme-picker-element")
 export default class ThemePickerElement extends UmbElementMixin(UmbLitElement) implements UmbPropertyEditorUiElement {
+  /**
+   * The selected theme name, which is the value saved for the property.
+   * @type {string | undefined}
+   */
   @property()
   value?: string;
 
+  /**
+   * The configuration for the property editor.
+   * @type {UmbPropertyEditorConfigCollection | undefined}
+   */
   @property({ attribute: false })
   config?: UmbPropertyEditorConfigCollection;
 
+  /**
+   * An array of theme options for the select input.
+   * @private
+   * @type {Array<{ name: string; value: string; selected?: boolean }>}
+   */
   @state()
   private _themeSelectOptions: Array<{ name: string; value: string; selected?: boolean }> = [];
 
+  /**
+   * Holds an error object if fetching themes fails.
+   * @private
+   * @type {{ title: string; details: string[] } | null}
+   */
   @state()
   private _error: { title: string; details: string[] } | null = null;
 
@@ -44,10 +68,15 @@ export default class ThemePickerElement extends UmbElementMixin(UmbLitElement) i
     }
   }
 
+  /**
+   * Fetches the available themes from the server and populates the select options.
+   * @private
+   * @async
+   */
   private async _fetchThemes() {
     this._error = null;
 
-    const result = await Articulate.getArticulateEditorsThemesV1();
+    const result = await Editors.getArticulateEditorsThemesV1();
 
     if (!result.response.ok || !result.data) {
       this._error = formatApiError(result.error, "Failed to load themes from the server.");
@@ -63,6 +92,11 @@ export default class ThemePickerElement extends UmbElementMixin(UmbLitElement) i
     }));
   }
 
+  /**
+   * Handles the change event from the select input, updates the value, and dispatches a change event.
+   * @param {Event} event The input change event.
+   * @private
+   */
   private _handleInput(event: Event) {
     const newValue = (event.target as any).value as string | undefined;
 
@@ -89,6 +123,11 @@ export default class ThemePickerElement extends UmbElementMixin(UmbLitElement) i
     `;
   }
 
+  /**
+   * The styles for the component.
+   * @static
+   * @readonly
+   */
   static override readonly styles = [
     UmbTextStyles,
     css`

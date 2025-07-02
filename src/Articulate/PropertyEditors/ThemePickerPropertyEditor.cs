@@ -3,7 +3,7 @@ using Umbraco.Cms.Core.PropertyEditors;
 
 namespace Articulate.PropertyEditors
 {
-    [DataEditor($"{ArticulateConstants.Articulate}ThemePicker")]
+    [DataEditor("ArticulateThemePicker")]
     public class ThemePickerPropertyEditor : DataEditor
     {
         private readonly IIOHelper _ioHelper;

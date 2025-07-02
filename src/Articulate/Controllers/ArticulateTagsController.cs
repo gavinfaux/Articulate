@@ -22,7 +22,7 @@ namespace Articulate.Controllers
     /// <remarks>
     /// Cached for one minute
     /// </remarks>
-    [OutputCache(PolicyName = $"{ArticulateConstants.Articulate}60")]
+    [OutputCache(PolicyName = "Articulate60")]
     [ArticulateDynamicRoute]
     public class ArticulateTagsController : ListControllerBase
     {

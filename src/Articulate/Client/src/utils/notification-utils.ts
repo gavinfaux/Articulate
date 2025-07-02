@@ -3,9 +3,11 @@ import { UMB_NOTIFICATION_CONTEXT, UmbNotificationColor } from "@umbraco-cms/bac
 
 /**
  * Shows a global Umbraco notification.
- * @param contextHost The LitElement (or other context consumer) instance, typically 'this', that can provide the UMB_NOTIFICATION_CONTEXT.
- * @param message The message to display.
- * @param type The type of notification: UmbNotificationColor - '' | 'default' | 'positive' | 'warning' | 'danger';
+ * @param {UmbLitElement} contextHost The LitElement instance (or other context consumer) that provides the notification context.
+ * @param {string} message The message to display in the notification.
+ * @param {UmbNotificationColor} type The color and style of the notification. Can be `''`, `'default'`, `'positive'`, `'warning'`, or `'danger'`.
+ * @param {boolean} [stay=false] If true, the notification will stay until dismissed. If false, it will 'peek' and disappear automatically.
+ * @returns {Promise<void>} A promise that resolves once the notification is shown.
  */
 export async function showUmbracoNotification(
   contextHost: UmbLitElement,

@@ -7,7 +7,6 @@ using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Api.Common.Attributes;
 using Umbraco.Cms.Api.Management.Controllers;
@@ -32,14 +31,13 @@ namespace Articulate.Controllers
     [ApiVersion("1.0")]
     [Authorize(Policy = AuthorizationPolicies.SectionAccessSettings)]
     [VersionedApiBackOfficeRoute("articulate/blog")]
-    [ApiExplorerSettings(GroupName = ArticulateConstants.ApiGroupName)]
+    [ApiExplorerSettings(GroupName = "Blog")]
     [MapToApi(ArticulateConstants.ApiName)]
     public class ArticulateBlogImportController(
         BlogMlExporter blogMlExporter,
         BlogMlImporter blogMlImporter,
         IBackOfficeSecurityAccessor backOfficeSecurityAccessor,
         ArticulateTempFileSystem articulateTempFileSystem,
-        LinkGenerator linkGenerator,
         ILogger<ArticulateBlogImportController> logger,
         IPublishedContentTypeCache publishedContentTypeCache)
         : ManagementApiControllerBase
@@ -93,6 +91,7 @@ namespace Articulate.Controllers
         [ProducesResponseType<PostResponseModel>(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status415UnsupportedMediaType)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [Consumes("multipart/form-data")]
         public IActionResult PostInitialize(IFormFile importFile)
         {
             try
@@ -193,9 +192,9 @@ namespace Articulate.Controllers
         /// <response code="500">Import failed due to a server error.</response>
         [HttpPost("import")]
         [ProducesResponseType<ImportModel>(StatusCodes.Status200OK)]
-        [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
-        [ProducesResponseType<ProblemDetails>(StatusCodes.Status500InternalServerError)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<ImportModel>> PostImportBlogMl(ImportBlogMlModel model)
         {
             if (!articulateTempFileSystem.FileExists(model.TempFile))
@@ -207,8 +206,8 @@ namespace Articulate.Controllers
                 });
             }
 
-            // this should never happen since Authorize attribute is applied to ManagementApi?!
-            // also don't add as a ProducesResponseType attribute since Swagger already adds, cos Authorize attribute ;)
+            // this should never happen since Authorize the attribute applied to ManagementApi?!
+            // also don't add a ProducesResponseType(StatusCodes.Status401Unauthorized) to ManagementApi since already added, cos Authorize attribute ;)
             if (backOfficeSecurityAccessor.BackOfficeSecurity?.CurrentUser == null)
             {
                 return StatusCode(StatusCodes.Status401Unauthorized, new ProblemDetails
@@ -322,10 +321,10 @@ namespace Articulate.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public IActionResult ArticulateContentTypeGuid()
         {
-            var contentType = publishedContentTypeCache.Get(PublishedItemType.Content, ArticulateConstants.ArticulateContentTypeAlias);
+            var contentType = publishedContentTypeCache.Get(PublishedItemType.Content, ArticulateConstants.Articulate);
             if (contentType == null)
             {
-                var message = $"Content type '{ArticulateConstants.ArticulateContentTypeAlias}' not found.";
+                var message = "Content type 'Articulate' not found.";
                 logger.LogWarning(message);
                 return OperationStatusResult(ArticulateBlogImportOperationStatus.NotFound, builder => NotFound(builder.WithTitle(message).WithDetail("See back office logs for details.").Build()));
             }

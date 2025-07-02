@@ -1,5 +1,5 @@
-import { c as r, f as h } from "./client.gen-7oad9SSy.js";
-class b {
+import { c as r, f as u } from "./client.gen-7oad9SSy.js";
+class i {
   /**
    * Gets the Guid for the Articulate content type.
    * This endpoint is used to retrieve the Guid for the back office import and export features.
@@ -78,7 +78,7 @@ class b {
    */
   static postArticulateBlogImportBeginV1(e) {
     return ((e == null ? void 0 : e.client) ?? r).post({
-      ...h,
+      ...u,
       security: [
         {
           scheme: "bearer",
@@ -93,6 +93,8 @@ class b {
       }
     });
   }
+}
+class h {
   /**
    * Gets the list of all available Articulate themes, both default and user-defined.
    * This endpoint returns the names of all available themes, including both default and user-defined themes.
@@ -109,6 +111,8 @@ class b {
       ...e
     });
   }
+}
+class g {
   /**
    * Copies an existing theme to a new theme with a specified name.
    * This endpoint creates a copy of an existing theme under a new name. The new theme name must be unique.
@@ -147,32 +151,22 @@ class b {
   }
 }
 function s(t, e) {
-  if (console.error("An API error occurred:", t), t && typeof t == "object" && "title" in t) {
-    const a = t;
-    if (a.errors) {
-      const u = Object.entries(a.errors).flatMap(([l, m]) => {
-        const i = l.startsWith("$.") ? l.substring(2) : l;
-        return m.filter((c) => !!c).map((c) => {
-          const g = c.split(" Path: $.")[0] || c;
-          return `${i}: ${g}`;
-        });
-      });
-      if (u.length > 0)
-        return {
-          title: a.title || "One or more validation errors occurred",
-          details: u
-        };
-    }
-    if (a.title)
-      return {
-        title: a.title,
-        details: a.detail ? [a.detail] : []
-      };
+  if (console.info("[formatApiError] Received error:", t), t !== null && typeof t == "object" && "title" in t && typeof t.title == "string") {
+    const a = t, c = [];
+    return a.detail && c.push(a.detail), a.errors && c.push(...Object.values(a.errors).flatMap((l) => l)), {
+      title: a.title ?? e,
+      details: c
+    };
   }
-  return t instanceof Error ? { title: t.message, details: [] } : typeof t == "string" && t ? { title: t, details: [] } : { title: e, details: [] };
+  if (t instanceof Error) {
+    const a = t.name !== "Error" ? t.name : e, c = t.message ? [t.message] : [];
+    return console.warn(`[${a}] Stack Trace:`, t.stack), { title: a, details: c };
+  }
+  return typeof t == "string" ? { title: e, details: [t] } : { title: e, details: [] };
 }
 export {
-  b as A,
+  i as B,
+  h as E,
+  g as T,
   s as f
 };
-//# sourceMappingURL=error-utils-DkyN1ORi.js.map

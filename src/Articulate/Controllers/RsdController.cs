@@ -46,7 +46,7 @@ namespace Articulate.Controllers
             var rsd = new XElement("rsd",
                 new XAttribute("version", "1.0"),
                 new XElement("service",
-                    new XElement("engineName", $"{ArticulateConstants.Articulate}, powered by Umbraco"),
+                    new XElement("engineName", "Articulate, powered by Umbraco"),
                     new XElement("engineLink", "http://github.com/shazwazza/articulate"),
                     new XElement("homePageLink", node.Url(mode: UrlMode.Absolute))),
                 new XElement("apis",

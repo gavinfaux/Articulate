@@ -3,10 +3,10 @@ import { UUIButtonState } from "@umbraco-cms/backoffice/external/uui";
 import { UmbLitElement } from "@umbraco-cms/backoffice/lit-element";
 import { UMB_MODAL_MANAGER_CONTEXT, UmbModalManagerContext } from "@umbraco-cms/backoffice/modal";
 import { UmbTextStyles } from "@umbraco-cms/backoffice/style";
-import { Articulate } from "../api/sdk.gen";
+import { Blog } from "../api/sdk.gen";
 import type { ExportBlogMlModel } from "../api/types.gen";
 import { fetchArchiveDoctypeUdi, fetchNodeByUdi, openNodePicker } from "../utils/document-node-utils";
-import { formatApiError } from "../utils/error-utils";
+import { IFormController, setFormError } from "../utils/form-utils";
 import { showUmbracoNotification } from "../utils/notification-utils";
 import { renderErrorMessage, renderHeaderActions } from "../utils/template-utils";
 
@@ -17,26 +17,67 @@ import { renderErrorMessage, renderHeaderActions } from "../utils/template-utils
  * @element blogml-exporter
  * @extends UmbLitElement
  */
+/**
+ * A LitElement-based component for exporting blog content in BlogML format.
+ * Provides a form to select a blog node and export its content.
+ *
+ * @element blogml-exporter
+ * @extends UmbLitElement
+ * @implements {IFormController}
+ */
 @customElement("blogml-exporter")
-export default class BlogMlExporterElement extends UmbLitElement {
+export default class BlogMlExporterElement extends UmbLitElement implements IFormController {
+  /**
+   * Optional router path for the back button.
+   * @type {string | undefined}
+   */
   @property({ type: String })
   routerPath?: string;
 
-  @state() private _formState: UUIButtonState = undefined;
-  @state() private _formError: { title: string; details: string[] } | null = null;
+  /**
+   * The current state of the form button.
+   * @type {UUIButtonState}
+   */
+  @state() _formState: UUIButtonState = undefined;
+  /**
+   * Holds an error object if a form operation fails.
+   * @type {{ title: string; details: string[] } | null}
+   */
+  @state() _formError: { title: string; details: string[] } | null = null;
+  /**
+   * The UDI of the selected Articulate blog node for export.
+   * @private
+   * @type {string | undefined}
+   */
   @state() private _articulateNodeId: string | undefined = undefined;
+  /**
+   * The name of the selected blog node, displayed in the input.
+   * @private
+   * @type {string}
+   */
   @state() private _selectedBlogNodeName: string = "";
 
+  /**
+   * The main form element.
+   * @private
+   * @type {HTMLFormElement}
+   */
   @query("#blogMlExportForm")
   private _form!: HTMLFormElement;
 
+  /**
+   * The modal manager context, used for opening the node picker.
+   * @private
+   * @type {UmbModalManagerContext | undefined}
+   */
   private _modalManagerContext?: UmbModalManagerContext;
+  /**
+   * The UDI of the Articulate Archive document type.
+   * @private
+   * @type {string | undefined}
+   */
   private _archiveDoctypeUdi: string | undefined = undefined;
 
-  /**
-   * Creates an instance of ArticulateBlogMlExporterElement.
-   * Sets up the modal manager context.
-   */
   constructor() {
     super();
     this.consumeContext(UMB_MODAL_MANAGER_CONTEXT, (instance) => {
@@ -45,35 +86,49 @@ export default class BlogMlExporterElement extends UmbLitElement {
   }
 
   /**
-   * Lifecycle method called when the element is added to the DOM.
-   * Fetches the Articulate Archive document type UDI.
+   * Fetches the Articulate Archive doctype UDI when the component connects.
+   * @async
    */
   async connectedCallback() {
     super.connectedCallback();
     this._archiveDoctypeUdi = await fetchArchiveDoctypeUdi();
     if (this._archiveDoctypeUdi === null) {
-      this._formState = "failed";
-      this._formError = { title: "Failed to retrieve Articulate Archive document type.", details: [] };
-      return;
+      const error = new Error(
+        "Could not find the Articulate Archive document type. Please ensure Articulate is installed correctly.",
+      );
+      error.name = "Configuration Error";
+      setFormError(this, error, error.name);
     }
   }
 
   /**
-   * Opens the Umbraco document picker to select a blog node.
-   * Updates the selected node UDI and fetches its name.
+   * Resets the component's state.
+   * @param {boolean} [fullReset=false] If true, performs a full reset of the form and its state.
+   */
+  resetState(fullReset = false) {
+    if (fullReset) {
+      this._form?.reset();
+      this._formState = undefined;
+      this._formError = null;
+      this._articulateNodeId = undefined;
+      this._selectedBlogNodeName = "";
+    }
+  }
+
+  /**
+   * Opens the Umbraco node picker to select an Articulate blog node.
    * @private
-   * @returns {Promise<void>}
+   * @async
    */
   private async _openNodePicker() {
-    if (!this._archiveDoctypeUdi) {
-      return;
-    }
+    if (!this._archiveDoctypeUdi) return;
+
     this._formError = null;
     const udi = await openNodePicker(this._modalManagerContext!, this._archiveDoctypeUdi, this);
     if (udi) {
       const variant = await fetchNodeByUdi(udi);
       if (!variant) {
-        this._formError = { title: "Selected node not found.", details: [] };
+        setFormError(this, new Error(`Could not find a node with UDI: ${udi}`), "Node Not Found");
         return;
       }
       this._articulateNodeId = udi;
@@ -81,6 +136,11 @@ export default class BlogMlExporterElement extends UmbLitElement {
     }
   }
 
+  /**
+   * Triggers a browser download for a given Blob.
+   * @param {Blob} blob The file blob to download.
+   * @param {string} fileName The name for the downloaded file.
+   */
   #downloadFile = (blob: Blob, fileName: string) => {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -93,57 +153,68 @@ export default class BlogMlExporterElement extends UmbLitElement {
     a.remove();
   };
 
+  /**
+   * Type guard to check if a value is a Blob.
+   * @param {unknown} value The value to check.
+   * @returns {boolean} True if the value is a Blob.
+   */
   #isBlob = (value: unknown): value is Blob => {
     return value instanceof Blob;
   };
 
-  #clearError() {
-    this._formError = null;
-  }
-
   /**
-   * Handles the form submission for exporting blog content.
-   * Validates the form and initiates the export process.
-   * @param {Event} e - The form submission event.
-   * @returns {Promise<void>}
+   * Handles the form submission event.
+   * @param {SubmitEvent} e The submit event.
+   * @private
+   * @async
    */
   #handleSubmit = async (e: SubmitEvent) => {
     e.preventDefault();
-    console.info("At validation event: #handleSubmit started in blogml-exporter");
-    if (!this._form) {
-      console.info("At validation event: #handleSubmit form not found in blogml-exporter");
+
+    if (!this._form) return;
+
+    console.info("Form submission validity check:", this._form.reportValidity());
+    console.info("Current _articulateNodeId:", this._articulateNodeId);
+
+    // Manually validate the articulateNodeId first.
+    if (!this._articulateNodeId) {
+      const validationError = new Error("A blog node must be selected before exporting.");
+      validationError.name = "Validation Error";
+      setFormError(this, validationError, validationError.name);
+      // Trigger the browser's validation UI on the invalid field(s).
+      // Work around for dirty uui-input-file after form submission and reset
+      this._form.reportValidity();
       return;
     }
 
-    console.info("At validation event: #handleSubmit calling reportValidity in blogml-exporter");
+    // Then, let the browser validate the rest of the form.
     if (!this._form.reportValidity()) {
-      console.info("At validation event: #handleSubmit reportValidity failed in blogml-exporter");
-      this._formState = "failed"; // Give feedback on the button
+      const validationError = new Error("The form is not valid. Please check the fields marked with an error.");
+      validationError.name = "Validation Error";
+      setFormError(this, validationError, validationError.name);
       return;
     }
-    console.info("At validation event: #handleSubmit reportValidity succeeded in blogml-exporter");
 
-    if (this._formState === "waiting") {
-      console.info("At validation event: #handleSubmit form state is waiting in blogml-exporter");
-      return;
-    }
+    if (this._formState === "waiting") return;
 
     this._formState = "waiting";
     this._formError = null;
 
     try {
-      console.info("At validation event: #handleSubmit calling performExport in blogml-exporter");
       await this.#performExport();
       this._formState = "success";
       await showUmbracoNotification(this, "BlogML exported successfully!", "positive");
-      this._handleReset(e);
+      this.resetState(true);
     } catch (error) {
-      console.info("At validation event: #handleSubmit exception caught in blogml-exporter");
-      this._formError = formatApiError(error, "Failed to export blog content.");
-      this._formState = "failed";
+      setFormError(this, error, "Export Failed");
     }
   };
 
+  /**
+   * Performs the BlogML export by calling the backend API.
+   * @private
+   * @async
+   */
   #performExport = async () => {
     const formData = new FormData(this._form);
     const embedImages = formData.get("embedImages") === "on";
@@ -151,18 +222,18 @@ export default class BlogMlExporterElement extends UmbLitElement {
       articulateNodeId: this._articulateNodeId!,
       exportImagesAsBase64: embedImages,
     };
-    const result = await Articulate.postArticulateBlogExportV1({ body: payload });
+    const result = await Blog.postArticulateBlogExportV1({ body: payload });
     if (!result.response.ok || !result.data) {
-      throw result.error || new Error("Failed to export blog content.");
+      throw result.error || new Error("The server returned an invalid response during export.");
     }
     const blob = result.data;
     if (!this.#isBlob(blob)) {
-      throw new Error("Failed to receive a valid file from the server.");
+      throw new Error("The server did not return a file. Please check the server logs.");
     }
     const contentDisposition = result.response.headers.get("content-disposition");
     let fileName = "blog-export.xml"; // Default filename
     if (contentDisposition) {
-      const fileNameMatch = contentDisposition.match(/filename="?([^\"]+)"?/);
+      const fileNameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
       if (fileNameMatch && fileNameMatch.length > 1 && fileNameMatch[1]) {
         fileName = fileNameMatch[1];
       }
@@ -170,13 +241,14 @@ export default class BlogMlExporterElement extends UmbLitElement {
     this.#downloadFile(blob, fileName);
   };
 
+  /**
+   * Handles the reset button click event.
+   * @param {Event} e The click event.
+   * @private
+   */
   private _handleReset = (e: Event) => {
     e.preventDefault();
-    this._form.reset();
-    this._formState = undefined;
-    this._formError = null;
-    this._articulateNodeId = undefined;
-    this._selectedBlogNodeName = "";
+    this.resetState(true);
   };
 
   override render() {
@@ -184,7 +256,14 @@ export default class BlogMlExporterElement extends UmbLitElement {
       <uui-box headline="BlogML Exporter">
         ${renderHeaderActions(this.routerPath)}
         <uui-form>
-          <form id="blogMlExportForm" @submit=${this.#handleSubmit} @input=${this.#clearError}>
+          <form
+            id="blogMlExportForm"
+            @submit=${this.#handleSubmit}
+            @input=${() => {
+              this._formError = null;
+              this._formState = undefined;
+            }}
+          >
             <uui-validation-message>
               <uui-form-layout-item>
                 <div class="node-picker-container">
@@ -221,11 +300,16 @@ export default class BlogMlExporterElement extends UmbLitElement {
             <uui-button type="button" look="secondary" @click=${this._handleReset}>Reset</uui-button>
           </form>
         </uui-form>
-        ${renderErrorMessage(this._formError)}
+        ${this._formError ? renderErrorMessage(this._formError) : ""}
       </uui-box>
     `;
   }
 
+  /**
+   * The styles for the component.
+   * @static
+   * @readonly
+   */
   static override readonly styles = [
     UmbTextStyles,
     css`

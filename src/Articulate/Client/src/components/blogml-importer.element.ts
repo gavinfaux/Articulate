@@ -4,42 +4,85 @@ import { UmbLitElement } from "@umbraco-cms/backoffice/lit-element";
 import { UMB_MODAL_MANAGER_CONTEXT, UmbModalManagerContext } from "@umbraco-cms/backoffice/modal";
 import { UmbTextStyles } from "@umbraco-cms/backoffice/style";
 import { keyed } from "lit-html/directives/keyed.js";
-import { Articulate } from "../api/sdk.gen";
+import { Blog } from "../api/sdk.gen";
 import type { ImportBlogMlModel, ImportModel, PostResponseModel } from "../api/types.gen";
 import { fetchArchiveDoctypeUdi, fetchNodeByUdi, openNodePicker } from "../utils/document-node-utils";
-import { formatApiError } from "../utils/error-utils";
+import { IFormController, setFormError } from "../utils/form-utils";
 import { showUmbracoNotification } from "../utils/notification-utils";
 import { renderErrorMessage, renderHeaderActions } from "../utils/template-utils";
 
 /**
- * A LitElement-based component for importing blog content from BlogML format.
- * Provides a form to upload a BlogML file and select a target blog node.
+ * A LitElement-based component for importing blog content from a BlogML file.
  *
  * @element blogml-importer
  * @extends UmbLitElement
+ * @implements {IFormController}
  */
 @customElement("blogml-importer")
-export default class BlogMlImporterElement extends UmbLitElement {
+export default class BlogMlImporterElement extends UmbLitElement implements IFormController {
+  /**
+   * Optional router path for the back button.
+   * @type {string | undefined}
+   */
   @property({ type: String })
   routerPath?: string;
 
-  @state() private _formState: UUIButtonState = undefined;
-  @state() private _formError: { title: string; details: string[] } | null = null;
+  /**
+   * The current state of the form button.
+   * @type {UUIButtonState}
+   */
+  @state() _formState: UUIButtonState = undefined;
+  /**
+   * Holds an error object if a form operation fails.
+   * @type {{ title: string; details: string[] } | null}
+   */
+  @state() _formError: { title: string; details: string[] } | null = null;
+  /**
+   * The UDI of the selected Articulate blog node for import.
+   * @private
+   * @type {string | undefined}
+   */
   @state() private _articulateNodeId: string | undefined = undefined;
+  /**
+   * The name of the selected blog node, displayed in the input.
+   * @private
+   * @type {string}
+   */
   @state() private _selectedBlogNodeName: string = "";
+  /**
+   * The number of posts found in the uploaded BlogML file.
+   * @private
+   * @type {number | undefined}
+   */
   @state() private _postCount: number | undefined = undefined;
+  /**
+   * A key to force re-rendering of the form, used for resetting the file input.
+   * @private
+   * @type {number}
+   */
   @state() private _formRenderKey = 0;
 
+  /**
+   * The main form element.
+   * @private
+   * @type {HTMLFormElement}
+   */
   @query("#blogMlImportForm")
   private _form!: HTMLFormElement;
 
+  /**
+   * The modal manager context, used for opening the node picker.
+   * @private
+   * @type {UmbModalManagerContext | undefined}
+   */
   private _modalManagerContext?: UmbModalManagerContext;
+  /**
+   * The UDI of the Articulate Archive document type.
+   * @private
+   * @type {string | undefined}
+   */
   private _archiveDoctypeUdi: string | undefined = undefined;
 
-  /**
-   * Creates an instance of ArticulateBlogMlImporterElement.
-   * Sets up the modal manager context and file reader event handlers.
-   */
   constructor() {
     super();
     this.consumeContext(UMB_MODAL_MANAGER_CONTEXT, (instance) => {
@@ -48,35 +91,53 @@ export default class BlogMlImporterElement extends UmbLitElement {
   }
 
   /**
-   * Lifecycle method called when the element is added to the DOM.
-   * Fetches the Articulate Archive document type UDI.
+   * Fetches the Articulate Archive doctype UDI when the component connects.
+   * @async
    */
   async connectedCallback() {
     super.connectedCallback();
     this._archiveDoctypeUdi = await fetchArchiveDoctypeUdi();
     if (this._archiveDoctypeUdi === null) {
-      this._formState = "failed";
-      this._formError = { title: "Failed to retrieve Articulate Archive document type.", details: [] };
-      return;
+      const error = new Error(
+        "Could not find the Articulate Archive document type. Please ensure Articulate is installed correctly.",
+      );
+      error.name = "Configuration Error";
+      setFormError(this, error, error.name);
     }
   }
 
   /**
-   * Opens the Umbraco document picker to select a blog node.
-   * Updates the selected node UDI and fetches its name.
+   * Resets the component's state.
+   * @param {boolean} [fullReset=false] If true, performs a full reset of the form and its state.
+   */
+  resetState(fullReset = false) {
+    this._postCount = undefined;
+
+    if (fullReset) {
+      this._formState = undefined;
+      this._formError = null;
+      this._articulateNodeId = undefined;
+      this._selectedBlogNodeName = "";
+      // Incrementing the key forces Lit to re-render the form from scratch, effectively resetting it.
+      // workaround for dirty uui-input-file after form submission and reset
+      this._formRenderKey++;
+    }
+  }
+
+  /**
+   * Opens the Umbraco node picker to select an Articulate blog node.
    * @private
-   * @returns {Promise<void>}
+   * @async
    */
   private async _openNodePicker() {
-    if (!this._archiveDoctypeUdi) {
-      return;
-    }
+    if (!this._archiveDoctypeUdi) return;
+
     this._formError = null;
     const udi = await openNodePicker(this._modalManagerContext!, this._archiveDoctypeUdi, this);
     if (udi) {
       const variant = await fetchNodeByUdi(udi);
       if (!variant) {
-        this._formError = { title: "Selected node not found.", details: [] };
+        setFormError(this, new Error(`Could not find a node with UDI: ${udi}`), "Node Not Found");
         return;
       }
       this._articulateNodeId = udi;
@@ -84,6 +145,11 @@ export default class BlogMlImporterElement extends UmbLitElement {
     }
   }
 
+  /**
+   * Triggers a browser download for a given Blob.
+   * @param {Blob} blob The file blob to download.
+   * @param {string} fileName The name for the downloaded file.
+   */
   #downloadFile = (blob: Blob, fileName: string) => {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -96,71 +162,81 @@ export default class BlogMlImporterElement extends UmbLitElement {
     a.remove();
   };
 
+  /**
+   * Type guard to check if a value is a Blob.
+   * @param {unknown} value The value to check.
+   * @returns {boolean} True if the value is a Blob.
+   */
   #isBlob = (value: unknown): value is Blob => {
     return value instanceof Blob;
   };
 
-  #clearError() {
-    this._formError = null;
-  }
-
   /**
-   * Handles the form submission for importing blog content.
-   * Validates the form and initiates the import process.
+   * Handles the form submission by orchestrating the multi-step import process.
+   * @param {SubmitEvent} e The submit event.
    * @private
-   * @param {Event} e - The form submission event.
-   * @returns {Promise<void>}
+   * @async
    */
   #handleSubmit = async (e: SubmitEvent) => {
     e.preventDefault();
-    console.info("At validation event: #handleSubmit started in blogml-importer");
-    if (!this._form) {
-      console.info("At validation event: #handleSubmit form not found in blogml-importer");
+
+    if (!this._form) return;
+
+    const formData = new FormData(this._form);
+    const importFile = formData.get("importFile") as File;
+
+    console.info("Form submission validity check:", this._form.reportValidity());
+    console.info("Current _articulateNodeId:", this._articulateNodeId);
+    console.info("Selected import file:", importFile?.name, "Size:", importFile?.size);
+
+    // Manually validate the articulateNodeId first.
+    if (!this._articulateNodeId) {
+      const validationError = new Error("A blog node must be selected before importing.");
+      validationError.name = "Validation Error";
+      setFormError(this, validationError, validationError.name);
+      // Trigger the browser's validation UI on the invalid field(s).
+      this._form.reportValidity();
       return;
     }
 
-    console.info("At validation event: #handleSubmit calling reportValidity in blogml-importer");
-    // This causes a browser error: An invalid form control with name='importFile' is not focusable.
-    try {
-      if (!this._form.reportValidity()) {
-        console.info("At validation event: #handleSubmit reportValidity failed in blogml-importer reportValidity");
-        this._formState = "failed"; // Give feedback on the button
-        return;
-      }
-    } catch (error) {
-      console.error("At validation event: #handleSubmit error calling reportValidity in blogml-importer", error);
-      this._formState = "failed"; // Give feedback on the button
+    // Manually validate that a file has been selected. The `required` attribute on uui-input-file
+    // doesn't seem to be consistently enforced by reportValidity() across all scenarios.
+    if (!importFile || importFile.size === 0) {
+      const validationError = new Error("A BlogML file must be selected for import.");
+      validationError.name = "Validation Error";
+      setFormError(this, validationError, validationError.name);
+      // Trigger the browser's validation UI on the invalid field(s).
+      this._form.reportValidity();
       return;
+    }
 
-    }
-    if (this._formState === "waiting") {
+    // Then, let the browser validate the rest of the form.
+    if (!this._form.reportValidity()) {
+      // The browser will display its own validation messages.
+      // We create a generic error for our own state management.
+      const error = new Error("The form is not valid. Please check the fields marked with an error.");
+      error.name = "Validation Error";
+      setFormError(this, error, error.name);
       return;
     }
+
+    if (this._formState === "waiting") return;
+
     this._formState = "waiting";
     this._formError = null;
     this._postCount = undefined;
-    if (!this._articulateNodeId) {
-      this._formError = { title: "Please select a blog node before importing.", details: [] };
-      this._formState = "failed";
-      return;
-    }
-    const formData = new FormData(this._form);
-    const importFile = formData.get("importFile") as File | null;
-    if (!importFile) {
-      this._formError = { title: "Please select a file to import.", details: [] };
-      this._formState = "failed";
-      return;
-    }
+
     try {
       // Step 1: Upload the file and get post count
       const initData = await this.#beginImport(importFile);
       this._postCount = initData.postCount;
+
       // Step 2: Perform import and get results
-      const importData = await this.#finalizeImport(formData, initData.temporaryFileName!);
-      // Step 3: (Optional) Export Disqus comments if requested and available
+      const importData = await this.#finalizeImport(formData, initData.temporaryFileName!); // Step 3: (Optional) Export Disqus comments if requested and available
       if (formData.get("exportDisqusXml") === "on" && importData.commentCount > 0) {
         await this.#exportDisqusComments();
       }
+
       // All steps succeeded
       this._formState = "success";
       const disqusMessage =
@@ -169,28 +245,42 @@ export default class BlogMlImporterElement extends UmbLitElement {
           : formData.get("exportDisqusXml") === "on"
             ? "No comments found to export."
             : "";
+
       await showUmbracoNotification(
         this,
         `BlogML imported successfully! ${importData.authorCount} authors, ${this._postCount} posts imported. ${disqusMessage}`,
         "positive",
         true,
       );
-      this._handleReset(e);
+      this.resetState(true);
     } catch (error) {
-      this._formError = formatApiError(error, "An unexpected error occurred during import.");
-      this._formState = "failed";
-      this._postCount = undefined;
+      setFormError(this, error, "Import Failed");
     }
   };
 
+  /**
+   * Begins the import process by uploading the BlogML file to the server.
+   * @param {File} importFile The BlogML file to upload.
+   * @returns {Promise<PostResponseModel>} A promise that resolves with the initial import data, including the temporary file name and post count.
+   * @private
+   * @async
+   */
   #beginImport = async (importFile: File): Promise<PostResponseModel> => {
-    const result = await Articulate.postArticulateBlogImportBeginV1({ body: { importFile } });
+    const result = await Blog.postArticulateBlogImportBeginV1({ body: { importFile } });
     if (!result.response.ok || !result.data?.temporaryFileName || !result.data?.postCount) {
       throw result.error || new Error("Failed to upload blog content.");
     }
     return result.data;
   };
 
+  /**
+   * Finalizes the import process by sending the import options to the server.
+   * @param {FormData} formData The form data containing import options.
+   * @param {string} tempFile The temporary file name returned from the beginImport step.
+   * @returns {Promise<ImportModel>} A promise that resolves with the final import results.
+   * @private
+   * @async
+   */
   #finalizeImport = async (formData: FormData, tempFile: string): Promise<ImportModel> => {
     const payload: ImportBlogMlModel = {
       articulateNodeId: this._articulateNodeId!,
@@ -202,15 +292,20 @@ export default class BlogMlImporterElement extends UmbLitElement {
       exportDisqusXml: formData.get("exportDisqusXml") === "on",
       importFirstImage: formData.get("importFirstImage") === "on",
     };
-    const result = await Articulate.postArticulateBlogImportV1({ body: payload });
+    const result = await Blog.postArticulateBlogImportV1({ body: payload });
     if (!result.response.ok || !result.data?.completed) {
       throw result.error || new Error("Failed to import blog content.");
     }
     return result.data;
   };
 
+  /**
+   * Exports the Disqus comments to an XML file.
+   * @private
+   * @async
+   */
   #exportDisqusComments = async () => {
-    const result = await Articulate.getArticulateBlogExportDisqusV1();
+    const result = await Blog.getArticulateBlogExportDisqusV1();
     if (!result.response.ok || !result.data) {
       throw result.error || new Error("Failed to export Disqus comments.");
     }
@@ -221,7 +316,7 @@ export default class BlogMlImporterElement extends UmbLitElement {
     const contentDisposition = result.response.headers.get("content-disposition");
     let fileName = "disqus-comments.xml"; // Default filename
     if (contentDisposition) {
-      const fileNameMatch = contentDisposition.match(/filename="?([^\"]+)"?/);
+      const fileNameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
       if (fileNameMatch && fileNameMatch.length > 1 && fileNameMatch[1]) {
         fileName = fileNameMatch[1];
       }
@@ -229,14 +324,14 @@ export default class BlogMlImporterElement extends UmbLitElement {
     this.#downloadFile(blob, fileName);
   };
 
+  /**
+   * Handles the reset button click event.
+   * @param {Event} e The click event.
+   * @private
+   */
   private _handleReset = (e: Event) => {
     e.preventDefault();
-    this._formState = undefined;
-    this._formError = null;
-    this._articulateNodeId = undefined;
-    this._selectedBlogNodeName = "";
-    this._postCount = undefined;
-    this._formRenderKey++;
+    this.resetState(true);
   };
 
   override render() {
@@ -245,9 +340,16 @@ export default class BlogMlImporterElement extends UmbLitElement {
         ${renderHeaderActions(this.routerPath)}
         <uui-form>
           ${keyed(
-      this._formRenderKey,
-      html`
-              <form id="blogMlImportForm" @submit=${this.#handleSubmit} @input=${this.#clearError()}>
+            this._formRenderKey,
+            html`
+              <form
+                id="blogMlImportForm"
+                @submit=${this.#handleSubmit}
+                @input=${() => {
+                  this._formError = null;
+                  this._formState = undefined;
+                }}
+              >
                 <uui-validation-message>
                   <uui-form-layout-item>
                     <div class="node-picker-container">
@@ -345,26 +447,37 @@ export default class BlogMlImporterElement extends UmbLitElement {
                 <uui-button type="button" look="secondary" @click=${this._handleReset}>Reset</uui-button>
               </form>
             `,
-    )}
+          )}
         </uui-form>
         ${this._postCount !== undefined && this._postCount > 0
-        ? html`
+          ? html`
               <div slot="message">
                 <uui-tag look="secondary" color="positive">${this._postCount} posts in uploaded file.</uui-tag>
               </div>
             `
-        : ""}
-        ${renderErrorMessage(this._formError)}
+          : ""}
+        ${this._formError ? renderErrorMessage(this._formError) : ""}
       </uui-box>
     `;
   }
 
+  /**
+   * The styles for the component.
+   * @static
+   * @readonly
+   */
   static override readonly styles = [
     UmbTextStyles,
     css`
       :host {
         display: block;
         padding: var(--uui-size-layout-1);
+      }
+
+      .node-picker-container {
+        display: flex;
+        gap: var(--uui-size-space-4);
+        align-items: flex-end;
       }
     `,
   ];

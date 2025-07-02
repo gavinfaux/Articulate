@@ -3,11 +3,11 @@ import { html as h, css as m, property as p, state as u, customElement as f } fr
 import { UmbLitElement as v } from "@umbraco-cms/backoffice/lit-element";
 import { UmbPropertyValueChangeEvent as _ } from "@umbraco-cms/backoffice/property-editor";
 import { UmbTextStyles as d } from "@umbraco-cms/backoffice/style";
-import { A as y, f as O } from "./error-utils-DkyN1ORi.js";
-var b = Object.defineProperty, S = Object.getOwnPropertyDescriptor, a = (e, t, r, o) => {
-  for (var s = o > 1 ? void 0 : o ? S(t, r) : t, i = e.length - 1, n; i >= 0; i--)
-    (n = e[i]) && (s = (o ? n(t, r, s) : n(s)) || s);
-  return o && s && b(t, r, s), s;
+import { E as y, f as O } from "./error-utils-D-7IZ3ij.js";
+var b = Object.defineProperty, E = Object.getOwnPropertyDescriptor, o = (e, t, r, a) => {
+  for (var s = a > 1 ? void 0 : a ? E(t, r) : t, i = e.length - 1, n; i >= 0; i--)
+    (n = e[i]) && (s = (a ? n(t, r, s) : n(s)) || s);
+  return a && s && b(t, r, s), s;
 };
 let l = class extends c(v) {
   constructor() {
@@ -22,6 +22,11 @@ let l = class extends c(v) {
       selected: !!this.value && t.value === this.value
     })));
   }
+  /**
+   * Fetches the available themes from the server and populates the select options.
+   * @private
+   * @async
+   */
   async _fetchThemes() {
     this._error = null;
     const e = await y.getArticulateEditorsThemesV1();
@@ -36,6 +41,11 @@ let l = class extends c(v) {
       selected: !!this.value && r === this.value
     }));
   }
+  /**
+   * Handles the change event from the select input, updates the value, and dispatches a change event.
+   * @param {Event} event The input change event.
+   * @private
+   */
   _handleInput(e) {
     const t = e.target.value;
     this.value !== t && (this.value = t, this.dispatchEvent(new _()));
@@ -61,22 +71,21 @@ l.styles = [
       }
     `
 ];
-a([
+o([
   p()
 ], l.prototype, "value", 2);
-a([
+o([
   p({ attribute: !1 })
 ], l.prototype, "config", 2);
-a([
+o([
   u()
 ], l.prototype, "_themeSelectOptions", 2);
-a([
+o([
   u()
 ], l.prototype, "_error", 2);
-l = a([
+l = o([
   f("theme-picker-element")
 ], l);
 export {
   l as default
 };
-//# sourceMappingURL=theme-picker.element-BVujy5Yj.js.map

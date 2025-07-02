@@ -34,7 +34,7 @@ namespace Articulate.Syndication
               new Uri(rootPageModel.RootBlogNode.Url(mode: UrlMode.Absolute)),
               GetFeedItems(rootPageModel, posts))
             {
-                Generator = $"{ArticulateConstants.Articulate}, blogging built on Umbraco",
+                Generator = "Articulate, blogging built on Umbraco",
                 ImageUrl = GetBlogImage(rootPageModel)
             };
 

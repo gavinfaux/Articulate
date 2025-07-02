@@ -28,7 +28,7 @@ namespace Articulate.Controllers
     [Authorize(Policy = AuthorizationPolicies.SectionAccessSettings)]
     [VersionedApiBackOfficeRoute("articulate/themes")]
     [MapToApi(ArticulateConstants.ApiName)]
-    [ApiExplorerSettings(GroupName = ArticulateConstants.ApiGroupName)]
+    [ApiExplorerSettings(GroupName = "Themes")]
     public class ThemeEditorController(IHostEnvironment hostingEnvironment, ILogger<ThemeEditorController> logger) : ManagementApiControllerBase
     {
         /// <summary>
@@ -60,9 +60,9 @@ namespace Articulate.Controllers
         /// <response code="500">An internal server error occurred while copying the theme.</response>
         [HttpPost("copy")]
         [ProducesResponseType<string>(StatusCodes.Status200OK)]
-        [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
-        [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType<ProblemDetails>(StatusCodes.Status500InternalServerError)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public IActionResult PostCopyTheme(PostCopyThemeModel model)
         {
             try

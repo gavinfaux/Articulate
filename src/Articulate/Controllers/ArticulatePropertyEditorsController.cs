@@ -23,7 +23,7 @@ namespace Articulate.Controllers
     [ApiVersion("1.0")]
     [Authorize(Policy = AuthorizationPolicies.SectionAccessContent)]
     [VersionedApiBackOfficeRoute("articulate/editors")]
-    [ApiExplorerSettings(GroupName = ArticulateConstants.ApiGroupName)]
+    [ApiExplorerSettings(GroupName = "Editors")]
     [MapToApi(ArticulateConstants.ApiName)]
     public class ArticulatePropertyEditorsController(IHostEnvironment hostingEnvironment) : ManagementApiControllerBase
     {

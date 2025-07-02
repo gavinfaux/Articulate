@@ -2,161 +2,230 @@ import { css, customElement, html, property, query, state } from "@umbraco-cms/b
 import { UUIButtonState } from "@umbraco-cms/backoffice/external/uui";
 import { UmbLitElement } from "@umbraco-cms/backoffice/lit-element";
 import { UmbTextStyles } from "@umbraco-cms/backoffice/style";
-import { Articulate } from "../api/sdk.gen";
-import { formatApiError } from "../utils/error-utils";
+import { Themes } from "../api/sdk.gen";
+import { IFormController, setFormError } from "../utils/form-utils";
 import { showUmbracoNotification } from "../utils/notification-utils";
 import { renderErrorMessage, renderHeaderActions } from "../utils/template-utils";
+
 /**
- * A component for duplicating Articulate themes with a new name.
- * Provides a form to select an existing theme and specify a new name for the duplicate.
+ * A LitElement-based component for copying an existing theme.
  *
  * @element copy-theme
  * @extends UmbLitElement
+ * @implements {IFormController}
  */
 @customElement("copy-theme")
-export default class CopyThemeElement extends UmbLitElement {
+export default class CopyThemeElement extends UmbLitElement implements IFormController {
+  /**
+   * Optional router path for the back button.
+   * @type {string | undefined}
+   */
   @property({ type: String })
   routerPath?: string;
 
-  @state() private _formState: UUIButtonState = undefined;
-  @state() private _formError: { title: string; details: string[] } | null = null;
+  /**
+   * The current state of the form button.
+   * @type {UUIButtonState}
+   */
+  @state() _formState: UUIButtonState = undefined;
+  /**
+   * Holds an error object if a form operation fails.
+   * @type {{ title: string; details: string[] } | null}
+   */
+  @state() _formError: { title: string; details: string[] } | null = null;
+  /**
+   * A list of available themes.
+   * @private
+   * @type {string[]}
+   */
   @state() private _themes: string[] = [];
+  /**
+   * The name of the theme currently selected for duplication.
+   * @private
+   * @type {string | undefined}
+   */
   @state() private _selectedTheme: string | undefined = undefined;
+  /**
+   * The name for the new, duplicated theme.
+   * @private
+   * @type {string | undefined}
+   */
   @state() private _newThemeName: string | undefined = undefined;
 
+  /**
+   * The form element for duplicating a theme.
+   * @private
+   * @type {HTMLFormElement}
+   */
   @query("form") private _form!: HTMLFormElement;
 
   /**
-   * Fetches the list of available themes.
-   * @private
+   * Loads the list of themes when the component is connected to the DOM.
+   * @async
    */
   async connectedCallback() {
     super.connectedCallback();
-    await this._loadThemes();
+    await this.#loadThemes();
   }
 
-  #clearError() {
-    this._formError = null;
-  }
-
-  private async _loadThemes() {
-    try {
-      const result = await Articulate.getArticulateThemesDefaultV1();
-      if (!result.response.ok || !result.data) {
-        throw result.error || new Error("Failed to load themes.");
-      }
-      this._themes = result.data?.map((theme) => theme) ?? [];
-    } catch (error) {
-      this._formError = formatApiError(error, "Failed to load themes.");
-      this._formState = "failed";
+  /**
+   * Resets the component's state.
+   * @param {boolean} [fullReset=false] If true, performs a full reset, clearing the selected theme and form state.
+   */
+  resetState(fullReset = false) {
+    if (fullReset) {
+      this._formState = undefined;
+      this._formError = null;
+      this._selectedTheme = undefined;
+      this._newThemeName = undefined;
     }
   }
 
   /**
-   * Selects a theme to duplicate.
+   * Fetches the list of available themes from the server.
    * @private
-   * @param {string} theme - The name of the theme to select.
+   * @async
    */
-  private _selectTheme(theme: string) {
-    this.#clearError();
+  async #loadThemes() {
+    try {
+      const result = await Themes.getArticulateThemesDefaultV1();
+      if (!result.response.ok || !result.data) {
+        throw result.error || new Error("The list of themes could not be retrieved from the server.");
+      }
+      this._themes = result.data?.map((theme) => theme) ?? [];
+    } catch (error) {
+      setFormError(this, error, "Could not load themes");
+    }
+  }
+
+  /**
+   * Sets the selected theme and pre-fills the new theme name.
+   * @param {string} theme The name of the theme to select.
+   * @private
+   */
+  #selectTheme(theme: string) {
+    this.resetState(true);
     this._selectedTheme = theme;
     this._newThemeName = `${theme} - Copy`;
   }
 
-  private _handleSelectThemeButtonClick(event: Event, themeName: string) {
+  /**
+   * Handles the click event for the select button on a theme card.
+   * @param {Event} event The click event.
+   * @param {string} themeName The name of the theme to select.
+   * @private
+   */
+  #handleSelectThemeButtonClick(event: Event, themeName: string) {
     event.stopPropagation();
-    this._selectTheme(themeName);
+    this.#selectTheme(themeName);
   }
 
-  private _onCardSelected(event: Event) {
+  /**
+   * Handles the selection of a theme card.
+   * @param {Event} event The selection event.
+   * @private
+   */
+  #onCardSelected(event: Event) {
     const card = event.target as HTMLElement;
     const theme = card.getAttribute("data-theme");
     if (theme) {
-      this._selectTheme(theme);
+      this.#selectTheme(theme);
     }
   }
 
-  private _onCardDeselected(event: Event) {
+  /**
+   * Handles the deselection of a theme card.
+   * @param {Event} event The deselection event.
+   * @private
+   */
+  #onCardDeselected(event: Event) {
     const card = event.target as HTMLElement;
     const theme = card.getAttribute("data-theme");
     if (theme && theme === this._selectedTheme) {
-      this._selectedTheme = undefined;
-      this.#clearError();
+      this.resetState(true);
     }
   }
 
+  /**
+   * Handles changes to the new theme name input field.
+   * @param {Event} e The input event.
+   * @private
+   */
   #onNewThemeNameChange = (e: Event) => {
-    this.#clearError();
+    this._formError = null;
+    this._formState = undefined;
     this._newThemeName = (e.target as HTMLInputElement).value;
   };
 
   /**
-   * Handles form submission for duplicating a theme.
+   * Handles the form submission for duplicating a theme.
+   * @param {Event} e The submit event.
    * @private
+   * @async
    */
-  private async _duplicateTheme(e: Event) {
+  async #handleSubmit(e: Event) {
     e.preventDefault();
     if (!this._form) return;
+
     if (!this._form.reportValidity()) {
-      this._formState = "failed"; // Give feedback on the button
+      const error = new Error("Please enter a new name for the theme.");
+      error.name = "Validation Error";
+      setFormError(this, error, error.name);
       return;
     }
 
-    if (this._formState === "waiting") {
-      return;
-    }
+    if (this._formState === "waiting") return;
+
     this._formState = "waiting";
-    this.#clearError();
-
-    if (!this._selectedTheme || !this._newThemeName) {
-      this._formError = { title: "Please select a theme and enter a new theme name.", details: [] };
-      return;
-    }
+    this._formError = null;
 
     try {
-      const result = await Articulate.postArticulateThemesCopyV1({
+      const result = await Themes.postArticulateThemesCopyV1({
         body: {
-          themeName: this._selectedTheme,
-          newThemeName: this._newThemeName,
+          themeName: this._selectedTheme!,
+          newThemeName: this._newThemeName!,
         },
       });
       if (!result.response.ok) {
         throw result.error || new Error("Failed to duplicate theme.");
       }
+
       this._formState = "success";
       await showUmbracoNotification(this, "Theme duplicated successfully!", "positive");
-      this._handleReset();
+      this.resetState(true);
     } catch (error) {
-      this._formError = formatApiError(error, "Failed to duplicate theme.");
-      this._formState = "failed";
+      setFormError(this, error, "Duplication Failed");
     }
   }
 
-  private _handleReset = () => {
-    this._formState = undefined;
-    this.#clearError();
-    this._selectedTheme = undefined;
-    this._newThemeName = undefined;
+  /**
+   * Handles the reset/cancel button click event.
+   * @param {Event} e The click event.
+   * @private
+   */
+  #handleReset = (e: Event) => {
+    e.preventDefault();
+    this.resetState(true);
   };
 
   /**
-   * Renders the theme grid.
+   * Renders the grid of available themes.
+   * @returns {TemplateResult} The rendered HTML template.
    * @private
-   * @returns {TemplateResult} The theme grid template.
    */
-  private _renderThemeGrid() {
+  #renderThemeGrid() {
     return html`
       <div class="theme-grid">
         ${(this._themes ?? []).map(
-      (theme: string) => html`
+          (theme: string) => html`
             <uui-card-media
               class="theme-card"
               .name=${theme}
               ?selectable=${this._formState !== "waiting"}
               ?selected=${this._selectedTheme === theme}
               selectOnly
-              @selected=${this._onCardSelected}
-              @deselected=${this._onCardDeselected}
+              @selected=${this.#onCardSelected}
+              @deselected=${this.#onCardDeselected}
               data-theme=${theme}
               role="radio"
               aria-checked=${this._selectedTheme === theme}
@@ -169,52 +238,58 @@ export default class CopyThemeElement extends UmbLitElement {
                 alt="${theme} theme preview"
                 loading="lazy"
                 @error=${(e: Event) => {
-          const img = e.target as HTMLImageElement;
-          img.style.display = "none";
+                  const img = e.target as HTMLImageElement;
+                  img.style.display = "none";
 
-          const parent = img.parentElement;
-          if (!parent) return;
+                  const parent = img.parentElement;
+                  if (!parent) return;
 
-          if (!parent.querySelector(":scope > .theme-fallback-initial")) {
-            const span = document.createElement("span");
-            span.className = "theme-fallback-initial";
-            span.textContent = theme.charAt(0).toUpperCase();
-            parent.appendChild(span);
-          }
-        }}
+                  if (!parent.querySelector(":scope > .theme-fallback-initial")) {
+                    const span = document.createElement("span");
+                    span.className = "theme-fallback-initial";
+                    span.textContent = theme.charAt(0).toUpperCase();
+                    parent.appendChild(span);
+                  }
+                }}
               />
               <div slot="actions">
                 <uui-button
                   look="primary"
                   label="Select Theme ${theme}"
-                  @click=${(e: Event) => this._handleSelectThemeButtonClick(e, theme)}
+                  @click=${(e: Event) => this.#handleSelectThemeButtonClick(e, theme)}
                 >
                   Select
                 </uui-button>
               </div>
             </uui-card-media>
           `,
-    )}
+        )}
       </div>
     `;
   }
 
   /**
-   * Renders the duplicate form.
+   * Renders the form for entering the new theme name.
+   * @returns {TemplateResult} The rendered HTML template.
    * @private
-   * @returns {TemplateResult} The duplicate form template.
    */
-  private _renderDuplicateForm() {
+  #renderDuplicateForm() {
     if (!this._selectedTheme) {
       return html``;
     }
-    const duplicateButtonLabel = this._formState === "waiting" ? "Duplicating..." : "Duplicate";
+
     return html`
       <div class="duplicate-form">
         <h3>Duplicate '${this._selectedTheme}' Theme</h3>
         <p>Create a copy of this theme that you can customize.</p>
         <uui-form>
-          <form @submit=${(e: Event) => e.preventDefault()} @input=${this.#clearError}>
+          <form
+            @submit=${this.#handleSubmit}
+            @input=${() => {
+              this._formError = null;
+              this._formState = undefined;
+            }}
+          >
             <uui-validation-message>
               <uui-form-layout-item>
                 <uui-label for="newThemeName" slot="label" required>New theme name</uui-label>
@@ -224,23 +299,21 @@ export default class CopyThemeElement extends UmbLitElement {
                   .value=${this._newThemeName ?? ""}
                   @input=${this.#onNewThemeNameChange}
                   required
+                  required-message="You must provide a new name for the theme."
+                  label="New theme name"
                 ></uui-input>
               </uui-form-layout-item>
             </uui-validation-message>
+            <div class="form-actions">
+              <uui-button id="duplicateButton" type="submit" look="primary" .state=${this._formState}>
+                Duplicate
+              </uui-button>
+              <uui-button id="cancelButton" type="button" look="secondary" @click=${this.#handleReset}>
+                Cancel
+              </uui-button>
+            </div>
           </form>
         </uui-form>
-        <div class="form-actions">
-          <uui-button
-            look="primary"
-            label=${duplicateButtonLabel}
-            type="button"
-            @click=${this._duplicateTheme}
-            .state=${this._formState}
-          >
-            ${duplicateButtonLabel}
-          </uui-button>
-          <uui-button type="button" look="secondary" @click=${this._handleReset}>Reset</uui-button>
-        </div>
       </div>
     `;
   }
@@ -256,12 +329,17 @@ export default class CopyThemeElement extends UmbLitElement {
             themes drop down on your Articulate root node to use it.
           </p>
         </div>
-        <div class="container">${this._renderThemeGrid()} ${this._renderDuplicateForm()}</div>
-        ${renderErrorMessage(this._formError)}
+        <div class="container">${this.#renderThemeGrid()} ${this.#renderDuplicateForm()}</div>
+        ${this._formError ? renderErrorMessage(this._formError) : ""}
       </uui-box>
     `;
   }
 
+  /**
+   * The styles for the component.
+   * @static
+   * @readonly
+   */
   static override readonly styles = [
     UmbTextStyles,
     css`
@@ -283,7 +361,6 @@ export default class CopyThemeElement extends UmbLitElement {
         aspect-ratio: 1;
         box-sizing: border-box;
         display: flex;
-        text-align: center;
         flex-direction: column;
         align-items: center;
         justify-content: space-between;
@@ -321,6 +398,12 @@ export default class CopyThemeElement extends UmbLitElement {
         margin-top: var(--uui-size-space-6);
         border-top: 1px solid var(--uui-color-divider);
         padding: var(--uui-size-space-3);
+      }
+
+      .form-actions {
+        display: flex;
+        gap: var(--uui-size-space-4);
+        margin-top: var(--uui-size-space-6);
       }
     `,
   ];

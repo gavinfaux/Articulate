@@ -1,3 +1,8 @@
+/**
+ * An array of extension manifests for the Articulate editors.
+ * This is used by Umbraco to register the custom property editors.
+ * @type {Array<UmbExtensionManifest>}
+ */
 export const manifests: Array<UmbExtensionManifest> = [
   {
     type: "propertyEditorUi",

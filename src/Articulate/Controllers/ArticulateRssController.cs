@@ -21,7 +21,7 @@ namespace Articulate.Controllers
     /// <remarks>
     /// Cached for one minute
     /// </remarks>
-    [OutputCache(PolicyName = $"{ArticulateConstants.Articulate}300")]
+    [OutputCache(PolicyName = "Articulate300")]
     [ArticulateDynamicRoute]
     public class ArticulateRssController : RenderController
     {

@@ -75,7 +75,7 @@ namespace Articulate.Routing
                 using (var scope = _scopeProvider.CreateCoreScope(autoComplete: true))
                 {
 
-                    IPublishedContentType articulateCt = publishedContentTypeCache.Get(PublishedItemType.Content, ArticulateConstants.ArticulateContentTypeAlias);
+                    IPublishedContentType articulateCt = publishedContentTypeCache.Get(PublishedItemType.Content, ArticulateConstants.Articulate);
                     if (articulateCt == null)
                     {
                         return;

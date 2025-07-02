@@ -1,77 +1,63 @@
-import { ProblemDetails } from "../api";
+import type { ProblemDetails } from "../api/types.gen";
+
+// -----------------------------
+// TODO: Remove this when we have proper error handling for the API, using hey-api for now & sends ProblemDetails
+// Base class or mixin based on maybe https://github.com/umbraco/Umbraco-CMS/blob/main/src/Umbraco.Web.UI.Client/examples/validation-context/validation-context-dashboard.ts
+// https://docs.umbraco.com/umbraco-cms/15.latest/customizing/foundation/validation/integrate-validation
+// https://github.com/umbraco/Umbraco-CMS/blob/main/src/Umbraco.Web.UI.Client/src/packages/core/validation/context/validation.context.ts
+// Umbraco sends ValidateErrorResponseBodyModel ?
+// https://github.com/umbraco/Umbraco-CMS/tree/main/src/Umbraco.Web.UI.Client/src/packages/core/validation
+// https://github.com/umbraco/Umbraco-CMS/blob/main/src/Umbraco.Web.UI.Client/src/packages/core/validation/context/server-model-validator.context.ts
+// https://github.com/umbraco/Umbraco-CMS/blob/main/src/Umbraco.Web.UI.Client/src/packages/core/validation/controllers/form-control-validator.controller.ts
+// -----------------------------
 
 /**
- * Formats an error from an API call into a user-friendly object.
- * It intelligently handles ProblemDetails objects, standard Error objects, and strings.
- *
- * @param error The error object, typically from the `error` property of an API result.
- * @param defaultMessage A fallback message if the error object is not recognized.
- * @returns A user-friendly error message object with a title and an array of details.
+ * Formats an API error into a user-friendly message.
+ * It can handle ProblemDetails objects, standard Error objects, and strings.
+ * @param {unknown} error The error object, which can be of any type.
+ * @param {string} defaultMessage A fallback message if the error object is not recognized.
+ * @returns {{title: string, details: string[]}} A user-friendly error message object with a title and an array of details.
  */
 export function formatApiError(error: unknown, defaultMessage: string): { title: string; details: string[] } {
-  // Log the raw error for debugging purposes
-  console.error("An API error occurred:", error);
-  console.info(`At validation event: formatApiError started with defaultMessage: ${defaultMessage}`);
+  console.info("[formatApiError] Received error:", error);
 
   // Check if it's a ProblemDetails-like object from the API
-  if (error && typeof error === "object" && "title" in error) {
-    console.info("At validation event: formatApiError identified a ProblemDetails-like object");
-    const problem = error as ProblemDetails & { errors?: Record<string, string[]> };
+  if (
+    error !== null &&
+    typeof error === "object" &&
+    "title" in error &&
+    typeof (error as ProblemDetails).title === "string"
+  ) {
+    const problem = error as ProblemDetails & { detail?: string; errors?: Record<string, string[]> };
+    const details: string[] = [];
 
-    // Prioritize extracting and formatting detailed validation errors
+    if (problem.detail) {
+      details.push(problem.detail);
+    }
+
     if (problem.errors) {
-      console.info("At validation event: formatApiError found validation errors in ProblemDetails");
-      const formattedErrors = Object.entries(problem.errors).flatMap(([key, messages]) => {
-        // Clean up the field name (e.g., '$.articulateNodeId' -> 'articulateNodeId')
-        const fieldName = key.startsWith("$.") ? key.substring(2) : key;
-
-        // Map over all messages for the current key, filtering out any null/empty ones first
-        return messages
-          .filter((msg) => !!msg)
-          .map((msg) => {
-            // Clean up the message, but fall back to the original if the split fails
-            const cleanedMsg = msg.split(" Path: $.")[0] || msg;
-            return `${fieldName}: ${cleanedMsg}`;
-          });
-      });
-
-      if (formattedErrors.length > 0) {
-        const result = {
-          title: problem.title || "One or more validation errors occurred",
-          details: formattedErrors,
-        };
-        console.info(`At validation event: formatApiError returning formatted validation errors`);
-        return result;
-      }
+      details.push(...Object.values(problem.errors).flatMap((e) => e));
     }
 
-    // Fallback to title and detail if no specific validation errors are found
-    if (problem.title) {
-      const result = {
-        title: problem.title,
-        details: problem.detail ? [problem.detail] : [],
-      };
-      console.info(`At validation event: formatApiError returning ProblemDetails title and detail`);
-      return result;
-    }
+    return {
+      title: problem.title ?? defaultMessage,
+      details,
+    };
   }
 
-  // Fallback for standard JavaScript Error objects
   if (error instanceof Error) {
-    const result = { title: error.message, details: [] };
-    console.info(`At validation event: formatApiError returning standard Error message`);
-    return result;
+    // Use the error's name for the title if it's descriptive, otherwise use the default.
+    const title = error.name !== "Error" ? error.name : defaultMessage;
+    const details = error.message ? [error.message] : [];
+
+    // During development, log the stack trace for much easier debugging.
+    console.warn(`[${title}] Stack Trace:`, error.stack);
+    return { title, details };
   }
 
-  // Fallback for simple string errors
-  if (typeof error === "string" && error) {
-    const result = { title: error, details: [] };
-    console.info(`At validation event: formatApiError returning string error`);
-    return result;
+  if (typeof error === "string") {
+    return { title: defaultMessage, details: [error] };
   }
 
-  // If the error is unrecognizable, use the default message.
-  const result = { title: defaultMessage, details: [] };
-  console.info(`At validation event: formatApiError returning default message`);
-  return result;
+  return { title: defaultMessage, details: [] };
 }

@@ -68,7 +68,7 @@ namespace Articulate.Components
                         return;
                     }
 
-                    if (content.ContentType.Alias.InvariantEquals(ArticulateConstants.ArticulateContentTypeAlias))
+                    if (content.ContentType.Alias.InvariantEquals(ArticulateConstants.Articulate))
                     {
                         //ensure routes are rebuilt
                         _appCaches.RequestCache.GetCacheItem(ArticulateConstants.RefreshRoutesToken, () => true);
@@ -90,7 +90,7 @@ namespace Articulate.Components
                 var item = umbracoContext.Content.GetById(id);
 
                 // if it's directly related to an articulate node
-                if (item != null && item.ContentType.Alias.InvariantEquals(ArticulateConstants.ArticulateContentTypeAlias))
+                if (item != null && item.ContentType.Alias.InvariantEquals(ArticulateConstants.Articulate))
                 {
                     //ensure routes are rebuilt
                     _appCaches.RequestCache.GetCacheItem(ArticulateConstants.RefreshRoutesToken, () => true);
@@ -113,7 +113,7 @@ namespace Articulate.Components
                     }
                 }
 
-                var articulateContentType = _publishedContentTypeCache.Get(PublishedItemType.Content, ArticulateConstants.ArticulateContentTypeAlias);
+                var articulateContentType = _publishedContentTypeCache.Get(PublishedItemType.Content, ArticulateConstants.Articulate);
                 if (articulateContentType != null)
                 {
                     var articulateNodes = _documentCacheService.GetByContentType(articulateContentType);

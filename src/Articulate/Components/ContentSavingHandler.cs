@@ -124,7 +124,7 @@ namespace Articulate.Components
                     }
                 }
 
-                if (content.ContentType.Alias.InvariantEquals(ArticulateConstants.ArticulateContentTypeAlias))
+                if (content.ContentType.Alias.InvariantEquals(ArticulateConstants.Articulate))
                 {
                     if (content.HasProperty("theme"))
                     {

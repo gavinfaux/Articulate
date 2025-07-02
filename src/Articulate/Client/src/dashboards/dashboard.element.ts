@@ -1,19 +1,78 @@
+import { RuntimeModeModel, ServerInformationResponseModel } from "@umbraco-cms/backoffice/external/backend-api";
 import { css, customElement, html, state } from "@umbraco-cms/backoffice/external/lit";
 import { UmbLitElement } from "@umbraco-cms/backoffice/lit-element";
 import type { UmbRoute, UmbRouterSlotInitEvent } from "@umbraco-cms/backoffice/router";
 import { UmbTextStyles } from "@umbraco-cms/backoffice/style";
+import { Server } from "../api/umbraco/sdk.gen.js";
 import BlogMlExporterElement from "../components/blogml-exporter.element.js";
 import BlogMlImporterElement from "../components/blogml-importer.element.js";
 import CopyThemeElement from "../components/copy-theme.element.js";
 import DashboardOptionsElement from "../components/dashboard-options.element.js";
 
+/**
+ * The main dashboard element for the Articulate package.
+ * It sets up the routing for the different dashboard sections.
+ *
+ * @element articulate-dashboard
+ * @extends {UmbLitElement}
+ */
 @customElement("articulate-dashboard")
 export default class ArticulateDashboardElement extends UmbLitElement {
+  /**
+   * The base path for the router.
+   * @private
+   * @type {string | undefined}
+   */
   @state() private _routerBasePath?: string;
+  /**
+   * The routes for the dashboard router.
+   * @private
+   * @type {UmbRoute[]}
+   */
   @state() private _routes: UmbRoute[];
+  /**
+   * The build date of the package, injected by the build process.
+   * @private
+   * @type {string}
+   */
+  @state() private _buildDate = __BUILD_DATE__;
+  /**
+   * The version of the package, injected by the build process.
+   * @private
+   * @type {string}
+   */
+  @state() private _packageVersion = __PACKAGE_VERSION__;
+  /**
+   * Holds server information, such as the runtime mode.
+   * @private
+   * @type {ServerInformationResponseModel | undefined}
+   */
+  @state() private _serverInformation?: ServerInformationResponseModel;
 
+  /**
+   * Fetches server information from the backend.
+   * @private
+   * @async
+   * @returns {Promise<ServerInformationResponseModel | null>} The server information or null if it fails.
+   */
+  private async _getServerInformation() {
+    const response = await Server.getServerInformation();
+    if (response.response.ok && response.data) {
+      this._serverInformation = response.data;
+      console.info("Server Information:", response.data);
+      return response.data;
+    }
+    console.warn("Failed to get server information.");
+    return null;
+  }
+
+  /**
+   * Initializes the component, fetches server information, and sets up routes.
+   */
   constructor() {
     super();
+
+    this._getServerInformation();
 
     const createSetup = <T extends UmbLitElement & { routerPath?: string }>(component: new () => T) => {
       return (el: Element | undefined) => {
@@ -68,10 +127,24 @@ export default class ArticulateDashboardElement extends UmbLitElement {
             }}
           ></umb-router-slot>
         </div>
+        <footer slot="footer">
+          <p slot="footer-info" class="articulate-footer-info">
+            Articulate | Version:
+            ${this._packageVersion}${this._serverInformation &&
+            this._serverInformation.runtimeMode === RuntimeModeModel.BACKOFFICE_DEVELOPMENT
+              ? ` | Build Date: ${this._buildDate}`
+              : ""}
+          </p>
+        </footer>
       </umb-body-layout>
     `;
   }
 
+  /**
+   * The styles for the component.
+   * @static
+   * @readonly
+   */
   static override readonly styles = [
     UmbTextStyles,
     css`
