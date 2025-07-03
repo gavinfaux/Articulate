@@ -1,6 +1,7 @@
 import { css, customElement, html, property } from "@umbraco-cms/backoffice/external/lit";
 import { UmbLitElement } from "@umbraco-cms/backoffice/lit-element";
 import { UmbTextStyles } from "@umbraco-cms/backoffice/style";
+import { BoxStyles, HostStyles } from "../utils/template-utils";
 
 const dashboards = [
   {
@@ -43,6 +44,11 @@ export default class DashboardOptionsElement extends UmbLitElement {
   render() {
     return html`
       <uui-box headline="Options">
+        <div slot="header-actions">
+          <uui-button look="default" compact href="https://github.com/Shazwazza/Articulate/wiki" label="Wiki">
+            <uui-icon name="icon-help-alt" label="Wiki"></uui-icon>
+          </uui-button>
+        </div>
         <div class="tools-grid">
           ${dashboards.map((d) => {
             const basePath = this.routerPath?.replace(/\/$/, "");
@@ -60,15 +66,24 @@ export default class DashboardOptionsElement extends UmbLitElement {
 
   static readonly styles = [
     UmbTextStyles,
+    HostStyles,
+    BoxStyles,
     css`
-      :host {
-        display: block;
-      }
       .tools-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-        gap: var(--uui-size-space-6);
+        gap: var(--uui-size-space-4);
       }
+
+      [slot="header-actions"] {
+        display: flex;
+        gap: var(--uui-size-space-2);
+      }
+
+      [slot="header-actions"] > uui-button {
+        font-size: var(--uui-size-6, 18px);
+      }
+
       .tool-card {
         border: 1px solid var(--uui-color-border-emphasis);
         width: 100%;

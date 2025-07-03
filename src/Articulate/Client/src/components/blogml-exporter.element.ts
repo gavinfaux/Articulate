@@ -1,4 +1,4 @@
-import { css, customElement, html, property, query, state } from "@umbraco-cms/backoffice/external/lit";
+import { customElement, html, property, query, state } from "@umbraco-cms/backoffice/external/lit";
 import { UUIButtonState } from "@umbraco-cms/backoffice/external/uui";
 import { UmbLitElement } from "@umbraco-cms/backoffice/lit-element";
 import { UMB_MODAL_MANAGER_CONTEXT, UmbModalManagerContext } from "@umbraco-cms/backoffice/modal";
@@ -8,7 +8,15 @@ import type { ExportBlogMlModel } from "../api/types.gen";
 import { fetchArchiveDoctypeUdi, fetchNodeByUdi, openNodePicker } from "../utils/document-node-utils";
 import { IFormController, setFormError } from "../utils/form-utils";
 import { showUmbracoNotification } from "../utils/notification-utils";
-import { renderErrorMessage, renderHeaderActions } from "../utils/template-utils";
+import {
+  BoxStyles,
+  ErrorBoxStyles,
+  FormStyles,
+  HostStyles,
+  NodePickerStyles,
+  renderErrorMessage,
+  renderHeaderActions,
+} from "../utils/template-utils";
 
 /**
  * A LitElement-based component for exporting blog content in BlogML format.
@@ -251,6 +259,10 @@ export default class BlogMlExporterElement extends UmbLitElement implements IFor
     this.resetState(true);
   };
 
+  private get _submitButtonColor(): "positive" | "primary" {
+    return this._articulateNodeId ? "positive" : "primary";
+  }
+
   override render() {
     return html`
       <uui-box headline="BlogML Exporter">
@@ -296,8 +308,16 @@ export default class BlogMlExporterElement extends UmbLitElement implements IFor
               </uui-form-layout-item>
             </uui-validation-message>
 
-            <uui-button type="submit" look="primary" .state=${this._formState}>Submit</uui-button>
-            <uui-button type="button" look="secondary" @click=${this._handleReset}>Reset</uui-button>
+            <div class="form-actions">
+              <uui-button
+                type="submit"
+                look="primary"
+                .color=${this._submitButtonColor}
+                .state=${this._formState}
+                label="Submit"
+              ></uui-button>
+              <uui-button type="reset" look="secondary" label="Reset" @click=${this._handleReset}></uui-button>
+            </div>
           </form>
         </uui-form>
         ${this._formError ? renderErrorMessage(this._formError) : ""}
@@ -312,12 +332,13 @@ export default class BlogMlExporterElement extends UmbLitElement implements IFor
    */
   static override readonly styles = [
     UmbTextStyles,
-    css`
-      :host {
-        display: block;
-        padding: var(--uui-size-layout-1);
-      }
-    `,
+    UmbTextStyles,
+    UmbTextStyles,
+    HostStyles,
+    BoxStyles,
+    ErrorBoxStyles,
+    FormStyles,
+    NodePickerStyles,
   ];
 }
 

@@ -5,7 +5,14 @@ import { UmbTextStyles } from "@umbraco-cms/backoffice/style";
 import { Themes } from "../api/sdk.gen";
 import { IFormController, setFormError } from "../utils/form-utils";
 import { showUmbracoNotification } from "../utils/notification-utils";
-import { renderErrorMessage, renderHeaderActions } from "../utils/template-utils";
+import {
+  BoxStyles,
+  ErrorBoxStyles,
+  FormStyles,
+  HostStyles,
+  renderErrorMessage,
+  renderHeaderActions,
+} from "../utils/template-utils";
 
 /**
  * A LitElement-based component for copying an existing theme.
@@ -208,6 +215,10 @@ export default class CopyThemeElement extends UmbLitElement implements IFormCont
     this.resetState(true);
   };
 
+  private get _submitButtonColor(): "positive" | "primary" {
+    return this._selectedTheme && this._newThemeName ? "positive" : "primary";
+  }
+
   /**
    * Renders the grid of available themes.
    * @returns {TemplateResult} The rendered HTML template.
@@ -305,10 +316,16 @@ export default class CopyThemeElement extends UmbLitElement implements IFormCont
               </uui-form-layout-item>
             </uui-validation-message>
             <div class="form-actions">
-              <uui-button id="duplicateButton" type="submit" look="primary" .state=${this._formState}>
+              <uui-button
+                id="duplicateButton"
+                type="submit"
+                look="primary"
+                .color=${this._submitButtonColor}
+                .state=${this._formState}
+              >
                 Duplicate
               </uui-button>
-              <uui-button id="cancelButton" type="button" look="secondary" @click=${this.#handleReset}>
+              <uui-button id="cancelButton" type="reset" look="secondary" @click=${this.#handleReset}>
                 Cancel
               </uui-button>
             </div>
@@ -342,11 +359,11 @@ export default class CopyThemeElement extends UmbLitElement implements IFormCont
    */
   static override readonly styles = [
     UmbTextStyles,
+    HostStyles,
+    BoxStyles,
+    ErrorBoxStyles,
+    FormStyles,
     css`
-      :host {
-        display: block;
-        padding: var(--uui-size-layout-1);
-      }
       .theme-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
@@ -400,10 +417,8 @@ export default class CopyThemeElement extends UmbLitElement implements IFormCont
         padding: var(--uui-size-space-3);
       }
 
-      .form-actions {
-        display: flex;
-        gap: var(--uui-size-space-4);
-        margin-top: var(--uui-size-space-6);
+      .duplicate-form h3 {
+        margin-top: 0;
       }
     `,
   ];

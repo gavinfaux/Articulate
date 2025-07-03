@@ -1,13 +1,12 @@
-import { RuntimeModeModel, ServerInformationResponseModel } from "@umbraco-cms/backoffice/external/backend-api";
 import { css, customElement, html, state } from "@umbraco-cms/backoffice/external/lit";
 import { UmbLitElement } from "@umbraco-cms/backoffice/lit-element";
 import type { UmbRoute, UmbRouterSlotInitEvent } from "@umbraco-cms/backoffice/router";
 import { UmbTextStyles } from "@umbraco-cms/backoffice/style";
-import { Server } from "../api/umbraco/sdk.gen.js";
 import BlogMlExporterElement from "../components/blogml-exporter.element.js";
 import BlogMlImporterElement from "../components/blogml-importer.element.js";
 import CopyThemeElement from "../components/copy-theme.element.js";
 import DashboardOptionsElement from "../components/dashboard-options.element.js";
+import { HostStyles } from "../utils/template-utils.js";
 
 /**
  * The main dashboard element for the Articulate package.
@@ -35,44 +34,8 @@ export default class ArticulateDashboardElement extends UmbLitElement {
    * @private
    * @type {string}
    */
-  @state() private _buildDate = __BUILD_DATE__;
-  /**
-   * The version of the package, injected by the build process.
-   * @private
-   * @type {string}
-   */
-  @state() private _packageVersion = __PACKAGE_VERSION__;
-  /**
-   * Holds server information, such as the runtime mode.
-   * @private
-   * @type {ServerInformationResponseModel | undefined}
-   */
-  @state() private _serverInformation?: ServerInformationResponseModel;
-
-  /**
-   * Fetches server information from the backend.
-   * @private
-   * @async
-   * @returns {Promise<ServerInformationResponseModel | null>} The server information or null if it fails.
-   */
-  private async _getServerInformation() {
-    const response = await Server.getServerInformation();
-    if (response.response.ok && response.data) {
-      this._serverInformation = response.data;
-      console.info("Server Information:", response.data);
-      return response.data;
-    }
-    console.warn("Failed to get server information.");
-    return null;
-  }
-
-  /**
-   * Initializes the component, fetches server information, and sets up routes.
-   */
   constructor() {
     super();
-
-    this._getServerInformation();
 
     const createSetup = <T extends UmbLitElement & { routerPath?: string }>(component: new () => T) => {
       return (el: Element | undefined) => {
@@ -128,13 +91,7 @@ export default class ArticulateDashboardElement extends UmbLitElement {
           ></umb-router-slot>
         </div>
         <footer slot="footer">
-          <p slot="footer-info" class="articulate-footer-info">
-            Articulate | Version:
-            ${this._packageVersion}${this._serverInformation &&
-            this._serverInformation.runtimeMode === RuntimeModeModel.BACKOFFICE_DEVELOPMENT
-              ? ` | Build Date: ${this._buildDate}`
-              : ""}
-          </p>
+          <p slot="footer-info" class="articulate-footer-info"></p>
         </footer>
       </umb-body-layout>
     `;
@@ -147,30 +104,17 @@ export default class ArticulateDashboardElement extends UmbLitElement {
    */
   static override readonly styles = [
     UmbTextStyles,
+    HostStyles,
     css`
-      :host {
-        display: block;
-        padding: var(--uui-size-space-5);
+      .dashboard-container {
+        max-width: var(--uui-size-content-large);
+        margin: 0 auto;
+        padding: 0 var(--uui-size-space-3);
       }
 
       .header-container {
         width: 100%;
         padding: 0 var(--uui-size-space-3);
-      }
-
-      .articulate-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        width: 100%;
-        height: 69px;
-        background: var(--uui-color-surface);
-        border-radius: var(--uui-border-radius);
-        box-shadow: var(--uui-shadow-1);
-        box-sizing: border-box;
-        padding: 0 2rem;
-        margin: 0;
-        position: relative;
       }
       .header-title {
         font-size: var(--uui-type-h3-size);
@@ -190,18 +134,31 @@ export default class ArticulateDashboardElement extends UmbLitElement {
         justify-content: flex-end;
         height: 100%;
       }
+
+      .articulate-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        height: 69px;
+        background: var(--uui-color-surface);
+        border-radius: var(--uui-border-radius);
+        box-shadow: var(--uui-shadow-1);
+        box-sizing: border-box;
+        padding: 0 2rem;
+        margin: 0;
+        position: relative;
+      }
+      .articulate-footer-info {
+        text-align: right;
+        font-size: 0.8em;
+        color: var(--uui-color-border-standalone);
+      }
+
       @media (max-width: 768px) {
-        :host {
-          padding: var(--uui-size-space-3);
-        }
         .articulate-header {
           padding: 1rem 0.7rem;
         }
-      }
-      .dashboard-container {
-        max-width: var(--uui-size-content-large);
-        margin: 0 auto;
-        padding: 0 var(--uui-size-space-3);
       }
     `,
   ];

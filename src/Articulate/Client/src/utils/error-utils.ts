@@ -1,15 +1,35 @@
 import type { ProblemDetails } from "../api/types.gen";
 
-// -----------------------------
+// ---
+
 // TODO: Remove this when we have proper error handling for the API, using hey-api for now & sends ProblemDetails
-// Base class or mixin based on maybe https://github.com/umbraco/Umbraco-CMS/blob/main/src/Umbraco.Web.UI.Client/examples/validation-context/validation-context-dashboard.ts
-// https://docs.umbraco.com/umbraco-cms/15.latest/customizing/foundation/validation/integrate-validation
-// https://github.com/umbraco/Umbraco-CMS/blob/main/src/Umbraco.Web.UI.Client/src/packages/core/validation/context/validation.context.ts
-// Umbraco sends ValidateErrorResponseBodyModel ?
+
+// Docs
+// https://docs.umbraco.com/umbraco-cms/15/latest/customizing/foundation/validation/integrate-validation
 // https://github.com/umbraco/Umbraco-CMS/tree/main/src/Umbraco.Web.UI.Client/src/packages/core/validation
+
+// UmbServerModelValidatorContext & UmbValidationContext
+// https://github.com/umbraco/Umbraco-CMS/blob/main/src/Umbraco.Web.UI.Client/src/packages/core/validation/context/validation.context.ts
 // https://github.com/umbraco/Umbraco-CMS/blob/main/src/Umbraco.Web.UI.Client/src/packages/core/validation/context/server-model-validator.context.ts
-// https://github.com/umbraco/Umbraco-CMS/blob/main/src/Umbraco.Web.UI.Client/src/packages/core/validation/controllers/form-control-validator.controller.ts
-// -----------------------------
+
+// Example
+// https://github.com/umbraco/Umbraco-CMS/blob/main/src/Umbraco.Web.UI.Client/examples/validation-context/validation-context-dashboard.ts
+
+// ---
+
+/**
+ * Cleans up a field name for display in the UI.
+ * e.g., '$.articulateNodeId' -> 'Articulate Node Id'
+ * @param fieldName The raw field name.
+ * @returns A cleaned, human-readable field name.
+ */
+function cleanFieldName(fieldName: string): string {
+  // Remove leading '$.' if present
+  const cleanedName = fieldName.startsWith("$.") ? fieldName.substring(2) : fieldName;
+
+  // Add spaces before uppercase letters and capitalize the first letter.
+  return cleanedName.replace(/([a-z0-9])([A-Z])/g, "$1 $2").replace(/^./, (str) => str.toUpperCase());
+}
 
 /**
  * Formats an API error into a user-friendly message.
@@ -19,7 +39,7 @@ import type { ProblemDetails } from "../api/types.gen";
  * @returns {{title: string, details: string[]}} A user-friendly error message object with a title and an array of details.
  */
 export function formatApiError(error: unknown, defaultMessage: string): { title: string; details: string[] } {
-  console.info("[formatApiError] Received error:", error);
+  console.warn("[formatApiError] Received error:", error);
 
   // Check if it's a ProblemDetails-like object from the API
   if (
@@ -29,6 +49,31 @@ export function formatApiError(error: unknown, defaultMessage: string): { title:
     typeof (error as ProblemDetails).title === "string"
   ) {
     const problem = error as ProblemDetails & { detail?: string; errors?: Record<string, string[]> };
+
+    if (problem.errors) {
+      const formattedErrors = Object.entries(problem.errors).flatMap(([key, messages]) => {
+        const fieldName = cleanFieldName(key);
+
+        // Map over all messages for the current key, filtering out any null/empty ones first
+        return messages
+          .filter((msg) => !!msg)
+          .map((msg) => {
+            // Clean up the message, but fall back to the original if the split fails
+            const cleanedMsg = msg.split(" Path: $.")[0] || msg;
+            return `${fieldName}: ${cleanedMsg}`;
+          });
+      });
+
+      if (formattedErrors.length > 0) {
+        const result = {
+          title: problem.title || "One or more validation errors occurred",
+          details: formattedErrors,
+        };
+        console.info(`At validation event: formatApiError returning formatted validation errors`);
+        return result;
+      }
+    }
+
     const details: string[] = [];
 
     if (problem.detail) {

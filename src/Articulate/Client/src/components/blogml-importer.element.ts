@@ -1,4 +1,4 @@
-import { css, customElement, html, property, query, state } from "@umbraco-cms/backoffice/external/lit";
+import { customElement, html, property, query, state } from "@umbraco-cms/backoffice/external/lit";
 import { UUIButtonState } from "@umbraco-cms/backoffice/external/uui";
 import { UmbLitElement } from "@umbraco-cms/backoffice/lit-element";
 import { UMB_MODAL_MANAGER_CONTEXT, UmbModalManagerContext } from "@umbraco-cms/backoffice/modal";
@@ -9,7 +9,15 @@ import type { ImportBlogMlModel, ImportModel, PostResponseModel } from "../api/t
 import { fetchArchiveDoctypeUdi, fetchNodeByUdi, openNodePicker } from "../utils/document-node-utils";
 import { IFormController, setFormError } from "../utils/form-utils";
 import { showUmbracoNotification } from "../utils/notification-utils";
-import { renderErrorMessage, renderHeaderActions } from "../utils/template-utils";
+import {
+  BoxStyles,
+  ErrorBoxStyles,
+  FormStyles,
+  HostStyles,
+  NodePickerStyles,
+  renderErrorMessage,
+  renderHeaderActions,
+} from "../utils/template-utils";
 
 /**
  * A LitElement-based component for importing blog content from a BlogML file.
@@ -405,14 +413,7 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
                     ></uui-input>
                     <div slot="description">
                       Regex statement used to match content in the blog post to be replaced by the match statement. See
-                      the Articulate Wiki
-                      <a
-                        href="https://github.com/Shazwazza/Articulate/wiki/Importing#options"
-                        rel="noopener noreferrer nofollow"
-                      >
-                        Importing
-                      </a>
-                      page for more information.
+                      the Articulate Wiki Importing page for more information.
                     </div>
                   </uui-form-layout-item>
                   <uui-form-layout-item>
@@ -442,9 +443,14 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
                     </div>
                   </uui-form-layout-item>
                 </uui-validation-message>
-
-                <uui-button type="submit" look="primary" .state=${this._formState}>Submit</uui-button>
-                <uui-button type="button" look="secondary" @click=${this._handleReset}>Reset</uui-button>
+                <div class="form-actions">
+                  <uui-button type="submit" look="primary" .state=${this._formState} color="primary" label="Submit">
+                    Submit
+                  </uui-button>
+                  <uui-button type="button" look="secondary" @click=${this._handleReset} label="Reset">
+                    Reset
+                  </uui-button>
+                </div>
               </form>
             `,
           )}
@@ -468,18 +474,12 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
    */
   static override readonly styles = [
     UmbTextStyles,
-    css`
-      :host {
-        display: block;
-        padding: var(--uui-size-layout-1);
-      }
-
-      .node-picker-container {
-        display: flex;
-        gap: var(--uui-size-space-4);
-        align-items: flex-end;
-      }
-    `,
+    UmbTextStyles,
+    HostStyles,
+    BoxStyles,
+    ErrorBoxStyles,
+    FormStyles,
+    NodePickerStyles,
   ];
 }
 
