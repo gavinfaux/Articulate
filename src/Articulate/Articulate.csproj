@@ -2,14 +2,13 @@
 
   <PropertyGroup>
     <TargetFrameworks>net9.0</TargetFrameworks>
-    <PackDependsOn>BuildClient;$(PackDependsOn)</PackDependsOn>
-    <IsPacking Condition="'$(IsPacking)' == ''">false</IsPacking>
-    <IsPacking Condition="'$(GeneratePackageOnBuild)' == 'true' Or '$(PackageId)' != ''">true</IsPacking>
     <OutputType>Library</OutputType>
     <!-- Temporary, resolve in later PRs and enable-->
     <Nullable>warnings</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
     <CompressionEnabled>false</CompressionEnabled>
+    <IsPacking Condition="'$(IsPacking)' == ''">false</IsPacking>
+    <IsPacking Condition="'$(GeneratePackageOnBuild)' == 'true'">true</IsPacking>    
   </PropertyGroup>
 
 
@@ -37,7 +36,7 @@
   </PropertyGroup>
 
 
-    <!--
+  <!--
     Nuget - Dotnet SourceLink & Symbol Package
     https://github.com/dotnet/sourcelink#using-source-link-in-net-projects
     https://devblogs.microsoft.com/dotnet/producing-packages-with-source-link/
@@ -55,7 +54,7 @@
     </PackageReference>
   </ItemGroup>
 
-    <!-- Framework References-->
+  <!-- Framework References-->
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
@@ -83,45 +82,28 @@
     <Message Importance="high" Text="Restoring Client NPM packages..." />
     <Exec Command="npm i" WorkingDirectory="Client" />
   </Target>
-  <Target Name="BuildClient" DependsOnTargets="RestoreClient" BeforeTargets="CoreBuild" Inputs="@(ClientAssetsInputs)" Outputs="$(IntermediateOutputPath)client.build.timestamp">
-   <Message Importance="high" Text="[Articulate] Executing Client NPM build script..." />
-
-    <!-- Execute the build and capture the exit code -->
+  <Target Name="BuildClient" BeforeTargets="CoreBuild" Inputs="@(ClientAssetsInputs)" Outputs="$(IntermediateOutputPath)client.build.timestamp">
+    <Message Importance="high" Text="[Articulate] Executing Client NPM build script..." />
     <Exec Command="npm run build" WorkingDirectory="Client" ContinueOnError="true">
       <Output TaskParameter="ExitCode" PropertyName="ClientBuildExitCode" />
     </Exec>
-
     <!-- Issue a WARNING on failure during a normal build -->
-    <Warning
-      Condition="'$(IsPacking)' != 'true' AND '$(ClientBuildExitCode)' != '0'"
-      Text="[Articulate] The client-side build (npm run build) failed..." />
-
+    <Warning Condition="'$(IsPacking)' != 'true' AND '$(ClientBuildExitCode)' != '0'" Text="[Articulate] The client-side build (npm run build) failed. The UI might be out of date." />
     <!-- Issue an ERROR on failure during a pack -->
-    <Error
-      Condition="'$(IsPacking)' == 'true' AND '$(ClientBuildExitCode)' != '0'"
-      Text="[Articulate] The client-side build (npm run build) FAILED..." />
-
-    <Touch Files="$(IntermediateOutputPath)client.build.timestamp" AlwaysCreate="true" Condition="'$(ClientBuildExitCode)' == '0'"/>
+    <Error Condition="'$(IsPacking)' == 'true' AND '$(ClientBuildExitCode)' != '0'" Text="[Articulate] The client-side build (npm run build) FAILED. The package cannot be created." />
+    <Touch Files="$(IntermediateOutputPath)client.build.timestamp" AlwaysCreate="true" Condition="'$(ClientBuildExitCode)' == '0'" />
   </Target>
 
-  <!-- Packaging -->
-  <Target Name="_AddArticulateBackOfficeFiles" BeforeTargets="GetPackageFiles" DependsOnTargets="BuildClient">
-    <ItemGroup>
-      <Content Include="App_Plugins\**">
-        <Pack>true</Pack>
-        <PackagePath>contentFiles\any\any\App_Plugins\%(RecursiveDir)%(Filename)%(Extension)</PackagePath>
-        <CopyToOutput>true</CopyToOutput>
-        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-        <BuildAction>Content</BuildAction>
-      </Content>
-    </ItemGroup>
-  </Target>
+  <ItemGroup>
+    <None Include="App_Plugins\**\*" Pack="true" PackagePath="App_Plugins\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="build\**\*.*" Pack="True" PackagePath="buildTransitive" />
+  </ItemGroup>
 
   <ItemGroup>
     <None Remove="Packaging\package.zip" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="buildTransitive\Articulate.targets" Pack="true" PackagePath="buildTransitive\" />
   </ItemGroup>
 
   <ItemGroup>
