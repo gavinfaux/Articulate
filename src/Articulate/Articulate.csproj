@@ -1,14 +1,15 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  
+
   <PropertyGroup>
     <TargetFrameworks>net9.0</TargetFrameworks>
+    <PackDependsOn>BuildClient;$(PackDependsOn)</PackDependsOn>
+    <IsPacking Condition="'$(IsPacking)' == ''">false</IsPacking>
+    <IsPacking Condition="'$(GeneratePackageOnBuild)' == 'true' Or '$(PackageId)' != ''">true</IsPacking>
     <OutputType>Library</OutputType>
     <!-- Temporary, resolve in later PRs and enable-->
     <Nullable>warnings</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
     <CompressionEnabled>false</CompressionEnabled>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <IncludeContentInPack>true</IncludeContentInPack>    
   </PropertyGroup>
 
 
@@ -53,7 +54,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
   </ItemGroup>
-  
+
     <!-- Framework References-->
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
@@ -72,50 +73,49 @@
     <PackageReference Include="WilderMinds.MetaWeblog" Version="5.1.3" />
   </ItemGroup>
 
-  
+
   <ItemGroup>
     <ClientAssetsInputs Include="Client\**" Exclude="$(DefaultItemExcludes)" />
   </ItemGroup>
-  
+
   <!-- Build backoffice client-->
   <Target Name="RestoreClient" Inputs="Client\package.json;Client\package-lock.json" Outputs="Client\node_modules\.package-lock.json">
     <Message Importance="high" Text="Restoring Client NPM packages..." />
     <Exec Command="npm i" WorkingDirectory="Client" />
   </Target>
   <Target Name="BuildClient" DependsOnTargets="RestoreClient" BeforeTargets="CoreBuild" Inputs="@(ClientAssetsInputs)" Outputs="$(IntermediateOutputPath)client.build.timestamp">
-    <Message Importance="high" Text="[Articulate] Executing Client NPM build script..." />
+   <Message Importance="high" Text="[Articulate] Executing Client NPM build script..." />
 
-    <!-- === NORMAL BUILD, NOT PACKING === -->
-    <!-- For a regular build, continue on error and show a WARNING.-->
-    <Exec Command="npm run build" WorkingDirectory="Client" ContinueOnError="true" Condition="'$(IsPacking)' != 'true'">
+    <!-- Execute the build and capture the exit code -->
+    <Exec Command="npm run build" WorkingDirectory="Client" ContinueOnError="true">
       <Output TaskParameter="ExitCode" PropertyName="ClientBuildExitCode" />
     </Exec>
+
+    <!-- Issue a WARNING on failure during a normal build -->
     <Warning
       Condition="'$(IsPacking)' != 'true' AND '$(ClientBuildExitCode)' != '0'"
-      Text="[Articulate] The client-side build (npm run build) failed. The UI might be out of date. Check logs for details." />
+      Text="[Articulate] The client-side build (npm run build) failed..." />
 
-    <!-- === RELEASE (PACKING) === -->
-    <!-- For a 'dotnet pack' build, continue on error and then fail with a detailed ERROR.-->
-    <Exec Command="npm run build" WorkingDirectory="Client" ContinueOnError="true" Condition="'$(IsPacking)' == 'true'">
-      <Output TaskParameter="ExitCode" PropertyName="ClientBuildExitCode" />
-    </Exec>
+    <!-- Issue an ERROR on failure during a pack -->
     <Error
       Condition="'$(IsPacking)' == 'true' AND '$(ClientBuildExitCode)' != '0'"
-      Text="[Articulate] The client-side build (npm run build) FAILED. The package cannot be created with a broken client build. Please check the logs above for specific JavaScript/TypeScript errors. To debug, navigate to the 'Client' directory and run 'npm run build' manually." />
+      Text="[Articulate] The client-side build (npm run build) FAILED..." />
 
-    <!-- This timestamp file only created if the build succeeds (or forgiven for normal builds)-->
-    <Touch Files="$(IntermediateOutputPath)client.build.timestamp" AlwaysCreate="true" />
+    <Touch Files="$(IntermediateOutputPath)client.build.timestamp" AlwaysCreate="true" Condition="'$(ClientBuildExitCode)' == '0'"/>
   </Target>
-  
+
   <!-- Packaging -->
-  <ItemGroup>
-    <Content Include="App_Plugins\**">
-      <Pack>true</Pack>
-      <PackagePath>contentFiles\any\any\App_Plugins</PackagePath>
-      <CopyToOutput>true</CopyToOutput>
-      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-    </Content>
-  </ItemGroup>
+  <Target Name="_AddArticulateBackOfficeFiles" BeforeTargets="GetPackageFiles" DependsOnTargets="BuildClient">
+    <ItemGroup>
+      <Content Include="App_Plugins\**">
+        <Pack>true</Pack>
+        <PackagePath>contentFiles\any\any\App_Plugins\%(RecursiveDir)%(Filename)%(Extension)</PackagePath>
+        <CopyToOutput>true</CopyToOutput>
+        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+        <BuildAction>Content</BuildAction>
+      </Content>
+    </ItemGroup>
+  </Target>
 
   <ItemGroup>
     <None Remove="Packaging\package.zip" />

@@ -1,7 +1,7 @@
 {
   "name": "articulate-backoffice",
   "private": true,
-  "version": "6.0.0-g893cecf628",
+  "version": "6.0.0-g974c722e5a",
   "type": "module",
   "scriptsComments": {
     "watch": "Master script that runs both scripts required to watch, build and copy the client in parallel. NOTE: run the test site with `dotnet watch --no-hot-reload` to avoid browser reloads when Umbraco sends token authentication requests to the backoffice",

@@ -1277,7 +1277,7 @@ let N = class extends W {
    * Initializes the component, fetches server information, and sets up routes.
    */
   constructor() {
-    super(), this._buildDate = "2025-07-03T00:26:37.144Z", this._packageVersion = "6.0.0-g893cecf628", this._getServerInformation();
+    super(), this._buildDate = "2025-07-03T01:37:15.553Z", this._packageVersion = "6.0.0-g974c722e5a", this._getServerInformation();
     const t = (e) => (i) => {
       this._routerBasePath && i instanceof e && (i.routerPath = this._routerBasePath);
     };
