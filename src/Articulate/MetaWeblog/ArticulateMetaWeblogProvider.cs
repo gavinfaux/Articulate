@@ -5,14 +5,13 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Articulate.Models;
-using Newtonsoft.Json;
+using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.IO;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Models.Membership;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.PropertyEditors;
-using Umbraco.Cms.Core.PropertyEditors.ValueConverters;
 using Umbraco.Cms.Core.Security;
 using Umbraco.Cms.Core.Serialization;
 using Umbraco.Cms.Core.Services;
@@ -25,6 +24,11 @@ namespace Articulate.MetaWeblog
 {
     public class ArticulateMetaWeblogProvider : IMetaWeblogProvider
     {
+        private readonly Lazy<IMedia> _articulateRootMediaFolder;
+        private readonly IContentTypeBaseServiceProvider _contentTypeBaseServiceProvider;
+        private readonly ILogger<ArticulateMetaWeblogProvider> _logger;
+        private readonly IMediaService _mediaService;
+        private readonly MediaUrlGeneratorCollection _mediaUrlGenerators;
         private readonly IUmbracoContextAccessor _umbracoContextAccessor;
         private readonly IUserService _userService;
         private readonly IContentTypeService _contentTypeService;
@@ -58,6 +62,10 @@ namespace Articulate.MetaWeblog
             IPublishedValueFallback publishedValueFallback,
             IVariationContextAccessor variationContextAccessor,
             ITagService tagService,
+            IContentTypeBaseServiceProvider contentTypeBaseServiceProvider,
+            ILogger<ArticulateMetaWeblogProvider> logger,
+            IMediaService mediaService,
+            MediaUrlGeneratorCollection mediaUrlGenerators,
             int articulateBlogRootNodeId)
         {
             _umbracoContextAccessor = umbracoContextAccessor;
@@ -75,7 +83,17 @@ namespace Articulate.MetaWeblog
             _variationContextAccessor = variationContextAccessor;
             _tagService = tagService;
             _articulateBlogRootNodeId = articulateBlogRootNodeId;
-
+            _contentTypeBaseServiceProvider = contentTypeBaseServiceProvider;
+            _logger = logger;
+            _mediaService = mediaService;
+            _mediaUrlGenerators = mediaUrlGenerators;
+            _articulateRootMediaFolder = new Lazy<IMedia>(() =>
+            {
+                var root = _mediaService.GetRootMedia().FirstOrDefault(x =>
+                    x.Name == ArticulateConstants.Articulate && x.ContentType.Alias.InvariantEquals("folder"));
+                return root ??= _mediaService.CreateMediaWithIdentity(ArticulateConstants.Articulate,
+                    Constants.System.Root, "folder");
+            });
         }
 
         public async Task<BlogInfo[]> GetUsersBlogsAsync(string key, string username, string password)
@@ -283,7 +301,13 @@ namespace Articulate.MetaWeblog
             content.SetInvariantOrDefaultCultureValue("author", user.Name, contentType, _localizationService);
             if (content.HasProperty("richText"))
             {
-                var firstImage = "";
+
+                var firstImageMatch = _mediaSrc.Match(post.description);
+                string firstImageRelativePath = null;
+                if (firstImageMatch.Success && firstImageMatch.Groups.Count == 2)
+                {
+                    firstImageRelativePath = firstImageMatch.Groups[1].Value;
+                }
 
                 // Extract the articulate firstImage.
                 // Re-update the URL to be the one from the media file system.
@@ -296,11 +320,6 @@ namespace Articulate.MetaWeblog
                     {
                         var relativePath = match.Groups[1].Value;
                         var mediaFileSystemPath = _mediaFileManager.FileSystem.GetUrl(relativePath);
-                        if (firstImage.IsNullOrWhiteSpace())
-                        {
-                            // get the first images absolute media path                            
-                            firstImage = mediaFileSystemPath;
-                        }
 
                         return " src=\"" + mediaFileSystemPath + "\"";
                     }
@@ -334,27 +353,45 @@ namespace Articulate.MetaWeblog
                 content.SetInvariantOrDefaultCultureValue("richText", contentToSave, contentType, _localizationService);
                 if (extractFirstImageAsProperty
                     && content.HasProperty("postImage")
-                        && !firstImage.IsNullOrWhiteSpace())
+                        && !firstImageRelativePath.IsNullOrWhiteSpace())
                 {
-                    var configuration = _dataTypeService.GetDataType(content.Properties["postImage"].PropertyType.DataTypeId).ConfigurationAs<ImageCropperConfiguration>();
-                    var crops = configuration?.Crops ?? Array.Empty<ImageCropperConfiguration.Crop>();
-
-                    var imageCropValue = new ImageCropperValue
+                    if (!string.IsNullOrWhiteSpace(firstImageRelativePath) && _mediaFileManager.FileSystem.FileExists(firstImageRelativePath))
                     {
-                        Src = firstImage,
-                        Crops = crops.Select(x => new ImageCropperValue.ImageCropperCrop
+                        try
                         {
-                            Alias = x.Alias,
-                            Height = x.Height,
-                            Width = x.Width
-                        }).ToList()
-                    };
+                            using (var fileStream = _mediaFileManager.FileSystem.OpenFile(firstImageRelativePath))
+                            {
+                                var fileName = Path.GetFileName(firstImageRelativePath);
 
-                    content.SetInvariantOrDefaultCultureValue(
-                        "postImage",
-                        JsonConvert.SerializeObject(imageCropValue),
-                        contentType,
-                        _localizationService);
+                                var mediaItem = _mediaService.CreateMedia(fileName, _articulateRootMediaFolder.Value,
+                                    Constants.Conventions.MediaTypes.Image);
+                                mediaItem.SetValue(
+                                    _mediaFileManager,
+                                    _mediaUrlGenerators,
+                                    _shortStringHelper,
+                                    _contentTypeBaseServiceProvider,
+                                    Constants.Conventions.Media.File,
+                                    fileName,
+                                    fileStream);
+
+                                _mediaService.Save(mediaItem);
+
+                                var udi = Udi.Create(Constants.UdiEntityType.Media, mediaItem.Key);
+
+                                content.SetInvariantOrDefaultCultureValue(
+                                    "postImage",
+                                    udi.ToString(),
+                                    contentType,
+                                    _localizationService);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, "Could not create media item for featured image {FileName}",
+                                firstImageRelativePath);
+                            throw;
+                        }
+                    }
                 }
             }
 
