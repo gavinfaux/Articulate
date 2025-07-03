@@ -389,7 +389,6 @@ namespace Articulate.MetaWeblog
                         {
                             _logger.LogError(ex, "Could not create media item for featured image {FileName}",
                                 firstImageRelativePath);
-                            throw;
                         }
                     }
                 }
