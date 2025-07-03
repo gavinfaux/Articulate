@@ -495,5 +495,9 @@ umbraco-package-schema.json
 
 build
 !build/build.ps1
-!/src/Articulate/build/Articulate.props
+!**/Articulate/build/
+!**/Articulate/build/Articulate.targets
 !**/[Pp]ackages/markdown-editor/
+
+
+
