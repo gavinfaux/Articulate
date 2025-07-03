@@ -25,8 +25,8 @@ jobs:
       with:
         dotnet-version: '8.x'
 
-    - name: Install nbgv tool
-      run: dotnet tool install --global Nerdbank.GitVersioning --version 3.7.115
+    - name: Restore .NET tools
+      run: dotnet tool restore
 
     - name: Use Node.js 22.x
       uses: actions/setup-node@v4
