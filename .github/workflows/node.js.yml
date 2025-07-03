@@ -20,6 +20,14 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.x'
+
+    - name: Install nbgv tool
+      run: dotnet tool install --global Nerdbank.GitVersioning --version 3.7.115
+
     - name: Use Node.js 22.x
       uses: actions/setup-node@v4
       with:
