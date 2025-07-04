@@ -187,41 +187,34 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
    */
   #handleSubmit = async (e: SubmitEvent) => {
     e.preventDefault();
-
     if (!this._form) return;
 
     const formData = new FormData(this._form);
     const importFile = formData.get("importFile") as File;
 
-    console.info("Form submission validity check:", this._form.reportValidity());
-    console.info("Current _articulateNodeId:", this._articulateNodeId);
-    console.info("Selected import file:", importFile?.name, "Size:", importFile?.size);
+    const validationRules = [
+      {
+        isValid: !!this._articulateNodeId,
+        message: "A blog node must be selected before importing.",
+      },
+      {
+        isValid: importFile && importFile.size > 0,
+        message: "A BlogML file must be selected for import.",
+      },
+    ];
 
-    // Manually validate the articulateNodeId first.
-    if (!this._articulateNodeId) {
-      const validationError = new Error("A blog node must be selected before importing.");
+    const firstInvalidRule = validationRules.find((rule) => !rule.isValid);
+
+    if (firstInvalidRule) {
+      const validationError = new Error(firstInvalidRule.message);
       validationError.name = "Validation Error";
       setFormError(this, validationError, validationError.name);
-      // Trigger the browser's validation UI on the invalid field(s).
       this._form.reportValidity();
       return;
     }
 
-    // Manually validate that a file has been selected. The `required` attribute on uui-input-file
-    // doesn't seem to be consistently enforced by reportValidity() across all scenarios.
-    if (!importFile || importFile.size === 0) {
-      const validationError = new Error("A BlogML file must be selected for import.");
-      validationError.name = "Validation Error";
-      setFormError(this, validationError, validationError.name);
-      // Trigger the browser's validation UI on the invalid field(s).
-      this._form.reportValidity();
-      return;
-    }
-
-    // Then, let the browser validate the rest of the form.
+    // fallback for other inputs (that we don't have at the moment)
     if (!this._form.reportValidity()) {
-      // The browser will display its own validation messages.
-      // We create a generic error for our own state management.
       const error = new Error("The form is not valid. Please check the fields marked with an error.");
       error.name = "Validation Error";
       setFormError(this, error, error.name);
@@ -240,7 +233,8 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
       this._postCount = initData.postCount;
 
       // Step 2: Perform import and get results
-      const importData = await this.#finalizeImport(formData, initData.temporaryFileName!); // Step 3: (Optional) Export Disqus comments if requested and available
+      const importData = await this.#finalizeImport(formData, initData.temporaryFileName!);
+      // Step 3: (Optional) Export Disqus comments if requested and available
       if (formData.get("exportDisqusXml") === "on" && importData.commentCount > 0) {
         await this.#exportDisqusComments();
       }

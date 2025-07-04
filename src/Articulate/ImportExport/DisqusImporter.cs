@@ -5,8 +5,7 @@
 //using System.Threading.Tasks;
 //using System.Web;
 //using Microsoft.Extensions.Logging;
-//using Newtonsoft.Json;
-//using Newtonsoft.Json.Linq;
+//using System.Text.Json;
 //using Umbraco.Extensions;
 
 //namespace Articulate.ImportExport
@@ -81,8 +80,14 @@
 //                    using (var reader = new StreamReader(responseStream))
 //                    {
 //                        var stringResponse = reader.ReadToEnd();
-//                        var jsonResponse = JObject.Parse(stringResponse);
-//                        return jsonResponse["code"].Value<int>() == 0;
+//                        using var doc = JsonDocument.Parse(stringResponse);
+//                        var root = doc.RootElement;
+//                        if (root.TryGetProperty("code", out var codeProp))
+//                        {
+//                          int code = codeProp.GetInt32();
+//                          return code == 0;
+//                        }
+//                        return false;
 //                    }
 //                }
 //            }
@@ -98,7 +103,7 @@
 
 //                    _logger.LogError(new Exception(result), "Importing comment failed");
 
-//                    var obj = (JObject)JsonConvert.DeserializeObject(result);
+//                    using var obj = JsonDocument.Parse(result);;
 //                    throw;
 //                }
 //            }
