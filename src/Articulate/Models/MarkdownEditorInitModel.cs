@@ -8,5 +8,9 @@ namespace Articulate.Models
         public string IsAuthUrl { get; set; }
 
         public string DoAuthUrl { get; set; }
+
+        public string MainJsPath { get; set; }
+
+        public string MainCssPath { get; set; }
     }
 }

@@ -74,30 +74,45 @@
 
 
   <ItemGroup>
-    <ClientAssetsInputs Include="Client\**" Exclude="$(DefaultItemExcludes)" />
+    <BackOfficeClientAssetsInputs Include="Client/BackOffice/**" Exclude="$(DefaultItemExcludes)" />
+    <MarkdownEditorClientAssetsInputs Include="Client/MarkdownEditor/**" Exclude="$(DefaultItemExcludes)" />
   </ItemGroup>
 
   <!-- Build backoffice client-->
-  <Target Name="RestoreClient" Inputs="Client\package.json;Client\package-lock.json" Outputs="Client\node_modules\.package-lock.json">
-    <Message Importance="high" Text="Restoring Client NPM packages..." />
-    <Exec Command="npm i" WorkingDirectory="Client" />
+  <Target Name="RestoreBackOfficeClient" BeforeTargets="BuildBackOfficeClient">
+    <Message Importance="high" Text="Restoring BackOffice Client NPM packages..." />
+    <Exec Command="npm i" WorkingDirectory="Client/BackOffice" />
   </Target>
-  <Target Name="BuildClient" BeforeTargets="CoreBuild" Inputs="@(ClientAssetsInputs)" Outputs="$(IntermediateOutputPath)client.build.timestamp">
+
+  <Target Name="RestoreMarkdownEditorClient" BeforeTargets="BuildMarkdownEditorClient">
+    <Message Importance="high" Text="Restoring Markdown Editor Client NPM packages..." />
+    <Exec Command="npm i" WorkingDirectory="Client/MarkdownEditor" />
+  </Target>
+  <Target Name="BuildBackOfficeClient" BeforeTargets="CoreBuild" Inputs="@(BackOfficeClientAssetsInputs)" Outputs="$(IntermediateOutputPath)client.build.timestamp">
     <!-- Show message before running the build -->
-    <Message Importance="High" Condition="'$(IsPacking)' == 'true'" Text="[Articulate] Executing Client NPM production releasee build script..." />
-    <Message Importance="Normal" Condition="'$(IsPacking)' != 'true'" Text="[Articulate] Executing Client NPM development build script..." />
+    <Message Importance="High" Condition="'$(IsPacking)' == 'true'" Text="[Articulate] Executing BackOffice Client NPM production release build script..." />
+    <Message Importance="Normal" Condition="'$(IsPacking)' != 'true'" Text="[Articulate] Executing BackOffice Client NPM development build script..." />
     <!-- Run different npm commands based on IsPacking -->
-    <Exec Condition="'$(IsPacking)' == 'true'" Command="npm run build:release" WorkingDirectory="Client" ContinueOnError="true">
+    <Exec Condition="'$(IsPacking)' == 'true'" Command="npm run build:release" WorkingDirectory="Client/BackOffice" ContinueOnError="true">
       <Output TaskParameter="ExitCode" PropertyName="ClientBuildExitCode" />
     </Exec>
-    <Exec Condition="'$(IsPacking)' != 'true'" Command="npm run build" WorkingDirectory="Client" ContinueOnError="true">
+    <Exec Condition="'$(IsPacking)' != 'true'" Command="npm run build" WorkingDirectory="Client/BackOffice" ContinueOnError="true">
       <Output TaskParameter="ExitCode" PropertyName="ClientBuildExitCode" />
     </Exec>
     <!-- Issue a WARNING on failure during a normal build -->
-    <Warning Condition="'$(IsPacking)' != 'true' AND '$(ClientBuildExitCode)' != '0'" Text="[Articulate] The client-side build (npm run build) failed. The api client may need updated." />
+    <Warning Condition="'$(IsPacking)' != 'true' AND '$(ClientBuildExitCode)' != '0'" Text="[Articulate] The BackOffice client-side build (npm run build) failed." />
     <!-- Issue an ERROR on failure during a pack -->
-    <Error Condition="'$(IsPacking)' == 'true' AND '$(ClientBuildExitCode)' != '0'" Text="[Articulate] The client-side build (npm run build:release) FAILED. The package cannot be created." />
+    <Error Condition="'$(IsPacking)' == 'true' AND '$(ClientBuildExitCode)' != '0'" Text="[Articulate] The BackOffice client-side build (npm run build:release) FAILED. The package cannot be created." />
     <Touch Files="$(IntermediateOutputPath)client.build.timestamp" AlwaysCreate="true" Condition="'$(ClientBuildExitCode)' == '0'" />
+  </Target>
+
+  <Target Name="BuildMarkdownEditorClient" BeforeTargets="CoreBuild" Inputs="@(MarkdownEditorClientAssetsInputs)" Outputs="$(IntermediateOutputPath)markdownclient.build.timestamp">
+    <Message Importance="Normal" Text="[Articulate] Executing Markdown Editor Client NPM development build script..." />
+    <Exec Command="npm run build" WorkingDirectory="Client/MarkdownEditor" ContinueOnError="true">
+      <Output TaskParameter="ExitCode" PropertyName="MarkdownClientBuildExitCode" />
+    </Exec>
+    <Warning Condition="'$(MarkdownClientBuildExitCode)' != '0'" Text="[Articulate] The Markdown Editor client-side build (npm run build) failed." />
+    <Touch Files="$(IntermediateOutputPath)markdownclient.build.timestamp" AlwaysCreate="true" Condition="'$(MarkdownClientBuildExitCode)' == '0'" />
   </Target>
 
   <ItemGroup>

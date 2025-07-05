@@ -1,22 +1,30 @@
-node_modules/
-build/
-dist/
-public/
-scripts/
-src/api/
-docs/
-.vscode/
-src/packages/markdown-editor/
+# General ignores for all sub-projects
+**/node_modules/
+**/build/
+**/dist/
+**/public/
+**/package-lock.json
 
+# Ignore generated API clients
+**/src/api/
+
+# Ignore project-specific configs and folders
+**/.vscode/
+**/docs/
+**/vite.config.ts
+**/tsconfig.json
+
+# Ignore specific BackOffice assets
+BackOffice/scripts/
+BackOffice/src/packages/markdown-editor/
+BackOffice/umbraco-package-schema.json
+
+# Ignore specific MarkdownEditor assets
+MarkdownEditor/scripts/
+
+# Ignore specific file types
 *.min.js
 *.bundle.js
 *.d.ts
 *.css
 *.map
-umbraco-package-schema.json
-.prettierrc.cjs
-eslint.config.mjs
-eslint-local-rules.mjs
-vite.config.ts
-package-lock.json
-tsconfig.json

@@ -1,0 +1,12 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "experimentalDecorators": true,
+    "useDefineForClassFields": false,
+    "types": [
+      "@umbraco-cms/backoffice/extension-types",
+      "@umbraco-cms/backoffice/external/lit"
+    ]
+  },
+  "include": ["src/**/*.ts"]
+}
