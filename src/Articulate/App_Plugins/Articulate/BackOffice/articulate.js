@@ -3,7 +3,7 @@ const t = [
     type: "dashboard",
     alias: "Articulate.BackOffice.Dashboard",
     name: "Articulate Dashboard",
-    js: async () => await import("./dashboard.element-D7CVZ5yF.js"),
+    js: async () => await import("./dashboard.element-DhW57mis.js"),
     weight: 10,
     meta: {
       label: "Articulate",
@@ -22,7 +22,7 @@ const t = [
     alias: "ArticulateThemePicker.UI",
     name: "Articulate Theme Picker UI",
     elementName: "theme-picker-element",
-    js: async () => await import("./theme-picker.element-DmPK6_dv.js"),
+    js: async () => await import("./theme-picker.element-B7tNp3_A.js"),
     meta: {
       label: "Articulate Theme Picker",
       propertyEditorSchemaAlias: "Umbraco.Plain.String",
@@ -35,7 +35,7 @@ const t = [
     name: "Articulate Entrypoint",
     alias: "Articulate.Entrypoint",
     type: "backofficeEntryPoint",
-    js: async () => await import("./entrypoint-BwmiYc8a.js")
+    js: async () => await import("./entrypoint-CS8sun92.js")
   }
 ], a = [
   {

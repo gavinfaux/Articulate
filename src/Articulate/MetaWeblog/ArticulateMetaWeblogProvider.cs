@@ -2,6 +2,7 @@ using System;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Security.Authentication;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Articulate.Models;
@@ -90,9 +91,9 @@ namespace Articulate.MetaWeblog
             _articulateRootMediaFolder = new Lazy<IMedia>(() =>
             {
                 var root = _mediaService.GetRootMedia().FirstOrDefault(x =>
-                    x.Name == ArticulateConstants.Articulate && x.ContentType.Alias.InvariantEquals("folder"));
+                    x.Name == ArticulateConstants.Articulate && x.ContentType.Alias.InvariantEquals(Constants.Conventions.MediaTypes.Folder));
                 return root ??= _mediaService.CreateMediaWithIdentity(ArticulateConstants.Articulate,
-                    Constants.System.Root, "folder");
+                    Constants.System.Root, Constants.Conventions.MediaTypes.Folder);
             });
         }
 
@@ -119,14 +120,15 @@ namespace Articulate.MetaWeblog
             await ValidateUser(username, password);
 
             // TODO: These would be across all Articulate Blog root nodes :S
-            var tags = _tagService.GetAllTags(ArticulateConstants.ArticulateCategories)
-                .Select(x => new CategoryInfo()
-                {
-                    title = x.Text,
-                    categoryid = x.Id.ToString()
+            var all = await _tagService.GetAllAsync(ArticulateConstants.ArticulateCategories);
 
-                    // TODO HTML & RSS URL ? (Wasnt used before)
-                }).ToArray();
+            var tags = all.Select(x => new CategoryInfo()
+            {
+                title = x.Text,
+                categoryid = x.Id.ToString()
+
+                // TODO HTML & RSS URL ? (Wasnt used before)
+            }).ToArray();
 
             return tags;
         }
@@ -136,12 +138,13 @@ namespace Articulate.MetaWeblog
             await ValidateUser(username, password);
 
             // TODO: These would be across all Articulate Blog root nodes :S
-            var tags = _tagService.GetAllTags(ArticulateConstants.ArticulateTags)
-                .Select(x => new WilderMinds.MetaWeblog.Tag()
-                {
-                    name = x.Text
-                })
-                .ToArray();
+            var all = await _tagService.GetAllAsync(ArticulateConstants.ArticulateTags);
+
+            var tags = all.Select(x => new WilderMinds.MetaWeblog.Tag()
+            {
+                name = x.Text
+            })
+            .ToArray();
 
             return tags;
         }
@@ -150,7 +153,7 @@ namespace Articulate.MetaWeblog
         {
             await ValidateUser(username, password);
 
-            var node = BlogRoot().ChildrenOfType(ArticulateConstants.ArticulateArchive).FirstOrDefault() ?? throw new InvalidOperationException("No Articulate Archive node found");
+            var node = BlogRoot()?.ChildrenOfType(ArticulateConstants.ArticulateArchive).FirstOrDefault() ?? throw new InvalidOperationException("No Articulate Archive node found");
 
             var recent = _contentService
                     .GetPagedChildren(node.Id, 0, numberOfPosts, out long totalPosts, ordering: Ordering.By("updateDate", direction: Direction.Descending))
@@ -166,7 +169,7 @@ namespace Articulate.MetaWeblog
 
             var root = BlogRoot();
 
-            var node = root.ChildrenOfType(ArticulateConstants.ArticulateArchive).FirstOrDefault() ?? throw new InvalidOperationException("No Articulate Archive node found");
+            var node = root?.ChildrenOfType(ArticulateConstants.ArticulateArchive).FirstOrDefault() ?? throw new InvalidOperationException("No Articulate Archive node found");
 
             var contentType = _contentTypeService.Get(ArticulateConstants.ArticulateRichText) ?? throw new InvalidOperationException("No content type found with alias 'ArticulateRichText'");
 
@@ -387,6 +390,7 @@ namespace Articulate.MetaWeblog
                         }
                         catch (Exception ex)
                         {
+                            // Catch any exception and log it, post will still be saved
                             _logger.LogError(ex, "Could not create media item for featured image {FileName}",
                                 firstImageRelativePath);
                         }
@@ -396,7 +400,7 @@ namespace Articulate.MetaWeblog
 
             if (!post.link.IsNullOrWhiteSpace())
             {
-                content.SetInvariantOrDefaultCultureValue("umbracoUrlName", post.link, contentType, _localizationService);
+                content.SetInvariantOrDefaultCultureValue(Constants.Conventions.Content.UrlName, post.link, contentType, _localizationService);
             }
 
             if (!post.mt_excerpt.IsNullOrWhiteSpace())
@@ -482,9 +486,9 @@ namespace Articulate.MetaWeblog
             ? post.GetValue<string>("richText")
             : MarkdownHelper.ToHtml(post.GetValue<string>("markdown")),
 
-            permalink = post.GetValue<string>("umbracoUrlName").IsNullOrWhiteSpace()
+            permalink = post.GetValue<string>(Constants.Conventions.Content.UrlName).IsNullOrWhiteSpace()
             ? post.Name.ToUrlSegment(_shortStringHelper)
-            : post.GetValue<string>("umbracoUrlName").ToUrlSegment(_shortStringHelper)
+            : post.GetValue<string>(Constants.Conventions.Content.UrlName).ToUrlSegment(_shortStringHelper)
         };
 
         private IPublishedContent BlogRoot()
@@ -499,7 +503,7 @@ namespace Articulate.MetaWeblog
             if (await _backOfficeUserManager.ValidateCredentialsAsync(username, password) == false)
             {
                 // Throw some error if not valid credentials - so we exit out early of stuff
-                throw new InvalidOperationException("Credentials issue");
+                throw new AuthenticationException("Failed to validate user credentials");
             }
 
             return _userService.GetByUsername(username);

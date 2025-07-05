@@ -13,7 +13,7 @@ namespace Articulate.Options
         /// </summary>
         public ArticulateOptions()
         {
-            GenerateExcerpt = (val => val == null
+            GenerateExcerpt = (val => val == null || val.DetectIsJson()
                 ? string.Empty
                 : string.Join("", val.StripHtml()
                     .DecodeHtml()

@@ -1,20 +1,33 @@
-import type { ProblemDetails } from "../api/types.gen";
-
+//import type { ProblemDetails } from "../api/types.gen";
+// TODO: Why is hey no longer generating the type?
 // ---
 
-// TODO: Remove this when we have proper error handling for the API, using hey-api for now & sends ProblemDetails
+type ProblemDetails = {
+  type?: string | null;
+  title?: string | null;
+  status?: number | null;
+  detail?: string | null;
+  instance?: string | null;
+  [key: string]:
+    | unknown
+    | (string | null)
+    | (string | null)
+    | (number | null)
+    | (string | null)
+    | (string | null)
+    | undefined;
+};
 
+// ---
+// TODO: Remove this when we have proper error handling for the API, using hey-api for now & sends ProblemDetails
 // Docs
 // https://docs.umbraco.com/umbraco-cms/15/latest/customizing/foundation/validation/integrate-validation
 // https://github.com/umbraco/Umbraco-CMS/tree/main/src/Umbraco.Web.UI.Client/src/packages/core/validation
-
 // UmbServerModelValidatorContext & UmbValidationContext
 // https://github.com/umbraco/Umbraco-CMS/blob/main/src/Umbraco.Web.UI.Client/src/packages/core/validation/context/validation.context.ts
 // https://github.com/umbraco/Umbraco-CMS/blob/main/src/Umbraco.Web.UI.Client/src/packages/core/validation/context/server-model-validator.context.ts
-
 // Example
 // https://github.com/umbraco/Umbraco-CMS/blob/main/src/Umbraco.Web.UI.Client/examples/validation-context/validation-context-dashboard.ts
-
 // ---
 
 /**
@@ -69,7 +82,6 @@ export function formatApiError(error: unknown, defaultMessage: string): { title:
           title: problem.title || "One or more validation errors occurred",
           details: formattedErrors,
         };
-        console.info(`At validation event: formatApiError returning formatted validation errors`);
         return result;
       }
     }

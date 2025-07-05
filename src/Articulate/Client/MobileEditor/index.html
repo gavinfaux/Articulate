@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Articulate Mobile Editor</title>
+
+    <!-- Pico.css -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css" />
+    <!-- EasyMDE CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/easymde/dist/easymde.min.css" />
+
+    <!-- Alpine.js -->
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <!-- Our App (we will build this) -->
+    <script src="/src/main.ts" type="module"></script>
+
+    <style>
+      /* Hide elements until Alpine.js is initialized to prevent FOUC (Flash of Unstyled Content) */
+      [x-cloak] {
+        display: none !important;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="container" x-data="app" x-init="init()" x-cloak>
+      <header>
+        <h1 x-text="caption"></h1>
+        <progress x-show="step === 'loading' || step === 'submitting'"></progress>
+      </header>
+
+      <!-- Login View -->
+      <article x-show="step === 'login'">
+        <form @submit.prevent="handleLogin">
+          <label for="username">Username</label>
+          <input x-model="login.username" type="text" id="username" required />
+          <label for="password">Password</label>
+          <input x-model="login.password" type="password" id="password" required />
+          <small x-show="errorMessage" x-text="errorMessage"></small>
+          <button type="submit" :aria-busy="submitting">Login</button>
+        </form>
+      </article>
+
+      <!-- Editor View -->
+      <article x-show="step === 'editor'">
+        <label for="title">Title</label>
+        <input x-model="post.title" type="text" id="title" placeholder="Your post title..." required />
+        <textarea id="markdown-editor-textarea"></textarea>
+        <footer>
+          <button @click="step = 'optional'">Optional Info &rarr;</button>
+        </footer>
+      </article>
+
+      <!-- Optional Info View -->
+      <article x-show="step === 'optional'">
+        <label for="tags">Tags (comma separated)</label>
+        <input x-model="post.tags" type="text" id="tags" placeholder="e.g. csharp, umbraco, .net" />
+
+        <label for="categories">Categories (comma separated)</label>
+        <input x-model="post.categories" type="text" id="categories" placeholder="e.g. Tech, Tutorials" />
+
+        <label for="excerpt">Excerpt</label>
+        <textarea x-model="post.excerpt" id="excerpt" rows="3"></textarea>
+
+        <label for="slug">Slug</label>
+        <input x-model="post.slug" type="text" id="slug" placeholder="e.g. my-awesome-post" />
+
+        <footer>
+          <button class="secondary" @click="step = 'editor'">&larr; Back to Editor</button>
+          <button @click="handlePublish" :aria-busy="submitting">Post It!</button>
+        </footer>
+      </article>
+
+      <!-- Success View -->
+      <article x-show="step === 'success'">
+        <h2>Success!</h2>
+        <p>Your post has been published.</p>
+        <a :href="successUrl" role="button">View Your Post</a>
+      </article>
+    </main>
+  </body>
+</html>

@@ -83,14 +83,20 @@
     <Exec Command="npm i" WorkingDirectory="Client" />
   </Target>
   <Target Name="BuildClient" BeforeTargets="CoreBuild" Inputs="@(ClientAssetsInputs)" Outputs="$(IntermediateOutputPath)client.build.timestamp">
-    <Message Importance="high" Text="[Articulate] Executing Client NPM build script..." />
-    <Exec Command="npm run build" WorkingDirectory="Client" ContinueOnError="true">
+    <!-- Show message before running the build -->
+    <Message Importance="High" Condition="'$(IsPacking)' == 'true'" Text="[Articulate] Executing Client NPM production releasee build script..." />
+    <Message Importance="Normal" Condition="'$(IsPacking)' != 'true'" Text="[Articulate] Executing Client NPM development build script..." />
+    <!-- Run different npm commands based on IsPacking -->
+    <Exec Condition="'$(IsPacking)' == 'true'" Command="npm run build:release" WorkingDirectory="Client" ContinueOnError="true">
+      <Output TaskParameter="ExitCode" PropertyName="ClientBuildExitCode" />
+    </Exec>
+    <Exec Condition="'$(IsPacking)' != 'true'" Command="npm run build" WorkingDirectory="Client" ContinueOnError="true">
       <Output TaskParameter="ExitCode" PropertyName="ClientBuildExitCode" />
     </Exec>
     <!-- Issue a WARNING on failure during a normal build -->
-    <Warning Condition="'$(IsPacking)' != 'true' AND '$(ClientBuildExitCode)' != '0'" Text="[Articulate] The client-side build (npm run build) failed. The UI might be out of date." />
+    <Warning Condition="'$(IsPacking)' != 'true' AND '$(ClientBuildExitCode)' != '0'" Text="[Articulate] The client-side build (npm run build) failed. The api client may need updated." />
     <!-- Issue an ERROR on failure during a pack -->
-    <Error Condition="'$(IsPacking)' == 'true' AND '$(ClientBuildExitCode)' != '0'" Text="[Articulate] The client-side build (npm run build) FAILED. The package cannot be created." />
+    <Error Condition="'$(IsPacking)' == 'true' AND '$(ClientBuildExitCode)' != '0'" Text="[Articulate] The client-side build (npm run build:release) FAILED. The package cannot be created." />
     <Touch Files="$(IntermediateOutputPath)client.build.timestamp" AlwaysCreate="true" Condition="'$(ClientBuildExitCode)' == '0'" />
   </Target>
 

@@ -1,37 +1,33 @@
 {
   "name": "articulate-backoffice",
   "private": true,
-  "version": "6.0.0-g974c722e5a",
+  "version": "6.0.0-g8929c49f22",
   "type": "module",
   "scriptsComments": {
-    "watch": "Master script that runs both scripts required to watch, build and copy the client in parallel. NOTE: run the test site with `dotnet watch --no-hot-reload` to avoid browser reloads when Umbraco sends token authentication requests to the backoffice",
+    "watch": "Master script that runs both scripts required to watch, build and copy the client in parallel. NOTE: run the test site with `dotnet watch --no-hot-reload` to avoid browser reloads when Umbraco sends token authentication requests to the backoffice.",
     "dev:vite": "Starts the vite dev server and watches for changes, incremental builds on file changes",
     "dev:copy": "Monitors the output of the build script and copies the client to the package backoffice folder",
-    "build": "Sets the version, builds the client, and runs post-build scripts to copy the client to the package backoffice folder",
-    "build:copy": "Sets the version, builds the client, and runs post-build scripts to copy the client to both the package backoffice folder and the test site package backoffice folder",
+    "build": "Builds the client, and runs post-build scripts to copy the client to the package backoffice folder",
+    "build:copy": "Builds the client, and runs post-build scripts to copy the client to both the package backoffice folder and the test site package backoffice folder",
+    "build:release": "Sets the version, builds the client, and runs post-build scripts to copy the client to both the package backoffice folder and the test site package backoffice folder",
     "format": "Formats the code",
     "lint": "Runs eslint on the code",
     "check": "Checks the code for errors",
     "generate-client": "This master script runs all generators in sequence",
-    "generate-client:main": "Generates the main Articulate API",
-    "generate-client:umbraco": "Generates ONLY the needed umbraco client operations into a separate folder.",
-    "set-version": "Sets the version in package.json and umbraco-package.json",
-    "prepublishOnly": "Pre flight before publishing package to npm, runs npm run set-version, not that a private package can be published to npm, so it is just a placeholder/example."
+    "set-version": "Sets the version in package.json and umbraco-package.json"
   },
   "scripts": {
     "watch": "npm-run-all2 --parallel dev:*",
     "dev:vite": "vite build --watch",
     "dev:copy": "chokidar \"../App_Plugins/Articulate/BackOffice/**/*\" --ignore \"**/umbraco-package.json\" -c \"node scripts/post-build.js --copy\"",
-    "build": "npm run set-version && tsc && vite build && node scripts/post-build.js",
-    "build:copy": "npm run set-version && tsc && vite build && node scripts/post-build.js --copy",
+    "build": "tsc && vite build && node scripts/post-build.js",
+    "build:copy": "tsc && vite build && node scripts/post-build.js --copy",
+    "build:release": "npm run set-version && tsc && vite build && node scripts/post-build.js",
     "format": "prettier --write .",
     "lint": "eslint . --ext .ts,.js,.tsx,.jsx",
     "check": "tsc --noEmit",
-    "generate-client": "npm run generate-client:main && npm run generate-client:umbraco",
-    "generate-client:main": "node scripts/generate-openapi.js https://localhost:44366/umbraco/swagger/articulate/swagger.json ./src/api",
-    "generate-client:umbraco": "node scripts/generate-openapi.js https://localhost:44366/umbraco/swagger/management/swagger.json ./src/api/umbraco --includeTags \"Server\"",
-    "set-version": "node update-version.js",
-    "prepublishOnly": "npm run set-version"
+    "generate-client": "node scripts/generate-openapi.js https://localhost:44366/umbraco/swagger/articulate/swagger.json ./src/api",
+    "set-version": "node update-version.js"
   },
   "dependenciesComments": {
     "monaco-editor": "Articulate Markdown Editor, only required until Umbraco Core editor supports better markdown to HTML processing; see https://github.com/umbraco/Umbraco-CMS/issues/19500"

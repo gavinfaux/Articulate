@@ -1,15 +1,15 @@
-import { UmbElementMixin as c } from "@umbraco-cms/backoffice/element-api";
-import { html as h, css as m, property as p, state as u, customElement as f } from "@umbraco-cms/backoffice/external/lit";
+import { UmbElementMixin as m } from "@umbraco-cms/backoffice/element-api";
+import { html as h, css as c, property as p, state as u, customElement as f } from "@umbraco-cms/backoffice/external/lit";
 import { UmbLitElement as v } from "@umbraco-cms/backoffice/lit-element";
 import { UmbPropertyValueChangeEvent as _ } from "@umbraco-cms/backoffice/property-editor";
 import { UmbTextStyles as d } from "@umbraco-cms/backoffice/style";
-import { E as y, f as O } from "./error-utils-D-7IZ3ij.js";
-var b = Object.defineProperty, E = Object.getOwnPropertyDescriptor, o = (e, t, r, a) => {
-  for (var s = a > 1 ? void 0 : a ? E(t, r) : t, i = e.length - 1, n; i >= 0; i--)
-    (n = e[i]) && (s = (a ? n(t, r, s) : n(s)) || s);
-  return a && s && b(t, r, s), s;
+import { T as y, f as O } from "./error-utils-BQkI2uUw.js";
+var b = Object.defineProperty, S = Object.getOwnPropertyDescriptor, a = (e, t, r, o) => {
+  for (var s = o > 1 ? void 0 : o ? S(t, r) : t, i = e.length - 1, n; i >= 0; i--)
+    (n = e[i]) && (s = (o ? n(t, r, s) : n(s)) || s);
+  return o && s && b(t, r, s), s;
 };
-let l = class extends c(v) {
+let l = class extends m(v) {
   constructor() {
     super(), this._themeSelectOptions = [], this._error = null;
   }
@@ -29,7 +29,7 @@ let l = class extends c(v) {
    */
   async _fetchThemes() {
     this._error = null;
-    const e = await y.getArticulateEditorsThemesV1();
+    const e = await y.getArticulateThemesAll();
     if (!e.response.ok || !e.data) {
       this._error = O(e.error, "Failed to load themes from the server.");
       return;
@@ -65,25 +65,25 @@ let l = class extends c(v) {
 };
 l.styles = [
   d,
-  m`
+  c`
       uui-select {
         width: 100%;
       }
     `
 ];
-o([
+a([
   p()
 ], l.prototype, "value", 2);
-o([
+a([
   p({ attribute: !1 })
 ], l.prototype, "config", 2);
-o([
+a([
   u()
 ], l.prototype, "_themeSelectOptions", 2);
-o([
+a([
   u()
 ], l.prototype, "_error", 2);
-l = o([
+l = a([
   f("theme-picker-element")
 ], l);
 export {

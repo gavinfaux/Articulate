@@ -7,7 +7,7 @@ import {
   type UmbPropertyEditorUiElement,
 } from "@umbraco-cms/backoffice/property-editor";
 import { UmbTextStyles } from "@umbraco-cms/backoffice/style";
-import { Editors } from "../api/sdk.gen";
+import { Themes } from "../api/sdk.gen";
 import { formatApiError } from "../utils/error-utils";
 
 /**
@@ -76,7 +76,7 @@ export default class ThemePickerElement extends UmbElementMixin(UmbLitElement) i
   private async _fetchThemes() {
     this._error = null;
 
-    const result = await Editors.getArticulateEditorsThemesV1();
+    const result = await Themes.getArticulateThemesAll();
 
     if (!result.response.ok || !result.data) {
       this._error = formatApiError(result.error, "Failed to load themes from the server.");

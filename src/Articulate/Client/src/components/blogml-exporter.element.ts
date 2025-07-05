@@ -3,9 +3,9 @@ import { UUIButtonState } from "@umbraco-cms/backoffice/external/uui";
 import { UmbLitElement } from "@umbraco-cms/backoffice/lit-element";
 import { UMB_MODAL_MANAGER_CONTEXT, UmbModalManagerContext } from "@umbraco-cms/backoffice/modal";
 import { UmbTextStyles } from "@umbraco-cms/backoffice/style";
-import { Blog } from "../api/sdk.gen";
-import type { ExportBlogMlModel } from "../api/types.gen";
-import { fetchArchiveDoctypeUdi, fetchNodeByUdi, openNodePicker } from "../utils/document-node-utils";
+import { ExportModel } from "../api";
+import { BlogMl } from "../api/sdk.gen";
+import { ArticulateDocumentTypeKey, DocumentById, openNodePicker } from "../utils/document-node-utils";
 import { IFormController, setFormError } from "../utils/form-utils";
 import { showUmbracoNotification } from "../utils/notification-utils";
 import {
@@ -99,7 +99,7 @@ export default class BlogMlExporterElement extends UmbLitElement implements IFor
    */
   async connectedCallback() {
     super.connectedCallback();
-    this._archiveDoctypeUdi = await fetchArchiveDoctypeUdi();
+    this._archiveDoctypeUdi = await ArticulateDocumentTypeKey();
     if (this._archiveDoctypeUdi === null) {
       const error = new Error(
         "Could not find the Articulate Archive document type. Please ensure Articulate is installed correctly.",
@@ -134,7 +134,7 @@ export default class BlogMlExporterElement extends UmbLitElement implements IFor
     this._formError = null;
     const udi = await openNodePicker(this._modalManagerContext!, this._archiveDoctypeUdi, this);
     if (udi) {
-      const variant = await fetchNodeByUdi(udi);
+      const variant = await DocumentById(udi);
       if (!variant) {
         setFormError(this, new Error(`Could not find a node with UDI: ${udi}`), "Node Not Found");
         return;
@@ -181,21 +181,13 @@ export default class BlogMlExporterElement extends UmbLitElement implements IFor
 
     if (!this._form) return;
 
-    console.info("Form submission validity check:", this._form.reportValidity());
-    console.info("Current _articulateNodeId:", this._articulateNodeId);
-
-    // Manually validate the articulateNodeId first.
     if (!this._articulateNodeId) {
       const validationError = new Error("A blog node must be selected before exporting.");
       validationError.name = "Validation Error";
       setFormError(this, validationError, validationError.name);
-      // Trigger the browser's validation UI on the invalid field(s).
-      // Work around for dirty uui-input-file after form submission and reset
-      this._form.reportValidity();
       return;
     }
 
-    // Then, let the browser validate the rest of the form.
     if (!this._form.reportValidity()) {
       const validationError = new Error("The form is not valid. Please check the fields marked with an error.");
       validationError.name = "Validation Error";
@@ -226,11 +218,11 @@ export default class BlogMlExporterElement extends UmbLitElement implements IFor
   #performExport = async () => {
     const formData = new FormData(this._form);
     const embedImages = formData.get("embedImages") === "on";
-    const payload: ExportBlogMlModel = {
-      articulateNodeId: this._articulateNodeId!,
+    const payload: ExportModel = {
+      articulateBlogNode: this._articulateNodeId!,
       exportImagesAsBase64: embedImages,
     };
-    const result = await Blog.postArticulateBlogExportV1({ body: payload });
+    const result = await BlogMl.postArticulateBlogmlExport({ body: payload });
     if (!result.response.ok || !result.data) {
       throw result.error || new Error("The server returned an invalid response during export.");
     }

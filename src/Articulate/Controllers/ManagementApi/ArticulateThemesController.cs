@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Articulate.Models;
+using Articulate.Models.ManagmentApi;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -16,7 +16,7 @@ using Umbraco.Cms.Core.Extensions;
 using Umbraco.Cms.Web.Common.Authorization;
 using Umbraco.Extensions;
 
-namespace Articulate.Controllers
+namespace Articulate.Controllers.ManagementApi
 {
     // NOTE: ManagementApiControllerBase [ApiController] attribute will automatically validate the model
     // [ApiController] attribute also infers [FromBody] for model binding
@@ -29,7 +29,7 @@ namespace Articulate.Controllers
     [VersionedApiBackOfficeRoute("articulate/themes")]
     [MapToApi(ArticulateConstants.ApiName)]
     [ApiExplorerSettings(GroupName = "Themes")]
-    public class ThemeEditorController(IHostEnvironment hostingEnvironment, ILogger<ThemeEditorController> logger) : ManagementApiControllerBase
+    public class ArticulateThemesController(IHostEnvironment hostingEnvironment, ILogger<ArticulateThemesController> logger) : ManagementApiControllerBase
     {
         /// <summary>
         /// Represents the possible operation statuses for theme editing actions.
@@ -63,7 +63,7 @@ namespace Articulate.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public IActionResult PostCopyTheme(PostCopyThemeModel model)
+        public IActionResult PostCopyTheme(ThemeCopyModel model)
         {
             try
             {
@@ -119,6 +119,30 @@ namespace Articulate.Controllers
 
             return Ok(model.NewThemeName);
         }
+        /// <summary>
+        /// Gets the list of all available Articulate themes, both default and user-defined.
+        /// </summary>
+        /// <remarks>
+        /// This endpoint returns the names of all available themes, including both default and user-defined themes.
+        /// </remarks>
+        /// <returns>
+        /// A list of theme names as strings.
+        /// </returns>
+        /// <response code="200">Returns the list of all available theme names.</response>
+        [HttpGet("all")]
+        [ProducesResponseType<IEnumerable<string>>(StatusCodes.Status200OK)]
+        public ActionResult<IEnumerable<string>> GetAllThemes()
+        {
+            var defaultThemeDir = hostingEnvironment.MapPathContentRoot(PathHelper.VirtualThemePath);
+            var defaultThemes = Directory.GetDirectories(defaultThemeDir).Select(x => new DirectoryInfo(x).Name);
+
+            var userThemeDir = hostingEnvironment.MapPathContentRoot(PathHelper.UserVirtualThemePath);
+            var userThemes = Directory.Exists(userThemeDir)
+                ? Directory.GetDirectories(userThemeDir).Select(x => new DirectoryInfo(x).Name)
+                : [];
+
+            return Ok(userThemes.Union(defaultThemes));
+        }
 
         /// <summary>
         /// Retrieves the list of available default Articulate themes.
@@ -134,14 +158,14 @@ namespace Articulate.Controllers
         [ProducesResponseType<List<string>>(StatusCodes.Status200OK)]
         public IActionResult GetDefaultThemes()
             => Ok(
-                AllThemes()
+                DefaultThemes()
             );
 
         /// <summary>
         /// Gets all default theme directory names.
         /// </summary>
         /// <returns>A list of theme names.</returns>
-        private List<string> AllThemes()
+        private List<string> DefaultThemes()
         {
             var themeFolderDirectories = GetThemeDirectories();
 

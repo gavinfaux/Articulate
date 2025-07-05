@@ -9,7 +9,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Argotic.Syndication.Specialized;
-using Articulate.Models;
+using Articulate.Models.ManagmentApi;
 using Microsoft.AspNetCore.Html;
 using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Core;
@@ -85,8 +85,8 @@ namespace Articulate.ImportExport
             _articulateTempFileSystem = articulateTempFileSystem;
             _articulateRootMediaFolder = new Lazy<IMedia>(() =>
             {
-                var root = _mediaService.GetRootMedia().FirstOrDefault(x => x.Name == ArticulateConstants.Articulate && x.ContentType.Alias.InvariantEquals("folder"));
-                return root ??= _mediaService.CreateMediaWithIdentity(ArticulateConstants.Articulate, Constants.System.Root, "folder");
+                var root = _mediaService.GetRootMedia().FirstOrDefault(x => x.Name == ArticulateConstants.Articulate && x.ContentType.Alias.InvariantEquals(Constants.Conventions.MediaTypes.Folder));
+                return root ??= _mediaService.CreateMediaWithIdentity(ArticulateConstants.Articulate, Constants.System.Root, Constants.Conventions.MediaTypes.Folder);
             });
         }
 
@@ -99,8 +99,8 @@ namespace Articulate.ImportExport
         /// <summary>
         /// Imports the blogml file to articulate
         /// </summary>
-        /// <returns>An <see cref="ImportModel"/> containing import statistics and the download URL for the Disqus export, if applicable.</returns>
-        public async Task<ImportModel> Import(
+        /// <returns>An <see cref="ImportResponse"/> containing import statistics and the download URL for the Disqus export, if applicable.</returns>
+        public async Task<ImportResponse> Import(
             int userId,
             string fileName,
             Guid blogRootNode,
@@ -129,7 +129,7 @@ namespace Articulate.ImportExport
             // wrap entire operation in scope
             using (var scope = _scopeProvider.CreateScope())
             {
-                var returnModel = new ImportModel();
+                var returnModel = new ImportResponse();
 
                 try
                 {
@@ -180,12 +180,10 @@ namespace Articulate.ImportExport
                 throw new FileNotFoundException("File not found: " + fileName);
             }
 
-            using (var stream = _articulateTempFileSystem.OpenFile(fileName))
-            {
-                var document = new BlogMLDocument();
-                document.Load(stream);
-                return document;
-            }
+            using var stream = _articulateTempFileSystem.OpenFile(fileName);
+            var document = new BlogMLDocument();
+            document.Load(stream);
+            return document;
         }
 
         private IDictionary<string, string> ImportAuthors(int userId, IContent rootNode, IEnumerable<BlogMLAuthor> authors)
@@ -318,8 +316,8 @@ namespace Articulate.ImportExport
                 {
                     //Use the "slug" (post name) if post.id is not there
                     postNode = allPostNodes
-                        .FirstOrDefault(x => x.GetValue<string>("umbracoUrlName") != null
-                                             && x.GetValue<string>("umbracoUrlName").InvariantStartsWith(post.Name.Content));
+                        .FirstOrDefault(x => x.GetValue<string>(Constants.Conventions.Content.UrlName) != null
+                                             && x.GetValue<string>(Constants.Conventions.Content.UrlName).InvariantStartsWith(post.Name.Content));
                 }
 
                 //it exists and we don't wanna overwrite, skip it
@@ -393,7 +391,7 @@ namespace Articulate.ImportExport
                         slug = fileName.TrimEnd("." + ext);
                     }
 
-                    postNode.SetInvariantOrDefaultCultureValue("umbracoUrlName", slug, postType, _localizationService);
+                    postNode.SetInvariantOrDefaultCultureValue(Constants.Conventions.Content.UrlName, slug, postType, _localizationService);
                 }
 
                 if (post.Authors.Count > 0)

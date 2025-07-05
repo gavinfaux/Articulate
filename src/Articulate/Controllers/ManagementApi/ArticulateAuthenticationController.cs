@@ -1,6 +1,6 @@
 #nullable enable
-using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
+using Articulate.Models.ManagmentApi.Authentication;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authorization;
@@ -10,103 +10,29 @@ using Umbraco.Cms.Api.Common.Attributes;
 using Umbraco.Cms.Web.Common.Authorization;
 using Umbraco.Cms.Web.Common.Security;
 
-namespace Articulate.Controllers
+namespace Articulate.Controllers.ManagementApi
 {
-    /// <summary>
-    /// Represents the response returned upon successful login.
-    /// </summary>
-    public class LoginSuccessResponse
-    {
-        /// <summary>
-        /// Gets a value indicating whether the login was successful.
-        /// </summary>
-        public bool Success { get; init; }
-    }
-
-    /// <summary>
-    /// Represents the response when two-factor authentication is required.
-    /// </summary>
-    public class TwoFactorRequiredResponse
-    {
-        /// <summary>
-        /// Gets a value indicating whether two-factor authentication is required.
-        /// </summary>
-        public bool RequiresTwoFactor { get; init; }
-
-        /// <summary>
-        /// Gets the URL to redirect the user for two-factor authentication.
-        /// </summary>
-        public string RedirectUrl { get; init; } = string.Empty;
-    }
-
-    /// <summary>
-    /// Represents the authentication status response.
-    /// </summary>
-    public class StatusResponse
-    {
-        /// <summary>
-        /// Gets a value indicating whether the user is authenticated.
-        /// </summary>
-        public bool IsAuthenticated { get; init; }
-    }
-
-    /// <summary>
-    /// Represents the CSRF token response.
-    /// </summary>
-    public class CsrfTokenResponse
-    {
-        /// <summary>
-        /// Gets the CSRF request token.
-        /// </summary>
-        public string RequestToken { get; init; } = string.Empty;
-    }
-
-    /// <summary>
-    /// Represents the login model for authentication.
-    /// </summary>
-    public class ArticulateLoginModel
-    {
-        /// <summary>
-        /// Gets the email address of the user.
-        /// </summary>
-        [Required(ErrorMessage = "Email Address is required.")]
-        [EmailAddress(ErrorMessage = "Email Address must be a valid email address.")]
-        public string EmailAddress
-        {
-            get;
-        } = string.Empty;
-
-        /// <summary>
-        /// Gets the password of the user.
-        /// </summary>
-        [Required(ErrorMessage = "Password is required.")]
-        public string Password
-        {
-            get;
-        } = string.Empty;
-    }
     // NOTE: [ApiController] attribute will automatically validate the model
     // [ApiController] attribute also infers [FromBody] for model binding
 
     /// <summary>
-    /// Provides authentication endpoints for Articulate.
+    /// Provides alternative authentication endpoint for Umbraco BackOffice and Articulate (Umbraco endpoint forces redirect to backoffice).
     /// </summary>
     [ApiVersion("1.0")]
     [ApiExplorerSettings(GroupName = "Authentication")]
     [ApiController]
     [MapToApi(ArticulateConstants.ApiName)]
-    [Route("api/v{version:apiVersion}/articulate/auth")]
-    public class ArticulateAuthController(IBackOfficeSignInManager signInManager, IAntiforgery antiforgery)
+    [Route("articulate/management/api/v{version:apiVersion}/authentication")]
+    public class ArticulateAuthenticationController(IBackOfficeSignInManager signInManager, IAntiforgery antiforgery)
         : ControllerBase
     {
         /// <summary>
         /// Gets a CSRF token for the current session.
         /// </summary>
         /// <returns>A <see cref="CsrfTokenResponse"/> containing the CSRF request token.</returns>
-        [HttpGet("get-csrf-token")]
+        [HttpGet("csrf-token")]
         [AllowAnonymous]
         [ProducesResponseType(typeof(CsrfTokenResponse), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public IActionResult GetCsrfToken()
         {
             var tokens = antiforgery.GetAndStoreTokens(HttpContext);
@@ -117,11 +43,9 @@ namespace Articulate.Controllers
         /// Gets the authentication status of the current user.
         /// </summary>
         /// <returns>A <see cref="StatusResponse"/> indicating if the user is authenticated.</returns>
-        [ProducesResponseType<StatusResponse>(StatusCodes.Status200OK)]
-        [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
-        [ProducesDefaultResponseType(typeof(ProblemDetails))]
         [HttpGet("status")]
         [Authorize(Policy = AuthorizationPolicies.BackOfficeAccess)]
+        [ProducesResponseType<StatusResponse>(StatusCodes.Status200OK)]
         public IActionResult GetStatus() => Ok(new StatusResponse { IsAuthenticated = true });
 
         /// <summary>
@@ -143,7 +67,7 @@ namespace Articulate.Controllers
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status423Locked)]
         public async Task<IActionResult> Login(
-             ArticulateLoginModel model)
+             LoginModel model)
         {
             if (string.IsNullOrEmpty(model.EmailAddress) || string.IsNullOrEmpty(model.Password))
             {
@@ -151,7 +75,7 @@ namespace Articulate.Controllers
             }
 
             var result = await signInManager.PasswordSignInAsync(
-                model.EmailAddress, model.Password, true, true).ConfigureAwait(false);
+                model.EmailAddress, model.Password, true, true);
 
             if (result.Succeeded)
             {
@@ -164,17 +88,9 @@ namespace Articulate.Controllers
                 return Ok(new TwoFactorRequiredResponse { RequiresTwoFactor = true, RedirectUrl = "/umbraco" });
             }
 
-            if (result.IsLockedOut)
-            {
-                return new StatusCodeResult(StatusCodes.Status423Locked);
-            }
-
-            if (result.IsNotAllowed)
-            {
-                return new StatusCodeResult(StatusCodes.Status403Forbidden);
-            }
-
-            return new StatusCodeResult(StatusCodes.Status401Unauthorized);
+            return result.IsLockedOut ? new StatusCodeResult(StatusCodes.Status423Locked) :
+                result.IsNotAllowed ? new StatusCodeResult(StatusCodes.Status403Forbidden) :
+                new StatusCodeResult(StatusCodes.Status401Unauthorized);
         }
 
         /// <summary>
@@ -186,13 +102,12 @@ namespace Articulate.Controllers
         /// <returns>
         /// An <see cref="IActionResult"/> indicating the result of the logout operation.
         /// </returns>
-        /// <response code="200">If the user was successfully logged out.</response>
         [HttpPost("logout")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [Authorize(Policy = AuthorizationPolicies.BackOfficeAccess)]
         public async Task<IActionResult> Logout()
         {
-            await signInManager.SignOutAsync().ConfigureAwait(false);
+            await signInManager.SignOutAsync();
             return Ok();
         }
     }

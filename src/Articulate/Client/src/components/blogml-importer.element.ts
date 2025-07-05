@@ -4,9 +4,9 @@ import { UmbLitElement } from "@umbraco-cms/backoffice/lit-element";
 import { UMB_MODAL_MANAGER_CONTEXT, UmbModalManagerContext } from "@umbraco-cms/backoffice/modal";
 import { UmbTextStyles } from "@umbraco-cms/backoffice/style";
 import { keyed } from "lit-html/directives/keyed.js";
-import { Blog } from "../api/sdk.gen";
-import type { ImportBlogMlModel, ImportModel, PostResponseModel } from "../api/types.gen";
-import { fetchArchiveDoctypeUdi, fetchNodeByUdi, openNodePicker } from "../utils/document-node-utils";
+import { BlogMl } from "../api/sdk.gen";
+import type { ImportModel, ImportResponse, PostArticulateBlogmlImportFileResponse } from "../api/types.gen";
+import { ArticulateDocumentTypeKey, DocumentById, openNodePicker } from "../utils/document-node-utils";
 import { IFormController, setFormError } from "../utils/form-utils";
 import { showUmbracoNotification } from "../utils/notification-utils";
 import {
@@ -104,7 +104,7 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
    */
   async connectedCallback() {
     super.connectedCallback();
-    this._archiveDoctypeUdi = await fetchArchiveDoctypeUdi();
+    this._archiveDoctypeUdi = await ArticulateDocumentTypeKey();
     if (this._archiveDoctypeUdi === null) {
       const error = new Error(
         "Could not find the Articulate Archive document type. Please ensure Articulate is installed correctly.",
@@ -143,7 +143,7 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
     this._formError = null;
     const udi = await openNodePicker(this._modalManagerContext!, this._archiveDoctypeUdi, this);
     if (udi) {
-      const variant = await fetchNodeByUdi(udi);
+      const variant = await DocumentById(udi);
       if (!variant) {
         setFormError(this, new Error(`Could not find a node with UDI: ${udi}`), "Node Not Found");
         return;
@@ -263,12 +263,12 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
   /**
    * Begins the import process by uploading the BlogML file to the server.
    * @param {File} importFile The BlogML file to upload.
-   * @returns {Promise<PostResponseModel>} A promise that resolves with the initial import data, including the temporary file name and post count.
+   * @returns {Promise<PostArticulateBlogmlImportFileResponse>} A promise that resolves with the initial import data, including the temporary file name and post count.
    * @private
    * @async
    */
-  #beginImport = async (importFile: File): Promise<PostResponseModel> => {
-    const result = await Blog.postArticulateBlogImportBeginV1({ body: { importFile } });
+  #beginImport = async (importFile: File): Promise<PostArticulateBlogmlImportFileResponse> => {
+    const result = await BlogMl.postArticulateBlogmlImportFile({ body: { importFile } });
     if (!result.response.ok || !result.data?.temporaryFileName || !result.data?.postCount) {
       throw result.error || new Error("Failed to upload blog content.");
     }
@@ -279,13 +279,13 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
    * Finalizes the import process by sending the import options to the server.
    * @param {FormData} formData The form data containing import options.
    * @param {string} tempFile The temporary file name returned from the beginImport step.
-   * @returns {Promise<ImportModel>} A promise that resolves with the final import results.
+   * @returns {Promise<ImportResponse>} A promise that resolves with the final import results.
    * @private
    * @async
    */
-  #finalizeImport = async (formData: FormData, tempFile: string): Promise<ImportModel> => {
-    const payload: ImportBlogMlModel = {
-      articulateNodeId: this._articulateNodeId!,
+  #finalizeImport = async (formData: FormData, tempFile: string): Promise<ImportResponse> => {
+    const payload: ImportModel = {
+      articulateBlogNode: this._articulateNodeId!,
       overwrite: formData.get("overwrite") === "on",
       publish: formData.get("publish") === "on",
       regexMatch: (formData.get("regexMatch") as string) || "",
@@ -294,7 +294,7 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
       exportDisqusXml: formData.get("exportDisqusXml") === "on",
       importFirstImage: formData.get("importFirstImage") === "on",
     };
-    const result = await Blog.postArticulateBlogImportV1({ body: payload });
+    const result = await BlogMl.postArticulateBlogmlImport({ body: payload });
     if (!result.response.ok || !result.data?.completed) {
       throw result.error || new Error("Failed to import blog content.");
     }
@@ -307,7 +307,7 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
    * @async
    */
   #exportDisqusComments = async () => {
-    const result = await Blog.getArticulateBlogExportDisqusV1();
+    const result = await BlogMl.getArticulateBlogmlExportDisqus();
     if (!result.response.ok || !result.data) {
       throw result.error || new Error("Failed to export Disqus comments.");
     }

@@ -28,6 +28,22 @@ export default [
       "@typescript-eslint/no-unused-vars": "warn",
     },
   },
+  {
+    files: ["MobileEditor/src/**/*.ts", "MobileEditor/src/**/*.tsx"],
+    languageOptions: {
+      parser: tseslint.parser,
+      parserOptions: {
+        project: "./MobileEditor/tsconfig.eslint.json",
+        tsconfigRootDir: __dirname,
+      },
+    },
+    plugins: {
+      "@typescript-eslint": tseslint.plugin,
+    },
+    rules: {
+      "@typescript-eslint/no-unused-vars": "warn",
+    },
+  },
   includeIgnoreFile(gitignorePath),
   prettierConfig,
 

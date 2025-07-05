@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -12,6 +11,7 @@ using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Umbraco.Cms.Api.Common.Attributes;
 using Umbraco.Cms.Api.Management.Controllers;
@@ -23,7 +23,6 @@ using Umbraco.Cms.Core.Hosting;
 using Umbraco.Cms.Core.IO;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Models.Membership;
-using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.PropertyEditors;
 using Umbraco.Cms.Core.Security;
 using Umbraco.Cms.Core.Serialization;
@@ -33,7 +32,7 @@ using Umbraco.Cms.Web.Common;
 using Umbraco.Cms.Web.Common.Authorization;
 using Umbraco.Extensions;
 
-namespace Articulate.Controllers
+namespace Articulate.Controllers.ManagementApi
 {
     // NOTE: ManagementApiControllerBase [ApiController] attribute will automatically validate the model
     // [ApiController] attribute also infers [FromBody] for model binding
@@ -45,10 +44,26 @@ namespace Articulate.Controllers
     [Authorize(AuthorizationPolicies.ContentPermissionByResource)]
     [Authorize(AuthorizationPolicies.MediaPermissionByResource)]
     [MapToApi(ArticulateConstants.ApiName)]
-    [VersionedApiBackOfficeRoute("articulate/anew")]
-    [ApiExplorerSettings(GroupName = "Markdown Editor")]
-    public class MardownEditorApiController : ManagementApiControllerBase
+    [VersionedApiBackOfficeRoute("articulate/posts")]
+    [ApiExplorerSettings(GroupName = "Posts")]
+    public class ArticulatePostsController : ManagementApiControllerBase
     {
+
+        /// <summary>
+        /// Represents possible operation statuses for blog import actions.
+        /// </summary>
+        /// <example>InvalidRequest</example>
+        public enum MardownEditorOperationStatus
+        {
+            /// <summary>
+            /// The request was invalid.
+            /// </summary>
+            BadRequest,
+            /// <summary>
+            /// The requested resource was not found.
+            /// </summary>
+            NotFound
+        }
         private readonly ServiceContext _services;
         private readonly IBackOfficeSecurityAccessor _backOfficeSecurityAccessor;
         private readonly UmbracoHelper _umbracoHelper;
@@ -62,8 +77,9 @@ namespace Articulate.Controllers
         private readonly IContentTypeBaseServiceProvider _contentTypeBaseServiceProvider;
         private readonly IShortStringHelper _shortStringHelper;
         private readonly Lazy<IMedia> _articulateRootMediaFolder;
+        private readonly ILogger<ArticulatePostsController> _logger;
 
-        public MardownEditorApiController(
+        public ArticulatePostsController(
             ServiceContext services,
             IBackOfficeSecurityAccessor backOfficeSecurityAccessor,
             UmbracoHelper umbracoHelper,
@@ -73,7 +89,8 @@ namespace Articulate.Controllers
             IOptions<GlobalSettings> globalSettings,
             IHostingEnvironment hostingEnvironment, IMediaService mediaService,
             MediaUrlGeneratorCollection mediaUrlGenerators,
-            IContentTypeBaseServiceProvider contentTypeBaseServiceProvider, IShortStringHelper shortStringHelper)
+            IContentTypeBaseServiceProvider contentTypeBaseServiceProvider, IShortStringHelper shortStringHelper,
+            ILogger<ArticulatePostsController> logger)
         {
             _services = services;
             _backOfficeSecurityAccessor = backOfficeSecurityAccessor;
@@ -87,10 +104,11 @@ namespace Articulate.Controllers
             _mediaUrlGenerators = mediaUrlGenerators;
             _contentTypeBaseServiceProvider = contentTypeBaseServiceProvider;
             _shortStringHelper = shortStringHelper;
+            _logger = logger;
             _articulateRootMediaFolder = new Lazy<IMedia>(() =>
             {
-                var root = _mediaService.GetRootMedia().FirstOrDefault(x => x.Name == "Articulate" && x.ContentType.Alias.InvariantEquals("folder"));
-                return root ?? _mediaService.CreateMediaWithIdentity("Articulate", Constants.System.Root, "folder");
+                var root = _mediaService.GetRootMedia().FirstOrDefault(x => x.Name == "Articulate" && x.ContentType.Alias.InvariantEquals(Constants.Conventions.MediaTypes.Folder));
+                return root ?? _mediaService.CreateMediaWithIdentity("Articulate", Constants.System.Root, Constants.Conventions.MediaTypes.Folder);
             });
         }
 
@@ -100,9 +118,31 @@ namespace Articulate.Controllers
             public string FirstImage { get; set; }
         }
 
-        [HttpPost("post")]
-        public async Task<ActionResult> PostNew()
+        [HttpPost("markdown")]
+        public async Task<IActionResult> CreateMarkdownPost([FromForm(Name = "json")] string jsonModel,
+            IFormFileCollection files)
         {
+
+            MardownEditorModel model;
+            try
+            {
+                model = JsonSerializer.Deserialize<MardownEditorModel>(jsonModel);
+                if (model is null)
+                {
+                    _logger.LogWarning("The provided JSON model is invalid.");
+                    return StatusCode(StatusCodes.Status400BadRequest, new ProblemDetails { Title = "Bad Request", Detail = "The provided JSON model is invalid.", Status = StatusCodes.Status400BadRequest });
+                }
+            }
+            catch (JsonException ex)
+            {
+                _logger.LogWarning("JSON deserialization failed: {Message}", ex.Message);
+                return StatusCode(StatusCodes.Status400BadRequest, new ProblemDetails { Title = "Bad Request", Detail = $"JSON deserialization failed: {ex.Message}", Status = StatusCodes.Status400BadRequest });
+            }
+            //if (importFile == null || !Path.GetExtension(importFile.FileName.Trim("\"").ToLowerInvariant()).InvariantEquals(".xml"))
+            //{
+            //    _logger.LogWarning("The request was not a valid form file or the file was not XML");
+            //    return OperationStatusResult(ArticulateBlogImportOperationStatus.InvalidRequest, builder => StatusCode(StatusCodes.Status415UnsupportedMediaType, builder.WithTitle("Invalid request").WithDetail("The request was not a valid form file or the file was not XML.").Build()));
+            //}
             await Task.CompletedTask;
 
             if (!Request.HasFormContentType && !Request.Form.Files.Any())
@@ -114,8 +154,6 @@ namespace Articulate.Controllers
             {
                 return BadRequest("The request was not formatted correctly and is missing the 'model' parameter");
             }
-
-            var model = JsonSerializer.Deserialize<MardownEditorModel>(Request.Form["model"]);
 
             if (model.ArticulateNodeId.HasValue == false)
             {
@@ -139,18 +177,18 @@ namespace Articulate.Controllers
                 extractFirstImageAsProperty = articulateNode.GetValue<bool>("extractFirstImage");
             }
 
-            var archive = _services.ContentService.GetPagedChildren(model.ArticulateNodeId.Value, 0, int.MaxValue, out long totalArchiveNodes)
+            var archive = _services.ContentService.GetPagedChildren(model.ArticulateNodeId.Value, 0, int.MaxValue, out var totalArchiveNodes)
                 .FirstOrDefault(x => x.ContentType.Alias.InvariantEquals(ArticulateConstants.ArticulateArchive));
             if (archive == null)
             {
                 return BadRequest("No Articulate Archive node found for the specified id");
             }
 
-            var list = new List<string> { ActionNew.ActionLetter, ActionUpdate.ActionLetter, ActionPublish.ActionLetter };
+            var list = new[] { ActionNew.ActionLetter, ActionUpdate.ActionLetter, ActionPublish.ActionLetter };
             var hasPermission = CheckPermissions(
                 _backOfficeSecurityAccessor.BackOfficeSecurity.CurrentUser,
                 _services.UserService,
-                list.ToArray(),
+                list,
                 archive);
 
             if (hasPermission == false)
@@ -190,19 +228,19 @@ namespace Articulate.Controllers
 
             if (model.Tags.IsNullOrWhiteSpace() == false)
             {
-                var tags = model.Tags.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim());
+                var tags = model.Tags.Split([','], StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim());
                 content.AssignInvariantOrDefaultCultureTags("tags", tags, contentType, _services.LocalizationService, _services.DataTypeService, _propertyEditors, _jsonSerializer);
             }
 
             if (model.Categories.IsNullOrWhiteSpace() == false)
             {
-                var cats = model.Categories.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim());
+                var cats = model.Categories.Split([','], StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim());
                 content.AssignInvariantOrDefaultCultureTags("categories", cats, contentType, _services.LocalizationService, _services.DataTypeService, _propertyEditors, _jsonSerializer);
             }
 
             if (model.Slug.IsNullOrWhiteSpace() == false)
             {
-                content.SetInvariantOrDefaultCultureValue("umbracoUrlName", model.Slug, contentType, _services.LocalizationService);
+                content.SetInvariantOrDefaultCultureValue(Constants.Conventions.Content.UrlName, model.Slug, contentType, _services.LocalizationService);
             }
 
             //author is required
@@ -216,7 +254,7 @@ namespace Articulate.Controllers
                 return BadRequest(ModelState);
             }
 
-            IPublishedContent published = _umbracoHelper.Content(content.Id);
+            var published = _umbracoHelper.Content(content.Id);
             return Ok(new { url = published.Url() });
         }
 
@@ -291,20 +329,18 @@ namespace Articulate.Controllers
                     {
                         var rndId = Guid.NewGuid().ToString("N");
 
-                        using (var stream = new MemoryStream())
-                        {
-                            file.CopyTo(stream);
+                        using var stream = new MemoryStream();
+                        file.CopyTo(stream);
 
-                            var fileUrl = "articulate/" + rndId + "/" + cleanFileName.TrimStart("\"").TrimEnd("\"");
-                            _mediaFileManager.FileSystem.AddFile(fileUrl, stream);
+                        var fileUrl = "articulate/" + rndId + "/" + cleanFileName.TrimStart("\"").TrimEnd("\"");
+                        _mediaFileManager.FileSystem.AddFile(fileUrl, stream);
 
-                            // UmbracoMediaPath default setting = ~/media
-                            // Resolved mediaRootPath = /media
-                            var mediaRootPath = _hostingEnvironment.ToAbsolute(_globalSettings.UmbracoMediaPath);
-                            var mediaFilePath = $"{mediaRootPath}/{fileUrl}";
-                            var result = $"![{mediaFilePath}]({mediaFilePath})";
-                            return result;
-                        }
+                        // UmbracoMediaPath default setting = ~/media
+                        // Resolved mediaRootPath = /media
+                        var mediaRootPath = _hostingEnvironment.ToAbsolute(_globalSettings.UmbracoMediaPath);
+                        var mediaFilePath = $"{mediaRootPath}/{fileUrl}";
+                        var result = $"![{mediaFilePath}]({mediaFilePath})";
+                        return result;
                     }
                 }
 
@@ -317,12 +353,12 @@ namespace Articulate.Controllers
         private static bool CheckPermissions(IUser user, IUserService userService, string[] permissionsToCheck, IContent contentItem)
         {
 
-            if (permissionsToCheck == null || !permissionsToCheck.Any())
+            if (permissionsToCheck is not { Length: 0 })
             {
                 return true;
             }
 
-            var entityPermission = userService.GetPermissions(user, new[] { contentItem.Id }).FirstOrDefault();
+            var entityPermission = userService.GetPermissions(user, [contentItem.Id]).FirstOrDefault();
 
             var flag = true;
             foreach (var ch in permissionsToCheck)

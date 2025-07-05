@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 using Articulate.ImportExport;
-using Articulate.Models;
+using Articulate.Models.ManagmentApi;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -11,71 +11,28 @@ using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Api.Common.Attributes;
 using Umbraco.Cms.Api.Management.Controllers;
 using Umbraco.Cms.Api.Management.Routing;
-using Umbraco.Cms.Core.Models.PublishedContent;
-using Umbraco.Cms.Core.PublishedCache;
 using Umbraco.Cms.Core.Security;
 using Umbraco.Cms.Web.Common.Authorization;
 using Umbraco.Extensions;
 
-namespace Articulate.Controllers
+namespace Articulate.Controllers.ManagementApi
 {
-    // NOTE: ManagementApiControllerBase [ApiController] attribute will automatically validate the model
-    // [ApiController] attribute also infers [FromBody] for model binding
-
     /// <summary>
-    /// Provides API endpoints for importing and exporting Articulate blog data using BlogML and Disqus formats.
+    /// Provides import and export of Articulate blog data using BlogML and Disqus formats.
     /// </summary>
-    /// <remarks>
-    /// This controller allows initialization, import, and export of blog data, as well as retrieval of Articulate information required for feature.
-    /// </remarks>
     [ApiVersion("1.0")]
     [Authorize(Policy = AuthorizationPolicies.SectionAccessSettings)]
-    [VersionedApiBackOfficeRoute("articulate/blog")]
-    [ApiExplorerSettings(GroupName = "Blog")]
+    [VersionedApiBackOfficeRoute("articulate/blogml")]
+    [ApiExplorerSettings(GroupName = "BlogML")]
     [MapToApi(ArticulateConstants.ApiName)]
-    public class ArticulateBlogImportController(
+    public class ArticulateBlogMlController(
         BlogMlExporter blogMlExporter,
         BlogMlImporter blogMlImporter,
         IBackOfficeSecurityAccessor backOfficeSecurityAccessor,
         ArticulateTempFileSystem articulateTempFileSystem,
-        ILogger<ArticulateBlogImportController> logger,
-        IPublishedContentTypeCache publishedContentTypeCache)
+        ILogger<ArticulateBlogMlController> logger)
         : ManagementApiControllerBase
     {
-        /// <summary>
-        /// Represents the response model for the BlogML post initialization.
-        /// </summary>
-        public class PostResponseModel
-        {
-            /// <summary>
-            /// Gets or sets the temporary file name used for the uploaded BlogML file.
-            /// </summary>
-            /// <example>n4v8p7c1.7gk</example>
-            public string TemporaryFileName { get; set; }
-
-            /// <summary>
-            /// Gets or sets the number of posts detected in the BlogML file.
-            /// </summary>
-            /// <example>42</example>
-            public int PostCount { get; set; }
-        }
-
-        /// <summary>
-        /// Represents possible operation statuses for blog import actions.
-        /// </summary>
-        /// <example>InvalidRequest</example>
-        public enum ArticulateBlogImportOperationStatus
-        {
-            /// <summary>
-            /// The request was invalid.
-            /// </summary>
-            InvalidRequest,
-            /// <summary>
-            /// The requested resource was not found.
-            /// </summary>
-            NotFound
-        }
-
         /// <summary>
         /// Begins the BlogML import process by accepting an uploaded XML file, storing it temporarily, and returning a temporary file name along with the detected post count.
         /// This endpoint must be called before performing a blog export using the articulate/blog/import endpoint.
@@ -85,33 +42,34 @@ namespace Articulate.Controllers
         /// The name specified in the form's element or FormData must match the name of the parameter in the controller's action, e.g. <![CDATA[&lt;input type="file" name="importFile"&gt;]]>
         /// </remarks>
         /// <response code="200">Returns the temporary file name and post count.</response>
-        /// <response code="415">The request was not a valid form file or the file was not XML.</response>
+        /// <response code="415">The request is not a valid form file, file is missing or the file is not XML.</response>
         /// <response code="500">Upload failed due to a server error.</response>
-        [HttpPost("import/begin")]
-        [ProducesResponseType<PostResponseModel>(StatusCodes.Status200OK)]
+        [HttpPost("import-file")]
+        [ProducesResponseType<ImportFileResponse>(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status415UnsupportedMediaType)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [Consumes("multipart/form-data")]
-        public IActionResult PostInitialize(IFormFile importFile)
+        public async Task<IActionResult> PostInitialize(IFormFile importFile)
         {
             try
             {
                 if (importFile == null || !Path.GetExtension(importFile.FileName.Trim("\"").ToLowerInvariant()).InvariantEquals(".xml"))
                 {
-                    logger.LogWarning("The request was not a valid form file or the file was not XML");
-                    return OperationStatusResult(ArticulateBlogImportOperationStatus.InvalidRequest, builder => StatusCode(StatusCodes.Status415UnsupportedMediaType, builder.WithTitle("Invalid request").WithDetail("The request was not a valid form file or the file was not XML.").Build()));
+                    const string warningMessage = "The request was not a valid form file or the file was not XML";
+                    logger.LogWarning(warningMessage);
+                    return StatusCode(StatusCodes.Status415UnsupportedMediaType, new ProblemDetails { Title = "Invalid request", Detail = warningMessage, Status = StatusCodes.Status415UnsupportedMediaType });
                 }
 
                 var fileName = Path.GetRandomFileName();
                 using (var stream = new MemoryStream())
                 {
-                    Request.Form.Files[0].CopyTo(stream);
+                    await Request.Form.Files[0].CopyToAsync(stream);
                     articulateTempFileSystem.AddFile(fileName, stream);
                 }
 
                 var count = blogMlImporter.GetPostCount(fileName);
 
-                return Ok(new PostResponseModel
+                return Ok(new ImportFileResponse
                 {
                     PostCount = count,
                     TemporaryFileName = fileName
@@ -123,7 +81,8 @@ namespace Articulate.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, new ProblemDetails
                 {
                     Title = "Server error",
-                    Detail = ex.Message
+                    Detail = ex.Message,
+                    Status = StatusCodes.Status500InternalServerError
                 });
             }
         }
@@ -134,18 +93,17 @@ namespace Articulate.Controllers
         /// <param name="model">The export options including the Articulate node ID and image export settings.</param>
         /// <returns>A file stream containing the BlogML XML file.</returns>
         /// <response code="200">Returns the BlogML XML file as an octet-stream. The filename in the Content-Disposition header will be in the format: articulate-export-yyyyMMddHHmmss.xml.</response>
-        /// <response code="400">The chosen node is not an Articulate root node, or node does not exist, or Articulate is not installed correctly.</response>
         /// <response code="500">Export failed due to a server error.</response>
         [HttpPost("export")]
         [ProducesResponseType(typeof(byte[]), StatusCodes.Status200OK, "application/octet-stream")]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> PostExportBlogMl(ExportBlogMlModel model)
+        [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
+        public async Task<IActionResult> PostExportBlogMl(ExportModel model)
         {
             try
             {
 
-                blogMlExporter.Export(model.ArticulateNodeId, model.ExportImagesAsBase64);
+                blogMlExporter.Export(model.ArticulateBlogNode, model.ExportImagesAsBase64);
                 var downloadFileName = $"articulate-export-{DateTime.UtcNow:yyyyMMddHHmmss}.xml";
                 Response.Headers.Append("Content-Disposition", $"attachment; filename=\"{downloadFileName}\"");
                 Response.ContentType = "application/octet-stream";
@@ -162,10 +120,12 @@ namespace Articulate.Controllers
             catch (InvalidOperationException ex)
             {
                 logger.LogError(ex, "Export failed with errors");
-                return StatusCode(StatusCodes.Status400BadRequest, new ProblemDetails
+                return StatusCode(StatusCodes.Status503ServiceUnavailable, new ProblemDetails
                 {
                     Title = "Bad Request",
-                    Detail = ex.Message
+                    Detail = ex.Message,
+                    Status = StatusCodes.Status503ServiceUnavailable
+
                 });
 
             }
@@ -175,7 +135,8 @@ namespace Articulate.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, new ProblemDetails
                 {
                     Title = "Server error",
-                    Detail = ex.Message
+                    Detail = ex.Message,
+                    Status = StatusCodes.Status500InternalServerError
                 });
             }
         }
@@ -185,24 +146,25 @@ namespace Articulate.Controllers
         /// This endpoint should be called after initializing the import with the articulate/blog/import/begin endpoint.
         /// </summary>
         /// <param name="model">The import options including the temporary file name, Articulate node ID, and import settings.</param>
-        /// <returns>An <see cref="ImportModel"/> containing import statistics and the download URL for the Disqus export, if applicable.</returns>
+        /// <returns>An object containing import statistics and the download URL for the Disqus export, if applicable.</returns>
         /// <response code="200">Returns import statistics and the download URL for the comment export file for upload to Disqus, if applicable.</response>
         /// <response code="400">The requested Articulate node ID could not be found or is not a valid Articulate node.</response>
         /// <response code="404">The requested temporary file could not be found.</response>
         /// <response code="500">Import failed due to a server error.</response>
         [HttpPost("import")]
-        [ProducesResponseType<ImportModel>(StatusCodes.Status200OK)]
+        [ProducesResponseType<ImportResponse>(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<ImportModel>> PostImportBlogMl(ImportBlogMlModel model)
+        public async Task<ActionResult<ImportResponse>> PostImportBlogMl(ImportModel model)
         {
             if (!articulateTempFileSystem.FileExists(model.TempFile))
             {
                 return StatusCode(StatusCodes.Status404NotFound, new ProblemDetails
                 {
                     Title = "File Not Found",
-                    Detail = $"The temporary file {model.TempFile} could not be found."
+                    Detail = $"The temporary file {model.TempFile} could not be found.",
+                    Status = StatusCodes.Status404NotFound
                 });
             }
 
@@ -213,18 +175,19 @@ namespace Articulate.Controllers
                 return StatusCode(StatusCodes.Status401Unauthorized, new ProblemDetails
                 {
                     Title = "Not Authorized",
-                    Detail = "The current user is not authenticated or could not be found."
+                    Detail = "The current user is not authenticated or could not be found.",
+                    Status = StatusCodes.Status401Unauthorized
                 });
             }
 
-            ImportModel result;
+            ImportResponse result;
 
             try
             {
                 result = await blogMlImporter.Import(
                     backOfficeSecurityAccessor.BackOfficeSecurity.CurrentUser.Id,
                     model.TempFile,
-                    model.ArticulateNodeId,
+                    model.ArticulateBlogNode,
                     model.Overwrite,
                     model.RegexMatch,
                     model.RegexReplace,
@@ -241,7 +204,8 @@ namespace Articulate.Controllers
                     return StatusCode(StatusCodes.Status500InternalServerError, new ProblemDetails
                     {
                         Title = "Server error",
-                        Detail = "Import failed, see back office logs for details"
+                        Detail = "Import failed, see back office logs for details",
+                        Status = StatusCodes.Status500InternalServerError
                     });
                 }
 
@@ -251,8 +215,9 @@ namespace Articulate.Controllers
                 logger.LogError(ex, "Importing failed with errors");
                 return StatusCode(StatusCodes.Status404NotFound, new ProblemDetails
                 {
-                    Title = "File Not Found",
-                    Detail = ex.Message
+                    Title = $"The temporary file {model.TempFile} could not be found.",
+                    Detail = ex.Message,
+                    Status = StatusCodes.Status404NotFound
                 });
             }
             catch (InvalidOperationException ex)
@@ -283,6 +248,7 @@ namespace Articulate.Controllers
         /// </summary>
         /// <returns>A file stream containing the Disqus comments XML file extracted from the BlogML import XML file.</returns>
         /// <response code="200">Returns the Disqus comment XML file as an octet-stream. The filename in the Content-Disposition header will be in the format: articulate-disqus-comments-yyyyMMddHHmmss.xml.</response>
+        /// <response code="404">The Disqus XML export file could not be found.</response>
         [HttpGet("export/disqus")]
         [ProducesResponseType(typeof(byte[]), StatusCodes.Status200OK, "application/octet-stream")]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -292,7 +258,7 @@ namespace Articulate.Controllers
             {
                 var message = "Disqus comments export file not found.";
                 logger.LogWarning(message);
-                return OperationStatusResult(ArticulateBlogImportOperationStatus.NotFound, builder => NotFound(builder.WithTitle(message).Build()));
+                return NotFound(new ProblemDetails { Title = "File not found.", Detail = message, Status = StatusCodes.Status404NotFound });
             }
 
             var downloadFileName = $"articulate-disqus-comments-{DateTime.UtcNow:yyyyMMddHHmmss}.xml";
@@ -309,27 +275,5 @@ namespace Articulate.Controllers
             return new EmptyResult();
         }
 
-        /// <summary>
-        /// Gets the Guid for the Articulate content type.
-        /// This endpoint is used to retrieve the Guid for the back office import and export features.
-        /// </summary>
-        /// <returns>The UDI as a string.</returns>
-        /// <response code="200">The Guid as a string, example: ce9e1f75-6428-46b1-8711-84829b9b3d1c</response>
-        /// <response code="404">The Articulate archive content type was not found.</response>
-        [HttpGet("articulate/guid")]
-        [ProducesResponseType<string>(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public IActionResult ArticulateContentTypeGuid()
-        {
-            var contentType = publishedContentTypeCache.Get(PublishedItemType.Content, ArticulateConstants.Articulate);
-            if (contentType == null)
-            {
-                var message = "Content type 'Articulate' not found.";
-                logger.LogWarning(message);
-                return OperationStatusResult(ArticulateBlogImportOperationStatus.NotFound, builder => NotFound(builder.WithTitle(message).WithDetail("See back office logs for details.").Build()));
-            }
-
-            return Ok(contentType.Key.ToString());
-        }
     }
 }

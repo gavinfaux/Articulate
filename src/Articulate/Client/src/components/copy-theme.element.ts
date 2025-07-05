@@ -95,7 +95,7 @@ export default class CopyThemeElement extends UmbLitElement implements IFormCont
    */
   async #loadThemes() {
     try {
-      const result = await Themes.getArticulateThemesDefaultV1();
+      const result = await Themes.getArticulateThemesDefault();
       if (!result.response.ok || !result.data) {
         throw result.error || new Error("The list of themes could not be retrieved from the server.");
       }
@@ -187,7 +187,7 @@ export default class CopyThemeElement extends UmbLitElement implements IFormCont
     this._formError = null;
 
     try {
-      const result = await Themes.postArticulateThemesCopyV1({
+      const result = await Themes.postArticulateThemesCopy({
         body: {
           themeName: this._selectedTheme!,
           newThemeName: this._newThemeName!,

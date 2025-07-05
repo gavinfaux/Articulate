@@ -6,37 +6,41 @@ import {
   type UmbDocumentItemModel,
 } from "@umbraco-cms/backoffice/document";
 import type { UmbModalManagerContext } from "@umbraco-cms/backoffice/modal";
-import { Blog } from "../api";
 
 import type { DocumentVariantResponseModel } from "@umbraco-cms/backoffice/external/backend-api";
-import { DocumentService } from "@umbraco-cms/backoffice/external/backend-api";
-import { formatApiError } from "./error-utils";
-
-/**
- * Fetches the UDI of the Articulate blog archive document type.
- * @returns {Promise<string | undefined>} A promise that resolves to the UDI string of the blog archive document type, or undefined if the request fails.
- */
-export async function fetchArchiveDoctypeUdi(): Promise<string | undefined> {
-  const result = await Blog.getArticulateBlogArticulateGuidV1();
-  if (result.response.ok && result.data) {
-    return result.data;
-  }
-  console.error(formatApiError(result.error, "API request failed for Articulate Archive UDI"));
-  return undefined;
-}
+import { DocumentService, DocumentTypeService } from "@umbraco-cms/backoffice/external/backend-api";
 
 /**
  * Fetches a document variant by its UDI.
  * @param {string} udi The UDI (Unique Data Identifier) of the document to fetch.
  * @returns {Promise<DocumentVariantResponseModel | null>} A promise that resolves to the first document variant, or null if not found or an error occurs.
  */
-export async function fetchNodeByUdi(udi: string): Promise<DocumentVariantResponseModel | null> {
+export async function DocumentById(udi: string): Promise<DocumentVariantResponseModel | null> {
   try {
     const response = await DocumentService.getDocumentById({ id: udi });
     return response?.variants?.[0] ?? null;
   } catch (error) {
-    console.error(formatApiError(error, "Failed to fetch node"));
+    console.error(error, "Failed to fetch node");
     return null;
+  }
+}
+
+/**
+ * Fetches the UDI of the Articulate blog archive document type.
+ * @returns {Promise<string | undefined>} A promise that resolves to the UDI string of the blog archive document type, or undefined if not found or an error occurs.
+ */
+export async function ArticulateDocumentTypeKey(): Promise<string | undefined> {
+  try {
+    const response = await DocumentTypeService.getItemDocumentTypeSearch({
+      query: "Articulate",
+      skip: 0,
+      take: 1,
+      isElement: false,
+    });
+    return response?.items?.[0]?.id ?? undefined;
+  } catch (error) {
+    console.error(error, "Failed to fetch Articulate document type");
+    return undefined;
   }
 }
 
@@ -72,7 +76,7 @@ export async function openNodePicker(
     }
     return result.selection[0];
   } catch (error) {
-    console.error(formatApiError(error, "Node picker failed"));
+    console.error(error, "Node picker failed");
     return null;
   }
 }
