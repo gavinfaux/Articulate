@@ -192,7 +192,7 @@ export default class CopyThemeElement extends UmbLitElement implements IFormCont
       setFormError(this, validationError, validationError.name);
       return;
     }
-    
+
     if (this._formState === "waiting") return;
 
     this._formState = "waiting";

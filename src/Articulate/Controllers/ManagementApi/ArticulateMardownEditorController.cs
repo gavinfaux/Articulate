@@ -5,7 +5,6 @@ using System.Linq;
 using System.Net;
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using Articulate.Models.ManagmentApi;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
@@ -49,21 +48,6 @@ namespace Articulate.Controllers.ManagementApi
     public class ArticulateMardownEditorController : ManagementApiControllerBase
     {
 
-        /// <summary>
-        /// Represents possible operation statuses for blog import actions.
-        /// </summary>
-        /// <example>InvalidRequest</example>
-        public enum MardownEditorOperationStatus
-        {
-            /// <summary>
-            /// The request was invalid.
-            /// </summary>
-            BadRequest,
-            /// <summary>
-            /// The requested resource was not found.
-            /// </summary>
-            NotFound
-        }
         private readonly ServiceContext _services;
         private readonly IBackOfficeSecurityAccessor _backOfficeSecurityAccessor;
         private readonly UmbracoHelper _umbracoHelper;
@@ -91,7 +75,7 @@ namespace Articulate.Controllers.ManagementApi
             MediaUrlGeneratorCollection mediaUrlGenerators,
             IContentTypeBaseServiceProvider contentTypeBaseServiceProvider, IShortStringHelper shortStringHelper,
             ILogger<ArticulateMardownEditorController> logger)
-{
+        {
             _services = services;
             _backOfficeSecurityAccessor = backOfficeSecurityAccessor;
             _umbracoHelper = umbracoHelper;
@@ -118,11 +102,20 @@ namespace Articulate.Controllers.ManagementApi
             public string FirstImage { get; set; }
         }
 
-
         [HttpPost("post")]
-        public async Task<IActionResult> CreatePost([FromForm(Name = "json")] string jsonModel,
-IFormFileCollection files)
+        [Consumes("multipart/form-data")]
+        [ProducesResponseType(typeof(CreatePostResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status422UnprocessableEntity)]
+        public IActionResult CreatePost(
+            [FromForm(Name = "json")] string jsonModel,
+            IFormFileCollection files)
         {
+            if (string.IsNullOrWhiteSpace(jsonModel))
+            {
+                return Problem("The 'json' form part is missing or empty.", statusCode: StatusCodes.Status400BadRequest);
+            }
 
             MardownEditorModel model;
             try
@@ -130,82 +123,53 @@ IFormFileCollection files)
                 model = JsonSerializer.Deserialize<MardownEditorModel>(jsonModel);
                 if (model is null)
                 {
-                    _logger.LogWarning("The provided JSON model is invalid.");
-                    return StatusCode(StatusCodes.Status400BadRequest, new ProblemDetails { Title = "Bad Request", Detail = "The provided JSON model is invalid.", Status = StatusCodes.Status400BadRequest });
+                    return Problem("The provided JSON model is invalid.", statusCode: StatusCodes.Status400BadRequest);
                 }
             }
             catch (JsonException ex)
             {
                 _logger.LogWarning("JSON deserialization failed: {Message}", ex.Message);
-                return StatusCode(StatusCodes.Status400BadRequest, new ProblemDetails { Title = "Bad Request", Detail = $"JSON deserialization failed: {ex.Message}", Status = StatusCodes.Status400BadRequest });
-            }
-            //if (importFile == null || !Path.GetExtension(importFile.FileName.Trim("\"").ToLowerInvariant()).InvariantEquals(".xml"))
-            //{
-            //    _logger.LogWarning("The request was not a valid form file or the file was not XML");
-            //    return OperationStatusResult(ArticulateBlogImportOperationStatus.InvalidRequest, builder => StatusCode(StatusCodes.Status415UnsupportedMediaType, builder.WithTitle("Invalid request").WithDetail("The request was not a valid form file or the file was not XML.").Build()));
-            //}
-            await Task.CompletedTask;
-
-            if (!Request.HasFormContentType && !Request.Form.Files.Any())
-            {
-                return StatusCode((int)HttpStatusCode.UnsupportedMediaType);
+                return Problem($"JSON deserialization failed: {ex.Message}", statusCode: StatusCodes.Status400BadRequest);
             }
 
-            if (Request.Form.ContainsKey("model") == false)
+            if (model.ArticulateNodeId is null)
             {
-                return BadRequest("The request was not formatted correctly and is missing the 'model' parameter");
-            }
-
-            if (model.ArticulateNodeId.HasValue == false)
-            {
-                return BadRequest("No id specified");
-            }
-
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
+                ModelState.AddModelError(nameof(model.ArticulateNodeId), "The ArticulateNodeId field is required.");
+                return ValidationProblem(ModelState);
             }
 
             var articulateNode = _services.ContentService.GetById(model.ArticulateNodeId.Value);
             if (articulateNode == null)
             {
-                return BadRequest("No Articulate node found with the specified id");
+                return Problem($"No Articulate node found with the specified id: {model.ArticulateNodeId.Value}", statusCode: StatusCodes.Status404NotFound);
             }
 
-            var extractFirstImageAsProperty = true;
-            if (articulateNode.HasProperty("extractFirstImage"))
-            {
-                extractFirstImageAsProperty = articulateNode.GetValue<bool>("extractFirstImage");
-            }
+            var extractFirstImageAsProperty = articulateNode.HasProperty("extractFirstImage")
+                                              && articulateNode.GetValue<bool>("extractFirstImage");
 
-            var archive = _services.ContentService.GetPagedChildren(model.ArticulateNodeId.Value, 0, int.MaxValue, out var totalArchiveNodes)
+            var archive = _services.ContentService.GetPagedChildren(model.ArticulateNodeId.Value, 0, 1, out _)
                 .FirstOrDefault(x => x.ContentType.Alias.InvariantEquals(ArticulateConstants.ArticulateArchive));
             if (archive == null)
             {
-                return BadRequest("No Articulate Archive node found for the specified id");
+                return Problem("No Articulate Archive node found for the specified id.", statusCode: StatusCodes.Status404NotFound);
             }
 
-            var list = new[] { ActionNew.ActionLetter, ActionUpdate.ActionLetter, ActionPublish.ActionLetter };
-            var hasPermission = CheckPermissions(
-                _backOfficeSecurityAccessor.BackOfficeSecurity.CurrentUser,
-                _services.UserService,
-                list,
-                archive);
-
-            if (hasPermission == false)
+            var requiredPermissions = new[] { ActionNew.ActionLetter, ActionPublish.ActionLetter };
+            if (!CheckPermissions(_backOfficeSecurityAccessor.BackOfficeSecurity.CurrentUser, archive, requiredPermissions, _services.UserService))
             {
-                return BadRequest("Cannot create content at this level");
+                return Forbid();
             }
 
-            //parse out the images, we may be posting more than is in the body
-            var parsedImageResponse = ParseImages(model.Body, Request.Form.Files, extractFirstImageAsProperty);
+            var parsedImageResponse = ParseImages(model.Body, files, extractFirstImageAsProperty);
 
             model.Body = parsedImageResponse.BodyText;
 
             var contentType = _services.ContentTypeService.Get("ArticulateMarkdown");
             if (contentType == null)
             {
-                return BadRequest("No ArticulateMarkdown content type found");
+                var error = "Server configuration error: The 'ArticulateMarkdown' content type was not found.";
+                _logger.LogError(error);
+                return Problem(error, statusCode: StatusCodes.Status500InternalServerError);
             }
 
             var content = _services.ContentService.CreateWithInvariantOrDefaultCultureName(
@@ -247,20 +211,21 @@ IFormFileCollection files)
             //author is required
             content.SetInvariantOrDefaultCultureValue("author", _backOfficeSecurityAccessor.BackOfficeSecurity.CurrentUser.Name ?? "Unknown", contentType, _services.LocalizationService);
 
-            var status = _services.ContentService.Save(content, userId: _backOfficeSecurityAccessor.BackOfficeSecurity.GetUserId().Result);
+            var status = _services.ContentService.Save(content, _backOfficeSecurityAccessor.BackOfficeSecurity.GetUserId().Result);
             if (status.Success == false)
             {
-                ModelState.AddModelError("server", "Publishing failed: " + status.Result);
-                //probably  need to send back more info than that...
-                return BadRequest(ModelState);
+                ModelState.AddModelError("SaveOperation", "Content failed to save. Please check logs for details.");
+                return ValidationProblem(ModelState);
             }
 
             var published = _umbracoHelper.Content(content.Id);
-            return Ok(new { url = published.Url() });
+            return Ok(new CreatePostResponse { Url = published?.Url() ?? "#" });
         }
 
         private ParseImageResponse ParseImages(string body, IFormFileCollection formFiles, bool extractFirstImageAsProperty)
         {
+
+            // this will need to match what server-side code does - e.g. the placeholder or regex
             var bodyTextRegex = new Regex(@"\[i:(\d+)\:(.*?)]", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
             var reservedNames = new HashSet<string> { "con", "prn", "aux", "nul", "com1", "lpt1" };
@@ -271,10 +236,14 @@ IFormFileCollection files)
                 var index = m.Groups[1].Value.TryConvertTo<int>();
                 if (index)
                 {
-                    //get the file at this index
-                    var file = formFiles[index.Result];
+                    var file = (index.Result < formFiles.Count) ? formFiles[index.Result] : null;
+                    if (file == null)
+                    {
+                        // The referenced image was not included in the upload.
+                        _logger.LogWarning("Markdown image placeholder [i:{index}] found, but no corresponding file was uploaded.", index.Result);
+                        return m.Value;
+                    }
 
-                    //normalize
                     var untrustedFileName = Path.GetFullPath(file.FileName);
                     if (untrustedFileName.StartsWith("..") || untrustedFileName.Contains("/.."))
                     {
@@ -351,26 +320,10 @@ IFormFileCollection files)
             return new ParseImageResponse { BodyText = bodyText, FirstImage = firstImage };
         }
 
-        private static bool CheckPermissions(IUser user, IUserService userService, string[] permissionsToCheck, IContent contentItem)
+        private bool CheckPermissions(IUser user, IContent contentItem, IEnumerable<string> permissionsToCheck, IUserService userService)
         {
-
-            if (permissionsToCheck is not { Length: 0 })
-            {
-                return true;
-            }
-
-            var entityPermission = userService.GetPermissions(user, [contentItem.Id]).FirstOrDefault();
-
-            var flag = true;
-            foreach (var ch in permissionsToCheck)
-            {
-                if (entityPermission == null || !entityPermission.AssignedPermissions.Contains(ch))
-                {
-                    flag = false;
-                }
-            }
-
-            return flag;
+            var permissions = user.GetPermissions(contentItem.Path, userService);
+            return permissionsToCheck.All(p => permissions.Contains(p));
         }
     }
 }

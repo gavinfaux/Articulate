@@ -143,8 +143,8 @@ export default tseslint.config(
       <!-- Login View -->
       <article x-show="step === 'login'">
         <form @submit.prevent="handleLogin">
-          <label for="username">Username</label>
-          <input x-model="login.username" type="text" id="username" required />
+          <label for="email">Email Address</label>
+          <input x-model="login.emailAddress" type="email" id="email" required />
           <label for="password">Password</label>
           <input x-model="login.password" type="password" id="password" required />
           <small x-show="errorMessage" x-text="errorMessage"></small>
@@ -2682,7 +2682,20 @@ declare global {
   }
 }
 
+type ProblemDetails = {
+  type?: (string) | null;
+  title?: (string) | null;
+  status?: (number) | null;
+  detail?: (string) | null;
+  instance?: (string) | null;
+  [key: string]: (unknown | string | number) | undefined;
+};
+
 window.Alpine = Alpine;
+
+function isProblemDetails(obj: any): obj is ProblemDetails {
+  return obj && typeof obj === 'object' && ('title' in obj || 'detail' in obj);
+}
 
 // Add a guard to prevent double initialization from HMR in dev environments
 if (!window.alpineInitialized) {
@@ -2691,9 +2704,8 @@ if (!window.alpineInitialized) {
   document.addEventListener("alpine:init", () => {
     Alpine.data("app", () => ({
       // --- State Management ---
-      step: 1, // 1: login, 2: editor, 3: optional info, 4: success
+      step: "loading", // 'loading', 'login', 'editor', 'optional', 'success'
       isAuthenticated: false,
-      isLoading: true,
       submitting: false,
       errorMessage: "",
       successUrl: "#",
@@ -2703,7 +2715,7 @@ if (!window.alpineInitialized) {
 
       // --- Models ---
       login: {
-        username: "",
+        emailAddress: "",
         password: "",
       },
       post: {
@@ -2723,7 +2735,7 @@ if (!window.alpineInitialized) {
 
         this.$watch("step", (newStep, oldStep) => {
           console.info(`State changed: step transitioned from ${oldStep} to ${newStep}`);
-          if (newStep === 2 && !this.editor) {
+          if (newStep === "editor" && !this.editor) {
             this.$nextTick(async () => {
               if (this.$refs.editor) {
                 const editorInstance = await Editor.make()
@@ -2771,10 +2783,10 @@ if (!window.alpineInitialized) {
 
         let processedFile = file;
         // The isHeic function from 'heic-to' expects the file object itself.
-        if (isHeic(file)) {
+        if (await isHeic(file)) {
             try {
                 // The heicTo function from 'heic-to/csp' expects an options object.
-                const convertedBlob = await heicTo({ file: file, to: "JPEG", quality: 0.8 });
+                const convertedBlob = await heicTo({ blob: file, type: "image/jpeg", quality: 0.8 });
                 processedFile = new File([convertedBlob], `${file.name.split(".")[0]}.jpeg`, {
                     type: "image/jpeg",
                     lastModified: new Date().getTime(),
@@ -2819,7 +2831,6 @@ if (!window.alpineInitialized) {
 
       async checkAuthStatus() {
         console.info("Checking authentication status...");
-        this.isLoading = true;
         this.errorMessage = "";
         try {
           // Force the client to throw an error on 401, making the catch block reliable
@@ -2828,21 +2839,22 @@ if (!window.alpineInitialized) {
           if (status.data?.isAuthenticated) {
             console.info("User is authenticated. Setting step to 2.");
             this.isAuthenticated = true;
-            this.step = 2; // Go to editor
+            this.step = "editor"; // Go to editor
           } else {
             // This block should not be reached if an unauthenticated response throws.
             console.info("User is not authenticated, but no error was thrown. Setting step to 1.");
             this.isAuthenticated = false;
-            this.step = 1; // Stay on login
+            this.step = "login"; // Stay on login
           }
         } catch (error: any) {
-          console.error("Failed to get authentication status:", error);
-          console.info("Auth check failed due to an error. Setting step to 1.");
           this.isAuthenticated = false;
-          this.step = 1;
-        } finally {
-          this.isLoading = false;
-          console.info("Auth check complete. isLoading is now false.");
+          this.step = "login";
+          if (isProblemDetails(error?.data)) {
+            this.errorMessage = error.data.detail || error.data.title || "Authentication check failed.";
+          } else {
+            this.errorMessage = "An unknown error occurred during authentication check.";
+          }
+          console.error("Failed to get authentication status:", error);
         }
       },
 
@@ -2850,22 +2862,23 @@ if (!window.alpineInitialized) {
         this.submitting = true;
         this.errorMessage = "";
         try {
-          const response = await Authentication.postAuthenticationLogin({
+          await Authentication.postAuthenticationLogin({
             body: {
-              username: this.login.username,
+              emailAddress: this.login.emailAddress,
               password: this.login.password,
             },
           });
-          if (response.data?.isAuthenticated) {
-            this.isAuthenticated = true;
-            this.step = 2; // Go to editor
-          } else {
-            this.errorMessage = "Login failed. Please check your credentials.";
-            this.isAuthenticated = false;
-          }
+
+          this.isAuthenticated = true;
+          this.step = "editor"; // Go to editor
         } catch (error: any) {
-          this.errorMessage = `Login failed: ${error.message}`;
+          if (isProblemDetails(error?.data)) {
+            this.errorMessage = error.data.detail || error.data.title || "Login failed.";
+          } else {
+            this.errorMessage = "An unknown error occurred during login.";
+          }
           this.isAuthenticated = false;
+          console.error("Login failed:", error);
         } finally {
           this.submitting = false;
         }
@@ -2912,9 +2925,14 @@ if (!window.alpineInitialized) {
           // Cast the response data to the expected type
           const responseData = response.data as { url: string };
           this.successUrl = responseData.url ?? "#";
-          this.step = 4; // Go to success view
+          this.step = "success"; // Go to success view
         } catch (error: any) {
-          this.errorMessage = `Failed to publish post: ${error.message}`;
+          if (isProblemDetails(error?.data)) {
+            this.errorMessage = error.data.detail || error.data.title || "Failed to publish post.";
+          } else {
+            this.errorMessage = "An unknown error occurred while publishing.";
+          }
+          console.error("Failed to publish post:", error);
         } finally {
           this.submitting = false;
         }

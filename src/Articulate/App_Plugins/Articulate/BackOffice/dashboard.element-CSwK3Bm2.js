@@ -1,13 +1,13 @@
 import { html as h, nothing as Be, css as C, property as J, state as m, query as _e, customElement as W } from "@umbraco-cms/backoffice/external/lit";
 import { UmbLitElement as V } from "@umbraco-cms/backoffice/lit-element";
 import { UmbTextStyles as N } from "@umbraco-cms/backoffice/style";
-import { UMB_MODAL_MANAGER_CONTEXT as Oe } from "@umbraco-cms/backoffice/modal";
-import { f as at, B as K, T as Fe } from "./error-utils-IPtb8zHO.js";
+import { UMB_MODAL_MANAGER_CONTEXT as Fe } from "@umbraco-cms/backoffice/modal";
+import { f as at, B as K, T as Oe } from "./error-utils-BGlMw9rr.js";
 import { UMB_DOCUMENT_PICKER_MODAL as st } from "@umbraco-cms/backoffice/document";
 import { DocumentTypeService as nt, DocumentService as lt } from "@umbraco-cms/backoffice/external/backend-api";
 import { UMB_NOTIFICATION_CONTEXT as ut } from "@umbraco-cms/backoffice/notification";
 import { UmbValidationContext as ve } from "@umbraco-cms/backoffice/validation";
-async function Re(t) {
+async function Ue(t) {
   var e;
   try {
     const i = await lt.getDocumentById({ id: t });
@@ -16,7 +16,7 @@ async function Re(t) {
     return console.error(i, "Failed to fetch node"), null;
   }
 }
-async function Ue() {
+async function Re() {
   var t, e;
   try {
     const i = await nt.getItemDocumentTypeSearch({
@@ -164,13 +164,13 @@ var ct = Object.defineProperty, dt = Object.getOwnPropertyDescriptor, Le = (t) =
   for (var r = o > 1 ? void 0 : o ? dt(e, i) : e, a = t.length - 1, s; a >= 0; a--)
     (s = t[a]) && (r = (o ? s(e, i, r) : s(r)) || r);
   return o && r && ct(e, i, r), r;
-}, ht = (t, e, i) => e.has(t) || Le("Cannot " + i), z = (t, e, i) => (ht(t, e, "read from private field"), i ? i.call(t) : e.get(t)), O = (t, e, i) => e.has(t) ? Le("Cannot add the same private member more than once") : e instanceof WeakSet ? e.add(t) : e.set(t, i), re, ae, se, ne, le;
+}, ht = (t, e, i) => e.has(t) || Le("Cannot " + i), z = (t, e, i) => (ht(t, e, "read from private field"), i ? i.call(t) : e.get(t)), F = (t, e, i) => e.has(t) ? Le("Cannot add the same private member more than once") : e instanceof WeakSet ? e.add(t) : e.set(t, i), re, ae, se, ne, le;
 let b = class extends V {
   constructor() {
-    super(), this._formState = void 0, this._formError = null, this._articulateBlogNode = void 0, this._selectedBlogNodeName = "", this._archiveDoctypeUdi = void 0, O(this, re, new ve(this)), O(this, ae, (t, e) => {
+    super(), this._formState = void 0, this._formError = null, this._articulateBlogNode = void 0, this._selectedBlogNodeName = "", this._archiveDoctypeUdi = void 0, F(this, re, new ve(this)), F(this, ae, (t, e) => {
       const i = window.URL.createObjectURL(t), o = document.createElement("a");
       o.style.display = "none", o.href = i, o.download = e, document.body.appendChild(o), o.click(), window.URL.revokeObjectURL(i), o.remove();
-    }), O(this, se, (t) => t instanceof Blob), O(this, ne, async (t) => {
+    }), F(this, se, (t) => t instanceof Blob), F(this, ne, async (t) => {
       if (t.preventDefault(), !!this._form) {
         try {
           await z(this, re).validate();
@@ -192,7 +192,7 @@ let b = class extends V {
           }
         }
       }
-    }), O(this, le, async () => {
+    }), F(this, le, async () => {
       const e = new FormData(this._form).get("embedImages") === "on", i = {
         articulateBlogNode: this._articulateBlogNode,
         exportImagesAsBase64: e
@@ -205,13 +205,18 @@ let b = class extends V {
       const a = o.response.headers.get("content-disposition");
       let s = "blog-export.xml";
       if (a) {
-        const u = a.match(/filename="?([^"]+)"?/);
-        u && u.length > 1 && u[1] && (s = u[1]);
+        const u = a.match(/filename\*="UTF-8''([^"]+)"/);
+        if (u && u.length > 1 && u[1])
+          s = u[1];
+        else {
+          const n = a.match(/filename="?([^"]+)"?/);
+          n && n.length > 1 && n[1] && (s = n[1]);
+        }
       }
       z(this, ae).call(this, r, s);
     }), this._handleReset = (t) => {
       t.preventDefault(), this.resetState(!0);
-    }, this.consumeContext(Oe, (t) => {
+    }, this.consumeContext(Fe, (t) => {
       this._modalManagerContext = t;
     });
   }
@@ -220,7 +225,7 @@ let b = class extends V {
    * @async
    */
   async connectedCallback() {
-    if (super.connectedCallback(), this._archiveDoctypeUdi = await Ue(), this._archiveDoctypeUdi === null) {
+    if (super.connectedCallback(), this._archiveDoctypeUdi = await Re(), this._archiveDoctypeUdi === null) {
       const t = new Error(
         "Could not find the Articulate Archive document type. Please ensure Articulate is installed correctly."
       );
@@ -245,7 +250,7 @@ let b = class extends V {
     this._formError = null;
     const t = await He(this._modalManagerContext, this._archiveDoctypeUdi, this);
     if (t) {
-      const e = await Re(t);
+      const e = await Ue(t);
       if (!e) {
         f(this, new Error(`Could not find a node with UDI: ${t}`), "Node Not Found");
         return;
@@ -358,8 +363,8 @@ b = D([
  * Copyright 2017 Google LLC
  * SPDX-License-Identifier: BSD-3-Clause
  */
-const R = globalThis, G = R.trustedTypes, ke = G ? G.createPolicy("lit-html", { createHTML: (t) => t }) : void 0, We = "$lit$", A = `lit$${Math.random().toFixed(9).slice(2)}$`, Ve = "?" + A, mt = `<${Ve}>`, M = document, Z = () => M.createComment(""), U = (t) => t === null || typeof t != "object" && typeof t != "function", Ae = Array.isArray, pt = (t) => Ae(t) || typeof (t == null ? void 0 : t[Symbol.iterator]) == "function", ie = `[ 	
-\f\r]`, F = /<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g, Me = /-->/g, De = />/g, T = RegExp(`>|${ie}(?:([^\\s"'>=/]+)(${ie}*=${ie}*(?:[^ 	
+const U = globalThis, G = U.trustedTypes, ke = G ? G.createPolicy("lit-html", { createHTML: (t) => t }) : void 0, We = "$lit$", A = `lit$${Math.random().toFixed(9).slice(2)}$`, Ve = "?" + A, mt = `<${Ve}>`, M = document, Z = () => M.createComment(""), R = (t) => t === null || typeof t != "object" && typeof t != "function", Ae = Array.isArray, pt = (t) => Ae(t) || typeof (t == null ? void 0 : t[Symbol.iterator]) == "function", ie = `[ 	
+\f\r]`, O = /<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g, Me = /-->/g, De = />/g, T = RegExp(`>|${ie}(?:([^\\s"'>=/]+)(${ie}*=${ie}*(?:[^ 	
 \f\r"'\`<>=]|("|')|))|$)`, "g"), Pe = /'/g, Ie = /"/g, je = /^(?:script|style|textarea|title)$/i, H = Symbol.for("lit-noChange"), c = Symbol.for("lit-nothing"), ze = /* @__PURE__ */ new WeakMap(), k = M.createTreeWalker(M, 129);
 function Xe(t, e) {
   if (!Ae(t) || !t.hasOwnProperty("raw")) throw Error("invalid template strings array");
@@ -367,13 +372,13 @@ function Xe(t, e) {
 }
 const ft = (t, e) => {
   const i = t.length - 1, o = [];
-  let r, a = e === 2 ? "<svg>" : e === 3 ? "<math>" : "", s = F;
+  let r, a = e === 2 ? "<svg>" : e === 3 ? "<math>" : "", s = O;
   for (let u = 0; u < i; u++) {
     const n = t[u];
     let d, p, l = -1, y = 0;
-    for (; y < n.length && (s.lastIndex = y, p = s.exec(n), p !== null); ) y = s.lastIndex, s === F ? p[1] === "!--" ? s = Me : p[1] !== void 0 ? s = De : p[2] !== void 0 ? (je.test(p[2]) && (r = RegExp("</" + p[2], "g")), s = T) : p[3] !== void 0 && (s = T) : s === T ? p[0] === ">" ? (s = r ?? F, l = -1) : p[1] === void 0 ? l = -2 : (l = s.lastIndex - p[2].length, d = p[1], s = p[3] === void 0 ? T : p[3] === '"' ? Ie : Pe) : s === Ie || s === Pe ? s = T : s === Me || s === De ? s = F : (s = T, r = void 0);
+    for (; y < n.length && (s.lastIndex = y, p = s.exec(n), p !== null); ) y = s.lastIndex, s === O ? p[1] === "!--" ? s = Me : p[1] !== void 0 ? s = De : p[2] !== void 0 ? (je.test(p[2]) && (r = RegExp("</" + p[2], "g")), s = T) : p[3] !== void 0 && (s = T) : s === T ? p[0] === ">" ? (s = r ?? O, l = -1) : p[1] === void 0 ? l = -2 : (l = s.lastIndex - p[2].length, d = p[1], s = p[3] === void 0 ? T : p[3] === '"' ? Ie : Pe) : s === Ie || s === Pe ? s = T : s === Me || s === De ? s = O : (s = T, r = void 0);
     const x = s === T && t[u + 1].startsWith("/>") ? " " : "";
-    a += s === F ? n + mt : l >= 0 ? (o.push(d), n.slice(0, l) + We + n.slice(l) + A + x) : n + A + (l === -2 ? u : x);
+    a += s === O ? n + mt : l >= 0 ? (o.push(d), n.slice(0, l) + We + n.slice(l) + A + x) : n + A + (l === -2 ? u : x);
   }
   return [Xe(t, a + (t[i] || "<?>") + (e === 2 ? "</svg>" : e === 3 ? "</math>" : "")), o];
 };
@@ -418,7 +423,7 @@ function P(t, e, i = t, o) {
   var s, u;
   if (e === H) return e;
   let r = o !== void 0 ? (s = i._$Co) == null ? void 0 : s[o] : i._$Cl;
-  const a = U(e) ? void 0 : e._$litDirective$;
+  const a = R(e) ? void 0 : e._$litDirective$;
   return (r == null ? void 0 : r.constructor) !== a && ((u = r == null ? void 0 : r._$AO) == null || u.call(r, !1), a === void 0 ? r = void 0 : (r = new a(t), r._$AT(t, i, o)), o !== void 0 ? (i._$Co ?? (i._$Co = []))[o] = r : i._$Cl = r), r !== void 0 && (e = P(t, r._$AS(t, e.values), r, o)), e;
 }
 class gt {
@@ -469,7 +474,7 @@ class ee {
     return this._$AB;
   }
   _$AI(e, i = this) {
-    e = P(this, e, i), U(e) ? e === c || e == null || e === "" ? (this._$AH !== c && this._$AR(), this._$AH = c) : e !== this._$AH && e !== H && this._(e) : e._$litType$ !== void 0 ? this.$(e) : e.nodeType !== void 0 ? this.T(e) : pt(e) ? this.k(e) : this._(e);
+    e = P(this, e, i), R(e) ? e === c || e == null || e === "" ? (this._$AH !== c && this._$AR(), this._$AH = c) : e !== this._$AH && e !== H && this._(e) : e._$litType$ !== void 0 ? this.$(e) : e.nodeType !== void 0 ? this.T(e) : pt(e) ? this.k(e) : this._(e);
   }
   O(e) {
     return this._$AA.parentNode.insertBefore(e, this._$AB);
@@ -478,7 +483,7 @@ class ee {
     this._$AH !== e && (this._$AR(), this._$AH = this.O(e));
   }
   _(e) {
-    this._$AH !== c && U(this._$AH) ? this._$AA.nextSibling.data = e : this.T(M.createTextNode(e)), this._$AH = e;
+    this._$AH !== c && R(this._$AH) ? this._$AA.nextSibling.data = e : this.T(M.createTextNode(e)), this._$AH = e;
   }
   $(e) {
     var a;
@@ -525,11 +530,11 @@ class te {
   _$AI(e, i = this, o, r) {
     const a = this.strings;
     let s = !1;
-    if (a === void 0) e = P(this, e, i, 0), s = !U(e) || e !== this._$AH && e !== H, s && (this._$AH = e);
+    if (a === void 0) e = P(this, e, i, 0), s = !R(e) || e !== this._$AH && e !== H, s && (this._$AH = e);
     else {
       const u = e;
       let n, d;
-      for (e = a[0], n = 0; n < a.length - 1; n++) d = P(this, u[o + n], i, n), d === H && (d = this._$AH[n]), s || (s = !U(d) || d !== this._$AH[n]), d === c ? e = c : e !== c && (e += (d ?? "") + a[n + 1]), this._$AH[n] = d;
+      for (e = a[0], n = 0; n < a.length - 1; n++) d = P(this, u[o + n], i, n), d === H && (d = this._$AH[n]), s || (s = !R(d) || d !== this._$AH[n]), d === c ? e = c : e !== c && (e += (d ?? "") + a[n + 1]), this._$AH[n] = d;
     }
     s && !r && this.j(e);
   }
@@ -578,8 +583,8 @@ class yt {
     P(this, e);
   }
 }
-const oe = R.litHtmlPolyfillSupport;
-oe == null || oe(q, ee), (R.litHtmlVersions ?? (R.litHtmlVersions = [])).push("3.3.0");
+const oe = U.litHtmlPolyfillSupport;
+oe == null || oe(q, ee), (U.litHtmlVersions ?? (U.litHtmlVersions = [])).push("3.3.0");
 /**
  * @license
  * Copyright 2017 Google LLC
@@ -708,13 +713,18 @@ let g = class extends V {
       const i = t.response.headers.get("content-disposition");
       let o = "disqus-comments.xml";
       if (i) {
-        const r = i.match(/filename="?([^"]+)"?/);
-        r && r.length > 1 && r[1] && (o = r[1]);
+        const r = i.match(/filename\*="UTF-8''([^"]+)"/);
+        if (r && r.length > 1 && r[1])
+          o = r[1];
+        else {
+          const a = i.match(/filename="?([^"]+)"?/);
+          a && a.length > 1 && a[1] && (o = a[1]);
+        }
       }
       S(this, ce).call(this, e, o);
     }), this._handleReset = (t) => {
       t.preventDefault(), this.resetState(!0);
-    }, this.consumeContext(Oe, (t) => {
+    }, this.consumeContext(Fe, (t) => {
       this._modalManagerContext = t;
     });
   }
@@ -723,7 +733,7 @@ let g = class extends V {
    * @async
    */
   async connectedCallback() {
-    if (super.connectedCallback(), this._archiveDoctypeUdi = await Ue(), this._archiveDoctypeUdi === null) {
+    if (super.connectedCallback(), this._archiveDoctypeUdi = await Re(), this._archiveDoctypeUdi === null) {
       const t = new Error(
         "Could not find the Articulate Archive document type. Please ensure Articulate is installed correctly."
       );
@@ -747,7 +757,7 @@ let g = class extends V {
     this._formError = null;
     const t = await He(this._modalManagerContext, this._archiveDoctypeUdi, this);
     if (t) {
-      const e = await Re(t);
+      const e = await Ue(t);
       if (!e) {
         f(this, new Error(`Could not find a node with UDI: ${t}`), "Node Not Found");
         return;
@@ -870,10 +880,12 @@ let g = class extends V {
         ${this._formState === "waiting" ? h`
               <div class="container">
                 <uui-loader-circle style="color: #006eff; font-size: 2em"></uui-loader-circle>
-        ${this._postCount !== void 0 && this._postCount > 0 ? h`
+                ${this._postCount !== void 0 && this._postCount > 0 ? h`
                 <uui-tag look="secondary" color="positive">${this._postCount} posts in uploaded file.</uui-tag>
               </div>
-            ` : ""}` : ""}
+            ` : ""}
+              </div>
+            ` : ""}
         ${this._formError ? $e(this._formError) : ""}
       </uui-box>
     `;
@@ -976,7 +988,7 @@ v = /* @__PURE__ */ new WeakSet();
 Ze = async function() {
   var t;
   try {
-    const e = await Fe.getArticulateThemesDefault();
+    const e = await Oe.getArticulateThemesDefault();
     if (!e.response.ok || !e.data)
       throw e.error || new Error("The list of themes could not be retrieved from the server.");
     this._themes = ((t = e.data) == null ? void 0 : t.map((i) => i)) ?? [];
@@ -1015,7 +1027,7 @@ tt = async function(t) {
     if (this._formState !== "waiting") {
       this._formState = "waiting", this._formError = null;
       try {
-        const e = await Fe.postArticulateThemesCopy({
+        const e = await Oe.postArticulateThemesCopy({
           body: {
             themeName: this._selectedTheme,
             newThemeName: this._newThemeName

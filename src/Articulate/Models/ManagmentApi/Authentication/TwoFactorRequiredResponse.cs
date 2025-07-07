@@ -1,9 +1,6 @@
 namespace Articulate.Models.ManagmentApi.Authentication
 {
-    /// <summary>
-    /// Represents the response when two-factor authentication is required.
-    /// </summary>
-    public class TwoFactorRequiredResponse
+    public class TwoFactorRequiredResponse : LoginResponseBase
     {
         /// <summary>
         /// Gets a value indicating whether two-factor authentication is required.

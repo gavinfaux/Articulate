@@ -6,11 +6,7 @@
     <title>Articulate Mobile Editor</title>
 
     <!-- Pico.css -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css" />
-    <!-- EasyMDE CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/easymde/dist/easymde.min.css" />
-
-
+    <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css" /> -->
 
     <!-- Our App (we will build this) -->
     <script src="/src/main.ts" type="module"></script>
@@ -32,8 +28,8 @@
       <!-- Login View -->
       <article x-show="step === 'login'">
         <form @submit.prevent="handleLogin">
-          <label for="username">Username</label>
-          <input x-model="login.username" type="text" id="username" required />
+          <label for="email">Email Address</label>
+          <input x-model="login.emailAddress" type="email" id="email" required />
           <label for="password">Password</label>
           <input x-model="login.password" type="password" id="password" required />
           <small x-show="errorMessage" x-text="errorMessage"></small>
@@ -43,13 +39,13 @@
 
       <!-- Editor View -->
       <article x-show="step === 'editor'">
-        <input type="file" x-ref="imageUpload" @change="handleFileInput($event)" accept="image/jpeg,image/png,image/gif,image/heic,image/heif" style="display: none;" multiple>
-        <input type="file" x-ref="cameraUpload" @change="handleFileInput($event)" accept="image/jpeg,image/png,image/gif,image/heic,image/heif" capture="environment" style="display: none;">
+        <input x-ref="imageUpload" type="file" accept="image/*" hidden multiple />
+        <input x-ref="cameraUpload" type="file" accept="image/*" capture="environment" hidden />
         <label for="title">Title</label>
         <input x-model="post.title" type="text" id="title" placeholder="Your post title..." required />
 
         <div x-ref="editor"></div>
-        <footer style="display: flex; justify-content: space-between; align-items: center;">
+        <footer style="display: flex; justify-content: space-between; align-items: center">
           <div>
             <button class="secondary" @click="triggerImageUpload()" title="Upload Image">🖼️</button>
             <button class="secondary" @click="triggerCamera()" title="Use Camera">📸</button>

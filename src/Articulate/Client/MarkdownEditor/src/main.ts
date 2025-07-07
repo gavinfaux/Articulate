@@ -1,11 +1,7 @@
 import { Authentication, MarkdownEditor } from "./api/sdk.gen";
-import { Editor, defaultValueCtx, rootCtx, editorViewCtx, schemaCtx } from "@milkdown/kit/core";
-import { history } from "@milkdown/kit/plugin/history";
-import { listener, listenerCtx } from "@milkdown/kit/plugin/listener";
-import { upload, uploadConfig } from "@milkdown/kit/plugin/upload";
-import { isHeic } from "heic-to"
-import { heicTo } from "heic-to/csp"
-import { gfm } from "@milkdown/kit/preset/gfm";
+import type { Editor } from "@milkdown/kit/core";
+import type { ProblemDetails } from "./api/types.gen";
+
 import "@picocss/pico";
 import Alpine from "alpinejs";
 
@@ -18,6 +14,10 @@ declare global {
 
 window.Alpine = Alpine;
 
+function isProblemDetails(obj: any): obj is ProblemDetails {
+  return obj && typeof obj === "object" && ("title" in obj || "detail" in obj);
+}
+
 // Add a guard to prevent double initialization from HMR in dev environments
 if (!window.alpineInitialized) {
   window.alpineInitialized = true;
@@ -25,19 +25,19 @@ if (!window.alpineInitialized) {
   document.addEventListener("alpine:init", () => {
     Alpine.data("app", () => ({
       // --- State Management ---
-      step: 1, // 1: login, 2: editor, 3: optional info, 4: success
+      step: "loading", // 'loading', 'login', 'editor', 'optional', 'success'
       isAuthenticated: false,
-      isLoading: true,
       submitting: false,
       errorMessage: "",
       successUrl: "#",
       caption: "Create a new post",
       fileMap: new Map<string, File>(),
       editor: null as Editor | null,
+      editorInitialized: false,
 
       // --- Models ---
       login: {
-        username: "",
+        emailAddress: "",
         password: "",
       },
       post: {
@@ -57,28 +57,49 @@ if (!window.alpineInitialized) {
 
         this.$watch("step", (newStep, oldStep) => {
           console.info(`State changed: step transitioned from ${oldStep} to ${newStep}`);
-          if (newStep === 2 && !this.editor) {
+          if (newStep === "editor") {
+            if (this.editorInitialized) {
+              console.info("Editor creation already in progress or completed. Skipping.");
+              return;
+            }
+            this.editorInitialized = true;
+            console.info("Step is 'editor', attempting to initialize Milkdown...");
             this.$nextTick(async () => {
               if (this.$refs.editor) {
-                const editorInstance = await Editor.make()
-                  .config((ctx) => {
-                    ctx.set(rootCtx, this.$refs.editor);
-                    ctx.set(defaultValueCtx, this.post.markdown);
-                    ctx.get(listenerCtx).markdownUpdated((_, markdown) => {
-                      this.post.markdown = markdown;
-                    });
-                    const config = ctx.get(uploadConfig.key);
-                    ctx.set(uploadConfig.key, {
-                      ...config,
-                      uploader: this.uploader.bind(this),
-                    });
-                  })
-                  .use(gfm)
-                  .use(history)
-                  .use(listener)
-                  .use(upload)
-                  .create();
-                this.editor = editorInstance;
+                console.info("Found editor element via x-ref. Creating editor instance...");
+                try {
+                  const { Editor, defaultValueCtx, rootCtx } = await import("@milkdown/kit/core");
+                  const { commonmark } = await import("@milkdown/kit/preset/commonmark");
+                  const { history } = await import("@milkdown/kit/plugin/history");
+                  const { listener, listenerCtx } = await import("@milkdown/kit/plugin/listener");
+                  const { upload, uploadConfig } = await import("@milkdown/kit/plugin/upload");
+
+                  const editorInstance = await Editor.make()
+                    .config((ctx) => {
+                      ctx.set(rootCtx, this.$refs.editor);
+                      ctx.set(defaultValueCtx, this.post.markdown);
+                      ctx.get(listenerCtx).markdownUpdated((_, markdown) => {
+                        this.post.markdown = markdown;
+                      });
+                      const config = ctx.get(uploadConfig.key);
+                      ctx.set(uploadConfig.key, {
+                        ...config,
+                        uploader: this.uploader.bind(this),
+                      });
+                    })
+                    .use(commonmark)
+                    .use(history)
+                    .use(listener)
+                    .use(upload)
+                    .create();
+                  this.editor = editorInstance;
+                  console.info("Milkdown editor created successfully.");
+                } catch (e) {
+                  console.error("Failed to create Milkdown editor:", e);
+                  this.errorMessage = "Failed to load the editor.";
+                }
+              } else {
+                console.error("Editor element x-ref not found in DOM after nextTick.");
               }
             });
           }
@@ -89,94 +110,59 @@ if (!window.alpineInitialized) {
         this.$refs.imageUpload.click();
       },
 
-      triggerCameraUpload() {
+      triggerCamera() {
         this.$refs.cameraUpload.click();
       },
 
       async uploader(files: FileList, schema: any) {
-        const image = files[0];
-        if (!image) return false;
+        const imageNodes = [];
 
-        return this.processAndCreateImageNode(image, schema);
-      },
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          // ensure it's an image
+          if (!file || !file.type.startsWith("image")) {
+            continue;
+          }
 
-      async processAndCreateImageNode(file: File, schema: any) {
-        if (!file) return null;
+          const placeholder = URL.createObjectURL(file);
+          this.fileMap.set(placeholder, file);
 
-        let processedFile = file;
-        // The isHeic function from 'heic-to' expects the file object itself.
-        if (await isHeic(file)) {
-            try {
-                // The heicTo function from 'heic-to/csp' expects an options object.
-                const convertedBlob = await heicTo({ blob: file, type: "image/jpeg", quality: 0.8 });
-                processedFile = new File([convertedBlob], `${file.name.split(".")[0]}.jpeg`, {
-                    type: "image/jpeg",
-                    lastModified: new Date().getTime(),
-                });
-            } catch (error) {
-                console.error("Error converting HEIC to JPEG:", error);
-                return null;
-            }
+          // Create the image node for the editor.
+          const node = schema.nodes.image.create({
+            src: placeholder,
+          });
+          imageNodes.push(node);
         }
 
-        const placeholder = URL.createObjectURL(processedFile);
-        this.fileMap.set(placeholder, processedFile);
-
-        // Create and return the node for the upload plugin to insert.
-        return schema.nodes.image.create({
-            src: placeholder,
-        });
-      },
-
-      async handleFileInput(event: Event) {
-        const input = event.target as HTMLInputElement;
-        const file = input.files?.[0];
-        if (!file) return;
-
-        this.editor!.action(async (ctx) => {
-            const schema = ctx.get(schemaCtx);
-            const node = await this.processAndCreateImageNode(file, schema);
-
-            if (node) {
-                const view = ctx.get(editorViewCtx);
-                const { state } = view;
-                // The node returned is an image, we need to wrap it in a paragraph to insert it correctly.
-                const fragment = state.schema.nodes.paragraph.create(null, node);
-                const tr = state.tr.insert(state.selection.from, fragment);
-                view.dispatch(tr);
-            }
-        });
-
-        // Clear the input value to allow the same file to be selected again
-        input.value = "";
+        // Return the array of nodes to be inserted into the editor.
+        return imageNodes;
       },
 
       async checkAuthStatus() {
         console.info("Checking authentication status...");
-        this.isLoading = true;
         this.errorMessage = "";
         try {
           // Force the client to throw an error on 401, making the catch block reliable
           const status = await Authentication.getAuthenticationStatus({ throwOnError: true });
           console.info("Auth status response received:", status);
           if (status.data?.isAuthenticated) {
-            console.info("User is authenticated. Setting step to 2.");
+            console.info("User is authenticated. Setting step to 'editor'.");
             this.isAuthenticated = true;
-            this.step = 2; // Go to editor
+            this.step = "editor"; // Go to editor
           } else {
-            // This block should not be reached if an unauthenticated response throws.
-            console.info("User is not authenticated, but no error was thrown. Setting step to 1.");
+            console.info("User is not authenticated. Setting step to 'login'.");
             this.isAuthenticated = false;
-            this.step = 1; // Stay on login
+            this.step = "login"; // Stay on login
           }
         } catch (error: any) {
-          console.error("Failed to get authentication status:", error);
-          console.info("Auth check failed due to an error. Setting step to 1.");
           this.isAuthenticated = false;
-          this.step = 1;
-        } finally {
-          this.isLoading = false;
-          console.info("Auth check complete. isLoading is now false.");
+          this.step = "login";
+          if (isProblemDetails(error?.data)) {
+            this.errorMessage = error.data.detail || error.data.title || "Authentication check failed.";
+          } else {
+            this.errorMessage = "An unknown error occurred during authentication check.";
+          }
+          console.error("Failed to get authentication status:", error);
         }
       },
 
@@ -186,29 +172,31 @@ if (!window.alpineInitialized) {
         try {
           const response = await Authentication.postAuthenticationLogin({
             body: {
-              username: this.login.username,
+              emailAddress: this.login.emailAddress,
               password: this.login.password,
-            } as any, // Cast to any to bypass strict type check for now
+            },
+            throwOnError: true,
           });
 
-          const responseData = response.data;
-          // Check for a successful login response
-          if (responseData && typeof responseData === 'object' && 'isAuthenticated' in responseData && responseData.isAuthenticated) {
-              this.isAuthenticated = true;
-              this.step = 2; // Go to editor
-          } 
-          // Check for a 2FA required response
-          else if (responseData && typeof responseData === 'object' && 'requiresTwoFactor' in responseData) {
-               this.errorMessage = "Two-factor authentication is not supported in this editor.";
-               this.isAuthenticated = false;
-          }
-          else {
-              this.errorMessage = "Login failed. Please check your credentials.";
-              this.isAuthenticated = false;
+          // The login endpoint can return different objects on a 200 OK response.
+          // We need to check for the 2FA case.
+          const responseData = response.data as any;
+          if (responseData && responseData.requiresTwoFactor) {
+            this.errorMessage = "Two-factor authentication is not supported in this editor.";
+            this.isAuthenticated = false;
+          } else {
+            // Otherwise, we assume a successful login.
+            this.isAuthenticated = true;
+            this.step = "editor";
           }
         } catch (error: any) {
-          this.errorMessage = `Login failed: ${error.message || 'Please check your credentials and try again.'}`;
+          if (isProblemDetails(error?.data)) {
+            this.errorMessage = error.data.detail || error.data.title || "Login failed.";
+          } else {
+            this.errorMessage = "An unknown error occurred during login.";
+          }
           this.isAuthenticated = false;
+          console.error("Login failed:", error);
         } finally {
           this.submitting = false;
         }
@@ -255,9 +243,14 @@ if (!window.alpineInitialized) {
           // Cast the response data to the expected type
           const responseData = response.data as { url: string };
           this.successUrl = responseData.url ?? "#";
-          this.step = 4; // Go to success view
+          this.step = "success"; // Go to success view
         } catch (error: any) {
-          this.errorMessage = `Failed to publish post: ${error.message}`;
+          if (isProblemDetails(error?.data)) {
+            this.errorMessage = error.data.detail || error.data.title || "Failed to publish post.";
+          } else {
+            this.errorMessage = "An unknown error occurred while publishing.";
+          }
+          console.error("Failed to publish post:", error);
         } finally {
           this.submitting = false;
         }

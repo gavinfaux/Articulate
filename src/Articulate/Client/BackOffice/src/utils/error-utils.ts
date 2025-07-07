@@ -1,18 +1,7 @@
-//import type { ProblemDetails } from "../api/types.gen";
-// TODO: Why is hey no longer generating the type?
-// ---
-
-type ProblemDetails = {
-  type?: string | null;
-  title?: string | null;
-  status?: number | null;
-  detail?: string | null;
-  instance?: string | null;
-  [key: string]: unknown | (string | null) | number | undefined;
-};
+import type { ProblemDetails } from "../api/types.gen";
 
 // ---
-// TODO: Remove this when we have proper error handling for the API, using hey-api for now & sends ProblemDetails
+// TODO: Remove this when we have proper error handling for the API, using hey-api for now & sends ProblemDetails. Form validator does not catch all issues client side, e.g. uui-input-file and node picker.
 // Docs
 // https://docs.umbraco.com/umbraco-cms/15/latest/customizing/foundation/validation/integrate-validation
 // https://github.com/umbraco/Umbraco-CMS/tree/main/src/Umbraco.Web.UI.Client/src/packages/core/validation

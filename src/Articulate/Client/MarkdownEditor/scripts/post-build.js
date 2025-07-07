@@ -9,7 +9,7 @@ const __dirname = path.dirname(__filename);
 
 const clientDir = path.resolve(__dirname, "..");
 const viteOutDir = path.resolve(clientDir, "../../App_Plugins/Articulate/Assets");
-const testSitePluginsDir = path.resolve(clientDir, "../../Articulate.Tests.Website/App_Plugins/Articulate/Assets");
+const testSitePluginsDir = path.resolve(clientDir, "../../../Articulate.Tests.Website/App_Plugins/Articulate/Assets");
 
 const shouldCopy = process.argv.includes("--copy");
 
@@ -33,7 +33,7 @@ async function copyOutputToTestSite() {
     console.log(`  Deleting existing directory: ${chalk.yellow(testSitePluginsDir)}`);
     try {
       await fse.remove(testSitePluginsDir);
-      console.log(chalk.green(`  Successfully deleted existing directory.`));
+      console.log(chalk.green(`Successfully deleted existing directory.`));
     } catch (error) {
       throw new Error(`Error deleting existing directory ${testSitePluginsDir}: ${error.message}`);
     }

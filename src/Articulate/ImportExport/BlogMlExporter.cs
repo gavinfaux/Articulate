@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
+using System.Threading.Tasks;
 using Argotic.Common;
 using Argotic.Syndication.Specialized;
 using Microsoft.Extensions.Logging;
@@ -61,67 +62,68 @@ namespace Articulate.ImportExport
             _globalSettings = globalSettings;
         }
 
-        public void Export(
+        public async Task ExportAsync(
             Guid blogRootNode,
+            string exportFileName,
             bool exportImagesAsBase64 = false)
         {
-            var root = _contentService.GetById(blogRootNode) ?? throw new InvalidOperationException("No node found with id " + blogRootNode);
-
-            if (!root.ContentType.Alias.InvariantEquals(ArticulateConstants.Articulate))
+            await Task.Run(() =>
             {
-                throw new InvalidOperationException($"The node with id {blogRootNode} is not an Articulate root node");
-            }
+                var root = _contentService.GetById(blogRootNode) ?? throw new InvalidOperationException("No node found with id " + blogRootNode);
 
-            var postType = _contentTypeService.Get(ArticulateConstants.ArticulateRichText) ?? throw new InvalidOperationException("Articulate is not installed properly, the 'ArticulateRichText' doc type could not be found");
+                if (!root.ContentType.Alias.InvariantEquals(ArticulateConstants.Articulate))
+                {
+                    throw new InvalidOperationException($"The node with id {blogRootNode} is not an Articulate root node");
+                }
 
-            var categoryDataType = _dataTypeService.GetDataType("Articulate Categories") ?? throw new InvalidOperationException("No Data Type named 'Articulate Categories' found");
+                var postType = _contentTypeService.Get(ArticulateConstants.ArticulateRichText) ?? throw new InvalidOperationException("Articulate is not installed properly, the 'ArticulateRichText' doc type could not be found");
+                var categoryDataType = _dataTypeService.GetDataType("Articulate Categories") ?? throw new InvalidOperationException("No Data Type named 'Articulate Categories' found");
+                var categoryConfiguration = categoryDataType.ConfigurationAs<TagConfiguration>();
+                var categoryGroup = categoryConfiguration.Group;
+                var tagDataType = _dataTypeService.GetDataType("Articulate Tags") ?? throw new InvalidOperationException("No Data Type named 'Articulate Tags' found");
+                var tagConfiguration = tagDataType.ConfigurationAs<TagConfiguration>();
+                var tagGroup = tagConfiguration.Group;
+                //TODO: See: http://argotic.codeplex.com/wikipage?title=Generating%20portable%20web%20log%20content&referringTitle=Home
 
-            var categoryConfiguration = categoryDataType.ConfigurationAs<TagConfiguration>();
-            var categoryGroup = categoryConfiguration.Group;
+                var blogMlDoc = new BlogMLDocument
+                {
+                    RootUrl = new Uri(_urlProvider.GetUrl(root.Id), UriKind.RelativeOrAbsolute),
+                    GeneratedOn = DateTime.Now,
+                    Title = new BlogMLTextConstruct(root.GetValue<string>("blogTitle")),
+                    Subtitle = new BlogMLTextConstruct(root.GetValue<string>("blogDescription"))
+                };
 
-            var tagDataType = _dataTypeService.GetDataType("Articulate Tags") ?? throw new InvalidOperationException("No Data Type named 'Articulate Tags' found");
+                var authorsContentType = _contentTypeService.Get(ArticulateConstants.ArticulateAuthors)
+                    ?? throw new InvalidOperationException("Articulate is not installed properly, the 'ArticulateAuthors' doc type could not be found");
 
-            var tagConfiguration = tagDataType.ConfigurationAs<TagConfiguration>();
-            var tagGroup = tagConfiguration.Group;
+                var authorsNodes = _contentService.GetPagedDescendants(root.Id, 0, int.MaxValue, out var total,
+                        _sqlContext.Query<IContent>().Where(x => x.ContentTypeId == authorsContentType.Id),
+                        Ordering.By("CreateDate", Umbraco.Cms.Core.Direction.Descending));
 
-            //TODO: See: http://argotic.codeplex.com/wikipage?title=Generating%20portable%20web%20log%20content&referringTitle=Home
+                foreach (var authorsNode in authorsNodes)
+                {
+                    AddBlogAuthors(authorsNode, blogMlDoc);
+                }
 
-            var blogMlDoc = new BlogMLDocument
-            {
-                RootUrl = new Uri(_urlProvider.GetUrl(root.Id), UriKind.RelativeOrAbsolute),
-                GeneratedOn = DateTime.Now,
-                Title = new BlogMLTextConstruct(root.GetValue<string>("blogTitle")),
-                Subtitle = new BlogMLTextConstruct(root.GetValue<string>("blogDescription"))
-            };
+                AddBlogCategories(blogMlDoc, categoryGroup);
 
-            var authorsContentType = _contentTypeService.Get(ArticulateConstants.ArticulateAuthors)
-                ?? throw new InvalidOperationException("Articulate is not installed properly, the 'ArticulateAuthors' doc type could not be found");
-            var authorsNodes = _contentService.GetPagedDescendants(root.Id, 0, int.MaxValue, out var total,
-                    _sqlContext.Query<IContent>().Where(x => x.ContentTypeId == authorsContentType.Id),
-                    Ordering.By("CreateDate", Umbraco.Cms.Core.Direction.Descending));
+                var archiveContentType = _contentTypeService.Get(ArticulateConstants.ArticulateArchive)
+                    ?? throw new InvalidOperationException("Articulate is not installed properly, the 'ArticulateArchive' doc type could not be found");
 
-            foreach (var authorsNode in authorsNodes)
-            {
-                AddBlogAuthors(authorsNode, blogMlDoc);
-            }
+                var archiveNodes = _contentService.GetPagedDescendants(root.Id, 0, int.MaxValue, out total,
+                        _sqlContext.Query<IContent>().Where(x => x.ContentTypeId == archiveContentType.Id),
+                        Ordering.By("CreateDate", Umbraco.Cms.Core.Direction.Descending));
 
-            AddBlogCategories(blogMlDoc, categoryGroup);
+                foreach (var archiveNode in archiveNodes)
+                {
+                    AddBlogPosts(archiveNode, blogMlDoc, categoryGroup, tagGroup, exportImagesAsBase64);
+                }
 
-            var archiveContentType = _contentTypeService.Get(ArticulateConstants.ArticulateArchive)
-                ?? throw new InvalidOperationException("Articulate is not installed properly, the 'ArticulateArchive' doc type could not be found");
-            var archiveNodes = _contentService.GetPagedDescendants(root.Id, 0, int.MaxValue, out total,
-                    _sqlContext.Query<IContent>().Where(x => x.ContentTypeId == archiveContentType.Id),
-                    Ordering.By("CreateDate", Umbraco.Cms.Core.Direction.Descending));
-
-            foreach (var archiveNode in archiveNodes)
-            {
-                AddBlogPosts(archiveNode, blogMlDoc, categoryGroup, tagGroup, exportImagesAsBase64);
-            }
-
-            WriteFile(blogMlDoc);
+                WriteFile(blogMlDoc, exportFileName);
+            });
         }
 
-        private void WriteFile(BlogMLDocument blogMlDoc)
+        private void WriteFile(BlogMLDocument blogMlDoc, string fileName)
         {
             using (var stream = new MemoryStream())
             {
@@ -130,8 +132,7 @@ namespace Articulate.ImportExport
                     CharacterEncoding = Encoding.UTF8
                 });
                 stream.Position = 0;
-
-                _articulateTempFileSystem.AddFile("BlogMlExport.xml", stream, true);
+                _articulateTempFileSystem.AddFile(fileName, stream, true);
             }
         }
 
@@ -145,40 +146,43 @@ namespace Articulate.ImportExport
                     continue;
                 }
 
-                var blogMlCategory = new BlogMLCategory();
-                blogMlCategory.Id = category.Id.ToString();
-                blogMlCategory.CreatedOn = category.CreateDate;
-                blogMlCategory.LastModifiedOn = category.UpdateDate;
-                blogMlCategory.ApprovalStatus = BlogMLApprovalStatus.Approved;
-                blogMlCategory.ParentId = "0";
-                blogMlCategory.Title = new BlogMLTextConstruct(category.Text);
+                var blogMlCategory = new BlogMLCategory
+                {
+                    Id = category.Id.ToString(),
+                    CreatedOn = category.CreateDate,
+                    LastModifiedOn = category.UpdateDate,
+                    ApprovalStatus = BlogMLApprovalStatus.Approved,
+                    ParentId = "0",
+                    Title = new BlogMLTextConstruct(category.Text)
+                };
                 blogMlDoc.Categories.Add(blogMlCategory);
             }
         }
 
         private void AddBlogAuthors(IContent authorsNode, BlogMLDocument blogMlDoc)
         {
-            foreach (var author in _contentService.GetPagedChildren(authorsNode.Id, 0, int.MaxValue, out long totalAuthors))
+            foreach (var author in _contentService.GetPagedChildren(authorsNode.Id, 0, int.MaxValue, out _))
             {
-                var blogMlAuthor = new BlogMLAuthor();
-                blogMlAuthor.Id = author.Key.ToString();
-                blogMlAuthor.CreatedOn = author.CreateDate;
-                blogMlAuthor.LastModifiedOn = author.UpdateDate;
-                blogMlAuthor.ApprovalStatus = BlogMLApprovalStatus.Approved;
-                blogMlAuthor.Title = new BlogMLTextConstruct(author.Name);
+                var blogMlAuthor = new BlogMLAuthor
+                {
+                    Id = author.Key.ToString(),
+                    CreatedOn = author.CreateDate,
+                    LastModifiedOn = author.UpdateDate,
+                    ApprovalStatus = BlogMLApprovalStatus.Approved,
+                    Title = new BlogMLTextConstruct(author.Name)
+                };
                 blogMlDoc.Authors.Add(blogMlAuthor);
             }
         }
 
         private void AddBlogPosts(IContent archiveNode, BlogMLDocument blogMlDoc, string categoryGroup, string tagGroup, bool exportImagesAsBase64)
         {
-            // TODO: This won't work for variants
             const int pageSize = 1000;
             var pageIndex = 0;
             IContent[] posts;
             do
             {
-                posts = _contentService.GetPagedChildren(archiveNode.Id, pageIndex, pageSize, out long _, ordering: Ordering.By("createDate")).ToArray();
+                posts = _contentService.GetPagedChildren(archiveNode.Id, pageIndex, pageSize, out _, ordering: Ordering.By("createDate")).ToArray();
 
                 foreach (var child in posts)
                 {
@@ -221,117 +225,65 @@ namespace Articulate.ImportExport
                     }
 
                     var categories = _tagService.GetTagsForEntity(child.Id, categoryGroup);
-
                     foreach (var category in categories)
                     {
                         blogMlPost.Categories.Add(category.Id.ToString());
                     }
 
                     var tags = _tagService.GetTagsForEntity(child.Id, tagGroup).Select(t => t.Text).ToList();
-                    if (tags?.Any() == true)
+                    if (tags.Any())
                     {
-                        blogMlPost.AddExtension(
-                            new Syndication.BlogML.TagsSyndicationExtension()
-                            {
-                                Context = { Tags = new Collection<string>(tags) }
-                            });
+                        blogMlPost.AddExtension(new Syndication.BlogML.TagsSyndicationExtension { Context = { Tags = new Collection<string>(tags) } });
                     }
 
-                    //add the image attached if there is one
-                    if (child.HasProperty("postImage"))
+                    if (child.HasProperty("postImage") && child.GetValue<string>("postImage") is { } mediaItemJson && mediaItemJson.DetectIsJson())
                     {
                         try
                         {
-                            var mediaItem = child.GetValue<string>("postImage");
-                            if (mediaItem != null)
+                            using var doc = JsonDocument.Parse(mediaItemJson);
+                            var mediaKeyStr = doc.RootElement.EnumerateArray().FirstOrDefault().GetProperty("mediaKey").GetString();
+
+                            if (Guid.TryParse(mediaKeyStr, out var mediaKey))
                             {
-                                IMedia media;
-                                string mediaPath;
-                                if (!string.IsNullOrWhiteSpace(mediaItem) && !mediaItem.DetectIsJson())
+                                var media = _mediaService.GetById(mediaKey);
+                                if (media != null && media.GetValue<string>(Constants.Conventions.Media.File) is { } mediaFilePath)
                                 {
-                                    //post images uploaded via a-new (a property migration would negate this)!
-                                    mediaPath = mediaItem;
-                                    media = _mediaService.GetMediaByPath(mediaPath)
-                                            ?? throw new InvalidOperationException("No media found by id " + mediaPath);
-                                }
-                                else
-                                {
-                                    using var doc = JsonDocument.Parse(mediaItem);
-                                    var mediaKey = doc.RootElement[0].GetProperty("mediaKey").GetString();
-                                    if (mediaKey != null)
+                                    var mime = ImageMimeType(mediaFilePath);
+                                    if (!string.IsNullOrWhiteSpace(mime))
                                     {
-                                        var id = Guid.Parse(mediaKey);
-                                        media = _mediaService.GetById(id)
-                                                ?? throw new InvalidOperationException("No media found by id " + id);
-                                    }
-                                    else
-                                    {
-                                        media = null;
-                                    }
-                                }
-
-                                if (media != null)
-                                {
-                                    mediaPath = _mediaFileManager.GetMediaPath(
-                                        media.GetValue(Constants.Conventions.Media.File).ToString(),
-                                        media.Key,
-                                        media.Properties[Constants.Conventions.Media.File].PropertyType.Key);
-                                    if (!string.IsNullOrWhiteSpace(mediaPath))
-                                    {
-                                        var mediaDir = _globalSettings.Value.UmbracoMediaPhysicalRootPath.TrimStart("~/").EnsureEndsWith('/');
-                                        if (!mediaPath.StartsWith(mediaDir))
+                                        var imageUrl = new Uri(postAbsoluteUrl.GetLeftPart(UriPartial.Authority) + mediaFilePath.EnsureStartsWith('/'), UriKind.Absolute);
+                                        var attachment = new BlogMLAttachment
                                         {
-                                            mediaPath = mediaDir + mediaPath;
-                                        }
+                                            Url = imageUrl,
+                                            ExternalUri = imageUrl,
+                                            IsEmbedded = exportImagesAsBase64,
+                                            MimeType = mime
+                                        };
 
-                                        var mime = BlogMlExporter.ImageMimeType(mediaPath);
-
-                                        if (!mime.IsNullOrWhiteSpace())
+                                        if (exportImagesAsBase64)
                                         {
-                                            var imageUrl = new Uri(postAbsoluteUrl.GetLeftPart(UriPartial.Authority) + mediaPath.EnsureStartsWith('/'), UriKind.Absolute);
-
-                                            if (exportImagesAsBase64)
+                                            using (var mediaFileStream = _mediaFileManager.GetFile(media, out _))
                                             {
-                                                using (var mediaFileStream = _mediaFileManager.GetFile(media, out _))
+                                                using (var memoryStream = new MemoryStream())
                                                 {
-                                                    byte[] bytes;
-                                                    using (var memoryStream = new MemoryStream())
-                                                    {
-                                                        mediaFileStream.CopyTo(memoryStream);
-                                                        bytes = memoryStream.ToArray();
-                                                    }
-
-                                                    blogMlPost.Attachments.Add(new BlogMLAttachment
-                                                    {
-                                                        Content = Convert.ToBase64String(bytes),
-                                                        Url = imageUrl,
-                                                        ExternalUri = imageUrl,
-                                                        IsEmbedded = true,
-                                                        MimeType = mime
-                                                    });
+                                                    mediaFileStream.CopyTo(memoryStream);
+                                                    attachment.Content = Convert.ToBase64String(memoryStream.ToArray());
                                                 }
                                             }
-                                            else
-                                            {
-                                                blogMlPost.Attachments.Add(new BlogMLAttachment
-                                                {
-                                                    Content = string.Empty,
-                                                    Url = imageUrl,
-                                                    ExternalUri = imageUrl,
-                                                    IsEmbedded = false,
-                                                    MimeType = mime
-                                                });
-                                            }
                                         }
+                                        else
+                                        {
+                                            attachment.Content = string.Empty;
+                                        }
+
+                                        blogMlPost.Attachments.Add(attachment);
                                     }
                                 }
-
                             }
-
                         }
                         catch (Exception ex)
                         {
-                            _logger.LogError(ex, "Could not add the file to the blogML post attachments");
+                            _logger.LogError(ex, "Could not add the file to the blogML post attachments for post {PostId}", child.Id);
                         }
                     }
 
@@ -344,7 +296,7 @@ namespace Articulate.ImportExport
 
         private static string ImageMimeType(string src)
         {
-            var ext = Path.GetExtension(src)?.ToLowerInvariant();
+            var ext = Path.GetExtension(src).ToLowerInvariant();
             switch (ext)
             {
                 case ".jpg":

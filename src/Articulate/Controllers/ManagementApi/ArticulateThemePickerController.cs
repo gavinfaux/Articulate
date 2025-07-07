@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -41,19 +42,32 @@ namespace Articulate.Controllers.ManagementApi
         /// <response code="200">Returns the list of all available theme names.</response>
         [HttpGet("themes")]
         [ProducesResponseType<IEnumerable<string>>(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
         public ActionResult<IEnumerable<string>> GetAllThemes()
         {
-            var defaultThemeDir = hostingEnvironment.MapPathContentRoot(PathHelper.VirtualThemePath);
-            var defaultThemes = Directory.GetDirectories(defaultThemeDir).Select(x => new DirectoryInfo(x).Name);
+            try
+            {
 
-            var userThemeDir = hostingEnvironment.MapPathContentRoot(PathHelper.UserVirtualThemePath);
-            var userThemes = Directory.Exists(userThemeDir)
-                ? Directory.GetDirectories(userThemeDir).Select(x => new DirectoryInfo(x).Name)
-                : [];
+                var defaultThemePath = hostingEnvironment.MapPathContentRoot(PathHelper.VirtualThemePath);
+                var defaultThemes = Directory.Exists(defaultThemePath)
+                    ? new DirectoryInfo(defaultThemePath).GetDirectories().Select(d => d.Name)
+                    : Enumerable.Empty<string>();
 
-            return Ok(userThemes.Union(defaultThemes));
+                var userThemePath = hostingEnvironment.MapPathContentRoot(PathHelper.UserVirtualThemePath);
+                var userThemes = Directory.Exists(userThemePath)
+                    ? new DirectoryInfo(userThemePath).GetDirectories().Select(d => d.Name)
+                    : Enumerable.Empty<string>();
+
+                var allThemes = defaultThemes.Union(userThemes).OrderBy(name => name);
+                return Ok(allThemes);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "An error occurred while retrieving Articulate themes.");
+                return Problem(
+                    "An unexpected error occurred while retrieving themes. Please check the server logs.",
+                    statusCode: StatusCodes.Status500InternalServerError);
+            }
         }
-
-
     }
 }

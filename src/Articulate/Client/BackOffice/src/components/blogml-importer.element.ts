@@ -321,9 +321,14 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
     const contentDisposition = result.response.headers.get("content-disposition");
     let fileName = "disqus-comments.xml"; // Default filename
     if (contentDisposition) {
-      const fileNameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
+      const fileNameMatch = contentDisposition.match(/filename\*="UTF-8''([^"]+)"/);
       if (fileNameMatch && fileNameMatch.length > 1 && fileNameMatch[1]) {
         fileName = fileNameMatch[1];
+      } else {
+        const fileNameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
+        if (fileNameMatch && fileNameMatch.length > 1 && fileNameMatch[1]) {
+          fileName = fileNameMatch[1];
+        }
       }
     }
     this.#downloadFile(blob, fileName);
@@ -456,12 +461,14 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
           ? html`
               <div class="container">
                 <uui-loader-circle style="color: #006eff; font-size: 2em"></uui-loader-circle>
-        ${this._postCount !== undefined && this._postCount > 0
-        ? html `
+                ${this._postCount !== undefined && this._postCount > 0
+                  ? html`
                 <uui-tag look="secondary" color="positive">${this._postCount} posts in uploaded file.</uui-tag>
               </div>
             `
-            : ""}`
+                  : ""}
+              </div>
+            `
           : ""}
         ${this._formError ? renderErrorMessage(this._formError) : ""}
       </uui-box>

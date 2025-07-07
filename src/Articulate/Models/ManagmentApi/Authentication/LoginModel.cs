@@ -14,7 +14,7 @@ namespace Articulate.Models.ManagmentApi.Authentication
         [EmailAddress(ErrorMessage = "Email Address must be a valid email address.")]
         public string EmailAddress
         {
-            get;
+            get; set;
         } = string.Empty;
 
         /// <summary>
@@ -23,7 +23,7 @@ namespace Articulate.Models.ManagmentApi.Authentication
         [Required(ErrorMessage = "Password is required.")]
         public string Password
         {
-            get;
+            get; set;
         } = string.Empty;
     }
 }

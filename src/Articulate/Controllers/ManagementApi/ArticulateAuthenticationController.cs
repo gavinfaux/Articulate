@@ -12,17 +12,8 @@ using Umbraco.Cms.Web.Common.Security;
 
 namespace Articulate.Controllers.ManagementApi
 {
-
-    public enum AuthenticationOperationStatus
-    {
-        BadRequest
-    }
-
-    // NOTE: [ApiController] attribute will automatically validate the model
-    // [ApiController] attribute also infers [FromBody] for model binding
-
     /// <summary>
-    /// Provides alternative authentication endpoint for Umbraco BackOffice and Articulate (Umbraco endpoint forces redirect to backoffice).
+    /// Provides an authentication endpoint for the Articulate Mobile Editor.
     /// </summary>
     [ApiVersion("1.0")]
     [ApiExplorerSettings(GroupName = "Authentication")]
@@ -32,99 +23,87 @@ namespace Articulate.Controllers.ManagementApi
     public class ArticulateAuthenticationController(IBackOfficeSignInManager signInManager, IAntiforgery antiforgery)
         : ControllerBase
     {
-        // <summary>
-        // Gets a CSRF token for the current session.
-        // </summary>
-        // <returns>A <see cref="CsrfTokenResponse"/> containing the CSRF request token.</returns>
-        // <response code="200">Returns an <see cref="CsrfTokenResponse"/> containing the CSRF request token.</response>
+        /// <summary>
+        /// Gets a CSRF token required for authenticated POST/PUT requests.
+        /// </summary>
+        /// <returns>A <see cref="CsrfTokenResponse"/> containing the CSRF request token.</returns>
+        /// <response code="200">Successfully retrieved the CSRF token.</response>
         [HttpGet("csrf-token")]
         [AllowAnonymous]
-        [ProducesResponseType(typeof(CsrfTokenResponse), StatusCodes.Status200OK)]
-        public IActionResult GetCsrfToken()
+        [ProducesResponseType<CsrfTokenResponse>(StatusCodes.Status200OK)]
+        public ActionResult<CsrfTokenResponse> GetCsrfToken()
         {
             var tokens = antiforgery.GetAndStoreTokens(HttpContext);
-            return new JsonResult(new { requestToken = tokens.RequestToken });
+            return new CsrfTokenResponse { RequestToken = tokens.RequestToken };
         }
 
         /// <summary>
         /// Gets the authentication status of the current user.
         /// </summary>
         /// <returns>A <see cref="StatusResponse"/> indicating if the user is authenticated.</returns>
-        /// <response code="200">Returns an <see cref="StatusResponse"/> indicating if the user is authenticated.</response>
+        /// <response code="200">Returns the current authentication status.</response>
         [HttpGet("status")]
         [Authorize(Policy = AuthorizationPolicies.BackOfficeAccess)]
         [ProducesResponseType<StatusResponse>(StatusCodes.Status200OK)]
-        public IActionResult GetStatus() => Ok(new StatusResponse { IsAuthenticated = true });
+        public ActionResult<StatusResponse> GetStatus() => Ok(new StatusResponse { IsAuthenticated = true });
 
         /// <summary>
         /// Authenticates a user with the provided credentials.
         /// </summary>
         /// <param name="model">The login model containing email and password.</param>
-        /// <returns>
-        /// <see cref="LoginSuccessResponse"/> if login is successful,
-        /// <see cref="TwoFactorRequiredResponse"/> if two-factor authentication is required,
-        /// or an appropriate error response.
-        /// </returns>
-        /// <response code="200">Returns an <see cref="LoginSuccessResponse"/> indicating login is successful.</response>
-        /// <response code="200">Returns an <see cref="TwoFactorRequiredResponse"/> indicating if the user is authenticated.</response>
-        /// <response code="400">Email and password are required.</response>
-        /// <response code="401">Authentication failed.</response>
+        /// <response code="200">Login was successful. Returns either a <see cref="LoginSuccessResponse"/> or a <see cref="TwoFactorRequiredResponse"/>.</response>
+        /// <response code="400">The request was invalid (e.g., missing email or password).</response>
         /// <response code="403">User login is disabled.</response>
-        /// <response code="423">User is locked out.</response>
+        /// <response code="423">The user account is locked out.</response>
         [AllowAnonymous]
-        [ValidateAntiForgeryToken]
+        //[ValidateAntiForgeryToken]
         [HttpPost("login")]
-        [ProducesResponseType<LoginSuccessResponse>(StatusCodes.Status200OK)]
-        [ProducesResponseType<TwoFactorRequiredResponse>(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        [ProducesResponseType(StatusCodes.Status423Locked)]
-        public async Task<IActionResult> Login(
-             LoginModel model)
+        [ProducesResponseType<LoginResponseBase>(StatusCodes.Status200OK)]
+        [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType<ProblemDetails>(StatusCodes.Status423Locked)]
+        public async Task<ActionResult<LoginResponseBase>> Login(LoginModel model)
         {
             if (string.IsNullOrEmpty(model.EmailAddress) || string.IsNullOrEmpty(model.Password))
             {
-                return BadRequest(new ProblemDetails { Title="Validation Error", Detail = "Email and password are required.",
-                    Status = StatusCodes.Status400BadRequest });
+                return Problem(
+                    title: "Validation Error",
+                    detail: "Email and password are required.",
+                    statusCode: StatusCodes.Status400BadRequest);
             }
 
-            var result = await signInManager.PasswordSignInAsync(
-                model.EmailAddress, model.Password, true, true);
+            var result = await signInManager.PasswordSignInAsync(model.EmailAddress, model.Password, true, true);
 
             if (result.Succeeded)
             {
-                return Ok(new LoginSuccessResponse { Success = true });
+                return Ok(new LoginSuccessResponse { IsAuthenticated = true });
             }
 
             if (result.RequiresTwoFactor)
             {
-                // 200 OK with instructions for the client.
                 return Ok(new TwoFactorRequiredResponse { RequiresTwoFactor = true, RedirectUrl = "/umbraco" });
             }
 
-            return result.IsLockedOut ? StatusCode(StatusCodes.Status423Locked, new ProblemDetails { Title = "Authentication Failed", Detail = "User is locked out.", Status = StatusCodes.Status423Locked }) :
-                result.IsNotAllowed ? StatusCode(StatusCodes.Status403Forbidden, new ProblemDetails { Title = "Forbidden", Detail = "User login is disabled.", Status = StatusCodes.Status403Forbidden }) :
-                StatusCode(StatusCodes.Status401Unauthorized, new ProblemDetails { Title = "Unauthorized", Detail = "Authentication failed.", Status = StatusCodes.Status401Unauthorized });
+            return result switch
+            {
+                { IsLockedOut: true } => Problem(title: "Authentication Failed", detail: "User is locked out.", statusCode: StatusCodes.Status423Locked),
+                { IsNotAllowed: true } => Problem(title: "Forbidden", detail: "User login is disabled.", statusCode: StatusCodes.Status403Forbidden),
+                _ => Problem(title: "Unauthorized", detail: "Authentication failed.", statusCode: StatusCodes.Status401Unauthorized)
+            };
         }
 
         /// <summary>
         /// Logs out the currently authenticated user.
         /// </summary>
-        /// <remarks>
-        /// Signs out the current user and ends their session.
-        /// </remarks>
-        /// <returns>
-        /// An <see cref="IActionResult"/> indicating the result of the logout operation.
-        /// </returns>
-        /// <response code="200">Logout successful.</response>
+        /// <remarks>Signs out the current user and ends their session.</remarks>
+        /// <response code="204">Logout was successful.</response>
         [HttpPost("logout")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
         [Authorize(Policy = AuthorizationPolicies.BackOfficeAccess)]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
         public async Task<IActionResult> Logout()
         {
             await signInManager.SignOutAsync();
-            return Ok(new { message = "Logout successful" });
+            return NoContent();
         }
     }
 }

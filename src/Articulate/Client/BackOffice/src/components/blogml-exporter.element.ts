@@ -237,9 +237,14 @@ export default class BlogMlExporterElement extends UmbLitElement implements IFor
     const contentDisposition = result.response.headers.get("content-disposition");
     let fileName = "blog-export.xml"; // Default filename
     if (contentDisposition) {
-      const fileNameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
+      const fileNameMatch = contentDisposition.match(/filename\*="UTF-8''([^"]+)"/);
       if (fileNameMatch && fileNameMatch.length > 1 && fileNameMatch[1]) {
         fileName = fileNameMatch[1];
+      } else {
+        const fileNameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
+        if (fileNameMatch && fileNameMatch.length > 1 && fileNameMatch[1]) {
+          fileName = fileNameMatch[1];
+        }
       }
     }
     this.#downloadFile(blob, fileName);
