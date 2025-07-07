@@ -1,13 +1,11 @@
 using System;
 using System.ComponentModel.DataAnnotations;
-using System.Runtime.Serialization;
 
 namespace Articulate.Models.ManagmentApi
 {
     /// <summary>
     /// Represents the options for importing blog data from a BlogML file.
     /// </summary>
-    [DataContract]
     public class ImportModel
     {
         /// <summary>

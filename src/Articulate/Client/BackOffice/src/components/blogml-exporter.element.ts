@@ -17,6 +17,7 @@ import {
   renderErrorMessage,
   renderHeaderActions,
 } from "../utils/template-utils";
+import { UmbValidationContext } from "@umbraco-cms/backoffice/validation";
 
 /**
  * A LitElement-based component for exporting blog content in BlogML format.
@@ -85,6 +86,8 @@ export default class BlogMlExporterElement extends UmbLitElement implements IFor
    * @type {string | undefined}
    */
   private _archiveDoctypeUdi: string | undefined = undefined;
+
+  #validation = new UmbValidationContext(this);
 
   constructor() {
     super();
@@ -181,15 +184,16 @@ export default class BlogMlExporterElement extends UmbLitElement implements IFor
 
     if (!this._form) return;
 
-    if (!this._articulateBlogNode) {
-      const validationError = new Error("A blog node must be selected before exporting.");
-      validationError.name = "Validation Error";
-      setFormError(this, validationError, validationError.name);
+    try {
+      await this.#validation.validate();
+    } catch (error) {
+      setFormError(this, error, "Validation Failed");
       return;
     }
 
-    if (!this._form.reportValidity()) {
-      const validationError = new Error("The form is not valid. Please check the fields marked with an error.");
+    // validate() does not appear to work with the node picker consistently, so backup validation
+    if (!this._articulateBlogNode) {
+      const validationError = new Error("A blog node must be selected before exporting.");
       validationError.name = "Validation Error";
       setFormError(this, validationError, validationError.name);
       return;
@@ -268,7 +272,7 @@ export default class BlogMlExporterElement extends UmbLitElement implements IFor
               this._formState = undefined;
             }}
           >
-            <uui-validation-message>
+            <uui-form-validation-message>
               <uui-form-layout-item>
                 <div class="node-picker-container">
                   <uui-label for="articulateBlogNode" slot="label" required>Articulate blog node</uui-label>
@@ -298,7 +302,7 @@ export default class BlogMlExporterElement extends UmbLitElement implements IFor
                   to be HTTP accessible to the site you will be importing on.
                 </div>
               </uui-form-layout-item>
-            </uui-validation-message>
+            </uui-form-validation-message>
 
             <div class="form-actions">
               <uui-button

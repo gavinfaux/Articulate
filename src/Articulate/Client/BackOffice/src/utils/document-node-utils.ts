@@ -5,10 +5,9 @@ import {
   UmbDocumentPickerModalValue,
   type UmbDocumentItemModel,
 } from "@umbraco-cms/backoffice/document";
-import type { UmbModalManagerContext } from "@umbraco-cms/backoffice/modal";
-
 import type { DocumentVariantResponseModel } from "@umbraco-cms/backoffice/external/backend-api";
 import { DocumentService, DocumentTypeService } from "@umbraco-cms/backoffice/external/backend-api";
+import type { UmbModalManagerContext } from "@umbraco-cms/backoffice/modal";
 
 /**
  * Fetches a document variant by its UDI.

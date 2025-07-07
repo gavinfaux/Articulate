@@ -1,11 +1,8 @@
-using System.Runtime.Serialization;
-
 namespace Articulate.Models.ManagmentApi
 {
     /// <summary>
     /// Represents the result of a BlogML import with operation statistics.
     /// </summary>
-    [DataContract]
     public class ImportResponse
     {
         /// <summary>

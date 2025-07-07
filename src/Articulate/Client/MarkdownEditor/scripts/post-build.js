@@ -1,17 +1,17 @@
-import chalk from 'chalk';
-import fse from 'fs-extra';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import chalk from "chalk";
+import fse from "fs-extra";
+import path from "path";
+import { fileURLToPath } from "url";
 
 // --- Configuration & Path Definitions ---
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const clientDir = path.resolve(__dirname, '..');
-const viteOutDir = path.resolve(clientDir, '../../App_Plugins/Articulate/Assets');
-const testSitePluginsDir = path.resolve(clientDir, '../../Articulate.Tests.Website/App_Plugins/Articulate/Assets');
+const clientDir = path.resolve(__dirname, "..");
+const viteOutDir = path.resolve(clientDir, "../../App_Plugins/Articulate/Assets");
+const testSitePluginsDir = path.resolve(clientDir, "../../Articulate.Tests.Website/App_Plugins/Articulate/Assets");
 
-const shouldCopy = process.argv.includes('--copy');
+const shouldCopy = process.argv.includes("--copy");
 
 // --- Main Execution Logic ---
 
@@ -50,9 +50,9 @@ async function copyOutputToTestSite() {
 async function main() {
   try {
     await copyOutputToTestSite();
-    console.log(chalk.bold.green('Post-build script finished successfully.'));
+    console.log(chalk.bold.green("Post-build script finished successfully."));
   } catch (error) {
-    console.error(chalk.bold.red('Post-build script failed:'));
+    console.error(chalk.bold.red("Post-build script failed:"));
     console.error(chalk.red(error.message));
     process.exit(1);
   }

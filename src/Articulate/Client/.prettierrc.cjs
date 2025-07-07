@@ -10,5 +10,5 @@ module.exports = {
   bracketSpacing: true,
   endOfLine: "lf",
   htmlWhitespaceSensitivity: "ignore",
-  plugins: ["prettier-plugin-organize-imports"],
+
 };

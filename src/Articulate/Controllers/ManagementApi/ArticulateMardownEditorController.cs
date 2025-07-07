@@ -6,7 +6,7 @@ using System.Net;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Articulate.Models;
+using Articulate.Models.ManagmentApi;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -44,9 +44,9 @@ namespace Articulate.Controllers.ManagementApi
     [Authorize(AuthorizationPolicies.ContentPermissionByResource)]
     [Authorize(AuthorizationPolicies.MediaPermissionByResource)]
     [MapToApi(ArticulateConstants.ApiName)]
-    [VersionedApiBackOfficeRoute("articulate/posts")]
-    [ApiExplorerSettings(GroupName = "Posts")]
-    public class ArticulatePostsController : ManagementApiControllerBase
+    [VersionedApiBackOfficeRoute("articulate/editors/markdown")]
+    [ApiExplorerSettings(GroupName = "Markdown Editor")]
+    public class ArticulateMardownEditorController : ManagementApiControllerBase
     {
 
         /// <summary>
@@ -77,9 +77,9 @@ namespace Articulate.Controllers.ManagementApi
         private readonly IContentTypeBaseServiceProvider _contentTypeBaseServiceProvider;
         private readonly IShortStringHelper _shortStringHelper;
         private readonly Lazy<IMedia> _articulateRootMediaFolder;
-        private readonly ILogger<ArticulatePostsController> _logger;
+        private readonly ILogger<ArticulateMardownEditorController> _logger;
 
-        public ArticulatePostsController(
+        public ArticulateMardownEditorController(
             ServiceContext services,
             IBackOfficeSecurityAccessor backOfficeSecurityAccessor,
             UmbracoHelper umbracoHelper,
@@ -90,8 +90,8 @@ namespace Articulate.Controllers.ManagementApi
             IHostingEnvironment hostingEnvironment, IMediaService mediaService,
             MediaUrlGeneratorCollection mediaUrlGenerators,
             IContentTypeBaseServiceProvider contentTypeBaseServiceProvider, IShortStringHelper shortStringHelper,
-            ILogger<ArticulatePostsController> logger)
-        {
+            ILogger<ArticulateMardownEditorController> logger)
+{
             _services = services;
             _backOfficeSecurityAccessor = backOfficeSecurityAccessor;
             _umbracoHelper = umbracoHelper;
@@ -118,9 +118,10 @@ namespace Articulate.Controllers.ManagementApi
             public string FirstImage { get; set; }
         }
 
-        [HttpPost("markdown")]
-        public async Task<IActionResult> CreateMarkdownPost([FromForm(Name = "json")] string jsonModel,
-            IFormFileCollection files)
+
+        [HttpPost("post")]
+        public async Task<IActionResult> CreatePost([FromForm(Name = "json")] string jsonModel,
+IFormFileCollection files)
         {
 
             MardownEditorModel model;

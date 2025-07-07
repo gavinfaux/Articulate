@@ -119,30 +119,6 @@ namespace Articulate.Controllers.ManagementApi
 
             return Ok(model.NewThemeName);
         }
-        /// <summary>
-        /// Gets the list of all available Articulate themes, both default and user-defined.
-        /// </summary>
-        /// <remarks>
-        /// This endpoint returns the names of all available themes, including both default and user-defined themes.
-        /// </remarks>
-        /// <returns>
-        /// A list of theme names as strings.
-        /// </returns>
-        /// <response code="200">Returns the list of all available theme names.</response>
-        [HttpGet("all")]
-        [ProducesResponseType<IEnumerable<string>>(StatusCodes.Status200OK)]
-        public ActionResult<IEnumerable<string>> GetAllThemes()
-        {
-            var defaultThemeDir = hostingEnvironment.MapPathContentRoot(PathHelper.VirtualThemePath);
-            var defaultThemes = Directory.GetDirectories(defaultThemeDir).Select(x => new DirectoryInfo(x).Name);
-
-            var userThemeDir = hostingEnvironment.MapPathContentRoot(PathHelper.UserVirtualThemePath);
-            var userThemes = Directory.Exists(userThemeDir)
-                ? Directory.GetDirectories(userThemeDir).Select(x => new DirectoryInfo(x).Name)
-                : [];
-
-            return Ok(userThemes.Union(defaultThemes));
-        }
 
         /// <summary>
         /// Retrieves the list of available default Articulate themes.

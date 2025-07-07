@@ -1,12 +1,10 @@
 using System.ComponentModel.DataAnnotations;
-using System.Runtime.Serialization;
 
 namespace Articulate.Models.ManagmentApi.Authentication
 {
     /// <summary>
     /// Represents the login model for authentication.
     /// </summary>
-    [DataContract]
     public class LoginModel
     {
         /// <summary>

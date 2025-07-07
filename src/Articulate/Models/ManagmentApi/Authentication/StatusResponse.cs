@@ -1,11 +1,8 @@
-using System.Runtime.Serialization;
-
 namespace Articulate.Models.ManagmentApi.Authentication
 {
     /// <summary>
     /// Represents the authentication status response.
     /// </summary>
-    [DataContract]
     public class StatusResponse
     {
         /// <summary>

@@ -1,7 +1,7 @@
 {
   "name": "articulate-backoffice",
   "private": true,
-  "version": "6.0.0-g8929c49f22",
+  "version": "6.0.0-g1f4f86bc24",
   "type": "module",
   "description": "",
   "keywords": [],
@@ -27,32 +27,29 @@
     "build": "vite build && node ./scripts/post-build.js",
     "build:copy": "vite build && node ./scripts/post-build.js --copy",
     "build:release": "npm run set-version && vite build && node ./scripts/post-build.js",
-    "format": "prettier --write .",
+    "format": "prettier --write . --ignore-path ../.prettierignore",
     "lint": "eslint .",
     "check": "tsc --noEmit",
-    "generate-client": "node ./scripts/generate-openapi.js https://localhost:44366/umbraco/swagger/articulate/swagger.json ./src/api --excludeTags Authentication,Posts",
+    "generate-client": "node ./scripts/generate-openapi.js https://localhost:44366/umbraco/swagger/articulate/swagger.json ./src/api --excludeTags Authentication, 'Markdown Editor'",
     "set-version": "node ./scripts/update-version.js ./package.json"
   },
   "dependenciesComments": {
     "monaco-editor": "Articulate Markdown Editor, only required until Umbraco Core editor supports better markdown to HTML processing; see https://github.com/umbraco/Umbraco-CMS/issues/19500"
   },
   "devDependencies": {
-    "@eslint/compat": "^1.3.1",
-    "@hey-api/openapi-ts": "^0.77.0",
+    "@hey-api/openapi-ts": "^0.78.1",
     "@umbraco-cms/backoffice": "^15.4.3",
     "chalk": "^5.4.1",
     "chokidar-cli": "^3.0.0",
-    "eslint": "^9.29.0",
     "eslint-config-prettier": "^10.1.5",
-    "eslint-plugin-local-rules": "3.0.2",
+    "eslint": "^9.30.1",
     "fs-extra": "^11.2.0",
     "monaco-editor": "^0.52.2",
     "node-fetch": "^3.3.2",
     "npm-run-all2": "^8.0.4",
     "prettier": "^3.6.1",
-    "prettier-plugin-organize-imports": "^4.1.0",
-    "typescript": "^5.8.2",
     "typescript-eslint": "^8.35.0",
-    "vite": "^6.2.0"
+    "typescript": "^5.8.2",
+    "vite": "^6.3.5"
   }
 }

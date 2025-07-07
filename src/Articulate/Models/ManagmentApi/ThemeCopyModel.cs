@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.IO;
-using System.Runtime.Serialization;
 using Umbraco.Extensions;
 
 namespace Articulate.Models.ManagmentApi
@@ -9,7 +8,6 @@ namespace Articulate.Models.ManagmentApi
     /// <summary>
     /// Represents the data required to copy an existing theme to a new theme name.
     /// </summary>
-    [DataContract]
     public class ThemeCopyModel : IValidatableObject
     {
         /// <summary>

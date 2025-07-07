@@ -1,7 +1,7 @@
-import chalk from 'chalk';
-import path from 'path';
-import fse from 'fs-extra';
-import { fileURLToPath } from 'url';
+import chalk from "chalk";
+import path from "path";
+import fse from "fs-extra";
+import { fileURLToPath } from "url";
 
 // --- Configuration & Path Definitions ---
 
@@ -10,18 +10,18 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Resolve paths from the new script location
-const clientDir = path.resolve(__dirname, '..', '..'); // Go up two levels from BackOffice/scripts to Client
+const clientDir = path.resolve(__dirname, "..", ".."); // Go up two levels from BackOffice/scripts to Client
 const viteOutDir = path.resolve(clientDir, `../App_Plugins/Articulate/BackOffice`); // Correct path from Client to App_Plugins
 const testSitePluginsDir = path.resolve(clientDir, `../../Articulate.Tests.Website/App_Plugins/Articulate/BackOffice`);
 
 // --- umbraco-package.json specific logic (only for BackOffice) ---
-const packageJsonFileName = 'umbraco-package.json';
+const packageJsonFileName = "umbraco-package.json";
 const packageJsonSourcePath = path.join(viteOutDir, packageJsonFileName);
-const packageJsonDestPath = path.resolve(viteOutDir, '..', packageJsonFileName);
-const testSitePackageJsonDestPath = path.resolve(testSitePluginsDir, '..', packageJsonFileName);
+const packageJsonDestPath = path.resolve(viteOutDir, "..", packageJsonFileName);
+const testSitePackageJsonDestPath = path.resolve(testSitePluginsDir, "..", packageJsonFileName);
 
 // process.argv works the same way in ES Modules
-const shouldCopy = process.argv.includes('--copy');
+const shouldCopy = process.argv.includes("--copy");
 
 // --- Helper Functions for Core Operations ---
 
@@ -97,9 +97,9 @@ async function main() {
     // The movePackageJson function is specific to BackOffice, so we call it directly.
     await movePackageJson();
     await copyOutputToTestSite();
-    console.log(chalk.bold.green('Post-build script finished successfully.'));
+    console.log(chalk.bold.green("Post-build script finished successfully."));
   } catch (error) {
-    console.error(chalk.bold.red('Post-build script failed:'));
+    console.error(chalk.bold.red("Post-build script failed:"));
     console.error(chalk.red(error.message));
     process.exit(1);
   }

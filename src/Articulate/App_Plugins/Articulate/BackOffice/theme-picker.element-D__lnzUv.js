@@ -1,15 +1,15 @@
-import { UmbElementMixin as m } from "@umbraco-cms/backoffice/element-api";
-import { html as h, css as c, property as p, state as u, customElement as f } from "@umbraco-cms/backoffice/external/lit";
+import { UmbElementMixin as c } from "@umbraco-cms/backoffice/element-api";
+import { html as h, css as m, property as p, state as u, customElement as f } from "@umbraco-cms/backoffice/external/lit";
 import { UmbLitElement as v } from "@umbraco-cms/backoffice/lit-element";
 import { UmbPropertyValueChangeEvent as _ } from "@umbraco-cms/backoffice/property-editor";
 import { UmbTextStyles as d } from "@umbraco-cms/backoffice/style";
-import { T as y, f as O } from "./error-utils-BQkI2uUw.js";
+import { a as y, f as O } from "./error-utils-IPtb8zHO.js";
 var b = Object.defineProperty, S = Object.getOwnPropertyDescriptor, a = (e, t, r, o) => {
   for (var s = o > 1 ? void 0 : o ? S(t, r) : t, i = e.length - 1, n; i >= 0; i--)
     (n = e[i]) && (s = (o ? n(t, r, s) : n(s)) || s);
   return o && s && b(t, r, s), s;
 };
-let l = class extends m(v) {
+let l = class extends c(v) {
   constructor() {
     super(), this._themeSelectOptions = [], this._error = null;
   }
@@ -29,7 +29,7 @@ let l = class extends m(v) {
    */
   async _fetchThemes() {
     this._error = null;
-    const e = await y.getArticulateThemesAll();
+    const e = await y.getArticulateEditorsThemePickerThemes();
     if (!e.response.ok || !e.data) {
       this._error = O(e.error, "Failed to load themes from the server.");
       return;
@@ -65,7 +65,7 @@ let l = class extends m(v) {
 };
 l.styles = [
   d,
-  c`
+  m`
       uui-select {
         width: 100%;
       }

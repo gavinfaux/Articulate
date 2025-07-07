@@ -18,6 +18,7 @@ import {
   renderErrorMessage,
   renderHeaderActions,
 } from "../utils/template-utils";
+import { UmbValidationContext } from "@umbraco-cms/backoffice/validation";
 
 /**
  * A LitElement-based component for importing blog content from a BlogML file.
@@ -90,6 +91,8 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
    * @type {string | undefined}
    */
   private _archiveDoctypeUdi: string | undefined = undefined;
+
+  #validation = new UmbValidationContext(this);
 
   constructor() {
     super();
@@ -189,9 +192,17 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
     e.preventDefault();
     if (!this._form) return;
 
+    try {
+      await this.#validation.validate();
+    } catch (error) {
+      setFormError(this, error, "Validation Failed");
+      return;
+    }
+
     const formData = new FormData(this._form);
     const importFile = formData.get("importFile") as File;
 
+    // validate() does not appear to work with the uui-file-input form element consistently, so backup validation
     const validationRules = [
       {
         isValid: !!this._articulateBlogNode,
@@ -209,15 +220,6 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
       const validationError = new Error(firstInvalidRule.message);
       validationError.name = "Validation Error";
       setFormError(this, validationError, validationError.name);
-      this._form.reportValidity();
-      return;
-    }
-
-    // fallback for other inputs (that we don't have at the moment)
-    if (!this._form.reportValidity()) {
-      const error = new Error("The form is not valid. Please check the fields marked with an error.");
-      error.name = "Validation Error";
-      setFormError(this, error, error.name);
       return;
     }
 
@@ -231,6 +233,7 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
       // Step 1: Upload the file and get post count
       const initData = await this.#beginImport(importFile);
       this._postCount = initData.postCount;
+      this.requestUpdate("_postCount");
 
       // Step 2: Perform import and get results
       const importData = await this.#finalizeImport(formData, initData.temporaryFileName!);
@@ -352,7 +355,7 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
                   this._formState = undefined;
                 }}
               >
-                <uui-validation-message>
+                <uui-form-validation-message>
                   <uui-form-layout-item>
                     <div class="node-picker-container">
                       <uui-label for="articulateBlogNode" slot="label" required>Articulate blog node</uui-label>
@@ -436,7 +439,7 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
                       If you would like Articulate to try and import the first image url in the post attachments
                     </div>
                   </uui-form-layout-item>
-                </uui-validation-message>
+                </uui-form-validation-message>
                 <div class="form-actions">
                   <uui-button type="submit" look="primary" .state=${this._formState} color="primary" label="Submit">
                     Submit
@@ -449,12 +452,16 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
             `,
           )}
         </uui-form>
-        ${this._postCount !== undefined && this._postCount > 0
+        ${this._formState === "waiting"
           ? html`
-              <div slot="message">
+              <div class="container">
+                <uui-loader-circle style="color: #006eff; font-size: 2em"></uui-loader-circle>
+        ${this._postCount !== undefined && this._postCount > 0
+        ? html `
                 <uui-tag look="secondary" color="positive">${this._postCount} posts in uploaded file.</uui-tag>
               </div>
             `
+            : ""}`
           : ""}
         ${this._formError ? renderErrorMessage(this._formError) : ""}
       </uui-box>

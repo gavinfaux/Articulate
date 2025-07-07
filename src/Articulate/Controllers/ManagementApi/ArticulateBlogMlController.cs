@@ -17,6 +17,19 @@ using Umbraco.Extensions;
 
 namespace Articulate.Controllers.ManagementApi
 {
+
+    public enum ArticulateBlogMlOperationStatus
+    {
+        /// <summary>
+        /// The request was invalid.
+        /// </summary>
+        InvalidRequest,
+        /// <summary>
+        /// The requested resource was not found.
+        /// </summary>
+        NotFound
+    }
+
     /// <summary>
     /// Provides import and export of Articulate blog data using BlogML and Disqus formats.
     /// </summary>
@@ -55,15 +68,13 @@ namespace Articulate.Controllers.ManagementApi
             {
                 if (importFile == null || !Path.GetExtension(importFile.FileName.Trim("\"").ToLowerInvariant()).InvariantEquals(".xml"))
                 {
-                    const string warningMessage = "The request was not a valid form file or the file was not XML";
-                    logger.LogWarning(warningMessage);
-                    return StatusCode(StatusCodes.Status415UnsupportedMediaType, new ProblemDetails { Title = "Invalid request", Detail = warningMessage, Status = StatusCodes.Status415UnsupportedMediaType });
+                    return OperationStatusResult(ArticulateBlogMlOperationStatus.InvalidRequest, builder => StatusCode(StatusCodes.Status415UnsupportedMediaType, builder.WithTitle("Invalid request").WithDetail("The request was not a valid form file or the file was not XML").Build()));
                 }
 
                 var fileName = Path.GetRandomFileName();
                 using (var stream = new MemoryStream())
                 {
-                    await Request.Form.Files[0].CopyToAsync(stream);
+                    await importFile.CopyToAsync(stream);
                     articulateTempFileSystem.AddFile(fileName, stream);
                 }
 

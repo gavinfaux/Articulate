@@ -10,8 +10,7 @@
     <!-- EasyMDE CSS -->
     <link rel="stylesheet" href="https://unpkg.com/easymde/dist/easymde.min.css" />
 
-    <!-- Alpine.js -->
-    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
 
     <!-- Our App (we will build this) -->
     <script src="/src/main.ts" type="module"></script>
@@ -44,12 +43,17 @@
 
       <!-- Editor View -->
       <article x-show="step === 'editor'">
+        <input type="file" x-ref="imageUpload" @change="handleFileInput($event)" accept="image/jpeg,image/png,image/gif,image/heic,image/heif" style="display: none;" multiple>
+        <input type="file" x-ref="cameraUpload" @change="handleFileInput($event)" accept="image/jpeg,image/png,image/gif,image/heic,image/heif" capture="environment" style="display: none;">
         <label for="title">Title</label>
         <input x-model="post.title" type="text" id="title" placeholder="Your post title..." required />
 
-
-        <textarea id="markdown-editor-textarea"></textarea>
-        <footer>
+        <div x-ref="editor"></div>
+        <footer style="display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <button class="secondary" @click="triggerImageUpload()" title="Upload Image">🖼️</button>
+            <button class="secondary" @click="triggerCamera()" title="Use Camera">📸</button>
+          </div>
           <button @click="step = 'optional'">Optional Info &rarr;</button>
         </footer>
       </article>

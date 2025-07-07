@@ -1,12 +1,10 @@
 using System.ComponentModel.DataAnnotations;
-using System.Runtime.Serialization;
 
 namespace Articulate.Models.ManagmentApi
 {
     /// <summary>
     /// Represents the response model for the BlogML post initialization.
     /// </summary>
-    [DataContract]
     public class ImportFileResponse
     {
         /// <summary>

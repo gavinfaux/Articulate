@@ -1,13 +1,11 @@
 using System;
 using System.ComponentModel.DataAnnotations;
-using System.Runtime.Serialization;
 
 namespace Articulate.Models.ManagmentApi
 {
     /// <summary>
     /// Represents the options for exporting blog data in BlogML format.
     /// </summary>
-    [DataContract]
     public class ExportModel
     {
         /// <summary>

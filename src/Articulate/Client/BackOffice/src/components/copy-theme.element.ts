@@ -2,6 +2,7 @@ import { css, customElement, html, property, query, state } from "@umbraco-cms/b
 import { UUIButtonState } from "@umbraco-cms/backoffice/external/uui";
 import { UmbLitElement } from "@umbraco-cms/backoffice/lit-element";
 import { UmbTextStyles } from "@umbraco-cms/backoffice/style";
+
 import { Themes } from "../api/sdk.gen";
 import { IFormController, setFormError } from "../utils/form-utils";
 import { showUmbracoNotification } from "../utils/notification-utils";
@@ -13,6 +14,7 @@ import {
   renderErrorMessage,
   renderHeaderActions,
 } from "../utils/template-utils";
+import { UmbValidationContext } from "@umbraco-cms/backoffice/validation";
 
 /**
  * A LitElement-based component for copying an existing theme.
@@ -65,6 +67,8 @@ export default class CopyThemeElement extends UmbLitElement implements IFormCont
    * @type {HTMLFormElement}
    */
   @query("form") private _form!: HTMLFormElement;
+
+  #validation = new UmbValidationContext(this);
 
   /**
    * Loads the list of themes when the component is connected to the DOM.
@@ -174,13 +178,21 @@ export default class CopyThemeElement extends UmbLitElement implements IFormCont
     e.preventDefault();
     if (!this._form) return;
 
-    if (!this._form.reportValidity()) {
-      const error = new Error("Please enter a new name for the theme.");
-      error.name = "Validation Error";
-      setFormError(this, error, error.name);
+    try {
+      await this.#validation.validate();
+    } catch (error) {
+      setFormError(this, error, "Validation Failed");
       return;
     }
 
+    // validate() does not appear to work with other some uui elements, so backup validation, likely un-needed for a input box...
+    if (!this._selectedTheme || !this._newThemeName) {
+      const validationError = new Error("Please select a theme to duplicate and provide a new theme name.");
+      validationError.name = "Validation Error";
+      setFormError(this, validationError, validationError.name);
+      return;
+    }
+    
     if (this._formState === "waiting") return;
 
     this._formState = "waiting";
@@ -301,7 +313,7 @@ export default class CopyThemeElement extends UmbLitElement implements IFormCont
               this._formState = undefined;
             }}
           >
-            <uui-validation-message>
+            <uui-form-validation-message>
               <uui-form-layout-item>
                 <uui-label for="newThemeName" slot="label" required>New theme name</uui-label>
                 <uui-input
@@ -314,7 +326,7 @@ export default class CopyThemeElement extends UmbLitElement implements IFormCont
                   label="New theme name"
                 ></uui-input>
               </uui-form-layout-item>
-            </uui-validation-message>
+            </uui-form-validation-message>
             <div class="form-actions">
               <uui-button
                 id="duplicateButton"

@@ -6,13 +6,6 @@
       "@api/*": ["./src/api/*"]
     }
   },
-  "include": [
-    "src/**/*.ts",
-    "src/**/*.d.ts",
-    "vite.config.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist"
-  ]
+  "include": ["src/**/*.ts", "src/**/*.d.ts", "vite.config.ts"],
+  "exclude": ["node_modules", "dist"]
 }

@@ -1,11 +1,8 @@
-using System.Runtime.Serialization;
-
 namespace Articulate.Models.ManagmentApi.Authentication
 {
     /// <summary>
     /// Represents the response when two-factor authentication is required.
     /// </summary>
-    [DataContract]
     public class TwoFactorRequiredResponse
     {
         /// <summary>

@@ -1,5 +1,6 @@
 import { UMB_AUTH_CONTEXT } from "@umbraco-cms/backoffice/auth";
 import type { UmbEntryPointOnInit, UmbEntryPointOnUnload } from "@umbraco-cms/backoffice/extension-api";
+
 import { client } from "../api/client.gen";
 
 /**

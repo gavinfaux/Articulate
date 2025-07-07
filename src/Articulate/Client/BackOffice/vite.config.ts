@@ -10,7 +10,7 @@ export default defineConfig(({ mode }) => {
       },
       outDir: "../../App_Plugins/Articulate/BackOffice/",
       emptyOutDir: true,
-      sourcemap: mode === 'development',
+      sourcemap: mode === "development",
       rollupOptions: {
         external: [/^@umbraco/],
       },
