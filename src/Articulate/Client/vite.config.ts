@@ -8,7 +8,7 @@ export default defineConfig(({ mode }) => {
         formats: ["es"],
         fileName: "articulate",
       },
-      outDir: "../../App_Plugins/Articulate/BackOffice/",
+      outDir: "../App_Plugins/Articulate/BackOffice/",
       emptyOutDir: true,
       sourcemap: mode === "development",
       rollupOptions: {

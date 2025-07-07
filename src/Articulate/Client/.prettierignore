@@ -14,13 +14,13 @@
 **/vite.config.ts
 **/tsconfig.json
 
-# Ignore specific BackOffice assets
-BackOffice/scripts/
-BackOffice/src/packages/markdown-editor/
-BackOffice/umbraco-package-schema.json
-
-# Ignore specific MarkdownEditor assets
-MarkdownEditor/scripts/
+# Ignore specific assets
+scripts/
+src/packages/markdown-editor/
+umbraco-package-schema.json
+.prettierrc.cjs
+eslint.config.js
+package.json
 
 # Ignore specific file types
 *.min.js

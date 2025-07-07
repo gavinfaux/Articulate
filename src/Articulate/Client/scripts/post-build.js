@@ -10,7 +10,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Resolve paths from the new script location
-const clientDir = path.resolve(__dirname, "..", ".."); // Go up two levels from BackOffice/scripts to Client
+const clientDir = path.resolve(__dirname, ".."); // Go up one level from scripts to Client
 const viteOutDir = path.resolve(clientDir, `../App_Plugins/Articulate/BackOffice`); // Correct path from Client to App_Plugins
 const testSitePluginsDir = path.resolve(clientDir, `../../Articulate.Tests.Website/App_Plugins/Articulate/BackOffice`);
 

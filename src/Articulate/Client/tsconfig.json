@@ -10,6 +10,9 @@
     "noEmit": true,
     "resolveJsonModule": true,
     "lib": ["ESNext", "DOM"],
-    "types": ["vite/client"]
-  }
+    "experimentalDecorators": true,
+    "useDefineForClassFields": false,
+    "types": ["@umbraco-cms/backoffice/extension-types", "@umbraco-cms/backoffice/external/lit"]
+  },
+  "include": ["src/**/*.ts"]
 }

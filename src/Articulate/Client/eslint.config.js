@@ -6,7 +6,7 @@ import tseslint from "typescript-eslint";
 export default tseslint.config(
   {
     // Global ignores
-    ignores: ["dist/**", "vite.config.ts", "src/api/**"],
+    ignores: ["App_Plugins/**", "vite.config.ts", "src/api/**", "src/packages/**"],
   },
 
   // Apply the recommended configurations from typescript-eslint.
@@ -20,7 +20,7 @@ export default tseslint.config(
       parserOptions: {
         // Pointing to the correct tsconfig is crucial for the parser
         // to understand the project's types and structure.
-        project: "../tsconfig.base.json",
+        project: "./tsconfig.json",
         tsconfigRootDir: import.meta.dirname,
       },
     },

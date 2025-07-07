@@ -20,7 +20,7 @@ const fullPkgPath = path.resolve(__dirname, "..", targetPackageJsonPath);
 // Get version from nbgv, running from the solution root
 const version = execSync("dotnet nbgv get-version -v SemVer2", {
   encoding: "utf8",
-  cwd: path.resolve(__dirname, "..", "..", ".."), // Go up three levels to the Articulate project root
+  cwd: path.resolve(__dirname, "..", "..", "..", ".."), // Go up four levels to the solution root
 }).trim();
 
 // Update package.json

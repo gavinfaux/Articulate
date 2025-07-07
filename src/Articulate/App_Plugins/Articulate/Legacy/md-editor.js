@@ -1,4 +1,4 @@
-﻿'use strict';
+'use strict';
 
 var articulateapp = angular.module('articulateapp', [
   'ngRoute',
@@ -64,11 +64,11 @@ articulateapp.config(['$routeProvider', function ($routeProvider) {
                   alert("File too large, max 10MB.");
                   return;
                 }
-                var allowedMimeTypes = ["image/jpeg", "image/png", "image/gif", "image/webp", "image/bmp", "image/heic", "image/tiff"];
-                var allowedExtensions = ["jpg", "jpeg", "png", "gif", "webp", "bmp", "heic", "tiff"];
+                var allowedMimeTypes = ["image/jpeg", "image/png", "image/gif"];
+                var allowedExtensions = ["jpg", "jpeg", "png", "gif"];
                 var fileExtension = check.split(".").pop().toLowerCase();
                 if (allowedExtensions.indexOf(fileExtension) === -1 || (file.type && allowedMimeTypes.indexOf(file.type) === -1)) {
-                  alert("Only JPEG, PNG, GIF, WebP, BMP, HEIC, and TIFF images are allowed.");
+                  alert("Only JPEG, PNG and GIF images are allowed.");
                   return;
                 }
                 var fileName = check.split(".").slice(0, -1).join(".");
@@ -84,7 +84,7 @@ articulateapp.config(['$routeProvider', function ($routeProvider) {
                 }
                 var fileWithExtension = cleanFileName + (file.type === "image/heic" ? ".jpg" : "." + fileExtension);
                 var token = "[i:" + ($scope.$parent.files ? $scope.$parent.files.length : 0) + ":" + fileWithExtension + "]";
-                var tokenRegex = /^\[i:\d+:[a-zA-Z0-9_-]+\.(jpg|jpeg|png|gif|webp|bmp|tiff)\]$/;
+                var tokenRegex = /^\[i:\d+:[a-zA-Z0-9_-]+\.(jpg|jpeg|png|gif)\]$/;
                 if (!token.match(tokenRegex)) {
                   alert("Invalid token format.");
                   return;

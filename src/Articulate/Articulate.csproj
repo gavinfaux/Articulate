@@ -75,7 +75,6 @@
 
   <ItemGroup>
     <BackOfficeClientAssetsInputs Include="Client/BackOffice/**" Exclude="$(DefaultItemExcludes)" />
-    <MarkdownEditorClientAssetsInputs Include="Client/MarkdownEditor/**" Exclude="$(DefaultItemExcludes)" />
   </ItemGroup>
 
   <!-- Build backoffice client-->
@@ -84,10 +83,6 @@
     <Exec Command="npm i" WorkingDirectory="Client/BackOffice" />
   </Target>
 
-  <Target Name="RestoreMarkdownEditorClient" BeforeTargets="BuildMarkdownEditorClient">
-    <Message Importance="high" Text="Restoring Markdown Editor Client NPM packages..." />
-    <Exec Command="npm i" WorkingDirectory="Client/MarkdownEditor" />
-  </Target>
   <Target Name="BuildBackOfficeClient" BeforeTargets="CoreBuild" Inputs="@(BackOfficeClientAssetsInputs)" Outputs="$(IntermediateOutputPath)client.build.timestamp">
     <!-- Show message before running the build -->
     <Message Importance="High" Condition="'$(IsPacking)' == 'true'" Text="[Articulate] Executing BackOffice Client NPM production release build script..." />
@@ -104,15 +99,6 @@
     <!-- Issue an ERROR on failure during a pack -->
     <Error Condition="'$(IsPacking)' == 'true' AND '$(ClientBuildExitCode)' != '0'" Text="[Articulate] The BackOffice client-side build (npm run build:release) FAILED. The package cannot be created." />
     <Touch Files="$(IntermediateOutputPath)client.build.timestamp" AlwaysCreate="true" Condition="'$(ClientBuildExitCode)' == '0'" />
-  </Target>
-
-  <Target Name="BuildMarkdownEditorClient" BeforeTargets="CoreBuild" Inputs="@(MarkdownEditorClientAssetsInputs)" Outputs="$(IntermediateOutputPath)markdownclient.build.timestamp">
-    <Message Importance="Normal" Text="[Articulate] Executing Markdown Editor Client NPM development build script..." />
-    <Exec Command="npm run build" WorkingDirectory="Client/MarkdownEditor" ContinueOnError="true">
-      <Output TaskParameter="ExitCode" PropertyName="MarkdownClientBuildExitCode" />
-    </Exec>
-    <Warning Condition="'$(MarkdownClientBuildExitCode)' != '0'" Text="[Articulate] The Markdown Editor client-side build (npm run build) failed." />
-    <Touch Files="$(IntermediateOutputPath)markdownclient.build.timestamp" AlwaysCreate="true" Condition="'$(MarkdownClientBuildExitCode)' == '0'" />
   </Target>
 
   <ItemGroup>

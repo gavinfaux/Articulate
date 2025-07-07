@@ -10,5 +10,4 @@ module.exports = {
   bracketSpacing: true,
   endOfLine: "lf",
   htmlWhitespaceSensitivity: "ignore",
-
 };
