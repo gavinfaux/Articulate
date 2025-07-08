@@ -117,11 +117,11 @@ export type LoginModel = {
     /**
      * Gets the email address of the user.
      */
-    readonly emailAddress: string;
+    emailAddress: string;
     /**
      * Gets the password of the user.
      */
-    readonly password: string;
+    password: string;
 };
 
 export type LoginResponseBase = {

@@ -1,4 +1,4 @@
-import { html as h, nothing as Be, css as C, property as J, state as m, query as _e, customElement as W } from "@umbraco-cms/backoffice/external/lit";
+import { html as p, nothing as Be, css as C, property as J, state as h, query as _e, customElement as W } from "@umbraco-cms/backoffice/external/lit";
 import { UmbLitElement as V } from "@umbraco-cms/backoffice/lit-element";
 import { UmbTextStyles as N } from "@umbraco-cms/backoffice/style";
 import { UMB_MODAL_MANAGER_CONTEXT as Fe } from "@umbraco-cms/backoffice/modal";
@@ -70,7 +70,7 @@ async function be(t, e, i, o = !1) {
   });
 }
 function ye(t) {
-  return h`
+  return p`
     <div slot="header-actions">
       <uui-button
         label="Back to Articulate dashboard options"
@@ -87,13 +87,13 @@ function $e(t) {
   if (!t)
     return console.info("At validation event: renderErrorMessage returning nothing as errors object is null"), Be;
   const { title: e, details: i } = t;
-  return h`
+  return p`
     <div class="articulate-error-box">
       <strong>${e}</strong>
-      ${i.length > 0 ? h`
+      ${i.length > 0 ? p`
             <ul class="articulate-error-list">
               ${i.map(
-    (o) => h`
+    (o) => p`
                   <li>${o}</li>
                 `
   )}
@@ -262,7 +262,7 @@ let b = class extends V {
     return this._articulateBlogNode ? "positive" : "primary";
   }
   render() {
-    return h`
+    return p`
       <uui-box headline="BlogML Exporter">
         ${ye(this.routerPath)}
         <uui-form>
@@ -341,16 +341,16 @@ D([
   J({ type: String })
 ], b.prototype, "routerPath", 2);
 D([
-  m()
+  h()
 ], b.prototype, "_formState", 2);
 D([
-  m()
+  h()
 ], b.prototype, "_formError", 2);
 D([
-  m()
+  h()
 ], b.prototype, "_articulateBlogNode", 2);
 D([
-  m()
+  h()
 ], b.prototype, "_selectedBlogNodeName", 2);
 D([
   _e("#blogMlExportForm")
@@ -375,8 +375,8 @@ const ft = (t, e) => {
   let r, a = e === 2 ? "<svg>" : e === 3 ? "<math>" : "", s = O;
   for (let u = 0; u < i; u++) {
     const n = t[u];
-    let d, p, l = -1, y = 0;
-    for (; y < n.length && (s.lastIndex = y, p = s.exec(n), p !== null); ) y = s.lastIndex, s === O ? p[1] === "!--" ? s = Me : p[1] !== void 0 ? s = De : p[2] !== void 0 ? (je.test(p[2]) && (r = RegExp("</" + p[2], "g")), s = T) : p[3] !== void 0 && (s = T) : s === T ? p[0] === ">" ? (s = r ?? O, l = -1) : p[1] === void 0 ? l = -2 : (l = s.lastIndex - p[2].length, d = p[1], s = p[3] === void 0 ? T : p[3] === '"' ? Ie : Pe) : s === Ie || s === Pe ? s = T : s === Me || s === De ? s = O : (s = T, r = void 0);
+    let d, m, l = -1, y = 0;
+    for (; y < n.length && (s.lastIndex = y, m = s.exec(n), m !== null); ) y = s.lastIndex, s === O ? m[1] === "!--" ? s = Me : m[1] !== void 0 ? s = De : m[2] !== void 0 ? (je.test(m[2]) && (r = RegExp("</" + m[2], "g")), s = T) : m[3] !== void 0 && (s = T) : s === T ? m[0] === ">" ? (s = r ?? O, l = -1) : m[1] === void 0 ? l = -2 : (l = s.lastIndex - m[2].length, d = m[1], s = m[3] === void 0 ? T : m[3] === '"' ? Ie : Pe) : s === Ie || s === Pe ? s = T : s === Me || s === De ? s = O : (s = T, r = void 0);
     const x = s === T && t[u + 1].startsWith("/>") ? " " : "";
     a += s === O ? n + mt : l >= 0 ? (o.push(d), n.slice(0, l) + We + n.slice(l) + A + x) : n + A + (l === -2 ? u : x);
   }
@@ -387,7 +387,7 @@ class q {
     let r;
     this.parts = [];
     let a = 0, s = 0;
-    const u = e.length - 1, n = this.parts, [d, p] = ft(e, i);
+    const u = e.length - 1, n = this.parts, [d, m] = ft(e, i);
     if (this.el = q.createElement(d, o), k.currentNode = this.el.content, i === 2 || i === 3) {
       const l = this.el.content.firstChild;
       l.replaceWith(...l.childNodes);
@@ -395,7 +395,7 @@ class q {
     for (; (r = k.nextNode()) !== null && n.length < u; ) {
       if (r.nodeType === 1) {
         if (r.hasAttributes()) for (const l of r.getAttributeNames()) if (l.endsWith(We)) {
-          const y = p[s++], x = r.getAttribute(l).split(A), X = /([.?@])?(.*)/.exec(y);
+          const y = m[s++], x = r.getAttribute(l).split(A), X = /([.?@])?(.*)/.exec(y);
           n.push({ type: 1, index: a, name: X[2], strings: x, ctor: X[1] === "." ? _t : X[1] === "?" ? vt : X[1] === "@" ? bt : te }), r.removeAttribute(l);
         } else l.startsWith(A) && (n.push({ type: 6, index: a }), r.removeAttribute(l));
         if (je.test(r.tagName)) {
@@ -766,13 +766,13 @@ let g = class extends V {
     }
   }
   render() {
-    return h`
+    return p`
       <uui-box headline="BlogML Importer">
         ${ye(this.routerPath)}
         <uui-form>
           ${Nt(
       this._formRenderKey,
-      h`
+      p`
               <form
                 id="blogMlImportForm"
                 @submit=${S(this, he)}
@@ -866,6 +866,11 @@ let g = class extends V {
                   </uui-form-layout-item>
                 </uui-form-validation-message>
                 <div class="form-actions">
+                  ${this._postCount !== void 0 && this._postCount > 0 ? p`
+                        <uui-tag look="secondary" color="positive" style="margin-right: 1em;">
+                          ${this._postCount} posts in uploaded file.
+                        </uui-tag>
+                      ` : ""}
                   <uui-button type="submit" look="primary" .state=${this._formState} color="primary" label="Submit">
                     Submit
                   </uui-button>
@@ -877,15 +882,7 @@ let g = class extends V {
             `
     )}
         </uui-form>
-        ${this._formState === "waiting" ? h`
-              <div class="container">
-                <uui-loader-circle style="color: #006eff; font-size: 2em"></uui-loader-circle>
-                ${this._postCount !== void 0 && this._postCount > 0 ? h`
-                <uui-tag look="secondary" color="positive">${this._postCount} posts in uploaded file.</uui-tag>
-              </div>
-            ` : ""}
-              </div>
-            ` : ""}
+
         ${this._formError ? $e(this._formError) : ""}
       </uui-box>
     `;
@@ -911,22 +908,22 @@ w([
   J({ type: String })
 ], g.prototype, "routerPath", 2);
 w([
-  m()
+  h()
 ], g.prototype, "_formState", 2);
 w([
-  m()
+  h()
 ], g.prototype, "_formError", 2);
 w([
-  m()
+  h()
 ], g.prototype, "_articulateBlogNode", 2);
 w([
-  m()
+  h()
 ], g.prototype, "_selectedBlogNodeName", 2);
 w([
-  m()
+  h()
 ], g.prototype, "_postCount", 2);
 w([
-  m()
+  h()
 ], g.prototype, "_formRenderKey", 2);
 w([
   _e("#blogMlImportForm")
@@ -967,7 +964,7 @@ let _ = class extends V {
     return this._selectedTheme && this._newThemeName ? "positive" : "primary";
   }
   render() {
-    return h`
+    return p`
       <uui-box headline="Theme Duplication">
         ${ye(this.routerPath)}
         <div class="container">
@@ -1044,10 +1041,10 @@ tt = async function(t) {
 };
 Te = /* @__PURE__ */ new WeakMap();
 it = function() {
-  return h`
+  return p`
       <div class="theme-grid">
         ${(this._themes ?? []).map(
-    (t) => h`
+    (t) => p`
             <uui-card-media
               class="theme-card"
               .name=${t}
@@ -1093,7 +1090,7 @@ it = function() {
     `;
 };
 ot = function() {
-  return this._selectedTheme ? h`
+  return this._selectedTheme ? p`
       <div class="duplicate-form">
         <h3>Duplicate '${this._selectedTheme}' Theme</h3>
         <p>Create a copy of this theme that you can customize.</p>
@@ -1135,7 +1132,7 @@ ot = function() {
           </form>
         </uui-form>
       </div>
-    ` : h``;
+    ` : p``;
 };
 _.styles = [
   N,
@@ -1206,19 +1203,19 @@ E([
   J({ type: String })
 ], _.prototype, "routerPath", 2);
 E([
-  m()
+  h()
 ], _.prototype, "_formState", 2);
 E([
-  m()
+  h()
 ], _.prototype, "_formError", 2);
 E([
-  m()
+  h()
 ], _.prototype, "_themes", 2);
 E([
-  m()
+  h()
 ], _.prototype, "_selectedTheme", 2);
 E([
-  m()
+  h()
 ], _.prototype, "_newThemeName", 2);
 E([
   _e("form")
@@ -1261,7 +1258,7 @@ let I = class extends V {
    * @returns {TemplateResult} The rendered dashboard options template.
    */
   render() {
-    return h`
+    return p`
       <uui-box headline="Options">
         <div slot="header-actions">
           <uui-button look="default" compact href="https://github.com/Shazwazza/Articulate/wiki" label="Wiki">
@@ -1272,7 +1269,7 @@ let I = class extends V {
           ${Dt.map((t) => {
       var o;
       const i = `${(o = this.routerPath) == null ? void 0 : o.replace(/\/$/, "")}/${t.path}`;
-      return h`
+      return p`
               <uui-card-block-type class="tool-card" name="${t.name}" description="${t.description}" href=${i}>
                 <uui-icon name="${t.icon}"></uui-icon>
               </uui-card-block-type>
@@ -1378,7 +1375,7 @@ let L = class extends V {
     ];
   }
   render() {
-    return h`
+    return p`
       <umb-body-layout>
         <div slot="header" class="header-container">
           <div class="articulate-header">
@@ -1462,10 +1459,10 @@ L.styles = [
     `
 ];
 Se([
-  m()
+  h()
 ], L.prototype, "_routerBasePath", 2);
 Se([
-  m()
+  h()
 ], L.prototype, "_routes", 2);
 L = Se([
   W("articulate-dashboard")

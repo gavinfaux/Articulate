@@ -95,7 +95,7 @@ namespace Articulate.Components.ManagementApi
                 .Replace(formattedOperationId, m => m.Groups[1].Value.ToUpper());
 
             // Get map to version attribute
-            string version = null;
+            string? version = null;
 
             var versionAttributeValue = controllerActionDescriptor.MethodInfo.GetMapToApiVersionAttributeValue();
 

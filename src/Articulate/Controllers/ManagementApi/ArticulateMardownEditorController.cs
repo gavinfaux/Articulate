@@ -102,6 +102,7 @@ namespace Articulate.Controllers.ManagementApi
             public string FirstImage { get; set; }
         }
 
+        [ValidateAntiForgeryToken]
         [HttpPost("post")]
         [Consumes("multipart/form-data")]
         [ProducesResponseType(typeof(CreatePostResponse), StatusCodes.Status200OK)]
@@ -224,102 +225,105 @@ namespace Articulate.Controllers.ManagementApi
 
         private ParseImageResponse ParseImages(string body, IFormFileCollection formFiles, bool extractFirstImageAsProperty)
         {
+            // This regex correctly finds the markdown tag and captures the temporary URL.
+            var bodyTextRegex = new Regex(@"!\[.*?\]\((tmp:[^)]+)\)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
-            // this will need to match what server-side code does - e.g. the placeholder or regex
-            var bodyTextRegex = new Regex(@"\[i:(\d+)\:(.*?)]", RegexOptions.IgnoreCase | RegexOptions.Compiled);
-
+            // security validation list
             var reservedNames = new HashSet<string> { "con", "prn", "aux", "nul", "com1", "lpt1" };
-
             var firstImage = string.Empty;
+
             var bodyText = bodyTextRegex.Replace(body, m =>
             {
-                var index = m.Groups[1].Value.TryConvertTo<int>();
-                if (index)
+                // Get the full temporary URL from the match (e.g., "tmp:0:my-cat.jpg").
+                var tempUrl = m.Groups[1].Value;
+
+                // Find the uploaded file by its name, which the frontend set to our temporary URL.
+                var file = formFiles.FirstOrDefault(f => f.Name == tempUrl);
+
+                if (file == null)
                 {
-                    var file = (index.Result < formFiles.Count) ? formFiles[index.Result] : null;
-                    if (file == null)
-                    {
-                        // The referenced image was not included in the upload.
-                        _logger.LogWarning("Markdown image placeholder [i:{index}] found, but no corresponding file was uploaded.", index.Result);
-                        return m.Value;
-                    }
-
-                    var untrustedFileName = Path.GetFullPath(file.FileName);
-                    if (untrustedFileName.StartsWith("..") || untrustedFileName.Contains("/.."))
-                    {
-                        // path traversal attempt
-                        return string.Empty;
-                    }
-
-                    var filename = Path.GetFileName(file.FileName);
-                    var fileExtension = Path.GetExtension(filename).ToLowerInvariant();
-
-                    // TODO: validate mime type / extension OR file signature
-
-                    //strip out any characters that are illegal in filenames
-                    var cleanFileName = string.Join("", filename.Split(Path.GetInvalidFileNameChars()));
-                    if (cleanFileName.IsNullOrWhiteSpace() || cleanFileName.Length > 100 || reservedNames.Contains(cleanFileName.ToLowerInvariant()))
-                    {
-                        return string.Empty;
-                    }
-
-                    var fileWithExtension = string.Concat(WebUtility.HtmlEncode(cleanFileName), ".", fileExtension);
-
-                    if (extractFirstImageAsProperty && index.Result == 0)
-                    {
-                        var stream = new MemoryStream();
-                        file.CopyTo(stream);
-                        if (stream.Length is 0 or > 1024 * 1024 * 10)
-                        {
-                            return string.Empty;
-                        }
-
-                        var mediaItem = _mediaService.CreateMedia(fileWithExtension, _articulateRootMediaFolder.Value, Constants.Conventions.MediaTypes.Image);
-                        mediaItem.SetValue(_mediaFileManager, _mediaUrlGenerators, _shortStringHelper, _contentTypeBaseServiceProvider, Constants.Conventions.Media.File, fileWithExtension, stream);
-                        _mediaService.Save(mediaItem);
-                        var media = _umbracoHelper.Media(mediaItem.Key);
-                        if (media == null)
-                        {
-                            return string.Empty;
-                        }
-
-                        var result = $"![{media.Name}]({media.Url()})"; // update bodyText with media item URL
-                        if (string.IsNullOrEmpty(firstImage))
-                        {
-                            firstImage = Udi.Create(Constants.UdiEntityType.Media, media.Key).ToString();
-
-                            //in this case, we've extracted the image, we don't want it to be displayed
-                            // in the content too so don't return it.
-                            return string.Empty;
-                        }
-
-                        return result;
-                    }
-                    else
-                    {
-                        var rndId = Guid.NewGuid().ToString("N");
-
-                        using var stream = new MemoryStream();
-                        file.CopyTo(stream);
-
-                        var fileUrl = "articulate/" + rndId + "/" + cleanFileName.TrimStart("\"").TrimEnd("\"");
-                        _mediaFileManager.FileSystem.AddFile(fileUrl, stream);
-
-                        // UmbracoMediaPath default setting = ~/media
-                        // Resolved mediaRootPath = /media
-                        var mediaRootPath = _hostingEnvironment.ToAbsolute(_globalSettings.UmbracoMediaPath);
-                        var mediaFilePath = $"{mediaRootPath}/{fileUrl}";
-                        var result = $"![{mediaFilePath}]({mediaFilePath})";
-                        return result;
-                    }
+                    // The file referenced in the markdown was not found in the form upload.
+                    _logger.LogWarning("Markdown image placeholder for {TempUrl} found, but no corresponding file was uploaded.", tempUrl);
+                    return m.Value; // Return the original markdown tag so it's not lost?
                 }
 
-                return m.Value;
+                // To get the index for 'extractFirstImageAsProperty' logic, we parse the tempUrl.
+                int? imageIndex = null;
+                var parts = tempUrl.Split(new[] { ':' }, 3);
+                if (parts.Length == 3 && int.TryParse(parts[1], out int parsedIndex))
+                {
+                    imageIndex = parsedIndex;
+                }
+
+                // security and filename validation, original filename uploaded by user.
+                var untrustedFileName = Path.GetFullPath(file.FileName);
+                if (untrustedFileName.StartsWith("..") || untrustedFileName.Contains("/.."))
+                {
+                    return string.Empty; // Path traversal attempt
+                }
+
+                var filename = Path.GetFileName(file.FileName);
+                var fileExtension = Path.GetExtension(filename).ToLowerInvariant();
+
+                var cleanFileName = string.Join("_", filename.Split(Path.GetInvalidFileNameChars()));
+                if (cleanFileName.IsNullOrWhiteSpace() || cleanFileName.Length > 100 || reservedNames.Contains(cleanFileName.ToLowerInvariant()))
+                {
+                    return string.Empty;
+                }
+
+                // We use the cleaned filename going forward.
+                var safeFileNameWithExt = cleanFileName;
+
+                // Check if the 'extractFirstImage' feature should be used.
+                if (extractFirstImageAsProperty && imageIndex.HasValue && imageIndex.Value == 0)
+                {
+                    // logic for creating a proper Umbraco Media Item for the first image.
+                    using var stream = new MemoryStream();
+                    file.CopyTo(stream);
+                    if (stream.Length is 0 or > 10 * 1024 * 1024)
+                    {
+                        return string.Empty; // 10MB limit
+                    }
+
+                    var mediaItem = _mediaService.CreateMedia(safeFileNameWithExt, _articulateRootMediaFolder.Value, Constants.Conventions.MediaTypes.Image);
+                    mediaItem.SetValue(_mediaFileManager, _mediaUrlGenerators, _shortStringHelper, _contentTypeBaseServiceProvider, Constants.Conventions.Media.File, safeFileNameWithExt, stream);
+                    _mediaService.Save(mediaItem);
+
+                    var media = _umbracoHelper.Media(mediaItem.Key);
+                    if (media == null)
+                    {
+                        return string.Empty;
+                    }
+
+                    if (string.IsNullOrEmpty(firstImage))
+                    {
+                        firstImage = Udi.Create(Constants.UdiEntityType.Media, media.Key).ToString();
+                        // We've extracted it as a property, so remove it from the body text.
+                        return string.Empty;
+                    }
+
+                    // If for some reason it's not the first, fallback to inserting it.
+                    return $"![{media.Name}]({media.Url()})";
+                }
+                else
+                {
+                    // logic for saving other images to the custom 'articulate/' folder.
+                    var rndId = Guid.NewGuid().ToString("N");
+                    using var stream = new MemoryStream();
+                    file.CopyTo(stream);
+
+                    var fileUrl = $"articulate/{rndId}/{safeFileNameWithExt}";
+                    _mediaFileManager.FileSystem.AddFile(fileUrl, stream);
+
+                    var mediaRootPath = _hostingEnvironment.ToAbsolute(_globalSettings.UmbracoMediaPath);
+                    var mediaFilePath = $"{mediaRootPath.TrimEnd('/')}/{fileUrl}";
+
+                    return $"![{safeFileNameWithExt}]({mediaFilePath})";
+                }
             });
 
             return new ParseImageResponse { BodyText = bodyText, FirstImage = firstImage };
         }
-
         private bool CheckPermissions(IUser user, IContent contentItem, IEnumerable<string> permissionsToCheck, IUserService userService)
         {
             var permissions = user.GetPermissions(contentItem.Path, userService);

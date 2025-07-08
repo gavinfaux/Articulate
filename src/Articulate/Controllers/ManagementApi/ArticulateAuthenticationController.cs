@@ -56,7 +56,7 @@ namespace Articulate.Controllers.ManagementApi
         /// <response code="403">User login is disabled.</response>
         /// <response code="423">The user account is locked out.</response>
         [AllowAnonymous]
-        //[ValidateAntiForgeryToken]
+        [ValidateAntiForgeryToken]
         [HttpPost("login")]
         [ProducesResponseType<LoginResponseBase>(StatusCodes.Status200OK)]
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]

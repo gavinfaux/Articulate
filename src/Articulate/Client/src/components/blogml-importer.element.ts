@@ -3,6 +3,7 @@ import { UUIButtonState } from "@umbraco-cms/backoffice/external/uui";
 import { UmbLitElement } from "@umbraco-cms/backoffice/lit-element";
 import { UMB_MODAL_MANAGER_CONTEXT, UmbModalManagerContext } from "@umbraco-cms/backoffice/modal";
 import { UmbTextStyles } from "@umbraco-cms/backoffice/style";
+import { UmbValidationContext } from "@umbraco-cms/backoffice/validation";
 import { keyed } from "lit-html/directives/keyed.js";
 import { BlogMl } from "../api/sdk.gen";
 import type { ImportModel, ImportResponse, PostArticulateBlogmlImportFileResponse } from "../api/types.gen";
@@ -18,7 +19,6 @@ import {
   renderErrorMessage,
   renderHeaderActions,
 } from "../utils/template-utils";
-import { UmbValidationContext } from "@umbraco-cms/backoffice/validation";
 
 /**
  * A LitElement-based component for importing blog content from a BlogML file.
@@ -446,6 +446,13 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
                   </uui-form-layout-item>
                 </uui-form-validation-message>
                 <div class="form-actions">
+                  ${this._postCount !== undefined && this._postCount > 0
+                    ? html`
+                        <uui-tag look="secondary" color="positive" style="margin-right: 1em;">
+                          ${this._postCount} posts in uploaded file.
+                        </uui-tag>
+                      `
+                    : ""}
                   <uui-button type="submit" look="primary" .state=${this._formState} color="primary" label="Submit">
                     Submit
                   </uui-button>
@@ -457,19 +464,7 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
             `,
           )}
         </uui-form>
-        ${this._formState === "waiting"
-          ? html`
-              <div class="container">
-                <uui-loader-circle style="color: #006eff; font-size: 2em"></uui-loader-circle>
-                ${this._postCount !== undefined && this._postCount > 0
-                  ? html`
-                <uui-tag look="secondary" color="positive">${this._postCount} posts in uploaded file.</uui-tag>
-              </div>
-            `
-                  : ""}
-              </div>
-            `
-          : ""}
+
         ${this._formError ? renderErrorMessage(this._formError) : ""}
       </uui-box>
     `;

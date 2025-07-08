@@ -5,12 +5,12 @@ namespace Articulate.Models
         public int ArticulateNodeId { get; set; }
         public string PostUrl { get; set; }
 
-        public string IsAuthUrl { get; set; }
+        public string AuthSignInUrl { get; set; }
 
-        public string DoAuthUrl { get; set; }
+        public string AuthSignOutUrl { get; set; }
 
-        public string MainJsPath { get; set; }
+        public string AuthCsrfTokenUrl { get; set; }
 
-        public string MainCssPath { get; set; }
+        public string AuthStatusUrl { get; set; }
     }
 }

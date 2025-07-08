@@ -1,5 +1,9 @@
+using System.Collections.Generic;
+using System.Linq;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -59,20 +63,6 @@ builder.Services.Configure<FormOptions>(x =>
     x.MultipartHeadersLengthLimit = int.MaxValue;
 });
 
-if (builder.Environment.IsDevelopment())
-{
-    // Only required for local Vite development server
-    builder.Services.AddCors(options =>
-    {
-        options.AddPolicy("AllowAll", builder =>
-        {
-            builder.AllowAnyOrigin()
-                .AllowAnyHeader()
-                .AllowAnyMethod();
-        });
-    });
-}
-
 // Only required for Razor page support in Pages folder (just a Debug helper at present)
 // builder.Services.AddRazorPages();
 
@@ -83,8 +73,6 @@ await app.BootUmbracoAsync();
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
-    // Only required for local Vite development server
-    app.UseCors("AllowAll");
 }
 
 app.UseUmbraco()
@@ -95,7 +83,7 @@ app.UseUmbraco()
     })
     .WithEndpoints(u =>
     {
-        // // NOTE: Only enable this in development for debugging route issues
+        // // NOTE: debugging routes
         //if (app.Environment.IsDevelopment())
         //{
         //    u.EndpointRouteBuilder.MapGet("/debug/routes", (IEnumerable<EndpointDataSource> endpointSources) =>

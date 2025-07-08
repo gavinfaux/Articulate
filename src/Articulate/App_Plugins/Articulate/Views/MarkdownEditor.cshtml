@@ -1,58 +1,51 @@
 @addTagHelper *, Smidge
 @inject Smidge.SmidgeHelper SmidgeHelper
-@using Microsoft.AspNetCore.Antiforgery
-@inject IAntiforgery Antiforgery
 @model global::Articulate.Models.MarkdownEditorInitModel
-
 @{
     Layout = null;
     SmidgeHelper
-    .RequiresJs("~/App_Plugins/Articulate/Assets/md-editor.js")
-    .RequiresCss("~/App_Plugins/Articulate/Assets/md-editor.css");
+        .RequiresCss("~/App_Plugins/Articulate/Assets/md-editor.css");
 }
+
+@* TODO:Sort out the layout / CSS / JS, effects and login stuff *@ 
+@* https://kjac.dev/posts/using-umb_ucontext-with-umbraco-14-plus/ *@
+@* set Claims and SignInAsync etc https://github.com/kjac/UmbracoCustomAuth *@
+
+
 <!doctype html>
 <html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Articulate - Create New Post</title>
-
     <link rel="preconnect" href="https://cdn.jsdelivr.ne">
     <link rel="preconnect" href="https://cdn.jsdelivr.ne" crossorigin>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@@picocss/pico@@2/css/pico.min.css">
-
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tiny-markdown-editor@@0.2.0/dist/tiny-mde.min.css">
-
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tiny-markdown-editor@0.2.0/dist/tiny-mde.min.css" integrity="sha256-MZ1zddO2Et4HONRzfJKJ1vC/Ecj9JIa3MI2GYCX2l5Y=" crossorigin="anonymous">
     @* Smidge CSS Bundle (Only a single file for now) *@
     @await SmidgeHelper.CssHereAsync()
-
-    <script src="https://cdn.jsdelivr.net/npm/alpinejs@@3.14.9/dist/cdn.min.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/tiny-markdown-editor@@0.2.0/lib/index.min.js" defer></script>
-
-    @* Smidge JS Bundle (Only a single file for now) *@
-    @await SmidgeHelper.JsHereAsync()
-
+    <script defer src="https://cdn.jsdelivr.net/npm/tiny-markdown-editor@0.2.0/dist/tiny-mde.min.js" integrity="sha256-3RX+4eonZtpTV5BuscEas9t44jhaxeOaQ9T/tP8SeC0=" crossorigin="anonymous"></script>
+    @* We can't use Smidge here?  defer is needed and can't find a way to pass a 'defer'? *@
+    <script defer src="~/App_Plugins/Articulate/assets/md-editor.js"></script>
+    <script defer src="https://unpkg.com/alpinejs/dist/cdn.min.js"></script>
     @* TODO: Should camera upload capture user (front facing) or environment (outward facing) *@
-
     <style>
         [x-cloak] {
             display: none !important;
         }
     </style>
 </head>
-<body>
-    <main class="container" x-data="app" x-init="init()" x-cloak>
-        <header>
-            <h1 x-text="caption"></h1>
-            <progress x-show="step === 'loading' || step === 'submitting'"></progress>
-        </header>
+<body x-data="app" x-init="init()" x-cloak data-articulate-node-id="@Model.ArticulateNodeId" data-auth-status-url="@Model.AuthStatusUrl" data-auth-signin-url="@Model.AuthSignInUrl" data-auth-csrf-url="@Model.AuthCsrfTokenUrl" data-auth-signout-url="@Model.AuthSignOutUrl" data-post-url="@Model.PostUrl">
+    <header>
+        <h1 x-text="caption"></h1>
+        <progress x-show="step === 'loading' || submitting"></progress>
+    </header>
 
+    <main class="container">
         <!-- Login View -->
         <article x-show="step === 'login'">
             <form @@submit.prevent="handleLogin">
@@ -67,39 +60,25 @@
 
         <!-- Editor View -->
         <article x-show="step === 'editor'">
-            <input x-ref="imageUpload" type="file" accept="image/jpeg,image/png,image/gif" hidden multiple />
-            <input x-ref="cameraUpload" type="file" accept="image/jpeg,image/png,image/gif" capture="environment" hidden />
+            <input x-ref="imageUpload" type="file" accept="image/*" hidden @@change="handleFileSelect($event.target.files)" />
+            <input x-ref="cameraUpload" type="file" accept="image/*" capture="environment" hidden @@change="handleFileSelect($event.target.files)" />
             <label for="title">Title</label>
             <input x-model="post.title" type="text" id="title" placeholder="Your post title..." required />
-
-            <textarea x-ref="editor" id="editor"></textarea>
-            <footer style="display: flex; justify-content: space-between; align-items: center">
-                <div>
-                    <button class="secondary material-icons" @@click ="triggerImageUpload()" title="Upload Image">photo</button>
-                    <button class="secondary material-icons" @@click ="triggerCamera()" title="Use Camera">photo_camera</button>
-                </div>
-                <button class="material-icons" @@click ="step = 'optional'">forward</button>
-            </footer>
+            <div class="editor-container" style="height: 500px;">
+            <textarea x-ref="editor" id="editor" placeholder="## Your post content..."></textarea>
+            </div>
         </article>
 
         <!-- Optional View -->
         <article x-show="step === 'optional'">
             <label for="tags">Tags (comma separated)</label>
             <input x-model="post.tags" type="text" id="tags" placeholder="e.g. csharp, umbraco, .net" />
-
             <label for="categories">Categories (comma separated)</label>
             <input x-model="post.categories" type="text" id="categories" placeholder="e.g. Tech, Tutorials" />
-
             <label for="excerpt">Excerpt</label>
             <textarea x-model="post.excerpt" id="excerpt" rows="3"></textarea>
-
             <label for="slug">Slug</label>
             <input x-model="post.slug" type="text" id="slug" placeholder="e.g. my-awesome-post" />
-
-            <footer>
-                <button style="transform: rotate(180deg);" class="secondary material-icons" @@click ="step = 'editor'">forward</button>
-                <button @@click ="handlePublish" :aria-busy="submitting">Post It!</button>
-            </footer>
         </article>
 
         <!-- Success View -->
@@ -109,5 +88,18 @@
             <a :href="successUrl" role="button">View Your Post</a>
         </article>
     </main>
+
+    <!-- Global Footer for Actions -->
+    <footer>
+        <div class="footer-left">
+            <button x-show="step === 'editor'" class="secondary material-icons" @@click="triggerImageUpload()" title="Upload Image">photo</button>
+            <button x-show="step === 'editor'" class="secondary material-icons" @@click="triggerCamera()" title="Use Camera">photo_camera</button>
+        </div>
+        <div class="footer-right">
+            <button x-show="step === 'optional'" style="transform: rotate(180deg);" class="secondary material-icons" @@click="step = 'editor'" title="Back">forward</button>
+            <button x-show="step === 'editor' && post.title" class="material-icons" @@click="step = 'optional'" title="Next">forward</button>
+            <button x-show="step === 'optional'" @@click="handlePublish" :aria-busy="submitting" class="post-button">Post It!</button>
+        </div>
+    </footer>
 </body>
 </html>

@@ -74,13 +74,13 @@
 
 
   <ItemGroup>
-    <BackOfficeClientAssetsInputs Include="Client/BackOffice/**" Exclude="$(DefaultItemExcludes)" />
+    <BackOfficeClientAssetsInputs Include="Client/**" Exclude="$(DefaultItemExcludes)" />
   </ItemGroup>
 
   <!-- Build backoffice client-->
   <Target Name="RestoreBackOfficeClient" BeforeTargets="BuildBackOfficeClient">
     <Message Importance="high" Text="Restoring BackOffice Client NPM packages..." />
-    <Exec Command="npm i" WorkingDirectory="Client/BackOffice" />
+    <Exec Command="npm i" WorkingDirectory="Client" />
   </Target>
 
   <Target Name="BuildBackOfficeClient" BeforeTargets="CoreBuild" Inputs="@(BackOfficeClientAssetsInputs)" Outputs="$(IntermediateOutputPath)client.build.timestamp">
@@ -88,10 +88,10 @@
     <Message Importance="High" Condition="'$(IsPacking)' == 'true'" Text="[Articulate] Executing BackOffice Client NPM production release build script..." />
     <Message Importance="Normal" Condition="'$(IsPacking)' != 'true'" Text="[Articulate] Executing BackOffice Client NPM development build script..." />
     <!-- Run different npm commands based on IsPacking -->
-    <Exec Condition="'$(IsPacking)' == 'true'" Command="npm run build:release" WorkingDirectory="Client/BackOffice" ContinueOnError="true">
+    <Exec Condition="'$(IsPacking)' == 'true'" Command="npm run build:release" WorkingDirectory="Client" ContinueOnError="true">
       <Output TaskParameter="ExitCode" PropertyName="ClientBuildExitCode" />
     </Exec>
-    <Exec Condition="'$(IsPacking)' != 'true'" Command="npm run build" WorkingDirectory="Client/BackOffice" ContinueOnError="true">
+    <Exec Condition="'$(IsPacking)' != 'true'" Command="npm run build" WorkingDirectory="Client" ContinueOnError="true">
       <Output TaskParameter="ExitCode" PropertyName="ClientBuildExitCode" />
     </Exec>
     <!-- Issue a WARNING on failure during a normal build -->
