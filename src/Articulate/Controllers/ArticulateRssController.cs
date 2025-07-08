@@ -55,13 +55,10 @@ namespace Articulate.Controllers
 
         public IActionResult Index(int? maxItems)
         {
-            if (!maxItems.HasValue)
-            {
-                maxItems = 25;
-            }
+            if (!maxItems.HasValue) maxItems = 25;
 
             var listNodes = CurrentPage.Children
-                .Where(x => x.ContentType.Alias.InvariantEquals(ArticulateConstants.Articulate))
+                .Where(x => x.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateArchive))
                 .ToArray();
             if (listNodes.Length == 0)
             {
@@ -106,20 +103,14 @@ namespace Articulate.Controllers
         public IActionResult Author(int authorId, int? maxItems)
         {
             var author = _umbracoHelper.Content(authorId);
-            if (author == null)
-            {
-                throw new ArgumentNullException(nameof(author));
-            }
+            if (author == null) throw new ArgumentNullException(nameof(authorId));
 
-            if (!maxItems.HasValue)
-            {
-                maxItems = 25;
-            }
+            if (!maxItems.HasValue) maxItems = 25;
 
             //create a master model
             var masterModel = new MasterModel(author, _publishedValueFallback, _variationContextAccessor);
 
-            var listNodes = masterModel.RootBlogNode.ChildrenOfType(ArticulateConstants.ArticulateArchive).ToArray();
+            var listNodes = masterModel.RootBlogNode.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive).ToArray();
 
             var authorContenet = _umbracoHelper.GetContentByAuthor(
                 listNodes,
@@ -135,32 +126,20 @@ namespace Articulate.Controllers
 
         public IActionResult Categories(string tag, int? maxItems)
         {
-            if (tag == null)
-            {
-                throw new ArgumentNullException(nameof(tag));
-            }
+            if (tag == null) throw new ArgumentNullException(nameof(tag));
 
-            if (!maxItems.HasValue)
-            {
-                maxItems = 25;
-            }
+            if (!maxItems.HasValue) maxItems = 25;
 
-            return RenderTagsOrCategoriesRss(ArticulateConstants.ArticulateCategories, "categories", maxItems.Value, tag);
+            return RenderTagsOrCategoriesRss(ArticulateConstants.DataType.ArticulateCategories, "categories", maxItems.Value, tag);
         }
 
         public IActionResult Tags(string tag, int? maxItems)
         {
-            if (tag == null)
-            {
-                throw new ArgumentNullException(nameof(tag));
-            }
+            if (tag == null) throw new ArgumentNullException(nameof(tag));
 
-            if (!maxItems.HasValue)
-            {
-                maxItems = 25;
-            }
+            if (!maxItems.HasValue) maxItems = 25;
 
-            return RenderTagsOrCategoriesRss(ArticulateConstants.ArticulateTags, "tags", maxItems.Value, tag);
+            return RenderTagsOrCategoriesRss(ArticulateConstants.DataType.ArticulateTags, "tags", maxItems.Value, tag);
         }
 
         public IActionResult RenderTagsOrCategoriesRss(string tagGroup, string baseUrl, int maxItems, string tag)

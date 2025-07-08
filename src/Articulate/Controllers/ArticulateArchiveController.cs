@@ -1,9 +1,10 @@
-
+using System;
 using System.Collections.Generic;
 using Articulate.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Logging;
+using Umbraco.Cms.Core.Media;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.Routing;
@@ -37,13 +38,15 @@ namespace Articulate.Controllers
         /// <summary>
         /// Declare new Index action with optional page number
         /// </summary>
+        /// <param name="model"></param>
         /// <param name="p"></param>
         /// <returns></returns>
         public IActionResult Index(int? p) => RenderView(new ContentModel(CurrentPage), p);
 
-        /// <summary>
+        // <summary>
         /// Override and declare a NonAction so that we get routed to the Index action with the optional page route
         /// </summary>
+        /// <param name="model"></param>
         /// <returns></returns>
         [NonAction]
         public override IActionResult Index() => Index(0);
@@ -73,7 +76,7 @@ namespace Articulate.Controllers
                 PublishedValueFallback,
                 VariationContextAccessor);
 
-            return GetPagedListView(archive, archive, posts, count, null);
+            return GetPagedListView(archive, archive, posts, count, null);          
         }
     }
 }

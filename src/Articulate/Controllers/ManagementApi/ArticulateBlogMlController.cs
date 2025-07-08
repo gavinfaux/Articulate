@@ -24,7 +24,7 @@ namespace Articulate.Controllers.ManagementApi
     [Authorize(Policy = AuthorizationPolicies.SectionAccessSettings)]
     [VersionedApiBackOfficeRoute("articulate/blogml")]
     [ApiExplorerSettings(GroupName = "BlogML")]
-    [MapToApi(ArticulateConstants.ApiName)]
+    [MapToApi(ArticulateConstants.Name.ArticulateManagementApi)]
     public class ArticulateBlogMlController(
         BlogMlExporter blogMlExporter,
         BlogMlImporter blogMlImporter,

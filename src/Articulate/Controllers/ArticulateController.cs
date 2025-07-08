@@ -1,10 +1,10 @@
-
 using System;
 using System.Linq;
 using Articulate.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Logging;
+using Umbraco.Cms.Core.Media;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.Routing;
@@ -38,6 +38,7 @@ namespace Articulate.Controllers
         /// <summary>
         /// Declare new Index action with optional page number
         /// </summary>
+        /// <param name="model"></param>
         /// <param name="p"></param>
         /// <returns></returns>
         public IActionResult Index(int? p) => RenderView(new ContentModel(CurrentPage), p);
@@ -45,13 +46,14 @@ namespace Articulate.Controllers
         /// <summary>
         /// Override and declare a NonAction so that we get routed to the Index action with the optional page route
         /// </summary>
+        /// <param name="model"></param>
         /// <returns></returns>
         [NonAction]
         public override IActionResult Index() => Index(0);
 
         private IActionResult RenderView(ContentModel model, int? p = null)
         {
-            var listNodes = model.Content.ChildrenOfType(ArticulateConstants.ArticulateArchive).ToArray();
+            var listNodes = model.Content.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive).ToArray();
             if (listNodes.Length == 0)
             {
                 throw new InvalidOperationException("An ArticulateArchive document must exist under the root Articulate document");

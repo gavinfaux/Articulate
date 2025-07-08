@@ -28,7 +28,7 @@ namespace Articulate.Controllers
         }
 
         [HttpGet]
-        public IActionResult NewPost()
+        public ViewResult NewPost()
         {
 
             // Get all API descriptions from the provider

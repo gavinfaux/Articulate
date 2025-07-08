@@ -1,5 +1,5 @@
-using Umbraco.Cms.Core.IO;
 using Umbraco.Cms.Core.PropertyEditors;
+using Umbraco.Cms.Core.IO;
 
 namespace Articulate.PropertyEditors
 {
@@ -8,13 +8,16 @@ namespace Articulate.PropertyEditors
     {
         private readonly IIOHelper _ioHelper;
 
-        public ThemePickerPropertyEditor(IDataValueEditorFactory dataValueEditorFactory, IIOHelper ioHelper)
+        public ThemePickerPropertyEditor(IDataValueEditorFactory dataValueEditorFactory, IIOHelper ioHelper) 
             : base(dataValueEditorFactory)
         {
             _ioHelper = ioHelper;
         }
 
-        protected override IConfigurationEditor CreateConfigurationEditor() => new ThemePickerConfigurationEditor(_ioHelper);
+        protected override IConfigurationEditor CreateConfigurationEditor()
+        {
+            return new ThemePickerConfigurationEditor(_ioHelper);
+        }
     }
 
     public class ThemePickerConfigurationEditor : ConfigurationEditor

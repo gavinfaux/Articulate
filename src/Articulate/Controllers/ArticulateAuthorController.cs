@@ -1,4 +1,3 @@
-
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,6 +5,7 @@ using Articulate.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Logging;
+using Umbraco.Cms.Core.Media;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.Routing;
 using Umbraco.Cms.Core.Web;
@@ -36,6 +36,7 @@ namespace Articulate.Controllers
         /// <summary>
         /// Override and declare a NonAction so that we get routed to the Index action with the optional page route
         /// </summary>
+        /// <param name="model"></param>
         /// <returns></returns>
         [NonAction]
         public override IActionResult Index() => Index(0);
@@ -45,7 +46,7 @@ namespace Articulate.Controllers
             //create a master model
             var masterModel = new MasterModel(CurrentPage, PublishedValueFallback, VariationContextAccessor);
 
-            var listNodes = masterModel.RootBlogNode.ChildrenOfType(ArticulateConstants.ArticulateArchive).ToArray();
+            var listNodes = masterModel.RootBlogNode.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive).ToArray();
             if (listNodes.Length == 0)
             {
                 throw new InvalidOperationException("An ArticulateArchive document must exist under the root Articulate document");
@@ -57,7 +58,7 @@ namespace Articulate.Controllers
             {
                 return new RedirectToUmbracoPageResult(
                     CurrentPage.Parent,
-                    PublishedUrlProvider,
+                    PublishedUrlProvider,                    
                     UmbracoContextAccessor);
             }
 
@@ -75,9 +76,10 @@ namespace Articulate.Controllers
                 totalPosts,
                 PublishedValueFallback,
                 VariationContextAccessor);
-
+            
             return View(PathHelper.GetThemeViewPath(author, "Author"), author);
         }
 
+        
     }
 }

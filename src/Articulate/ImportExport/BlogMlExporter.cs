@@ -71,12 +71,12 @@ namespace Articulate.ImportExport
             {
                 var root = _contentService.GetById(blogRootNode) ?? throw new InvalidOperationException("No node found with id " + blogRootNode);
 
-                if (!root.ContentType.Alias.InvariantEquals(ArticulateConstants.Articulate))
+                if (!root.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.Articulate))
                 {
                     throw new InvalidOperationException($"The node with id {blogRootNode} is not an Articulate root node");
                 }
 
-                var postType = _contentTypeService.Get(ArticulateConstants.ArticulateRichText) ?? throw new InvalidOperationException("Articulate is not installed properly, the 'ArticulateRichText' doc type could not be found");
+                var postType = _contentTypeService.Get(ArticulateConstants.ContentType.ArticulateRichText) ?? throw new InvalidOperationException("Articulate is not installed properly, the 'ArticulateRichText' doc type could not be found");
                 var categoryDataType = _dataTypeService.GetDataType("Articulate Categories") ?? throw new InvalidOperationException("No Data Type named 'Articulate Categories' found");
                 var categoryConfiguration = categoryDataType.ConfigurationAs<TagConfiguration>();
                 var categoryGroup = categoryConfiguration.Group;
@@ -93,7 +93,7 @@ namespace Articulate.ImportExport
                     Subtitle = new BlogMLTextConstruct(root.GetValue<string>("blogDescription"))
                 };
 
-                var authorsContentType = _contentTypeService.Get(ArticulateConstants.ArticulateAuthors)
+                var authorsContentType = _contentTypeService.Get(ArticulateConstants.ContentType.ArticulateAuthors)
                     ?? throw new InvalidOperationException("Articulate is not installed properly, the 'ArticulateAuthors' doc type could not be found");
 
                 var authorsNodes = _contentService.GetPagedDescendants(root.Id, 0, int.MaxValue, out var total,
@@ -107,7 +107,7 @@ namespace Articulate.ImportExport
 
                 AddBlogCategories(blogMlDoc, categoryGroup);
 
-                var archiveContentType = _contentTypeService.Get(ArticulateConstants.ArticulateArchive)
+                var archiveContentType = _contentTypeService.Get(ArticulateConstants.ContentType.ArticulateArchive)
                     ?? throw new InvalidOperationException("Articulate is not installed properly, the 'ArticulateArchive' doc type could not be found");
 
                 var archiveNodes = _contentService.GetPagedDescendants(root.Id, 0, int.MaxValue, out total,
@@ -192,12 +192,12 @@ namespace Articulate.ImportExport
                     }
 
                     string content = "";
-                    if (child.ContentType.Alias.InvariantEquals(ArticulateConstants.ArticulateRichText))
+                    if (child.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateRichText))
                     {
                         //TODO: this would also need to export all macros
                         content = child.GetValue<string>("richText");
                     }
-                    else if (child.ContentType.Alias.InvariantEquals(ArticulateConstants.ArticulateMarkdown))
+                    else if (child.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateMarkdown))
                     {
                         content = MarkdownHelper.ToHtml(child.GetValue<string>("markdown"));
                     }

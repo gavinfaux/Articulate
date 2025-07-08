@@ -1,5 +1,4 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <TargetFrameworks>net9.0</TargetFrameworks>
     <OutputType>Library</OutputType>
@@ -10,7 +9,6 @@
     <IsPacking Condition="'$(IsPacking)' == ''">false</IsPacking>
     <IsPacking Condition="'$(GeneratePackageOnBuild)' == 'true'">true</IsPacking>    
   </PropertyGroup>
-
 
   <!-- NuGet package metadata -->
   <PropertyGroup>
@@ -29,30 +27,29 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
-
+  
   <!-- NoWarn for missing XML comments on public API-->
   <PropertyGroup>
     <NoWarn>$(NoWarn);1591</NoWarn>
   </PropertyGroup>
 
+<!--
+  Nuget - Dotnet SourceLink & Symbol Package
+  https://github.com/dotnet/sourcelink#using-source-link-in-net-projects
+  https://devblogs.microsoft.com/dotnet/producing-packages-with-source-link/
 
-  <!--
-    Nuget - Dotnet SourceLink & Symbol Package
-    https://github.com/dotnet/sourcelink#using-source-link-in-net-projects
-    https://devblogs.microsoft.com/dotnet/producing-packages-with-source-link/
-
-    Newer recommended way from Claire Novotny - Nuget PM
-    Use package Dotnet.ReproducibleBuilds
-    This sets the same properties as above URLs and a few additional build properties
-    ie less work - just include this package & be done...
-    https://github.com/dotnet/reproducible-builds
+  Newer recommended way from Claire Novotny - Nuget PM
+  Use package Dotnet.ReproducibleBuilds
+  This sets the same properties as above URLs and a few additional build properties
+  ie less work - just include this package & be done...
+  https://github.com/dotnet/reproducible-builds  
   -->
   <ItemGroup>
     <PackageReference Include="DotNet.ReproducibleBuilds" Version="1.2.25">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
-  </ItemGroup>
+  </ItemGroup>  
 
   <!-- Framework References-->
   <ItemGroup>
@@ -71,22 +68,22 @@
     <PackageReference Include="System.ServiceModel.Syndication" Version="9.0.6" />
     <PackageReference Include="WilderMinds.MetaWeblog" Version="5.1.3" />
   </ItemGroup>
-
-
+  
+  <!-- Build backoffice client-->
   <ItemGroup>
     <BackOfficeClientAssetsInputs Include="Client/**" Exclude="$(DefaultItemExcludes)" />
   </ItemGroup>
 
-  <!-- Build backoffice client-->
   <Target Name="RestoreBackOfficeClient" BeforeTargets="BuildBackOfficeClient">
     <Message Importance="high" Text="Restoring BackOffice Client NPM packages..." />
     <Exec Command="npm i" WorkingDirectory="Client" />
   </Target>
-
+      
   <Target Name="BuildBackOfficeClient" BeforeTargets="CoreBuild" Inputs="@(BackOfficeClientAssetsInputs)" Outputs="$(IntermediateOutputPath)client.build.timestamp">
     <!-- Show message before running the build -->
     <Message Importance="High" Condition="'$(IsPacking)' == 'true'" Text="[Articulate] Executing BackOffice Client NPM production release build script..." />
     <Message Importance="Normal" Condition="'$(IsPacking)' != 'true'" Text="[Articulate] Executing BackOffice Client NPM development build script..." />
+
     <!-- Run different npm commands based on IsPacking -->
     <Exec Condition="'$(IsPacking)' == 'true'" Command="npm run build:release" WorkingDirectory="Client" ContinueOnError="true">
       <Output TaskParameter="ExitCode" PropertyName="ClientBuildExitCode" />
@@ -94,10 +91,13 @@
     <Exec Condition="'$(IsPacking)' != 'true'" Command="npm run build" WorkingDirectory="Client" ContinueOnError="true">
       <Output TaskParameter="ExitCode" PropertyName="ClientBuildExitCode" />
     </Exec>
+
     <!-- Issue a WARNING on failure during a normal build -->
     <Warning Condition="'$(IsPacking)' != 'true' AND '$(ClientBuildExitCode)' != '0'" Text="[Articulate] The BackOffice client-side build (npm run build) failed." />
+
     <!-- Issue an ERROR on failure during a pack -->
     <Error Condition="'$(IsPacking)' == 'true' AND '$(ClientBuildExitCode)' != '0'" Text="[Articulate] The BackOffice client-side build (npm run build:release) FAILED. The package cannot be created." />
+
     <Touch Files="$(IntermediateOutputPath)client.build.timestamp" AlwaysCreate="true" Condition="'$(ClientBuildExitCode)' == '0'" />
   </Target>
 
@@ -110,25 +110,25 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Remove="Packaging\package.zip" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Compile Update="Controllers\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
   </ItemGroup>
-
+  
   <ItemGroup>
     <EmbeddedResource Update="Controllers\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
-
+  
   <ItemGroup>
+    <None Remove="Packaging\package.zip" />
+  </ItemGroup>
+
+    <ItemGroup>
     <EmbeddedResource Include="Packaging\author.jpg" />
     <EmbeddedResource Include="Packaging\banner.jpg" />
     <EmbeddedResource Include="Packaging\logo.png" />
@@ -139,15 +139,23 @@
 
   <ItemGroup>
     <None Include="..\..\README.md">
-      <Pack>True</Pack>
+      <Pack>true</Pack>
       <PackagePath>\</PackagePath>
     </None>
   </ItemGroup>
+  
   <ItemGroup>
     <None Include="..\..\assets\Icon-transparent.png">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
     </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="Client\node_modules\**" />
+    <Content Remove="Client\node_modules\**" />
+    <EmbeddedResource Remove="Client\node_modules\**" />
+    <None Remove="Client\node_modules\**" />
   </ItemGroup>
 
 </Project>

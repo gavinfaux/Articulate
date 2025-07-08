@@ -28,12 +28,17 @@ namespace Articulate.Models
             {
                 _maxCount = this.Max(x => x.PostCount);
             }
-
             return Convert.ToInt32(Math.Ceiling(postsByTag.PostCount * maxWeight / _maxCount.Value));
         }
 
-        public IEnumerator<PostsByTagModel> GetEnumerator() => _tags.GetEnumerator();
+        public IEnumerator<PostsByTagModel> GetEnumerator()
+        {
+            return _tags.GetEnumerator();
+        }
 
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
     }
 }

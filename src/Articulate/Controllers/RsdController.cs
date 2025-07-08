@@ -64,10 +64,7 @@ namespace Articulate.Controllers
     {
         private readonly XDocument _xDocument;
 
-        public XmlResult(XDocument xDocument)
-        {
-            _xDocument = xDocument;
-        }
+        public XmlResult(XDocument xDocument) => _xDocument = xDocument;
 
         /// <summary>
         /// Serialises the object that was passed into the constructor to XML and writes the corresponding XML to the result stream.

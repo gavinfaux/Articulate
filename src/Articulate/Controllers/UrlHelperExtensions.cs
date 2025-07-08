@@ -1,7 +1,7 @@
 using System.Linq;
 using System.Text;
-using System.Web;
 using Microsoft.AspNetCore.Mvc;
+using System.Web;
 
 namespace Articulate.Controllers
 {
@@ -16,7 +16,7 @@ namespace Articulate.Controllers
             //and normalises paths - / is used consistently between trees and editors
             basePath = basePath.TrimStart('~');
             virtualPath = virtualPath.TrimStart('~');
-            virtualPath = virtualPath[basePath.Length..];
+            virtualPath = virtualPath.Substring(basePath.Length);
             virtualPath = virtualPath.Replace('\\', '/');
 
             //-1 is the default root id for trees
@@ -34,7 +34,6 @@ namespace Articulate.Controllers
                     sb.Append(path);
                 }
             }
-
             return sb.ToString().TrimEnd(',');
         }
     }

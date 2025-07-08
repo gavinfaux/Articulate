@@ -15,7 +15,7 @@ namespace Articulate.Components
 
     public sealed class ContentCacheRefresherHandler : INotificationHandler<ContentCacheRefresherNotification>
     {
-
+        
         private readonly IUmbracoContextAccessor _umbracoContextAccessor;
         private readonly AppCaches _appCaches;
         private readonly IScopeProvider _scopeProvider;
@@ -68,7 +68,7 @@ namespace Articulate.Components
                         return;
                     }
 
-                    if (content.ContentType.Alias.InvariantEquals(ArticulateConstants.Articulate))
+                    if (content.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.Articulate))
                     {
                         //ensure routes are rebuilt
                         _appCaches.RequestCache.GetCacheItem(ArticulateConstants.RefreshRoutesToken, () => true);
@@ -90,7 +90,7 @@ namespace Articulate.Components
                 var item = umbracoContext.Content.GetById(id);
 
                 // if it's directly related to an articulate node
-                if (item != null && item.ContentType.Alias.InvariantEquals(ArticulateConstants.Articulate))
+                if (item != null && item.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.Articulate))
                 {
                     //ensure routes are rebuilt
                     _appCaches.RequestCache.GetCacheItem(ArticulateConstants.RefreshRoutesToken, () => true);
@@ -113,7 +113,7 @@ namespace Articulate.Components
                     }
                 }
 
-                var articulateContentType = _publishedContentTypeCache.Get(PublishedItemType.Content, ArticulateConstants.Articulate);
+                var articulateContentType = _publishedContentTypeCache.Get(PublishedItemType.Content, ArticulateConstants.ContentType.Articulate);
                 if (articulateContentType != null)
                 {
                     var articulateNodes = _documentCacheService.GetByContentType(articulateContentType);

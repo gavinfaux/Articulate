@@ -85,8 +85,8 @@ namespace Articulate.ImportExport
             _articulateTempFileSystem = articulateTempFileSystem;
             _articulateRootMediaFolder = new Lazy<IMedia>(() =>
             {
-                var root = _mediaService.GetRootMedia().FirstOrDefault(x => x.Name == ArticulateConstants.Articulate && x.ContentType.Alias.InvariantEquals(Constants.Conventions.MediaTypes.Folder));
-                return root ??= _mediaService.CreateMediaWithIdentity(ArticulateConstants.Articulate, Constants.System.Root, Constants.Conventions.MediaTypes.Folder);
+                var root = _mediaService.GetRootMedia().FirstOrDefault(x => x.Name == ArticulateConstants.Name.Articulate && x.ContentType.Alias.InvariantEquals(Constants.Conventions.MediaTypes.Folder));
+                return root ??= _mediaService.CreateMediaWithIdentity(ArticulateConstants.Name.Articulate, Constants.System.Root, Constants.Conventions.MediaTypes.Folder);
             });
         }
 
@@ -121,7 +121,7 @@ namespace Articulate.ImportExport
             var root = _contentService.GetById(blogRootNode)
                        ?? throw new InvalidOperationException("No node found with id " + blogRootNode);
 
-            if (!root.ContentType.Alias.InvariantEquals(ArticulateConstants.Articulate))
+            if (!root.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.Articulate))
             {
                 throw new InvalidOperationException("The node with id " + blogRootNode + " is not an Articulate root node");
             }
@@ -190,10 +190,10 @@ namespace Articulate.ImportExport
         {
             var result = new Dictionary<string, string>();
 
-            var authorType = _contentTypeService.Get(ArticulateConstants.ArticulateAuthor)
+            var authorType = _contentTypeService.Get(ArticulateConstants.ContentType.ArticulateAuthor)
                 ?? throw new InvalidOperationException("Articulate is not installed properly, the 'ArticulateAuthor' doc type could not be found");
 
-            var authorsType = _contentTypeService.Get(ArticulateConstants.ArticulateAuthors)
+            var authorsType = _contentTypeService.Get(ArticulateConstants.ContentType.ArticulateAuthors)
                 ?? throw new InvalidOperationException("Articulate is not installed properly, the 'ArticulateAuthors' doc type could not be found");
 
             // get the authors container node for this articulate root
@@ -208,7 +208,7 @@ namespace Articulate.ImportExport
             if (authorsNode == null)
             {
                 //create the authors node
-                authorsNode = _contentService.CreateWithInvariantOrDefaultCultureName(ArticulateConstants.AuthorsDefaultName, rootNode, authorsType, _localizationService);
+                authorsNode = _contentService.CreateWithInvariantOrDefaultCultureName(ArticulateConstants.Name.AuthorsDocument, rootNode, authorsType, _localizationService);
 
                 _contentService.Save(authorsNode, userId: userId);
                 _contentService.Publish(authorsNode, ["*"], userId: userId);
@@ -270,10 +270,10 @@ namespace Articulate.ImportExport
         {
             var result = new List<IContent>();
 
-            var postType = _contentTypeService.Get(ArticulateConstants.ArticulateRichText)
+            var postType = _contentTypeService.Get(ArticulateConstants.ContentType.ArticulateRichText)
                 ?? throw new InvalidOperationException("Articulate is not installed properly, the 'ArticulateRichText' doc type could not be found");
 
-            var archiveDocType = _contentTypeService.Get(ArticulateConstants.ArticulateArchive);
+            var archiveDocType = _contentTypeService.Get(ArticulateConstants.ContentType.ArticulateArchive);
 
             // get the archive container node for this articulate root
             var archive = _contentService.GetPagedOfType(
@@ -288,7 +288,7 @@ namespace Articulate.ImportExport
             if (archiveNode == null)
             {
                 //create the authors node
-                archiveNode = _contentService.CreateWithInvariantOrDefaultCultureName(ArticulateConstants.ArticlesDefaultName, rootNode, archiveDocType, _localizationService);
+                archiveNode = _contentService.CreateWithInvariantOrDefaultCultureName(ArticulateConstants.Name.AuthorsDocument, rootNode, archiveDocType, _localizationService);
 
                 _contentService.Save(archiveNode);
             }

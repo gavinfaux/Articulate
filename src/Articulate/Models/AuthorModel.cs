@@ -1,15 +1,18 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Umbraco.Cms.Core.Media;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Models.PublishedContent;
+using Umbraco.Cms.Core.PropertyEditors.ValueConverters;
 using Umbraco.Extensions;
+
 namespace Articulate.Models
 {
     public class AuthorModel : ListModel, IImageModel
-    {
+    {        
         private DateTime? _lastPostDate;
-
+        
         public AuthorModel(
             IPublishedContent content,
             IEnumerable<IPublishedContent> listItems,
@@ -20,7 +23,7 @@ namespace Articulate.Models
             : base(content, pager, listItems, publishedValueFallback, variationContextAccessor)
         {
             PostCount = postCount;
-        }
+        }        
 
         public string Bio => this.Value<string>("authorBio");
 
@@ -28,7 +31,7 @@ namespace Articulate.Models
 
         private MediaWithCrops _image;
         public MediaWithCrops Image => (_image ??= base.Unwrap().Value<MediaWithCrops>("authorImage"));
-
+       
         public int PostCount { get; }
 
         //We know the list of posts passed in is already ordered descending so get the first

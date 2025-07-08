@@ -20,8 +20,6 @@ namespace Articulate.Models
         /// <param name="content"></param>
         /// <param name="listItems"></param>
         /// <param name="pager"></param>
-        /// <param name="publishedValueFallback"></param>
-        /// <param name="variationContextAccessor"></param>
         /// <remarks>
         /// Default sorting by published date will be disabled for this list model, it is assumed that the list items will
         /// already be sorted.
@@ -41,7 +39,7 @@ namespace Articulate.Models
 
             Pages = pager;
             _listItems = listItems;
-            if (content.ContentType.Alias.Equals(ArticulateConstants.ArticulateArchive))
+            if (content.ContentType.Alias.Equals(ArticulateConstants.ContentType.ArticulateArchive))
             {
                 PageTitle = BlogTitle + " - " + BlogDescription;
             }
@@ -49,7 +47,7 @@ namespace Articulate.Models
             {
                 PageTags = Name;
             }
-        }
+        }        
 
         public ListModel(IPublishedContent content, IPublishedValueFallback publishedValueFallback, IVariationContextAccessor variationContextAccessor)
             : base(content, publishedValueFallback, variationContextAccessor)

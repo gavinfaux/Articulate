@@ -8,7 +8,7 @@
   "author": "",
   "license": "MIT",
   "scriptsComments": {
-    "watch": "Master script that runs both scripts required to watch, build and copy the client in parallel. NOTE: run the test site with `dotnet watch --no-hot-reload` to avoid browser reloads when Umbraco sends token authentication requests to the backoffice.",
+    "watch": "Master script that runs both scripts required to watch, build and copy the client in parallel. NOTE: run the test site with `dotnet watch --no-hot-reload` to avoid browser reloads when Umbraco sends token authentication requests to the backoffice. Alternative to dotnet run build:copy",
     "dev:vite": "Starts the vite dev server and watches for changes, incremental builds on file changes",
     "dev:copy": "Monitors the output of the build script and copies the client to the package backoffice folder",
     "build": "Builds the client, and runs post-build scripts to copy the client to the package backoffice folder",
@@ -17,7 +17,7 @@
     "format": "Formats the code",
     "lint": "Runs eslint on the code",
     "check": "Checks the code for errors",
-    "generate-client": "This master script runs all generators in sequence",
+    "generate-client": "Run the hey-api/openapi-ts generator to generate the client for sdk and types",
     "set-version": "Sets the version in package.json and umbraco-package.json"
   },
   "scripts": {

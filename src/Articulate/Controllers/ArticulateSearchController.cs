@@ -1,15 +1,16 @@
-
-using System.Linq;
 using Articulate.Models;
+using System;
+using System.Linq;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Logging;
-using Umbraco.Cms.Core.Models.PublishedContent;
-using Umbraco.Cms.Core.Routing;
-using Umbraco.Cms.Core.Web;
 using Umbraco.Cms.Web.Common.Controllers;
-using Umbraco.Cms.Web.Common.Routing;
+using Microsoft.AspNetCore.Mvc.ViewEngines;
+using Umbraco.Cms.Core.Web;
+using Umbraco.Cms.Core.Routing;
+using Umbraco.Cms.Core.Models.PublishedContent;
+using Umbraco.Cms.Core.Media;
 using Umbraco.Cms.Web.Website.ActionResults;
+using Umbraco.Cms.Web.Common.Routing;
 
 namespace Articulate.Controllers
 {
@@ -33,6 +34,7 @@ namespace Articulate.Controllers
         {
             _articulateSearcher = articulateSearcher;
         }
+
         protected override UmbracoRouteValues UmbracoRouteValues => base.UmbracoRouteValues;
 
         public override IActionResult Index() => base.Index();
@@ -62,6 +64,7 @@ namespace Articulate.Controllers
                     Enumerable.Empty<IPublishedContent>(),
                     PublishedValueFallback,
                     VariationContextAccessor);
+
                 return View(PathHelper.GetThemeViewPath(emptyList, "List"), emptyList);
             }
 

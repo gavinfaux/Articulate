@@ -6,6 +6,6 @@ namespace Articulate.Syndication
 {
     public interface IRssFeedGenerator
     {
-        public SyndicationFeed GetFeed(IMasterModel rootPageModel, IEnumerable<PostModel> posts);
+        SyndicationFeed GetFeed(IMasterModel rootPageModel, IEnumerable<PostModel> posts);
     }
 }

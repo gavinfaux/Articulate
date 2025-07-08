@@ -1,8 +1,9 @@
+using Articulate.Models;
+using Articulate.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Articulate.Models;
-using Articulate.Services;
+using Umbraco.Cms.Core.Media;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.PublishedCache;
 using Umbraco.Cms.Web.Common;
@@ -57,7 +58,7 @@ namespace Articulate
         /// <param name="filter"></param>
         /// <returns></returns>
         public static IEnumerable<IPublishedContent> GetPostsSortedByPublishedDate(
-            this UmbracoHelper helper,
+            this UmbracoHelper helper, 
             PagerModel pager,
             Func<IPublishedContent, bool> filter,
             params int[] articulateArchiveIds)
@@ -66,7 +67,7 @@ namespace Articulate
                 .Select(helper.Content)
                 .WhereNotNull()
                 .SelectMany(x => x.Descendants());
-
+            
             //apply a filter if there is one
             if (filter != null)
             {
@@ -93,11 +94,13 @@ namespace Articulate
                 helper,
                 tagQuery,
                 masterModel,
-                ArticulateConstants.ArticulateTags,
+                ArticulateConstants.DataType.ArticulateTags,
                 tagsBaseUrl);
 
             return new PostTagCollection(contentByTags);
         }
+
+        
 
         /// <summary>
         /// Returns a list of the most recent posts
@@ -105,8 +108,6 @@ namespace Articulate
         /// <param name="helper"></param>
         /// <param name="masterModel"></param>
         /// <param name="count"></param>
-        /// <param name="publishedValueFallback"></param>
-        /// <param name="variationContextAccessor"></param>
         /// <returns></returns>
         public static IEnumerable<PostModel> GetRecentPosts(
             this UmbracoHelper helper,
@@ -134,8 +135,6 @@ namespace Articulate
         /// <param name="masterModel"></param>
         /// <param name="page"></param>
         /// <param name="pageSize"></param>
-        /// <param name="publishedValueFallback"></param>
-        /// <param name="variationContextAccessor"></param>
         /// <returns></returns>
         public static IEnumerable<PostModel> GetRecentPosts(
             this UmbracoHelper helper,
@@ -164,8 +163,6 @@ namespace Articulate
         /// <param name="masterModel"></param>
         /// <param name="page"></param>
         /// <param name="pageSize"></param>
-        /// <param name="publishedValueFallback"></param>
-        /// <param name="variationContextAccessor"></param>
         /// <returns></returns>
         public static IEnumerable<PostModel> GetRecentPostsByArchive(
             this UmbracoHelper helper,
@@ -190,8 +187,8 @@ namespace Articulate
             PagerModel pager,
             IPublishedValueFallback publishedValueFallback,
             IVariationContextAccessor variationContextAccessor)
-        {
-            var listNodeIds = listNodes.Select(x => x.Id).ToArray();
+        {            
+            var listNodeIds = listNodes.Select(x => x.Id).ToArray();           
 
             var postWithAuthor = helper.GetPostsSortedByPublishedDate(pager, x => string.Equals(x.Value<string>("author"), authorName.Replace("-", " "), StringComparison.InvariantCultureIgnoreCase), listNodeIds);
 
@@ -201,7 +198,7 @@ namespace Articulate
 
         private static IPublishedContent[] GetListNodes(IMasterModel masterModel)
         {
-            var listNodes = masterModel.RootBlogNode.ChildrenOfType(ArticulateConstants.ArticulateArchive).ToArray();
+            var listNodes = masterModel.RootBlogNode.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive).ToArray();
             if (listNodes.Length == 0)
             {
                 throw new InvalidOperationException(
@@ -210,6 +207,9 @@ namespace Articulate
 
             return listNodes;
         }
+        
+        
+        
 
     }
 }

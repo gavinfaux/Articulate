@@ -5,7 +5,7 @@
 @model global::Articulate.Models.ListModel
 @{
     Layout = "Master.cshtml";
-    ViewBag.CssWrapperClass = Model.ContentType.Alias == ArticulateConstants.ArticulateArchive ? null : "demo-blog--blogpost";
+    ViewBag.CssWrapperClass = Model.ContentType.Alias == ArticulateConstants.ContentType.ArticulateArchive ? null : "demo-blog--blogpost";
 }
 
 <div class="demo-back">
@@ -34,7 +34,7 @@
         var doneFirst = false;
         foreach (var post in Model.Posts)
         {
-            if (!doneFirst && Model.ContentType.Alias == ArticulateConstants.ArticulateArchive)
+            if (!doneFirst && Model.ContentType.Alias == ArticulateConstants.ContentType.ArticulateArchive)
             {
                 doneFirst = true;
 

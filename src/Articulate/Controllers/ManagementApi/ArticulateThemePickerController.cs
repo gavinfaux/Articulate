@@ -23,9 +23,9 @@ namespace Articulate.Controllers.ManagementApi
     /// Provides API endpoints for copying an Articulate default theme to a new theme name to allow customisation.
     /// </summary>
     [ApiVersion("1.0")]
-    [Authorize(Policy = AuthorizationPolicies.SectionAccessSettings)]
+    [Authorize(Policy = AuthorizationPolicies.BackOfficeAccess)]
     [VersionedApiBackOfficeRoute("articulate/editors/theme-picker")]
-    [MapToApi(ArticulateConstants.ApiName)]
+    [MapToApi(ArticulateConstants.Name.ArticulateManagementApi)]
     [ApiExplorerSettings(GroupName = "Theme Picker")]
     public class ArticulateThemePickerController(IHostEnvironment hostingEnvironment, ILogger<ArticulateThemePickerController> logger) : ManagementApiControllerBase
     {

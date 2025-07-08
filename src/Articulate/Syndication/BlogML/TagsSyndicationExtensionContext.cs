@@ -18,8 +18,11 @@ namespace Articulate.Syndication.BlogML
 
         public Collection<string> Tags
         {
-            get => _extensionTags; set => _extensionTags = value;
+            get { return _extensionTags; }
+            set { _extensionTags = value; }
         }
+
+
         public bool Load(XPathNavigator source, XmlNamespaceManager manager)
         {
             var flag = false;
@@ -32,24 +35,18 @@ namespace Articulate.Syndication.BlogML
                 {
                     var xpathTagIterator = source.Select("tag");
                     if (xpathTagIterator.Count > 0)
-                    {
                         while (xpathTagIterator.MoveNext())
                         {
                             if (xpathTagIterator.Current.HasAttributes)
                             {
                                 var tag = xpathTagIterator.Current.GetAttribute("ref", manager.DefaultNamespace);
                                 if (!string.IsNullOrEmpty(tag))
-                                {
                                     Tags.Add(tag);
-                                }
                             }
-
                             flag = true;
                         }
-                    }
                 }
             }
-
             return flag;
         }
 
@@ -57,11 +54,7 @@ namespace Articulate.Syndication.BlogML
         {
             Guard.ArgumentNotNull(writer, "writer");
             Guard.ArgumentNotNullOrEmptyString(xmlNamespace, "xmlNamespace");
-            if (Tags.Count <= 0)
-            {
-                return;
-            }
-
+            if (Tags.Count <= 0) return;
             writer.WriteStartElement("tags");
             foreach (var tag in Tags)
             {
@@ -69,7 +62,6 @@ namespace Articulate.Syndication.BlogML
                 writer.WriteAttributeString("ref", tag);
                 writer.WriteEndElement();
             }
-
             writer.WriteEndElement();
         }
     }

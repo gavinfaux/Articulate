@@ -14,7 +14,7 @@ import type { ProblemDetails } from "../api/types.gen";
 
 /**
  * Cleans up a field name for display in the UI.
- * e.g., '$.articulateNodeId' -> 'Articulate Node Id'
+ * e.g., '$.articulateBlogNode' -> 'Articulate Blog Node'
  * @param fieldName The raw field name.
  * @returns A cleaned, human-readable field name.
  */

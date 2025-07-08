@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using System.ServiceModel.Syndication;
 using System.Text.RegularExpressions;
+using Articulate.Controllers;
 using Articulate.Models;
 using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Core.Hosting;
@@ -44,7 +45,10 @@ namespace Articulate.Syndication
             return feed;
         }
 
-        protected virtual string GetPostContent(PostModel model) => model.Body.ToHtmlString();
+        protected virtual string GetPostContent(PostModel model)
+        {
+            return model.Body.ToHtmlString();
+        }
 
         protected virtual SyndicationItem GetFeedItem(IMasterModel model, PostModel post, string rootUrl)
         {
@@ -66,7 +70,6 @@ namespace Articulate.Syndication
                 {
                     return $" href=\"{rootUrl.TrimEnd('/')}{match.Groups[1].Value.EnsureStartsWith('/')}\"";
                 }
-
                 return null;
             });
             content = _relativeMediaSrc.Replace(content, match =>
@@ -75,9 +78,8 @@ namespace Articulate.Syndication
                 {
                     return $" src=\"{mediaRoot}{match.Groups[1].Value.EnsureStartsWith('/')}\"";
                 }
-
                 return null;
-            });
+            });            
 
             var item = new SyndicationItem(
                 post.Name,
@@ -106,12 +108,10 @@ namespace Articulate.Syndication
         private IEnumerable<SyndicationItem> GetFeedItems(IMasterModel model, IEnumerable<PostModel> posts)
         {
             var rootUrl = model.RootBlogNode.Url(mode: UrlMode.Absolute);
-
             if (!posts.Any())
             {
                 return new List<SyndicationItem>();
             }
-
             return posts.Select(post => GetFeedItem(model, post, rootUrl)).WhereNotNull().ToList();
         }
 
@@ -128,9 +128,9 @@ namespace Articulate.Syndication
             {
                 _logger.LogError(ex, "Could not convert the blog logo path to a Uri");
             }
-
             return logoUri;
         }
 
+        
     }
 }

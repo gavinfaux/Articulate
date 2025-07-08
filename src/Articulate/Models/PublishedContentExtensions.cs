@@ -1,9 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
-using System.Threading.Tasks;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.PropertyEditors;
@@ -40,14 +38,10 @@ namespace Articulate.Models
             foreach (var sibling in content.Parent.Children)
             {
                 if (found)
-                {
                     return sibling;
-                }
 
                 if (sibling.Id == content.Id)
-                {
                     found = true;
-                }
             }
 
             return null;
@@ -60,9 +54,7 @@ namespace Articulate.Models
             foreach (var sibling in content.Parent.Children)
             {
                 if (found)
-                {
                     return last;
-                }
 
                 if (sibling.Id == content.Id)
                 {
@@ -76,30 +68,25 @@ namespace Articulate.Models
 
             //it could have been at the end
             if (found)
-            {
                 return last;
-            }
 
             return null;
         }
 
         /// <summary>
-        ///     Returns true if there is more than x items
+        /// Returns true if there is more than x items
         /// </summary>
         /// <param name="source"></param>
         /// <param name="count"></param>
         /// <returns></returns>
         /// <summary>
-        ///     Returns true if source has at least <paramref name="count" /> elements efficiently.
+        /// Returns true if source has at least <paramref name="count"/> elements efficiently.
         /// </summary>
         /// <remarks>Based on int Enumerable.Count() method.</remarks>
         public static bool HasMoreThan<TSource>(this IEnumerable<TSource> source, int count)
         {
             if (source == null)
-            {
                 throw new ArgumentNullException(nameof(source));
-            }
-
             var collection = source as ICollection<TSource>;
             if (collection != null)
             {
@@ -112,7 +99,7 @@ namespace Articulate.Models
                 return collection2.Count > count;
             }
 
-            var num = 0;
+            int num = 0;
             checked
             {
                 using (var enumerator = source.GetEnumerator())
@@ -131,6 +118,7 @@ namespace Articulate.Models
             return false; // < count
         }
 
+        // TODO: This should not be needed once PostImage migration is complete
         public static string GetBaseImageUrl(this IPublishedContent content, string propertyAlias)
         {
             if (content == null)
@@ -152,7 +140,7 @@ namespace Articulate.Models
             return url;
         }
 
-        public static string GetCroppedImageUrl(this IPublishedContent content, string propertyAlias, string cropAlias, ImageCropMode imageCropMode = ImageCropMode.Max, Size fallbackSize = default)
+        public static string GetCroppedImageUrl(this IPublishedContent content, string propertyAlias, string cropAlias, ImageCropMode imageCropMode = ImageCropMode.Max)
         {
             if (content == null || string.IsNullOrWhiteSpace(cropAlias) || string.IsNullOrWhiteSpace(propertyAlias))
             {
@@ -166,28 +154,11 @@ namespace Articulate.Models
 
                 if (!string.IsNullOrWhiteSpace(baseUrl))
                 {
-                    //var size = GetDimensionsForAlias(cropAlias);
-                    //if (size.width > 0 && size.height > 0)
-                    //{
                     cropUrl = baseUrl.GetCropUrl(imageCropMode: imageCropMode);
-                    //}
                 }
             }
 
             return cropUrl;
-        }
-
-        ///// <summary>
-        ///// A private helper to map crop aliases to dimensions.
-        ///// </summary>
-        private static async Task<Size> GetDimensionsForAlias(this string cropAlias, IDataTypeService dataTypeService, Size fallBackSize = default)
-        {
-            //var dataTypeService = StaticServiceProvider.Instance.GetRequiredService<IDataTypeService>();
-            var picker = await dataTypeService.GetAsync(ArticulateConstants.ArticulateImagePicker);
-            var config = picker?.ConfigurationAs<MediaPicker3Configuration>();
-            var crops = config?.Crops;
-            var crop = crops?.FirstOrDefault(x => x.Alias == cropAlias);
-            return crop == null ? fallBackSize : new Size(crop.Width, crop.Height);
         }
 
         /// <summary>
@@ -226,4 +197,3 @@ namespace Articulate.Models
         }
     }
 }
-

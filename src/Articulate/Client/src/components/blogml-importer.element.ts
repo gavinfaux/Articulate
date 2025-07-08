@@ -202,7 +202,7 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
     const formData = new FormData(this._form);
     const importFile = formData.get("importFile") as File;
 
-    // validate() does not appear to work with the uui-file-input form element consistently, so backup validation
+    // validate() does not appear to work with the uui-file-input form element consistently or the node picker, so backup validation
     const validationRules = [
       {
         isValid: !!this._articulateBlogNode,

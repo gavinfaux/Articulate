@@ -1,10 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using Umbraco.Cms.Core.IO;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.PropertyEditors;
 using Umbraco.Cms.Core.Serialization;
 using Umbraco.Cms.Core.Services;
+using Umbraco.Cms.Core.Strings;
 using Umbraco.Extensions;
 
 namespace Articulate
@@ -44,9 +47,7 @@ namespace Articulate
             ILocalizationService localizationService)
         {
             if (contentType is null)
-            {
                 throw new ArgumentNullException(nameof(contentType));
-            }
 
             var variesByCulure = contentType.VariesByCulture();
 
@@ -108,9 +109,7 @@ namespace Articulate
             bool merge = false)
         {
             if (contentType is null)
-            {
                 throw new ArgumentNullException(nameof(contentType));
-            }
 
             var variesByCulture = VariesByCulture(propertyTypeAlias, contentType);
 
@@ -129,7 +128,6 @@ namespace Articulate
         /// </summary>
         /// <param name="content">The content to set the values for</param>
         /// <param name="propertyAlias">The property alias to set the values for</param>
-        /// <param name="contentType"></param>
         /// <param name="propertyValueGetter">Callback to get the value to be set for the given culture</param>
         /// <remarks>
         /// This will only set property values for cultures that have been defined on the <see cref="IContentBase"/>, it will
@@ -142,22 +140,20 @@ namespace Articulate
             Func<IContentBase, IContentTypeComposition, ContentCultureInfos, object> propertyValueGetter)
         {
             if (contentType is null)
-            {
                 throw new ArgumentNullException(nameof(contentType));
-            }
 
             if (content.ContentType.VariesByCulture())
             {
                 // iterate over any existing cultures defined on the content item
                 foreach (var c in content.CultureInfos)
                 {
-                    var propertyType = contentType.CompositionPropertyTypes.FirstOrDefault(x => x.Alias == propertyAlias) ?? throw new InvalidOperationException($"No property type found by alias {propertyAlias}");
+                    var propertyType = contentType.CompositionPropertyTypes.FirstOrDefault(x => x.Alias == propertyAlias);
+                    if (propertyType == null)
+                        throw new InvalidOperationException($"No property type found by alias {propertyAlias}");
 
                     var valueToSet = propertyValueGetter(content, contentType, c);
                     if (valueToSet == null || (valueToSet is string propValAsString && string.IsNullOrWhiteSpace(propValAsString)))
-                    {
                         continue;
-                    }
 
                     content.SetValue(propertyAlias, valueToSet, propertyType.VariesByCulture() ? c.Culture : null);
                 }
@@ -166,13 +162,11 @@ namespace Articulate
             {
                 var propertyValue = propertyValueGetter(content, contentType, null);
                 if (propertyValue == null || (propertyValue is string propValAsString && string.IsNullOrWhiteSpace(propValAsString)))
-                {
                     return;
-                }
 
                 content.SetValue(propertyAlias, propertyValue);
             }
-
+            
         }
 
         private static bool VariesByCulture(string propertyTypeAlias, IContentTypeComposition contentType)

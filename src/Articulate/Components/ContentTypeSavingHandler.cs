@@ -13,7 +13,7 @@ namespace Articulate.Components
         {
 
             foreach (IContentType c in notification.SavedEntities
-                .Where(c => c.Alias.InvariantEquals(ArticulateConstants.ArticulateArchive) || c.Alias.InvariantEquals(ArticulateConstants.ArticulateAuthors))
+                .Where(c => c.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateArchive) || c.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateAuthors))
                 .Where(c => c.HasIdentity == false))
             {
                 c.ListView = Constants.DataTypes.Guids.ListViewContentGuid;

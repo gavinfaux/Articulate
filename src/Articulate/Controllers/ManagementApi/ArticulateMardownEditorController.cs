@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Articulate.Models.ManagmentApi;
@@ -42,7 +41,7 @@ namespace Articulate.Controllers.ManagementApi
     [ApiVersion("1.0")]
     [Authorize(AuthorizationPolicies.ContentPermissionByResource)]
     [Authorize(AuthorizationPolicies.MediaPermissionByResource)]
-    [MapToApi(ArticulateConstants.ApiName)]
+    [MapToApi(ArticulateConstants.Name.ArticulateManagementApi)]
     [VersionedApiBackOfficeRoute("articulate/editors/markdown")]
     [ApiExplorerSettings(GroupName = "Markdown Editor")]
     public class ArticulateMardownEditorController : ManagementApiControllerBase
@@ -149,7 +148,7 @@ namespace Articulate.Controllers.ManagementApi
                                               && articulateNode.GetValue<bool>("extractFirstImage");
 
             var archive = _services.ContentService.GetPagedChildren(model.ArticulateNodeId.Value, 0, 1, out _)
-                .FirstOrDefault(x => x.ContentType.Alias.InvariantEquals(ArticulateConstants.ArticulateArchive));
+                .FirstOrDefault(x => x.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateArchive));
             if (archive == null)
             {
                 return Problem("No Articulate Archive node found for the specified id.", statusCode: StatusCodes.Status404NotFound);

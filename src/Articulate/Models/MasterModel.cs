@@ -16,7 +16,7 @@ namespace Articulate.Models
             PublishedValueFallback = publishedValueFallback;
             VariationContextAccessor = variationContextAccessor;
         }
-
+        
         /// <summary>
         /// Returns the current theme
         /// </summary>
@@ -30,8 +30,8 @@ namespace Articulate.Models
         {
             get
             {
-                var root = base.Unwrap().AncestorOrSelf(ArticulateConstants.Articulate);
-                _rootBlogNode = root ?? throw new InvalidOperationException("Could not find the 'Articulate' root document for the current rendered page");
+                var root = base.Unwrap().AncestorOrSelf(ArticulateConstants.ContentType.Articulate);
+                _rootBlogNode = root ?? throw new InvalidOperationException("Could not find the Articulate root document for the current rendered page");
                 return _rootBlogNode;
             }
             protected set => _rootBlogNode = value;
@@ -62,8 +62,8 @@ namespace Articulate.Models
         {
             get
             {
-                var list = RootBlogNode.ChildrenOfType(ArticulateConstants.ArticulateArchive).FirstOrDefault();
-                _blogListNode = list ?? throw new InvalidOperationException("Could not find the 'ArticulateArchive' document for the current rendered page");
+                var list = RootBlogNode.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive).FirstOrDefault();
+                _blogListNode = list ?? throw new InvalidOperationException("Could not find the ArticulateArchive document for the current rendered page");
                 return _blogListNode;
             }
             protected set => _blogListNode = value;
@@ -76,8 +76,8 @@ namespace Articulate.Models
         {
             get
             {
-                var authors = RootBlogNode.ChildrenOfType(ArticulateConstants.ArticulateAuthors).FirstOrDefault();
-                _blogAuthorsNode = authors ?? throw new InvalidOperationException("Could not find the 'ArticulateAuthors' document for the current rendered page");
+                var authors = RootBlogNode.ChildrenOfType(ArticulateConstants.ContentType.ArticulateAuthors).FirstOrDefault();
+                _blogAuthorsNode = authors ?? throw new InvalidOperationException("Could not find the ArticulateAuthors document for the current rendered page");
                 return _blogAuthorsNode;
             }
             protected set => _blogListNode = value;
@@ -93,7 +93,7 @@ namespace Articulate.Models
         {
             get => _customRssFeed ?? (_customRssFeed = RootBlogNode.Value<string>("customRssFeedUrl"));
             protected set => _customRssFeed = value;
-        }
+        }        
 
         public string BlogLogo
         {

@@ -1,5 +1,5 @@
-using System;
 using Microsoft.AspNetCore.Routing.Template;
+using System;
 
 namespace Articulate.Routing
 {
@@ -12,7 +12,7 @@ namespace Articulate.Routing
             RouteTemplate = routeTemplate;
             _template = routeTemplate.TemplateText;
         }
-
+        
         public RouteTemplate RouteTemplate { get; }
 
         public override bool Equals(object obj) => obj is ArticulateRouteTemplate template && Equals(template);

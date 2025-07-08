@@ -34,17 +34,14 @@ namespace Articulate.Components
         public void Handle(ContentSavingNotification notification)
         {
             var saved = notification.SavedEntities.ToList();
-            if (saved.Count == 0)
-            {
-                return;
-            }
+            if (saved.Count == 0) return;
 
             var contentTypes = _contentTypeService.GetMany(saved.Select(x => x.ContentTypeId).ToArray()).ToDictionary(x => x.Id);
+
             foreach (var content in saved)
             {
-                if (content.ContentType.Alias.InvariantEquals(ArticulateConstants.ArticulateRichText)
-                    || content.ContentType.Alias.InvariantEquals(ArticulateConstants.ArticulateMarkdown))
-
+                if (content.ContentType.Alias.InvariantEquals("ArticulateRichText")
+                    || content.ContentType.Alias.InvariantEquals("ArticulateMarkdown"))
                 {
                     content.SetAllPropertyCultureValues(
                         "publishedDate",
@@ -70,8 +67,8 @@ namespace Articulate.Components
 
                 if (_articulateOptions.AutoGenerateExcerpt)
                 {
-                    if (content.ContentType.Alias.InvariantEquals(ArticulateConstants.ArticulateRichText)
-                        || content.ContentType.Alias.InvariantEquals(ArticulateConstants.ArticulateMarkdown))
+                    if (content.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateRichText)
+                        || content.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateMarkdown))
                     {
 
                         // fill in the excerpt if it is empty
@@ -82,10 +79,7 @@ namespace Articulate.Components
                             {
                                 // don't set it if it's already set
                                 var currentExcerpt = c.GetValue("excerpt", culture?.Culture)?.ToString();
-                                if (!currentExcerpt.IsNullOrWhiteSpace())
-                                {
-                                    return null;
-                                }
+                                if (!currentExcerpt.IsNullOrWhiteSpace()) return null;
 
                                 if (content.HasProperty("richText"))
                                 {
@@ -112,10 +106,7 @@ namespace Articulate.Components
                                 {
                                     // don't set it if it's already set
                                     var currentSocialDescription = c.GetValue("socialDescription", culture?.Culture)?.ToString();
-                                    if (!currentSocialDescription.IsNullOrWhiteSpace())
-                                    {
-                                        return null;
-                                    }
+                                    if (!currentSocialDescription.IsNullOrWhiteSpace()) return null;
 
                                     var excerptProperty = ct.CompositionPropertyTypes.First(x => x.Alias == "excerpt");
                                     return content.GetValue<string>("excerpt", excerptProperty.VariesByCulture() ? culture?.Culture : null);
@@ -124,7 +115,7 @@ namespace Articulate.Components
                     }
                 }
 
-                if (content.ContentType.Alias.InvariantEquals(ArticulateConstants.Articulate))
+                if (content.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.Articulate))
                 {
                     if (content.HasProperty("theme"))
                     {
@@ -136,9 +127,7 @@ namespace Articulate.Components
                                 // don't set it if it's already set
                                 var current = c.GetValue("theme", culture?.Culture)?.ToString();
                                 if (!current.IsNullOrWhiteSpace())
-                                {
                                     return null;
-                                }
 
                                 return "VAPOR";
                             });
@@ -154,9 +143,7 @@ namespace Articulate.Components
                                 // don't set it if it's already set
                                 var current = c.GetValue("pageSize", culture?.Culture)?.ToString();
                                 if (!current.IsNullOrWhiteSpace())
-                                {
                                     return null;
-                                }
 
                                 return 10;
                             });
@@ -172,9 +159,7 @@ namespace Articulate.Components
                                 // don't set it if it's already set
                                 var current = c.GetValue("categoriesUrlName", culture?.Culture)?.ToString();
                                 if (!current.IsNullOrWhiteSpace())
-                                {
                                     return null;
-                                }
 
                                 return "categories";
                             });
@@ -190,9 +175,7 @@ namespace Articulate.Components
                                 // don't set it if it's already set
                                 var current = c.GetValue("tagsUrlName", culture?.Culture)?.ToString();
                                 if (!current.IsNullOrWhiteSpace())
-                                {
                                     return null;
-                                }
 
                                 return "tags";
                             });
@@ -208,9 +191,7 @@ namespace Articulate.Components
                                 // don't set it if it's already set
                                 var current = c.GetValue("searchUrlName", culture?.Culture)?.ToString();
                                 if (!current.IsNullOrWhiteSpace())
-                                {
                                     return null;
-                                }
 
                                 return "search";
                             });
@@ -226,9 +207,7 @@ namespace Articulate.Components
                                 // don't set it if it's already set
                                 var current = c.GetValue("categoriesPageName", culture?.Culture)?.ToString();
                                 if (!current.IsNullOrWhiteSpace())
-                                {
                                     return null;
-                                }
 
                                 return "Categories";
                             });
@@ -244,9 +223,7 @@ namespace Articulate.Components
                                 // don't set it if it's already set
                                 var current = c.GetValue("tagsPageName", culture?.Culture)?.ToString();
                                 if (!current.IsNullOrWhiteSpace())
-                                {
                                     return null;
-                                }
 
                                 return "Tags";
                             });
@@ -262,9 +239,7 @@ namespace Articulate.Components
                                 // don't set it if it's already set
                                 var current = c.GetValue("searchPageName", culture?.Culture)?.ToString();
                                 if (!current.IsNullOrWhiteSpace())
-                                {
                                     return null;
-                                }
 
                                 return "Search results";
                             });

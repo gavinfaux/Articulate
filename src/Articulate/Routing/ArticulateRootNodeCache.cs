@@ -1,6 +1,6 @@
+using Microsoft.AspNetCore.Mvc.Controllers;
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.AspNetCore.Mvc.Controllers;
 using Umbraco.Cms.Core.Routing;
 
 namespace Articulate.Routing

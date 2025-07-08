@@ -2,8 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.Html;
+using Umbraco.Cms.Core.Media;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Models.PublishedContent;
+using Umbraco.Cms.Core.PropertyEditors.ValueConverters;
 using Umbraco.Cms.Core.Strings;
 using Umbraco.Extensions;
 
@@ -56,7 +58,7 @@ namespace Articulate.Models
                 };
 
                 //look up assocated author node if we can
-                var authors = RootBlogNode?.Children(content => content.ContentType.Alias.InvariantEquals(ArticulateConstants.ArticulateAuthors)).FirstOrDefault();
+                var authors = RootBlogNode?.Children(content => content.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateAuthors)).FirstOrDefault();
                 var authorNode = authors?.Children(content => content.Name.InvariantEquals(_author.Name)).FirstOrDefault();
                 if (authorNode != null)
                 {
@@ -82,7 +84,7 @@ namespace Articulate.Models
         public MediaWithCrops PostImage => _postImage ??= base.Unwrap().Value<MediaWithCrops>("postImage");
 
         private string _croppedPostImageUrl;
-
+        
         /// <summary>
         /// Cropped version of the PostImageUrl
         /// </summary>
@@ -100,7 +102,8 @@ namespace Articulate.Models
                     return null;
                 }
 
-                _croppedPostImageUrl = this.GetCroppedImageUrl("postImage", "wide");
+                var wideCropUrl = PostImage.GetCropUrl("wide");
+                _croppedPostImageUrl = (wideCropUrl ?? string.Empty) + ((wideCropUrl != null && wideCropUrl.Contains('?')) ? "&" : "?");
                 return _croppedPostImageUrl;
             }
         }

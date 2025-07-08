@@ -23,6 +23,8 @@ namespace Articulate.Services
             _repository = repository;
         }
 
+        // TODO: Wrap the repo
+
         public IEnumerable<PostsByTagModel> GetContentByTags(
             UmbracoHelper helper,
             ITagQuery tagQuery,

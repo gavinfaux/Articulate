@@ -40,6 +40,7 @@ namespace Articulate.Components
             builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<MatcherPolicy, ArticulateDynamicRouteSelectorPolicy>());
 
             builder.UrlProviders().InsertBefore<NewDefaultUrlProvider, DateFormattedUrlProvider>();
+
             builder.ContentFinders().InsertBefore<ContentFinderByUrlNew, DateFormattedPostContentFinder>();
 
             services.AddOptions<ArticulateOptions>();
@@ -54,7 +55,7 @@ namespace Articulate.Components
             builder.Services.ConfigureOptions<ConfigureArticulateMvcOptions>();
 
             builder.Services.AddOutputCache(options =>
-            {
+            {               
                 options.AddPolicy("Articulate120", builder =>
                     builder.Expire(TimeSpan.FromSeconds(120)));
                 options.AddPolicy("Articulate300", builder =>

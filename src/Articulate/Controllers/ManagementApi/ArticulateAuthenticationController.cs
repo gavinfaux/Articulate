@@ -18,7 +18,7 @@ namespace Articulate.Controllers.ManagementApi
     [ApiVersion("1.0")]
     [ApiExplorerSettings(GroupName = "Authentication")]
     [ApiController]
-    [MapToApi(ArticulateConstants.ApiName)]
+    [MapToApi(ArticulateConstants.Name.ArticulateManagementApi)]
     [Route("articulate/management/api/v{version:apiVersion}/authentication")]
     public class ArticulateAuthenticationController(IBackOfficeSignInManager signInManager, IAntiforgery antiforgery)
         : ControllerBase

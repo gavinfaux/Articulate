@@ -10,13 +10,12 @@ namespace Articulate.Components
     {
         private readonly AppCaches _appCaches;
 
-        public DomainCacheRefresherHandler(AppCaches appCaches)
-        {
-            _appCaches = appCaches;
-        }
+        public DomainCacheRefresherHandler(AppCaches appCaches) => _appCaches = appCaches;
 
-        public void Handle(DomainCacheRefresherNotification notification) =>
+        public void Handle(DomainCacheRefresherNotification notification)
+        {
             //ensure routes are rebuilt
             _appCaches.RequestCache.GetCacheItem(ArticulateConstants.RefreshRoutesToken, () => true);
+        }
     }
 }

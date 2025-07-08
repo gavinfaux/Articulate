@@ -3,6 +3,7 @@ using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using Articulate.MetaWeblog;
+using Examine;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.DependencyInjection;
@@ -54,7 +55,7 @@ namespace Articulate.Controllers
             var service = ActivatorUtilities.CreateInstance<MetaWeblogService>(_serviceProvider, provider);
 
             var rawContent = string.Empty;
-            using (var reader = new StreamReader(Request.Body))
+            using(var reader = new StreamReader(Request.Body))
             {
                 rawContent = reader.ReadToEnd();
             }

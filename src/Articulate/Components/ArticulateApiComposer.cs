@@ -13,7 +13,7 @@ using Umbraco.Cms.Core.Composing;
 using Umbraco.Cms.Core.DependencyInjection;
 using Umbraco.Extensions;
 
-namespace Articulate.Components.ManagementApi
+namespace Articulate.Components
 {
     /// <summary>
     /// Composes the Articulate API by registering Swagger/OpenAPI configuration and operation handlers.
@@ -41,7 +41,7 @@ namespace Articulate.Components.ManagementApi
         /// <summary>
         /// Gets the API name for which security requirements are applied.
         /// </summary>
-        protected override string ApiName => ArticulateConstants.ApiName;
+        protected override string ApiName => ArticulateConstants.Name.ArticulateManagementApi;
     }
 
     /// <summary>

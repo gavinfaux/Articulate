@@ -1,6 +1,6 @@
 using System;
 using System.IO;
-using Articulate.Components.ManagementApi;
+using Articulate.Components;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -23,7 +23,7 @@ namespace Articulate.Options
         {
             var year = DateTime.Now.Year.ToString();
             options.SwaggerDoc(
-                ArticulateConstants.ApiName,
+                ArticulateConstants.Name.ArticulateManagementApi,
                 new OpenApiInfo
                 {
                     Title = "Articulate Management API",

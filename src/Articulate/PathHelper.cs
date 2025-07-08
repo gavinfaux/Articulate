@@ -1,6 +1,6 @@
-using System;
 using Articulate.Models;
 using Microsoft.AspNetCore.Http;
+using System;
 using Umbraco.Extensions;
 
 namespace Articulate
@@ -67,8 +67,14 @@ namespace Articulate
         /// <summary>
         /// Get the full domain of the current page
         /// </summary>
-        public static string GetDomain(HttpRequest request) =>
+        public static string GetDomain(HttpRequest request)
+        {
             // TODO: This doesn't take into account port?
-            request.Scheme + Uri.SchemeDelimiter + request.Host;//return requestUrl.Scheme +//    System.Uri.SchemeDelimiter +//    requestUrl.Authority;
+            return request.Scheme + Uri.SchemeDelimiter + request.Host;
+
+            //return requestUrl.Scheme +
+            //    System.Uri.SchemeDelimiter +
+            //    requestUrl.Authority;
+        }
     }
 }

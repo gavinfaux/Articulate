@@ -40,7 +40,7 @@ namespace Articulate.Controllers
             UmbracoHelper umbracoHelper,
             ArticulateTagService articulateTagService,
             ITagQuery tagQuery)
-             : base(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider, publishedValueFallback, variationContextAccessor)
+            : base(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider, publishedValueFallback, variationContextAccessor)
         {
             _umbracoHelper = umbracoHelper;
             _articulateTagService = articulateTagService;
@@ -50,6 +50,7 @@ namespace Articulate.Controllers
         /// <summary>
         /// Used to render the category listing (virtual node)
         /// </summary>
+        /// <param name="model"></param>
         /// <param name="tag">The category to display if supplied</param>
         /// <param name="p"></param>
         /// <returns></returns>
@@ -58,13 +59,14 @@ namespace Articulate.Controllers
             var caturlName = CurrentPage.Value<string>("categoriesUrlName");
 
             return tag.IsNullOrWhiteSpace()
-                ? RenderTagsOrCategories(ArticulateConstants.ArticulateCategories, caturlName)
-                : RenderByTagOrCategory(tag, p, ArticulateConstants.ArticulateCategories, caturlName);
+                ? RenderTagsOrCategories(ArticulateConstants.DataType.ArticulateCategories, caturlName)
+                : RenderByTagOrCategory(tag, p, ArticulateConstants.DataType.ArticulateCategories, caturlName);
         }
 
         /// <summary>
         /// Used to render the tag listing (virtual node)
         /// </summary>
+        /// <param name="model"></param>
         /// <param name="tag">The tag to display if supplied</param>
         /// <param name="p"></param>
         /// <returns></returns>
@@ -73,8 +75,8 @@ namespace Articulate.Controllers
             var tagurlName = CurrentPage.Value<string>("tagsUrlName");
 
             return tag.IsNullOrWhiteSpace()
-                ? RenderTagsOrCategories(ArticulateConstants.ArticulateTags, tagurlName)
-                : RenderByTagOrCategory(tag, p, ArticulateConstants.ArticulateTags, tagurlName);
+                ? RenderTagsOrCategories(ArticulateConstants.DataType.ArticulateTags, tagurlName)
+                : RenderByTagOrCategory(tag, p, ArticulateConstants.DataType.ArticulateTags, tagurlName);
         }
 
         private IActionResult RenderTagsOrCategories(string tagGroup, string baseUrl)

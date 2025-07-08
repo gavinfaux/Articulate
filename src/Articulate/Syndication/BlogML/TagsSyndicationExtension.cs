@@ -20,7 +20,7 @@ namespace Articulate.Syndication.BlogML
 
         public TagsSyndicationExtensionContext Context
         {
-            get => _extensionContext;
+            get { return _extensionContext; }
             set
             {
                 Guard.ArgumentNotNull(value, "value");
@@ -31,13 +31,9 @@ namespace Articulate.Syndication.BlogML
         public int CompareTo(object obj)
         {
             if (obj == null)
-            {
                 return 1;
-            }
-
             var syndicationExtension = obj as TagsSyndicationExtension;
             if (syndicationExtension != null)
-            {
                 return
                     string.Compare(Description, syndicationExtension.Description, StringComparison.OrdinalIgnoreCase) |
                     Uri.Compare(Documentation, syndicationExtension.Documentation, UriComponents.AbsoluteUri,
@@ -48,8 +44,6 @@ namespace Articulate.Syndication.BlogML
                     string.Compare(XmlPrefix, syndicationExtension.XmlPrefix, StringComparison.Ordinal) |
                     ComparisonUtility.CompareSequence(Context.Tags, syndicationExtension.Context.Tags,
                         StringComparison.OrdinalIgnoreCase);
-            }
-
             throw new ArgumentException(
                 string.Format(null, "obj is not of type {0}, type was found to be '{1}'.", (object)GetType().FullName,
                     (object)obj.GetType().FullName), nameof(obj));
@@ -92,7 +86,6 @@ namespace Articulate.Syndication.BlogML
                 {
                     WriteTo(writer);
                 }
-
                 memoryStream.Seek(0L, SeekOrigin.Begin);
                 using (var streamReader = new StreamReader(memoryStream))
                 {
@@ -104,13 +97,13 @@ namespace Articulate.Syndication.BlogML
         public override bool Equals(object obj)
         {
             if (!(obj is TagsSyndicationExtension))
-            {
                 return false;
-            }
-
             return CompareTo(obj) == 0;
         }
 
-        public override int GetHashCode() => ToString().ToCharArray().GetHashCode();
+        public override int GetHashCode()
+        {
+            return ToString().ToCharArray().GetHashCode();
+        }
     }
 }

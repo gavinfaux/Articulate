@@ -91,8 +91,8 @@ namespace Articulate.MetaWeblog
             _articulateRootMediaFolder = new Lazy<IMedia>(() =>
             {
                 var root = _mediaService.GetRootMedia().FirstOrDefault(x =>
-                    x.Name == ArticulateConstants.Articulate && x.ContentType.Alias.InvariantEquals(Constants.Conventions.MediaTypes.Folder));
-                return root ??= _mediaService.CreateMediaWithIdentity(ArticulateConstants.Articulate,
+                    x.Name == ArticulateConstants.Name.Articulate && x.ContentType.Alias.InvariantEquals(Constants.Conventions.MediaTypes.Folder));
+                return root ??= _mediaService.CreateMediaWithIdentity(ArticulateConstants.Name.Articulate,
                     Constants.System.Root, Constants.Conventions.MediaTypes.Folder);
             });
         }
@@ -120,7 +120,7 @@ namespace Articulate.MetaWeblog
             await ValidateUser(username, password);
 
             // TODO: These would be across all Articulate Blog root nodes :S
-            var all = await _tagService.GetAllAsync(ArticulateConstants.ArticulateCategories);
+            var all = await _tagService.GetAllAsync(ArticulateConstants.DataType.ArticulateCategories);
 
             var tags = all.Select(x => new CategoryInfo()
             {
@@ -138,7 +138,7 @@ namespace Articulate.MetaWeblog
             await ValidateUser(username, password);
 
             // TODO: These would be across all Articulate Blog root nodes :S
-            var all = await _tagService.GetAllAsync(ArticulateConstants.ArticulateTags);
+            var all = await _tagService.GetAllAsync(ArticulateConstants.DataType.ArticulateTags);
 
             var tags = all.Select(x => new WilderMinds.MetaWeblog.Tag()
             {
@@ -153,7 +153,7 @@ namespace Articulate.MetaWeblog
         {
             await ValidateUser(username, password);
 
-            var node = BlogRoot()?.ChildrenOfType(ArticulateConstants.ArticulateArchive).FirstOrDefault() ?? throw new InvalidOperationException("No Articulate Archive node found");
+            var node = BlogRoot()?.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive).FirstOrDefault() ?? throw new InvalidOperationException("No Articulate Archive node found");
 
             var recent = _contentService
                     .GetPagedChildren(node.Id, 0, numberOfPosts, out long totalPosts, ordering: Ordering.By("updateDate", direction: Direction.Descending))
@@ -169,9 +169,9 @@ namespace Articulate.MetaWeblog
 
             var root = BlogRoot();
 
-            var node = root?.ChildrenOfType(ArticulateConstants.ArticulateArchive).FirstOrDefault() ?? throw new InvalidOperationException("No Articulate Archive node found");
+            var node = root?.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive).FirstOrDefault() ?? throw new InvalidOperationException("No Articulate Archive node found");
 
-            var contentType = _contentTypeService.Get(ArticulateConstants.ArticulateRichText) ?? throw new InvalidOperationException("No content type found with alias 'ArticulateRichText'");
+            var contentType = _contentTypeService.Get(ArticulateConstants.ContentType.ArticulateRichText) ?? throw new InvalidOperationException("No content type found with alias 'ArticulateRichText'");
 
             var content = _contentService.CreateWithInvariantOrDefaultCultureName(
                 post.title, node.Id, contentType, _localizationService, user.Id);
@@ -269,7 +269,7 @@ namespace Articulate.MetaWeblog
 
             var umbracoContent = _contentService.GetById(asInt.Result);
 
-            var contentType = _contentTypeService.Get(ArticulateConstants.ArticulateRichText) ?? throw new InvalidOperationException("No content type found with alias 'ArticulateRichText'");
+            var contentType = _contentTypeService.Get(ArticulateConstants.ContentType.ArticulateRichText) ?? throw new InvalidOperationException("No content type found with alias 'ArticulateRichText'");
 
             var root = BlogRoot();
 
@@ -482,7 +482,7 @@ namespace Articulate.MetaWeblog
             ? post.GetValue<string>("categories").Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
             : Array.Empty<string>(),
 
-            description = post.ContentType.Alias == ArticulateConstants.ArticulateRichText
+            description = post.ContentType.Alias == ArticulateConstants.ContentType.ArticulateRichText
             ? post.GetValue<string>("richText")
             : MarkdownHelper.ToHtml(post.GetValue<string>("markdown")),
 

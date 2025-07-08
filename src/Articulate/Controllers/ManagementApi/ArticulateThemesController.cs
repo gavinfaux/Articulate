@@ -21,7 +21,7 @@ namespace Articulate.Controllers.ManagementApi
     [ApiVersion("1.0")]
     [Authorize(Policy = AuthorizationPolicies.SectionAccessSettings)]
     [VersionedApiBackOfficeRoute("articulate/themes")]
-    [MapToApi(ArticulateConstants.ApiName)]
+    [MapToApi(ArticulateConstants.Name.ArticulateManagementApi)]
     [ApiExplorerSettings(GroupName = "Themes")]
     public class ArticulateThemesController(IHostEnvironment hostingEnvironment, ILogger<ArticulateThemesController> logger) : ManagementApiControllerBase
     {

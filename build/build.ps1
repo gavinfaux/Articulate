@@ -7,34 +7,40 @@ $SolutionRoot = Join-Path -Path $RepoRoot "src"
 $CodeProjFolder = Join-Path -Path $RepoRoot -ChildPath "src\Articulate"
 $CodeCSProj = Join-Path -Path $CodeProjFolder -ChildPath "Articulate.csproj"
 
-
-
 if ((Get-Item $ReleaseFolder -ErrorAction SilentlyContinue) -ne $null)
 {
-    Write-Warning "$ReleaseFolder already exists on your local machine. It will now be deleted."
-    Remove-Item $ReleaseFolder -Recurse
+	Write-Warning "$ReleaseFolder already exists on your local machine. It will now be deleted."
+	Remove-Item $ReleaseFolder -Recurse
 }
 
-####### DO THE SLN BUILD PART #############
+####### DO THE PROJECT BUILD PART #############
 
-# Build the solution in release mode
-$SolutionPath = Join-Path -Path $SolutionRoot -ChildPath "Articulate.sln"
+# Get the solution path
+# $SolutionPath = Join-Path -Path $SolutionRoot -ChildPath "Articulate.sln"
+
+# Build the project in release mode; don't need to buld the test site, CI will check that
 
 # Restore packages
 Write-Host "Restoring nuget packages..."
-dotnet restore $SolutionPath
+# dotnet restore $SolutionPath
+dotnet restore $CodeCSProj
 
 # Clean solution
-dotnet clean $SolutionPath --configuration Release
+Write-Host "Cleaning solution..."
+# dotnet clean $SolutionPath --configuration Release
+dotnet clean $CodeCSProj --configuration Release
 if (-not $?) {
     throw "The dotnet clean process returned an error code."
 }
 
 # Build solution
-dotnet build $SolutionPath --configuration Release --no-restore
+# dotnet build $SolutionPath --configuration Release --no-restore
+Write-Host "Building Articulate..."
+dotnet build $CodeCSProj --configuration Release --no-restore
 if (-not $?) {
     throw "The dotnet build process returned an error code."
 }
 
 # dotnet pack (As its a SDK style project, nuget pack was not reading info stored in csproj)
+Write-Host "Packing Articulate..."
 dotnet pack $CodeCSProj --output $ReleaseFolder --configuration Release

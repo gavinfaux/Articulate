@@ -5,9 +5,11 @@ using Articulate.Models;
 using NPoco;
 using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.Cache;
+using Umbraco.Cms.Core.Media;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.PublishedCache;
+using Umbraco.Cms.Core.Scoping;
 using Umbraco.Cms.Infrastructure.Persistence.Repositories.Implement;
 using Umbraco.Cms.Infrastructure.Scoping;
 using Umbraco.Cms.Web.Common;
@@ -34,6 +36,7 @@ namespace Articulate.Services
         /// <summary>
         /// Returns a list of all categories belonging to this articualte root
         /// </summary>
+        /// <param name="helper"></param>
         /// <param name="masterModel"></param>
         /// <returns></returns>
         public IEnumerable<string> GetAllCategories(
@@ -44,7 +47,7 @@ namespace Articulate.Services
             var sql = GetTagQuery($"{Constants.DatabaseSchema.Tables.Tag}.id, {Constants.DatabaseSchema.Tables.Tag}.tag, {Constants.DatabaseSchema.Tables.Tag}.[group], Count(*) as NodeCount", masterModel)
                 .Where($"{Constants.DatabaseSchema.Tables.Tag}." + SqlSyntax.GetQuotedColumnName("group") + " = @tagGroup", new
                 {
-                    tagGroup = ArticulateConstants.ArticulateCategories
+                    tagGroup = ArticulateConstants.DataType.ArticulateCategories
                 })
                 .GroupBy($"{Constants.DatabaseSchema.Tables.Tag}.id", $"{Constants.DatabaseSchema.Tables.Tag}.tag", $"{Constants.DatabaseSchema.Tables.Tag}." + SqlSyntax.GetQuotedColumnName("group") + @"");
 
@@ -144,7 +147,7 @@ namespace Articulate.Services
                 //get the publishedDate property type id on the ArticulatePost content type
                 var publishedDatePropertyTypeId = Database.ExecuteScalar<int>($@"SELECT {Constants.DatabaseSchema.Tables.PropertyType}.id FROM {Constants.DatabaseSchema.Tables.ContentType}
 INNER JOIN {Constants.DatabaseSchema.Tables.PropertyType} ON {Constants.DatabaseSchema.Tables.PropertyType}.contentTypeId = {Constants.DatabaseSchema.Tables.ContentType}.nodeId
-WHERE {Constants.DatabaseSchema.Tables.ContentType}.alias = @contentTypeAlias AND {Constants.DatabaseSchema.Tables.PropertyType}.alias = @propertyTypeAlias", new { contentTypeAlias = ArticulateConstants.ArticulatePost, propertyTypeAlias = "publishedDate" });
+WHERE {Constants.DatabaseSchema.Tables.ContentType}.alias = @contentTypeAlias AND {Constants.DatabaseSchema.Tables.PropertyType}.alias = @propertyTypeAlias", new { contentTypeAlias = ArticulateConstants.ContentType.ArticulatePost, propertyTypeAlias = "publishedDate" });
 
                 var sqlContent = GetContentByTagQueryForPaging($"{Constants.DatabaseSchema.Tables.Node}.id, {Constants.DatabaseSchema.Tables.PropertyData}.dateValue", masterModel, publishedDatePropertyTypeId);
 
@@ -191,6 +194,7 @@ WHERE {Constants.DatabaseSchema.Tables.ContentType}.alias = @contentTypeAlias AN
         /// </summary>
         /// <param name="selectCols"></param>
         /// <param name="masterModel"></param>
+        /// <param name="sqlSyntax"></param>
         /// <param name="publishedDatePropertyTypeId">
         /// This is needed to perform the sorting on published date,  this is the PK of the property type for publishedDate on the ArticulatePost content type
         /// </param>
@@ -227,6 +231,7 @@ WHERE {Constants.DatabaseSchema.Tables.ContentType}.alias = @contentTypeAlias AN
         /// </summary>
         /// <param name="selectCols"></param>
         /// <param name="masterModel"></param>
+        /// <param name="sqlSyntax"></param>        
         /// <returns></returns>
         /// <remarks>
         /// TODO: We won't need this when this is fixed http://issues.umbraco.org/issue/U4-9290
