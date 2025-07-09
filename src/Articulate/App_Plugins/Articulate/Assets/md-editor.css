@@ -1,172 +1,106 @@
-:root {
-  --md-pink: #e91e63;
-  --md-blue: #448aff;
-  --md-grey: #eee;
-}
-
 body {
-  background-color: var(--md-grey);
-  margin: 0;
-  padding: 0;
-}
-
-main.container {
-  padding-top: 80px; /* Space for fixed header */
-  padding-bottom: 90px; /* Space for fixed footer */
-  max-width: none;
-}
-
-article {
-  padding: 20px;
-  background-color: white;
-  box-shadow: 0 2px 2px 0 rgba(0,0,0,.14),0 3px 1px -2px rgba(0,0,0,.2),0 1px 5px 0 rgba(0,0,0,.12);
-  border-radius: 2px;
-  margin-bottom: 20px;
-}
-
-header {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 100;
-  background-color: var(--md-pink);
-  color: white;
-  padding: 16px;
-  box-shadow: 0 2px 2px 0 rgba(0,0,0,.14),0 3px 1px -2px rgba(0,0,0,.2),0 1px 5px 0 rgba(0,0,0,.12);
-}
-
-  header h1 {
-    font-size: 20px;
+    background-color: #eee;
     margin: 0;
-    font-weight: 500;
-    color: whitesmoke;
-  }
-
-.editor-container {
-    display: grid;
-    position: relative;
+    padding: 0;
 }
 
-.editor-container > textarea,
-.editor-container > .editor-wrapper {
-    grid-area: 1 / 1 / 2 / 2;
-}
 
-.editor-container > textarea {
-    background: transparent;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    box-sizing: border-box;
-    caret-color: #333;
-    font: inherit;
-    min-height: 50vh;
-    padding: 1rem;
-    resize: none;
+.container .mdl-card {
     width: 100%;
-    z-index: 1;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
 }
-
-.editor-container > .editor-wrapper {
-    visibility: hidden;
-    white-space: pre-wrap;
-    word-wrap: break-word;
-    padding: 1rem;
+.container .mdl-card .mdl-textfield {
+    display: block;
+    width: 100%;
 }
-
-.TinyMDE {
-  flex-grow: 1;
-  overflow-y: auto;
-}
-
-/* Updated Footer Styles */
-footer {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 200;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 15px;
-  pointer-events: none;
-}
-
-  footer > div {
-    pointer-events: auto;
-    flex-shrink: 0;
-  }
-
-  footer button {
-    background-color: var(--md-blue);
-    border-color: var(--md-blue);
-    color: white;
-    border-radius: 50%;
-    width: 56px;
-    height: 56px;
-    font-size: 24px;
-    line-height: 1;
-    box-shadow: 0 1px 1.5px 0 rgba(0,0,0,.12),0 1px 1px 0 rgba(0,0,0,.24);
-    margin: 5px;
-  }
-
-    footer button.secondary {
-      background-color: var(--md-pink);
-      border-color: var(--md-pink);
-    }
-
-    footer button.post-button {
-      width: auto;
-      border-radius: 2px;
-      padding: 0 16px;
-      height: 36px;
-      font-size: 14px;
-      text-transform: uppercase;
-    }
-
-/* --- Form Input Material Design Styles --- */
-
-label {
-    color: #999;
+.container .mdl-card .mdl-textfield.fixed {
     position: absolute;
-    pointer-events: none;
     left: 15px;
-    top: 10px;
-    transition: 0.2s ease all;
+    right: 15px;
+    top: 15px;
+    width: inherit;
 }
 
-input:focus ~ label,
-input:not(:placeholder-shown) ~ label,
-textarea:focus ~ label,
-textarea:not(:placeholder-shown) ~ label {
-    top: -20px;
-    font-size: 14px;
-    color: var(--md-pink);
+div.container {
+    position: fixed;
+    left: 15px;
+    top: 70px;
+    right: 15px;
+    bottom: 25px;
+    padding: 10px;
+    overflow: auto;
 }
 
-/* Add relative positioning to the parent of the input and label */
-form > div {
-    position: relative;
-    margin-bottom: 25px; /* Add space for the floating label */
+.container .mdl-card .mdl-textfield.md-input {    
+    top: 60px;
+    bottom: 0px;
 }
 
-/* Add relative positioning to the parent of the input and label */
-article > div {
-    position: relative;
-    margin-bottom: 25px; /* Add space for the floating label */
+.container .mdl-progress {
+    width: auto;
 }
 
-/* Style for invalid inputs */
-input[aria-invalid="true"] {
+.container .mdl-card .mdl-textfield.md-input {    
+        top: 60px;
+        bottom: 55px;
+        padding-bottom: 30px;
+    }
 
-    border-color: var(--md-pink);
-    box-shadow: 0 0 0 1px var(--md-pink);
+.fill-height {
+    height: 100%;
 }
 
-@media (max-width: 768px) {
-  main.container {
-    padding-top: 70px;
-    padding-bottom: 80px;
-  }
+textarea {
+    font-family: inherit;
+    width: 100%;
+    height: 100%;
 }
+
+.btn-fab-right {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 200;
+}
+
+.btn-raised-right {
+    position: fixed;
+    bottom: 50px;
+    right: 40px;
+    z-index: 200;
+}
+
+.btn-fab-left {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    z-index: 200;
+}
+
+.btn-fab * {
+    margin: 5px;
+}
+
+.ng-dirty .ng-invalid {    
+    border-bottom: 2px dashed rgb(68,138,255) !important;    
+}
+
+.hidden-insert-file {
+    position: absolute;
+    top: -1000px;
+    visibility: hidden;
+}
+
+/* Smartphones (portrait and landscape) ----------- */
+@media only screen and (min-device-width : 320px) and (max-device-width : 480px) {
+    div.container {
+        left: 5px;
+        top: 60px;
+        right: 5px;
+        bottom: 5px;        
+    }
+    
+}
+

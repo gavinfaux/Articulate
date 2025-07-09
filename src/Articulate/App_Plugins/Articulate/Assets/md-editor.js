@@ -69,6 +69,13 @@ document.addEventListener("alpine:init", () => {
                 await this.checkAuthStatus();
             }
             this.setupWatchers();
+
+            // Ensure MDL components are upgraded after initial setup
+            this.$nextTick(() => {
+                if (window.componentHandler) {
+                    window.componentHandler.upgradeDom();
+                }
+            });
         },
 
         loadUrlsFromDataset() {
@@ -86,6 +93,13 @@ document.addEventListener("alpine:init", () => {
                 if (newStep === STEPS.EDITOR && !this.editor && !this.isEditorInitializing) {
                     this.initializeEditor();
                 }
+
+                // Ensure MDL components are upgraded after AlpineJS updates the DOM
+                this.$nextTick(() => {
+                    if (window.componentHandler) {
+                        window.componentHandler.upgradeDom();
+                    }
+                });
             });
         },
 

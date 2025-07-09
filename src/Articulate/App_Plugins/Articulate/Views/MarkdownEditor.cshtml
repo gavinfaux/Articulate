@@ -1,125 +1,160 @@
 @addTagHelper *, Smidge
 @inject Smidge.SmidgeHelper SmidgeHelper
+@using Microsoft.AspNetCore.Antiforgery
+@inject IAntiforgery Antiforgery
 @model global::Articulate.Models.MarkdownEditorInitModel
+
 @{
     Layout = null;
+
     SmidgeHelper
+        .RequiresJs("~/App_Plugins/Articulate/Assets/md-editor.js")
         .RequiresCss("~/App_Plugins/Articulate/Assets/md-editor.css");
 }
 
-@* TODO:Sort out the layout / CSS / JS (missing footer buttons, state/steps/css issue, picking display: none), and persist login*@
-@* https://kjac.dev/posts/using-umb_ucontext-with-umbraco-14-plus/ *@
-@* set Claims and SignInAsync etc https://github.com/kjac/UmbracoCustomAuth *@
-
-
-<!doctype html>
-<html lang="en" data-theme="light">
+<!DOCTYPE html>
+<html>
 <head>
-    <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Articulate - Create New Post</title>
-    <link rel="preconnect" href="https://cdn.jsdelivr.net">
-    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@@picocss/pico@@2/css/pico.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+    <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.pink-blue.min.css" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tiny-markdown-editor@0.2.0/dist/tiny-mde.min.css" integrity="sha256-MZ1zddO2Et4HONRzfJKJ1vC/Ecj9JIa3MI2GYCX2l5Y=" crossorigin="anonymous">
-    @* Smidge CSS Bundle (Only a single file for now) *@
+
     @await SmidgeHelper.CssHereAsync()
-    <script defer src="https://cdn.jsdelivr.net/npm/tiny-markdown-editor@0.2.0/dist/tiny-mde.min.js" integrity="sha256-3RX+4eonZtpTV5BuscEas9t44jhaxeOaQ9T/tP8SeC0=" crossorigin="anonymous"></script>
-    @* We can't use Smidge here?  defer is needed and can't find a way to pass a 'defer'? *@
-    <script defer src="~/App_Plugins/Articulate/assets/md-editor.js"></script>
-    <script defer src="https://unpkg.com/alpinejs/dist/cdn.min.js"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/@@alpinejs/csp@3.14.9/dist/cdn.min.js" integrity="sha256-ggvJUDh0AkBX2iRNwwwhMBVIMp65oA55N+kcTTkIsnM=" crossorigin="anonymous"></script>
-    @* TODO: Should camera upload capture user (front facing) or environment (outward facing) *@
+
     <style>
         [x-cloak] {
             display: none !important;
         }
     </style>
+
+    <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/tiny-markdown-editor@0.2.0/dist/tiny-mde.min.js" integrity="sha256-3RX+4eonZtpTV5BuscEas9t44jhaxeOaQ9T/tP8SeC0=" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/@@alpinejs/csp@3.x.x/dist/cdn.min.js"></script>
+
+    @await SmidgeHelper.JsHereAsync()
 </head>
-<body x-data="app" x-init="init" x-cloak data-articulate-node-id="@Model.ArticulateNodeId" data-auth-status-url="@Model.AuthStatusUrl" data-auth-signin-url="@Model.AuthSignInUrl" data-auth-csrf-url="@Model.AuthCsrfTokenUrl" data-auth-signout-url="@Model.AuthSignOutUrl" data-post-url="@Model.PostUrl">
-    <header>
-        <h1 x-text="caption"></h1>
-        <progress x-show="isLoading"></progress>
-    </header>
+<body x-data="app" x-init="init" x-cloak 
+      data-articulate-node-id="@Model.ArticulateNodeId" 
+      data-auth-status-url="@Model.AuthStatusUrl" 
+      data-auth-signin-url="@Model.AuthSignInUrl" 
+      data-auth-csrf-url="@Model.AuthCsrfTokenUrl" 
+      data-auth-signout-url="@Model.AuthSignOutUrl" 
+      data-post-url="@Model.PostUrl">
 
-    <main class="container">
-        <!-- Login View -->
-        <article x-show="isLoginStep">
-            <form @@submit.prevent="handleLogin" novalidate>
-                <div>
-                    <input x-model="login.emailAddress" type="email" id="email" required :aria-invalid="isEmailInvalid" placeholder=" " />
-                    <label for="email">Email Address</label>
+    <div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+        <header class="mdl-layout__header">
+            <div class="mdl-layout__header-row">
+                <span class="mdl-layout-title" x-text="caption"></span>
+                <div class="mdl-layout-spacer"></div>
+                <div x-show="isLoading" class="mdl-spinner mdl-js-spinner is-active"></div>
+            </div>
+        </header>
+
+        <main class="mdl-layout__content">
+            <div class="page-content">
+                <div class="container">
+
+                    <!-- Login View -->
+                    <div x-show="isLoginStep" class="mdl-card mdl-shadow--2dp fill-height">
+                        <div class="mdl-card__supporting-text">
+                            <form @@submit.prevent="handleLogin" novalidate>
+                                <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                                    <input class="mdl-textfield__input" type="email" id="email" x-model="login.emailAddress" required :aria-invalid="isEmailInvalid" />
+                                    <label class="mdl-textfield__label" for="email">Email Address</label>
+                                </div>
+                                <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                                    <input class="mdl-textfield__input" type="password" id="password" x-model="login.password" required :aria-invalid="isPasswordInvalid" />
+                                    <label class="mdl-textfield__label" for="password">Password</label>
+                                </div>
+                                <template x-if="twoFactorUrl">
+                                    <p>Please <a :href="twoFactorUrl">click here</a> to complete your login.</p>
+                                </template>
+                                <div class="btn-raised-right">
+                                    <button type="submit" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent" :disabled="submitting">Login</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Editor View -->
+                    <div x-show="isEditorStep" class="mdl-card mdl-shadow--2dp fill-height">
+                        <div class="mdl-card__supporting-text">
+                            <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label fixed">
+                                <input class="mdl-textfield__input" type="text" id="title" x-model="post.title" required />
+                                <label class="mdl-textfield__label" for="title">Title...</label>
+                            </div>
+                            <div class="editor-container">
+                                <textarea x-ref="editor" id="editor"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Optional View -->
+                    <div x-show="isOptionalStep" class="mdl-card mdl-shadow--2dp fill-height">
+                        <div class="mdl-card__supporting-text">
+                            <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                                <input class="mdl-textfield__input" type="text" id="tags" x-model="post.tags" />
+                                <label class="mdl-textfield__label" for="tags">Tags (comma separated)</label>
+                            </div>
+                            <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                                <input class="mdl-textfield__input" type="text" id="categories" x-model="post.categories" />
+                                <label class="mdl-textfield__label" for="categories">Categories (comma separated)</label>
+                            </div>
+                            <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                                <textarea class="mdl-textfield__input" id="excerpt" x-model="post.excerpt" rows="3"></textarea>
+                                <label class="mdl-textfield__label" for="excerpt">Excerpt</label>
+                            </div>
+                            <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                                <input class="mdl-textfield__input" type="text" id="slug" x-model="post.slug" />
+                                <label class="mdl-textfield__label" for="slug">Slug</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Success View -->
+                    <div x-show="isSuccessStep" class="mdl-card mdl-shadow--2dp">
+                        <div class="mdl-card__supporting-text">
+                            <h3>Success!</h3>
+                            <p>Your post has been published.</p>
+                        </div>
+                        <div class="mdl-card__actions mdl-card--border">
+                            <a :href="successUrl" class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect">
+                                Click here to view your post
+                            </a>
+                        </div>
+                         <div class="mdl-card__menu">
+                            <a href="#" @@click.prevent="resetForNewPost" class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect">
+                                Create another post
+                            </a>
+                        </div>
+                    </div>
+
                 </div>
-                <div>
-                    <input x-model="login.password" type="password" id="password" required :aria-invalid="isPasswordInvalid" placeholder=" " />
-                    <label for="password">Password</label>
-                </div>
-                
-                <template x-if="twoFactorUrl">
-                    <p>Please <a :href="twoFactorUrl">click here</a> to complete your login.</p>
-                </template>
+            </div>
+        </main>
+    </div>
 
-                <button type="submit" :aria-busy="submitting">Login</button>
-            </form>
-        </article>
+    <!-- Hidden file inputs -->
+    <div class="hidden-insert-file">
+        <input x-ref="imageUpload" type="file" accept="image/jpeg,image/png,image/gif" @@change="handleFileSelect" />
+        <input x-ref="cameraUpload" type="file" accept="image/jpeg,image/png,image/gif" capture="environment" @@change="handleFileSelect" />
+    </div>
 
-        <!-- Editor View -->
-        <article x-show="isEditorStep">
-            <input x-ref="imageUpload" type="file" accept="image/jpeg,image/png,image/gif" hidden @@change="handleFileSelect" />
-            <input x-ref="cameraUpload" type="file" accept="image/jpeg,image/png,image/gif" capture="environment" hidden @@change="handleFileSelect" />
-            <div>
-                <input x-model="post.title" type="text" id="title" placeholder=" " required />
-                <label for="title">Title</label>
-            </div>
-            <div class="editor-container">
-                <textarea x-ref="editor" id="editor" placeholder="## Your post content..."></textarea>
-            </div>
-        </article>
+    <!-- Floating Action Buttons -->
+    <div class="btn-fab-left">
+        <button x-show="isEditorStep" @@click="triggerImageUpload" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--colored material-icons" title="Upload Image">photo</button>
+        <button x-show="isEditorStep" @@click="triggerCamera" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--colored material-icons" title="Use Camera">photo_camera</button>
+    </div>
 
-        <!-- Optional View -->
-        <article x-show="isOptionalStep">
-            <div>
-                <input x-model="post.tags" type="text" id="tags" placeholder=" " />
-                <label for="tags">Tags (comma separated)</label>
-            </div>
-            <div>
-                <input x-model="post.categories" type="text" id="categories" placeholder=" " />
-                <label for="categories">Categories (comma separated)</label>
-            </div>
-            <div>
-                <textarea x-model="post.excerpt" id="excerpt" rows="3" placeholder=" "></textarea>
-                <label for="excerpt">Excerpt</label>
-            </div>
-            <div>
-                <input x-model="post.slug" type="text" id="slug" placeholder=" " />
-                <label for="slug">Slug</label>
-            </div>
-        </article>
+    <div class="btn-fab-right">
+        <button x-show="isOptionalStep" @@click="goToEditorStep" style="transform: rotate(180deg);" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--accent material-icons" title="Back">forward</button>
+        <button x-show="canShowNextButton" @@click="goToOptionalStep" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--accent material-icons" title="Next">forward</button>
+        <button x-show="isOptionalStep" @@click="handlePublish" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent" :disabled="submitting">Post It!</button>
+    </div>
 
-        <!-- Success View -->
-        <article x-show="isSuccessStep">
-            <h2>Success!</h2>
-            <p>Your post has been published.</p>
-            <a :href="successUrl" role="button">Click here to view your post</a>
-            <p><a href="#" @@click.prevent="resetForNewPost">Create another post</a></p>
-        </article>
-    </main>
-
-    <!-- Global Footer for Actions -->
-    <footer>
-        <div class="footer-left">
-            <button x-show="isEditorStep" class="secondary material-icons" @@click="triggerImageUpload" title="Upload Image">photo</button>
-            <button x-show="isEditorStep" class="secondary material-icons" @@click="triggerCamera" title="Use Camera">photo_camera</button>
-        </div>
-        <div class="footer-right">
-            <button x-show="isOptionalStep" style="transform: rotate(180deg);" class="secondary material-icons" @@click="goToEditorStep" title="Back">forward</button>
-            <button x-show="canShowNextButton" class="material-icons" @@click="goToOptionalStep" title="Next">forward</button>
-            <button x-show="isOptionalStep" @@click="handlePublish" :aria-busy="submitting" class="post-button">Post It!</button>
-        </div>
-    </footer>
 </body>
 </html>
