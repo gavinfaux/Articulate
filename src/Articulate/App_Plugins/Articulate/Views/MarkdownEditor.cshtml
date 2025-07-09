@@ -50,10 +50,14 @@
         <!-- Login View -->
         <article x-show="step === 'login'">
             <form @@submit.prevent="handleLogin" novalidate>
-                <label for="email">Email Address</label>
-                <input x-model="login.emailAddress" type="email" id="email" required :aria-invalid="!login.validation.emailAddress" />
-                <label for="password">Password</label>
-                <input x-model="login.password" type="password" id="password" required :aria-invalid="!login.validation.password" />
+                <div>
+                    <input x-model="login.emailAddress" type="email" id="email" required :aria-invalid="!login.validation.emailAddress" placeholder=" " />
+                    <label for="email">Email Address</label>
+                </div>
+                <div>
+                    <input x-model="login.password" type="password" id="password" required :aria-invalid="!login.validation.password" placeholder=" " />
+                    <label for="password">Password</label>
+                </div>
                 
                 <template x-if="twoFactorUrl">
                     <p>Please <a :href="twoFactorUrl">click here</a> to complete your login.</p>
@@ -67,30 +71,41 @@
         <article x-show="step === 'editor'">
             <input x-ref="imageUpload" type="file" accept="image/jpeg,image/png,image/gif" hidden @@change="handleFileSelect($event.target.files)" />
             <input x-ref="cameraUpload" type="file" accept="image/jpeg,image/png,image/gif" capture="environment" hidden @@change="handleFileSelect($event.target.files)" />
-            <label for="title">Title</label>
-            <input x-model="post.title" type="text" id="title" placeholder="Your post title..." required />
-            <div class="editor-container" style="height: 500px;">
+            <div>
+                <input x-model="post.title" type="text" id="title" placeholder=" " required />
+                <label for="title">Title</label>
+            </div>
+            <div class="editor-container">
                 <textarea x-ref="editor" id="editor" placeholder="## Your post content..."></textarea>
             </div>
         </article>
 
         <!-- Optional View -->
         <article x-show="step === 'optional'">
-            <label for="tags">Tags (comma separated)</label>
-            <input x-model="post.tags" type="text" id="tags" placeholder="e.g. csharp, umbraco, .net" />
-            <label for="categories">Categories (comma separated)</label>
-            <input x-model="post.categories" type="text" id="categories" placeholder="e.g. Tech, Tutorials" />
-            <label for="excerpt">Excerpt</label>
-            <textarea x-model="post.excerpt" id="excerpt" rows="3"></textarea>
-            <label for="slug">Slug</label>
-            <input x-model="post.slug" type="text" id="slug" placeholder="e.g. my-awesome-post" />
+            <div>
+                <input x-model="post.tags" type="text" id="tags" placeholder=" " />
+                <label for="tags">Tags (comma separated)</label>
+            </div>
+            <div>
+                <input x-model="post.categories" type="text" id="categories" placeholder=" " />
+                <label for="categories">Categories (comma separated)</label>
+            </div>
+            <div>
+                <textarea x-model="post.excerpt" id="excerpt" rows="3" placeholder=" "></textarea>
+                <label for="excerpt">Excerpt</label>
+            </div>
+            <div>
+                <input x-model="post.slug" type="text" id="slug" placeholder=" " />
+                <label for="slug">Slug</label>
+            </div>
         </article>
 
         <!-- Success View -->
         <article x-show="step === 'success'">
             <h2>Success!</h2>
             <p>Your post has been published.</p>
-            <a :href="successUrl" role="button">View Your Post</a>
+            <a :href="successUrl" role="button">Click here to view your post</a>
+            <p><a href="#" @@click.prevent="resetForNewPost">Create another post</a></p>
         </article>
     </main>
 
@@ -102,7 +117,7 @@
         </div>
         <div class="footer-right">
             <button x-show="step === 'optional'" style="transform: rotate(180deg);" class="secondary material-icons" @@click="step = 'editor'" title="Back">forward</button>
-            <button x-show="step === 'editor' && post.title && post.markdown" class="material-icons" @@click="step = 'optional'" title="Next">forward</button>
+            <button x-show="step === 'editor' && post.title && post.markdown" class="material-icons" @@click="goToNextStep" title="Next">forward</button>
             <button x-show="step === 'optional'" @@click="handlePublish" :aria-busy="submitting" class="post-button">Post It!</button>
         </div>
     </footer>

@@ -44,11 +44,34 @@ header {
   }
 
 .editor-container {
-  display: flex;
-  flex-direction: column;
-  height: 500px;
-  border: 2px solid #CFD5E2;
-  border-radius: 3px 4px;
+    display: grid;
+    position: relative;
+}
+
+.editor-container > textarea,
+.editor-container > .editor-wrapper {
+    grid-area: 1 / 1 / 2 / 2;
+}
+
+.editor-container > textarea {
+    background: transparent;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+    caret-color: #333;
+    font: inherit;
+    min-height: 50vh;
+    padding: 1rem;
+    resize: none;
+    width: 100%;
+    z-index: 1;
+}
+
+.editor-container > .editor-wrapper {
+    visibility: hidden;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    padding: 1rem;
 }
 
 .TinyMDE {
@@ -101,6 +124,45 @@ footer {
       font-size: 14px;
       text-transform: uppercase;
     }
+
+/* --- Form Input Material Design Styles --- */
+
+label {
+    color: #999;
+    position: absolute;
+    pointer-events: none;
+    left: 15px;
+    top: 10px;
+    transition: 0.2s ease all;
+}
+
+input:focus ~ label,
+input:not(:placeholder-shown) ~ label,
+textarea:focus ~ label,
+textarea:not(:placeholder-shown) ~ label {
+    top: -20px;
+    font-size: 14px;
+    color: var(--md-pink);
+}
+
+/* Add relative positioning to the parent of the input and label */
+form > div {
+    position: relative;
+    margin-bottom: 25px; /* Add space for the floating label */
+}
+
+/* Add relative positioning to the parent of the input and label */
+article > div {
+    position: relative;
+    margin-bottom: 25px; /* Add space for the floating label */
+}
+
+/* Style for invalid inputs */
+input[aria-invalid="true"] {
+
+    border-color: var(--md-pink);
+    box-shadow: 0 0 0 1px var(--md-pink);
+}
 
 @media only screen and (min-device-width : 320px) and (max-device-width : 480px) {
   main.container {

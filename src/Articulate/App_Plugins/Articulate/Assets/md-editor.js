@@ -48,6 +48,18 @@ document.addEventListener("alpine:init", () => {
             slug: "",
         },
 
+        // --- Getters for CSP Compliance ---
+        get isLoading() { return this.step === STEPS.LOADING || this.submitting; },
+        get isLoginStep() { return this.step === STEPS.LOGIN; },
+        get isEditorStep() { return this.step === STEPS.EDITOR; },
+        get isOptionalStep() { return this.step === STEPS.OPTIONAL; },
+        get isSuccessStep() { return this.step === STEPS.SUCCESS; },
+
+        get isEmailInvalid() { return !this.login.validation.emailAddress; },
+        get isPasswordInvalid() { return !this.login.validation.password; },
+
+        get canShowNextButton() { return this.isEditorStep && this.post.title && this.post.markdown; },
+
         // --- Initialization ---
         async init() {
             console.info("Alpine component initializing...");
@@ -80,15 +92,30 @@ document.addEventListener("alpine:init", () => {
         initializeEditor() {
             this.isEditorInitializing = true;
             this.$nextTick(() => {
+                const editorTextarea = this.$refs.editor;
+                const editorWrapper = document.createElement('div');
+                editorWrapper.className = 'editor-wrapper';
+                editorTextarea.parentNode.insertBefore(editorWrapper, editorTextarea);
+
+                editorTextarea.addEventListener('input', () => {
+                    editorWrapper.textContent = editorTextarea.value;
+                });
+
                 this.editor = new TinyMDE.Editor({
-                    element: this.$refs.editor,
+                    element: editorTextarea,
                     content: this.post.markdown,
                     commandBar: false
                 });
+
                 this.editor.addEventListener("change", () => {
                     this.post.markdown = this.editor.getContent();
+                    editorWrapper.textContent = this.post.markdown; // Update wrapper on change
                 });
-                console.info("tiny-markdown-editor initialized.");
+
+                // Initial sync
+                editorWrapper.textContent = this.post.markdown;
+
+                console.info("tiny-markdown-editor initialized with auto-grow.");
             });
         },
 
@@ -195,21 +222,118 @@ document.addEventListener("alpine:init", () => {
             this.$refs.cameraUpload.click();
         },
 
-        handleFileSelect(files) {
-            // TODO: Implement full file validation logic here
+        handleFileSelect(event) {
+            const files = event.target.files;
+            const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+            const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif'];
+            const ALLOWED_EXTENSIONS = /\.(jpg|jpeg|png|gif)$/i;
+
             for (const file of files) {
-                if (!file || !file.type.startsWith("image")) continue;
+                if (!file) continue;
+
+                // 1. MIME Type Check
+                if (!ALLOWED_TYPES.includes(file.type)) {
+                    console.info(`Rejected file: Invalid MIME type - ${file.name} (${file.type})`);
+                    continue;
+                }
+
+                // 2. File Extension Check
+                if (!ALLOWED_EXTENSIONS.test(file.name)) {
+                    console.info(`Rejected file: Invalid extension - ${file.name}`);
+                    continue;
+                }
+
+                // 3. File Size Check
+                if (file.size > MAX_FILE_SIZE) {
+                    console.info(`Rejected file: Exceeds 10MB size limit - ${file.name}`);
+                    continue;
+                }
+
+                // 4. File Name Normalization and Path Traversal Check
+                let normalizedName = file.name.replace(/\\/g, "/");
+                if (normalizedName.match(/^\.\.|\/\.\./)) {
+                    console.info(`Rejected file: Potential path traversal - ${file.name}`);
+                    continue;
+                }
+
+                // 5. Sanitize and Validate Length
+                // Remove potentially harmful characters, allowing a basic set.
+                let sanitizedName = normalizedName.split('/').pop().replace(/[^a-zA-Z0-9_.-]/g, '');
+                if (sanitizedName.length === 0 || sanitizedName.length > 255) {
+                    console.info(`Rejected file: Invalid filename length after sanitization - ${file.name}`);
+                    continue;
+                }
+
+                // All checks passed, proceed with adding the file
                 const index = this.fileMap.size;
-                const placeholderUrl = `tmp:${index}:${file.name}`;
+                const placeholderUrl = `tmp:${index}:${sanitizedName}`;
                 this.fileMap.set(placeholderUrl, file);
-                const markdownToInsert = `![${file.name}](${placeholderUrl})`;
+
+                const markdownToInsert = `![${sanitizedName}](${placeholderUrl})`;
                 this.editor.paste(markdownToInsert);
             }
         },
 
+        goToEditorStep() { this.step = STEPS.EDITOR; },
+        goToOptionalStep() { this.step = STEPS.OPTIONAL; },
+
+        goToNextStep() {
+            if (this.post.title && this.post.markdown) {
+                this.step = STEPS.OPTIONAL;
+            }
+        },
+
+        resetForNewPost() {
+            this.step = STEPS.LOADING; // show progress bar briefly
+            this.post.title = "";
+            this.post.markdown = "";
+            this.post.tags = "";
+            this.post.categories = "";
+            this.post.excerpt = "";
+            this.post.slug = "";
+            this.post.published = new Date().toISOString().slice(0, 16);
+            this.fileMap.clear();
+            if (this.editor) {
+                this.editor.setContent('');
+            }
+            this.successUrl = "#";
+            this.$nextTick(() => this.step = STEPS.EDITOR);
+        },
+
         async handlePublish() {
-            // TODO: Implement publish logic
-            console.log("Publishing...");
+            this.submitting = true;
+
+            const formData = new FormData();
+            formData.append('json', JSON.stringify(this.post));
+
+            for (const [key, file] of this.fileMap.entries()) {
+                formData.append(key, file);
+            }
+
+            try {
+                const response = await fetch(this.postUrl, {
+                    method: 'POST',
+                    headers: {
+                        'RequestVerificationToken': this.csrfToken
+                    },
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || `Publish request failed with status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                this.successUrl = result.url || '#';
+                this.step = STEPS.SUCCESS;
+
+            } catch (error) {
+                console.warn('Failed to publish post:', error);
+                this.step = STEPS.OPTIONAL; // Return to optional step on failure
+            } finally {
+                this.submitting = false;
+            }
         }
     }));
 });
