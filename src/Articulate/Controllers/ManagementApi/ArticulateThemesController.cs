@@ -22,7 +22,7 @@ namespace Articulate.Controllers.ManagementApi
     [Authorize(Policy = AuthorizationPolicies.SectionAccessSettings)]
     [VersionedApiBackOfficeRoute("articulate/themes")]
     [MapToApi(ArticulateConstants.Name.ArticulateManagementApi)]
-    [ApiExplorerSettings(GroupName = "Themes")]
+    [ApiExplorerSettings(GroupName = ArticulateConstants.Name.ThemesApiGroup)]
     public class ArticulateThemesController(IHostEnvironment hostingEnvironment, ILogger<ArticulateThemesController> logger) : ManagementApiControllerBase
     {
         [HttpPost("copy")]

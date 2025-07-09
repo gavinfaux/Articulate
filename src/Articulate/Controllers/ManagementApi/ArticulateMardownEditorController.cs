@@ -43,7 +43,7 @@ namespace Articulate.Controllers.ManagementApi
     [Authorize(AuthorizationPolicies.MediaPermissionByResource)]
     [MapToApi(ArticulateConstants.Name.ArticulateManagementApi)]
     [VersionedApiBackOfficeRoute("articulate/editors/markdown")]
-    [ApiExplorerSettings(GroupName = "Markdown Editor")]
+    [ApiExplorerSettings(GroupName = ArticulateConstants.Name.MarkdownEditorApiGroup)]
     public class ArticulateMardownEditorController : ManagementApiControllerBase
     {
 
@@ -328,7 +328,5 @@ namespace Articulate.Controllers.ManagementApi
             var permissions = user.GetPermissions(contentItem.Path, userService);
             return permissionsToCheck.All(p => permissions.Contains(p));
         }
-
- 
     }
 }

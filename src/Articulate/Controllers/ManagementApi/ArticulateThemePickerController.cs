@@ -26,7 +26,7 @@ namespace Articulate.Controllers.ManagementApi
     [Authorize(Policy = AuthorizationPolicies.BackOfficeAccess)]
     [VersionedApiBackOfficeRoute("articulate/editors/theme-picker")]
     [MapToApi(ArticulateConstants.Name.ArticulateManagementApi)]
-    [ApiExplorerSettings(GroupName = "Theme Picker")]
+    [ApiExplorerSettings(GroupName = ArticulateConstants.Name.ThemePickerApiGroup)]
     public class ArticulateThemePickerController(IHostEnvironment hostingEnvironment, ILogger<ArticulateThemePickerController> logger) : ManagementApiControllerBase
     {
 

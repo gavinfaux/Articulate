@@ -30,7 +30,14 @@ namespace Articulate
             public const string AuthorsDocument = "Authors";
 
             public const string ArticulateManagementApi = "articulate";
-            public const string OperationIdGroup = "Articulate";
+
+            public const string AuthenticationApiGroup = "Authentication";
+            public const string BlogMlApiGroup = "BlogML";
+            public const string MarkdownEditorApiGroup = "Markdown Editor";
+            public const string ThemePickerApiGroup = "Theme Picker";
+            public const string ThemesApiGroup = "Themes";
+
         }
+
     }
 }

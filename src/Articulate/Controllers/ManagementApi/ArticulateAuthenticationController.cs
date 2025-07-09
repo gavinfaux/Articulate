@@ -16,7 +16,7 @@ namespace Articulate.Controllers.ManagementApi
     /// Provides an authentication endpoint for the Articulate Mobile Editor.
     /// </summary>
     [ApiVersion("1.0")]
-    [ApiExplorerSettings(GroupName = "Authentication")]
+    [ApiExplorerSettings(GroupName = ArticulateConstants.Name.AuthenticationApiGroup)]
     [ApiController]
     [MapToApi(ArticulateConstants.Name.ArticulateManagementApi)]
     [Route("articulate/management/api/v{version:apiVersion}/authentication")]
