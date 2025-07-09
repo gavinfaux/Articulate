@@ -1,188 +1,215 @@
 document.addEventListener("alpine:init", () => {
-Alpine.data("app", () => ({
-  // --- State Management ---
-  step: "loading", // "loading", "login", "editor", "optional", , "success"
-  isEditorInitializing: false,
-  isAuthenticated: false,
-  submitting: false,
-  errorMessage: "",
-  successUrl: "#",
-  caption: "Create a new post",
-  fileMap: new Map(),
-  editor: null,
-  csrfToken: null,
-  authSigninUrl: "",
-  authSignoutUrl: "",
-  authCsrfUrl: "",
-  authStatusUrl: "",
-  postUrl: "",
-
-  // --- Models  ---
-  login: {
-    emailAddress: "",
-    password: "",
-  },
-  post: {
-    articulateNodeId: "",
-    title: "",
-    markdown: "",
-    author: "",
-    tags: "",
-    categories: "",
-    published: new Date().toISOString().slice(0, 16),
-    excerpt: "",
-    slug: "",
-  },
-
-  async init() {
-    console.info("Alpine component initializing...");
-
-    const bodyEl = document.body;
-    this.authSigninUrl = bodyEl.dataset.authSigninUrl;
-    this.authSignoutUrl = bodyEl.dataset.authSignoutUrl;
-    this.authCsrfUrl = bodyEl.dataset.authCsrfUrl;
-    this.authStatusUrl = bodyEl.dataset.authStatusUrl;
-    this.postUrl = bodyEl.dataset.postUrl;
-    this.post.articulateNodeId = bodyEl.dataset.articulateNodeId;
-    Alpine.data("app", () => ({
-      
-    }));
-
-
-    
-    await this.getCsrfToken();
-    if (this.csrfToken) {
-      await this.checkAuthStatus();
-    }
-
-    this.$watch("step", (newStep) => {
-      if (newStep === "editor" && !this.editor && !this.isEditorInitializing) {
-        this.isEditorInitializing = true;
-        this.$nextTick(() => {
-          this.editor = new TinyMDE.Editor({
-            element: this.$refs.editor,
-            content: this.post.markdown,
-            commandBar: false
-          });
-          this.editor.addEventListener("change", () => {
-            this.post.markdown = this.editor.getContent();
-          });
-          console.info("tiny-markdown-editor initialized.");
-        });
-      }
+    const STEPS = Object.freeze({
+        LOADING: 'loading',
+        LOGIN: 'login',
+        EDITOR: 'editor',
+        OPTIONAL: 'optional',
+        SUCCESS: 'success',
     });
-  },
 
-  // fetch the CSRF token from the API
-  async getCsrfToken() {
-    try {
-      const response = await fetch(this.authCsrfUrl);
-      if (!response.ok) throw new Error('Could not fetch CSRF token');
-      const data = await response.json();
-      this.csrfToken = data.requestToken;
-    } catch (error) {
-      this.errorMessage = "A security token could not be loaded. Please refresh the page.";
-      // fallback to login on error
-      this.step = 'login';
-    }
-  },
+    Alpine.data("app", () => ({
+        // --- State Management ---
+        step: STEPS.LOADING,
+        submitting: false,
+        isEditorInitializing: false,
+        isAuthenticated: false,
+        fileMap: new Map(),
+        editor: null,
+        csrfToken: null,
+        caption: "Create a new post",
 
-  triggerImageUpload() {
-    this.$refs.imageUpload.click();
-  },
+        // --- URLs ---
+        authSigninUrl: "",
+        authSignoutUrl: "",
+        authCsrfUrl: "",
+        authStatusUrl: "",
+        postUrl: "",
+        successUrl: "#",
+        twoFactorUrl: "",
 
-  triggerCamera() {
-    this.$refs.cameraUpload.click();
-  },
-
-  handleFileSelect(files) {
-    for (const file of files) {
-      if (!file || !file.type.startsWith("image")) continue;
-
-      const index = this.fileMap.size;
-
-      // 1. Create the unique, temporary placeholder URL.
-      const placeholderUrl = `tmp:${index}:${file.name}`;
-
-      // 2. Use this placeholder as the key in our map.
-      this.fileMap.set(placeholderUrl, file);
-
-      // 3. Insert standard Markdown syntax into the editor.
-      const markdownToInsert = `![${file.name}](${placeholderUrl})`;
-      this.editor.paste(markdownToInsert);
-}
-  },
-
-  async checkAuthStatus() {
-    this.errorMessage = "";
-    try {
-      const response = await fetch(this.authStatusUrl);
-      if (!response.ok) throw new Error('Authentication check failed');
-      const data = await response.json();
-      this.step = data.isAuthenticated ? "editor" : "login";
-    } catch (error) {
-      this.step = "login";
-      this.errorMessage = "Could not verify login status.";
-    }
-  },
-
-  async handleLogin() {
-    this.submitting = true;
-    this.errorMessage = "";
-    try {
-      const response = await fetch(this.authSigninUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'RequestVerificationToken': this.csrfToken // Send the token
+        // --- Models & Validation ---
+        login: {
+            emailAddress: "",
+            password: "",
+            validation: { // For material design style effects
+                emailAddress: true,
+                password: true,
+            }
         },
-        body: JSON.stringify(this.login)
-      });
-
-      if (!response.ok) throw new Error('Login failed. Please check your credentials.');
-
-      this.isAuthenticated = true;
-      this.step = "editor";
-    } catch (error) {
-      this.errorMessage = error.message;
-    } finally {
-      this.submitting = false;
-    }
-  },
-
-  async handlePublish() {
-    this.submitting = true;
-    this.errorMessage = "";
-
-    const formData = new FormData();
-    formData.append('json', JSON.stringify(this.post));
-
-    for (const [key, file] of this.fileMap.entries()) {
-      // The 'key' will be "tmp:0:my-cat.jpg"
-      // The 'file' will be the actual file data
-      formData.append(key, file);
-    }
-
-    try {
-      const response = await fetch(this.postUrl, {
-        method: 'POST',
-        headers: {
-          'RequestVerificationToken': this.csrfToken
+        post: {
+            articulateNodeId: "",
+            title: "",
+            markdown: "",
+            author: "",
+            tags: "",
+            categories: "",
+            published: new Date().toISOString().slice(0, 16),
+            excerpt: "",
+            slug: "",
         },
-        body: formData
-      });
 
-      if (!response.ok) throw new Error('Failed to publish post.');
+        // --- Initialization ---
+        async init() {
+            console.info("Alpine component initializing...");
+            this.loadUrlsFromDataset();
+            await this.getCsrfToken();
+            if (this.csrfToken) {
+                await this.checkAuthStatus();
+            }
+            this.setupWatchers();
+        },
 
-      const result = await response.json();
-      this.successUrl = result.url || '#';
-      this.step = 'success';
-    } catch (error) {
-      this.errorMessage = error.message;
-      this.step = 'optional';
-    } finally {
-      this.submitting = false;
-    }
-  }
-}));
+        loadUrlsFromDataset() {
+            const bodyEl = document.body;
+            this.authSigninUrl = bodyEl.dataset.authSigninUrl;
+            this.authSignoutUrl = bodyEl.dataset.authSignoutUrl;
+            this.authCsrfUrl = bodyEl.dataset.authCsrfUrl;
+            this.authStatusUrl = bodyEl.dataset.authStatusUrl;
+            this.postUrl = bodyEl.dataset.postUrl;
+            this.post.articulateNodeId = bodyEl.dataset.articulateNodeId;
+        },
+
+        setupWatchers() {
+            this.$watch("step", (newStep) => {
+                if (newStep === STEPS.EDITOR && !this.editor && !this.isEditorInitializing) {
+                    this.initializeEditor();
+                }
+            });
+        },
+
+        initializeEditor() {
+            this.isEditorInitializing = true;
+            this.$nextTick(() => {
+                this.editor = new TinyMDE.Editor({
+                    element: this.$refs.editor,
+                    content: this.post.markdown,
+                    commandBar: false
+                });
+                this.editor.addEventListener("change", () => {
+                    this.post.markdown = this.editor.getContent();
+                });
+                console.info("tiny-markdown-editor initialized.");
+            });
+        },
+
+        // --- Authentication ---
+        async getCsrfToken() {
+            try {
+                const response = await fetch(this.authCsrfUrl);
+                if (!response.ok) throw new Error(`CSRF token fetch failed with status: ${response.status}`);
+                const data = await response.json();
+                this.csrfToken = data.requestToken;
+            } catch (error) {
+                console.error("A security token could not be loaded. Please refresh the page.", error);
+                this.step = STEPS.LOGIN; // Fallback to login
+            }
+        },
+
+        async checkAuthStatus() {
+            try {
+                const response = await fetch(this.authStatusUrl);
+                // A 401 is an expected 'not logged in' state, not an error.
+                if (response.status === 401) {
+                    this.isAuthenticated = false;
+                    this.step = STEPS.LOGIN;
+                    return;
+                }
+                if (!response.ok) throw new Error(`Auth status check failed with status: ${response.status}`);
+
+                const result = await response.json();
+                if (result.isAuthenticated) {
+                    this.isAuthenticated = true;
+                    this.step = STEPS.EDITOR;
+                } else {
+                    this.isAuthenticated = false;
+                    this.step = STEPS.LOGIN;
+                }
+            } catch (error) {
+                console.warn("Could not verify login status.", error);
+                this.step = STEPS.LOGIN;
+            }
+        },
+
+        validateLoginFields() {
+            this.login.validation.emailAddress = !!this.login.emailAddress;
+            this.login.validation.password = !!this.login.password;
+            return this.login.validation.emailAddress && this.login.validation.password;
+        },
+
+        async handleLogin() {
+            if (!this.validateLoginFields()) {
+                return;
+            }
+
+            this.submitting = true;
+            this.twoFactorUrl = '';
+
+            try {
+                const response = await fetch(this.authSigninUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': this.csrfToken
+                    },
+                    body: JSON.stringify(this.login)
+                });
+
+                if (response.status === 401) {
+                    this.login.validation.emailAddress = false;
+                    this.login.validation.password = false;
+                    console.warn('Login failed: Invalid credentials.');
+                    return;
+                }
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || `Login request failed with status: ${response.status}`);
+                }
+
+                const result = await response.json();
+
+                if (result.requiresTwoFactor) {
+                    this.twoFactorUrl = result.redirectUrl;
+                    console.info('Two-factor authentication required.');
+                } else if (result.loginSuccess) {
+                    this.isAuthenticated = true;
+                    this.step = STEPS.EDITOR;
+                }
+
+            } catch (error) {
+                console.error('An error occurred during login:', error);
+                // Indicate a general error on fields if something unexpected happens
+                this.login.validation.emailAddress = false;
+                this.login.validation.password = false;
+            } finally {
+                this.submitting = false;
+            }
+        },
+
+        // --- File & Post Handling (To be implemented) ---
+        triggerImageUpload() {
+            this.$refs.imageUpload.click();
+        },
+
+        triggerCamera() {
+            this.$refs.cameraUpload.click();
+        },
+
+        handleFileSelect(files) {
+            // TODO: Implement full file validation logic here
+            for (const file of files) {
+                if (!file || !file.type.startsWith("image")) continue;
+                const index = this.fileMap.size;
+                const placeholderUrl = `tmp:${index}:${file.name}`;
+                this.fileMap.set(placeholderUrl, file);
+                const markdownToInsert = `![${file.name}](${placeholderUrl})`;
+                this.editor.paste(markdownToInsert);
+            }
+        },
+
+        async handlePublish() {
+            // TODO: Implement publish logic
+            console.log("Publishing...");
+        }
+    }));
 });

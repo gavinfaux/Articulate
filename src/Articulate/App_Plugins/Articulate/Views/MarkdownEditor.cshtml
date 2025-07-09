@@ -49,24 +49,28 @@
     <main class="container">
         <!-- Login View -->
         <article x-show="step === 'login'">
-            <form @@submit.prevent="handleLogin">
+            <form @@submit.prevent="handleLogin" novalidate>
                 <label for="email">Email Address</label>
-                <input x-model="login.emailAddress" type="email" id="email" required />
+                <input x-model="login.emailAddress" type="email" id="email" required :aria-invalid="!login.validation.emailAddress" />
                 <label for="password">Password</label>
-                <input x-model="login.password" type="password" id="password" required />
-                <small x-show="errorMessage" x-text="errorMessage"></small>
+                <input x-model="login.password" type="password" id="password" required :aria-invalid="!login.validation.password" />
+                
+                <template x-if="twoFactorUrl">
+                    <p>Please <a :href="twoFactorUrl">click here</a> to complete your login.</p>
+                </template>
+
                 <button type="submit" :aria-busy="submitting">Login</button>
             </form>
         </article>
 
         <!-- Editor View -->
         <article x-show="step === 'editor'">
-            <input x-ref="imageUpload" type="file" accept="image/*" hidden @@change="handleFileSelect($event.target.files)" />
-            <input x-ref="cameraUpload" type="file" accept="image/*" capture="environment" hidden @@change="handleFileSelect($event.target.files)" />
+            <input x-ref="imageUpload" type="file" accept="image/jpeg,image/png,image/gif" hidden @@change="handleFileSelect($event.target.files)" />
+            <input x-ref="cameraUpload" type="file" accept="image/jpeg,image/png,image/gif" capture="environment" hidden @@change="handleFileSelect($event.target.files)" />
             <label for="title">Title</label>
             <input x-model="post.title" type="text" id="title" placeholder="Your post title..." required />
             <div class="editor-container" style="height: 500px;">
-            <textarea x-ref="editor" id="editor" placeholder="## Your post content..."></textarea>
+                <textarea x-ref="editor" id="editor" placeholder="## Your post content..."></textarea>
             </div>
         </article>
 
@@ -98,7 +102,7 @@
         </div>
         <div class="footer-right">
             <button x-show="step === 'optional'" style="transform: rotate(180deg);" class="secondary material-icons" @@click="step = 'editor'" title="Back">forward</button>
-            <button x-show="step === 'editor' && post.title" class="material-icons" @@click="step = 'optional'" title="Next">forward</button>
+            <button x-show="step === 'editor' && post.title && post.markdown" class="material-icons" @@click="step = 'optional'" title="Next">forward</button>
             <button x-show="step === 'optional'" @@click="handlePublish" :aria-busy="submitting" class="post-button">Post It!</button>
         </div>
     </footer>
