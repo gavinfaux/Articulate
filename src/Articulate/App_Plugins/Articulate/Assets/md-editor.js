@@ -1,7 +1,7 @@
 document.addEventListener("alpine:init", () => {
 Alpine.data("app", () => ({
   // --- State Management ---
-  step: "loading",
+  step: "loading", // "loading", "login", "editor", "optional", , "success"
   isEditorInitializing: false,
   isAuthenticated: false,
   submitting: false,
@@ -44,7 +44,12 @@ Alpine.data("app", () => ({
     this.authStatusUrl = bodyEl.dataset.authStatusUrl;
     this.postUrl = bodyEl.dataset.postUrl;
     this.post.articulateNodeId = bodyEl.dataset.articulateNodeId;
+    Alpine.data("app", () => ({
+      
+    }));
 
+
+    
     await this.getCsrfToken();
     if (this.csrfToken) {
       await this.checkAuthStatus();

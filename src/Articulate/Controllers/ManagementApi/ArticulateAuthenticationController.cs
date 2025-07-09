@@ -81,7 +81,7 @@ namespace Articulate.Controllers.ManagementApi
 
             if (result.RequiresTwoFactor)
             {
-                return Ok(new TwoFactorRequiredResponse { RequiresTwoFactor = true, RedirectUrl = "/umbraco" });
+                return Ok(new TwoFactorRequiredResponse { RedirectUrl = "/umbraco/login" });
             }
 
             return result switch

@@ -31,10 +31,6 @@ namespace Articulate.Controllers
         public ViewResult NewPost()
         {
 
-            // Get all API descriptions from the provider
-            var allApiDescriptions = _apiDescriptionProvider.ApiDescriptionGroups.Items
-                .SelectMany(group => group.Items)
-                .ToList();
 
             var vm = new MarkdownEditorInitModel
             {

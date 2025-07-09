@@ -328,5 +328,7 @@ namespace Articulate.Controllers.ManagementApi
             var permissions = user.GetPermissions(contentItem.Path, userService);
             return permissionsToCheck.All(p => permissions.Contains(p));
         }
+
+ 
     }
 }
