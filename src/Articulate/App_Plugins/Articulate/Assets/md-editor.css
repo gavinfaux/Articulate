@@ -164,7 +164,7 @@ input[aria-invalid="true"] {
     box-shadow: 0 0 0 1px var(--md-pink);
 }
 
-@media only screen and (min-device-width : 320px) and (max-device-width : 480px) {
+@media (max-width: 768px) {
   main.container {
     padding-top: 70px;
     padding-bottom: 80px;
