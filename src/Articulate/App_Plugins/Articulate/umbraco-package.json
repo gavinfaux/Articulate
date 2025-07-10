@@ -2,13 +2,13 @@
   "$schema": "../umbraco-package-schema.json",
   "id": "Articulate",
   "name": "Articulate",
-  "version": "6.0.0-g1f4f86bc24",
+  "version": "0.0.0",
   "allowTelemetry": true,
   "extensions": [
     {
+      "name": "Articulate BackOffice Bundle",
+      "alias": "Articulate.BackOffice.Bundle",
       "type": "bundle",
-      "name": "Articulate BackOffice",
-      "alias": "Articulate.BackOffice",
       "js": "/App_Plugins/Articulate/BackOffice/articulate.js"
     }
   ]

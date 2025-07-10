@@ -22,22 +22,23 @@ namespace Articulate
             public const string ArticulateTags = "ArticulateTags";
         }
 
-        public static class Name
+        public static class Convention
         {
             public const string Articulate = "Articulate";
 
             public const string ArticlesDocument = "Articles";
             public const string AuthorsDocument = "Authors";
-
-            public const string ArticulateManagementApi = "articulate";
-
-            public const string AuthenticationApiGroup = "Authentication";
-            public const string BlogMlApiGroup = "BlogML";
-            public const string MarkdownEditorApiGroup = "Markdown Editor";
-            public const string ThemePickerApiGroup = "Theme Picker";
-            public const string ThemesApiGroup = "Themes";
-
         }
 
+        public static class ManagementApi
+        {
+            public const string Name = "articulate";
+
+            public const string Authentication = "Authentication";
+            public const string BlogMl = "BlogML";
+            public const string MarkdownEditor = "Markdown Editor";
+            public const string ThemePicker = "Theme Picker";
+            public const string ThemeOptions = "Theme Options";
+        }
     }
 }

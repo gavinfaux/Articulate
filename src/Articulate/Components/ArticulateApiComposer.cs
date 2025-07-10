@@ -29,7 +29,6 @@ namespace Articulate.Components
             _ = builder.Services.AddSingleton<IOperationIdHandler, ArticulateOperationIdHandler>();
 
             _ = builder.Services.ConfigureOptions<ArticulateSwaggerOptions>();
-
         }
     }
 
@@ -41,7 +40,7 @@ namespace Articulate.Components
         /// <summary>
         /// Gets the API name for which security requirements are applied.
         /// </summary>
-        protected override string ApiName => ArticulateConstants.Name.ArticulateManagementApi;
+        protected override string ApiName => ArticulateConstants.ManagementApi.Name;
     }
 
     /// <summary>
@@ -54,8 +53,11 @@ namespace Articulate.Components
 
         private readonly IOptions<ApiVersioningOptions> _apiVersioningOptions = apiVersioningOptions;
 
-        protected override bool CanHandle(ApiDescription apiDescription, ControllerActionDescriptor controllerActionDescriptor)
-            => controllerActionDescriptor.ControllerTypeInfo.Namespace?.StartsWith("Articulate.Controllers.ManagementApi", comparisonType: StringComparison.InvariantCultureIgnoreCase) is true;
+        protected override bool CanHandle(ApiDescription apiDescription,
+            ControllerActionDescriptor controllerActionDescriptor)
+            => controllerActionDescriptor.ControllerTypeInfo.Namespace?.StartsWith(
+                "Articulate.Controllers.ManagementApi",
+                comparisonType: StringComparison.InvariantCultureIgnoreCase) is true;
 
         public override string Handle(ApiDescription apiDescription)
             => ArticulateOperationId(apiDescription);
@@ -129,5 +131,4 @@ namespace Articulate.Components
         [GeneratedRegex("[\\/\\-](\\w{1})")]
         public static partial Regex ToCamelCaseRegex();
     }
-
 }

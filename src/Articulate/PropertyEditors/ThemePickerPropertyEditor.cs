@@ -1,28 +1,17 @@
 using Umbraco.Cms.Core.PropertyEditors;
-using Umbraco.Cms.Core.IO;
 
 namespace Articulate.PropertyEditors
 {
     [DataEditor("ArticulateThemePicker")]
-    public class ThemePickerPropertyEditor : DataEditor
+    public class ThemePickerPropertyEditor(IDataValueEditorFactory dataValueEditorFactory)
+        : DataEditor(dataValueEditorFactory)
     {
-        private readonly IIOHelper _ioHelper;
-
-        public ThemePickerPropertyEditor(IDataValueEditorFactory dataValueEditorFactory, IIOHelper ioHelper) 
-            : base(dataValueEditorFactory)
-        {
-            _ioHelper = ioHelper;
-        }
-
-        protected override IConfigurationEditor CreateConfigurationEditor()
-        {
-            return new ThemePickerConfigurationEditor(_ioHelper);
-        }
+        protected override IConfigurationEditor CreateConfigurationEditor() => new ThemePickerConfigurationEditor();
     }
 
     public class ThemePickerConfigurationEditor : ConfigurationEditor
     {
-        public ThemePickerConfigurationEditor(IIOHelper ioHelper) : base()
+        public ThemePickerConfigurationEditor() : base()
         {
             // No specific configuration needed for theme picker
         }

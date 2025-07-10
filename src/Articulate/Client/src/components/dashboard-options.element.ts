@@ -17,10 +17,10 @@ const dashboards = [
     description: "Export content to any BlogML compatible platform",
   },
   {
-    path: "theme/copy",
-    name: "Copy Theme",
+    path: "theme/options",
+    name: "Theme Options",
     icon: "icon-color-bucket",
-    description: "Copy Articulate themes for customization",
+    description: "Themean Articulate theme for customization",
   },
 ];
 

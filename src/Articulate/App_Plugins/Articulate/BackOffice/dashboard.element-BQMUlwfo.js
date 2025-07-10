@@ -1,8 +1,8 @@
 import { html as p, nothing as Be, css as C, property as J, state as h, query as _e, customElement as W } from "@umbraco-cms/backoffice/external/lit";
 import { UmbLitElement as V } from "@umbraco-cms/backoffice/lit-element";
 import { UmbTextStyles as N } from "@umbraco-cms/backoffice/style";
-import { UMB_MODAL_MANAGER_CONTEXT as Fe } from "@umbraco-cms/backoffice/modal";
-import { f as at, B as K, T as Oe } from "./error-utils-BGlMw9rr.js";
+import { UMB_MODAL_MANAGER_CONTEXT as Oe } from "@umbraco-cms/backoffice/modal";
+import { f as at, B as K, T as Fe } from "./error-utils-BGlMw9rr.js";
 import { UMB_DOCUMENT_PICKER_MODAL as st } from "@umbraco-cms/backoffice/document";
 import { DocumentTypeService as nt, DocumentService as lt } from "@umbraco-cms/backoffice/external/backend-api";
 import { UMB_NOTIFICATION_CONTEXT as ut } from "@umbraco-cms/backoffice/notification";
@@ -164,13 +164,13 @@ var ct = Object.defineProperty, dt = Object.getOwnPropertyDescriptor, Le = (t) =
   for (var r = o > 1 ? void 0 : o ? dt(e, i) : e, a = t.length - 1, s; a >= 0; a--)
     (s = t[a]) && (r = (o ? s(e, i, r) : s(r)) || r);
   return o && r && ct(e, i, r), r;
-}, ht = (t, e, i) => e.has(t) || Le("Cannot " + i), z = (t, e, i) => (ht(t, e, "read from private field"), i ? i.call(t) : e.get(t)), F = (t, e, i) => e.has(t) ? Le("Cannot add the same private member more than once") : e instanceof WeakSet ? e.add(t) : e.set(t, i), re, ae, se, ne, le;
+}, ht = (t, e, i) => e.has(t) || Le("Cannot " + i), z = (t, e, i) => (ht(t, e, "read from private field"), i ? i.call(t) : e.get(t)), O = (t, e, i) => e.has(t) ? Le("Cannot add the same private member more than once") : e instanceof WeakSet ? e.add(t) : e.set(t, i), re, ae, se, ne, le;
 let b = class extends V {
   constructor() {
-    super(), this._formState = void 0, this._formError = null, this._articulateBlogNode = void 0, this._selectedBlogNodeName = "", this._archiveDoctypeUdi = void 0, F(this, re, new ve(this)), F(this, ae, (t, e) => {
+    super(), this._formState = void 0, this._formError = null, this._articulateBlogNode = void 0, this._selectedBlogNodeName = "", this._archiveDoctypeUdi = void 0, O(this, re, new ve(this)), O(this, ae, (t, e) => {
       const i = window.URL.createObjectURL(t), o = document.createElement("a");
       o.style.display = "none", o.href = i, o.download = e, document.body.appendChild(o), o.click(), window.URL.revokeObjectURL(i), o.remove();
-    }), F(this, se, (t) => t instanceof Blob), F(this, ne, async (t) => {
+    }), O(this, se, (t) => t instanceof Blob), O(this, ne, async (t) => {
       if (t.preventDefault(), !!this._form) {
         try {
           await z(this, re).validate();
@@ -192,7 +192,7 @@ let b = class extends V {
           }
         }
       }
-    }), F(this, le, async () => {
+    }), O(this, le, async () => {
       const e = new FormData(this._form).get("embedImages") === "on", i = {
         articulateBlogNode: this._articulateBlogNode,
         exportImagesAsBase64: e
@@ -216,7 +216,7 @@ let b = class extends V {
       z(this, ae).call(this, r, s);
     }), this._handleReset = (t) => {
       t.preventDefault(), this.resetState(!0);
-    }, this.consumeContext(Fe, (t) => {
+    }, this.consumeContext(Oe, (t) => {
       this._modalManagerContext = t;
     });
   }
@@ -364,7 +364,7 @@ b = D([
  * SPDX-License-Identifier: BSD-3-Clause
  */
 const U = globalThis, G = U.trustedTypes, ke = G ? G.createPolicy("lit-html", { createHTML: (t) => t }) : void 0, We = "$lit$", A = `lit$${Math.random().toFixed(9).slice(2)}$`, Ve = "?" + A, mt = `<${Ve}>`, M = document, Z = () => M.createComment(""), R = (t) => t === null || typeof t != "object" && typeof t != "function", Ae = Array.isArray, pt = (t) => Ae(t) || typeof (t == null ? void 0 : t[Symbol.iterator]) == "function", ie = `[ 	
-\f\r]`, O = /<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g, Me = /-->/g, De = />/g, T = RegExp(`>|${ie}(?:([^\\s"'>=/]+)(${ie}*=${ie}*(?:[^ 	
+\f\r]`, F = /<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g, Me = /-->/g, De = />/g, T = RegExp(`>|${ie}(?:([^\\s"'>=/]+)(${ie}*=${ie}*(?:[^ 	
 \f\r"'\`<>=]|("|')|))|$)`, "g"), Pe = /'/g, Ie = /"/g, je = /^(?:script|style|textarea|title)$/i, H = Symbol.for("lit-noChange"), c = Symbol.for("lit-nothing"), ze = /* @__PURE__ */ new WeakMap(), k = M.createTreeWalker(M, 129);
 function Xe(t, e) {
   if (!Ae(t) || !t.hasOwnProperty("raw")) throw Error("invalid template strings array");
@@ -372,13 +372,13 @@ function Xe(t, e) {
 }
 const ft = (t, e) => {
   const i = t.length - 1, o = [];
-  let r, a = e === 2 ? "<svg>" : e === 3 ? "<math>" : "", s = O;
+  let r, a = e === 2 ? "<svg>" : e === 3 ? "<math>" : "", s = F;
   for (let u = 0; u < i; u++) {
     const n = t[u];
     let d, m, l = -1, y = 0;
-    for (; y < n.length && (s.lastIndex = y, m = s.exec(n), m !== null); ) y = s.lastIndex, s === O ? m[1] === "!--" ? s = Me : m[1] !== void 0 ? s = De : m[2] !== void 0 ? (je.test(m[2]) && (r = RegExp("</" + m[2], "g")), s = T) : m[3] !== void 0 && (s = T) : s === T ? m[0] === ">" ? (s = r ?? O, l = -1) : m[1] === void 0 ? l = -2 : (l = s.lastIndex - m[2].length, d = m[1], s = m[3] === void 0 ? T : m[3] === '"' ? Ie : Pe) : s === Ie || s === Pe ? s = T : s === Me || s === De ? s = O : (s = T, r = void 0);
+    for (; y < n.length && (s.lastIndex = y, m = s.exec(n), m !== null); ) y = s.lastIndex, s === F ? m[1] === "!--" ? s = Me : m[1] !== void 0 ? s = De : m[2] !== void 0 ? (je.test(m[2]) && (r = RegExp("</" + m[2], "g")), s = T) : m[3] !== void 0 && (s = T) : s === T ? m[0] === ">" ? (s = r ?? F, l = -1) : m[1] === void 0 ? l = -2 : (l = s.lastIndex - m[2].length, d = m[1], s = m[3] === void 0 ? T : m[3] === '"' ? Ie : Pe) : s === Ie || s === Pe ? s = T : s === Me || s === De ? s = F : (s = T, r = void 0);
     const x = s === T && t[u + 1].startsWith("/>") ? " " : "";
-    a += s === O ? n + mt : l >= 0 ? (o.push(d), n.slice(0, l) + We + n.slice(l) + A + x) : n + A + (l === -2 ? u : x);
+    a += s === F ? n + mt : l >= 0 ? (o.push(d), n.slice(0, l) + We + n.slice(l) + A + x) : n + A + (l === -2 ? u : x);
   }
   return [Xe(t, a + (t[i] || "<?>") + (e === 2 ? "</svg>" : e === 3 ? "</math>" : "")), o];
 };
@@ -724,7 +724,7 @@ let g = class extends V {
       S(this, ce).call(this, e, o);
     }), this._handleReset = (t) => {
       t.preventDefault(), this.resetState(!0);
-    }, this.consumeContext(Fe, (t) => {
+    }, this.consumeContext(Oe, (t) => {
       this._modalManagerContext = t;
     });
   }
@@ -985,7 +985,7 @@ v = /* @__PURE__ */ new WeakSet();
 Ze = async function() {
   var t;
   try {
-    const e = await Oe.getArticulateThemesDefault();
+    const e = await Fe.getArticulateThemesDefault();
     if (!e.response.ok || !e.data)
       throw e.error || new Error("The list of themes could not be retrieved from the server.");
     this._themes = ((t = e.data) == null ? void 0 : t.map((i) => i)) ?? [];
@@ -1024,7 +1024,7 @@ tt = async function(t) {
     if (this._formState !== "waiting") {
       this._formState = "waiting", this._formError = null;
       try {
-        const e = await Oe.postArticulateThemesCopy({
+        const e = await Fe.postArticulateThemesCopy({
           body: {
             themeName: this._selectedTheme,
             newThemeName: this._newThemeName
@@ -1221,7 +1221,7 @@ E([
   _e("form")
 ], _.prototype, "_form", 2);
 _ = E([
-  W("copy-theme")
+  W("theme-options")
 ], _);
 var kt = Object.defineProperty, Mt = Object.getOwnPropertyDescriptor, rt = (t, e, i, o) => {
   for (var r = o > 1 ? void 0 : o ? Mt(e, i) : e, a = t.length - 1, s; a >= 0; a--)
@@ -1242,10 +1242,10 @@ const Dt = [
     description: "Export content to any BlogML compatible platform"
   },
   {
-    path: "theme/copy",
-    name: "Copy Theme",
+    path: "theme/options",
+    name: "Theme Options",
     icon: "icon-color-bucket",
-    description: "Copy Articulate themes for customization"
+    description: "Themean Articulate theme for customization"
   }
 ];
 let I = class extends V {
@@ -1359,7 +1359,7 @@ let L = class extends V {
         setup: t(b)
       },
       {
-        path: "theme/copy",
+        path: "theme/options",
         component: _,
         setup: t(_)
       },

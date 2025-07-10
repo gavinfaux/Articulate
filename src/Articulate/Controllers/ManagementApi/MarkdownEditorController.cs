@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using Articulate.Models.ManagmentApi;
+using Articulate.Models.ManagementApi;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -38,15 +38,14 @@ namespace Articulate.Controllers.ManagementApi
     /// <summary>
     /// Controller for handling the a-new markdown editor endpoint for creating blog posts
     /// </summary>
+    [ManagementApi(ArticulateEnum.ManagementApi.MarkdownEditor)]
     [ApiVersion("1.0")]
     [Authorize(AuthorizationPolicies.ContentPermissionByResource)]
     [Authorize(AuthorizationPolicies.MediaPermissionByResource)]
-    [MapToApi(ArticulateConstants.Name.ArticulateManagementApi)]
+    [MapToApi(ArticulateConstants.ManagementApi.Name)]
     [VersionedApiBackOfficeRoute("articulate/editors/markdown")]
-    [ApiExplorerSettings(GroupName = ArticulateConstants.Name.MarkdownEditorApiGroup)]
-    public class ArticulateMardownEditorController : ManagementApiControllerBase
+    public class MarkdownEditorController : ManagementApiControllerBase
     {
-
         private readonly ServiceContext _services;
         private readonly IBackOfficeSecurityAccessor _backOfficeSecurityAccessor;
         private readonly UmbracoHelper _umbracoHelper;
@@ -60,9 +59,9 @@ namespace Articulate.Controllers.ManagementApi
         private readonly IContentTypeBaseServiceProvider _contentTypeBaseServiceProvider;
         private readonly IShortStringHelper _shortStringHelper;
         private readonly Lazy<IMedia> _articulateRootMediaFolder;
-        private readonly ILogger<ArticulateMardownEditorController> _logger;
+        private readonly ILogger<MarkdownEditorController> _logger;
 
-        public ArticulateMardownEditorController(
+        public MarkdownEditorController(
             ServiceContext services,
             IBackOfficeSecurityAccessor backOfficeSecurityAccessor,
             UmbracoHelper umbracoHelper,
@@ -73,7 +72,7 @@ namespace Articulate.Controllers.ManagementApi
             IHostingEnvironment hostingEnvironment, IMediaService mediaService,
             MediaUrlGeneratorCollection mediaUrlGenerators,
             IContentTypeBaseServiceProvider contentTypeBaseServiceProvider, IShortStringHelper shortStringHelper,
-            ILogger<ArticulateMardownEditorController> logger)
+            ILogger<MarkdownEditorController> logger)
         {
             _services = services;
             _backOfficeSecurityAccessor = backOfficeSecurityAccessor;
@@ -90,8 +89,11 @@ namespace Articulate.Controllers.ManagementApi
             _logger = logger;
             _articulateRootMediaFolder = new Lazy<IMedia>(() =>
             {
-                var root = _mediaService.GetRootMedia().FirstOrDefault(x => x.Name == "Articulate" && x.ContentType.Alias.InvariantEquals(Constants.Conventions.MediaTypes.Folder));
-                return root ?? _mediaService.CreateMediaWithIdentity("Articulate", Constants.System.Root, Constants.Conventions.MediaTypes.Folder);
+                var root = _mediaService.GetRootMedia().FirstOrDefault(x =>
+                    x.Name == "Articulate" &&
+                    x.ContentType.Alias.InvariantEquals(Constants.Conventions.MediaTypes.Folder));
+                return root ?? _mediaService.CreateMediaWithIdentity("Articulate", Constants.System.Root,
+                    Constants.Conventions.MediaTypes.Folder);
             });
         }
 
@@ -114,7 +116,8 @@ namespace Articulate.Controllers.ManagementApi
         {
             if (string.IsNullOrWhiteSpace(jsonModel))
             {
-                return Problem("The 'json' form part is missing or empty.", statusCode: StatusCodes.Status400BadRequest);
+                return Problem("The 'json' form part is missing or empty.",
+                    statusCode: StatusCodes.Status400BadRequest);
             }
 
             MardownEditorModel model;
@@ -129,7 +132,8 @@ namespace Articulate.Controllers.ManagementApi
             catch (JsonException ex)
             {
                 _logger.LogWarning("JSON deserialization failed: {Message}", ex.Message);
-                return Problem($"JSON deserialization failed: {ex.Message}", statusCode: StatusCodes.Status400BadRequest);
+                return Problem($"JSON deserialization failed: {ex.Message}",
+                    statusCode: StatusCodes.Status400BadRequest);
             }
 
             if (model.ArticulateNodeId is null)
@@ -141,21 +145,31 @@ namespace Articulate.Controllers.ManagementApi
             var articulateNode = _services.ContentService.GetById(model.ArticulateNodeId.Value);
             if (articulateNode == null)
             {
-                return Problem($"No Articulate node found with the specified id: {model.ArticulateNodeId.Value}", statusCode: StatusCodes.Status404NotFound);
+                return Problem($"No Articulate node found with the specified id: {model.ArticulateNodeId.Value}",
+                    statusCode: StatusCodes.Status404NotFound);
             }
 
             var extractFirstImageAsProperty = articulateNode.HasProperty("extractFirstImage")
                                               && articulateNode.GetValue<bool>("extractFirstImage");
 
             var archive = _services.ContentService.GetPagedChildren(model.ArticulateNodeId.Value, 0, 1, out _)
-                .FirstOrDefault(x => x.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateArchive));
+                .FirstOrDefault(x =>
+                    x.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateArchive));
             if (archive == null)
             {
-                return Problem("No Articulate Archive node found for the specified id.", statusCode: StatusCodes.Status404NotFound);
+                return Problem("No Articulate Archive node found for the specified id.",
+                    statusCode: StatusCodes.Status404NotFound);
+            }
+
+            var currentUser = _backOfficeSecurityAccessor.BackOfficeSecurity.CurrentUser;
+            if (currentUser == null)
+            {
+                // This shouldn't happen due to the [Authorize] attribute, but it's a good safeguard.
+                return Unauthorized();
             }
 
             var requiredPermissions = new[] { ActionNew.ActionLetter, ActionPublish.ActionLetter };
-            if (!CheckPermissions(_backOfficeSecurityAccessor.BackOfficeSecurity.CurrentUser, archive, requiredPermissions, _services.UserService))
+            if (!CheckPermissions(currentUser, archive, requiredPermissions, _services.UserService))
             {
                 return Forbid();
             }
@@ -167,9 +181,9 @@ namespace Articulate.Controllers.ManagementApi
             var contentType = _services.ContentTypeService.Get("ArticulateMarkdown");
             if (contentType == null)
             {
-                var error = "Server configuration error: The 'ArticulateMarkdown' content type was not found.";
-                _logger.LogError(error);
-                return Problem(error, statusCode: StatusCodes.Status500InternalServerError);
+                _logger.LogError("Server configuration error: The 'ArticulateMarkdown' content type was not found.");
+                return Problem("Server configuration error: The 'ArticulateMarkdown' content type was not found.",
+                    statusCode: StatusCodes.Status500InternalServerError);
             }
 
             var content = _services.ContentService.CreateWithInvariantOrDefaultCultureName(
@@ -177,41 +191,57 @@ namespace Articulate.Controllers.ManagementApi
                 archive,
                 contentType,
                 _services.LocalizationService,
-                _backOfficeSecurityAccessor.BackOfficeSecurity.GetUserId().Result);
+                currentUser.Id);
 
-            content.SetInvariantOrDefaultCultureValue("markdown", model.Body, contentType, _services.LocalizationService);
+            if (content == null)
+            {
+                _logger.LogError("Content could not be created.");
+                return Problem("Content could not be created.",
+                    statusCode: StatusCodes.Status500InternalServerError);
+            }
+
+            content.SetInvariantOrDefaultCultureValue("markdown", model.Body, contentType,
+                _services.LocalizationService);
 
             if (!string.IsNullOrEmpty(parsedImageResponse.FirstImage))
             {
-                content.SetInvariantOrDefaultCultureValue("postImage", parsedImageResponse.FirstImage, contentType, _services.LocalizationService);
+                content.SetInvariantOrDefaultCultureValue("postImage", parsedImageResponse.FirstImage, contentType,
+                    _services.LocalizationService);
             }
 
             if (model.Excerpt.IsNullOrWhiteSpace() == false)
             {
-                content.SetInvariantOrDefaultCultureValue("excerpt", model.Excerpt, contentType, _services.LocalizationService);
+                content.SetInvariantOrDefaultCultureValue("excerpt", model.Excerpt, contentType,
+                    _services.LocalizationService);
             }
 
             if (model.Tags.IsNullOrWhiteSpace() == false)
             {
                 var tags = model.Tags.Split([','], StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim());
-                content.AssignInvariantOrDefaultCultureTags("tags", tags, contentType, _services.LocalizationService, _services.DataTypeService, _propertyEditors, _jsonSerializer);
+                content.AssignInvariantOrDefaultCultureTags("tags", tags, contentType, _services.LocalizationService,
+                    _services.DataTypeService, _propertyEditors, _jsonSerializer);
             }
 
             if (model.Categories.IsNullOrWhiteSpace() == false)
             {
                 var cats = model.Categories.Split([','], StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim());
-                content.AssignInvariantOrDefaultCultureTags("categories", cats, contentType, _services.LocalizationService, _services.DataTypeService, _propertyEditors, _jsonSerializer);
+                content.AssignInvariantOrDefaultCultureTags("categories", cats, contentType,
+                    _services.LocalizationService, _services.DataTypeService, _propertyEditors, _jsonSerializer);
             }
 
             if (model.Slug.IsNullOrWhiteSpace() == false)
             {
-                content.SetInvariantOrDefaultCultureValue(Constants.Conventions.Content.UrlName, model.Slug, contentType, _services.LocalizationService);
+                content.SetInvariantOrDefaultCultureValue(Constants.Conventions.Content.UrlName, model.Slug,
+                    contentType, _services.LocalizationService);
             }
 
             //author is required
-            content.SetInvariantOrDefaultCultureValue("author", _backOfficeSecurityAccessor.BackOfficeSecurity.CurrentUser.Name ?? "Unknown", contentType, _services.LocalizationService);
+            content.SetInvariantOrDefaultCultureValue("author",
+                _backOfficeSecurityAccessor.BackOfficeSecurity.CurrentUser.Name ?? "Unknown", contentType,
+                _services.LocalizationService);
 
-            var status = _services.ContentService.Save(content, _backOfficeSecurityAccessor.BackOfficeSecurity.GetUserId().Result);
+            var status =
+                _services.ContentService.Save(content, _backOfficeSecurityAccessor.BackOfficeSecurity.CurrentUser.Id);
             if (status.Success == false)
             {
                 ModelState.AddModelError("SaveOperation", "Content failed to save. Please check logs for details.");
@@ -222,16 +252,22 @@ namespace Articulate.Controllers.ManagementApi
             return Ok(new CreatePostResponse { Url = published?.Url() ?? "#" });
         }
 
-        private ParseImageResponse ParseImages(string body, IFormFileCollection formFiles, bool extractFirstImageAsProperty)
+        private ParseImageResponse ParseImages(string body, IFormFileCollection formFiles,
+            bool extractFirstImageAsProperty)
         {
-            // This regex correctly finds the markdown tag and captures the temporary URL.
-            var bodyTextRegex = new Regex(@"!\[.*?\]\((tmp:[^)]+)\)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
-
             // security validation list
-            var reservedNames = new HashSet<string> { "con", "prn", "aux", "nul", "com1", "lpt1" };
+            var reservedNames = new HashSet<string>
+            {
+                "con",
+                "prn",
+                "aux",
+                "nul",
+                "com1",
+                "lpt1"
+            };
             var firstImage = string.Empty;
 
-            var bodyText = bodyTextRegex.Replace(body, m =>
+            var bodyText = ArticulateMardownEditorRegexes.ImageTagPlaceholderRegex().Replace(body, m =>
             {
                 // Get the full temporary URL from the match (e.g., "tmp:0:my-cat.jpg").
                 var tempUrl = m.Groups[1].Value;
@@ -242,14 +278,16 @@ namespace Articulate.Controllers.ManagementApi
                 if (file == null)
                 {
                     // The file referenced in the markdown was not found in the form upload.
-                    _logger.LogWarning("Markdown image placeholder for {TempUrl} found, but no corresponding file was uploaded.", tempUrl);
+                    _logger.LogWarning(
+                        "Markdown image placeholder for {TempUrl} found, but no corresponding file was uploaded.",
+                        tempUrl);
                     return m.Value; // Return the original markdown tag so it's not lost?
                 }
 
                 // To get the index for 'extractFirstImageAsProperty' logic, we parse the tempUrl.
                 int? imageIndex = null;
-                var parts = tempUrl.Split(new[] { ':' }, 3);
-                if (parts.Length == 3 && int.TryParse(parts[1], out int parsedIndex))
+                var parts = tempUrl.Split([':'], 3);
+                if (parts.Length == 3 && int.TryParse(parts[1], out var parsedIndex))
                 {
                     imageIndex = parsedIndex;
                 }
@@ -265,7 +303,8 @@ namespace Articulate.Controllers.ManagementApi
                 var fileExtension = Path.GetExtension(filename).ToLowerInvariant();
 
                 var cleanFileName = string.Join("_", filename.Split(Path.GetInvalidFileNameChars()));
-                if (cleanFileName.IsNullOrWhiteSpace() || cleanFileName.Length > 100 || reservedNames.Contains(cleanFileName.ToLowerInvariant()))
+                if (cleanFileName.IsNullOrWhiteSpace() || cleanFileName.Length > 100 ||
+                    reservedNames.Contains(cleanFileName.ToLowerInvariant()))
                 {
                     return string.Empty;
                 }
@@ -284,9 +323,11 @@ namespace Articulate.Controllers.ManagementApi
                         return string.Empty; // 10MB limit
                     }
 
-                    var mediaItem = _mediaService.CreateMedia(safeFileNameWithExt, _articulateRootMediaFolder.Value, Constants.Conventions.MediaTypes.Image);
-                    mediaItem.SetValue(_mediaFileManager, _mediaUrlGenerators, _shortStringHelper, _contentTypeBaseServiceProvider, Constants.Conventions.Media.File, safeFileNameWithExt, stream);
-                    _mediaService.Save(mediaItem);
+                    var mediaItem = _mediaService.CreateMedia(safeFileNameWithExt, _articulateRootMediaFolder.Value,
+                        Constants.Conventions.MediaTypes.Image);
+                    mediaItem.SetValue(_mediaFileManager, _mediaUrlGenerators, _shortStringHelper,
+                        _contentTypeBaseServiceProvider, Constants.Conventions.Media.File, safeFileNameWithExt, stream);
+                    _ = _mediaService.Save(mediaItem);
 
                     var media = _umbracoHelper.Media(mediaItem.Key);
                     if (media == null)
@@ -323,10 +364,19 @@ namespace Articulate.Controllers.ManagementApi
 
             return new ParseImageResponse { BodyText = bodyText, FirstImage = firstImage };
         }
-        private bool CheckPermissions(IUser user, IContent contentItem, IEnumerable<string> permissionsToCheck, IUserService userService)
+
+        private static bool CheckPermissions(IUser user, IContent contentItem, IEnumerable<string> permissionsToCheck,
+            IUserService userService)
         {
             var permissions = user.GetPermissions(contentItem.Path, userService);
             return permissionsToCheck.All(p => permissions.Contains(p));
         }
+    }
+
+    internal static partial class ArticulateMardownEditorRegexes
+    {
+        // regex finds the image placeholder markdown tag and captures the temporary URL.
+        [GeneratedRegex(@"!\[.*?\]\((tmp:[^)]+)\)")]
+        public static partial Regex ImageTagPlaceholderRegex();
     }
 }

@@ -23,8 +23,8 @@ import { UmbValidationContext } from "@umbraco-cms/backoffice/validation";
  * @extends UmbLitElement
  * @implements {IFormController}
  */
-@customElement("copy-theme")
-export default class CopyThemeElement extends UmbLitElement implements IFormController {
+@customElement("theme-options")
+export default class ThemeOptionsElement extends UmbLitElement implements IFormController {
   /**
    * Optional router path for the back button.
    * @type {string | undefined}
@@ -438,6 +438,6 @@ export default class CopyThemeElement extends UmbLitElement implements IFormCont
 
 declare global {
   interface HTMLElementTagNameMap {
-    "copy-theme": CopyThemeElement;
+    "theme-options": ThemeOptionsElement;
   }
 }

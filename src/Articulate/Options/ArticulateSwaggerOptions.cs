@@ -13,7 +13,8 @@ namespace Articulate.Options
     /// <summary>
     /// Configures SwaggerGen options for the Articulate API, including documentation, tags, and XML comments.
     /// </summary>
-    public class ArticulateSwaggerOptions(ILogger<ArticulateSwaggerOptions> logger) : IConfigureOptions<SwaggerGenOptions>
+    public class ArticulateSwaggerOptions(ILogger<ArticulateSwaggerOptions> logger)
+        : IConfigureOptions<SwaggerGenOptions>
     {
         /// <summary>
         /// Configures SwaggerGen options for the Articulate API.
@@ -23,11 +24,12 @@ namespace Articulate.Options
         {
             var year = DateTime.Now.Year.ToString();
             options.SwaggerDoc(
-                ArticulateConstants.Name.ArticulateManagementApi,
+                ArticulateConstants.ManagementApi.Name,
                 new OpenApiInfo
                 {
                     Title = "Articulate Management API",
-                    Description = "API for the back office dashboard section Articulate, a wonderful Blog engine built on Umbraco. ",
+                    Description =
+                        "API for the back office dashboard section Articulate, a wonderful Blog engine built on Umbraco. ",
                     Version = "Latest",
                     Contact = new OpenApiContact
                     {

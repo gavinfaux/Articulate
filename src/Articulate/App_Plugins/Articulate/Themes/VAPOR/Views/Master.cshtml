@@ -16,15 +16,20 @@
     @Html.AdvertiseWeblogApi(Model)
     @Html.RssFeed(Model)
     @Html.RenderOpenSearch(Model)
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+
     <environment names="Development">
-        <link href="articulate-vapor-css" rel="stylesheet" fetchpriority="high" debug="true"/>
+        <link href="articulate-vapor-css" rel="stylesheet" fetchpriority="high" debug="true">
     </environment>
     <environment names="Staging,Production">
-        <link href="articulate-vapor-css" rel="stylesheet" fetchpriority="high" />
+        <link href="articulate-vapor-css" rel="stylesheet" fetchpriority="high">
     </environment>
+
     <!-- Google Fonts -->
-    <link rel="preload" as="style" href="https://fonts.googleapis.com/css?subset=latin,cyrillic-ext,latin-ext,cyrillic&family=Open+Sans+Condensed:300|Open+Sans:400,600,400italic,600italic|Merriweather:400,300,300italic,400italic,700,700italic|Roboto+Slab:400,300&display=swap" media="all" onload="this.rel='stylesheet'" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?subset=latin,cyrillic-ext,latin-ext,cyrillic&family=Open+Sans+Condensed:300|Open+Sans:400,600,400italic,600italic|Merriweather:400,300,300italic,400italic,700,700italic|Roboto+Slab:400,300&display=swap" media="print" onload="this.media='all'">
     <!-- Font Awesome 6 -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@@fortawesome/fontawesome-free@6.7.2/css/fontawesome.min.css" integrity="sha256-TBe0l9PhFaVR3DwHmA2jQbUf1y6yQ22RBgJKKkNkC50=" crossorigin="anonymous" media="print" onload="this.media='all'">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@@fortawesome/fontawesome-free@6.7.2/css/brands.min.css" integrity="sha256-lvqQzfgRxG8QBB5QMqpZGrljg5T/hNmC3vC7i3zntlI=" crossorigin="anonymous" media="print" onload="this.media='all'">
@@ -74,7 +79,7 @@
         </div>
     </footer>
 
-    <script src="articulate-vapor-js" type="text/javascript"></script>
+    <script src="articulate-vapor-js" type="text/javascript" async></script>
 
     @Html.GoogleAnalyticsTracking(Model)
 

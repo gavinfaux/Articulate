@@ -1,6 +1,6 @@
 #nullable enable
 using System.Threading.Tasks;
-using Articulate.Models.ManagmentApi.Authentication;
+using Articulate.Models.ManagementApi.Authentication;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authorization;
@@ -10,17 +10,23 @@ using Umbraco.Cms.Api.Common.Attributes;
 using Umbraco.Cms.Web.Common.Authorization;
 using Umbraco.Cms.Web.Common.Security;
 
+// TODO: persist login parameter on login endpoint, navigating away from editor/closing the tab ends session
+// https://kjac.dev/posts/using-umb_ucontext-with-umbraco-14-plus/ 
+// Set Claims and SignInAsync etc https://github.com/kjac/UmbracoCustomAuth *@
+
 namespace Articulate.Controllers.ManagementApi
 {
     /// <summary>
-    /// Provides an authentication endpoint for the Articulate Mobile Editor.
+    /// Provides an authentication endpoint for the Articulate Frontend Markdown Editor
     /// </summary>
+    [ManagementApi(ArticulateEnum.ManagementApi.BlogML)]
     [ApiVersion("1.0")]
-    [ApiExplorerSettings(GroupName = ArticulateConstants.Name.AuthenticationApiGroup)]
     [ApiController]
-    [MapToApi(ArticulateConstants.Name.ArticulateManagementApi)]
+    [MapToApi(ArticulateConstants.ManagementApi.Name)]
     [Route("articulate/management/api/v{version:apiVersion}/authentication")]
-    public class ArticulateAuthenticationController(IBackOfficeSignInManager signInManager, IAntiforgery antiforgery)
+    public class BackOfficeAuthenticationControllerController(
+        IBackOfficeSignInManager signInManager,
+        IAntiforgery antiforgery)
         : ControllerBase
     {
         /// <summary>
@@ -72,24 +78,21 @@ namespace Articulate.Controllers.ManagementApi
                     statusCode: StatusCodes.Status400BadRequest);
             }
 
-            var result = await signInManager.PasswordSignInAsync(model.EmailAddress, model.Password, true, true);
+            var result = await signInManager.PasswordSignInAsync(model.EmailAddress, model.Password, false, true);
 
-            if (result.Succeeded)
-            {
-                return Ok(new LoginSuccessResponse { IsAuthenticated = true });
-            }
-
-            if (result.RequiresTwoFactor)
-            {
-                return Ok(new TwoFactorRequiredResponse { RedirectUrl = "/umbraco/login" });
-            }
-
-            return result switch
-            {
-                { IsLockedOut: true } => Problem(title: "Authentication Failed", detail: "User is locked out.", statusCode: StatusCodes.Status423Locked),
-                { IsNotAllowed: true } => Problem(title: "Forbidden", detail: "User login is disabled.", statusCode: StatusCodes.Status403Forbidden),
-                _ => Problem(title: "Unauthorized", detail: "Authentication failed.", statusCode: StatusCodes.Status401Unauthorized)
-            };
+            return result.Succeeded
+                ? Ok(new LoginSuccessResponse { IsAuthenticated = true })
+                : result.RequiresTwoFactor
+                    ? Ok(new TwoFactorRequiredResponse { RedirectUrl = "/umbraco/login" })
+                    : result switch
+                    {
+                        { IsLockedOut: true } => Problem(title: "Authentication Failed", detail: "User is locked out.",
+                            statusCode: StatusCodes.Status423Locked),
+                        { IsNotAllowed: true } => Problem(title: "Forbidden", detail: "User login is disabled.",
+                            statusCode: StatusCodes.Status403Forbidden),
+                        _ => Problem(title: "Unauthorized", detail: "Authentication failed.",
+                            statusCode: StatusCodes.Status401Unauthorized)
+                    };
         }
 
         /// <summary>

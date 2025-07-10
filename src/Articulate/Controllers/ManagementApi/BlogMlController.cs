@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 using Articulate.ImportExport;
-using Articulate.Models.ManagmentApi;
+using Articulate.Models.ManagementApi;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -20,17 +20,17 @@ namespace Articulate.Controllers.ManagementApi
     /// <summary>
     /// Provides import and export of Articulate blog data using BlogML and Disqus formats.
     /// </summary>
+    [ManagementApi(ArticulateEnum.ManagementApi.BlogML)]
     [ApiVersion("1.0")]
     [Authorize(Policy = AuthorizationPolicies.SectionAccessSettings)]
     [VersionedApiBackOfficeRoute("articulate/blogml")]
-    [ApiExplorerSettings(GroupName = ArticulateConstants.Name.BlogMlApiGroup)]
-    [MapToApi(ArticulateConstants.Name.ArticulateManagementApi)]
-    public class ArticulateBlogMlController(
+    [MapToApi(ArticulateConstants.ManagementApi.Name)]
+    public class BlogMlController(
         BlogMlExporter blogMlExporter,
         BlogMlImporter blogMlImporter,
         IBackOfficeSecurityAccessor backOfficeSecurityAccessor,
         ArticulateTempFileSystem articulateTempFileSystem,
-        ILogger<ArticulateBlogMlController> logger)
+        ILogger<BlogMlController> logger)
         : ManagementApiControllerBase
     {
         /// <summary>
@@ -98,6 +98,7 @@ namespace Articulate.Controllers.ManagementApi
                 var downloadFileName = $"articulate-export-{DateTime.UtcNow:yyyyMMddHHmmss}.xml";
 
                 var fileStream = articulateTempFileSystem.OpenFile(exportFileName);
+
                 Response.OnCompleted(() =>
                 {
                     fileStream.Dispose();
@@ -110,13 +111,16 @@ namespace Articulate.Controllers.ManagementApi
             }
             catch (InvalidOperationException ex)
             {
-                logger.LogError(ex, "Export failed due to an invalid operation, likely a missing or invalid blog node.");
-                return Problem(title: "Service Unavailable", detail: ex.Message, statusCode: StatusCodes.Status503ServiceUnavailable);
+                logger.LogError(ex,
+                    "Export failed due to an invalid operation, likely a missing or invalid blog node.");
+                return Problem(title: "Service Unavailable", detail: ex.Message,
+                    statusCode: StatusCodes.Status503ServiceUnavailable);
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "An unexpected error occurred during BlogML export.");
-                return Problem(title: "Server Error", detail: "An unexpected error occurred. Please check the logs.", statusCode: StatusCodes.Status500InternalServerError);
+                return Problem(title: "Server Error", detail: "An unexpected error occurred. Please check the logs.",
+                    statusCode: StatusCodes.Status500InternalServerError);
             }
         }
 
@@ -165,7 +169,8 @@ namespace Articulate.Controllers.ManagementApi
             catch (Exception ex)
             {
                 logger.LogError(ex, "An unexpected error occurred during import.");
-                return Problem(title: "Server Error", detail: "An unexpected error occurred. Please check the logs.", statusCode: StatusCodes.Status500InternalServerError);
+                return Problem(title: "Server Error", detail: "An unexpected error occurred. Please check the logs.",
+                    statusCode: StatusCodes.Status500InternalServerError);
             }
             finally
             {
@@ -189,7 +194,8 @@ namespace Articulate.Controllers.ManagementApi
             const string disqusExportFile = "DisqusXmlExport.xml";
             if (!articulateTempFileSystem.FileExists(disqusExportFile))
             {
-                return Problem(title: "File Not Found", detail: "Disqus comments export file not found.", statusCode: StatusCodes.Status404NotFound);
+                return Problem(title: "File Not Found", detail: "Disqus comments export file not found.",
+                    statusCode: StatusCodes.Status404NotFound);
             }
 
             var downloadFileName = $"articulate-disqus-comments-{DateTime.UtcNow:yyyyMMddHHmmss}.xml";

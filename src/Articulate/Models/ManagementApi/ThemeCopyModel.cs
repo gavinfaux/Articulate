@@ -31,7 +31,8 @@ namespace Articulate.Models.ManagementApi
         {
             if (Path.GetInvalidFileNameChars().ContainsAny(NewThemeName.ToCharArray()))
             {
-                yield return new ValidationResult("Name cannot contain invalid file name characters", [nameof(ThemeName)
+                yield return new ValidationResult("Name cannot contain invalid file name characters", [
+                    nameof(ThemeName)
                 ]);
             }
         }

@@ -226,7 +226,7 @@ export type PostAuthenticationLoginError = PostAuthenticationLoginErrors[keyof P
 
 export type PostAuthenticationLoginResponses = {
     /**
-     * Login was successful. Returns either a Articulate.Models.ManagmentApi.Authentication.LoginSuccessResponse or a Articulate.Models.ManagmentApi.Authentication.TwoFactorRequiredResponse.
+     * Login was successful. Returns either a Articulate.Models.ManagementApi.Authentication.LoginSuccessResponse or a Articulate.Models.ManagementApi.Authentication.TwoFactorRequiredResponse.
      */
     200: LoginResponseBase;
 };

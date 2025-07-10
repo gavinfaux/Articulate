@@ -5,7 +5,7 @@ import { UmbTextStyles } from "@umbraco-cms/backoffice/style";
 
 import BlogMlExporterElement from "../components/blogml-exporter.element.js";
 import BlogMlImporterElement from "../components/blogml-importer.element.js";
-import CopyThemeElement from "../components/copy-theme.element.js";
+import ThemeOptionsElement from "../components/theme-options.element.js";
 import DashboardOptionsElement from "../components/dashboard-options.element.js";
 import { HostStyles } from "../utils/template-utils.js";
 
@@ -58,9 +58,9 @@ export default class ArticulateDashboardElement extends UmbLitElement {
         setup: createSetup(BlogMlExporterElement),
       },
       {
-        path: "theme/copy",
-        component: CopyThemeElement,
-        setup: createSetup(CopyThemeElement),
+        path: "theme/options",
+        component: ThemeOptionsElement,
+        setup: createSetup(ThemeOptionsElement),
       },
       {
         path: "",

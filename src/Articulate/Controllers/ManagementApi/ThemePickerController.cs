@@ -22,14 +22,15 @@ namespace Articulate.Controllers.ManagementApi
     /// <summary>
     /// Provides API endpoints for copying an Articulate default theme to a new theme name to allow customisation.
     /// </summary>
+    [ManagementApi(ArticulateEnum.ManagementApi.ThemePicker)]
     [ApiVersion("1.0")]
     [Authorize(Policy = AuthorizationPolicies.BackOfficeAccess)]
     [VersionedApiBackOfficeRoute("articulate/editors/theme-picker")]
-    [MapToApi(ArticulateConstants.Name.ArticulateManagementApi)]
-    [ApiExplorerSettings(GroupName = ArticulateConstants.Name.ThemePickerApiGroup)]
-    public class ArticulateThemePickerController(IHostEnvironment hostingEnvironment, ILogger<ArticulateThemePickerController> logger) : ManagementApiControllerBase
+    [MapToApi(ArticulateConstants.ManagementApi.Name)]
+    public class ThemePickerController(
+        IHostEnvironment hostingEnvironment,
+        ILogger<ThemePickerController> logger) : ManagementApiControllerBase
     {
-
         /// <summary>
         /// Gets the list of all available Articulate themes, both default and user-defined.
         /// </summary>
@@ -47,16 +48,15 @@ namespace Articulate.Controllers.ManagementApi
         {
             try
             {
-
                 var defaultThemePath = hostingEnvironment.MapPathContentRoot(PathHelper.VirtualThemePath);
                 var defaultThemes = Directory.Exists(defaultThemePath)
                     ? new DirectoryInfo(defaultThemePath).GetDirectories().Select(d => d.Name)
-                    : Enumerable.Empty<string>();
+                    : [];
 
                 var userThemePath = hostingEnvironment.MapPathContentRoot(PathHelper.UserVirtualThemePath);
                 var userThemes = Directory.Exists(userThemePath)
                     ? new DirectoryInfo(userThemePath).GetDirectories().Select(d => d.Name)
-                    : Enumerable.Empty<string>();
+                    : [];
 
                 var allThemes = defaultThemes.Union(userThemes).OrderBy(name => name);
                 return Ok(allThemes);
