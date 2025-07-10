@@ -1,4 +1,4 @@
-namespace Articulate.Models.ManagmentApi
+namespace Articulate.Models.ManagementApi
 {
     public class CreatePostResponse
     {

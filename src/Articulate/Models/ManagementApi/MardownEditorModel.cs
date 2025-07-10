@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Articulate.Models.ManagmentApi
+namespace Articulate.Models.ManagementApi
 {
     public class MardownEditorModel
     {

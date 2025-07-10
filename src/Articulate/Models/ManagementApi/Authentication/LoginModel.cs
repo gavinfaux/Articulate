@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Articulate.Models.ManagmentApi.Authentication
+namespace Articulate.Models.ManagementApi.Authentication
 {
     /// <summary>
     /// Represents the login model for authentication.

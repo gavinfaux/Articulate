@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Articulate.Models.ManagmentApi
+namespace Articulate.Models.ManagementApi
 {
     /// <summary>
     /// Represents the response model for the BlogML post initialization.

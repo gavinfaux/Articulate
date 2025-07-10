@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 using System.IO;
 using Umbraco.Extensions;
 
-namespace Articulate.Models.ManagmentApi
+namespace Articulate.Models.ManagementApi
 {
     /// <summary>
     /// Represents the data required to copy an existing theme to a new theme name.

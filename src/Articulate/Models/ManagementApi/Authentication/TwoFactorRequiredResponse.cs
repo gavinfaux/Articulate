@@ -1,4 +1,4 @@
-namespace Articulate.Models.ManagmentApi.Authentication
+namespace Articulate.Models.ManagementApi.Authentication
 {
     public class TwoFactorRequiredResponse : LoginResponseBase
     {
