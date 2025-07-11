@@ -1,9 +1,8 @@
-using Articulate.Models;
-using Articulate.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Umbraco.Cms.Core.Media;
+using Articulate.Models;
+using Articulate.Services;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.PublishedCache;
 using Umbraco.Cms.Web.Common;
@@ -11,7 +10,6 @@ using Umbraco.Extensions;
 
 namespace Articulate
 {
-
     public static class UmbracoHelperExtensions
     {
         /// <summary>
@@ -58,7 +56,7 @@ namespace Articulate
         /// <param name="filter"></param>
         /// <returns></returns>
         public static IEnumerable<IPublishedContent> GetPostsSortedByPublishedDate(
-            this UmbracoHelper helper, 
+            this UmbracoHelper helper,
             PagerModel pager,
             Func<IPublishedContent, bool> filter,
             params int[] articulateArchiveIds)
@@ -67,7 +65,7 @@ namespace Articulate
                 .Select(helper.Content)
                 .WhereNotNull()
                 .SelectMany(x => x.Descendants());
-            
+
             //apply a filter if there is one
             if (filter != null)
             {
@@ -90,7 +88,7 @@ namespace Articulate
         {
             var tagsBaseUrl = masterModel.RootBlogNode.Value<string>("tagsUrlName");
 
-            IEnumerable<PostsByTagModel> contentByTags = articulateTagService.GetContentByTags(
+            var contentByTags = articulateTagService.GetContentByTags(
                 helper,
                 tagQuery,
                 masterModel,
@@ -100,14 +98,14 @@ namespace Articulate
             return new PostTagCollection(contentByTags);
         }
 
-        
-
         /// <summary>
         /// Returns a list of the most recent posts
         /// </summary>
         /// <param name="helper"></param>
         /// <param name="masterModel"></param>
         /// <param name="count"></param>
+        /// <param name="publishedValueFallback"></param>
+        /// <param name="variationContextAccessor"></param>
         /// <returns></returns>
         public static IEnumerable<PostModel> GetRecentPosts(
             this UmbracoHelper helper,
@@ -124,7 +122,8 @@ namespace Articulate
 
             var listItems = helper.GetPostsSortedByPublishedDate(pager, null, listNodeIds);
 
-            var rootPageModel = new ListModel(listNodes[0], pager, listItems, publishedValueFallback, variationContextAccessor);
+            var rootPageModel = new ListModel(listNodes[0], pager, listItems, publishedValueFallback,
+                variationContextAccessor);
             return rootPageModel.Posts;
         }
 
@@ -135,6 +134,8 @@ namespace Articulate
         /// <param name="masterModel"></param>
         /// <param name="page"></param>
         /// <param name="pageSize"></param>
+        /// <param name="publishedValueFallback"></param>
+        /// <param name="variationContextAccessor"></param>
         /// <returns></returns>
         public static IEnumerable<PostModel> GetRecentPosts(
             this UmbracoHelper helper,
@@ -152,7 +153,8 @@ namespace Articulate
 
             var listItems = helper.GetPostsSortedByPublishedDate(pager, null, listNodeIds);
 
-            var rootPageModel = new ListModel(listNodes[0], pager, listItems, publishedValueFallback, variationContextAccessor);
+            var rootPageModel = new ListModel(listNodes[0], pager, listItems, publishedValueFallback,
+                variationContextAccessor);
             return rootPageModel.Posts;
         }
 
@@ -163,6 +165,8 @@ namespace Articulate
         /// <param name="masterModel"></param>
         /// <param name="page"></param>
         /// <param name="pageSize"></param>
+        /// <param name="publishedValueFallback"></param>
+        /// <param name="variationContextAccessor"></param>
         /// <returns></returns>
         public static IEnumerable<PostModel> GetRecentPostsByArchive(
             this UmbracoHelper helper,
@@ -176,7 +180,8 @@ namespace Articulate
 
             var listItems = helper.GetPostsSortedByPublishedDate(pager, null, masterModel.Id);
 
-            var rootPageModel = new ListModel(masterModel, pager, listItems, publishedValueFallback, variationContextAccessor);
+            var rootPageModel = new ListModel(masterModel, pager, listItems, publishedValueFallback,
+                variationContextAccessor);
             return rootPageModel.Posts;
         }
 
@@ -187,18 +192,22 @@ namespace Articulate
             PagerModel pager,
             IPublishedValueFallback publishedValueFallback,
             IVariationContextAccessor variationContextAccessor)
-        {            
-            var listNodeIds = listNodes.Select(x => x.Id).ToArray();           
+        {
+            var listNodeIds = listNodes.Select(x => x.Id).ToArray();
 
-            var postWithAuthor = helper.GetPostsSortedByPublishedDate(pager, x => string.Equals(x.Value<string>("author"), authorName.Replace("-", " "), StringComparison.InvariantCultureIgnoreCase), listNodeIds);
+            var postWithAuthor = helper.GetPostsSortedByPublishedDate(pager,
+                x => string.Equals(x.Value<string>("author"), authorName.Replace('-', ' '),
+                    StringComparison.InvariantCultureIgnoreCase), listNodeIds);
 
-            var rootPageModel = new ListModel(listNodes[0], pager, postWithAuthor, publishedValueFallback, variationContextAccessor);
+            var rootPageModel = new ListModel(listNodes[0], pager, postWithAuthor, publishedValueFallback,
+                variationContextAccessor);
             return rootPageModel.Posts;
         }
 
         private static IPublishedContent[] GetListNodes(IMasterModel masterModel)
         {
-            var listNodes = masterModel.RootBlogNode.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive).ToArray();
+            var listNodes = masterModel.RootBlogNode.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive)
+                .ToArray();
             if (listNodes.Length == 0)
             {
                 throw new InvalidOperationException(
@@ -207,9 +216,5 @@ namespace Articulate
 
             return listNodes;
         }
-        
-        
-        
-
     }
 }

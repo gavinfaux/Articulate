@@ -8,12 +8,11 @@ using Umbraco.Extensions;
 
 namespace Articulate.Routing
 {
-    public class DateFormattedPostContentFinder : ContentFinderByUrl
+    public class DateFormattedPostContentFinder(
+        ILogger<ContentFinderByUrl> logger,
+        IUmbracoContextAccessor umbracoContextAccessor)
+        : ContentFinderByUrl(logger, umbracoContextAccessor)
     {
-        public DateFormattedPostContentFinder(ILogger<ContentFinderByUrl> logger, IUmbracoContextAccessor umbracoContextAccessor) : base(logger, umbracoContextAccessor)
-        {
-        }
-
         public override async Task<bool> TryFindContent(IPublishedRequestBuilder contentRequest)
         {
             await Task.CompletedTask;
@@ -26,7 +25,9 @@ namespace Articulate.Routing
                 return false;
             }
 
-            var stringDate = contentRequest.Uri.Segments[segmentLength - 4] + contentRequest.Uri.Segments[segmentLength - 3] + contentRequest.Uri.Segments[segmentLength - 2].TrimEnd('/');
+            var stringDate = contentRequest.Uri.Segments[segmentLength - 4] +
+                             contentRequest.Uri.Segments[segmentLength - 3] +
+                             contentRequest.Uri.Segments[segmentLength - 2].TrimEnd('/');
             DateTime postDate;
             try
             {
@@ -50,18 +51,20 @@ namespace Articulate.Routing
             // and the domain's path stripped from the start
             if (contentRequest.HasDomain())
             {
-                newRoute = contentRequest.Domain.ContentId + DomainUtilities.PathRelativeToDomain(contentRequest.Domain.Uri, newRoute);
+                newRoute = contentRequest.Domain.ContentId +
+                           DomainUtilities.PathRelativeToDomain(contentRequest.Domain.Uri, newRoute);
             }
 
             var node = FindContent(contentRequest, newRoute);
 
             // If by chance something matches the format pattern I check again if there is sucn a node and if it's an articulate post
-            if (node == null || (node.ContentType.Alias != ArticulateConstants.ContentType.ArticulateRichText && node.ContentType.Alias != ArticulateConstants.ContentType.ArticulateMarkdown))
+            if (node == null || (node.ContentType.Alias != ArticulateConstants.ContentType.ArticulateRichText &&
+                                 node.ContentType.Alias != ArticulateConstants.ContentType.ArticulateMarkdown))
             {
                 return false;
             }
 
-            if (!node.Parent.Parent.Value<bool>("useDateFormatForUrl"))
+            if (!node.Parent().Parent().Value<bool>("useDateFormatForUrl"))
             {
                 return false;
             }
@@ -73,7 +76,6 @@ namespace Articulate.Routing
 
             contentRequest.SetPublishedContent(node);
             return true;
-
         }
     }
 }

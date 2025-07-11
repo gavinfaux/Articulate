@@ -1,6 +1,6 @@
-using Microsoft.AspNetCore.Mvc.Controllers;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.AspNetCore.Mvc.Controllers;
 using Umbraco.Cms.Core.Routing;
 
 namespace Articulate.Routing
@@ -8,16 +8,11 @@ namespace Articulate.Routing
     /// <summary>
     /// Used to create all of the dynamic routes.
     /// </summary>
-    public class ArticulateRootNodeCache
+    public class ArticulateRootNodeCache(ControllerActionDescriptor controllerActionDescriptor)
     {
         private readonly Dictionary<int, IReadOnlyList<Domain>> _content = new();
 
-        public ArticulateRootNodeCache(ControllerActionDescriptor controllerActionDescriptor)
-        {
-            ControllerActionDescriptor = controllerActionDescriptor;
-        }
-
-        public ControllerActionDescriptor ControllerActionDescriptor { get; }
+        public ControllerActionDescriptor ControllerActionDescriptor { get; } = controllerActionDescriptor;
 
         public void Add(int contentId, IReadOnlyList<Domain> domains)
             => _content.Add(contentId, domains);

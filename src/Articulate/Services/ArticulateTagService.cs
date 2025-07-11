@@ -9,20 +9,13 @@ using Umbraco.Cms.Web.Common;
 
 namespace Articulate.Services
 {
-    public class ArticulateTagService : RepositoryService
+    public class ArticulateTagService(
+        IArticulateTagRepository repository,
+        ICoreScopeProvider provider,
+        ILoggerFactory loggerFactory,
+        IEventMessagesFactory eventMessagesFactory)
+        : RepositoryService(provider, loggerFactory, eventMessagesFactory)
     {
-        private readonly IArticulateTagRepository _repository;
-
-        public ArticulateTagService(
-            IArticulateTagRepository repository,
-            ICoreScopeProvider provider,
-            ILoggerFactory loggerFactory,
-            IEventMessagesFactory eventMessagesFactory)
-            : base(provider, loggerFactory, eventMessagesFactory)
-        {
-            _repository = repository;
-        }
-
         // TODO: Wrap the repo
 
         public IEnumerable<PostsByTagModel> GetContentByTags(
@@ -34,7 +27,7 @@ namespace Articulate.Services
         {
             using (ScopeProvider.CreateCoreScope(autoComplete: true))
             {
-                return _repository.GetContentByTags(
+                return repository.GetContentByTags(
                     helper,
                     tagQuery,
                     masterModel,
@@ -54,7 +47,7 @@ namespace Articulate.Services
         {
             using (ScopeProvider.CreateCoreScope(autoComplete: true))
             {
-                return _repository.GetContentByTag(
+                return repository.GetContentByTag(
                     helper,
                     masterModel,
                     tag,
@@ -62,15 +55,6 @@ namespace Articulate.Services
                     baseUrlName,
                     page,
                     pageSize);
-            }
-        }
-
-        public IEnumerable<string> GetAllCategories(
-            IMasterModel masterModel)
-        {
-            using (ScopeProvider.CreateCoreScope(autoComplete: true))
-            {
-                return _repository.GetAllCategories(masterModel);
             }
         }
     }

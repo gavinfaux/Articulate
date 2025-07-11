@@ -2,7 +2,7 @@ import { html as p, nothing as Be, css as C, property as J, state as h, query as
 import { UmbLitElement as V } from "@umbraco-cms/backoffice/lit-element";
 import { UmbTextStyles as N } from "@umbraco-cms/backoffice/style";
 import { UMB_MODAL_MANAGER_CONTEXT as Oe } from "@umbraco-cms/backoffice/modal";
-import { f as at, B as K, T as Fe } from "./error-utils-BGlMw9rr.js";
+import { f as at, B as K, T as Fe } from "./error-utils-CnK0auGd.js";
 import { UMB_DOCUMENT_PICKER_MODAL as st } from "@umbraco-cms/backoffice/document";
 import { DocumentTypeService as nt, DocumentService as lt } from "@umbraco-cms/backoffice/external/backend-api";
 import { UMB_NOTIFICATION_CONTEXT as ut } from "@umbraco-cms/backoffice/notification";
@@ -507,7 +507,7 @@ class ee {
   }
   _$AR(e = this._$AA.nextSibling, i) {
     var o;
-    for ((o = this._$AP) == null ? void 0 : o.call(this, !1, !0, i); e && e !== this._$AB; ) {
+    for ((o = this._$AP) == null ? void 0 : o.call(this, !1, !0, i); e !== this._$AB; ) {
       const r = e.nextSibling;
       e.remove(), e = r;
     }
@@ -584,7 +584,7 @@ class yt {
   }
 }
 const oe = U.litHtmlPolyfillSupport;
-oe == null || oe(q, ee), (U.litHtmlVersions ?? (U.litHtmlVersions = [])).push("3.3.0");
+oe == null || oe(q, ee), (U.litHtmlVersions ?? (U.litHtmlVersions = [])).push("3.3.1");
 /**
  * @license
  * Copyright 2017 Google LLC
@@ -985,7 +985,7 @@ v = /* @__PURE__ */ new WeakSet();
 Ze = async function() {
   var t;
   try {
-    const e = await Fe.getArticulateThemesDefault();
+    const e = await Fe.getArticulateThemeDefault();
     if (!e.response.ok || !e.data)
       throw e.error || new Error("The list of themes could not be retrieved from the server.");
     this._themes = ((t = e.data) == null ? void 0 : t.map((i) => i)) ?? [];
@@ -1024,7 +1024,7 @@ tt = async function(t) {
     if (this._formState !== "waiting") {
       this._formState = "waiting", this._formError = null;
       try {
-        const e = await Fe.postArticulateThemesCopy({
+        const e = await Fe.postArticulateThemeCopy({
           body: {
             themeName: this._selectedTheme,
             newThemeName: this._newThemeName

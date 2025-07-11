@@ -1,17 +1,15 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
+using Articulate.Attributes;
+using Articulate.Services;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Api.Common.Attributes;
 using Umbraco.Cms.Api.Management.Controllers;
 using Umbraco.Cms.Api.Management.Routing;
-using Umbraco.Cms.Core.Extensions;
 using Umbraco.Cms.Web.Common.Authorization;
 
 namespace Articulate.Controllers.ManagementApi
@@ -27,9 +25,7 @@ namespace Articulate.Controllers.ManagementApi
     [Authorize(Policy = AuthorizationPolicies.BackOfficeAccess)]
     [VersionedApiBackOfficeRoute("articulate/editors/theme-picker")]
     [MapToApi(ArticulateConstants.ManagementApi.Name)]
-    public class ThemePickerController(
-        IHostEnvironment hostingEnvironment,
-        ILogger<ThemePickerController> logger) : ManagementApiControllerBase
+    public class ThemePickerController(IThemeService themeService, ILogger<ThemePickerController> logger) : ManagementApiControllerBase
     {
         /// <summary>
         /// Gets the list of all available Articulate themes, both default and user-defined.
@@ -48,24 +44,14 @@ namespace Articulate.Controllers.ManagementApi
         {
             try
             {
-                var defaultThemePath = hostingEnvironment.MapPathContentRoot(PathHelper.VirtualThemePath);
-                var defaultThemes = Directory.Exists(defaultThemePath)
-                    ? new DirectoryInfo(defaultThemePath).GetDirectories().Select(d => d.Name)
-                    : [];
-
-                var userThemePath = hostingEnvironment.MapPathContentRoot(PathHelper.UserVirtualThemePath);
-                var userThemes = Directory.Exists(userThemePath)
-                    ? new DirectoryInfo(userThemePath).GetDirectories().Select(d => d.Name)
-                    : [];
-
-                var allThemes = defaultThemes.Union(userThemes).OrderBy(name => name);
-                return Ok(allThemes);
+                return Ok(themeService.GetAllThemes());
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                logger.LogError(ex, "An error occurred while retrieving Articulate themes.");
+                logger.LogError(e, "An unexpected error occurred while retrieving themes");
+
                 return Problem(
-                    "An unexpected error occurred while retrieving themes. Please check the server logs.",
+                    "An unexpected error occurred while retrieving themes.",
                     statusCode: StatusCodes.Status500InternalServerError);
             }
         }

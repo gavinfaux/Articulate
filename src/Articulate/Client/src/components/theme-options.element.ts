@@ -3,7 +3,7 @@ import { UUIButtonState } from "@umbraco-cms/backoffice/external/uui";
 import { UmbLitElement } from "@umbraco-cms/backoffice/lit-element";
 import { UmbTextStyles } from "@umbraco-cms/backoffice/style";
 
-import { Themes } from "../api/sdk.gen";
+import { ThemeOptions } from "../api/sdk.gen";
 import { IFormController, setFormError } from "../utils/form-utils";
 import { showUmbracoNotification } from "../utils/notification-utils";
 import {
@@ -99,7 +99,7 @@ export default class ThemeOptionsElement extends UmbLitElement implements IFormC
    */
   async #loadThemes() {
     try {
-      const result = await Themes.getArticulateThemesDefault();
+      const result = await ThemeOptions.getArticulateThemeDefault();
       if (!result.response.ok || !result.data) {
         throw result.error || new Error("The list of themes could not be retrieved from the server.");
       }
@@ -199,7 +199,7 @@ export default class ThemeOptionsElement extends UmbLitElement implements IFormC
     this._formError = null;
 
     try {
-      const result = await Themes.postArticulateThemesCopy({
+      const result = await ThemeOptions.postArticulateThemeCopy({
         body: {
           themeName: this._selectedTheme!,
           newThemeName: this._newThemeName!,

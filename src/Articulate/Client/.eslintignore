@@ -1,2 +1,0 @@
-# Ignore build configuration files in all sub-projects
-**/vite.config.ts

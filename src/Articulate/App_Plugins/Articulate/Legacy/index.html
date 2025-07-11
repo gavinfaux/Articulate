@@ -1,91 +1,91 @@
 <!doctype html>
 <html lang="en" data-theme="light">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Articulate Mobile Editor</title>
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Articulate Mobile Editor</title>
 
-    <link rel="preconnect" href="https://cdn.jsdelivr.ne">
-    <link rel="preconnect" href="https://cdn.jsdelivr.ne" crossorigin>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tiny-markdown-editor@0.2.0/dist/tiny-mde.min.css"><link rel="stylesheet" href="/src/theme.css" />
-    <script src="https://unpkg.com/alpinejs" defer></script>
-    <script src="https://unpkg.com/tiny-markdown-editor/dist/tiny-mde.min.js" defer></script>
+  <link rel="preconnect" href="https://cdn.jsdelivr.ne">
+  <link rel="preconnect" href="https://cdn.jsdelivr.ne" crossorigin>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tiny-markdown-editor@0.2.0/dist/tiny-mde.min.css"><link rel="stylesheet" href="/src/theme.css"/>
+  <script src="https://unpkg.com/alpinejs" defer></script>
+  <script src="https://unpkg.com/tiny-markdown-editor/dist/tiny-mde.min.js" defer></script>
 
-    <script src="/src/app.js" defer></script>
+  <script src="/src/app.js" defer></script>
 
-    <style>
+  <style>
       [x-cloak] {
         display: none !important;
       }
     </style>
-  </head>
-  <body>
-    <main class="container" x-data="app" x-init="init()" x-cloak>
-      <header>
-        <h1 x-text="caption"></h1>
-        <progress x-show="step === 'loading' || step === 'submitting'"></progress>
-      </header>
+</head>
+<body>
+<main class="container" x-data="app" x-init="init()" x-cloak>
+  <header>
+    <h1 x-text="caption"></h1>
+    <progress x-show="step === 'loading' || step === 'submitting'"></progress>
+  </header>
 
-      <!-- Login View -->
-      <article x-show="step === 'login'">
-        <form @submit.prevent="handleLogin">
-          <label for="email">Email Address</label>
-          <input x-model="login.emailAddress" type="email" id="email" required />
-          <label for="password">Password</label>
-          <input x-model="login.password" type="password" id="password" required />
-          <small x-show="errorMessage" x-text="errorMessage"></small>
-          <button type="submit" :aria-busy="submitting">Login</button>
-        </form>
-      </article>
+  <!-- Login View -->
+  <article x-show="step === 'login'">
+    <form @submit.prevent="handleLogin">
+      <label for="email">Email Address</label>
+      <input x-model="login.emailAddress" type="email" id="email" required/>
+      <label for="password">Password</label>
+      <input x-model="login.password" type="password" id="password" required/>
+      <small x-show="errorMessage" x-text="errorMessage"></small>
+      <button type="submit" :aria-busy="submitting">Login</button>
+    </form>
+  </article>
 
-      <!-- Editor View -->
-      <article x-show="step === 'editor'">
-        <input x-ref="imageUpload" type="file" accept="image/jpeg,image/png,image/gif" hidden multiple />
-        <input x-ref="cameraUpload" type="file" accept="image/jpeg,image/png,image/gif" capture="environment" hidden />
-        <label for="title">Title</label>
-        <input x-model="post.title" type="text" id="title" placeholder="Your post title..." required />
+  <!-- Editor View -->
+  <article x-show="step === 'editor'">
+    <input x-ref="imageUpload" type="file" accept="image/jpeg,image/png,image/gif" hidden multiple/>
+    <input x-ref="cameraUpload" type="file" accept="image/jpeg,image/png,image/gif" capture="environment" hidden/>
+    <label for="title">Title</label>
+    <input x-model="post.title" type="text" id="title" placeholder="Your post title..." required/>
 
-        <textarea x-ref="editor" id="editor"></textarea>
-        <footer style="display: flex; justify-content: space-between; align-items: center">
-          <div>
-            <button class="secondary material-icons" @click="triggerImageUpload()" title="Upload Image">photo</button>
-            <button class="secondary material-icons" @click="triggerCamera()" title="Use Camera">photo_camera</button>
-          </div>
-          <button class="material-icons" @click="step = 'optional'">forward</button>
-        </footer>
-      </article>
+    <textarea x-ref="editor" id="editor"></textarea>
+    <footer style="display: flex; justify-content: space-between; align-items: center">
+      <div>
+        <button class="secondary material-icons" @click="triggerImageUpload()" title="Upload Image">photo</button>
+        <button class="secondary material-icons" @click="triggerCamera()" title="Use Camera">photo_camera</button>
+      </div>
+      <button class="material-icons" @click="step = 'optional'">forward</button>
+    </footer>
+  </article>
 
-      <!-- Optional View -->
-      <article x-show="step === 'optional'">
-        <label for="tags">Tags (comma separated)</label>
-        <input x-model="post.tags" type="text" id="tags" placeholder="e.g. csharp, umbraco, .net" />
+  <!-- Optional View -->
+  <article x-show="step === 'optional'">
+    <label for="tags">Tags (comma separated)</label>
+    <input x-model="post.tags" type="text" id="tags" placeholder="e.g. csharp, umbraco, .net"/>
 
-        <label for="categories">Categories (comma separated)</label>
-        <input x-model="post.categories" type="text" id="categories" placeholder="e.g. Tech, Tutorials" />
+    <label for="categories">Categories (comma separated)</label>
+    <input x-model="post.categories" type="text" id="categories" placeholder="e.g. Tech, Tutorials"/>
 
-        <label for="excerpt">Excerpt</label>
-        <textarea x-model="post.excerpt" id="excerpt" rows="3"></textarea>
+    <label for="excerpt">Excerpt</label>
+    <textarea x-model="post.excerpt" id="excerpt" rows="3"></textarea>
 
-        <label for="slug">Slug</label>
-        <input x-model="post.slug" type="text" id="slug" placeholder="e.g. my-awesome-post" />
+    <label for="slug">Slug</label>
+    <input x-model="post.slug" type="text" id="slug" placeholder="e.g. my-awesome-post"/>
 
-        <footer>
-          <button class="secondary material-icons" @click="step = 'editor'">back</button>
-          <button @click="handlePublish" :aria-busy="submitting">Post It!</button>
-        </footer>
-      </article>
+    <footer>
+      <button class="secondary material-icons" @click="step = 'editor'">back</button>
+      <button @click="handlePublish" :aria-busy="submitting">Post It!</button>
+    </footer>
+  </article>
 
-      <!-- Success View -->
-      <article x-show="step === 'success'">
-        <h2>Success!</h2>
-        <p>Your post has been published.</p>
-        <a :href="successUrl" role="button">View Your Post</a>
-      </article>
-    </main>
-  </body>
+  <!-- Success View -->
+  <article x-show="step === 'success'">
+    <h2>Success!</h2>
+    <p>Your post has been published.</p>
+    <a :href="successUrl" role="button">View Your Post</a>
+  </article>
+</main>
+</body>
 </html>

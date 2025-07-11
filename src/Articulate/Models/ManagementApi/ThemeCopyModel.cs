@@ -29,11 +29,12 @@ namespace Articulate.Models.ManagementApi
         /// <returns>A collection of validation results.</returns>
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
-            if (Path.GetInvalidFileNameChars().ContainsAny(NewThemeName.ToCharArray()))
+            if (string.IsNullOrWhiteSpace(NewThemeName) == false &&
+                NewThemeName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
             {
-                yield return new ValidationResult("Name cannot contain invalid file name characters", [
-                    nameof(ThemeName)
-                ]);
+                yield return new ValidationResult(
+                    "The theme name contains invalid characters.",
+                    [nameof(NewThemeName)]);
             }
         }
     }

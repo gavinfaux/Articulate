@@ -4,7 +4,6 @@ using System.Globalization;
 using System.Linq;
 using System.ServiceModel.Syndication;
 using System.Text.RegularExpressions;
-using Articulate.Controllers;
 using Articulate.Models;
 using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Core.Hosting;
@@ -13,27 +12,22 @@ using Umbraco.Extensions;
 
 namespace Articulate.Syndication
 {
-    public class RssFeedGenerator : IRssFeedGenerator
+    public class RssFeedGenerator(ILogger<RssFeedGenerator> logger, IHostingEnvironment hostingEnvironment)
+        : IRssFeedGenerator
     {
-        private readonly ILogger<RssFeedGenerator> _logger;
-        private readonly IHostingEnvironment _hostingEnvironment;
+        private readonly Regex _relativeMediaSrc = new(" src=(?:\"|')(/media/.*?)(?:\"|')",
+            RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-        public RssFeedGenerator(ILogger<RssFeedGenerator> logger, IHostingEnvironment hostingEnvironment)
-        {
-            _logger = logger;
-            _hostingEnvironment = hostingEnvironment;
-        }
-
-        private readonly Regex _relativeMediaSrc = new Regex(" src=(?:\"|')(/media/.*?)(?:\"|')", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-        private readonly Regex _relativeMediaHref = new Regex(" href=(?:\"|')(/media/.*?)(?:\"|')", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private readonly Regex _relativeMediaHref = new(" href=(?:\"|')(/media/.*?)(?:\"|')",
+            RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         public SyndicationFeed GetFeed(IMasterModel rootPageModel, IEnumerable<PostModel> posts)
         {
             var feed = new SyndicationFeed(
-              rootPageModel.BlogTitle,
-              rootPageModel.BlogDescription,
-              new Uri(rootPageModel.RootBlogNode.Url(mode: UrlMode.Absolute)),
-              GetFeedItems(rootPageModel, posts))
+                rootPageModel.BlogTitle,
+                rootPageModel.BlogDescription,
+                new Uri(rootPageModel.RootBlogNode.Url(mode: UrlMode.Absolute)),
+                GetFeedItems(rootPageModel, posts))
             {
                 Generator = "Articulate, blogging built on Umbraco",
                 ImageUrl = GetBlogImage(rootPageModel)
@@ -45,10 +39,7 @@ namespace Articulate.Syndication
             return feed;
         }
 
-        protected virtual string GetPostContent(PostModel model)
-        {
-            return model.Body.ToHtmlString();
-        }
+        protected virtual string GetPostContent(PostModel model) => model.Body.ToHtmlString();
 
         protected virtual SyndicationItem GetFeedItem(IMasterModel model, PostModel post, string rootUrl)
         {
@@ -60,7 +51,7 @@ namespace Articulate.Syndication
                 return null;
             }
 
-            var appPath = _hostingEnvironment.ApplicationVirtualPath;
+            var appPath = hostingEnvironment.ApplicationVirtualPath;
             var rootUri = new Uri(rootUrl);
             var mediaRoot = rootUri.GetLeftPart(UriPartial.Authority) + appPath.EnsureStartsWith('/').TrimEnd('/');
 
@@ -70,6 +61,7 @@ namespace Articulate.Syndication
                 {
                     return $" href=\"{rootUrl.TrimEnd('/')}{match.Groups[1].Value.EnsureStartsWith('/')}\"";
                 }
+
                 return null;
             });
             content = _relativeMediaSrc.Replace(content, match =>
@@ -78,8 +70,9 @@ namespace Articulate.Syndication
                 {
                     return $" src=\"{mediaRoot}{match.Groups[1].Value.EnsureStartsWith('/')}\"";
                 }
+
                 return null;
-            });            
+            });
 
             var item = new SyndicationItem(
                 post.Name,
@@ -88,7 +81,7 @@ namespace Articulate.Syndication
                 post.Id.ToString(CultureInfo.InvariantCulture),
                 post.PublishedDate)
             {
-                PublishDate = post.PublishedDate,
+                PublishDate = post.PublishedDate
 
                 //don't include this as it will override the main content bits
                 //Summary = new TextSyndicationContent(post.Excerpt)
@@ -112,6 +105,7 @@ namespace Articulate.Syndication
             {
                 return new List<SyndicationItem>();
             }
+
             return posts.Select(post => GetFeedItem(model, post, rootUrl)).WhereNotNull().ToList();
         }
 
@@ -126,11 +120,10 @@ namespace Articulate.Syndication
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Could not convert the blog logo path to a Uri");
+                logger.LogError(ex, "Could not convert the blog logo path to a Uri");
             }
+
             return logoUri;
         }
-
-        
     }
 }

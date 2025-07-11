@@ -14,29 +14,20 @@ namespace Articulate.Controllers
     /// <summary>
     /// This is used to redirect the Authors node to the root so no 404s occur
     /// </summary>
-    public class ArticulateAuthorsController : RenderController
+    public class ArticulateAuthorsController(
+        ILogger<RenderController> logger,
+        ICompositeViewEngine compositeViewEngine,
+        IUmbracoContextAccessor umbracoContextAccessor,
+        IPublishedValueFallback publishedValueFallback,
+        IVariationContextAccessor variationContextAccessor)
+        : RenderController(logger, compositeViewEngine, umbracoContextAccessor)
     {
-        private readonly IPublishedValueFallback _publishedValueFallback;
-        private readonly IVariationContextAccessor _variationContextAccessor;
-
-        public ArticulateAuthorsController(
-            ILogger<RenderController> logger,
-            ICompositeViewEngine compositeViewEngine,
-            IUmbracoContextAccessor umbracoContextAccessor,
-            IPublishedValueFallback publishedValueFallback,
-            IVariationContextAccessor variationContextAccessor)
-            : base(logger, compositeViewEngine, umbracoContextAccessor)
-        {
-            _publishedValueFallback = publishedValueFallback;
-            _variationContextAccessor = variationContextAccessor;
-        }
-
         public override IActionResult Index()
         {
             var root = new MasterModel(
                 CurrentPage,
-                _publishedValueFallback,
-                _variationContextAccessor);
+                publishedValueFallback,
+                variationContextAccessor);
 
             //TODO: Should we have another setting for authors?
             if (root.RootBlogNode.Value<bool>("redirectArchive"))
@@ -48,7 +39,9 @@ namespace Articulate.Controllers
 
             var action = ControllerContext.RouteData.Values["action"].ToString();
             if (!EnsurePhsyicalViewExists(action))
+            {
                 return new PublishedContentNotFoundResult(UmbracoContext);
+            }
 
             return View(action, new ContentModel(CurrentPage));
         }

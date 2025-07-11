@@ -5,7 +5,6 @@ using Articulate.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Logging;
-using Umbraco.Cms.Core.Media;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.Routing;
 using Umbraco.Cms.Core.Web;
@@ -16,27 +15,21 @@ using Umbraco.Extensions;
 
 namespace Articulate.Controllers
 {
-    public class ArticulateAuthorController : ListControllerBase
+    public class ArticulateAuthorController(
+        ILogger<RenderController> logger,
+        ICompositeViewEngine compositeViewEngine,
+        IUmbracoContextAccessor umbracoContextAccessor,
+        IPublishedUrlProvider publishedUrlProvider,
+        IPublishedValueFallback publishedValueFallback,
+        IVariationContextAccessor variationContextAccessor,
+        UmbracoHelper umbracoHelper)
+        : ListControllerBase(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider,
+            publishedValueFallback,
+            variationContextAccessor)
     {
-        private readonly UmbracoHelper _umbracoHelper;
-
-        public ArticulateAuthorController(
-            ILogger<RenderController> logger,
-            ICompositeViewEngine compositeViewEngine,
-            IUmbracoContextAccessor umbracoContextAccessor,
-            IPublishedUrlProvider publishedUrlProvider,
-            IPublishedValueFallback publishedValueFallback,
-            IVariationContextAccessor variationContextAccessor,
-            UmbracoHelper umbracoHelper)
-            : base(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider, publishedValueFallback, variationContextAccessor)
-        {
-            _umbracoHelper = umbracoHelper;
-        }
-
         /// <summary>
         /// Override and declare a NonAction so that we get routed to the Index action with the optional page route
         /// </summary>
-        /// <param name="model"></param>
         /// <returns></returns>
         [NonAction]
         public override IActionResult Index() => Index(0);
@@ -46,23 +39,25 @@ namespace Articulate.Controllers
             //create a master model
             var masterModel = new MasterModel(CurrentPage, PublishedValueFallback, VariationContextAccessor);
 
-            var listNodes = masterModel.RootBlogNode.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive).ToArray();
+            var listNodes = masterModel.RootBlogNode.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive)
+                .ToArray();
             if (listNodes.Length == 0)
             {
-                throw new InvalidOperationException("An ArticulateArchive document must exist under the root Articulate document");
+                throw new InvalidOperationException(
+                    "An ArticulateArchive document must exist under the root Articulate document");
             }
 
-            var totalPosts = _umbracoHelper.GetPostCount(CurrentPage.Name, listNodes.Select(x => x.Id).ToArray());
+            var totalPosts = umbracoHelper.GetPostCount(CurrentPage.Name, listNodes.Select(x => x.Id).ToArray());
 
             if (!GetPagerModel(masterModel, totalPosts, p, out var pager))
             {
                 return new RedirectToUmbracoPageResult(
-                    CurrentPage.Parent,
-                    PublishedUrlProvider,                    
+                    CurrentPage.Parent(),
+                    PublishedUrlProvider,
                     UmbracoContextAccessor);
             }
 
-            IEnumerable<IPublishedContent> authorPosts = _umbracoHelper.GetContentByAuthor(
+            var authorPosts = umbracoHelper.GetContentByAuthor(
                 listNodes,
                 CurrentPage.Name,
                 pager,
@@ -76,10 +71,8 @@ namespace Articulate.Controllers
                 totalPosts,
                 PublishedValueFallback,
                 VariationContextAccessor);
-            
+
             return View(PathHelper.GetThemeViewPath(author, "Author"), author);
         }
-
-        
     }
 }

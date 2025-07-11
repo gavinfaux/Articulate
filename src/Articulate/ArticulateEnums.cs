@@ -1,5 +1,6 @@
 using System;
 using System.Reflection;
+using Articulate.Attributes;
 
 namespace Articulate
 {
@@ -11,16 +12,16 @@ namespace Articulate
             Authentication,
 
             [StringValue(ArticulateConstants.ManagementApi.BlogMl)]
-            BlogML,
+            BlogMl,
 
-            [StringValue(ArticulateConstants.ManagementApi.ThemePicker)]
+            [StringValue(ArticulateConstants.ManagementApi.MarkdownEditor)]
             MarkdownEditor,
 
-            [StringValue(ArticulateConstants.ManagementApi.Authentication)]
+            [StringValue(ArticulateConstants.ManagementApi.ThemePicker)]
             ThemePicker,
 
             [StringValue(ArticulateConstants.ManagementApi.ThemeOptions)]
-            Template
+            ThemeOptions
         }
 
         public static string GetStringValue(this Enum enumValue)
@@ -33,7 +34,7 @@ namespace Articulate
             }
 
             // Get the StringValueAttribute from the member
-            var stringValueAttribute = memberInfo.GetCustomAttribute<StringValueAttribute>(inherit: false);
+            var stringValueAttribute = memberInfo.GetCustomAttribute<StringValueAttribute>(false);
 
             // Return the attribute's value, or fall back to the enum member's name
             return stringValueAttribute?.Value ?? enumValue.ToString();

@@ -1,16 +1,14 @@
-using Articulate.Models;
-using System;
 using System.Linq;
+using Articulate.Models;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
-using Umbraco.Cms.Web.Common.Controllers;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
-using Umbraco.Cms.Core.Web;
-using Umbraco.Cms.Core.Routing;
+using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Core.Models.PublishedContent;
-using Umbraco.Cms.Core.Media;
-using Umbraco.Cms.Web.Website.ActionResults;
+using Umbraco.Cms.Core.Routing;
+using Umbraco.Cms.Core.Web;
+using Umbraco.Cms.Web.Common.Controllers;
 using Umbraco.Cms.Web.Common.Routing;
+using Umbraco.Cms.Web.Website.ActionResults;
 
 namespace Articulate.Controllers
 {
@@ -18,23 +16,18 @@ namespace Articulate.Controllers
     /// Renders search results
     /// </summary>
     [ArticulateDynamicRoute]
-    public class ArticulateSearchController : ListControllerBase
+    public class ArticulateSearchController(
+        ILogger<RenderController> logger,
+        ICompositeViewEngine compositeViewEngine,
+        IUmbracoContextAccessor umbracoContextAccessor,
+        IPublishedUrlProvider publishedUrlProvider,
+        IPublishedValueFallback publishedValueFallback,
+        IVariationContextAccessor variationContextAccessor,
+        IArticulateSearcher articulateSearcher)
+        : ListControllerBase(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider,
+            publishedValueFallback,
+            variationContextAccessor)
     {
-        private readonly IArticulateSearcher _articulateSearcher;
-
-        public ArticulateSearchController(
-            ILogger<RenderController> logger,
-            ICompositeViewEngine compositeViewEngine,
-            IUmbracoContextAccessor umbracoContextAccessor,
-            IPublishedUrlProvider publishedUrlProvider,
-            IPublishedValueFallback publishedValueFallback,
-            IVariationContextAccessor variationContextAccessor,
-            IArticulateSearcher articulateSearcher)
-            : base(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider, publishedValueFallback, variationContextAccessor)
-        {
-            _articulateSearcher = articulateSearcher;
-        }
-
         protected override UmbracoRouteValues UmbracoRouteValues => base.UmbracoRouteValues;
 
         public override IActionResult Index() => base.Index();
@@ -61,14 +54,14 @@ namespace Articulate.Controllers
                 var emptyList = new ListModel(
                     CurrentPage,
                     new PagerModel(masterModel.PageSize, 0, 0),
-                    Enumerable.Empty<IPublishedContent>(),
+                    [],
                     PublishedValueFallback,
                     VariationContextAccessor);
 
                 return View(PathHelper.GetThemeViewPath(emptyList, "List"), emptyList);
             }
 
-            if (p != null && p.Value == 1)
+            if (p is 1)
             {
                 return new RedirectToUmbracoPageResult(
                     CurrentPage,
@@ -81,7 +74,8 @@ namespace Articulate.Controllers
                 p = 1;
             }
 
-            var searchResult = _articulateSearcher.Search(term, provider, masterModel.BlogArchiveNode.Id, masterModel.PageSize, p.Value - 1, out var totalPosts);
+            var searchResult = articulateSearcher.Search(term, provider, masterModel.BlogArchiveNode.Id,
+                masterModel.PageSize, p.Value - 1, out var totalPosts);
 
             return GetPagedListView(masterModel, CurrentPage, searchResult, totalPosts, p);
         }

@@ -8,21 +8,18 @@ namespace Articulate.Models
     /// <summary>
     /// The basic model for all articulate objects
     /// </summary>
-    public class MasterModel : PublishedContentWrapped, IMasterModel
+    public class MasterModel(
+        IPublishedContent content,
+        IPublishedValueFallback publishedValueFallback,
+        IVariationContextAccessor variationContextAccessor)
+        : PublishedContentWrapped(content, publishedValueFallback), IMasterModel
     {
-        public MasterModel(IPublishedContent content, IPublishedValueFallback publishedValueFallback, IVariationContextAccessor variationContextAccessor)
-            : base(content, publishedValueFallback)
-        {
-            PublishedValueFallback = publishedValueFallback;
-            VariationContextAccessor = variationContextAccessor;
-        }
-        
         /// <summary>
         /// Returns the current theme
         /// </summary>
         public string Theme
         {
-            get => _theme ??= base.Unwrap().Value<string>("theme", fallback: Fallback.ToAncestors);
+            get => _theme ??= Unwrap().Value<string>("theme", fallback: Fallback.ToAncestors);
             protected set => _theme = value;
         }
 
@@ -30,8 +27,10 @@ namespace Articulate.Models
         {
             get
             {
-                var root = base.Unwrap().AncestorOrSelf(ArticulateConstants.ContentType.Articulate);
-                _rootBlogNode = root ?? throw new InvalidOperationException("Could not find the Articulate root document for the current rendered page");
+                var root = Unwrap().AncestorOrSelf(ArticulateConstants.ContentType.Articulate);
+                _rootBlogNode = root ??
+                                throw new InvalidOperationException(
+                                    "Could not find the Articulate root document for the current rendered page");
                 return _rootBlogNode;
             }
             protected set => _rootBlogNode = value;
@@ -62,8 +61,11 @@ namespace Articulate.Models
         {
             get
             {
-                var list = RootBlogNode.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive).FirstOrDefault();
-                _blogListNode = list ?? throw new InvalidOperationException("Could not find the ArticulateArchive document for the current rendered page");
+                var list = RootBlogNode.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive)
+                    .FirstOrDefault();
+                _blogListNode = list ??
+                                throw new InvalidOperationException(
+                                    "Could not find the ArticulateArchive document for the current rendered page");
                 return _blogListNode;
             }
             protected set => _blogListNode = value;
@@ -76,8 +78,11 @@ namespace Articulate.Models
         {
             get
             {
-                var authors = RootBlogNode.ChildrenOfType(ArticulateConstants.ContentType.ArticulateAuthors).FirstOrDefault();
-                _blogAuthorsNode = authors ?? throw new InvalidOperationException("Could not find the ArticulateAuthors document for the current rendered page");
+                var authors = RootBlogNode.ChildrenOfType(ArticulateConstants.ContentType.ArticulateAuthors)
+                    .FirstOrDefault();
+                _blogAuthorsNode = authors ??
+                                   throw new InvalidOperationException(
+                                       "Could not find the ArticulateAuthors document for the current rendered page");
                 return _blogAuthorsNode;
             }
             protected set => _blogListNode = value;
@@ -85,7 +90,8 @@ namespace Articulate.Models
 
         public string DisqusShortName
         {
-            get => _disqusShortName ?? (_disqusShortName = base.Unwrap().Value<string>("disqusShortname", fallback: Fallback.ToAncestors));
+            get => _disqusShortName ?? (_disqusShortName =
+                Unwrap().Value<string>("disqusShortname", fallback: Fallback.ToAncestors));
             protected set => _disqusShortName = value;
         }
 
@@ -93,7 +99,7 @@ namespace Articulate.Models
         {
             get => _customRssFeed ?? (_customRssFeed = RootBlogNode.Value<string>("customRssFeedUrl"));
             protected set => _customRssFeed = value;
-        }        
+        }
 
         public string BlogLogo
         {
@@ -109,13 +115,15 @@ namespace Articulate.Models
 
         public string BlogTitle
         {
-            get => _blogTitle ?? (_blogTitle = base.Unwrap().Value<string>("blogTitle", fallback: Fallback.ToAncestors));
+            get => _blogTitle ??
+                   (_blogTitle = Unwrap().Value<string>("blogTitle", fallback: Fallback.ToAncestors));
             protected set => _blogTitle = value;
         }
 
         public string BlogDescription
         {
-            get => _blogDescription ?? (_blogDescription = base.Unwrap().Value<string>("blogDescription", fallback: Fallback.ToAncestors));
+            get => _blogDescription ?? (_blogDescription =
+                Unwrap().Value<string>("blogDescription", fallback: Fallback.ToAncestors));
             protected set => _blogDescription = value;
         }
 
@@ -125,7 +133,8 @@ namespace Articulate.Models
             {
                 if (_pageSize.HasValue == false)
                 {
-                    _pageSize = base.Unwrap().Value<int>("pageSize", fallback: Fallback.To(Fallback.Ancestors, Fallback.DefaultValue), defaultValue: 10);
+                    _pageSize = Unwrap().Value<int>("pageSize",
+                        fallback: Fallback.To(Fallback.Ancestors, Fallback.DefaultValue), defaultValue: 10);
                 }
 
                 return _pageSize.Value;
@@ -146,7 +155,7 @@ namespace Articulate.Models
         }
 
         public string PageTags { get; protected set; }
-        public IPublishedValueFallback PublishedValueFallback { get; }
-        public IVariationContextAccessor VariationContextAccessor { get; }
+        public IPublishedValueFallback PublishedValueFallback { get; } = publishedValueFallback;
+        public IVariationContextAccessor VariationContextAccessor { get; } = variationContextAccessor;
     }
 }

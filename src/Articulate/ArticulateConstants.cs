@@ -18,7 +18,6 @@ namespace Articulate
         public static class DataType
         {
             public const string ArticulateCategories = "ArticulateCategories";
-            public const string ArticulateImagePicker = "Articulate Image Picker";
             public const string ArticulateTags = "ArticulateTags";
         }
 

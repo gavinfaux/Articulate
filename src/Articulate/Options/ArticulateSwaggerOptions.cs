@@ -34,7 +34,7 @@ namespace Articulate.Options
                     Contact = new OpenApiContact
                     {
                         Name = "https://github.com/Shazwazza/Articulate",
-                        Url = new Uri("https://github.com/Shazwazza/Articulate"),
+                        Url = new Uri("https://github.com/Shazwazza/Articulate")
                     },
                     License = new OpenApiLicense
                     {

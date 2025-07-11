@@ -3,7 +3,6 @@ using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using Articulate.MetaWeblog;
-using Examine;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.DependencyInjection;
@@ -24,20 +23,13 @@ namespace Articulate.Controllers
     /// with our own multi-tenanted version.
     /// </remarks>
     [ArticulateDynamicRoute]
-    public class MetaWeblogController : RenderController
+    public class MetaWeblogController(
+        ILogger<RenderController> logger,
+        ICompositeViewEngine compositeViewEngine,
+        IUmbracoContextAccessor umbracoContextAccessor,
+        IServiceProvider serviceProvider)
+        : RenderController(logger, compositeViewEngine, umbracoContextAccessor)
     {
-        private readonly IServiceProvider _serviceProvider;
-
-        public MetaWeblogController(
-            ILogger<RenderController> logger,
-            ICompositeViewEngine compositeViewEngine,
-            IUmbracoContextAccessor umbracoContextAccessor,
-            IServiceProvider serviceProvider)
-            : base(logger, compositeViewEngine, umbracoContextAccessor)
-        {
-            _serviceProvider = serviceProvider;
-        }
-
         [HttpPost]
         public async Task<ActionResult> IndexAsync(int id)
         {
@@ -48,19 +40,19 @@ namespace Articulate.Controllers
 
             // create the provider using the start node
             var provider = ActivatorUtilities.CreateInstance<ArticulateMetaWeblogProvider>(
-                _serviceProvider,
+                serviceProvider,
                 id);
 
             // create the service using the provider
-            var service = ActivatorUtilities.CreateInstance<MetaWeblogService>(_serviceProvider, provider);
+            var service = ActivatorUtilities.CreateInstance<MetaWeblogService>(serviceProvider, provider);
 
-            var rawContent = string.Empty;
-            using(var reader = new StreamReader(Request.Body))
+            string rawContent;
+            using (var reader = new StreamReader(Request.Body))
             {
-                rawContent = reader.ReadToEnd();
+                rawContent = await reader.ReadToEndAsync();
             }
 
-            string result = await service.InvokeAsync(rawContent);
+            var result = await service.InvokeAsync(rawContent);
             return Content(result, "text/xml", Encoding.UTF8);
         }
     }

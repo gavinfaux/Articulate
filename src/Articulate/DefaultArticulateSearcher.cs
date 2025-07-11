@@ -11,30 +11,25 @@ using Umbraco.Extensions;
 
 namespace Articulate
 {
-    public class DefaultArticulateSearcher : IArticulateSearcher
+    public class DefaultArticulateSearcher(
+        IUmbracoContextAccessor umbracoContextAccessor,
+        IExamineManager examineManager)
+        : IArticulateSearcher
     {
-        private readonly IUmbracoContextAccessor _umbracoContextAccessor;
-        private readonly IExamineManager _examineManager;
-
-        public DefaultArticulateSearcher(IUmbracoContextAccessor umbracoContextAccessor, IExamineManager examineManager)
+        public IEnumerable<IPublishedContent> Search(string term, string indexName, int blogArchiveNodeId, int pageSize,
+            int pageIndex, out long totalResults)
         {
-            _umbracoContextAccessor = umbracoContextAccessor;
-            _examineManager = examineManager;
-        }
-
-        public IEnumerable<IPublishedContent> Search(string term, string indexName, int blogArchiveNodeId, int pageSize, int pageIndex, out long totalResults)
-        {
-            var splitSearch = term.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            var splitSearch = term.Split([' '], StringSplitOptions.RemoveEmptyEntries);
 
             //The fields to search on and their 'weight' (importance)
             var fields = new Dictionary<string, int>
             {
-                {"markdown", 2},
-                {"richText", 2},
-                {"nodeName", 3},
-                {"tags", 1},
-                {"categories", 1},
-                {"umbracoUrlName", 3}
+                { "markdown", 2 },
+                { "richText", 2 },
+                { "nodeName", 3 },
+                { "tags", 1 },
+                { "categories", 1 },
+                { "umbracoUrlName", 3 }
             };
 
             //The multipliers for match types
@@ -46,26 +41,26 @@ namespace Articulate
             foreach (var field in fields)
             {
                 //full exact match (which has a higher boost)
-                fieldQuery.Append($"{field.Key}:{"\"" + term + "\""}^{field.Value*exactMatch}");
-                fieldQuery.Append(" ");
+                fieldQuery.Append($"{field.Key}:{"\"" + term + "\""}^{field.Value * exactMatch}");
+                fieldQuery.Append(' ');
                 //NOTE: Phrase match wildcard isn't really supported unless you use the Lucene
                 // API like ComplexPhraseWildcardSomethingOrOther...
                 //split match
                 foreach (var s in splitSearch)
                 {
                     //match on each term, no wildcard, higher boost
-                    fieldQuery.Append($"{field.Key}:{s}^{field.Value*termMatch}");
-                    fieldQuery.Append(" ");
+                    fieldQuery.Append($"{field.Key}:{s}^{field.Value * termMatch}");
+                    fieldQuery.Append(' ');
 
                     //match on each term, with wildcard 
                     fieldQuery.Append($"{field.Key}:{s}*");
-                    fieldQuery.Append(" ");
+                    fieldQuery.Append(' ');
                 }
             }
 
             indexName = indexName.IsNullOrWhiteSpace() ? Constants.UmbracoIndexes.ExternalIndexName : indexName;
 
-            if (!_examineManager.TryGetIndex(indexName, out IIndex index))
+            if (!examineManager.TryGetIndex(indexName, out var index))
             {
                 throw new InvalidOperationException("No index found by name " + indexName);
             }
@@ -81,7 +76,7 @@ namespace Articulate
 
             var result = searchResult
                 .Skip(pageIndex * pageSize)
-                .ToPublishedSearchResults(_umbracoContextAccessor.GetRequiredUmbracoContext().Content);
+                .ToPublishedSearchResults(umbracoContextAccessor.GetRequiredUmbracoContext().Content);
 
             totalResults = searchResult.TotalItemCount;
 

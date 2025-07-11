@@ -1,4 +1,3 @@
-
 using System.Collections.Generic;
 using Articulate.Models;
 using Articulate.Services;
@@ -24,33 +23,23 @@ namespace Articulate.Controllers
     /// </remarks>
     [OutputCache(PolicyName = "Articulate60")]
     [ArticulateDynamicRoute]
-    public class ArticulateTagsController : ListControllerBase
+    public class ArticulateTagsController(
+        ILogger<RenderController> logger,
+        ICompositeViewEngine compositeViewEngine,
+        IUmbracoContextAccessor umbracoContextAccessor,
+        IPublishedUrlProvider publishedUrlProvider,
+        IPublishedValueFallback publishedValueFallback,
+        IVariationContextAccessor variationContextAccessor,
+        UmbracoHelper umbracoHelper,
+        ArticulateTagService articulateTagService,
+        ITagQuery tagQuery)
+        : ListControllerBase(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider,
+            publishedValueFallback,
+            variationContextAccessor)
     {
-        private readonly UmbracoHelper _umbracoHelper;
-        private readonly ArticulateTagService _articulateTagService;
-        private readonly ITagQuery _tagQuery;
-
-        public ArticulateTagsController(
-            ILogger<RenderController> logger,
-            ICompositeViewEngine compositeViewEngine,
-            IUmbracoContextAccessor umbracoContextAccessor,
-            IPublishedUrlProvider publishedUrlProvider,
-            IPublishedValueFallback publishedValueFallback,
-            IVariationContextAccessor variationContextAccessor,
-            UmbracoHelper umbracoHelper,
-            ArticulateTagService articulateTagService,
-            ITagQuery tagQuery)
-            : base(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider, publishedValueFallback, variationContextAccessor)
-        {
-            _umbracoHelper = umbracoHelper;
-            _articulateTagService = articulateTagService;
-            _tagQuery = tagQuery;
-        }
-
         /// <summary>
         /// Used to render the category listing (virtual node)
         /// </summary>
-        /// <param name="model"></param>
         /// <param name="tag">The category to display if supplied</param>
         /// <param name="p"></param>
         /// <returns></returns>
@@ -66,7 +55,6 @@ namespace Articulate.Controllers
         /// <summary>
         /// Used to render the tag listing (virtual node)
         /// </summary>
-        /// <param name="model"></param>
         /// <param name="tag">The tag to display if supplied</param>
         /// <param name="p"></param>
         /// <returns></returns>
@@ -84,9 +72,9 @@ namespace Articulate.Controllers
             //create a blog model of the main page
             var rootPageModel = new MasterModel(CurrentPage, PublishedValueFallback, VariationContextAccessor);
 
-            IEnumerable<PostsByTagModel> contentByTags = _articulateTagService.GetContentByTags(
-                _umbracoHelper,
-                _tagQuery,
+            var contentByTags = articulateTagService.GetContentByTags(
+                umbracoHelper,
+                tagQuery,
                 rootPageModel,
                 tagGroup,
                 baseUrl);
@@ -107,8 +95,8 @@ namespace Articulate.Controllers
             //create a master model
             var masterModel = new MasterModel(CurrentPage, PublishedValueFallback, VariationContextAccessor);
 
-            PostsByTagModel contentByTag = _articulateTagService.GetContentByTag(
-                _umbracoHelper,
+            var contentByTag = articulateTagService.GetContentByTag(
+                umbracoHelper,
                 masterModel,
                 tag,
                 tagGroup,
@@ -121,8 +109,8 @@ namespace Articulate.Controllers
             // will replace them with '.' and do the lookup again
             if ((contentByTag == null || contentByTag.PostCount == 0) && tag.Contains('-'))
             {
-                contentByTag = _articulateTagService.GetContentByTag(
-                    _umbracoHelper,
+                contentByTag = articulateTagService.GetContentByTag(
+                    umbracoHelper,
                     masterModel,
                     tag.Replace('-', '.'),
                     tagGroup,

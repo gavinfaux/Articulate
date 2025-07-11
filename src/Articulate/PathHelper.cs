@@ -1,6 +1,6 @@
+using System;
 using Articulate.Models;
 using Microsoft.AspNetCore.Http;
-using System;
 using Umbraco.Extensions;
 
 namespace Articulate
@@ -16,7 +16,9 @@ namespace Articulate
         private const string VirtualThemeViewPathToken = "~" + ThemePath + "/{0}/Views/{1}.cshtml";
         private const string UserVirtualThemeViewPathToken = "~" + UserThemePath + "/{0}/Views/{1}.cshtml";
         private const string VirtualThemePartialViewPathToken = "~" + ThemePath + "/{0}/Views/Partials/{1}.cshtml";
-        private const string UserVirtualThemePartialViewPathToken = "~" + UserThemePath + "/{0}/Views/Partials/{1}.cshtml";
+
+        private const string UserVirtualThemePartialViewPathToken =
+            "~" + UserThemePath + "/{0}/Views/Partials/{1}.cshtml";
 
         public static string GetThemePath(string theme)
         {
@@ -34,7 +36,8 @@ namespace Articulate
         {
             if (model.Theme.IsNullOrWhiteSpace())
             {
-                throw new InvalidOperationException("No theme has been set for this Articulate root, republish the root with a selected theme");
+                throw new InvalidOperationException(
+                    "No theme has been set for this Articulate root, republish the root with a selected theme");
             }
 
             return GetThemePath(model.Theme);
@@ -44,7 +47,8 @@ namespace Articulate
         {
             if (model.Theme.IsNullOrWhiteSpace())
             {
-                throw new InvalidOperationException("No theme has been set for this Articulate root, republish the root with a selected theme");
+                throw new InvalidOperationException(
+                    "No theme has been set for this Articulate root, republish the root with a selected theme");
             }
 
             return DefaultThemes.IsDefaultTheme(model.Theme)
@@ -56,7 +60,8 @@ namespace Articulate
         {
             if (model.Theme.IsNullOrWhiteSpace())
             {
-                throw new InvalidOperationException("No theme has been set for this Articulate root, republish the root with a selected theme");
+                throw new InvalidOperationException(
+                    "No theme has been set for this Articulate root, republish the root with a selected theme");
             }
 
             return DefaultThemes.IsDefaultTheme(model.Theme)
@@ -67,14 +72,9 @@ namespace Articulate
         /// <summary>
         /// Get the full domain of the current page
         /// </summary>
-        public static string GetDomain(HttpRequest request)
-        {
+        public static string GetDomain(HttpRequest request) =>
             // TODO: This doesn't take into account port?
-            return request.Scheme + Uri.SchemeDelimiter + request.Host;
-
-            //return requestUrl.Scheme +
-            //    System.Uri.SchemeDelimiter +
-            //    requestUrl.Authority;
-        }
+            request.Scheme + Uri.SchemeDelimiter +
+            request.Host; //return requestUrl.Scheme +//    System.Uri.SchemeDelimiter +//    requestUrl.Authority;
     }
 }

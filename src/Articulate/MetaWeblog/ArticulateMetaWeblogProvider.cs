@@ -23,6 +23,7 @@ using WilderMinds.MetaWeblog;
 
 namespace Articulate.MetaWeblog
 {
+    
     public class ArticulateMetaWeblogProvider : IMetaWeblogProvider
     {
         private readonly Lazy<IMedia> _articulateRootMediaFolder;
@@ -116,9 +117,10 @@ namespace Articulate.MetaWeblog
             // TODO: These would be across all Articulate Blog root nodes :S
             var all = await _tagService.GetAllAsync(ArticulateConstants.DataType.ArticulateCategories);
 
-            var tags = all.Select(x => new CategoryInfo()
+            var tags = all.Select(x => new CategoryInfo
             {
-                title = x.Text, categoryid = x.Id.ToString()
+                title = x.Text,
+                categoryid = x.Id.ToString()
 
                 // TODO HTML & RSS URL ? (Wasnt used before)
             }).ToArray();
@@ -133,7 +135,7 @@ namespace Articulate.MetaWeblog
             // TODO: These would be across all Articulate Blog root nodes :S
             var all = await _tagService.GetAllAsync(ArticulateConstants.DataType.ArticulateTags);
 
-            var tags = all.Select(x => new WilderMinds.MetaWeblog.Tag() { name = x.Text })
+            var tags = all.Select(x => new WilderMinds.MetaWeblog.Tag { name = x.Text })
                 .ToArray();
 
             return tags;
@@ -149,7 +151,7 @@ namespace Articulate.MetaWeblog
 
             var recent = _contentService
                 .GetPagedChildren(node.Id, 0, numberOfPosts, out var totalPosts,
-                    ordering: Ordering.By("updateDate", direction: Direction.Descending))
+                    ordering: Ordering.By("updateDate", Direction.Descending))
                 .Select(FromContent)
                 .ToArray();
 
@@ -245,7 +247,7 @@ namespace Articulate.MetaWeblog
             _mediaFileManager.FileSystem.AddFile(fileUrl, ms);
             var absUrl = _mediaFileManager.FileSystem.GetUrl(fileUrl);
 
-            var result = new MediaObjectInfo() { url = absUrl };
+            var result = new MediaObjectInfo { url = absUrl };
 
             return result;
         }
@@ -446,7 +448,7 @@ namespace Articulate.MetaWeblog
                         _localizationService);
                 }
 
-                _ = _contentService.Save(content, userId: user.Id);
+                _ = _contentService.Save(content, user.Id);
                 _ = _contentService.Publish(content, ["*"], user.Id);
             }
             else

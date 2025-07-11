@@ -30,7 +30,7 @@ namespace Articulate.PropertyEditors
             bool preview)
         {
             var md = (string)inter;
-            return new HtmlEncodedString((inter == null) ? string.Empty : MarkdownHelper.ToHtml(md));
+            return new HtmlEncodedString(inter == null ? string.Empty : MarkdownHelper.ToHtml(md));
         }
     }
 }

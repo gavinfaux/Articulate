@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Threading.Tasks;
+using Articulate.Attributes;
 using Articulate.ImportExport;
 using Articulate.Models.ManagementApi;
 using Asp.Versioning;
@@ -20,11 +21,12 @@ namespace Articulate.Controllers.ManagementApi
     /// <summary>
     /// Provides import and export of Articulate blog data using BlogML and Disqus formats.
     /// </summary>
-    [ManagementApi(ArticulateEnum.ManagementApi.BlogML)]
+    [ManagementApi(ArticulateEnum.ManagementApi.BlogMl)]
     [ApiVersion("1.0")]
     [Authorize(Policy = AuthorizationPolicies.SectionAccessSettings)]
     [VersionedApiBackOfficeRoute("articulate/blogml")]
     [MapToApi(ArticulateConstants.ManagementApi.Name)]
+    [Obsolete]
     public class BlogMlController(
         BlogMlExporter blogMlExporter,
         BlogMlImporter blogMlImporter,
@@ -46,7 +48,7 @@ namespace Articulate.Controllers.ManagementApi
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status415UnsupportedMediaType)]
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status500InternalServerError)]
         [Consumes("multipart/form-data")]
-        public async Task<ActionResult<ImportFileResponse>> PostInitialize(IFormFile importFile)
+        public async Task<IActionResult> PostInitialize(IFormFile importFile)
         {
             if (importFile is null || !Path.GetExtension(importFile.FileName.Trim('\"')).InvariantEquals(".xml"))
             {
@@ -70,11 +72,7 @@ namespace Articulate.Controllers.ManagementApi
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "An unexpected error occurred during file initialization for import.");
-                return Problem(
-                    title: "Server Error",
-                    detail: "An unexpected error occurred. Please check the logs.",
-                    statusCode: StatusCodes.Status500InternalServerError);
+                return InternalServerError(ex, "An unexpected error occurred during file initialization for import.");
             }
         }
 
@@ -118,9 +116,7 @@ namespace Articulate.Controllers.ManagementApi
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "An unexpected error occurred during BlogML export.");
-                return Problem(title: "Server Error", detail: "An unexpected error occurred. Please check the logs.",
-                    statusCode: StatusCodes.Status500InternalServerError);
+                return InternalServerError(ex, "An unexpected error occurred during BlogML export.");
             }
         }
 
@@ -136,15 +132,20 @@ namespace Articulate.Controllers.ManagementApi
         [ProducesResponseType<ImportResponse>(StatusCodes.Status200OK)]
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
-        [ProducesResponseType<ProblemDetails>(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<ImportResponse>> PostImportBlogMl(ImportModel model)
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> PostImportBlogMl(ImportModel model)
         {
             var currentUser = backOfficeSecurityAccessor.BackOfficeSecurity?.CurrentUser;
+            if (currentUser is null)
+            {
+                return Problem(title: "Unauthorized", detail: "Could not determine the current user.",
+                    statusCode: StatusCodes.Status401Unauthorized);
+            }
 
             try
             {
                 var result = await blogMlImporter.Import(
-                    currentUser!.Id,
+                    currentUser.Id,
                     model.TempFile,
                     model.ArticulateBlogNode,
                     model.Overwrite,
@@ -168,9 +169,7 @@ namespace Articulate.Controllers.ManagementApi
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "An unexpected error occurred during import.");
-                return Problem(title: "Server Error", detail: "An unexpected error occurred. Please check the logs.",
-                    statusCode: StatusCodes.Status500InternalServerError);
+                return InternalServerError(ex, "An unexpected error occurred during import.");
             }
             finally
             {
@@ -210,6 +209,15 @@ namespace Articulate.Controllers.ManagementApi
 
             Response.Headers.Append("Content-Disposition", $"attachment; filename*=UTF-8''{downloadFileName}");
             return File(fileStream, "application/octet-stream");
+        }
+
+        private IActionResult InternalServerError(Exception ex, string message)
+        {
+            logger.LogError(ex, message);
+            return Problem(
+                title: "Server Error",
+                detail: "An unexpected error occurred. Please check the logs.",
+                statusCode: StatusCodes.Status500InternalServerError);
         }
     }
 }

@@ -8,9 +8,7 @@ using System.Threading.Tasks;
 using Argotic.Common;
 using Argotic.Syndication.Specialized;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Umbraco.Cms.Core;
-using Umbraco.Cms.Core.Configuration.Models;
 using Umbraco.Cms.Core.IO;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Models.PublishedContent;
@@ -32,11 +30,8 @@ namespace Articulate.ImportExport
         ArticulateTempFileSystem articulateTempFileSystem,
         IPublishedUrlProvider urlProvider,
         ISqlContext sqlContext,
-        ILogger<BlogMlExporter> logger,
-        IOptions<GlobalSettings> globalSettings)
+        ILogger<BlogMlExporter> logger)
     {
-        private readonly IOptions<GlobalSettings> _globalSettings = globalSettings;
-
         public async Task ExportAsync(
             Guid blogRootNode,
             string exportFileName,
@@ -80,7 +75,7 @@ namespace Articulate.ImportExport
 
                 var authorsNodes = contentService.GetPagedDescendants(root.Id, 0, int.MaxValue, out var total,
                     sqlContext.Query<IContent>().Where(x => x.ContentTypeId == authorsContentType.Id),
-                    Ordering.By("CreateDate", Umbraco.Cms.Core.Direction.Descending));
+                    Ordering.By("CreateDate", Direction.Descending));
 
                 foreach (var authorsNode in authorsNodes)
                 {
@@ -95,7 +90,7 @@ namespace Articulate.ImportExport
 
                 var archiveNodes = contentService.GetPagedDescendants(root.Id, 0, int.MaxValue, out total,
                     sqlContext.Query<IContent>().Where(x => x.ContentTypeId == archiveContentType.Id),
-                    Ordering.By("CreateDate", Umbraco.Cms.Core.Direction.Descending));
+                    Ordering.By("CreateDate", Direction.Descending));
 
                 foreach (var archiveNode in archiveNodes)
                 {
@@ -109,7 +104,7 @@ namespace Articulate.ImportExport
         private void WriteFile(BlogMLDocument blogMlDoc, string fileName)
         {
             using var stream = new MemoryStream();
-            blogMlDoc.Save(stream, new SyndicationResourceSaveSettings() { CharacterEncoding = Encoding.UTF8 });
+            blogMlDoc.Save(stream, new SyndicationResourceSaveSettings { CharacterEncoding = Encoding.UTF8 });
             stream.Position = 0;
             articulateTempFileSystem.AddFile(fileName, stream, true);
         }
@@ -185,7 +180,7 @@ namespace Articulate.ImportExport
 
                     var postUrl = new Uri(urlProvider.GetUrl(child.Id), UriKind.RelativeOrAbsolute);
                     var postAbsoluteUrl = new Uri(urlProvider.GetUrl(child.Id, UrlMode.Absolute), UriKind.Absolute);
-                    var blogMlPost = new BlogMLPost()
+                    var blogMlPost = new BlogMLPost
                     {
                         Id = child.Key.ToString(),
                         Name = new BlogMLTextConstruct(child.Name),
@@ -235,7 +230,7 @@ namespace Articulate.ImportExport
                             {
                                 var media = mediaService.GetById(mediaKey);
                                 if (media != null && media.GetValue<string>(Constants.Conventions.Media.File) is
-                                        { } mediaFilePath)
+                                    { } mediaFilePath)
                                 {
                                     var mime = ImageMimeType(mediaFilePath);
                                     if (!string.IsNullOrWhiteSpace(mime))

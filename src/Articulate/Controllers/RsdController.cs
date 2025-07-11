@@ -16,19 +16,13 @@ namespace Articulate.Controllers
     /// Really simple discovery controller
     /// </summary>
     [ArticulateDynamicRoute]
-    public class RsdController : RenderController
+    public class RsdController(
+        UmbracoHelper umbracoHelper,
+        ILogger<RenderController> logger,
+        ICompositeViewEngine compositeViewEngine,
+        IUmbracoContextAccessor umbracoContextAccessor)
+        : RenderController(logger, compositeViewEngine, umbracoContextAccessor)
     {
-        private readonly UmbracoHelper _umbracoHelper;
-
-        public RsdController(UmbracoHelper umbracoHelper,
-            ILogger<RenderController> logger,
-            ICompositeViewEngine compositeViewEngine,
-            IUmbracoContextAccessor umbracoContextAccessor)
-           : base(logger, compositeViewEngine, umbracoContextAccessor)
-        {
-            _umbracoHelper = umbracoHelper;
-        }
-
         /// <summary>
         /// Renders the RSD for the articulate node id
         /// </summary>
@@ -37,7 +31,7 @@ namespace Articulate.Controllers
         [HttpGet]
         public ActionResult Index(int id)
         {
-            var node = _umbracoHelper.Content(id);
+            var node = umbracoHelper.Content(id);
             if (node == null)
             {
                 return new NotFoundResult();
@@ -53,32 +47,29 @@ namespace Articulate.Controllers
                     new XElement("api",
                         new XAttribute("name", "MetaWeblog"),
                         new XAttribute("preferred", true),
-                        new XAttribute("apiLink", node.Url(mode: UrlMode.Absolute).EnsureEndsWith('/') + "metaweblog/" + id),
+                        new XAttribute("apiLink",
+                            node.Url(mode: UrlMode.Absolute).EnsureEndsWith('/') + "metaweblog/" + id),
                         new XAttribute("blogID", node.Url(mode: UrlMode.Absolute)))));
 
             return new XmlResult(new XDocument(rsd));
         }
     }
 
-    internal class XmlResult : ActionResult
+    internal class XmlResult(XDocument xDocument) : ActionResult
     {
-        private readonly XDocument _xDocument;
-
-        public XmlResult(XDocument xDocument) => _xDocument = xDocument;
-
         /// <summary>
         /// Serialises the object that was passed into the constructor to XML and writes the corresponding XML to the result stream.
         /// </summary>
         public override async Task ExecuteResultAsync(ActionContext context)
         {
-            if (_xDocument == null)
+            if (xDocument == null)
             {
                 return;
             }
 
             context.HttpContext.Response.Clear();
             context.HttpContext.Response.ContentType = "text/xml";
-            await context.HttpContext.Response.WriteAsync(_xDocument.ToString());
+            await context.HttpContext.Response.WriteAsync(xDocument.ToString()).ConfigureAwait(false);
         }
     }
 }

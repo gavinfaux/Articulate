@@ -2,6 +2,7 @@
 using System;
 using System.Text.RegularExpressions;
 using Articulate.Options;
+using Articulate.Services;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.Mvc.Controllers;
@@ -29,6 +30,10 @@ namespace Articulate.Components
             _ = builder.Services.AddSingleton<IOperationIdHandler, ArticulateOperationIdHandler>();
 
             _ = builder.Services.ConfigureOptions<ArticulateSwaggerOptions>();
+
+            _ = builder.Services.AddTransient<IMarkdownImageProcessor, MarkdownImageProcessor>();
+
+            _ = builder.Services.AddTransient<IThemeService, ThemeService>();
         }
     }
 
@@ -57,7 +62,7 @@ namespace Articulate.Components
             ControllerActionDescriptor controllerActionDescriptor)
             => controllerActionDescriptor.ControllerTypeInfo.Namespace?.StartsWith(
                 "Articulate.Controllers.ManagementApi",
-                comparisonType: StringComparison.InvariantCultureIgnoreCase) is true;
+                StringComparison.InvariantCultureIgnoreCase) is true;
 
         public override string Handle(ApiDescription apiDescription)
             => ArticulateOperationId(apiDescription);
@@ -117,7 +122,7 @@ namespace Articulate.Components
     /// source generators is that it will be pre-compiled at startup
     /// See: https://devblogs.microsoft.com/dotnet/regular-expression-improvements-in-dotnet-7/#source-generation for more info.
     /// </summary>
-    internal static partial class ArticulateOperationIdRegexes
+    public static partial class ArticulateOperationIdRegexes
     {
         // Lifted from Umbraco.Cms.Api.Common.OpenApi.OperationIdRegexes
 

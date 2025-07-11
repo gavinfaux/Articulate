@@ -11,9 +11,5 @@ namespace Articulate.PropertyEditors
 
     public class ThemePickerConfigurationEditor : ConfigurationEditor
     {
-        public ThemePickerConfigurationEditor() : base()
-        {
-            // No specific configuration needed for theme picker
-        }
     }
 }

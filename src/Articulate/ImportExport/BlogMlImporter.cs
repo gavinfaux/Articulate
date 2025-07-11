@@ -26,6 +26,7 @@ using Task = System.Threading.Tasks.Task;
 
 namespace Articulate.ImportExport
 {
+    
     public class BlogMlImporter
     {
         private readonly DisqusXmlExporter _disqusXmlExporter;
@@ -136,7 +137,7 @@ namespace Articulate.ImportExport
 
             try
             {
-                using (var stream = _articulateTempFileSystem.OpenFile(fileName))
+                await using (var stream = _articulateTempFileSystem.OpenFile(fileName))
                 {
                     var document = new BlogMLDocument();
                     document.Load(stream);
@@ -149,12 +150,13 @@ namespace Articulate.ImportExport
                     var imported = await ImportPosts(userId, xdoc, root, document.Posts, document.Authors.ToArray(),
                         document.Categories.ToArray(), authorIdsToName, overwrite, regexMatch, regexReplace, publishAll,
                         importFirstImage);
-                    returnModel.PostCount = imported.Count();
+                    var enumerable = imported as IContent[] ?? imported.ToArray();
+                    returnModel.PostCount = enumerable.Count();
 
                     if (exportDisqusXml)
                     {
-                        var xDoc = _disqusXmlExporter.Export(imported, document);
-                        var nsWp = "http://wordpress.org/export/1.0/";
+                        var xDoc = _disqusXmlExporter.Export(enumerable, document);
+                        const string nsWp = "http://wordpress.org/export/1.0/";
                         returnModel.CommentCount = xDoc.Descendants(XName.Get("comment", nsWp)).Count();
                         using var memStream = new MemoryStream();
                         xDoc.Save(memStream);
@@ -216,8 +218,8 @@ namespace Articulate.ImportExport
                 authorsNode = _contentService.CreateWithInvariantOrDefaultCultureName(
                     ArticulateConstants.Convention.AuthorsDocument, rootNode, authorsType, _localizationService);
 
-                _ = _contentService.Save(authorsNode, userId: userId);
-                _ = _contentService.Publish(authorsNode, ["*"], userId: userId);
+                _ = _contentService.Save(authorsNode, userId);
+                _ = _contentService.Publish(authorsNode, ["*"], userId);
             }
 
             // get the authors nodes for this authors container
@@ -245,8 +247,8 @@ namespace Articulate.ImportExport
                         authorNode = _contentService.CreateWithInvariantOrDefaultCultureName(found.Name, authorsNode,
                             authorType, _localizationService);
 
-                        _ = _contentService.Save(authorNode, userId: userId);
-                        _ = _contentService.Publish(authorNode, ["*"], userId: userId);
+                        _ = _contentService.Save(authorNode, userId);
+                        _ = _contentService.Publish(authorNode, ["*"], userId);
                     }
 
                     result.Add(author.Id, authorNode.Name);
@@ -263,8 +265,8 @@ namespace Articulate.ImportExport
                         authorNode = _contentService.CreateWithInvariantOrDefaultCultureName(author.Title.Content,
                             authorsNode, authorType, _localizationService);
 
-                        _ = _contentService.Save(authorNode, userId: userId);
-                        _ = _contentService.Publish(authorNode, ["*"], userId: userId);
+                        _ = _contentService.Save(authorNode, userId);
+                        _ = _contentService.Publish(authorNode, ["*"], userId);
                     }
 
                     result.Add(author.Id, authorNode.Name);
@@ -433,7 +435,7 @@ namespace Articulate.ImportExport
 
                 if (publishAll)
                 {
-                    _ = _contentService.Save(postNode, userId: userId);
+                    _ = _contentService.Save(postNode, userId);
                     _ = _contentService.Publish(postNode, ["*"], userId);
                 }
                 else
@@ -560,7 +562,7 @@ namespace Articulate.ImportExport
         {
             //since this blobml serializer doesn't support tags (can't find one that does) we need to manually take care of that
             var xmlPost = xdoc.Descendants(XName.Get("post", xdoc.Root.Name.NamespaceName))
-                .SingleOrDefault(x => ((string)x.Attribute("id")) == post.Id);
+                .SingleOrDefault(x => (string)x.Attribute("id") == post.Id);
 
             xmlPost ??= xdoc.Descendants(XName.Get("post", xdoc.Root.Name.NamespaceName))
                 .SingleOrDefault(x => x.Descendants(XName.Get("post-name", xdoc.Root.Name.NamespaceName))

@@ -37,7 +37,7 @@
     "monaco-editor": "Articulate Markdown Editor, only required until Umbraco Core editor supports better markdown to HTML processing; see https://github.com/umbraco/Umbraco-CMS/issues/19500"
   },
   "devDependencies": {
-    "@hey-api/openapi-ts": "^0.78.1",
+    "@hey-api/openapi-ts": "^0.78.3",
     "@umbraco-cms/backoffice": "^15.4.3",
     "chalk": "^5.4.1",
     "chokidar-cli": "^3.0.0",

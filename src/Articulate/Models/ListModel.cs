@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Umbraco.Cms.Core.Media;
 using Umbraco.Cms.Core.Models.PublishedContent;
 
 namespace Articulate.Models
@@ -20,6 +19,8 @@ namespace Articulate.Models
         /// <param name="content"></param>
         /// <param name="listItems"></param>
         /// <param name="pager"></param>
+        /// <param name="publishedValueFallback"></param>
+        /// <param name="variationContextAccessor"></param>
         /// <remarks>
         /// Default sorting by published date will be disabled for this list model, it is assumed that the list items will
         /// already be sorted.
@@ -32,7 +33,6 @@ namespace Articulate.Models
             IVariationContextAccessor variationContextAccessor)
             : base(content, publishedValueFallback, variationContextAccessor)
         {
-
             ArgumentNullException.ThrowIfNull(content);
             ArgumentNullException.ThrowIfNull(listItems);
             ArgumentNullException.ThrowIfNull(pager);
@@ -47,14 +47,13 @@ namespace Articulate.Models
             {
                 PageTags = Name;
             }
-        }        
+        }
 
-        public ListModel(IPublishedContent content, IPublishedValueFallback publishedValueFallback, IVariationContextAccessor variationContextAccessor)
+        public ListModel(IPublishedContent content, IPublishedValueFallback publishedValueFallback,
+            IVariationContextAccessor variationContextAccessor)
             : base(content, publishedValueFallback, variationContextAccessor)
         {
         }
-
-        public IImageUrlGenerator ImageUrlGenerator { get; }
 
         /// <summary>
         /// The pager model
@@ -68,7 +67,6 @@ namespace Articulate.Models
         {
             get
             {
-
                 if (_resolvedList != null)
                 {
                     return _resolvedList;
@@ -76,21 +74,22 @@ namespace Articulate.Models
 
                 if (_listItems == null)
                 {
-                    _resolvedList = ChildrenForAllCultures.Select(x => new PostModel(x, PublishedValueFallback, VariationContextAccessor)).ToArray();
+                    _resolvedList = ChildrenForAllCultures
+                        .Select(x => new PostModel(x, PublishedValueFallback, VariationContextAccessor)).ToArray();
                     return _resolvedList;
                 }
 
                 if (_listItems != null && Pages != null)
                 {
                     _resolvedList = _listItems
-                    //Skip will already be done in this case, but we'll take again anyways just to be safe                    
+                        //Skip will already be done in this case, but we'll take again anyways just to be safe                    
                         .Take(Pages.PageSize)
                         .Select(x => new PostModel(x, PublishedValueFallback, VariationContextAccessor))
                         .ToArray();
                 }
                 else
                 {
-                    _resolvedList = Enumerable.Empty<PostModel>();
+                    _resolvedList = [];
                 }
 
                 return _resolvedList;
@@ -100,6 +99,7 @@ namespace Articulate.Models
         /// <summary>
         /// The list of blog posts
         /// </summary>
+        [Obsolete("Please use TryGetChildrenKeys() on IDocumentNavigationQueryService or IMediaNavigationQueryService instead. Scheduled for removal in V16.")]
         public override IEnumerable<IPublishedContent> Children => Posts;
 
         public IEnumerable<IPublishedContent> ChildrenForAllCultures => Posts;

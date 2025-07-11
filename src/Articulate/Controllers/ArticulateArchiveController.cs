@@ -1,10 +1,8 @@
-using System;
 using System.Collections.Generic;
 using Articulate.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Logging;
-using Umbraco.Cms.Core.Media;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.Routing;
@@ -18,35 +16,30 @@ namespace Articulate.Controllers
     /// <summary>
     /// Renders the Articulate Archive node as a blog post list by date
     /// </summary>
-    public class ArticulateArchiveController : ListControllerBase
+    public class ArticulateArchiveController(
+        ILogger<RenderController> logger,
+        ICompositeViewEngine compositeViewEngine,
+        IUmbracoContextAccessor umbracoContextAccessor,
+        IPublishedUrlProvider publishedUrlProvider,
+        IPublishedValueFallback publishedValueFallback,
+        IVariationContextAccessor variationContextAccessor,
+        UmbracoHelper umbraco)
+        : ListControllerBase(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider,
+            publishedValueFallback,
+            variationContextAccessor)
     {
-        public ArticulateArchiveController(
-            ILogger<RenderController> logger,
-            ICompositeViewEngine compositeViewEngine,
-            IUmbracoContextAccessor umbracoContextAccessor,
-            IPublishedUrlProvider publishedUrlProvider,
-            IPublishedValueFallback publishedValueFallback,
-            IVariationContextAccessor variationContextAccessor,
-            UmbracoHelper umbraco)
-            : base(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider, publishedValueFallback, variationContextAccessor)
-        {
-            Umbraco = umbraco;
-        }
-
-        public UmbracoHelper Umbraco { get; }
+        public UmbracoHelper Umbraco { get; } = umbraco;
 
         /// <summary>
         /// Declare new Index action with optional page number
         /// </summary>
-        /// <param name="model"></param>
         /// <param name="p"></param>
         /// <returns></returns>
         public IActionResult Index(int? p) => RenderView(new ContentModel(CurrentPage), p);
 
-        // <summary>
+        /// <summary>
         /// Override and declare a NonAction so that we get routed to the Index action with the optional page route
         /// </summary>
-        /// <param name="model"></param>
         /// <returns></returns>
         [NonAction]
         public override IActionResult Index() => Index(0);
@@ -64,19 +57,19 @@ namespace Articulate.Controllers
             //Get post count by xpath is much faster than iterating all children to get a count
             var count = Umbraco.GetPostCount(archive.Id);
 
-            if (!int.TryParse(archive.RootBlogNode.Value<string>("pageSize"), out int pageSize))
+            if (!int.TryParse(archive.RootBlogNode.Value<string>("pageSize"), out var pageSize))
             {
                 pageSize = 10;
             }
 
-            IEnumerable<PostModel> posts = Umbraco.GetRecentPostsByArchive(
+            var posts = Umbraco.GetRecentPostsByArchive(
                 archive,
                 1,
                 pageSize,
                 PublishedValueFallback,
                 VariationContextAccessor);
 
-            return GetPagedListView(archive, archive, posts, count, null);          
+            return GetPagedListView(archive, archive, posts, count, null);
         }
     }
 }

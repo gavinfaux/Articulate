@@ -10,25 +10,17 @@ using Umbraco.Cms.Web.Common.Controllers;
 namespace Articulate.Controllers
 {
     [ArticulateDynamicRoute]
-    public class MarkdownEditorController : RenderController
+    public class MarkdownEditorController(
+        ILogger<RenderController> logger,
+        ICompositeViewEngine compositeViewEngine,
+        IUmbracoContextAccessor umbracoContextAccessor,
+        IApiDescriptionGroupCollectionProvider apiDescriptionProvider)
+        : RenderController(logger, compositeViewEngine, umbracoContextAccessor)
     {
-        private readonly IApiDescriptionGroupCollectionProvider _apiDescriptionProvider;
-
-        public MarkdownEditorController(
-            ILogger<RenderController> logger,
-            ICompositeViewEngine compositeViewEngine,
-            IUmbracoContextAccessor umbracoContextAccessor,
-            IApiDescriptionGroupCollectionProvider apiDescriptionProvider
-        )
-            : base(logger, compositeViewEngine, umbracoContextAccessor)
-        {
-            _apiDescriptionProvider = apiDescriptionProvider;
-        }
-
         [HttpGet]
         public ViewResult NewPost()
         {
-            var managementApiUrls = _apiDescriptionProvider.ForGroups([
+            var managementApiUrls = apiDescriptionProvider.ForGroups([
                 ArticulateConstants.ManagementApi.Authentication, ArticulateConstants.ManagementApi.MarkdownEditor
             ]);
 
@@ -37,19 +29,26 @@ namespace Articulate.Controllers
                 ArticulateNodeId = CurrentPage.Id,
                 AuthSignInUrl =
                     managementApiUrls
-                        [$"{nameof(BackOfficeAuthenticationControllerController)}.{nameof(BackOfficeAuthenticationControllerController.Login)}"],
+                        [GetKey<BackOfficeAuthenticationController>(nameof(BackOfficeAuthenticationController.Login))],
                 AuthSignOutUrl =
                     managementApiUrls
-                        [$"{nameof(BackOfficeAuthenticationControllerController)}.{nameof(BackOfficeAuthenticationControllerController.Logout)}"],
+                        [GetKey<BackOfficeAuthenticationController>(nameof(BackOfficeAuthenticationController.Logout))],
                 AuthCsrfTokenUrl =
-                    managementApiUrls[
-                        $"{nameof(BackOfficeAuthenticationControllerController)}.{nameof(BackOfficeAuthenticationControllerController.GetStatus)}"],
-                PostUrl = managementApiUrls[$"{nameof(Articulate.Controllers.ManagementApi.MarkdownEditorController)}.{nameof(Articulate.Controllers.ManagementApi.MarkdownEditorController.CreatePost)}"]
+                    managementApiUrls
+                        [GetKey<BackOfficeAuthenticationController>(nameof(BackOfficeAuthenticationController.GetCsrfToken))],
+                AuthStatusUrl =
+                    managementApiUrls
+                        [GetKey<BackOfficeAuthenticationController>(nameof(BackOfficeAuthenticationController.GetStatus))],
+                PostUrl = managementApiUrls[
+                    GetKey<ManagementApi.MarkdownEditorController>(nameof(ManagementApi.MarkdownEditorController
+                        .CreatePost))]
             };
 
             Response.Headers["Permissions-Policy"] = "camera=(self)";
 
             return View("~/App_Plugins/Articulate/Views/MarkdownEditor.cshtml", vm);
+
+            static string GetKey<T>(string actionName) => $"{typeof(T).Name}.{actionName}";
         }
     }
 }

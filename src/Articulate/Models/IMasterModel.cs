@@ -7,20 +7,21 @@ namespace Articulate.Models
         /// <summary>
         /// Returns the current theme
         /// </summary>
-        string Theme { get; }
-        IPublishedContent RootBlogNode { get; }
-        IPublishedContent BlogArchiveNode { get; }
-        IPublishedContent BlogAuthorsNode { get; }
-        string BlogTitle { get; }
-        string BlogDescription { get; }
-        string BlogLogo { get; }
-        string BlogBanner { get; }
-        int PageSize { get; }
-        string DisqusShortName { get; }
-        string CustomRssFeed { get; }
+        public string Theme { get; }
 
-        string PageTitle { get; }
-        string PageDescription { get; }
-        string PageTags { get; }
+        public IPublishedContent RootBlogNode { get; }
+        public IPublishedContent BlogArchiveNode { get; }
+        public IPublishedContent BlogAuthorsNode { get; }
+        public string BlogTitle { get; }
+        public string BlogDescription { get; }
+        public string BlogLogo { get; }
+        public string BlogBanner { get; }
+        public int PageSize { get; }
+        public string DisqusShortName { get; }
+        public string CustomRssFeed { get; }
+
+        public string PageTitle { get; }
+        public string PageDescription { get; }
+        public string PageTags { get; }
     }
 }

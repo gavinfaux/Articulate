@@ -1,5 +1,6 @@
 #nullable enable
 using System.Threading.Tasks;
+using Articulate.Attributes;
 using Articulate.Models.ManagementApi.Authentication;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Antiforgery;
@@ -19,12 +20,12 @@ namespace Articulate.Controllers.ManagementApi
     /// <summary>
     /// Provides an authentication endpoint for the Articulate Frontend Markdown Editor
     /// </summary>
-    [ManagementApi(ArticulateEnum.ManagementApi.BlogML)]
+    [ManagementApi(ArticulateEnum.ManagementApi.Authentication)]
     [ApiVersion("1.0")]
     [ApiController]
     [MapToApi(ArticulateConstants.ManagementApi.Name)]
     [Route("articulate/management/api/v{version:apiVersion}/authentication")]
-    public class BackOfficeAuthenticationControllerController(
+    public class BackOfficeAuthenticationController(
         IBackOfficeSignInManager signInManager,
         IAntiforgery antiforgery)
         : ControllerBase
@@ -70,14 +71,6 @@ namespace Articulate.Controllers.ManagementApi
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status423Locked)]
         public async Task<ActionResult<LoginResponseBase>> Login(LoginModel model)
         {
-            if (string.IsNullOrEmpty(model.EmailAddress) || string.IsNullOrEmpty(model.Password))
-            {
-                return Problem(
-                    title: "Validation Error",
-                    detail: "Email and password are required.",
-                    statusCode: StatusCodes.Status400BadRequest);
-            }
-
             var result = await signInManager.PasswordSignInAsync(model.EmailAddress, model.Password, false, true);
 
             return result.Succeeded

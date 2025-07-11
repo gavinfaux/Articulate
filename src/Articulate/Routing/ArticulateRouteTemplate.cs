@@ -1,19 +1,13 @@
-using Microsoft.AspNetCore.Routing.Template;
 using System;
+using Microsoft.AspNetCore.Routing.Template;
 
 namespace Articulate.Routing
 {
-    internal struct ArticulateRouteTemplate : IEquatable<ArticulateRouteTemplate>
+    internal readonly struct ArticulateRouteTemplate(RouteTemplate routeTemplate) : IEquatable<ArticulateRouteTemplate>
     {
-        private readonly string _template;
+        private readonly string _template = routeTemplate.TemplateText;
 
-        public ArticulateRouteTemplate(RouteTemplate routeTemplate)
-        {
-            RouteTemplate = routeTemplate;
-            _template = routeTemplate.TemplateText;
-        }
-        
-        public RouteTemplate RouteTemplate { get; }
+        public RouteTemplate RouteTemplate { get; } = routeTemplate;
 
         public override bool Equals(object obj) => obj is ArticulateRouteTemplate template && Equals(template);
         public bool Equals(ArticulateRouteTemplate other) => _template == other._template;

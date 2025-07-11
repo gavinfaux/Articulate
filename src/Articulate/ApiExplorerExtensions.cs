@@ -1,8 +1,8 @@
-using Microsoft.AspNetCore.Mvc.ApiExplorer;
-using Microsoft.AspNetCore.Mvc.Controllers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.AspNetCore.Mvc.ApiExplorer;
+using Microsoft.AspNetCore.Mvc.Controllers;
 
 namespace Articulate
 {
@@ -17,22 +17,22 @@ namespace Articulate
 
             //Find all matching groups.
             return provider.ApiDescriptionGroups.Items
-                // THE FIX: Use the HashSet for a fast and case-insensitive check.
-                .Where(g => g.GroupName != null && groupNameSet.Contains(g.GroupName))
                 //Flatten all their API descriptions into a single list.
                 .SelectMany(g => g.Items)
+                // Use the HashSet for a fast and case-insensitive check.
+                .Where(desc => desc.GroupName != null && groupNameSet.Contains(desc.GroupName))
                 //Filter for valid controller actions.
                 .Where(desc => desc.ActionDescriptor is ControllerActionDescriptor)
                 // Create the final dictionary with a unique composite key.
                 .ToDictionary(
-                    // Key: "ControllerName.ActionName"
+                    // Key: "ControllerTypeName.ActionName" - This matches nameof(ControllerType.Action)
                     desc =>
                     {
                         var cad = (ControllerActionDescriptor)desc.ActionDescriptor;
-                        return $"{cad.ControllerName}.{cad.ActionName}";
+                        return $"{cad.ControllerTypeInfo.Name}.{cad.ActionName}";
                     },
                     // Value: URL relative path
-                    desc => $"/{desc.RelativePath.TrimStart('/')}"
+                    desc => $"/{desc.RelativePath?.TrimStart('/')}"
                 );
         }
     }

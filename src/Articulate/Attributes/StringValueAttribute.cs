@@ -1,15 +1,13 @@
 using System;
 
-/// <summary>
-/// A simple attribute to associate a string value with an enum member.
-/// </summary>
-[AttributeUsage(AttributeTargets.Field, AllowMultiple = false)]
-public class StringValueAttribute : Attribute
+namespace Articulate.Attributes
 {
-    public string Value { get; }
-
-    public StringValueAttribute(string value)
+    /// <summary>
+    /// A simple attribute to associate a string value with an enum member.
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Field)]
+    public class StringValueAttribute(string value) : Attribute
     {
-        Value = value;
+        public string Value { get; } = value;
     }
 }

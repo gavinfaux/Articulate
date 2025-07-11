@@ -5,14 +5,9 @@ using Umbraco.Cms.Core.IO;
 
 namespace Articulate.ImportExport
 {
-    public class ArticulateTempFileSystem : PhysicalFileSystem
-    {
-        public ArticulateTempFileSystem(
-            IIOHelper ioHelper,
-            IHostingEnvironment hostingEnvironment,
-            ILogger<PhysicalFileSystem> logger)
-            : base(ioHelper, hostingEnvironment, logger, "Articulate/Temp", Guid.NewGuid().ToString())
-        {
-        }
-    }
+    public class ArticulateTempFileSystem(
+        IIOHelper ioHelper,
+        IHostingEnvironment hostingEnvironment,
+        ILogger<PhysicalFileSystem> logger)
+        : PhysicalFileSystem(ioHelper, hostingEnvironment, logger, "Articulate/Temp", Guid.NewGuid().ToString());
 }
