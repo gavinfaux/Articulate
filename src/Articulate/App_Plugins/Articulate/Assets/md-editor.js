@@ -11,32 +11,65 @@ document.addEventListener("alpine:init", () => {
     // --- State Management ---
     step: STEPS.LOADING,
     submitting: false,
-    isEditorInitializing: false,
     isAuthenticated: false,
     fileMap: new Map(),
     editor: null,
     csrfToken: null,
-    caption: "Create a new post",
+    get caption() {
+      switch (this.step) {
+        case STEPS.LOGIN:
+          return "User Login";
+        case STEPS.EDITOR:
+          return "Create a new post";
+        case STEPS.OPTIONAL:
+          return "Optional Details";
+        case STEPS.SUCCESS:
+          return "Success!";
+        default:
+          return "Loading...";
+      }
+    },
     isLoginError: false,
 
     // --- URLs ---
     authSigninUrl: "",
-    authSignoutUrl: "",
     authCsrfUrl: "",
     authStatusUrl: "",
     postUrl: "",
     successUrl: "#",
     twoFactorUrl: "",
 
-    // --- Models & Validation ---
+    // --- Models ---
     login: {
-      emailAddress: "",
-      password: "",
-      validation: {
-        // For material design style effects
-        emailAddress: true,
-        password: true,
-      },
+      emailAddress: null,
+      password: null,
+    },
+
+    updateLoginEmail() {
+      this.login.emailAddress = this.$refs.emailInput.value;
+      if (this.isLoginError) {
+        this.isLoginError = false;
+        this.$refs.emailInput.parentElement.classList.remove("is-invalid");
+        this.$refs.passwordInput.parentElement.classList.remove("is-invalid");
+      }
+    },
+
+    updateLoginPassword() {
+      this.login.password = this.$refs.passwordInput.value;
+      if (this.isLoginError) {
+        this.isLoginError = false;
+        this.$refs.emailInput.parentElement.classList.remove("is-invalid");
+        this.$refs.passwordInput.parentElement.classList.remove("is-invalid");
+      }
+    },
+
+    updatePostField(event) {
+      if (!event.target) return;
+      const field = event.target.id;
+      const value = event.target.value;
+      if (field && this.post.hasOwnProperty(field)) {
+        this.post[field] = value;
+      }
     },
     post: {
       articulateNodeId: "",
@@ -50,7 +83,7 @@ document.addEventListener("alpine:init", () => {
       slug: "",
     },
 
-    // --- Getters for CSP Compliance ---
+    // --- Getters for UI State ---
     get isLoading() {
       return this.step === STEPS.LOADING || this.submitting;
     },
@@ -66,147 +99,117 @@ document.addEventListener("alpine:init", () => {
     get isSuccessStep() {
       return this.step === STEPS.SUCCESS;
     },
-
-    get isEmailInvalid() {
-      return !this.login.validation.emailAddress;
-    },
-    get isPasswordInvalid() {
-      return !this.login.validation.password;
-    },
-
     get canShowNextButton() {
       return this.isEditorStep && this.post.title && this.post.markdown;
     },
 
-    // --- Initialization ---
+    get loginButtonText() {
+      return this.submitting ? "Logging in..." : "Login";
+    },
+
+    // --- Initialization & Lifecycle ---
     init() {
       this.loadUrlsFromDataset();
-      this.checkAuthStatus();
-      this.setupWatchers();
       this.getCsrfToken();
-      
-      // Initialize MDL components after the component is mounted
-      this.$nextTick(this.upgradeMDLComponents);
-      
-      // Clean up MDL components when component is destroyed
-      this.$on('destroy', this.downgradeMDLComponents);
-    },
-    
-    // Upgrade MDL components in a CSP-compliant way
-    upgradeMDLComponents() {
-      if (!window.componentHandler) return;
-      
-      // Find all MDL components that need upgrading
-      const components = [
-        '.mdl-textfield',
-        '.mdl-button',
-        '.mdl-spinner',
-        '.mdl-card',
-        // Add other MDL component selectors as needed
-      ];
-      
-      components.forEach(selector => {
-        const elements = this.$el.querySelectorAll(selector);
-        elements.forEach(el => {
-          if (!el.getAttribute('data-upgraded')) {
-            window.componentHandler.upgradeElement(el);
+
+      this.$nextTick(() => {
+        if (window.componentHandler) {
+          const layout = document.querySelector(".mdl-js-layout");
+          if (layout) window.componentHandler.upgradeElement(layout);
+        }
+      });
+
+      this.$watch("step", (value) => {
+        this.$nextTick(() => {
+          if (window.componentHandler) {
+            let container = null;
+            switch (value) {
+              case STEPS.LOGIN:
+                container = this.$refs.loginView;
+                break;
+              case STEPS.EDITOR:
+                container = this.$refs.editorView;
+                break;
+              case STEPS.OPTIONAL:
+                container = this.$refs.optionalView;
+                break;
+              case STEPS.SUCCESS:
+                container = this.$refs.successView;
+                break;
+            }
+
+            if (container) {
+              window.componentHandler.upgradeDom();
+            }
+
+            // Always ensure the FABs are upgraded if they are visible
+            window.componentHandler.upgradeDom();
+
+            if (value === STEPS.EDITOR) {
+              this.initializeEditor();
+            }
           }
         });
       });
-    },
-    
-    // Clean up MDL components
-    downgradeMDLComponents() {
-      if (!window.componentHandler) return;
-      
-      const elements = this.$el.querySelectorAll('[data-upgraded]');
-      elements.forEach(el => {
-        window.componentHandler.downgradeElements(el);
-      });
+
+      // Return a cleanup function for when the component is destroyed
+      return () => {
+        if (this.editor) {
+          this.editor.removeEventListener("change", this.updateMarkdownContent);
+        }
+      };
     },
 
     loadUrlsFromDataset() {
-      const bodyEl = document.body;
-      this.authSigninUrl = bodyEl.dataset.authSigninUrl;
-      this.authSignoutUrl = bodyEl.dataset.authSignoutUrl;
-      this.authCsrfUrl = bodyEl.dataset.authCsrfUrl;
-      this.authStatusUrl = bodyEl.dataset.authStatusUrl;
-      this.postUrl = bodyEl.dataset.postUrl;
-      this.post.articulateNodeId = bodyEl.dataset.articulateNodeId;
-    },
-
-    setupWatchers() {
-      // Watch for step changes to handle editor and MDL component initialization
-      this.$watch('step', (newStep) => {
-        // Use nextTick to ensure the DOM has been updated
-        this.$nextTick(() => {
-          // Upgrade MDL components when step changes
-          this.upgradeMDLComponents();
-          
-          // Initialize editor if we're on the editor step
-          if (newStep === STEPS.EDITOR) {
-            this.initializeEditor();
-          }
-        });
-      });
+      const {
+        authSigninUrl,
+        authCsrfUrl,
+        authStatusUrl,
+        postUrl,
+        articulateNodeId,
+      } = document.body.dataset;
+      this.authSigninUrl = authSigninUrl;
+      this.authCsrfUrl = authCsrfUrl;
+      this.authStatusUrl = authStatusUrl;
+      this.postUrl = postUrl;
+      this.post.articulateNodeId = articulateNodeId;
     },
 
     initializeEditor() {
-      if (this.editor) {
-        return;
-      }
-      
-      this.isEditorInitializing = true;
-      this.$nextTick(() => {
-        const editorTextarea = this.$refs.editor;
-        
-        // Initialize TinyMDE with minimal configuration
-        this.editor = new TinyMDE.Editor({
-          element: editorTextarea,
-          content: this.post.markdown,
-          commandBar: false,
-          autoGrow: true,
-          spellChecker: false
-        });
+      if (this.editor || !this.$refs.editor) return;
 
-        // Update markdown content on change
-        this.editor.addEventListener("change", () => {
-          this.post.markdown = this.editor.getContent();
-        });
-
-        // Upgrade MDL components
-        if (window.componentHandler) {
-          window.componentHandler.upgradeDom();
-        }
-
-        this.isEditorInitializing = false;
+      this.editor = new TinyMDE.Editor({
+        element: this.$refs.editor,
+        content: this.post.markdown,
+        commandBar: false,
+        autoGrow: true,
+        spellChecker: false,
       });
+
+      this.editor.addEventListener(
+        "change",
+        this.updateMarkdownContent.bind(this)
+      );
     },
 
-    // --- Authentication ---
-
-    updateEmail(event) {
-      this.login.emailAddress = event.target.value;
-      this.login.validation.emailAddress = !!event.target.value;
+    updateMarkdownContent() {
+      if (!this.editor) return;
+      this.post.markdown = this.editor.getContent();
     },
 
-    updatePassword(event) {
-      this.login.password = event.target.value;
-      this.login.validation.password = !!event.target.value;
+    // --- Authentication Flow ---
+    async _fetchCsrfToken() {
+      const response = await fetch(this.authCsrfUrl);
+      if (!response.ok)
+        throw new Error(`CSRF token fetch failed: ${response.status}`);
+      const data = await response.json();
+      this.csrfToken = data.requestToken;
     },
 
     async getCsrfToken() {
       try {
-        const response = await fetch(this.authCsrfUrl);
-        if (!response.ok)
-          throw new Error(
-            `CSRF token fetch failed with status: ${response.status}`
-          );
-        const data = await response.json();
-        this.csrfToken = data.requestToken;
-        if (this.csrfToken) {
-          await this.checkAuthStatus();
-        }
+        await this._fetchCsrfToken();
+        await this.checkAuthStatus();
       } catch (error) {
         console.error(
           "A security token could not be loaded. Please refresh the page.",
@@ -217,51 +220,40 @@ document.addEventListener("alpine:init", () => {
     },
 
     async checkAuthStatus() {
+      if (!this.authStatusUrl) return;
       try {
         const response = await fetch(this.authStatusUrl);
-        // A 401 is an expected 'not logged in' state, not an error.
         if (response.status === 401) {
           this.isAuthenticated = false;
           this.step = STEPS.LOGIN;
           return;
         }
         if (!response.ok)
-          throw new Error(
-            `Auth status check failed with status: ${response.status}`
-          );
+          throw new Error(`Auth status check failed: ${response.status}`);
 
         const result = await response.json();
-        if (result.isAuthenticated) {
-          this.isAuthenticated = true;
-          this.step = STEPS.EDITOR;
-        } else {
-          this.isAuthenticated = false;
-          this.step = STEPS.LOGIN;
-        }
+        this.isAuthenticated = result.isAuthenticated;
+        this.step = this.isAuthenticated ? STEPS.EDITOR : STEPS.LOGIN;
       } catch (error) {
         console.warn("Could not verify login status.", error);
         this.step = STEPS.LOGIN;
       }
     },
 
-    validateLoginFields() {
-      this.login.validation.emailAddress = !!this.login.emailAddress;
-      this.login.validation.password = !!this.login.password;
-      return (
-        this.login.validation.emailAddress && this.login.validation.password
-      );
-    },
-
     async handleLogin() {
-      if (!this.validateLoginFields()) {
+      if (!this.login.emailAddress || !this.login.password) {
+        this.isLoginError = true;
         return;
       }
 
       this.submitting = true;
-      this.twoFactorUrl = "";
       this.isLoginError = false;
+      this.twoFactorUrl = "";
 
       try {
+        // Fetch a fresh token right before login to prevent stale token errors.
+        await this._fetchCsrfToken();
+
         const response = await fetch(this.authSigninUrl, {
           method: "POST",
           headers: {
@@ -271,24 +263,24 @@ document.addEventListener("alpine:init", () => {
           body: JSON.stringify(this.login),
         });
 
-        if (response.status === 401) {
+        if (response.status === 401 || response.status === 400) {
           this.isLoginError = true;
-          this.login.validation.emailAddress = false;
-          this.login.validation.password = false;
-          console.warn("Login failed: Invalid credentials.");
+          this.$refs.emailInput.parentElement.classList.add("is-invalid");
+          this.$refs.passwordInput.parentElement.classList.add("is-invalid");
+          console.warn(
+            `Login failed with status ${response.status}. Invalid credentials or security token.`
+          );
           return;
         }
 
         if (!response.ok) {
           const errorData = await response.json();
           throw new Error(
-            errorData.detail ||
-              `Login request failed with status: ${response.status}`
+            errorData.detail || `Login request failed: ${response.status}`
           );
         }
 
         const result = await response.json();
-
         if (result.requiresTwoFactor) {
           this.twoFactorUrl = result.redirectUrl;
           console.info("Two-factor authentication required.");
@@ -299,36 +291,12 @@ document.addEventListener("alpine:init", () => {
       } catch (error) {
         console.error("An error occurred during login:", error);
         this.isLoginError = true;
-        // Indicate a general error on fields if something unexpected happens
-        this.login.validation.emailAddress = false;
-        this.login.validation.password = false;
       } finally {
         this.submitting = false;
       }
     },
 
-    // --- File & Post Handling ---
-
-    updateTitle(event) {
-      this.post.title = event.target.value;
-    },
-
-    updateTags(event) {
-      this.post.tags = event.target.value;
-    },
-
-    updateCategories(event) {
-      this.post.categories = event.target.value;
-    },
-
-    updateExcerpt(event) {
-      this.post.excerpt = event.target.value;
-    },
-
-    updateSlug(event) {
-      this.post.slug = event.target.value;
-    },
-
+    // --- UI Actions & Navigation ---
     triggerImageUpload() {
       this.$refs.imageUpload.click();
     },
@@ -337,58 +305,55 @@ document.addEventListener("alpine:init", () => {
       this.$refs.cameraUpload.click();
     },
 
+    goToEditorStep() {
+      this.step = STEPS.EDITOR;
+    },
+
+    goToOptionalStep() {
+      this.step = STEPS.OPTIONAL;
+    },
+
+    resetForNewPost() {
+      this.post = {
+        ...this.post, // Keep articulateNodeId
+        title: "",
+        markdown: "",
+        tags: "",
+        categories: "",
+        published: new Date().toISOString().slice(0, 16),
+        excerpt: "",
+        slug: "",
+      };
+      this.fileMap.clear();
+      if (this.editor) {
+        this.editor.setContent("");
+      }
+      this.step = STEPS.EDITOR;
+    },
+
+    // --- File Handling & Publishing ---
     handleFileSelect(event) {
       const files = event.target.files;
       const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
       const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/gif"];
-      const ALLOWED_EXTENSIONS = /\.(jpg|jpeg|png|gif)$/i;
 
       for (const file of files) {
         if (!file) continue;
 
-        // 1. MIME Type Check
-        if (!ALLOWED_TYPES.includes(file.type)) {
-          console.info(
-            `Rejected file: Invalid MIME type - ${file.name} (${file.type})`
-          );
+        if (!ALLOWED_TYPES.includes(file.type) || file.size > MAX_FILE_SIZE) {
+          console.warn(`Rejected file: ${file.name}. Invalid type or size.`);
           continue;
         }
 
-        // 2. File Extension Check
-        if (!ALLOWED_EXTENSIONS.test(file.name)) {
-          console.info(`Rejected file: Invalid extension - ${file.name}`);
-          continue;
-        }
-
-        // 3. File Size Check
-        if (file.size > MAX_FILE_SIZE) {
-          console.info(`Rejected file: Exceeds 10MB size limit - ${file.name}`);
-          continue;
-        }
-
-        // 4. File Name Normalization and Path Traversal Check
-        let normalizedName = file.name.replace(/\\/g, "/");
-        if (normalizedName.match(/^\.\.|\/\.\./)) {
-          console.info(
-            `Rejected file: Potential path traversal - ${file.name}`
-          );
-          continue;
-        }
-
-        // 5. Sanitize and Validate Length
-        // Remove potentially harmful characters, allowing a basic set.
-        let sanitizedName = normalizedName
-          .split("/")
-          .pop()
-          .replace(/[^a-zA-Z0-9_.-]/g, "");
+        // Basic sanitization
+        const sanitizedName = file.name.replace(/[^a-zA-Z0-9_.-]/g, "");
         if (sanitizedName.length === 0 || sanitizedName.length > 255) {
-          console.info(
-            `Rejected file: Invalid filename length after sanitization - ${file.name}`
+          console.warn(
+            `Rejected file: Invalid filename after sanitization - ${file.name}`
           );
           continue;
         }
 
-        // All checks passed, proceed with adding the file
         const index = this.fileMap.size;
         const placeholderUrl = `tmp:${index}:${sanitizedName}`;
         this.fileMap.set(placeholderUrl, file);
@@ -398,51 +363,23 @@ document.addEventListener("alpine:init", () => {
       }
     },
 
-    goToEditorStep() {
-      this.step = STEPS.EDITOR;
-    },
-    goToOptionalStep() {
-      this.step = STEPS.OPTIONAL;
-    },
-
-    goToNextStep() {
-      if (this.post.title && this.post.markdown) {
-        this.step = STEPS.OPTIONAL;
-      }
-    },
-
-    resetForNewPost() {
-      this.step = STEPS.LOADING; // show progress bar briefly
-      this.post.title = "";
-      this.post.markdown = "";
-      this.post.tags = "";
-      this.post.categories = "";
-      this.post.excerpt = "";
-      this.post.slug = "";
-      this.post.published = new Date().toISOString().slice(0, 16);
-      this.fileMap.clear();
-      if (this.editor) {
-        this.editor.setContent("");
-      }
-      this.successUrl = "#";
-      this.$nextTick(() => (this.step = STEPS.EDITOR));
-    },
-
     async handlePublish() {
       this.submitting = true;
 
-      const formData = new FormData();
-      formData.append("json", JSON.stringify(this.post));
-
-      for (const [key, file] of this.fileMap.entries()) {
-        formData.append(key, file);
-      }
-
       try {
+        // Fetch a fresh token right before posting to prevent stale token errors.
+        await this._fetchCsrfToken();
+
+        const formData = new FormData();
+        formData.append("json", JSON.stringify(this.post));
+  
+        for (const [key, file] of this.fileMap.entries()) {
+          formData.append(key, file);
+        }
         const response = await fetch(this.postUrl, {
           method: "POST",
           headers: {
-            "__RequestVerificationToken": this.csrfToken,
+            RequestVerificationToken: this.csrfToken,
           },
           body: formData,
         });
@@ -450,8 +387,7 @@ document.addEventListener("alpine:init", () => {
         if (!response.ok) {
           const errorData = await response.json();
           throw new Error(
-            errorData.detail ||
-              `Publish request failed with status: ${response.status}`
+            errorData.detail || `Publish request failed: ${response.status}`
           );
         }
 
@@ -459,7 +395,7 @@ document.addEventListener("alpine:init", () => {
         this.successUrl = result.url || "#";
         this.step = STEPS.SUCCESS;
       } catch (error) {
-        console.warn("Failed to publish post:", error);
+        console.error("Failed to publish post:", error);
         this.step = STEPS.OPTIONAL; // Return to optional step on failure
       } finally {
         this.submitting = false;
