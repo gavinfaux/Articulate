@@ -26,7 +26,6 @@ namespace Articulate.Controllers.ManagementApi
     [Authorize(Policy = AuthorizationPolicies.SectionAccessSettings)]
     [VersionedApiBackOfficeRoute("articulate/blogml")]
     [MapToApi(ArticulateConstants.ManagementApi.Name)]
-    [Obsolete]
     public class BlogMlController(
         BlogMlExporter blogMlExporter,
         BlogMlImporter blogMlImporter,
@@ -174,7 +173,7 @@ namespace Articulate.Controllers.ManagementApi
             finally
             {
                 if (articulateTempFileSystem.FileExists(model.TempFile))
-                {
+                 {
                     articulateTempFileSystem.DeleteFile(model.TempFile);
                 }
             }
