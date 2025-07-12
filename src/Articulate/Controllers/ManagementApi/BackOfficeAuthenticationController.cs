@@ -63,7 +63,7 @@ namespace Articulate.Controllers.ManagementApi
         /// <response code="403">User login is disabled.</response>
         /// <response code="423">The user account is locked out.</response>
         [AllowAnonymous]
-        [ValidateAntiForgeryToken]
+//        [ValidateAntiForgeryToken]
         [HttpPost("login")]
         [ProducesResponseType<LoginResponseBase>(StatusCodes.Status200OK)]
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
@@ -71,7 +71,7 @@ namespace Articulate.Controllers.ManagementApi
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status423Locked)]
         public async Task<ActionResult<LoginResponseBase>> Login(LoginModel model)
         {
-            var result = await signInManager.PasswordSignInAsync(model.EmailAddress, model.Password, false, true);
+            var result = await signInManager.PasswordSignInAsync(model.EmailAddress, model.Password, true, true);
 
             return result.Succeeded
                 ? Ok(new LoginSuccessResponse { IsAuthenticated = true })

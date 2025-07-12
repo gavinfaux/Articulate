@@ -38,6 +38,35 @@
     @await SmidgeHelper.JsHereAsync()
 
 
+    <script type="text/ng-template" id="login.html">
+        <div class="container">
+
+            <div class="mdl-card mdl-shadow--2dp fill-height">
+                <div class="mdl-card__supporting-text">
+
+                    <div class="mdl-textfield mdl-js-textfield">
+                        <input class="mdl-textfield__input" type="text" id="username" ng-model="username" required />
+                        <label class="mdl-textfield__label" for="username">Username...</label>
+                    </div>
+
+                    <div class="mdl-textfield mdl-js-textfield">
+                        <input class="mdl-textfield__input" type="password" id="password" ng-model="password" required />
+                        <label class="mdl-textfield__label" for="password">Password...</label>
+                    </div>
+                    <div class="mdl-textfield__error" ng-if="failed === true" style="visibility:visible;">
+                        Invalid username or password, try again
+                    </div>
+
+                    <div class="btn-raised-right">
+                        <button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent" type="submit" ng-click="login()">Login</button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+        <material-refresh></material-refresh>
+    </script>
+
     <script type="text/ng-template" id="md.html">
 
         <div class="container">
@@ -115,35 +144,6 @@
                     <div class="mdl-textfield mdl-js-textfield">
                         <input class="mdl-textfield__input" type="text" id="slug" ng-model="$parent.slug" />
                         <label class="mdl-textfield__label" for="slug">Slug...</label>
-                    </div>
-
-                </div>
-            </div>
-        </div>
-        <material-refresh></material-refresh>
-    </script>
-
-    <script type="text/ng-template" id="login.html">
-        <div class="container">
-
-            <div class="mdl-card mdl-shadow--2dp fill-height">
-                <div class="mdl-card__supporting-text">
-
-                    <div class="mdl-textfield mdl-js-textfield">
-                        <input class="mdl-textfield__input" type="text" id="username" ng-model="username" required />
-                        <label class="mdl-textfield__label" for="username">Username...</label>
-                    </div>
-
-                    <div class="mdl-textfield mdl-js-textfield">
-                        <input class="mdl-textfield__input" type="password" id="password" ng-model="password" required />
-                        <label class="mdl-textfield__label" for="password">Password...</label>
-                    </div>
-                    <div class="mdl-textfield__error" ng-if="failed === true" style="visibility:visible;">
-                        Invalid username or password, try again
-                    </div>
-
-                    <div class="btn-raised-right">
-                        <button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent" type="submit" ng-click="login()">Login</button>
                     </div>
 
                 </div>

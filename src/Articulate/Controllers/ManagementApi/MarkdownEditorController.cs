@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -13,22 +12,16 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using Umbraco.Cms.Api.Common.Attributes;
 using Umbraco.Cms.Api.Management.Controllers;
 using Umbraco.Cms.Api.Management.Routing;
 using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.Actions;
-using Umbraco.Cms.Core.Configuration.Models;
-using Umbraco.Cms.Core.Hosting;
-using Umbraco.Cms.Core.IO;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Models.Membership;
 using Umbraco.Cms.Core.PropertyEditors;
 using Umbraco.Cms.Core.Security;
 using Umbraco.Cms.Core.Serialization;
 using Umbraco.Cms.Core.Services;
-using Umbraco.Cms.Core.Strings;
 using Umbraco.Cms.Web.Common;
 using Umbraco.Cms.Web.Common.Authorization;
 using Umbraco.Extensions;
@@ -56,7 +49,7 @@ namespace Articulate.Controllers.ManagementApi
         ILogger<MarkdownEditorController> logger)
         : ManagementApiControllerBase
     {
-        [ValidateAntiForgeryToken]
+//        [ValidateAntiForgeryToken]
         [HttpPost("post")]
         [Consumes("multipart/form-data")]
         [ProducesResponseType(typeof(CreatePostResponse), StatusCodes.Status200OK)]
