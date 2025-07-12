@@ -1,4 +1,8 @@
-/* Base Styles */
+/* ===================================================================
+   Final Articulate Markdown Editor Stylesheet
+   =================================================================== */
+
+/* --- Base Styles --- */
 body {
   background-color: #eee;
   margin: 0;
@@ -9,7 +13,11 @@ body {
   padding: 20px;
 }
 
-  /* New Layout: Main fixed container for all views */
+  /* --- Core Layout --- */
+  /*
+  Establishes the main fixed container for all views (Login, Editor, etc.).
+  This creates a consistent viewport below the header.
+*/
   .page-content > .mdl-card {
     position: fixed;
     top: 84px; /* header height (64px) + padding (20px) */
@@ -20,7 +28,11 @@ body {
     width: auto;
   }
 
-/* Editor View Specific Layout */
+/* --- Editor View Specific Layout --- */
+/*
+  These rules absolutely position the Title and Markdown fields
+  within the main editor card.
+*/
 .mdl-card[x-ref="editorView"] .mdl-card__supporting-text {
   overflow: hidden; /* Prevent scrollbars on the card itself */
 }
@@ -43,18 +55,12 @@ body {
   width: auto;
 }
 
-/* TinyMDE editor specific style */
-.mdl-textfield.md-input .tiny-mde {
-  height: 100%;
-  border: 1px solid #ddd;
-}
-
-/* General Component & Utility Styles */
+/* --- Component & Utility Styles --- */
 .mdl-textfield {
   display: block;
   width: 100%;
   padding: 0;
-  margin: 0 0 16px 0;
+  margin: 0 0 24px 0; /* Provides consistent vertical spacing for all text fields */
 }
 
 textarea.mdl-textfield__input {
@@ -64,11 +70,18 @@ textarea.mdl-textfield__input {
   resize: none;
 }
 
-.container .mdl-progress {
-  width: auto;
+.tiny-mde {
+  height: 100%;
+  border: 1px solid #ddd;
 }
 
-/* Floating Action Buttons */
+.hidden-insert-file {
+  position: absolute;
+  top: -1000px;
+  visibility: hidden;
+}
+
+/* --- Floating Action Buttons --- */
 .btn-fab-right {
   position: fixed;
   bottom: 20px;
@@ -94,22 +107,17 @@ textarea.mdl-textfield__input {
     margin-right: 10px;
   }
 
-.hidden-insert-file {
-  position: absolute;
-  top: -1000px;
-  visibility: hidden;
-}
 
-/* Validation & Error Styles */
-
-/* MDL v1.0.0 Dynamic Placeholder Fix */
+/* --- Library Bug Fixes --- */
+/*
+  Definitive fix for MDL v1.0.0 placeholder issue in a dynamic environment.
+  MDL's JS incorrectly adds 'is-dirty' to dynamically added empty inputs,
+  hiding the label. This rule fixes that state without breaking focus animations.
+  IT IS REQUIRED.
+*/
 .mdl-textfield.is-dirty:not(.is-focused) .mdl-textfield__input:placeholder-shown + .mdl-textfield__label {
   color: rgb(187, 187, 187);
   visibility: visible;
   font-size: 16px;
   top: 20px;
-}
-
-.mdl-card[x-ref="loginView"] .mdl-textfield {
-  margin-bottom: 24px; /* Adjust as needed */
 }
