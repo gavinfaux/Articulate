@@ -20,7 +20,7 @@ namespace Articulate.Syndication
             await using (var txtWriter = new Utf8StringWriter())
             {
                 var xmlWriter = XmlWriter.Create(txtWriter,
-                    new XmlWriterSettings { Encoding = Encoding.UTF8, Indent = true, OmitXmlDeclaration = false, Async= true});
+                    new XmlWriterSettings { Encoding = Encoding.UTF8, Indent = true, OmitXmlDeclaration = false, Async = true });
 
                 // Write the Processing Instruction node.
                 var xsltHeader =

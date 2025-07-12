@@ -1,114 +1,115 @@
+/* Base Styles */
 body {
-    background-color: #eee;
-    margin: 0;
-    padding: 0;
+  background-color: #eee;
+  margin: 0;
+  padding: 0;
 }
 
 .page-content {
-    padding: 20px;
+  padding: 20px;
 }
 
-.mdl-card {
-    min-height: 200px;
+  /* New Layout: Main fixed container for all views */
+  .page-content > .mdl-card {
+    position: fixed;
+    top: 84px; /* header height (64px) + padding (20px) */
+    left: 20px;
+    right: 20px;
+    bottom: 20px;
+    height: auto;
+    width: auto;
+  }
+
+/* Editor View Specific Layout */
+.mdl-card[x-ref="editorView"] .mdl-card__supporting-text {
+  overflow: hidden; /* Prevent scrollbars on the card itself */
 }
 
-.mdl-card__supporting-text {
-    width: 100%;
-    box-sizing: border-box;
-    position: relative;
-    height: 100%;
+.mdl-card[x-ref="editorView"] .mdl-textfield.fixed {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  right: 16px;
+  width: auto;
+  z-index: 10;
 }
 
+.mdl-card[x-ref="editorView"] .mdl-textfield.md-input {
+  position: absolute;
+  top: 72px; /* Position below the title field */
+  bottom: 16px;
+  left: 16px;
+  right: 16px;
+  width: auto;
+}
+
+/* TinyMDE editor specific style */
+.mdl-textfield.md-input .tiny-mde {
+  height: 100%;
+  border: 1px solid #ddd;
+}
+
+/* General Component & Utility Styles */
 .mdl-textfield {
-    display: block;
-    width: 100%;
-    padding: 0;
-    margin: 0 0 16px 0;
-}
-
-.mdl-textfield.fixed {
-    position: absolute;
-    top: 1rem;
-    left: 1rem;
-    right: 1rem;
-    width: auto;
-    z-index: 10;
-}
-
-.editor-container {
-    position: absolute;
-    top: 5rem; /* Height of title + spacing */
-    bottom: 1rem;
-    left: 1rem;
-    right: 1rem;
-}
-
-.editor-container .tiny-mde {
-    height: 100%;
-}
-
-.container .mdl-progress {
-    width: auto;
-}
-
-.fill-height {
-    height: 100%;
+  display: block;
+  width: 100%;
+  padding: 0;
+  margin: 0 0 16px 0;
 }
 
 textarea.mdl-textfield__input {
-    font-family: inherit;
-    width: 100%;
-    height: 100%;
-    resize: none;
+  font-family: inherit;
+  width: 100%;
+  height: 100%;
+  resize: none;
 }
 
+.container .mdl-progress {
+  width: auto;
+}
+
+/* Floating Action Buttons */
 .btn-fab-right {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    z-index: 200;
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 200;
 }
 
 .btn-raised-right {
-    position: fixed;
-    bottom: 50px;
-    right: 40px;
-    z-index: 200;
+  position: fixed;
+  bottom: 50px;
+  right: 40px;
+  z-index: 200;
 }
 
 .btn-fab-left {
-    position: fixed;
-    bottom: 20px;
-    left: 20px;
-    z-index: 200;
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  z-index: 200;
 }
 
-.btn-fab-left > * {
+  .btn-fab-left > * {
     margin-right: 10px;
-}
+  }
 
 .hidden-insert-file {
-    position: absolute;
-    top: -1000px;
-    visibility: hidden;
+  position: absolute;
+  top: -1000px;
+  visibility: hidden;
 }
 
-.mdl-textfield__error {
-    color: #d50000;
-    font-size: 12px;
-    margin-top: 3px;
-    display: block;
-}
+/* Validation & Error Styles */
 
-/*
-  Definitive fix for MDL v1.0.0 placeholder issue in a dynamic environment.
-  MDL's JS incorrectly adds 'is-dirty' to dynamically added empty inputs, hiding the label.
-  This rule surgically targets that exact state, but only when the field is NOT focused.
-  It creates a perfect replica of the default state, fixing the bug without breaking focus animations.
-*/
+/* MDL v1.0.0 Dynamic Placeholder Fix */
 .mdl-textfield.is-dirty:not(.is-focused) .mdl-textfield__input:placeholder-shown + .mdl-textfield__label {
-    color: rgb(187, 187, 187);
-    visibility: visible;
-    font-size: 16px;
-    top: 20px;
+  color: rgb(187, 187, 187);
+  visibility: visible;
+  font-size: 16px;
+  top: 20px;
+}
+
+.mdl-card[x-ref="loginView"] .mdl-textfield {
+  margin-bottom: 24px; /* Adjust as needed */
 }

@@ -173,7 +173,7 @@ namespace Articulate.Controllers.ManagementApi
             finally
             {
                 if (articulateTempFileSystem.FileExists(model.TempFile))
-                 {
+                {
                     articulateTempFileSystem.DeleteFile(model.TempFile);
                 }
             }

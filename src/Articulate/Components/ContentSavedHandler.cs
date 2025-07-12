@@ -7,7 +7,7 @@ using Umbraco.Extensions;
 
 namespace Articulate.Components
 {
-    
+
     public class ContentSavedHandler(
         IContentTypeService contentTypeService,
         IContentService contentService,

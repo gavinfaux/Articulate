@@ -28,7 +28,7 @@ namespace Articulate.Models
         public int PostCount { get; } = postCount;
 
         //We know the list of posts passed in is already ordered descending so get the first
-        
+
         public DateTime? LastPostDate =>
             _lastPostDate ?? (_lastPostDate = Children.FirstOrDefault()?.Value<DateTime>("publishedDate"));
 

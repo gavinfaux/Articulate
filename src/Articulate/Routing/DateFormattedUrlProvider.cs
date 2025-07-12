@@ -10,7 +10,7 @@ using Umbraco.Extensions;
 
 namespace Articulate.Routing
 {
-    
+
     public class DateFormattedUrlProvider(
         IOptionsMonitor<RequestHandlerSettings> requestSettings,
         ILogger<DefaultUrlProvider> logger,

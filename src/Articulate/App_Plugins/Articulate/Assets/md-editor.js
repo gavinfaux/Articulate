@@ -29,7 +29,7 @@ document.addEventListener("alpine:init", () => {
           return "Loading...";
       }
     },
-    isLoginError: false,
+    errors: {},
 
     // --- URLs ---
     authSigninUrl: "",
@@ -82,8 +82,17 @@ document.addEventListener("alpine:init", () => {
       excerpt: "",
       slug: "",
     },
+    post: { title: '' },
+    login: { emailAddress: null, password: null },
+
 
     // --- Getters for UI State ---
+    get loginEmail() {
+      return this.login.emailAddress;
+    },
+    get loginPassword() {
+      return this.login.password;
+    },
     get isLoading() {
       return this.step === STEPS.LOADING || this.submitting;
     },
@@ -102,11 +111,55 @@ document.addEventListener("alpine:init", () => {
     get canShowNextButton() {
       return this.isEditorStep && this.post.title && this.post.markdown;
     },
+    get loginErrorClass() {
+      return this.errors.login ? 'is-invalid' : '';
+    },
+    // --- NEW Getters for Error Visibility and Text ---
+    get showLoginError() {
+      // Must return a simple boolean
+      return !!this.errors.login;
+    },
+    get loginErrorMessage() {
+      // Must return a simple string
+      return this.errors.login || '';
+    },
+    get postTitle() {
+      return this.post.title;
+    },
 
+    updatePostTitle(event) {
+      this.post.title = event.target.value;
+      // Clear any previous title error when user starts typing
+      if (this.errors.title) {
+        this.errors.title = null;
+      }
+    },
+
+    // Make sure your updatePostField method is still there for the optional fields
+    updatePostField(event) {
+      if (!event.target) return;
+      const field = event.target.id;
+      const value = event.target.value;
+      if (field && this.post.hasOwnProperty(field)) {
+        this.post[field] = value;
+      }
+    },
+    get titleErrorClass() {
+      return this.errors.title ? 'is-invalid' : '';
+    },
     get loginButtonText() {
       return this.submitting ? "Logging in..." : "Login";
     },
-
+    // --- NEW: Methods to safely UPDATE nested values from the view ---
+    updateLoginEmail(event) {
+      this.login.emailAddress = event.target.value;
+      if (this.errors.login) this.errors = {}; // Clear error on new input
+    },
+    updateLoginPassword(event) {
+      this.login.password = event.target.value;
+      if (this.errors.login) this.errors = {}; // Clear error on new input
+    },
+  
     // --- Initialization & Lifecycle ---
     init() {
       this.loadUrlsFromDataset();
@@ -184,6 +237,7 @@ document.addEventListener("alpine:init", () => {
         commandBar: false,
         autoGrow: true,
         spellChecker: false,
+        content: ""
       });
 
       this.editor.addEventListener(
@@ -240,62 +294,53 @@ document.addEventListener("alpine:init", () => {
       }
     },
 
+    // Replace the entire handleLogin function with this
+
     async handleLogin() {
+      // 1. Clear previous errors
+      this.errors = {};
+
+      // 2. Validate using the reactive data model
       if (!this.login.emailAddress || !this.login.password) {
-        this.isLoginError = true;
+        // Set the error state; the UI will react automatically
+        this.errors = { login: 'Invalid username or password, please try again' };
         return;
       }
 
       this.submitting = true;
-      this.isLoginError = false;
-      this.twoFactorUrl = "";
-
       try {
-        // Fetch a fresh token right before login to prevent stale token errors.
         await this._fetchCsrfToken();
 
         const response = await fetch(this.authSigninUrl, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            RequestVerificationToken: this.csrfToken,
+            "RequestVerificationToken": this.csrfToken,
           },
           body: JSON.stringify(this.login),
         });
 
-        if (response.status === 401 || response.status === 400) {
-          this.isLoginError = true;
-          this.$refs.emailInput.parentElement.classList.add("is-invalid");
-          this.$refs.passwordInput.parentElement.classList.add("is-invalid");
-          console.warn(
-            `Login failed with status ${response.status}. Invalid credentials or security token.`
-          );
-          return;
-        }
-
         if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(
-            errorData.detail || `Login request failed: ${response.status}`
-          );
+          // On failure, just set the error state. The UI will update.
+          this.errors = { login: 'Invalid username or password, please try again' };
+          console.warn(`Login failed with status ${response.status}.`);
+          return;
         }
 
         const result = await response.json();
         if (result.requiresTwoFactor) {
           this.twoFactorUrl = result.redirectUrl;
-          console.info("Two-factor authentication required.");
         } else {
           this.isAuthenticated = true;
           this.step = STEPS.EDITOR;
         }
       } catch (error) {
         console.error("An error occurred during login:", error);
-        this.isLoginError = true;
+        this.errors = { login: 'An unexpected error occurred.' };
       } finally {
         this.submitting = false;
       }
     },
-
     // --- UI Actions & Navigation ---
     triggerImageUpload() {
       this.$refs.imageUpload.click();
@@ -323,6 +368,10 @@ document.addEventListener("alpine:init", () => {
         published: new Date().toISOString().slice(0, 16),
         excerpt: "",
         slug: "",
+        isLoginError: false,
+        errors: {}, // { title: 'Title is required.', login: '...' },
+        post: { title: '' },
+        login: { emailAddress: null, password: null },
       };
       this.fileMap.clear();
       if (this.editor) {
@@ -330,6 +379,15 @@ document.addEventListener("alpine:init", () => {
       }
       this.step = STEPS.EDITOR;
     },
+    validate() {
+      const newErrors = {};
+      if (!this.post.title) {
+        newErrors.title = 'Title is required.';
+      }
+      this.errors = { ...this.errors, ...newErrors };
+      return !newErrors.title; // Return true if this part is valid
+    },
+
 
     // --- File Handling & Publishing ---
     handleFileSelect(event) {
@@ -364,6 +422,10 @@ document.addEventListener("alpine:init", () => {
     },
 
     async handlePublish() {
+      if (!this.validatePost()) {
+        return; // Abort if validation fails
+      }
+
       this.submitting = true;
 
       try {

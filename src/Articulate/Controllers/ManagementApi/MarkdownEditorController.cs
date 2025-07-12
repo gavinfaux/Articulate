@@ -49,7 +49,7 @@ namespace Articulate.Controllers.ManagementApi
         ILogger<MarkdownEditorController> logger)
         : ManagementApiControllerBase
     {
-//        [ValidateAntiForgeryToken]
+        //        [ValidateAntiForgeryToken]
         [HttpPost("post")]
         [Consumes("multipart/form-data")]
         [ProducesResponseType(typeof(CreatePostResponse), StatusCodes.Status200OK)]

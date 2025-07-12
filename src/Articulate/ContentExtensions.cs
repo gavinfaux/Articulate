@@ -11,7 +11,7 @@ namespace Articulate
 {
     public static class ContentExtensions
     {
-        
+
         public static IContent CreateWithInvariantOrDefaultCultureName(
             this IContentService contentService,
             string name,
@@ -25,7 +25,6 @@ namespace Articulate
             return content;
         }
 
-        
         public static IContent CreateWithInvariantOrDefaultCultureName(
             this IContentService contentService,
             string name,
@@ -39,7 +38,6 @@ namespace Articulate
             return content;
         }
 
-        
         public static void SetInvariantOrDefaultCultureName(
             this IContentBase content,
             string name,
@@ -71,7 +69,7 @@ namespace Articulate
         /// If varying by culture it will assign the value to the default language only.
         /// If varying by segment it will assign the value to no segment.
         /// </remarks>
-        
+
         public static void SetInvariantOrDefaultCultureValue(
             this IContentBase content,
             string propertyTypeAlias,
@@ -100,7 +98,7 @@ namespace Articulate
         /// If varying by culture it will assign the value to the default language only.
         /// If varying by segment it will assign the value to no segment.
         /// </remarks>
-        
+
         public static void AssignInvariantOrDefaultCultureTags(
             this IContentBase content,
             string propertyTypeAlias,

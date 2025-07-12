@@ -26,7 +26,7 @@ using Task = System.Threading.Tasks.Task;
 
 namespace Articulate.ImportExport
 {
-    
+
     public class BlogMlImporter
     {
         private readonly DisqusXmlExporter _disqusXmlExporter;

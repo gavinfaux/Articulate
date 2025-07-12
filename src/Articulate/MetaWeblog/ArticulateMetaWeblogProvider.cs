@@ -23,7 +23,7 @@ using WilderMinds.MetaWeblog;
 
 namespace Articulate.MetaWeblog
 {
-    
+
     public class ArticulateMetaWeblogProvider : IMetaWeblogProvider
     {
         private readonly Lazy<IMedia> _articulateRootMediaFolder;

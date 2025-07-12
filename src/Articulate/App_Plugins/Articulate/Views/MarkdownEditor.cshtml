@@ -60,96 +60,101 @@
 
                 <!-- Login View -->
                 <template x-if="isLoginStep">
-                <div x-ref="loginView" class="mdl-card mdl-shadow--2dp fill-height">
-                    <div class="mdl-card__supporting-text">
-                        <form @@submit.prevent="handleLogin" novalidate>
-                            <div class="mdl-textfield mdl-js-textfield">
-                                <input class="mdl-textfield__input" type="text" id="email" x-ref="emailInput" @@input="updateLoginEmail" required placeholder=" "/>
-                                <label class="mdl-textfield__label" for="email">Username...</label>
-                            </div>
+                    <div x-ref="loginView" class="mdl-card mdl-shadow--2dp fill-height">
+                        <div class="mdl-card__supporting-text">
+                            <form @@submit.prevent="handleLogin" novalidate>
+                                <div class="mdl-textfield mdl-js-textfield" :class="loginErrorClass">
+                                    <input class="mdl-textfield__input" type="text" id="email" :value="loginEmail" @@input="updateLoginEmail" autocomplete="username" required >
+                                    <label class="mdl-textfield__label" for="email">Username...</label>
+                                </div>
 
-                            <div class="mdl-textfield mdl-js-textfield">
-                                <input class="mdl-textfield__input" type="password" id="password" x-ref="passwordInput" @@input="updateLoginPassword" required placeholder=" ">
-                                <label class="mdl-textfield__label" for="password">Password...</label>
-                                <span class="mdl-textfield__error" x-show="isLoginError">Invalid username or password, please try again</span>
-                            </div>
+                                <div class="mdl-textfield mdl-js-textfield" :class="loginErrorClass">
+                                    <input class="mdl-textfield__input" type="password" id="password" :value="loginPassword" @@input="updateLoginPassword" required autocomplete="current-password" >
+                                    <label class="mdl-textfield__label" for="password">Password...</label>
+                                    <span class="mdl-textfield__error" x-show="showLoginError"
+                                          x-text="loginErrorMessage"></span>
+                                </div>
 
+                                <div class="btn-raised-right">
+                                    <button type="submit" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent" :disabled="submitting">
+                                        <span x-text="loginButtonText"></span>
+                                    </button>
+                                </div>
 
-                            <div class="btn-raised-right">
-                                <button type="submit" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent" :disabled="submitting">
-                                    <span x-text="loginButtonText"></span>
-                                </button>
-                            </div>
-
-                            <template x-if="twoFactorUrl">
-                                <p style="margin-top: 16px;">Please <a :href="twoFactorUrl">click here</a> to complete your login.</p>
-                            </template>
-                        </form>
+                                <template x-if="twoFactorUrl">
+                                    <p style="margin-top: 16px;">Please <a :href="twoFactorUrl">click here</a> to complete your login.</p>
+                                </template>
+                            </form>
+                        </div>
                     </div>
-                </div>
                 </template>
 
                 <!-- Editor View -->
                 <div x-ref="editorView" x-show="isEditorStep" class="mdl-card mdl-shadow--2dp fill-height">
                     <div class="mdl-card__supporting-text">
-                        <div class="mdl-textfield mdl-js-textfield fixed">
-                            <input class="mdl-textfield__input" 
-                                   type="text" 
-                                   id="title" 
-                                   :value="post.title"
-                                   @@input="updatePostField"
-                                   required />
+                        <!-- Editor View Example -->
+                        <div class="mdl-textfield mdl-js-textfield fixed" :class="titleErrorClass">
+                            <input class="mdl-textfield__input"
+                                   type="text"
+                                   id="title"
+                                   :value="postTitle"
+                                   @@input="updatePostTitle"
+                                   required>
                             <label class="mdl-textfield__label" for="title">Title...</label>
-                        </div>
+                        </div>label>
+                    </div>
+                    <div class="mdl-textfield mdl-js-textfield md-input">
+                        <textarea x-ref="editor" id="editor" class="mdl-textfield__input"></textarea>
                         <div class="mdl-textfield mdl-js-textfield md-input">
                             <textarea x-ref="editor" id="editor" class="mdl-textfield__input"></textarea>
                             <label class="mdl-textfield__label" for="editor">## Start writing your post here...</label>
                         </div>
                     </div>
                 </div>
-
-                <!-- Optional View -->
-                <div x-ref="optionalView" x-show="isOptionalStep" class="mdl-card mdl-shadow--2dp fill-height">
-                    <div class="mdl-card__supporting-text">
-                        <div class="mdl-textfield mdl-js-textfield">
-                            <input class="mdl-textfield__input" type="text" id="tags" :value="post.tags" @@input="updatePostField" />
-                            <label class="mdl-textfield__label" for="tags">Tags (comma separated)</label>
-                        </div>
-                        <div class="mdl-textfield mdl-js-textfield">
-                            <input class="mdl-textfield__input" type="text" id="categories" :value="post.categories" @@input="updatePostField" />
-                            <label class="mdl-textfield__label" for="categories">Categories (comma separated)</label>
-                        </div>
-                        <div class="mdl-textfield mdl-js-textfield">
-                            <textarea class="mdl-textfield__input" id="excerpt" :value="post.excerpt" @@input="updatePostField" rows="3"></textarea>
-                            <label class="mdl-textfield__label" for="excerpt">Excerpt</label>
-                        </div>
-                        <div class="mdl-textfield mdl-js-textfield">
-                            <input class="mdl-textfield__input" type="text" id="slug" :value="post.slug" @@input="updatePostField" />
-                            <label class="mdl-textfield__label" for="slug">Slug</label>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Success View -->
-                <div x-ref="successView" x-show="isSuccessStep" class="mdl-card mdl-shadow--2dp">
-                    <div class="mdl-card__supporting-text">
-                        <h3>Success!</h3>
-                        <p>Your post has been published.</p>
-                    </div>
-                    <div class="mdl-card__actions mdl-card--border">
-                        <a :href="successUrl" class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect">
-                            Click here to view your post
-                        </a>
-                    </div>
-                    <div class="mdl-card__menu">
-                        <a href="#" @@click.prevent="resetForNewPost" class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect">
-                            Create another post
-                        </a>
-                    </div>
-                </div>
-
             </div>
-        </main>
+
+            <!-- Optional View -->
+            <div x-ref="optionalView" x-show="isOptionalStep" class="mdl-card mdl-shadow--2dp fill-height">
+                <div class="mdl-card__supporting-text">
+                    <div class="mdl-textfield mdl-js-textfield">
+                        <input class="mdl-textfield__input" type="text" id="tags" :value="post.tags" @@input="updatePostField" />
+                        <label class="mdl-textfield__label" for="tags">Tags (comma separated)</label>
+                    </div>
+                    <div class="mdl-textfield mdl-js-textfield">
+                        <input class="mdl-textfield__input" type="text" id="categories" :value="post.categories" @@input="updatePostField" />
+                        <label class="mdl-textfield__label" for="categories">Categories (comma separated)</label>
+                    </div>
+                    <div class="mdl-textfield mdl-js-textfield">
+                        <textarea class="mdl-textfield__input" id="excerpt" :value="post.excerpt" @@input="updatePostField" rows="3"></textarea>
+                        <label class="mdl-textfield__label" for="excerpt">Excerpt</label>
+                    </div>
+                    <div class="mdl-textfield mdl-js-textfield">
+                        <input class="mdl-textfield__input" type="text" id="slug" :value="post.slug" @@input="updatePostField" />
+                        <label class="mdl-textfield__label" for="slug">Slug</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Success View -->
+            <div x-ref="successView" x-show="isSuccessStep" class="mdl-card mdl-shadow--2dp">
+                <div class="mdl-card__supporting-text">
+                    <h3>Success!</h3>
+                    <p>Your post has been published.</p>
+                </div>
+                <div class="mdl-card__actions mdl-card--border">
+                    <a :href="successUrl" class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect">
+                        Click here to view your post
+                    </a>
+                </div>
+                <div class="mdl-card__menu">
+                    <a href="#" @@click.prevent="resetForNewPost" class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect">
+                        Create another post
+                    </a>
+                </div>
+            </div>
+
+    </div>
+    </main>
 
     </div>
 

@@ -4,7 +4,7 @@ using Umbraco.Cms.Core.Composing;
 
 namespace Articulate.Components
 {
-    
+
     public class ArticulateComponent(IBundleManager bundleManager) : IComponent
     {
         public void Initialize()
