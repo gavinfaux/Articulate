@@ -4,10 +4,12 @@ using Articulate.Attributes;
 using Articulate.Models.ManagementApi.Authentication;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Antiforgery;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Umbraco.Cms.Api.Common.Attributes;
+using Umbraco.Cms.Core.Security;
 using Umbraco.Cms.Web.Common.Authorization;
 using Umbraco.Cms.Web.Common.Security;
 
@@ -25,11 +27,20 @@ namespace Articulate.Controllers.ManagementApi
     [ApiController]
     [MapToApi(ArticulateConstants.ManagementApi.Name)]
     [Route("articulate/management/api/v{version:apiVersion}/authentication")]
-    public class BackOfficeAuthenticationController(
-        IBackOfficeSignInManager signInManager,
-        IAntiforgery antiforgery)
-        : ControllerBase
+    public class BackOfficeAuthenticationController   : ControllerBase
     {
+        private readonly IBackOfficeSignInManager _signInManager;
+        private readonly IAntiforgery _antiforgery;
+
+        public BackOfficeAuthenticationController(
+            IBackOfficeSignInManager signInManager,
+            IBackOfficeUserManager userManager, // Keep userManager for consistency if needed elsewhere
+            IAntiforgery antiforgery)
+        {
+            _signInManager = signInManager;
+            _antiforgery = antiforgery;
+        }
+
         /// <summary>
         /// Gets a CSRF token required for authenticated POST/PUT requests.
         /// </summary>
@@ -40,7 +51,7 @@ namespace Articulate.Controllers.ManagementApi
         [ProducesResponseType<CsrfTokenResponse>(StatusCodes.Status200OK)]
         public ActionResult<CsrfTokenResponse> GetCsrfToken()
         {
-            var tokens = antiforgery.GetAndStoreTokens(HttpContext);
+            var tokens = _antiforgery.GetAndStoreTokens(HttpContext);
             return new CsrfTokenResponse { RequestToken = tokens.RequestToken };
         }
 
@@ -50,7 +61,7 @@ namespace Articulate.Controllers.ManagementApi
         /// <returns>A <see cref="StatusResponse"/> indicating if the user is authenticated.</returns>
         /// <response code="200">Returns the current authentication status.</response>
         [HttpGet("status")]
-        [Authorize(Policy = AuthorizationPolicies.BackOfficeAccess)]
+        [Authorize(AuthenticationSchemes = ArticulateConstants.ManagementApi.SchemeName)]
         [ProducesResponseType<StatusResponse>(StatusCodes.Status200OK)]
         public ActionResult<StatusResponse> GetStatus() => Ok(new StatusResponse { IsAuthenticated = true });
 
@@ -69,9 +80,11 @@ namespace Articulate.Controllers.ManagementApi
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status423Locked)]
-        public async Task<ActionResult<LoginResponseBase>> Login(LoginModel model)
+    public async Task<ActionResult<LoginResponseBase>> Login(LoginModel model)
         {
-            var result = await signInManager.PasswordSignInAsync(model.EmailAddress, model.Password, true, true);
+            // With startup configuration fixed, a single call is all that's needed.
+            // isPersistent: true will now work as expected.
+            var result = await _signInManager.PasswordSignInAsync(model.EmailAddress, model.Password, isPersistent: true, lockoutOnFailure: true);
 
             return result.Succeeded
                 ? Ok(new LoginSuccessResponse { IsAuthenticated = true })
@@ -79,27 +92,25 @@ namespace Articulate.Controllers.ManagementApi
                     ? Ok(new TwoFactorRequiredResponse { RedirectUrl = "/umbraco/login" })
                     : result switch
                     {
-                        { IsLockedOut: true } => Problem(title: "Authentication Failed", detail: "User is locked out.",
-                            statusCode: StatusCodes.Status423Locked),
-                        { IsNotAllowed: true } => Problem(title: "Forbidden", detail: "User login is disabled.",
-                            statusCode: StatusCodes.Status403Forbidden),
-                        _ => Problem(title: "Unauthorized", detail: "Authentication failed.",
-                            statusCode: StatusCodes.Status401Unauthorized)
+                        { IsLockedOut: true } => Problem(title: "Authentication Failed", detail: "User is locked out.", statusCode: StatusCodes.Status423Locked),
+                        { IsNotAllowed: true } => Problem(title: "Forbidden", detail: "User login is disabled.", statusCode: StatusCodes.Status403Forbidden),
+                        _ => Problem(title: "Unauthorized", detail: "Authentication failed.", statusCode: StatusCodes.Status401Unauthorized)
                     };
         }
-
         /// <summary>
         /// Logs out the currently authenticated user.
         /// </summary>
         /// <remarks>Signs out the current user and ends their session.</remarks>
         /// <response code="204">Logout was successful.</response>
         [HttpPost("logout")]
-        [Authorize(Policy = AuthorizationPolicies.BackOfficeAccess)]
+        [Authorize(AuthenticationSchemes = ArticulateConstants.ManagementApi.SchemeName)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         public async Task<IActionResult> Logout()
         {
-            await signInManager.SignOutAsync();
+            await _signInManager.SignOutAsync();
+            await HttpContext.SignOutAsync(ArticulateConstants.ManagementApi.SchemeName);
             return NoContent();
+
         }
     }
 }

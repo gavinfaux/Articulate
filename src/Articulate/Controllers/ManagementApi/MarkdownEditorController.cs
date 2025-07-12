@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Articulate.Attributes;
+using Articulate.Authorization;
 using Articulate.Models.ManagementApi;
 using Articulate.Services;
 using Asp.Versioning;
@@ -36,9 +37,8 @@ namespace Articulate.Controllers.ManagementApi
     /// </summary>
     [ManagementApi(ArticulateEnum.ManagementApi.MarkdownEditor)]
     [ApiVersion("1.0")]
-    [Authorize(AuthorizationPolicies.ContentPermissionByResource)]
-    [Authorize(AuthorizationPolicies.MediaPermissionByResource)]
     [VersionedApiBackOfficeRoute("articulate/editors/markdown")]
+    [UseArticulateCookieAuth]
     public class MarkdownEditorController(
         ServiceContext services,
         IBackOfficeSecurityAccessor backOfficeSecurityAccessor,

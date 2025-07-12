@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection; 
+using Articulate.Attributes;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.Mvc.Controllers;
 
@@ -12,26 +14,31 @@ namespace Articulate
             this IApiDescriptionGroupCollectionProvider provider,
             string[] apiGroupNames)
         {
-            // Create a HashSet for fast, case-insensitive lookups. This is the best practice.
             var groupNameSet = new HashSet<string>(apiGroupNames, StringComparer.OrdinalIgnoreCase);
 
-            //Find all matching groups.
             return provider.ApiDescriptionGroups.Items
-                //Flatten all their API descriptions into a single list.
-                .SelectMany(g => g.Items)
-                // Use the HashSet for a fast and case-insensitive check.
-                .Where(desc => desc.GroupName != null && groupNameSet.Contains(desc.GroupName))
-                //Filter for valid controller actions.
-                .Where(desc => desc.ActionDescriptor is ControllerActionDescriptor)
-                // Create the final dictionary with a unique composite key.
+                // Step 1: find only the groups that match our names ("Authentication", "Markdown Editor").
+                .Where(group => group.GroupName != null && groupNameSet.Contains(group.GroupName))
+                .SelectMany(group => group.Items)
+
+                // Step 2: filter list to ensure the controllers have our custom attribute.
+                // This prevents conflicts with any other package that might use the same group name.
+                .Where(desc =>
+                {
+                    if (desc.ActionDescriptor is not ControllerActionDescriptor controllerActionDescriptor)
+                    {
+                        return false;
+                    }
+
+                    return controllerActionDescriptor.ControllerTypeInfo.GetCustomAttribute<ManagementApiAttribute>() != null;
+                })
+
                 .ToDictionary(
-                    // Key: "ControllerTypeName.ActionName" - This matches nameof(ControllerType.Action)
                     desc =>
                     {
                         var cad = (ControllerActionDescriptor)desc.ActionDescriptor;
                         return $"{cad.ControllerTypeInfo.Name}.{cad.ActionName}";
                     },
-                    // Value: URL relative path
                     desc => $"/{desc.RelativePath?.TrimStart('/')}"
                 );
         }

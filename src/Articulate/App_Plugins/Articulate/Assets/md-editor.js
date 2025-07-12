@@ -183,6 +183,7 @@ document.addEventListener("alpine:init", () => {
         if (result.requiresTwoFactor) {
           this.twoFactorUrl = result.redirectUrl;
         } else {
+          await this._fetchCsrfToken();
           this.isAuthenticated = true;
           this.step = STEPS.EDITOR;
         }
