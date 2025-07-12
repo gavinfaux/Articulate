@@ -29,7 +29,7 @@
     <link rel="stylesheet" href="~/App_Plugins/Articulate/assets/md-editor.css" fetchpriority="high">
 
     @* Smidge CSS Bundle (Only a single file for now) *@
-@*     @await SmidgeHelper.CssHereAsync() *@
+    @*     @await SmidgeHelper.CssHereAsync() *@
 
     <style>
         [x-cloak] {
@@ -38,7 +38,7 @@
     </style>
 
 </head>
-<body x-data="app" x-init="init" x-cloak
+<body x-data="markdownEditor" x-init="init" x-cloak
       data-articulate-node-id="@Model.ArticulateNodeId"
       data-auth-status-url="@Model.AuthStatusUrl"
       data-auth-signin-url="@Model.AuthSignInUrl"
@@ -63,20 +63,47 @@
                     <div x-show="isLoginStep" class="mdl-card mdl-shadow--2dp fill-height">
                         <div class="mdl-card__supporting-text">
                             <form @@submit.prevent="handleLogin" novalidate>
-                                <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-                                    <input class="mdl-textfield__input" type="email" id="email" x-model="login.emailAddress" required :aria-invalid="isEmailInvalid" />
-                                    <label class="mdl-textfield__label" for="email">Email Address</label>
+                                <div class="mdl-textfield mdl-js-textfield">
+                                    <input class="mdl-textfield__input" 
+                                           type="email" 
+                                           id="email" 
+                                           :value="login.emailAddress" 
+                                           @@input="updateEmail" 
+                                           required 
+                                           :aria-invalid="isEmailInvalid"
+                                           autocomplete="email" />
+                                    <label class="mdl-textfield__label" for="email">Username...</label>
+                                    <span class="mdl-textfield__error" x-show="isEmailInvalid">Please enter a valid email</span>
                                 </div>
-                                <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-                                    <input class="mdl-textfield__input" type="password" id="password" x-model="login.password" required :aria-invalid="isPasswordInvalid" />
-                                    <label class="mdl-textfield__label" for="password">Password</label>
+
+                                <div class="mdl-textfield mdl-js-textfield">
+                                    <input class="mdl-textfield__input" 
+                                           type="password" 
+                                           id="password" 
+                                           :value="login.password" 
+                                           @@input="updatePassword" 
+                                           required 
+                                           :aria-invalid="isPasswordInvalid"
+                                           autocomplete="current-password" />
+                                    <label class="mdl-textfield__label" for="password">Password...</label>
+                                    <span class="mdl-textfield__error" x-show="isPasswordInvalid">Password is required</span>
                                 </div>
-                                <template x-if="twoFactorUrl">
-                                    <p>Please <a :href="twoFactorUrl">click here</a> to complete your login.</p>
-                                </template>
+
+                                <div class="mdl-textfield__error" x-show="isLoginError">
+                                    Invalid username or password, please try again
+                                </div>
+
                                 <div class="btn-raised-right">
-                                    <button type="submit" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent" :disabled="submitting">Login</button>
+                                    <button type="submit" 
+                                            class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent" 
+                                            :disabled="submitting">
+                                        <span x-text="submitting ? 'Logging in...' : 'Login'"></span>
+                                    </button>
                                 </div>
+
+                                <template x-if="twoFactorUrl">
+                                    <p style="margin-top: 16px;">Please <a :href="twoFactorUrl">click here</a> to complete your login.</p>
+                                </template>
                             </form>
                         </div>
                     </div>
@@ -84,12 +111,17 @@
                     <!-- Editor View -->
                     <div x-show="isEditorStep" class="mdl-card mdl-shadow--2dp fill-height">
                         <div class="mdl-card__supporting-text">
-                            <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label fixed">
-                                <input class="mdl-textfield__input" type="text" id="title" x-model="post.title" required />
+                            <div class="mdl-textfield mdl-js-textfield fixed">
+                                <input class="mdl-textfield__input" 
+                                       type="text" 
+                                       id="title" 
+                                       :value="post.title" 
+                                       @@input="updateTitle" 
+                                       required />
                                 <label class="mdl-textfield__label" for="title">Title...</label>
                             </div>
-                            <div class="editor-container">
-                                <textarea x-ref="editor" id="editor"></textarea>
+                            <div class="mdl-textfield mdl-js-textfield md-input">
+                                <textarea x-ref="editor" id="editor" class="mdl-textfield__input" placeholder="## Start writing your post here..."></textarea>
                             </div>
                         </div>
                     </div>
@@ -98,19 +130,19 @@
                     <div x-show="isOptionalStep" class="mdl-card mdl-shadow--2dp fill-height">
                         <div class="mdl-card__supporting-text">
                             <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-                                <input class="mdl-textfield__input" type="text" id="tags" x-model="post.tags" />
+                                <input class="mdl-textfield__input" type="text" id="tags" :value="post.tags" @@input="updateTags" />
                                 <label class="mdl-textfield__label" for="tags">Tags (comma separated)</label>
                             </div>
                             <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-                                <input class="mdl-textfield__input" type="text" id="categories" x-model="post.categories" />
+                                <input class="mdl-textfield__input" type="text" id="categories" :value="post.categories" @@input="updateCategories" />
                                 <label class="mdl-textfield__label" for="categories">Categories (comma separated)</label>
                             </div>
                             <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-                                <textarea class="mdl-textfield__input" id="excerpt" x-model="post.excerpt" rows="3"></textarea>
+                                <textarea class="mdl-textfield__input" id="excerpt" :value="post.excerpt" @@input="updateExcerpt" rows="3"></textarea>
                                 <label class="mdl-textfield__label" for="excerpt">Excerpt</label>
                             </div>
                             <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-                                <input class="mdl-textfield__input" type="text" id="slug" x-model="post.slug" />
+                                <input class="mdl-textfield__input" type="text" id="slug" :value="post.slug" @@input="updateSlug" />
                                 <label class="mdl-textfield__label" for="slug">Slug</label>
                             </div>
                         </div>

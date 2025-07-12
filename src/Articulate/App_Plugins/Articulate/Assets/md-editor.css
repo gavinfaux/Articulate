@@ -1,79 +1,153 @@
 body {
-  background-color: #eee;
-  margin: 0;
-  padding: 0;
+    background-color: #eee;
+    margin: 0;
+    padding: 0;
 }
-
 
 .container .mdl-card {
-  width: 100%;
-  -webkit-box-sizing: border-box;
-  -moz-box-sizing: border-box;
-  box-sizing: border-box;
+    width: 100%;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+    min-height: 200px;
 }
 
-  .container .mdl-card .mdl-textfield {
+.container .mdl-card .mdl-textfield {
     display: block;
     width: 100%;
-  }
-
-    .container .mdl-card .mdl-textfield.fixed {
-      position: absolute;
-      left: 15px;
-      right: 15px;
-      top: 15px;
-      width: inherit;
-    }
-
-div.container {
-  position: fixed;
-  left: 15px;
-  top: 70px;
-  right: 15px;
-  bottom: 25px;
-  padding: 10px;
-  overflow: auto;
-  background: none;
-  box-shadow: none;
-  border-radius: 0;
-  max-width: none;
-  min-height: 0;
+    padding: 0;
+    margin: 0 0 16px 0;
 }
 
-.container .mdl-card {
-  width: 100%;
-  background: inherit;
-  box-shadow: none;
-  border-radius: 0;
-  padding: 0;
-  margin: 0;
-  box-sizing: border-box;
+.mdl-textfield__input {
+    border: none;
+    border-bottom: 1px solid rgba(0,0,0,0.12);
+    font-size: 16px;
+    padding: 4px 0;
+    background: transparent;
+}
+
+.mdl-textfield__input:focus {
+    outline: none;
+    border-bottom: 2px solid rgb(63,81,181);
+    padding-bottom: 3px;
+}
+
+.mdl-textfield__label {
+    color: rgba(0,0,0,0.5);
+    font-size: 16px;
+}
+
+.mdl-textfield--floating-label.is-focused .mdl-textfield__label,
+.mdl-textfield--floating-label.is-dirty .mdl-textfield__label {
+    font-size: 12px;
+    top: -4px;
+    color: rgb(63,81,181);
+}
+
+.mdl-textfield__error {
+    color: #d50000;
+    font-size: 12px;
+    margin-top: 3px;
+    visibility: visible;
+}
+
+.container .mdl-card .mdl-textfield.fixed {
+    position: absolute;
+    left: 15px;
+    right: 15px;
+    top: 15px;
+    width: inherit;
+    margin: 0;
+}
+
+div.container {
+    position: fixed;
+    left: 15px;
+    top: 70px;
+    right: 15px;
+    bottom: 25px;
+    padding: 10px;
+    overflow: auto;
 }
 
 .container .mdl-card .mdl-textfield.md-input {
-  top: 60px;
-  bottom: 0px;
+    position: absolute;
+    top: 60px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 0 15px 30px 15px;
+    margin: 0;
+}
+
+.container .mdl-card .mdl-textfield--floating-label .mdl-textfield__label {
+    top: 24px;
+    font-size: 16px;
+}
+
+.container .mdl-card .mdl-textfield--floating-label.is-focused .mdl-textfield__label,
+.container .mdl-card .mdl-textfield--floating-label.is-dirty .mdl-textfield__label {
+    top: 0;
+    font-size: 12px;
 }
 
 .container .mdl-progress {
-  width: auto;
-}
-
-.container .mdl-card .mdl-textfield.md-input {
-  top: 60px;
-  bottom: 55px;
-  padding-bottom: 30px;
+    width: auto;
 }
 
 .fill-height {
-  min-height: 400px;
-  height: auto;
+    height: 100%;
 }
 
-textarea {
-  font-family: inherit;
-  width: 100%;
-  height: 100%;
+textarea.mdl-textfield__input {
+    font-family: inherit;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    border: none;
+    resize: none;
+    outline: none;
+    box-shadow: none;
+    background: transparent;
+}
+
+.mdl-textfield__error {
+    visibility: visible;
+    color: #d50000;
+    font-size: 12px;
+    margin: 5px 0 0 0;
+    display: block;
+    position: relative;
+    bottom: 20px;
+}
+
+.mdl-textfield__label:after {
+    background-color: rgb(63,81,181);
+    bottom: 20px;
+}
+
+.mdl-textfield--floating-label.has-placeholder .mdl-textfield__label {
+    top: 0;
+    font-size: 12px;
+}
+
+.mdl-textfield {
+    padding: 0;
+}
+
+.mdl-textfield__input {
+    border: none;
+    border-bottom: 1px solid rgba(0,0,0,.12);
+    display: block;
+    font-size: 16px;
+    margin: 0;
+    padding: 4px 0;
+    width: 100%;
+    background: 0 0;
+    text-align: left;
+    color: inherit;
 }
 
 .btn-fab-right {
@@ -122,7 +196,44 @@ textarea {
     margin: 0;
     padding: 5px;
   }
-  .container .mdl-card {
-    padding: 0;
-  }
+}
+
+.page-content {
+    padding: 20px;
+}
+
+.mdl-card__supporting-text {
+    position: relative;
+    height: 100%;
+    box-sizing: border-box;
+}
+
+.mdl-textfield__error {
+  visibility: visible;   /* Explicitly set in HTML */
+  color: #d50000;
+  font-size: 12px;
+  margin-top: 3px;
+  display: block;
+}
+
+.mdl-textfield.fixed {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    right: 1rem;
+    width: auto; /* Let the absolute positioning determine the width */
+    z-index: 10;
+}
+
+.editor-container {
+    position: absolute;
+    top: 5rem; /* Height of title + spacing */
+    bottom: 1rem;
+    left: 1rem;
+    right: 1rem;
+}
+
+/* Ensure the TinyMDE instance fills its container */
+.editor-container .tiny-mde {
+    height: 100%;
 }
