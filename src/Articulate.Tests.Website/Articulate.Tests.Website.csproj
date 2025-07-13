@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Umbraco.Cms" Version="15.4.3" />
+    <PackageReference Include="Umbraco.Cms" Version="15.4.2" />
   </ItemGroup>
 
   <ItemGroup>
@@ -46,9 +46,4 @@
     <Watch Remove="umbraco\**\*" />
   </ItemGroup>
   
-  <!-- Set this to true if ModelsBuilder mode is not InMemoryAuto-->
-  <PropertyGroup>
-    <RazorCompileOnBuild>false</RazorCompileOnBuild>
-    <RazorCompileOnPublish>false</RazorCompileOnPublish>
-  </PropertyGroup>
 </Project>

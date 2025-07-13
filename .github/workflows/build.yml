@@ -32,9 +32,15 @@ jobs:
     - name: Add MSBuild to PATH
       uses: microsoft/setup-msbuild@v2
     
-    - uses: nuget/setup-nuget@v2
+    - uses: nuget/setup-nuget@v2.0.1
       with:
         nuget-version: 'latest'
+
+    - uses: actions/setup-node@v4
+      with:
+        node-version-file: 'src/Articulate/Client/.nvmrc'
+        cache: 'npm'
+        cache-dependency-path: 'src/Articulate/Client/package-lock.json'
 
     - name: Nuget Restore
       run: nuget restore $env:Solution_File
