@@ -69,7 +69,6 @@ namespace Articulate
         /// If varying by culture it will assign the value to the default language only.
         /// If varying by segment it will assign the value to no segment.
         /// </remarks>
-
         public static void SetInvariantOrDefaultCultureValue(
             this IContentBase content,
             string propertyTypeAlias,
@@ -98,7 +97,6 @@ namespace Articulate
         /// If varying by culture it will assign the value to the default language only.
         /// If varying by segment it will assign the value to no segment.
         /// </remarks>
-
         public static void AssignInvariantOrDefaultCultureTags(
             this IContentBase content,
             string propertyTypeAlias,
@@ -154,12 +152,10 @@ namespace Articulate
                 // iterate over any existing cultures defined on the content item
                 foreach (var c in content.CultureInfos)
                 {
-                    var propertyType =
-                        contentType.CompositionPropertyTypes.FirstOrDefault(x => x.Alias == propertyAlias) ?? throw new InvalidOperationException($"No property type found by alias {propertyAlias}");
+                    var propertyType = contentType.CompositionPropertyTypes.FirstOrDefault(x => x.Alias == propertyAlias) ?? throw new InvalidOperationException($"No property type found by alias {propertyAlias}");
 
                     var valueToSet = propertyValueGetter(content, contentType, c);
-                    if (valueToSet == null || (valueToSet is string propValAsString &&
-                                               string.IsNullOrWhiteSpace(propValAsString)))
+                    if (valueToSet == null || (valueToSet is string propValAsString && string.IsNullOrWhiteSpace(propValAsString)))
                     {
                         continue;
                     }
@@ -170,14 +166,14 @@ namespace Articulate
             else
             {
                 var propertyValue = propertyValueGetter(content, contentType, null);
-                if (propertyValue == null ||
-                    (propertyValue is string propValAsString && string.IsNullOrWhiteSpace(propValAsString)))
+                if (propertyValue == null || (propertyValue is string propValAsString && string.IsNullOrWhiteSpace(propValAsString)))
                 {
                     return;
                 }
 
                 content.SetValue(propertyAlias, propertyValue);
             }
+
         }
 
         private static bool VariesByCulture(string propertyTypeAlias, IContentTypeComposition contentType)
@@ -185,8 +181,7 @@ namespace Articulate
             // will throw if the property type is not found
             var variesByCulture = contentType.VariesByCulture()
                 // only look up the property type if the content type varies else there's no point
-                ? contentType.CompositionPropertyTypes.First(x => x.Alias.InvariantEquals(propertyTypeAlias))
-                    .VariesByCulture()
+                ? contentType.CompositionPropertyTypes.First(x => x.Alias.InvariantEquals(propertyTypeAlias)).VariesByCulture()
                 : false;
 
             return variesByCulture;

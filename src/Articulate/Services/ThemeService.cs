@@ -15,88 +15,99 @@ namespace Articulate.Services
     {
         public Task CopyThemeAsync(string themeName, string newThemeName);
 
-        public IEnumerable<string> GetDefaultThemes();
+        public Task<IEnumerable<string>> GetDefaultThemesAsync();
+        public Task<IEnumerable<string>> GetAllThemesAsync();
 
-        public IEnumerable<string> GetAllThemes();
-    }
-
-    public class ThemeService(IHostEnvironment hostingEnvironment, ILogger<ThemeService> logger)
-        : IThemeService
-    {
-        public async Task CopyThemeAsync(string themeName, string newThemeName)
+        public class ThemeService(IHostEnvironment hostingEnvironment, ILogger<ThemeService> logger)
+            : IThemeService
         {
-            var userThemesPath = hostingEnvironment.MapPathContentRoot(PathHelper.UserVirtualThemePath);
-            var destinationPhysicalPath = Path.Combine(userThemesPath, newThemeName);
-
-            if (Directory.Exists(destinationPhysicalPath))
+            public async Task CopyThemeAsync(string themeName, string newThemeName)
             {
-                throw new IOException("A theme with the specified name already exists.");
-            }
+                var userThemesPath = hostingEnvironment.MapPathContentRoot(PathHelper.UserVirtualThemePath);
+                var destinationPhysicalPath = Path.Combine(userThemesPath, newThemeName);
 
-            var defaultThemesPath = hostingEnvironment.MapPathContentRoot(PathHelper.VirtualThemePath);
-            var sourcePhysicalPath = Path.Combine(defaultThemesPath, themeName);
+                if (Directory.Exists(destinationPhysicalPath))
+                {
+                    throw new IOException("A theme with the specified name already exists.");
+                }
 
-            if (!Directory.Exists(sourcePhysicalPath))
-            {
-                sourcePhysicalPath = Path.Combine(userThemesPath, themeName);
+                var defaultThemesPath = hostingEnvironment.MapPathContentRoot(PathHelper.VirtualThemePath);
+                var sourcePhysicalPath = Path.Combine(defaultThemesPath, themeName);
+
                 if (!Directory.Exists(sourcePhysicalPath))
                 {
-                    throw new DirectoryNotFoundException("The source theme could not be found.");
+                    sourcePhysicalPath = Path.Combine(userThemesPath, themeName);
+                    if (!Directory.Exists(sourcePhysicalPath))
+                    {
+                        throw new DirectoryNotFoundException("The source theme could not be found.");
+                    }
+                }
+
+                try
+                {
+                    await CopyDirectoryAsync(sourcePhysicalPath, destinationPhysicalPath);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex,
+                        "An unexpected error occurred while copying theme '{SourceTheme}' to '{DestinationTheme}'.",
+                        themeName, newThemeName);
+                    // Re-throw to allow the controller to handle it as a 500 error.
+                    throw;
                 }
             }
 
-            try
+            public Task<IEnumerable<string>> GetDefaultThemesAsync()
             {
-                await CopyDirectoryAsync(sourcePhysicalPath, destinationPhysicalPath);
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex,
-                    "An unexpected error occurred while copying theme '{SourceTheme}' to '{DestinationTheme}'.",
-                    themeName, newThemeName);
-                // Re-throw to allow the controller to handle it as a 500 error.
-                throw;
-            }
-        }
+                var defaultThemePath = hostingEnvironment.MapPathContentRoot(PathHelper.VirtualThemePath);
 
-        public IEnumerable<string> GetDefaultThemes()
-        {
-            var defaultThemePath = hostingEnvironment.MapPathContentRoot(PathHelper.VirtualThemePath);
-            return Directory.Exists(defaultThemePath)
-                ? new DirectoryInfo(defaultThemePath).GetDirectories().Select(d => d.Name).OrderBy(name => name)
-                : Enumerable.Empty<string>();
-        }
-
-        public IEnumerable<string> GetAllThemes()
-        {
-            var defaultThemes = GetDefaultThemes();
-
-            var userThemePath = hostingEnvironment.MapPathContentRoot(PathHelper.UserVirtualThemePath);
-            var userThemes = Directory.Exists(userThemePath)
-                ? new DirectoryInfo(userThemePath).GetDirectories().Select(d => d.Name)
-                : [];
-
-            return defaultThemes.Union(userThemes).OrderBy(name => name);
-        }
-
-        private static async Task CopyDirectoryAsync(string sourcePath, string destinationPath)
-        {
-            var sourceInfo = new DirectoryInfo(sourcePath);
-            _ = Directory.CreateDirectory(destinationPath);
-
-            foreach (var file in sourceInfo.GetFiles())
-            {
-                var destinationFile = Path.Combine(destinationPath, file.Name);
-                await using var sourceStream = file.OpenRead();
-                await using var destinationStream =
-                    new FileStream(destinationFile, FileMode.CreateNew, FileAccess.Write);
-                await sourceStream.CopyToAsync(destinationStream);
+                return Task.Run(() =>
+                {
+                    return Directory.Exists(defaultThemePath)
+                        ? new DirectoryInfo(defaultThemePath).GetDirectories().Select(d => d.Name).OrderBy(name => name)
+                        : Enumerable.Empty<string>();
+                });
             }
 
-            foreach (var dir in sourceInfo.GetDirectories())
+            public async Task<IEnumerable<string>> GetAllThemesAsync()
             {
-                var destinationDir = Path.Combine(destinationPath, dir.Name);
-                await CopyDirectoryAsync(dir.FullName, destinationDir);
+                var defaultThemesTask = GetDefaultThemesAsync();
+
+                var userThemePath = hostingEnvironment.MapPathContentRoot(PathHelper.UserVirtualThemePath);
+                var userThemesTask = Task.Run(() =>
+                {
+                    return Directory.Exists(userThemePath)
+                        ? new DirectoryInfo(userThemePath).GetDirectories().Select(d => d.Name)
+                        : Enumerable.Empty<string>();
+                });
+
+                await Task.WhenAll(defaultThemesTask, userThemesTask);
+
+                var defaultThemes = await defaultThemesTask;
+                var userThemes = await userThemesTask;
+
+                return defaultThemes.Union(userThemes).OrderBy(name => name);
+            }
+
+            private static async Task CopyDirectoryAsync(string sourcePath, string destinationPath)
+            {
+                var sourceInfo = new DirectoryInfo(sourcePath);
+                _ = Directory.CreateDirectory(destinationPath);
+
+                foreach (var file in sourceInfo.GetFiles())
+                {
+                    var destinationFile = Path.Combine(destinationPath, file.Name);
+                    await using var sourceStream = file.OpenRead();
+                    await using var destinationStream =
+                        new FileStream(destinationFile, FileMode.CreateNew, FileAccess.Write);
+                    await sourceStream.CopyToAsync(destinationStream);
+                }
+
+                foreach (var dir in sourceInfo.GetDirectories())
+                {
+                    var destinationDir = Path.Combine(destinationPath, dir.Name);
+                    await CopyDirectoryAsync(dir.FullName, destinationDir);
+                }
             }
         }
     }

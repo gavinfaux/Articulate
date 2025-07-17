@@ -1,3 +1,4 @@
+
 using System.Collections.Generic;
 using Articulate.Models;
 using Articulate.Services;
@@ -23,20 +24,29 @@ namespace Articulate.Controllers
     /// </remarks>
     [OutputCache(PolicyName = "Articulate60")]
     [ArticulateDynamicRoute]
-    public class ArticulateTagsController(
-        ILogger<RenderController> logger,
-        ICompositeViewEngine compositeViewEngine,
-        IUmbracoContextAccessor umbracoContextAccessor,
-        IPublishedUrlProvider publishedUrlProvider,
-        IPublishedValueFallback publishedValueFallback,
-        IVariationContextAccessor variationContextAccessor,
-        UmbracoHelper umbracoHelper,
-        ArticulateTagService articulateTagService,
-        ITagQuery tagQuery)
-        : ListControllerBase(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider,
-            publishedValueFallback,
-            variationContextAccessor)
+    public class ArticulateTagsController : ListControllerBase
     {
+        private readonly UmbracoHelper _umbracoHelper;
+        private readonly ArticulateTagService _articulateTagService;
+        private readonly ITagQuery _tagQuery;
+
+        public ArticulateTagsController(
+            ILogger<RenderController> logger,
+            ICompositeViewEngine compositeViewEngine,
+            IUmbracoContextAccessor umbracoContextAccessor,
+            IPublishedUrlProvider publishedUrlProvider,
+            IPublishedValueFallback publishedValueFallback,
+            IVariationContextAccessor variationContextAccessor,
+            UmbracoHelper umbracoHelper,
+            ArticulateTagService articulateTagService,
+            ITagQuery tagQuery)
+            : base(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider, publishedValueFallback, variationContextAccessor)
+        {
+            _umbracoHelper = umbracoHelper;
+            _articulateTagService = articulateTagService;
+            _tagQuery = tagQuery;
+        }
+
         /// <summary>
         /// Used to render the category listing (virtual node)
         /// </summary>
@@ -72,9 +82,9 @@ namespace Articulate.Controllers
             //create a blog model of the main page
             var rootPageModel = new MasterModel(CurrentPage, PublishedValueFallback, VariationContextAccessor);
 
-            var contentByTags = articulateTagService.GetContentByTags(
-                umbracoHelper,
-                tagQuery,
+            IEnumerable<PostsByTagModel> contentByTags = _articulateTagService.GetContentByTags(
+                _umbracoHelper,
+                _tagQuery,
                 rootPageModel,
                 tagGroup,
                 baseUrl);
@@ -95,8 +105,8 @@ namespace Articulate.Controllers
             //create a master model
             var masterModel = new MasterModel(CurrentPage, PublishedValueFallback, VariationContextAccessor);
 
-            var contentByTag = articulateTagService.GetContentByTag(
-                umbracoHelper,
+            PostsByTagModel contentByTag = _articulateTagService.GetContentByTag(
+                _umbracoHelper,
                 masterModel,
                 tag,
                 tagGroup,
@@ -109,8 +119,8 @@ namespace Articulate.Controllers
             // will replace them with '.' and do the lookup again
             if ((contentByTag == null || contentByTag.PostCount == 0) && tag.Contains('-'))
             {
-                contentByTag = articulateTagService.GetContentByTag(
-                    umbracoHelper,
+                contentByTag = _articulateTagService.GetContentByTag(
+                    _umbracoHelper,
                     masterModel,
                     tag.Replace('-', '.'),
                     tagGroup,

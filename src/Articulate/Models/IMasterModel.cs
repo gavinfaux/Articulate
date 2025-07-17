@@ -8,7 +8,6 @@ namespace Articulate.Models
         /// Returns the current theme
         /// </summary>
         public string Theme { get; }
-
         public IPublishedContent RootBlogNode { get; }
         public IPublishedContent BlogArchiveNode { get; }
         public IPublishedContent BlogAuthorsNode { get; }

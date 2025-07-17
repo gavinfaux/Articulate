@@ -23,7 +23,6 @@ using WilderMinds.MetaWeblog;
 
 namespace Articulate.MetaWeblog
 {
-
     public class ArticulateMetaWeblogProvider : IMetaWeblogProvider
     {
         private readonly Lazy<IMedia> _articulateRootMediaFolder;
@@ -90,8 +89,7 @@ namespace Articulate.MetaWeblog
             _articulateRootMediaFolder = new Lazy<IMedia>(() =>
             {
                 var root = _mediaService.GetRootMedia().FirstOrDefault(x =>
-                    x.Name == ArticulateConstants.Convention.Articulate &&
-                    x.ContentType.Alias.InvariantEquals(Constants.Conventions.MediaTypes.Folder));
+                    x.Name == ArticulateConstants.Convention.Articulate && x.ContentType.Alias.InvariantEquals(Constants.Conventions.MediaTypes.Folder));
                 return root ??= _mediaService.CreateMediaWithIdentity(ArticulateConstants.Convention.Articulate,
                     Constants.System.Root, Constants.Conventions.MediaTypes.Folder);
             });
@@ -99,12 +97,17 @@ namespace Articulate.MetaWeblog
 
         public async Task<BlogInfo[]> GetUsersBlogsAsync(string key, string username, string password)
         {
-            _ = await ValidateUser(username, password);
+            await ValidateUser(username, password);
 
             var node = BlogRoot();
             var blogs = new BlogInfo[]
             {
-                new() { blogid = node.Id.ToString(), blogName = node.Name, url = node.Url() }
+                new BlogInfo()
+                {
+                    blogid = node.Id.ToString(),
+                    blogName = node.Name,
+                    url = node.Url()
+                }
             };
 
             return blogs;
@@ -112,12 +115,12 @@ namespace Articulate.MetaWeblog
 
         public async Task<CategoryInfo[]> GetCategoriesAsync(string blogid, string username, string password)
         {
-            _ = await ValidateUser(username, password);
+            await ValidateUser(username, password);
 
             // TODO: These would be across all Articulate Blog root nodes :S
             var all = await _tagService.GetAllAsync(ArticulateConstants.DataType.ArticulateCategories);
 
-            var tags = all.Select(x => new CategoryInfo
+            var tags = all.Select(x => new CategoryInfo()
             {
                 title = x.Text,
                 categoryid = x.Id.ToString()
@@ -130,30 +133,30 @@ namespace Articulate.MetaWeblog
 
         public async Task<WilderMinds.MetaWeblog.Tag[]> GetTagsAsync(string blogid, string username, string password)
         {
-            _ = await ValidateUser(username, password);
+            await ValidateUser(username, password);
 
             // TODO: These would be across all Articulate Blog root nodes :S
             var all = await _tagService.GetAllAsync(ArticulateConstants.DataType.ArticulateTags);
 
-            var tags = all.Select(x => new WilderMinds.MetaWeblog.Tag { name = x.Text })
-                .ToArray();
+            var tags = all.Select(x => new WilderMinds.MetaWeblog.Tag()
+            {
+                name = x.Text
+            })
+            .ToArray();
 
             return tags;
         }
 
-        public async Task<Post[]> GetRecentPostsAsync(string blogid, string username, string password,
-            int numberOfPosts)
+        public async Task<Post[]> GetRecentPostsAsync(string blogid, string username, string password, int numberOfPosts)
         {
-            _ = await ValidateUser(username, password);
+            await ValidateUser(username, password);
 
-            var node = BlogRoot()?.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive).FirstOrDefault() ??
-                       throw new InvalidOperationException("No Articulate Archive node found");
+            var node = BlogRoot()?.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive).FirstOrDefault() ?? throw new InvalidOperationException("No Articulate Archive node found");
 
             var recent = _contentService
-                .GetPagedChildren(node.Id, 0, numberOfPosts, out var totalPosts,
-                    ordering: Ordering.By("updateDate", Direction.Descending))
-                .Select(FromContent)
-                .ToArray();
+                    .GetPagedChildren(node.Id, 0, numberOfPosts, out long totalPosts, ordering: Ordering.By("updateDate", direction: Direction.Descending))
+                    .Select(FromContent)
+                    .ToArray();
 
             return recent;
         }
@@ -164,12 +167,9 @@ namespace Articulate.MetaWeblog
 
             var root = BlogRoot();
 
-            var node = root?.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive).FirstOrDefault() ??
-                       throw new InvalidOperationException("No Articulate Archive node found");
+            var node = root?.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive).FirstOrDefault() ?? throw new InvalidOperationException("No Articulate Archive node found");
 
-            var contentType = _contentTypeService.Get(ArticulateConstants.ContentType.ArticulateRichText) ??
-                              throw new InvalidOperationException(
-                                  "No content type found with alias 'ArticulateRichText'");
+            var contentType = _contentTypeService.Get(ArticulateConstants.ContentType.ArticulateRichText) ?? throw new InvalidOperationException("No content type found with alias 'ArticulateRichText'");
 
             var content = _contentService.CreateWithInvariantOrDefaultCultureName(
                 post.title, node.Id, contentType, _localizationService, user.Id);
@@ -183,10 +183,10 @@ namespace Articulate.MetaWeblog
             AddOrUpdateContent(content, contentType, post, user, publish, extractFirstImageAsProperty);
 
             return content.Id.ToString(CultureInfo.InvariantCulture);
+
         }
 
-        public async Task<bool> DeletePostAsync(string key, string postid, string username, string password,
-            bool publish)
+        public async Task<bool> DeletePostAsync(string key, string postid, string username, string password, bool publish)
         {
             var user = await ValidateUser(username, password);
             var userId = user.Id;
@@ -205,13 +205,13 @@ namespace Articulate.MetaWeblog
             }
 
             // Put in recylce bin - rather than unpublish
-            _ = _contentService.MoveToRecycleBin(content, userId);
+            _contentService.MoveToRecycleBin(content, userId);
             return true;
         }
 
         public async Task<Post> GetPostAsync(string postid, string username, string password)
         {
-            _ = await ValidateUser(username, password);
+            await ValidateUser(username, password);
 
             var asInt = postid.TryConvertTo<int>();
             if (!asInt)
@@ -227,29 +227,32 @@ namespace Articulate.MetaWeblog
                 return fromPost;
             }
 
-            var content = _contentService.GetById(asInt.Result) ??
-                          throw new InvalidOperationException("No post found with id " + postid);
+            var content = _contentService.GetById(asInt.Result) ?? throw new InvalidOperationException("No post found with id " + postid);
 
             var fromContent = FromContent(content);
             return fromContent;
         }
 
-        public async Task<MediaObjectInfo> NewMediaObjectAsync(string blogid, string username, string password,
-            MediaObject mediaObject)
+        public async Task<MediaObjectInfo> NewMediaObjectAsync(string blogid, string username, string password, MediaObject mediaObject)
         {
-            _ = await ValidateUser(username, password);
+            await ValidateUser(username, password);
 
             var bytes = Convert.FromBase64String(mediaObject.bits);
 
             // Save File
-            using var ms = new MemoryStream(bytes);
-            var fileUrl = "articulate/" + mediaObject.name.ToSafeFileName(_shortStringHelper);
-            _mediaFileManager.FileSystem.AddFile(fileUrl, ms);
-            var absUrl = _mediaFileManager.FileSystem.GetUrl(fileUrl);
+            using (var ms = new MemoryStream(bytes))
+            {
+                var fileUrl = "articulate/" + mediaObject.name.ToSafeFileName(_shortStringHelper);
+                _mediaFileManager.FileSystem.AddFile(fileUrl, ms);
+                var absUrl = _mediaFileManager.FileSystem.GetUrl(fileUrl);
 
-            var result = new MediaObjectInfo { url = absUrl };
+                var result = new MediaObjectInfo()
+                {
+                    url = absUrl
+                };
 
-            return result;
+                return result;
+            }
         }
 
         public async Task<bool> EditPostAsync(string postid, string username, string password, Post post, bool publish)
@@ -264,9 +267,7 @@ namespace Articulate.MetaWeblog
 
             var umbracoContent = _contentService.GetById(asInt.Result);
 
-            var contentType = _contentTypeService.Get(ArticulateConstants.ContentType.ArticulateRichText) ??
-                              throw new InvalidOperationException(
-                                  "No content type found with alias 'ArticulateRichText'");
+            var contentType = _contentTypeService.Get(ArticulateConstants.ContentType.ArticulateRichText) ?? throw new InvalidOperationException("No content type found with alias 'ArticulateRichText'");
 
             var root = BlogRoot();
 
@@ -283,33 +284,18 @@ namespace Articulate.MetaWeblog
         }
 
         // Seems these are not used/supported
-        public Task<int> AddCategoryAsync(string key, string username, string password, NewCategory category) =>
-            throw new NotImplementedException();
-
-        public Task<Author[]> GetAuthorsAsync(string blogid, string username, string password) =>
-            throw new NotImplementedException();
-
-        public Task<UserInfo> GetUserInfoAsync(string key, string username, string password) =>
-            throw new NotImplementedException();
+        public Task<int> AddCategoryAsync(string key, string username, string password, NewCategory category) => throw new NotImplementedException();
+        public Task<Author[]> GetAuthorsAsync(string blogid, string username, string password) => throw new NotImplementedException();
+        public Task<UserInfo> GetUserInfoAsync(string key, string username, string password) => throw new NotImplementedException();
 
         // Not supporting pages from the WordPress implementation
-        public Task<string> AddPageAsync(string blogid, string username, string password, Page page, bool publish) =>
-            throw new NotImplementedException();
+        public Task<string> AddPageAsync(string blogid, string username, string password, Page page, bool publish) => throw new NotImplementedException();
+        public Task<bool> EditPageAsync(string blogid, string pageid, string username, string password, Page page, bool publish) => throw new NotImplementedException();
+        public Task<bool> DeletePageAsync(string blogid, string username, string password, string pageid) => throw new NotImplementedException();
+        public Task<Page> GetPageAsync(string blogid, string pageid, string username, string password) => throw new NotImplementedException();
+        public Task<Page[]> GetPagesAsync(string blogid, string username, string password, int numPages) => throw new NotImplementedException();
 
-        public Task<bool> EditPageAsync(string blogid, string pageid, string username, string password, Page page,
-            bool publish) => throw new NotImplementedException();
-
-        public Task<bool> DeletePageAsync(string blogid, string username, string password, string pageid) =>
-            throw new NotImplementedException();
-
-        public Task<Page> GetPageAsync(string blogid, string pageid, string username, string password) =>
-            throw new NotImplementedException();
-
-        public Task<Page[]> GetPagesAsync(string blogid, string username, string password, int numPages) =>
-            throw new NotImplementedException();
-
-        private void AddOrUpdateContent(IContent content, IContentType contentType, Post post, IUser user, bool publish,
-            bool extractFirstImageAsProperty)
+        private void AddOrUpdateContent(IContent content, IContentType contentType, Post post, IUser user, bool publish, bool extractFirstImageAsProperty)
         {
             content.SetInvariantOrDefaultCultureName(post.title, contentType, _localizationService);
 
@@ -353,8 +339,8 @@ namespace Articulate.MetaWeblog
                         var mediaFileSystemPath = _mediaFileManager.FileSystem.GetUrl(relativePath);
 
                         var href = " href=\"" +
-                                   mediaFileSystemPath +
-                                   "\" class=\"a-image-" + imagesProcessed + "\" ";
+                               mediaFileSystemPath +
+                               "\" class=\"a-image-" + imagesProcessed + "\" ";
 
                         imagesProcessed++;
 
@@ -367,36 +353,37 @@ namespace Articulate.MetaWeblog
                 content.SetInvariantOrDefaultCultureValue("richText", contentToSave, contentType, _localizationService);
                 if (extractFirstImageAsProperty
                     && content.HasProperty("postImage")
-                    && !firstImageRelativePath.IsNullOrWhiteSpace())
+                        && !firstImageRelativePath.IsNullOrWhiteSpace())
                 {
-                    if (!string.IsNullOrWhiteSpace(firstImageRelativePath) &&
-                        _mediaFileManager.FileSystem.FileExists(firstImageRelativePath))
+                    if (!string.IsNullOrWhiteSpace(firstImageRelativePath) && _mediaFileManager.FileSystem.FileExists(firstImageRelativePath))
                     {
                         try
                         {
-                            using var fileStream = _mediaFileManager.FileSystem.OpenFile(firstImageRelativePath);
-                            var fileName = Path.GetFileName(firstImageRelativePath);
+                            using (var fileStream = _mediaFileManager.FileSystem.OpenFile(firstImageRelativePath))
+                            {
+                                var fileName = Path.GetFileName(firstImageRelativePath);
 
-                            var mediaItem = _mediaService.CreateMedia(fileName, _articulateRootMediaFolder.Value,
-                                Constants.Conventions.MediaTypes.Image);
-                            mediaItem.SetValue(
-                                _mediaFileManager,
-                                _mediaUrlGenerators,
-                                _shortStringHelper,
-                                _contentTypeBaseServiceProvider,
-                                Constants.Conventions.Media.File,
-                                fileName,
-                                fileStream);
+                                var mediaItem = _mediaService.CreateMedia(fileName, _articulateRootMediaFolder.Value,
+                                    Constants.Conventions.MediaTypes.Image);
+                                mediaItem.SetValue(
+                                    _mediaFileManager,
+                                    _mediaUrlGenerators,
+                                    _shortStringHelper,
+                                    _contentTypeBaseServiceProvider,
+                                    Constants.Conventions.Media.File,
+                                    fileName,
+                                    fileStream);
 
-                            _ = _mediaService.Save(mediaItem);
+                                _mediaService.Save(mediaItem);
 
-                            var udi = Udi.Create(Constants.UdiEntityType.Media, mediaItem.Key);
+                                var udi = Udi.Create(Constants.UdiEntityType.Media, mediaItem.Key);
 
-                            content.SetInvariantOrDefaultCultureValue(
-                                "postImage",
-                                udi.ToString(),
-                                contentType,
-                                _localizationService);
+                                content.SetInvariantOrDefaultCultureValue(
+                                    "postImage",
+                                    udi.ToString(),
+                                    contentType,
+                                    _localizationService);
+                            }
                         }
                         catch (Exception ex)
                         {
@@ -410,14 +397,12 @@ namespace Articulate.MetaWeblog
 
             if (!post.link.IsNullOrWhiteSpace())
             {
-                content.SetInvariantOrDefaultCultureValue(Constants.Conventions.Content.UrlName, post.link, contentType,
-                    _localizationService);
+                content.SetInvariantOrDefaultCultureValue(Constants.Conventions.Content.UrlName, post.link, contentType, _localizationService);
             }
 
             if (!post.mt_excerpt.IsNullOrWhiteSpace())
             {
-                content.SetInvariantOrDefaultCultureValue("excerpt", post.mt_excerpt, contentType,
-                    _localizationService);
+                content.SetInvariantOrDefaultCultureValue("excerpt", post.mt_excerpt, contentType, _localizationService);
             }
 
             if (post.mt_allow_comments == 1)
@@ -429,31 +414,28 @@ namespace Articulate.MetaWeblog
                 content.SetInvariantOrDefaultCultureValue("enableComments", 0, contentType, _localizationService);
             }
 
-            content.AssignInvariantOrDefaultCultureTags("categories", post.categories, contentType,
-                _localizationService, _dataTypeService, _propertyEditors, _jsonSerializer);
+            content.AssignInvariantOrDefaultCultureTags("categories", post.categories, contentType, _localizationService, _dataTypeService, _propertyEditors, _jsonSerializer);
             var tags = post.mt_keywords
-                .Split([','], StringSplitOptions.RemoveEmptyEntries)
+                .Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
                 .Select(x => x.Trim())
                 .Distinct()
                 .ToArray();
 
-            content.AssignInvariantOrDefaultCultureTags("tags", tags, contentType, _localizationService,
-                _dataTypeService, _propertyEditors, _jsonSerializer);
+            content.AssignInvariantOrDefaultCultureTags("tags", tags, contentType, _localizationService, _dataTypeService, _propertyEditors, _jsonSerializer);
 
             if (publish)
             {
                 if (post.dateCreated != DateTime.MinValue)
                 {
-                    content.SetInvariantOrDefaultCultureValue("publishedDate", post.dateCreated, contentType,
-                        _localizationService);
+                    content.SetInvariantOrDefaultCultureValue("publishedDate", post.dateCreated, contentType, _localizationService);
                 }
 
-                _ = _contentService.Save(content, user.Id);
-                _ = _contentService.Publish(content, ["*"], user.Id);
+                _contentService.Save(content, userId: user.Id);
+                _contentService.Publish(content, ["*"], user.Id);
             }
             else
             {
-                _ = _contentService.Save(content, user.Id);
+                _contentService.Save(content, user.Id);
             }
         }
 
@@ -477,35 +459,38 @@ namespace Articulate.MetaWeblog
             postid = post.Id.ToString(CultureInfo.InvariantCulture),
             wp_slug = post.Url(),
             mt_excerpt = post.Excerpt,
-            mt_keywords = string.Join(',', post.Tags.ToArray()),
+            mt_keywords = string.Join(",", post.Tags.ToArray()),
             title = post.Name
         };
 
-        private Post FromContent(IContent post) => new()
+        private Post FromContent(IContent post) => new Post
         {
             title = post.Name,
             postid = post.Id.ToString(CultureInfo.InvariantCulture),
             dateCreated = post.UpdateDate,
             mt_excerpt = post.GetValue<string>("excerpt"),
             link = "",
+
             mt_keywords = string.IsNullOrWhiteSpace(post.GetValue<string>("tags")) == false
-                ? string.Join(',', post.GetValue<string>("tags").Split([','], StringSplitOptions.RemoveEmptyEntries))
-                : string.Empty,
+            ? string.Join(",", post.GetValue<string>("tags").Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+            : string.Empty,
+
             categories = string.IsNullOrEmpty(post.GetValue<string>("categories")) == false
-                ? post.GetValue<string>("categories").Split([','], StringSplitOptions.RemoveEmptyEntries)
-                : [],
+            ? post.GetValue<string>("categories").Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+            : Array.Empty<string>(),
+
             description = post.ContentType.Alias == ArticulateConstants.ContentType.ArticulateRichText
-                ? post.GetValue<string>("richText")
-                : MarkdownHelper.ToHtml(post.GetValue<string>("markdown")),
+            ? post.GetValue<string>("richText")
+            : MarkdownHelper.ToHtml(post.GetValue<string>("markdown")),
+
             permalink = post.GetValue<string>(Constants.Conventions.Content.UrlName).IsNullOrWhiteSpace()
-                ? post.Name.ToUrlSegment(_shortStringHelper)
-                : post.GetValue<string>(Constants.Conventions.Content.UrlName).ToUrlSegment(_shortStringHelper)
+            ? post.Name.ToUrlSegment(_shortStringHelper)
+            : post.GetValue<string>(Constants.Conventions.Content.UrlName).ToUrlSegment(_shortStringHelper)
         };
 
         private IPublishedContent BlogRoot()
         {
-            var node = _umbracoContextAccessor.GetRequiredUmbracoContext().Content.GetById(_articulateBlogRootNodeId) ??
-                       throw new InvalidOperationException("No node found by route");
+            var node = _umbracoContextAccessor.GetRequiredUmbracoContext().Content.GetById(_articulateBlogRootNodeId) ?? throw new InvalidOperationException("No node found by route");
 
             return node;
         }
@@ -525,10 +510,10 @@ namespace Articulate.MetaWeblog
     internal static partial class ArticulateMetaWeblogRegexes
     {
         // regex finds the image placeholder markdown tag and captures the temporary URL.
-        [GeneratedRegex(" src=(?:\"|')(?:http|https)://(?:[\\w\\d:/-]+?)(articulate/.*?)(?:\"|')")]
+        [GeneratedRegex(" src=(?:\"|')(?:http|https)://(?:[\\w\\d:/-]+?)(articulate/.*?)(?:\"|')", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase | RegexOptions.Compiled)]
         public static partial Regex MediaSourceRegex();
 
-        [GeneratedRegex(" href=(?:\"|')(?:http|https)://(?:[\\w\\d:/-]+?)(articulate/.*?)(?:\"|')")]
+        [GeneratedRegex(" href=(?:\"|')(?:http|https)://(?:[\\w\\d:/-]+?)(articulate/.*?)(?:\"|')", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase | RegexOptions.Compiled)]
         public static partial Regex MediaHrefRegex();
     }
 }

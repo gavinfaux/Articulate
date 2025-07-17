@@ -5,8 +5,15 @@ using System.Linq;
 
 namespace Articulate.Models
 {
-    public class PostTagCollection(IEnumerable<PostsByTagModel> tags) : IEnumerable<PostsByTagModel>
+    public class PostTagCollection : IEnumerable<PostsByTagModel>
     {
+        private readonly IEnumerable<PostsByTagModel> _tags;
+
+        public PostTagCollection(IEnumerable<PostsByTagModel> tags)
+        {
+            _tags = tags;
+        }
+
         private int? _maxCount;
 
         /// <summary>
@@ -25,7 +32,7 @@ namespace Articulate.Models
             return Convert.ToInt32(Math.Ceiling(postsByTag.PostCount * maxWeight / _maxCount.Value));
         }
 
-        public IEnumerator<PostsByTagModel> GetEnumerator() => tags.GetEnumerator();
+        public IEnumerator<PostsByTagModel> GetEnumerator() => _tags.GetEnumerator();
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }

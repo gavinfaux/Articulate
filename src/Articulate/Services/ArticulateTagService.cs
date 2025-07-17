@@ -9,13 +9,20 @@ using Umbraco.Cms.Web.Common;
 
 namespace Articulate.Services
 {
-    public class ArticulateTagService(
-        IArticulateTagRepository repository,
-        ICoreScopeProvider provider,
-        ILoggerFactory loggerFactory,
-        IEventMessagesFactory eventMessagesFactory)
-        : RepositoryService(provider, loggerFactory, eventMessagesFactory)
+    public class ArticulateTagService : RepositoryService
     {
+        private readonly IArticulateTagRepository _repository;
+
+        public ArticulateTagService(
+            IArticulateTagRepository repository,
+            ICoreScopeProvider provider,
+            ILoggerFactory loggerFactory,
+            IEventMessagesFactory eventMessagesFactory)
+            : base(provider, loggerFactory, eventMessagesFactory)
+        {
+            _repository = repository;
+        }
+
         // TODO: Wrap the repo
 
         public IEnumerable<PostsByTagModel> GetContentByTags(
@@ -27,7 +34,7 @@ namespace Articulate.Services
         {
             using (ScopeProvider.CreateCoreScope(autoComplete: true))
             {
-                return repository.GetContentByTags(
+                return _repository.GetContentByTags(
                     helper,
                     tagQuery,
                     masterModel,
@@ -47,7 +54,7 @@ namespace Articulate.Services
         {
             using (ScopeProvider.CreateCoreScope(autoComplete: true))
             {
-                return repository.GetContentByTag(
+                return _repository.GetContentByTag(
                     helper,
                     masterModel,
                     tag,

@@ -12,22 +12,24 @@ using Umbraco.Extensions;
 
 namespace Articulate.Syndication
 {
-    public class RssFeedGenerator(ILogger<RssFeedGenerator> logger, IHostingEnvironment hostingEnvironment)
-        : IRssFeedGenerator
+    public class RssFeedGenerator : IRssFeedGenerator
     {
-        private readonly Regex _relativeMediaSrc = new(" src=(?:\"|')(/media/.*?)(?:\"|')",
-            RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private readonly ILogger<RssFeedGenerator> _logger;
+        private readonly IHostingEnvironment _hostingEnvironment;
 
-        private readonly Regex _relativeMediaHref = new(" href=(?:\"|')(/media/.*?)(?:\"|')",
-            RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        public RssFeedGenerator(ILogger<RssFeedGenerator> logger, IHostingEnvironment hostingEnvironment)
+        {
+            _logger = logger;
+            _hostingEnvironment = hostingEnvironment;
+        }
 
         public SyndicationFeed GetFeed(IMasterModel rootPageModel, IEnumerable<PostModel> posts)
         {
             var feed = new SyndicationFeed(
-                rootPageModel.BlogTitle,
-                rootPageModel.BlogDescription,
-                new Uri(rootPageModel.RootBlogNode.Url(mode: UrlMode.Absolute)),
-                GetFeedItems(rootPageModel, posts))
+              rootPageModel.BlogTitle,
+              rootPageModel.BlogDescription,
+              new Uri(rootPageModel.RootBlogNode.Url(mode: UrlMode.Absolute)),
+              GetFeedItems(rootPageModel, posts))
             {
                 Generator = "Articulate, blogging built on Umbraco",
                 ImageUrl = GetBlogImage(rootPageModel)
@@ -51,11 +53,11 @@ namespace Articulate.Syndication
                 return null;
             }
 
-            var appPath = hostingEnvironment.ApplicationVirtualPath;
+            var appPath = _hostingEnvironment.ApplicationVirtualPath;
             var rootUri = new Uri(rootUrl);
             var mediaRoot = rootUri.GetLeftPart(UriPartial.Authority) + appPath.EnsureStartsWith('/').TrimEnd('/');
 
-            var content = _relativeMediaHref.Replace(GetPostContent(post), match =>
+            var content = RssFeedGeneratorRegexes.RelativeMediaHrefRegex().Replace(GetPostContent(post), match =>
             {
                 if (match.Groups.Count == 2)
                 {
@@ -64,7 +66,7 @@ namespace Articulate.Syndication
 
                 return null;
             });
-            content = _relativeMediaSrc.Replace(content, match =>
+            content = RssFeedGeneratorRegexes.RelativeMediaSrcRegex().Replace(content, match =>
             {
                 if (match.Groups.Count == 2)
                 {
@@ -81,7 +83,7 @@ namespace Articulate.Syndication
                 post.Id.ToString(CultureInfo.InvariantCulture),
                 post.PublishedDate)
             {
-                PublishDate = post.PublishedDate
+                PublishDate = post.PublishedDate,
 
                 //don't include this as it will override the main content bits
                 //Summary = new TextSyndicationContent(post.Excerpt)
@@ -120,10 +122,19 @@ namespace Articulate.Syndication
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Could not convert the blog logo path to a Uri");
+                _logger.LogError(ex, "Could not convert the blog logo path to a Uri");
             }
 
             return logoUri;
         }
+    }
+
+    internal static partial class RssFeedGeneratorRegexes
+    {
+        [GeneratedRegex(" src=(?:\"|')(?:http|https)://(?:[\\w\\d:/-]+?)(articulate/.*?)(?:\"|')", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase | RegexOptions.Compiled)]
+        public static partial Regex RelativeMediaSrcRegex();
+
+        [GeneratedRegex(" href=(?:\"|')(/media/.*?)(?:\"|')", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase | RegexOptions.Compiled)]
+        public static partial Regex RelativeMediaHrefRegex();
     }
 }

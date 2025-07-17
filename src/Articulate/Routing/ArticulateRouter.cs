@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using Articulate.Controllers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Controllers;
@@ -20,30 +19,15 @@ namespace Articulate.Routing
 {
     public class ArticulateRouter
     {
-        private static readonly Lock s_locker = new();
-
-        private static readonly string s_searchControllerName =
-            ControllerExtensions.GetControllerName<ArticulateSearchController>();
-
-        private static readonly string s_openSearchControllerName =
-            ControllerExtensions.GetControllerName<OpenSearchController>();
-
+        private static readonly object s_locker = new object();
+        private static readonly string s_searchControllerName = ControllerExtensions.GetControllerName<ArticulateSearchController>();
+        private static readonly string s_openSearchControllerName = ControllerExtensions.GetControllerName<OpenSearchController>();
         private static readonly string s_rsdControllerName = ControllerExtensions.GetControllerName<RsdController>();
-
-        private static readonly string s_wlwControllerName =
-            ControllerExtensions.GetControllerName<WlwManifestController>();
-
-        private static readonly string s_tagsControllerName =
-            ControllerExtensions.GetControllerName<ArticulateTagsController>();
-
-        private static readonly string s_rssControllerName =
-            ControllerExtensions.GetControllerName<ArticulateRssController>();
-
-        private static readonly string s_markdownEditorControllerName =
-            ControllerExtensions.GetControllerName<MarkdownEditorController>();
-
-        private static readonly string s_metaWeblogControllerName =
-            ControllerExtensions.GetControllerName<MetaWeblogController>();
+        private static readonly string s_wlwControllerName = ControllerExtensions.GetControllerName<WlwManifestController>();
+        private static readonly string s_tagsControllerName = ControllerExtensions.GetControllerName<ArticulateTagsController>();
+        private static readonly string s_rssControllerName = ControllerExtensions.GetControllerName<ArticulateRssController>();
+        //private static readonly string s_markdownEditorControllerName = ControllerExtensions.GetControllerName<MarkdownEditorController>();
+        private static readonly string s_metaWeblogControllerName = ControllerExtensions.GetControllerName<MetaWeblogController>();
 
         private readonly Dictionary<ArticulateRouteTemplate, ArticulateRootNodeCache> _routeCache = new();
         private readonly IControllerActionSearcher _controllerActionSearcher;
@@ -60,8 +44,7 @@ namespace Articulate.Routing
             _scopeProvider = scopeProvider;
         }
 
-        public bool TryMatch(PathString path, RouteValueDictionary routeValues,
-            out ArticulateRootNodeCache articulateRootNodeCache)
+        public bool TryMatch(PathString path, RouteValueDictionary routeValues, out ArticulateRootNodeCache articulateRootNodeCache)
         {
             foreach (var item in _routeCache)
             {
@@ -85,15 +68,14 @@ namespace Articulate.Routing
         /// <param name="publishedContentTypeCache"></param>
         /// <param name="documentCacheService"></param>
         /// <returns></returns>
-        public void MapRoutes(HttpContext httpContext, IUmbracoContext umbracoContext,
-            IPublishedContentTypeCache publishedContentTypeCache, IDocumentCacheService documentCacheService)
+        public void MapRoutes(HttpContext httpContext, IUmbracoContext umbracoContext, IPublishedContentTypeCache publishedContentTypeCache, IDocumentCacheService documentCacheService)
         {
             lock (s_locker)
             {
                 using (var scope = _scopeProvider.CreateCoreScope(autoComplete: true))
                 {
-                    var articulateCt = publishedContentTypeCache.Get(PublishedItemType.Content,
-                        ArticulateConstants.ContentType.Articulate);
+
+                    IPublishedContentType articulateCt = publishedContentTypeCache.Get(PublishedItemType.Content, ArticulateConstants.ContentType.Articulate);
                     if (articulateCt == null)
                     {
                         return;
@@ -128,14 +110,12 @@ namespace Articulate.Routing
 
                     foreach (var nodeByPathGroup in articulateNodesGroupedByUriPath)
                     {
-                        IPublishedContent[] nodesAsArray = nodeByPathGroup.ToArray();
-
                         var rootNodePath = nodeByPathGroup.Key.EnsureEndsWith('/');
 
-                        foreach (var articulateRootNode in nodeByPathGroup)
+                        foreach (IPublishedContent articulateRootNode in nodeByPathGroup)
                         {
                             MapRssRoute(httpContext, rootNodePath, articulateRootNode, domains);
-                            MapMarkdownEditorRoute(httpContext, rootNodePath, articulateRootNode, domains);
+                            //MapMarkdownEditorRoute(httpContext, rootNodePath, articulateRootNode, domains);
                             MapAuthorsRssRoute(httpContext, rootNodePath, articulateRootNode, domains);
 
                             MapSearchRoute(httpContext, rootNodePath, articulateRootNode, domains);
@@ -164,10 +144,9 @@ namespace Articulate.Routing
             IReadOnlyList<Domain> domains)
         {
             var art = new ArticulateRouteTemplate(routeTemplate);
-            if (!_routeCache.TryGetValue(art, out var dynamicRouteValues))
+            if (!_routeCache.TryGetValue(art, out ArticulateRootNodeCache dynamicRouteValues))
             {
-                var controllerActionDescriptor =
-                    _controllerActionSearcher.Find<IRenderController>(httpContext, controllerName, actionName);
+                ControllerActionDescriptor controllerActionDescriptor = _controllerActionSearcher.Find<IRenderController>(httpContext, controllerName, actionName);
                 if (_controllerActionSearcher == null)
                 {
                     throw new InvalidOperationException("No controller found with name " + controllerName);
@@ -181,17 +160,16 @@ namespace Articulate.Routing
             dynamicRouteValues.Add(articulateRootNode.Id, DomainsForContent(articulateRootNode, domains));
         }
 
-        private static List<Domain> DomainsForContent(IPublishedContent content, IReadOnlyList<Domain> domains)
+        private List<Domain> DomainsForContent(IPublishedContent content, IReadOnlyList<Domain> domains)
         {
-            var nodePaths = new HashSet<int>(content.Path.Split(',').Select(int.Parse).ToList());
+            var nodePaths = new HashSet<int>(content.Path.Split(",").Select(int.Parse).ToList());
 
             return domains.Where(domain => nodePaths.Contains(domain.ContentId)).ToList();
         }
 
-        private void MapOpenSearchRoute(HttpContext httpContext, string rootNodePath,
-            IPublishedContent articulateRootNode, List<Domain> domains)
+        private void MapOpenSearchRoute(HttpContext httpContext, string rootNodePath, IPublishedContent articulateRootNode, List<Domain> domains)
         {
-            var template = TemplateParser.Parse($"{rootNodePath}opensearch/{{id}}");
+            RouteTemplate template = TemplateParser.Parse($"{rootNodePath}opensearch/{{id}}");
             MapRoute(
                 s_openSearchControllerName,
                 nameof(OpenSearchController.Index),
@@ -201,10 +179,9 @@ namespace Articulate.Routing
                 domains);
         }
 
-        private void MapRsdRoute(HttpContext httpContext, string rootNodePath, IPublishedContent articulateRootNode,
-            List<Domain> domains)
+        private void MapRsdRoute(HttpContext httpContext, string rootNodePath, IPublishedContent articulateRootNode, List<Domain> domains)
         {
-            var template = TemplateParser.Parse($"{rootNodePath}rsd/{{id}}");
+            RouteTemplate template = TemplateParser.Parse($"{rootNodePath}rsd/{{id}}");
             MapRoute(
                 s_rsdControllerName,
                 nameof(RsdController.Index),
@@ -214,10 +191,10 @@ namespace Articulate.Routing
                 domains);
         }
 
-        private void MapMetaWeblogRoute(HttpContext httpContext, string rootNodePath,
-            IPublishedContent articulateRootNode, List<Domain> domains)
+        private void MapMetaWeblogRoute(HttpContext httpContext, string rootNodePath, IPublishedContent articulateRootNode, List<Domain> domains)
         {
-            var template = TemplateParser.Parse($"{rootNodePath}metaweblog/{{id}}");
+
+            RouteTemplate template = TemplateParser.Parse($"{rootNodePath}metaweblog/{{id}}");
             MapRoute(
                 s_metaWeblogControllerName,
                 nameof(MetaWeblogController.Index),
@@ -225,12 +202,12 @@ namespace Articulate.Routing
                 httpContext,
                 articulateRootNode,
                 domains);
+
         }
 
-        private void MapManifestRoute(HttpContext httpContext, string rootNodePath,
-            IPublishedContent articulateRootNode, List<Domain> domains)
+        private void MapManifestRoute(HttpContext httpContext, string rootNodePath, IPublishedContent articulateRootNode, List<Domain> domains)
         {
-            var template = TemplateParser.Parse($"{rootNodePath}wlwmanifest/{{id}}");
+            RouteTemplate template = TemplateParser.Parse($"{rootNodePath}wlwmanifest/{{id}}");
             MapRoute(
                 s_wlwControllerName,
                 nameof(WlwManifestController.Index),
@@ -247,10 +224,9 @@ namespace Articulate.Routing
         /// <param name="rootNodePath"></param>
         /// <param name="articulateRootNode"></param>
         /// <param name="domains"></param>
-        private void MapRssRoute(HttpContext httpContext, string rootNodePath, IPublishedContent articulateRootNode,
-            IReadOnlyList<Domain> domains)
+        private void MapRssRoute(HttpContext httpContext, string rootNodePath, IPublishedContent articulateRootNode, IReadOnlyList<Domain> domains)
         {
-            var rssTemplate = TemplateParser.Parse($"{rootNodePath}rss");
+            RouteTemplate rssTemplate = TemplateParser.Parse($"{rootNodePath}rss");
             MapRoute(
                 s_rssControllerName,
                 nameof(ArticulateRssController.Index),
@@ -259,7 +235,7 @@ namespace Articulate.Routing
                 articulateRootNode,
                 domains);
 
-            var xsltTemplate = TemplateParser.Parse($"{rootNodePath}rss/xslt");
+            RouteTemplate xsltTemplate = TemplateParser.Parse($"{rootNodePath}rss/xslt");
             MapRoute(
                 s_rssControllerName,
                 nameof(ArticulateRssController.FeedXslt),
@@ -269,10 +245,9 @@ namespace Articulate.Routing
                 domains);
         }
 
-        private void MapAuthorsRssRoute(HttpContext httpContext, string rootNodePath,
-            IPublishedContent articulateRootNode, IReadOnlyList<Domain> domains)
+        private void MapAuthorsRssRoute(HttpContext httpContext, string rootNodePath, IPublishedContent articulateRootNode, IReadOnlyList<Domain> domains)
         {
-            var rssTemplate = TemplateParser.Parse($"{rootNodePath}author/{{authorId}}/rss");
+            RouteTemplate rssTemplate = TemplateParser.Parse($"{rootNodePath}author/{{authorId}}/rss");
             MapRoute(
                 s_rssControllerName,
                 nameof(ArticulateRssController.Author),
@@ -282,24 +257,22 @@ namespace Articulate.Routing
                 domains);
         }
 
-        private void MapMarkdownEditorRoute(HttpContext httpContext, string rootNodePath,
-            IPublishedContent articulateRootNode, IReadOnlyList<Domain> domains)
-        {
-            var template = TemplateParser.Parse($"{rootNodePath}a-new");
-            MapRoute(
-                s_markdownEditorControllerName,
-                nameof(MarkdownEditorController.NewPost),
-                template,
-                httpContext,
-                articulateRootNode,
-                domains);
-        }
+        //private void MapMarkdownEditorRoute(HttpContext httpContext, string rootNodePath, IPublishedContent articulateRootNode, IReadOnlyList<Domain> domains)
+        //{
+        //    RouteTemplate template = TemplateParser.Parse($"{rootNodePath}a-new");
+        //    MapRoute(
+        //        s_markdownEditorControllerName,
+        //        nameof(MarkdownEditorController.NewPost),
+        //        template,
+        //        httpContext,
+        //        articulateRootNode,
+        //        domains);
+        //}
 
-        private void MapSearchRoute(HttpContext httpContext, string rootNodePath, IPublishedContent articulateRootNode,
-            IReadOnlyList<Domain> domains)
+        private void MapSearchRoute(HttpContext httpContext, string rootNodePath, IPublishedContent articulateRootNode, IReadOnlyList<Domain> domains)
         {
             var searchUrlName = articulateRootNode.Value<string>("searchUrlName");
-            var template = TemplateParser.Parse($"{rootNodePath}{searchUrlName}");
+            RouteTemplate template = TemplateParser.Parse($"{rootNodePath}{searchUrlName}");
             MapRoute(
                 s_searchControllerName,
                 nameof(ArticulateSearchController.Search),
@@ -309,11 +282,10 @@ namespace Articulate.Routing
                 domains);
         }
 
-        private void MapTagsAndCategoriesRoute(HttpContext httpContext, string rootNodePath,
-            IPublishedContent articulateRootNode, IReadOnlyList<Domain> domains)
+        private void MapTagsAndCategoriesRoute(HttpContext httpContext, string rootNodePath, IPublishedContent articulateRootNode, IReadOnlyList<Domain> domains)
         {
             var categoriesUrlName = articulateRootNode.Value<string>("categoriesUrlName");
-            var categoriesTemplate = TemplateParser.Parse($"{rootNodePath}{categoriesUrlName}/{{tag?}}");
+            RouteTemplate categoriesTemplate = TemplateParser.Parse($"{rootNodePath}{categoriesUrlName}/{{tag?}}");
             MapRoute(
                 s_tagsControllerName,
                 nameof(ArticulateTagsController.Categories),
@@ -321,8 +293,7 @@ namespace Articulate.Routing
                 httpContext,
                 articulateRootNode,
                 domains);
-            var categoriesRssTemplate =
-                TemplateParser.Parse($"{rootNodePath}{categoriesUrlName}/{{tag}}/rss");
+            RouteTemplate categoriesRssTemplate = TemplateParser.Parse($"{rootNodePath}{categoriesUrlName}/{{tag}}/rss");
             MapRoute(
                 s_rssControllerName,
                 nameof(ArticulateRssController.Categories),
@@ -332,7 +303,7 @@ namespace Articulate.Routing
                 domains);
 
             var tagsUrlName = articulateRootNode.Value<string>("tagsUrlName");
-            var tagsTemplate = TemplateParser.Parse($"{rootNodePath}{tagsUrlName}/{{tag?}}");
+            RouteTemplate tagsTemplate = TemplateParser.Parse($"{rootNodePath}{tagsUrlName}/{{tag?}}");
             MapRoute(
                 s_tagsControllerName,
                 nameof(ArticulateTagsController.Tags),
@@ -340,7 +311,7 @@ namespace Articulate.Routing
                 httpContext,
                 articulateRootNode,
                 domains);
-            var tagsRssTemplate = TemplateParser.Parse($"{rootNodePath}{tagsUrlName}/{{tag}}/rss");
+            RouteTemplate tagsRssTemplate = TemplateParser.Parse($"{rootNodePath}{tagsUrlName}/{{tag}}/rss");
             MapRoute(
                 s_rssControllerName,
                 nameof(ArticulateRssController.Tags),

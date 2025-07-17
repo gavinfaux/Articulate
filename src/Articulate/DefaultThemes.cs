@@ -27,8 +27,8 @@ namespace Articulate
 
             public override void CreateBundles(IBundleManager bundleManager)
             {
-                bundleManager.CreateJs("articulate-vapor-js", RequiredThemedJsFolder(Name));
-                bundleManager.CreateCss("articulate-vapor-css", RequiredThemedCssFolder(Name));
+                bundleManager.CreateJs("articulate-vapor-js", DefaultTheme.RequiredThemedJsFolder(Name));
+                bundleManager.CreateCss("articulate-vapor-css", DefaultTheme.RequiredThemedCssFolder(Name));
             }
         }
 
@@ -38,8 +38,8 @@ namespace Articulate
 
             public override void CreateBundles(IBundleManager bundleManager)
             {
-                bundleManager.CreateJs("articulate-material-js", RequiredThemedJsFolder(Name));
-                bundleManager.CreateCss("articulate-material-css", RequiredThemedCssFolder(Name));
+                bundleManager.CreateJs("articulate-material-js", DefaultTheme.RequiredThemedJsFolder(Name));
+                bundleManager.CreateCss("articulate-material-css", DefaultTheme.RequiredThemedCssFolder(Name));
             }
         }
 
@@ -48,7 +48,7 @@ namespace Articulate
             public const string Name = "Phantom";
 
             public override void CreateBundles(IBundleManager bundleManager)
-                => bundleManager.CreateCss("articulate-phantom-css", RequiredThemedCssFolder(Name));
+                => bundleManager.CreateCss("articulate-phantom-css", DefaultTheme.RequiredThemedCssFolder(Name));
         }
 
         public class Mini : DefaultTheme
@@ -56,7 +56,7 @@ namespace Articulate
             public const string Name = "Mini";
 
             public override void CreateBundles(IBundleManager bundleManager)
-                => bundleManager.CreateCss("articulate-mini-css", RequiredThemedCssFolder(Name));
+                => bundleManager.CreateCss("articulate-mini-css", DefaultTheme.RequiredThemedCssFolder(Name));
         }
 
         public abstract class DefaultTheme

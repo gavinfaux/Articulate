@@ -13,8 +13,7 @@ namespace Articulate.Models
     {
         private PostAuthorModel _author;
 
-        public PostModel(IPublishedContent content, IPublishedValueFallback publishedValueFallback,
-            IVariationContextAccessor variationContextAccessor)
+        public PostModel(IPublishedContent content, IPublishedValueFallback publishedValueFallback, IVariationContextAccessor variationContextAccessor)
             : base(content, publishedValueFallback, variationContextAccessor)
         {
             PageTitle = Name + " - " + BlogTitle;
@@ -27,7 +26,7 @@ namespace Articulate.Models
             get
             {
                 var tags = this.Value<IEnumerable<string>>("tags");
-                return tags ?? [];
+                return tags ?? Enumerable.Empty<string>();
             }
         }
 
@@ -36,11 +35,11 @@ namespace Articulate.Models
             get
             {
                 var tags = this.Value<IEnumerable<string>>("categories");
-                return tags ?? [];
+                return tags ?? Enumerable.Empty<string>();
             }
         }
 
-        public bool EnableComments => Unwrap().Value<bool>("enableComments", fallback: Fallback.ToAncestors);
+        public bool EnableComments => base.Unwrap().Value<bool>("enableComments", fallback: Fallback.ToAncestors);
 
         public PostAuthorModel Author
         {
@@ -53,15 +52,12 @@ namespace Articulate.Models
 
                 _author = new PostAuthorModel
                 {
-                    Name = Unwrap().Value<string>("author", fallback: Fallback.ToAncestors)
+                    Name = base.Unwrap().Value<string>("author", fallback: Fallback.ToAncestors)
                 };
 
                 //look up assocated author node if we can
-                var authors = RootBlogNode?.Children(content =>
-                        content.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateAuthors))
-                    .FirstOrDefault();
-                var authorNode = authors?.Children(content => content.Name.InvariantEquals(_author.Name))
-                    .FirstOrDefault();
+                var authors = RootBlogNode?.Children(content => content.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateAuthors)).FirstOrDefault();
+                var authorNode = authors?.Children(content => content.Name.InvariantEquals(_author.Name)).FirstOrDefault();
                 if (authorNode != null)
                 {
                     _author.Bio = authorNode.Value<string>("authorBio");
@@ -76,14 +72,14 @@ namespace Articulate.Models
 
         public string Excerpt => this.Value<string>("excerpt");
 
-        public DateTime PublishedDate => Unwrap().Value<DateTime>("publishedDate");
+        public DateTime PublishedDate => base.Unwrap().Value<DateTime>("publishedDate");
 
         private MediaWithCrops _postImage;
 
         /// <summary>
         /// Some blog post may have an associated image
         /// </summary>
-        public MediaWithCrops PostImage => _postImage ??= Unwrap().Value<MediaWithCrops>("postImage");
+        public MediaWithCrops PostImage => _postImage ??= base.Unwrap().Value<MediaWithCrops>("postImage");
 
         private string _croppedPostImageUrl;
 
@@ -105,8 +101,7 @@ namespace Articulate.Models
                 }
 
                 var wideCropUrl = PostImage.GetCropUrl("wide");
-                _croppedPostImageUrl = (wideCropUrl ?? string.Empty) +
-                                       (wideCropUrl != null && wideCropUrl.Contains('?') ? "&" : "?");
+                _croppedPostImageUrl = (wideCropUrl ?? string.Empty) + ((wideCropUrl != null && wideCropUrl.Contains('?')) ? "&" : "?");
                 return _croppedPostImageUrl;
             }
         }
@@ -122,8 +117,9 @@ namespace Articulate.Models
             {
                 return new HtmlString(
                     this.Value<IHtmlEncodedString>(
-                            this.HasProperty("richText") ? "richText" : "markdown")
-                        .ToHtmlString());
+                        this.HasProperty("richText") ? "richText" : "markdown")
+                    .ToHtmlString());
+
             }
         }
 
@@ -134,4 +130,5 @@ namespace Articulate.Models
         string IImageModel.Name => Name;
         string IImageModel.Url => this.Url();
     }
+
 }

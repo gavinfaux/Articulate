@@ -12,10 +12,19 @@ using Umbraco.Extensions;
 namespace Articulate.ImportExport
 {
     // ReSharper disable once ClassNeverInstantiated.Global
-    public class DisqusXmlExporter(
-        IPublishedUrlProvider publishedUrlProvider,
-        ILogger<DisqusXmlExporter> logger)
+    public class DisqusXmlExporter
     {
+        private readonly IPublishedUrlProvider _publishedUrlProvider;
+        private readonly ILogger<DisqusXmlExporter> _logger;
+
+        public DisqusXmlExporter(
+            IPublishedUrlProvider publishedUrlProvider,
+            ILogger<DisqusXmlExporter> logger)
+        {
+            _publishedUrlProvider = publishedUrlProvider;
+            _logger = logger;
+        }
+
         public XDocument Export(IEnumerable<IContent> posts, BlogMLDocument document)
         {
             var nsContent = XNamespace.Get("http://purl.org/rss/1.0/modules/content/");
@@ -40,12 +49,12 @@ namespace Articulate.ImportExport
 
                 if (blogMlPost == null)
                 {
-                    logger.LogWarning("Cannot find blog ml post XML element with post name {Name}", post.Name);
+                    _logger.LogWarning("Cannot find blog ml post XML element with post name " + post.Name);
                     continue;
                 }
 
                 //no comments to import
-                if (blogMlPost.Comments.Count == 0)
+                if (blogMlPost.Comments.Any() == false)
                 {
                     continue;
                 }
@@ -58,18 +67,15 @@ namespace Articulate.ImportExport
 
                 var xItem = new XElement("item",
                     new XElement("title", post.Name),
-                    new XElement("link",
-                        publishedUrlProvider.GetUrl(post.Id,
-                            Umbraco.Cms.Core.Models.PublishedContent.UrlMode.Absolute) ?? string.Empty),
+                    new XElement("link", _publishedUrlProvider.GetUrl(post.Id, Umbraco.Cms.Core.Models.PublishedContent.UrlMode.Absolute) ?? string.Empty),
                     new XElement(nsContent + "encoded", new XCData(body)),
                     new XElement(nsDsq + "thread_identifier", post.Key.ToString()),
-                    new XElement(nsWp + "post_date_gmt",
-                        post.GetValue<DateTime>("publishedDate").ToUniversalTime().ToIsoString()),
+                    new XElement(nsWp + "post_date_gmt", post.GetValue<DateTime>("publishedDate").ToUniversalTime().ToIsoString()),
                     new XElement(nsWp + "comment_status", "open"));
 
                 foreach (var comment in blogMlPost.Comments)
                 {
-                    var commentText = comment.Content.Content;
+                    string commentText = comment.Content.Content;
 
                     if (comment.Content.ContentType == BlogMLContentType.Base64)
                     {
@@ -80,12 +86,10 @@ namespace Articulate.ImportExport
                         new XElement(nsWp + "comment_id", comment.Id),
                         new XElement(nsWp + "comment_author", comment.UserName),
                         new XElement(nsWp + "comment_author_email", comment.UserEmailAddress),
-                        new XElement(nsWp + "comment_author_url",
-                            comment.UserUrl == null ? string.Empty : comment.UserUrl.ToString()),
+                        new XElement(nsWp + "comment_author_url", comment.UserUrl == null ? string.Empty : comment.UserUrl.ToString()),
                         new XElement(nsWp + "comment_date_gmt", comment.CreatedOn.ToUniversalTime().ToIsoString()),
                         new XElement(nsWp + "comment_content", commentText),
-                        new XElement(nsWp + "comment_approved",
-                            comment.ApprovalStatus == BlogMLApprovalStatus.Approved ? 1 : 0));
+                        new XElement(nsWp + "comment_approved", comment.ApprovalStatus == BlogMLApprovalStatus.Approved ? 1 : 0));
 
                     xItem.Add(xComment);
                 }

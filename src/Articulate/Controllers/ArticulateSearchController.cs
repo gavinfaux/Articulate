@@ -16,18 +16,23 @@ namespace Articulate.Controllers
     /// Renders search results
     /// </summary>
     [ArticulateDynamicRoute]
-    public class ArticulateSearchController(
-        ILogger<RenderController> logger,
-        ICompositeViewEngine compositeViewEngine,
-        IUmbracoContextAccessor umbracoContextAccessor,
-        IPublishedUrlProvider publishedUrlProvider,
-        IPublishedValueFallback publishedValueFallback,
-        IVariationContextAccessor variationContextAccessor,
-        IArticulateSearcher articulateSearcher)
-        : ListControllerBase(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider,
-            publishedValueFallback,
-            variationContextAccessor)
+    public class ArticulateSearchController : ListControllerBase
     {
+        private readonly IArticulateSearcher _articulateSearcher;
+
+        public ArticulateSearchController(
+            ILogger<RenderController> logger,
+            ICompositeViewEngine compositeViewEngine,
+            IUmbracoContextAccessor umbracoContextAccessor,
+            IPublishedUrlProvider publishedUrlProvider,
+            IPublishedValueFallback publishedValueFallback,
+            IVariationContextAccessor variationContextAccessor,
+            IArticulateSearcher articulateSearcher)
+            : base(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider, publishedValueFallback, variationContextAccessor)
+        {
+            _articulateSearcher = articulateSearcher;
+        }
+
         protected override UmbracoRouteValues UmbracoRouteValues => base.UmbracoRouteValues;
 
         public override IActionResult Index() => base.Index();
@@ -54,14 +59,14 @@ namespace Articulate.Controllers
                 var emptyList = new ListModel(
                     CurrentPage,
                     new PagerModel(masterModel.PageSize, 0, 0),
-                    [],
+                    Enumerable.Empty<IPublishedContent>(),
                     PublishedValueFallback,
                     VariationContextAccessor);
 
                 return View(PathHelper.GetThemeViewPath(emptyList, "List"), emptyList);
             }
 
-            if (p is 1)
+            if (p != null && p.Value == 1)
             {
                 return new RedirectToUmbracoPageResult(
                     CurrentPage,
@@ -74,8 +79,7 @@ namespace Articulate.Controllers
                 p = 1;
             }
 
-            var searchResult = articulateSearcher.Search(term, provider, masterModel.BlogArchiveNode.Id,
-                masterModel.PageSize, p.Value - 1, out var totalPosts);
+            var searchResult = _articulateSearcher.Search(term, provider, masterModel.BlogArchiveNode.Id, masterModel.PageSize, p.Value - 1, out var totalPosts);
 
             return GetPagedListView(masterModel, CurrentPage, searchResult, totalPosts, p);
         }

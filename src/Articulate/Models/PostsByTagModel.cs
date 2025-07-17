@@ -45,7 +45,6 @@ namespace Articulate.Models
         public string HtmlId => TagName.SafeEncodeUrlSegments();
 
         private int? _count;
-
         public int PostCount
         {
             get
@@ -59,4 +58,5 @@ namespace Articulate.Models
             }
         }
     }
+
 }

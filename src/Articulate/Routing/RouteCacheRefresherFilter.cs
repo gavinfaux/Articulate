@@ -15,11 +15,17 @@ namespace Articulate.Routing
     /// In some cases many articulate roots might be published at one time but we only want to rebuild the routes once so we'll do it once
     /// at the end of the request.
     /// </remarks>
-    internal class RouteCacheRefresherFilter(
-        IPublishedContentTypeCache publishedContentTypeCache,
-        IDocumentCacheService documentCacheService)
-        : IActionFilter
+    internal class RouteCacheRefresherFilter : IActionFilter
     {
+
+        private readonly IPublishedContentTypeCache _publishedContentTypeCache;
+        private readonly IDocumentCacheService _documentCacheService;
+
+        public RouteCacheRefresherFilter(IPublishedContentTypeCache publishedContentTypeCache, IDocumentCacheService documentCacheService)
+        {
+            _documentCacheService = documentCacheService;
+            _publishedContentTypeCache = publishedContentTypeCache;
+        }
         public void OnActionExecuted(ActionExecutedContext context) => PerformRefresh(context.HttpContext);
 
         public void OnActionExecuting(ActionExecutingContext context)
@@ -40,7 +46,7 @@ namespace Articulate.Routing
                     var umbCtx = umbracoContextReference.UmbracoContext;
 
                     // Regenerate the generated routes
-                    articulateRouter.MapRoutes(context, umbCtx, publishedContentTypeCache, documentCacheService);
+                    articulateRouter.MapRoutes(context, umbCtx, _publishedContentTypeCache, _documentCacheService);
                 }
             }
         }

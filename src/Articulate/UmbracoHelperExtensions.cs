@@ -10,6 +10,7 @@ using Umbraco.Extensions;
 
 namespace Articulate
 {
+
     public static class UmbracoHelperExtensions
     {
         /// <summary>
@@ -88,7 +89,7 @@ namespace Articulate
         {
             var tagsBaseUrl = masterModel.RootBlogNode.Value<string>("tagsUrlName");
 
-            var contentByTags = articulateTagService.GetContentByTags(
+            IEnumerable<PostsByTagModel> contentByTags = articulateTagService.GetContentByTags(
                 helper,
                 tagQuery,
                 masterModel,
@@ -122,8 +123,7 @@ namespace Articulate
 
             var listItems = helper.GetPostsSortedByPublishedDate(pager, null, listNodeIds);
 
-            var rootPageModel = new ListModel(listNodes[0], pager, listItems, publishedValueFallback,
-                variationContextAccessor);
+            var rootPageModel = new ListModel(listNodes[0], pager, listItems, publishedValueFallback, variationContextAccessor);
             return rootPageModel.Posts;
         }
 
@@ -153,8 +153,7 @@ namespace Articulate
 
             var listItems = helper.GetPostsSortedByPublishedDate(pager, null, listNodeIds);
 
-            var rootPageModel = new ListModel(listNodes[0], pager, listItems, publishedValueFallback,
-                variationContextAccessor);
+            var rootPageModel = new ListModel(listNodes[0], pager, listItems, publishedValueFallback, variationContextAccessor);
             return rootPageModel.Posts;
         }
 
@@ -180,8 +179,7 @@ namespace Articulate
 
             var listItems = helper.GetPostsSortedByPublishedDate(pager, null, masterModel.Id);
 
-            var rootPageModel = new ListModel(masterModel, pager, listItems, publishedValueFallback,
-                variationContextAccessor);
+            var rootPageModel = new ListModel(masterModel, pager, listItems, publishedValueFallback, variationContextAccessor);
             return rootPageModel.Posts;
         }
 
@@ -195,19 +193,15 @@ namespace Articulate
         {
             var listNodeIds = listNodes.Select(x => x.Id).ToArray();
 
-            var postWithAuthor = helper.GetPostsSortedByPublishedDate(pager,
-                x => string.Equals(x.Value<string>("author"), authorName.Replace('-', ' '),
-                    StringComparison.InvariantCultureIgnoreCase), listNodeIds);
+            var postWithAuthor = helper.GetPostsSortedByPublishedDate(pager, x => string.Equals(x.Value<string>("author"), authorName.Replace("-", " "), StringComparison.InvariantCultureIgnoreCase), listNodeIds);
 
-            var rootPageModel = new ListModel(listNodes[0], pager, postWithAuthor, publishedValueFallback,
-                variationContextAccessor);
+            var rootPageModel = new ListModel(listNodes[0], pager, postWithAuthor, publishedValueFallback, variationContextAccessor);
             return rootPageModel.Posts;
         }
 
         private static IPublishedContent[] GetListNodes(IMasterModel masterModel)
         {
-            var listNodes = masterModel.RootBlogNode.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive)
-                .ToArray();
+            var listNodes = masterModel.RootBlogNode.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive).ToArray();
             if (listNodes.Length == 0)
             {
                 throw new InvalidOperationException(
@@ -216,5 +210,6 @@ namespace Articulate
 
             return listNodes;
         }
+
     }
 }

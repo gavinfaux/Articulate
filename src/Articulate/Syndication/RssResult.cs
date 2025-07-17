@@ -11,8 +11,17 @@ using Umbraco.Extensions;
 
 namespace Articulate.Syndication
 {
-    public class RssResult(SyndicationFeed feed, IMasterModel model) : ActionResult
+    public class RssResult : ActionResult
     {
+        private readonly SyndicationFeed _feed;
+        private readonly IMasterModel _model;
+
+        public RssResult(SyndicationFeed feed, IMasterModel model)
+        {
+            _feed = feed;
+            _model = model;
+        }
+
         public override async Task ExecuteResultAsync(ActionContext context)
         {
             context.HttpContext.Response.ContentType = "application/xml";
@@ -23,11 +32,10 @@ namespace Articulate.Syndication
                     new XmlWriterSettings { Encoding = Encoding.UTF8, Indent = true, OmitXmlDeclaration = false, Async = true });
 
                 // Write the Processing Instruction node.
-                var xsltHeader =
-                    $"type=\"text/xsl\" href=\"{model.RootBlogNode.Url(mode: UrlMode.Absolute).EnsureEndsWith('/') + "rss/xslt"}\"";
+                var xsltHeader = string.Format("type=\"text/xsl\" href=\"{0}\"", _model.RootBlogNode.Url(mode: UrlMode.Absolute).EnsureEndsWith('/') + "rss/xslt");
                 await xmlWriter.WriteProcessingInstructionAsync("xml-stylesheet", xsltHeader);
 
-                var formatter = feed.GetRss20Formatter();
+                var formatter = _feed.GetRss20Formatter();
                 formatter.WriteTo(xmlWriter);
 
                 await xmlWriter.FlushAsync();
@@ -36,7 +44,7 @@ namespace Articulate.Syndication
             }
         }
 
-        private sealed class Utf8StringWriter : StringWriter
+        public sealed class Utf8StringWriter : StringWriter
         {
             public override Encoding Encoding => Encoding.UTF8;
         }

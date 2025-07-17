@@ -14,20 +14,29 @@ namespace Articulate.Controllers
     /// <summary>
     /// This is used to redirect the Authors node to the root so no 404s occur
     /// </summary>
-    public class ArticulateAuthorsController(
-        ILogger<RenderController> logger,
-        ICompositeViewEngine compositeViewEngine,
-        IUmbracoContextAccessor umbracoContextAccessor,
-        IPublishedValueFallback publishedValueFallback,
-        IVariationContextAccessor variationContextAccessor)
-        : RenderController(logger, compositeViewEngine, umbracoContextAccessor)
+    public class ArticulateAuthorsController : RenderController
     {
+        private readonly IPublishedValueFallback _publishedValueFallback;
+        private readonly IVariationContextAccessor _variationContextAccessor;
+
+        public ArticulateAuthorsController(
+            ILogger<RenderController> logger,
+            ICompositeViewEngine compositeViewEngine,
+            IUmbracoContextAccessor umbracoContextAccessor,
+            IPublishedValueFallback publishedValueFallback,
+            IVariationContextAccessor variationContextAccessor)
+            : base(logger, compositeViewEngine, umbracoContextAccessor)
+        {
+            _publishedValueFallback = publishedValueFallback;
+            _variationContextAccessor = variationContextAccessor;
+        }
+
         public override IActionResult Index()
         {
             var root = new MasterModel(
                 CurrentPage,
-                publishedValueFallback,
-                variationContextAccessor);
+                _publishedValueFallback,
+                _variationContextAccessor);
 
             //TODO: Should we have another setting for authors?
             if (root.RootBlogNode.Value<bool>("redirectArchive"))

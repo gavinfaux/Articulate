@@ -36,8 +36,8 @@ namespace Articulate.Components
             services.AddSingleton<ArticulateRouter>();
             services.AddSingleton<RouteCacheRefresherFilter>();
             services.AddSingleton<ArticulateFrontEndFilterConvention>();
-            builder.Services.TryAddEnumerable(ServiceDescriptor
-                .Singleton<MatcherPolicy, ArticulateDynamicRouteSelectorPolicy>());
+            builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<MatcherPolicy, ArticulateDynamicRouteSelectorPolicy>());
+            builder.Services.TryAddScoped<IThemeService, IThemeService.ThemeService>();
 
             builder.UrlProviders().InsertBefore<NewDefaultUrlProvider, DateFormattedUrlProvider>();
 
@@ -56,12 +56,12 @@ namespace Articulate.Components
 
             builder.Services.AddOutputCache(options =>
             {
-                options.AddPolicy("Articulate120", build =>
-                    build.Expire(TimeSpan.FromSeconds(120)));
-                options.AddPolicy("Articulate300", build =>
-                    build.Expire(TimeSpan.FromSeconds(300)));
-                options.AddPolicy("Articulate60", build =>
-                    build.Expire(TimeSpan.FromSeconds(60)));
+                options.AddPolicy("Articulate120", builder =>
+                    builder.Expire(TimeSpan.FromSeconds(120)));
+                options.AddPolicy("Articulate300", builder =>
+                    builder.Expire(TimeSpan.FromSeconds(300)));
+                options.AddPolicy("Articulate60", builder =>
+                    builder.Expire(TimeSpan.FromSeconds(60)));
             });
         }
     }

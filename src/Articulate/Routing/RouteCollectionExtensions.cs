@@ -14,10 +14,9 @@ namespace Articulate.Routing
         /// <returns></returns>
         internal static string RoutePathFromNodeUrl(HttpContext httpContext, string routePath)
         {
-            var virtualPath =
-                $"{httpContext.Request.Scheme}://{httpContext.Request.Host}{httpContext.Request.PathBase}";
+            var virtualPath = $"{httpContext.Request.Scheme}://{httpContext.Request.Host}{httpContext.Request.PathBase}";
 
-            var rootRoutePath = (Uri.TryCreate(routePath, UriKind.Absolute, out var result)
+            var rootRoutePath = (Uri.TryCreate(routePath, UriKind.Absolute, out Uri result)
                 ? result.PathAndQuery
                 : routePath).EnsureEndsWith('/');
 

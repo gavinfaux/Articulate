@@ -48,7 +48,7 @@
                                     }
                                     @post.Excerpt
                                     <span class="readmore">
-                                        <i class="fa fa-plus-square plus-sign"></i>
+                                        <i class="fa-solid fa-plus-square plus-sign"></i>
                                         <span class="readmore-hover">READMORE</span>
                                     </span>
                                 </div>
@@ -58,7 +58,7 @@
                                 @if (post.Tags.Any())
                                 {
                                     <div class="tags">
-                                        <i class="fa fa-tags fa-lg"></i>
+                                        <i class="fa-solid fa-tags fa-lg"></i>
                                         @await Html.ThemedPartialAsync(Model, "PostTags", post)
                                     </div>    
                                 }

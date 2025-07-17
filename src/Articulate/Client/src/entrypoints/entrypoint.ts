@@ -26,7 +26,11 @@ export const onInit: UmbEntryPointOnInit = (host, _extensionRegistry) => {
   host.consumeContext(UMB_AUTH_CONTEXT, (authContext) => {
     const openApiConfig = authContext?.getOpenApiConfiguration();
     if (openApiConfig) {
-      client.setConfig(openApiConfig);
+      client.setConfig({
+        auth: openApiConfig?.token ?? undefined,
+        baseUrl: openApiConfig?.base ?? "",
+        credentials: openApiConfig?.credentials ?? "same-origin",
+      });
     }
 
     // // Pass the XSRF token to the API client

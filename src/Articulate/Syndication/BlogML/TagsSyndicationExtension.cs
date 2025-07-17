@@ -7,11 +7,16 @@ using Argotic.Extensions;
 
 namespace Articulate.Syndication.BlogML
 {
-    public class TagsSyndicationExtension() : SyndicationExtension("tags", Namespace, new Version("1.0")), IComparable
+    public class TagsSyndicationExtension : SyndicationExtension, IComparable
     {
-        private const string Namespace = "https://github.com/Shazwazza/Articulate/blogml/";
+        public const string Namespace = "https://github.com/Shazwazza/Articulate/blogml/";
 
-        private TagsSyndicationExtensionContext _extensionContext = new();
+        private TagsSyndicationExtensionContext _extensionContext = new TagsSyndicationExtensionContext();
+
+        public TagsSyndicationExtension()
+            : base("tags", Namespace, new Version("1.0"))
+        {
+        }
 
         public TagsSyndicationExtensionContext Context
         {
@@ -30,7 +35,8 @@ namespace Articulate.Syndication.BlogML
                 return 1;
             }
 
-            if (obj is TagsSyndicationExtension syndicationExtension)
+            var syndicationExtension = obj as TagsSyndicationExtension;
+            if (syndicationExtension != null)
             {
                 return
                     string.Compare(Description, syndicationExtension.Description, StringComparison.OrdinalIgnoreCase) |
@@ -45,8 +51,8 @@ namespace Articulate.Syndication.BlogML
             }
 
             throw new ArgumentException(
-                string.Format(null, @"obj is not of type {0}, type was found to be '{1}'.", GetType().FullName,
-                    obj.GetType().FullName), nameof(obj));
+                string.Format(null, "obj is not of type {0}, type was found to be '{1}'.", (object)GetType().FullName,
+                    (object)obj.GetType().FullName), nameof(obj));
         }
 
         /// <inheritdoc />
@@ -75,22 +81,23 @@ namespace Articulate.Syndication.BlogML
 
         public override string ToString()
         {
-            using var memoryStream = new MemoryStream();
-            using (var writer = XmlWriter.Create(memoryStream,
-                       new XmlWriterSettings
-                       {
-                           ConformanceLevel = ConformanceLevel.Fragment,
-                           Indent = true,
-                           OmitXmlDeclaration = true
-                       }))
+            using (var memoryStream = new MemoryStream())
             {
-                WriteTo(writer);
-            }
+                using (var writer = XmlWriter.Create(memoryStream, new XmlWriterSettings
+                {
+                    ConformanceLevel = ConformanceLevel.Fragment,
+                    Indent = true,
+                    OmitXmlDeclaration = true
+                }))
+                {
+                    WriteTo(writer);
+                }
 
-            memoryStream.Seek(0L, SeekOrigin.Begin);
-            using (var streamReader = new StreamReader(memoryStream))
-            {
-                return streamReader.ReadToEnd();
+                memoryStream.Seek(0L, SeekOrigin.Begin);
+                using (var streamReader = new StreamReader(memoryStream))
+                {
+                    return streamReader.ReadToEnd();
+                }
             }
         }
 

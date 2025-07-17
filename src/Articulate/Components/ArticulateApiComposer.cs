@@ -2,7 +2,6 @@
 using System;
 using System.Text.RegularExpressions;
 using Articulate.Options;
-using Articulate.Services;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.Mvc.Controllers;
@@ -31,9 +30,6 @@ namespace Articulate.Components
 
             _ = builder.Services.ConfigureOptions<ArticulateSwaggerOptions>();
 
-            _ = builder.Services.AddTransient<IMarkdownImageProcessor, MarkdownImageProcessor>();
-
-            _ = builder.Services.AddTransient<IThemeService, ThemeService>();
         }
     }
 
@@ -127,13 +123,13 @@ namespace Articulate.Components
         // Lifted from Umbraco.Cms.Api.Common.OpenApi.OperationIdRegexes
 
         // Your IDE may be showing errors here, this is because it's a new dotnet 7 feature, error resolved on compile (it's fixed in the EAP of Rider)
-        [GeneratedRegex(".*?\\/v[1-9]+/")]
+        [GeneratedRegex(".*?\\/v[1-9]+/", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase | RegexOptions.Compiled)]
         public static partial Regex VersionPrefixRegex();
 
-        [GeneratedRegex("\\{(.*?)\\:?\\}")]
+        [GeneratedRegex("\\{(.*?)\\:?\\}", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase | RegexOptions.Compiled)]
         public static partial Regex TemplatePlaceholdersRegex();
 
-        [GeneratedRegex("[\\/\\-](\\w{1})")]
+        [GeneratedRegex("[\\/\\-](\\w{1})", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase | RegexOptions.Compiled)]
         public static partial Regex ToCamelCaseRegex();
     }
 }

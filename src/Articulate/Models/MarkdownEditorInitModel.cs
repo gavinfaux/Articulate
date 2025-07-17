@@ -5,11 +5,11 @@ namespace Articulate.Models
         public int ArticulateNodeId { get; set; }
         public string PostUrl { get; set; }
 
-        public string AuthSignInUrl { get; set; }
+        public string AuthLoginUrl { get; set; }
 
-        public string AuthSignOutUrl { get; set; }
+        public string AuthLogoutUrl { get; set; }
 
-        public string AuthCsrfTokenUrl { get; set; }
+        public string CsrfTokenUrl { get; set; }
 
         public string AuthStatusUrl { get; set; }
     }

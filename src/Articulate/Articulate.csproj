@@ -25,7 +25,7 @@
     <Company>Shannon Deminick</Company>
     <Copyright>Copyright © $(Company) $([System.DateTime]::Now.Year)</Copyright>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
   </PropertyGroup>
   
   <!-- NoWarn for missing XML comments on public API-->

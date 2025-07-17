@@ -10,17 +10,19 @@ using Umbraco.Extensions;
 
 namespace Articulate.Routing
 {
-
-    public class DateFormattedUrlProvider(
-        IOptionsMonitor<RequestHandlerSettings> requestSettings,
-        ILogger<DefaultUrlProvider> logger,
-        ISiteDomainMapper siteDomainMapper,
-        IUmbracoContextAccessor umbracoContextAccessor,
-        UriUtility uriUtility,
-        ILocalizationService localizationService)
-        : DefaultUrlProvider(requestSettings, logger, siteDomainMapper, umbracoContextAccessor, uriUtility,
-            localizationService)
+    public class DateFormattedUrlProvider : DefaultUrlProvider
     {
+        public DateFormattedUrlProvider(
+            IOptionsMonitor<RequestHandlerSettings> requestSettings,
+            ILogger<DefaultUrlProvider> logger,
+            ISiteDomainMapper siteDomainMapper,
+            IUmbracoContextAccessor umbracoContextAccessor,
+            UriUtility uriUtility,
+            ILocalizationService localizationService)
+            : base(requestSettings, logger, siteDomainMapper, umbracoContextAccessor, uriUtility, localizationService)
+        {
+        }
+
         public override UrlInfo GetUrl(IPublishedContent content, UrlMode mode, string culture, Uri current)
         {
             if (content is
@@ -42,11 +44,9 @@ namespace Articulate.Routing
                 var date = content.Value<DateTime?>("publishedDate");
                 if (date != null)
                 {
+                    var urlFolder = string.Format("{0}/{1:d2}/{2:d2}", date.Value.Year, date.Value.Month, date.Value.Day);
                     var parentPath = base.GetUrl(content.Parent(), mode, culture, current);
-                    var urlFolder = string.Format("{0}/{1:d2}/{2:d2}", date.Value.Year, date.Value.Month,
-                        date.Value.Day);
-                    var newUrl = parentPath.Text.EnsureEndsWith("/") + urlFolder + "/" +
-                                 content.UrlSegment.EnsureEndsWith("/");
+                    var newUrl = parentPath.Text.EnsureEndsWith("/") + urlFolder + "/" + content.UrlSegment.EnsureEndsWith("/");
 
                     return UrlInfo.Url(newUrl, culture);
                 }

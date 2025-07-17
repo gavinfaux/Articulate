@@ -32,9 +32,9 @@
 <body x-data="markdownEditor" x-init="init" x-cloak
       data-articulate-node-id="@Model.ArticulateNodeId"
       data-auth-status-url="@Model.AuthStatusUrl"
-      data-auth-signin-url="@Model.AuthSignInUrl"
-      data-auth-csrf-url="@Model.AuthCsrfTokenUrl"
-      data-auth-signout-url="@Model.AuthSignOutUrl"
+      data-auth-signin-url="@Model.AuthLoginUrl"
+      data-auth-csrf-url="@Model.CsrfTokenUrl"
+      data-auth-signout-url="@Model.AuthLogoutUrl"
       data-post-url="@Model.PostUrl">
 
     <div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">

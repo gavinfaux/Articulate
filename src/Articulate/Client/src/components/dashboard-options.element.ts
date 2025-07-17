@@ -20,7 +20,7 @@ const dashboards = [
     path: "theme/options",
     name: "Theme Options",
     icon: "icon-color-bucket",
-    description: "Themean Articulate theme for customization",
+    description: "Duplicate an Articulate default theme for customization",
   },
 ];
 

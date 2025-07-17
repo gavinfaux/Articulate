@@ -9,12 +9,15 @@ namespace Articulate.Syndication.BlogML
     [Serializable]
     public class TagsSyndicationExtensionContext
     {
-        private Collection<string> _extensionTags = [];
+        private Collection<string> _extensionTags;
+
+        public TagsSyndicationExtensionContext()
+        {
+            _extensionTags = new Collection<string>();
+        }
 
         public Collection<string> Tags
-        {
-            get => _extensionTags;
-            set => _extensionTags = value;
+        { get => _extensionTags; set => _extensionTags = value;
         }
 
         public bool Load(XPathNavigator source, XmlNamespaceManager manager)

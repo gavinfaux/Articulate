@@ -16,19 +16,22 @@ namespace Articulate.Controllers
     /// <summary>
     /// Renders the Articulate Archive node as a blog post list by date
     /// </summary>
-    public class ArticulateArchiveController(
-        ILogger<RenderController> logger,
-        ICompositeViewEngine compositeViewEngine,
-        IUmbracoContextAccessor umbracoContextAccessor,
-        IPublishedUrlProvider publishedUrlProvider,
-        IPublishedValueFallback publishedValueFallback,
-        IVariationContextAccessor variationContextAccessor,
-        UmbracoHelper umbraco)
-        : ListControllerBase(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider,
-            publishedValueFallback,
-            variationContextAccessor)
+    public class ArticulateArchiveController : ListControllerBase
     {
-        public UmbracoHelper Umbraco { get; } = umbraco;
+        public ArticulateArchiveController(
+            ILogger<RenderController> logger,
+            ICompositeViewEngine compositeViewEngine,
+            IUmbracoContextAccessor umbracoContextAccessor,
+            IPublishedUrlProvider publishedUrlProvider,
+            IPublishedValueFallback publishedValueFallback,
+            IVariationContextAccessor variationContextAccessor,
+            UmbracoHelper umbraco)
+            : base(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider, publishedValueFallback, variationContextAccessor)
+        {
+            Umbraco = umbraco;
+        }
+
+        public UmbracoHelper Umbraco { get; }
 
         /// <summary>
         /// Declare new Index action with optional page number
@@ -57,12 +60,12 @@ namespace Articulate.Controllers
             //Get post count by xpath is much faster than iterating all children to get a count
             var count = Umbraco.GetPostCount(archive.Id);
 
-            if (!int.TryParse(archive.RootBlogNode.Value<string>("pageSize"), out var pageSize))
+            if (!int.TryParse(archive.RootBlogNode.Value<string>("pageSize"), out int pageSize))
             {
                 pageSize = 10;
             }
 
-            var posts = Umbraco.GetRecentPostsByArchive(
+            IEnumerable<PostModel> posts = Umbraco.GetRecentPostsByArchive(
                 archive,
                 1,
                 pageSize,

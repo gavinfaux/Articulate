@@ -86,11 +86,8 @@ namespace Articulate.ImportExport
             _articulateTempFileSystem = articulateTempFileSystem;
             _articulateRootMediaFolder = new Lazy<IMedia>(() =>
             {
-                var root = _mediaService.GetRootMedia().FirstOrDefault(x =>
-                    x.Name == ArticulateConstants.Convention.Articulate &&
-                    x.ContentType.Alias.InvariantEquals(Constants.Conventions.MediaTypes.Folder));
-                return root ??= _mediaService.CreateMediaWithIdentity(ArticulateConstants.Convention.Articulate,
-                    Constants.System.Root, Constants.Conventions.MediaTypes.Folder);
+                var root = _mediaService.GetRootMedia().FirstOrDefault(x => x.Name == ArticulateConstants.Convention.Articulate && x.ContentType.Alias.InvariantEquals(Constants.Conventions.MediaTypes.Folder));
+                return root ??= _mediaService.CreateMediaWithIdentity(ArticulateConstants.Convention.Articulate, Constants.System.Root, Constants.Conventions.MediaTypes.Folder);
             });
         }
 
@@ -127,53 +124,54 @@ namespace Articulate.ImportExport
 
             if (!root.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.Articulate))
             {
-                throw new InvalidOperationException("The node with id " + blogRootNode +
-                                                    " is not an Articulate root node");
+                throw new InvalidOperationException("The node with id " + blogRootNode + " is not an Articulate root node");
             }
 
             // wrap entire operation in scope
-            using var scope = _scopeProvider.CreateScope();
-            var returnModel = new ImportResponse();
-
-            try
+            using (var scope = _scopeProvider.CreateScope())
             {
-                await using (var stream = _articulateTempFileSystem.OpenFile(fileName))
+                var returnModel = new ImportResponse();
+
+                try
                 {
-                    var document = new BlogMLDocument();
-                    document.Load(stream);
-
-                    stream.Position = 0;
-                    var xdoc = XDocument.Load(stream);
-
-                    var authorIdsToName = ImportAuthors(userId, root, document.Authors);
-                    returnModel.AuthorCount = authorIdsToName.Count;
-                    var imported = await ImportPosts(userId, xdoc, root, document.Posts, document.Authors.ToArray(),
-                        document.Categories.ToArray(), authorIdsToName, overwrite, regexMatch, regexReplace, publishAll,
-                        importFirstImage);
-                    var enumerable = imported as IContent[] ?? imported.ToArray();
-                    returnModel.PostCount = enumerable.Count();
-
-                    if (exportDisqusXml)
+                    await using (var stream = _articulateTempFileSystem.OpenFile(fileName))
                     {
-                        var xDoc = _disqusXmlExporter.Export(enumerable, document);
-                        const string nsWp = "http://wordpress.org/export/1.0/";
-                        returnModel.CommentCount = xDoc.Descendants(XName.Get("comment", nsWp)).Count();
-                        using var memStream = new MemoryStream();
-                        xDoc.Save(memStream);
-                        _articulateTempFileSystem.AddFile("DisqusXmlExport.xml", memStream, true);
-                    }
-                }
+                        var document = new BlogMLDocument();
+                        document.Load(stream);
 
-                // commit
-                _ = scope.Complete();
-                returnModel.Completed = true;
-                return returnModel;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Importing failed with errors");
-                returnModel.Completed = false;
-                return returnModel;
+                        stream.Position = 0;
+                        var xdoc = XDocument.Load(stream);
+
+                        var authorIdsToName = ImportAuthors(userId, root, document.Authors);
+                        returnModel.AuthorCount = authorIdsToName.Count;
+                        var imported = await ImportPosts(userId, xdoc, root, document.Posts, document.Authors.ToArray(),
+                            document.Categories.ToArray(), authorIdsToName, overwrite, regexMatch, regexReplace, publishAll,
+                            importFirstImage);
+                        var enumerable = imported as IContent[] ?? imported.ToArray();
+                        returnModel.PostCount = enumerable.Count();
+
+                        if (exportDisqusXml)
+                        {
+                            var xDoc = _disqusXmlExporter.Export(enumerable, document);
+                            const string nsWp = "http://wordpress.org/export/1.0/";
+                            returnModel.CommentCount = xDoc.Descendants(XName.Get("comment", nsWp)).Count();
+                            using var memStream = new MemoryStream();
+                            xDoc.Save(memStream);
+                            _articulateTempFileSystem.AddFile("DisqusXmlExport.xml", memStream, true);
+                        }
+                    }
+
+                    // commit
+                    _ = scope.Complete();
+                    returnModel.Completed = true;
+                    return returnModel;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Importing failed with errors");
+                    returnModel.Completed = false;
+                    return returnModel;
+                }
             }
         }
 
@@ -190,36 +188,32 @@ namespace Articulate.ImportExport
             return document;
         }
 
-        private Dictionary<string, string> ImportAuthors(int userId, IContent rootNode,
-            IEnumerable<BlogMLAuthor> authors)
+        private IDictionary<string, string> ImportAuthors(int userId, IContent rootNode, IEnumerable<BlogMLAuthor> authors)
         {
             var result = new Dictionary<string, string>();
 
             var authorType = _contentTypeService.Get(ArticulateConstants.ContentType.ArticulateAuthor)
-                             ?? throw new InvalidOperationException(
-                                 "Articulate is not installed properly, the 'ArticulateAuthor' doc type could not be found");
+                ?? throw new InvalidOperationException("Articulate is not installed properly, the 'ArticulateAuthor' doc type could not be found");
 
             var authorsType = _contentTypeService.Get(ArticulateConstants.ContentType.ArticulateAuthors)
-                              ?? throw new InvalidOperationException(
-                                  "Articulate is not installed properly, the 'ArticulateAuthors' doc type could not be found");
+                ?? throw new InvalidOperationException("Articulate is not installed properly, the 'ArticulateAuthors' doc type could not be found");
 
             // get the authors container node for this articulate root
             var allAuthorsNodes = _contentService.GetPagedOfType(
                 authorsType.Id,
                 0,
                 int.MaxValue,
-                out var totalAuthorsNodes,
+                out long totalAuthorsNodes,
                 _sqlContext.Query<IContent>().Where(x => x.ParentId == rootNode.Id && x.Trashed == false));
 
             var authorsNode = allAuthorsNodes.FirstOrDefault();
             if (authorsNode == null)
             {
                 //create the authors node
-                authorsNode = _contentService.CreateWithInvariantOrDefaultCultureName(
-                    ArticulateConstants.Convention.AuthorsDocument, rootNode, authorsType, _localizationService);
+                authorsNode = _contentService.CreateWithInvariantOrDefaultCultureName(ArticulateConstants.Convention.AuthorsDocument, rootNode, authorsType, _localizationService);
 
-                _ = _contentService.Save(authorsNode, userId);
-                _ = _contentService.Publish(authorsNode, ["*"], userId);
+                _contentService.Save(authorsNode, userId: userId);
+                _contentService.Publish(authorsNode, ["*"], userId: userId);
             }
 
             // get the authors nodes for this authors container
@@ -227,7 +221,7 @@ namespace Articulate.ImportExport
                 authorType.Id,
                 0,
                 int.MaxValue,
-                out var totalAuthorNodes,
+                out long totalAuthorNodes,
                 _sqlContext.Query<IContent>().Where(x => x.ParentId == authorsNode.Id && x.Trashed == false));
 
             foreach (var author in authors)
@@ -244,11 +238,10 @@ namespace Articulate.ImportExport
                     {
                         //create an author with the same name as the user - we'll need to wire up that
                         // name to posts later on
-                        authorNode = _contentService.CreateWithInvariantOrDefaultCultureName(found.Name, authorsNode,
-                            authorType, _localizationService);
+                        authorNode = _contentService.CreateWithInvariantOrDefaultCultureName(found.Name, authorsNode, authorType, _localizationService);
 
-                        _ = _contentService.Save(authorNode, userId);
-                        _ = _contentService.Publish(authorNode, ["*"], userId);
+                        _contentService.Save(authorNode, userId: userId);
+                        _contentService.Publish(authorNode, ["*"], userId: userId);
                     }
 
                     result.Add(author.Id, authorNode.Name);
@@ -262,11 +255,10 @@ namespace Articulate.ImportExport
                     if (authorNode == null)
                     {
                         //create a new author node with this title
-                        authorNode = _contentService.CreateWithInvariantOrDefaultCultureName(author.Title.Content,
-                            authorsNode, authorType, _localizationService);
+                        authorNode = _contentService.CreateWithInvariantOrDefaultCultureName(author.Title.Content, authorsNode, authorType, _localizationService);
 
-                        _ = _contentService.Save(authorNode, userId);
-                        _ = _contentService.Publish(authorNode, ["*"], userId);
+                        _contentService.Save(authorNode, userId: userId);
+                        _contentService.Publish(authorNode, ["*"], userId: userId);
                     }
 
                     result.Add(author.Id, authorNode.Name);
@@ -276,16 +268,12 @@ namespace Articulate.ImportExport
             return result;
         }
 
-        private async Task<IEnumerable<IContent>> ImportPosts(int userId, XDocument xdoc, IContent rootNode,
-            IEnumerable<BlogMLPost> posts, BlogMLAuthor[] authors, BlogMLCategory[] categories,
-            Dictionary<string, string> authorIdsToName, bool overwrite, string regexMatch, string regexReplace,
-            bool publishAll, bool importFirstImage = false)
+        private async Task<IEnumerable<IContent>> ImportPosts(int userId, XDocument xdoc, IContent rootNode, IEnumerable<BlogMLPost> posts, BlogMLAuthor[] authors, BlogMLCategory[] categories, IDictionary<string, string> authorIdsToName, bool overwrite, string regexMatch, string regexReplace, bool publishAll, bool importFirstImage = false)
         {
             var result = new List<IContent>();
 
             var postType = _contentTypeService.Get(ArticulateConstants.ContentType.ArticulateRichText)
-                           ?? throw new InvalidOperationException(
-                               "Articulate is not installed properly, the 'ArticulateRichText' doc type could not be found");
+                ?? throw new InvalidOperationException("Articulate is not installed properly, the 'ArticulateRichText' doc type could not be found");
 
             var archiveDocType = _contentTypeService.Get(ArticulateConstants.ContentType.ArticulateArchive);
 
@@ -294,7 +282,7 @@ namespace Articulate.ImportExport
                 archiveDocType.Id,
                 0,
                 int.MaxValue,
-                out var totalArchives,
+                out long totalArchives,
                 _sqlContext.Query<IContent>().Where(x => x.ParentId == rootNode.Id && x.Trashed == false));
 
             var archiveNode = archive.FirstOrDefault();
@@ -302,10 +290,9 @@ namespace Articulate.ImportExport
             if (archiveNode == null)
             {
                 //create the authors node
-                archiveNode = _contentService.CreateWithInvariantOrDefaultCultureName(
-                    ArticulateConstants.Convention.AuthorsDocument, rootNode, archiveDocType, _localizationService);
+                archiveNode = _contentService.CreateWithInvariantOrDefaultCultureName(ArticulateConstants.Convention.AuthorsDocument, rootNode, archiveDocType, _localizationService);
 
-                _ = _contentService.Save(archiveNode);
+                _contentService.Save(archiveNode);
             }
 
             // get the posts for this archive container
@@ -313,7 +300,7 @@ namespace Articulate.ImportExport
                 archiveNode.Id,
                 0,
                 int.MaxValue,
-                out var totalPostNodes,
+                out long totalPostNodes,
                 _sqlContext.Query<IContent>().Where(x => x.ParentId == archiveNode.Id && x.Trashed == false));
 
             foreach (var post in posts)
@@ -332,8 +319,7 @@ namespace Articulate.ImportExport
                     //Use the "slug" (post name) if post.id is not there
                     postNode = allPostNodes
                         .FirstOrDefault(x => x.GetValue<string>(Constants.Conventions.Content.UrlName) != null
-                                             && x.GetValue<string>(Constants.Conventions.Content.UrlName)
-                                                 .InvariantStartsWith(post.Name.Content));
+                                             && x.GetValue<string>(Constants.Conventions.Content.UrlName).InvariantStartsWith(post.Name.Content));
                 }
 
                 //it exists and we don't wanna overwrite, skip it
@@ -346,14 +332,12 @@ namespace Articulate.ImportExport
                 if (postNode == null)
                 {
                     var title = WebUtility.HtmlDecode(post.Title.Content);
-                    postNode = _contentService.CreateWithInvariantOrDefaultCultureName(title, archiveNode, postType,
-                        _localizationService);
+                    postNode = _contentService.CreateWithInvariantOrDefaultCultureName(title, archiveNode, postType, _localizationService);
                 }
 
                 var propType = postType.CompositionPropertyTypes.First(x => x.Alias == "publishedDate");
 
-                postNode.SetInvariantOrDefaultCultureValue("publishedDate", post.CreatedOn, postType,
-                    _localizationService);
+                postNode.SetInvariantOrDefaultCultureValue("publishedDate", post.CreatedOn, postType, _localizationService);
 
                 if (post.Excerpt != null && post.Excerpt.Content.IsNullOrWhiteSpace() == false)
                 {
@@ -385,8 +369,7 @@ namespace Articulate.ImportExport
 
                 // This apparently now needs to be saved as an HtmlString before hand,
                 // see https://docs.umbraco.com/umbraco-cms/fundamentals/backoffice/property-editors/built-in-umbraco-property-editors/rich-text-editor#add-values-programmatically
-                postNode.SetInvariantOrDefaultCultureValue("richText", new HtmlString(content), postType,
-                    _localizationService);
+                postNode.SetInvariantOrDefaultCultureValue("richText", new HtmlString(content), postType, _localizationService);
 
                 postNode.SetInvariantOrDefaultCultureValue("enableComments", true, postType, _localizationService);
 
@@ -401,18 +384,16 @@ namespace Articulate.ImportExport
                     //If post-name is not available we take the URL and remove the extension
                     else
                     {
-                        var slugArray = post.Url.OriginalString.Split(['/'], StringSplitOptions.RemoveEmptyEntries);
+                        var slugArray = post.Url.OriginalString.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
                         var fileNameAndQuery = slugArray[^1];
-                        var fileNameAndQueryArray =
-                            fileNameAndQuery.Split(['?'], StringSplitOptions.RemoveEmptyEntries);
+                        var fileNameAndQueryArray = fileNameAndQuery.Split(new[] { '?' }, StringSplitOptions.RemoveEmptyEntries);
                         var fileName = fileNameAndQueryArray[^1];
-                        var fileNameArray = fileName.Split(['.'], StringSplitOptions.RemoveEmptyEntries);
+                        var fileNameArray = fileName.Split(new[] { '.' }, StringSplitOptions.RemoveEmptyEntries);
                         var ext = fileNameArray[^1];
                         slug = fileName.TrimEnd("." + ext);
                     }
 
-                    postNode.SetInvariantOrDefaultCultureValue(Constants.Conventions.Content.UrlName, slug, postType,
-                        _localizationService);
+                    postNode.SetInvariantOrDefaultCultureValue(Constants.Conventions.Content.UrlName, slug, postType, _localizationService);
                 }
 
                 if (post.Authors.Count > 0)
@@ -435,12 +416,12 @@ namespace Articulate.ImportExport
 
                 if (publishAll)
                 {
-                    _ = _contentService.Save(postNode, userId);
-                    _ = _contentService.Publish(postNode, ["*"], userId);
+                    _contentService.Save(postNode, userId: userId);
+                    _contentService.Publish(postNode, ["*"], userId);
                 }
                 else
                 {
-                    _ = _contentService.Save(postNode, userId);
+                    _contentService.Save(postNode, userId);
                 }
 
                 //if (!publicKey.IsNullOrWhiteSpace())
@@ -475,13 +456,14 @@ namespace Articulate.ImportExport
             {
                 try
                 {
-                    using var client = new HttpClient();
-                    stream = await client.GetStreamAsync(attachment.ExternalUri);
+                    using (var client = new HttpClient())
+                    {
+                        stream = await client.GetStreamAsync(attachment.ExternalUri);
+                    }
                 }
                 catch (Exception exception)
                 {
-                    _logger.LogError(exception, "Exception retrieving {AttachmentUrl}; post {PostId}", attachment.Url,
-                        post.Id);
+                    _logger.LogError(exception, "Exception retrieving {AttachmentUrl}; post {PostId}", attachment.Url, post.Id);
                 }
             }
 
@@ -490,8 +472,7 @@ namespace Articulate.ImportExport
                 using (stream)
                 {
                     // create a media item
-                    var media = _mediaService.CreateMedia(postNode.Name, _articulateRootMediaFolder.Value,
-                        Constants.Conventions.MediaTypes.Image);
+                    var media = _mediaService.CreateMedia(postNode.Name, _articulateRootMediaFolder.Value, Constants.Conventions.MediaTypes.Image);
                     media.SetValue(
                         _mediaFileManager,
                         _mediaUrlGenerators,
@@ -547,38 +528,34 @@ namespace Articulate.ImportExport
         //    }
         //}
 
-        private void ImportCategories(IContent postNode, BlogMLPost post, IEnumerable<BlogMLCategory> allCategories,
-            IContentType postType)
+        private void ImportCategories(IContent postNode, BlogMLPost post, IEnumerable<BlogMLCategory> allCategories, IContentType postType)
         {
             var postCats = allCategories.Where(x => post.Categories.Contains(x.Id))
                 .Select(x => x.Title.Content)
                 .ToArray();
 
-            postNode.AssignInvariantOrDefaultCultureTags("categories", postCats, postType, _localizationService,
-                _dataTypeService, _dataEditors, _jsonSerializer);
+            postNode.AssignInvariantOrDefaultCultureTags("categories", postCats, postType, _localizationService, _dataTypeService, _dataEditors, _jsonSerializer);
         }
 
         private void ImportTags(XDocument xdoc, IContent postNode, BlogMLPost post, IContentType postType)
         {
             //since this blobml serializer doesn't support tags (can't find one that does) we need to manually take care of that
             var xmlPost = xdoc.Descendants(XName.Get("post", xdoc.Root.Name.NamespaceName))
-                .SingleOrDefault(x => (string)x.Attribute("id") == post.Id);
+                .SingleOrDefault(x => ((string)x.Attribute("id")) == post.Id);
 
             xmlPost ??= xdoc.Descendants(XName.Get("post", xdoc.Root.Name.NamespaceName))
-                .SingleOrDefault(x => x.Descendants(XName.Get("post-name", xdoc.Root.Name.NamespaceName))
-                    .SingleOrDefault(s => s.Value == post.Name.Content) != null
-                );
+                                .SingleOrDefault(x => x.Descendants(XName.Get("post-name", xdoc.Root.Name.NamespaceName))
+                                .SingleOrDefault(s => s.Value == post.Name.Content) != null
+                                );
 
             if (xmlPost == null)
             {
                 return;
             }
 
-            var tags = xmlPost.Descendants(XName.Get("tag", xdoc.Root.Name.NamespaceName))
-                .Select(x => (string)x.Attribute("ref")).ToArray();
+            var tags = xmlPost.Descendants(XName.Get("tag", xdoc.Root.Name.NamespaceName)).Select(x => (string)x.Attribute("ref")).ToArray();
 
-            postNode.AssignInvariantOrDefaultCultureTags("tags", tags, postType, _localizationService, _dataTypeService,
-                _dataEditors, _jsonSerializer);
+            postNode.AssignInvariantOrDefaultCultureTags("tags", tags, postType, _localizationService, _dataTypeService, _dataEditors, _jsonSerializer);
         }
     }
 }

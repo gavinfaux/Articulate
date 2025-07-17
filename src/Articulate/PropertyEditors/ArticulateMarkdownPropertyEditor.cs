@@ -8,6 +8,7 @@ using Umbraco.Cms.Core.Templates;
 
 namespace Articulate.PropertyEditors
 {
+
     [DataEditor("Articulate.MarkdownEditor", ValueType = ValueTypes.Text,
         ValueEditorIsReusable = true)]
     public class ArticulateMarkdownPropertyEditor(IDataValueEditorFactory dataValueEditorFactor)
@@ -30,7 +31,7 @@ namespace Articulate.PropertyEditors
             bool preview)
         {
             var md = (string)inter;
-            return new HtmlEncodedString(inter == null ? string.Empty : MarkdownHelper.ToHtml(md));
+            return new HtmlEncodedString((inter == null) ? string.Empty : MarkdownHelper.ToHtml(md));
         }
     }
 }

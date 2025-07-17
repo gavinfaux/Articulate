@@ -4,7 +4,7 @@ using static Articulate.ArticulateEnum;
 
 namespace Articulate.Attributes
 {
-    [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
     public sealed class ManagementApiAttribute : ApiExplorerSettingsAttribute
     {
         public ManagementApi Group { get; }

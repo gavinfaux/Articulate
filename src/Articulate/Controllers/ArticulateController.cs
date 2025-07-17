@@ -17,18 +17,23 @@ namespace Articulate.Controllers
     /// <summary>
     /// Renders the Articulate root node as the main blog post list by date
     /// </summary>
-    public class ArticulateController(
-        ILogger<RenderController> logger,
-        ICompositeViewEngine compositeViewEngine,
-        IUmbracoContextAccessor umbracoContextAccessor,
-        IPublishedUrlProvider publishedUrlProvider,
-        IPublishedValueFallback publishedValueFallback,
-        IVariationContextAccessor variationContextAccessor,
-        UmbracoHelper umbracoHelper)
-        : ListControllerBase(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider,
-            publishedValueFallback,
-            variationContextAccessor)
+    public class ArticulateController : ListControllerBase
     {
+        private readonly UmbracoHelper _umbracoHelper;
+
+        public ArticulateController(
+            ILogger<RenderController> logger,
+            ICompositeViewEngine compositeViewEngine,
+            IUmbracoContextAccessor umbracoContextAccessor,
+            IPublishedUrlProvider publishedUrlProvider,
+            IPublishedValueFallback publishedValueFallback,
+            IVariationContextAccessor variationContextAccessor,
+            UmbracoHelper umbracoHelper)
+            : base(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider, publishedValueFallback, variationContextAccessor)
+        {
+            _umbracoHelper = umbracoHelper;
+        }
+
         /// <summary>
         /// Declare new Index action with optional page number
         /// </summary>
@@ -48,15 +53,14 @@ namespace Articulate.Controllers
             var listNodes = model.Content.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive).ToArray();
             if (listNodes.Length == 0)
             {
-                throw new InvalidOperationException(
-                    "An ArticulateArchive document must exist under the root Articulate document");
+                throw new InvalidOperationException("An ArticulateArchive document must exist under the root Articulate document");
             }
 
             var master = new MasterModel(model.Content, PublishedValueFallback, VariationContextAccessor);
 
-            var count = umbracoHelper.GetPostCount(listNodes.Select(x => x.Id).ToArray());
+            var count = _umbracoHelper.GetPostCount(listNodes.Select(x => x.Id).ToArray());
 
-            var posts = umbracoHelper.GetRecentPosts(
+            var posts = _umbracoHelper.GetRecentPosts(
                 master,
                 p ?? 1,
                 master.PageSize,
@@ -64,6 +68,7 @@ namespace Articulate.Controllers
                 VariationContextAccessor);
 
             return GetPagedListView(master, listNodes[0], posts, count, p);
+
         }
     }
 }

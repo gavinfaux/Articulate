@@ -31,9 +31,9 @@ namespace Articulate.Routing
         {
             // Don't apply this filter to any endpoint group that is a controller route
             // i.e. only dynamic routes.
-            foreach (var endpoint in endpoints)
+            foreach (Endpoint endpoint in endpoints)
             {
-                var controller = endpoint.Metadata.GetMetadata<ControllerAttribute>();
+                ControllerAttribute? controller = endpoint.Metadata.GetMetadata<ControllerAttribute>();
                 if (controller != null)
                 {
                     return false;
@@ -51,8 +51,7 @@ namespace Articulate.Routing
             // If the request has been dynamically routed by articulate to an
             // Articulate controller
             if (umbracoRouteValues != null
-                && umbracoRouteValues.ControllerActionDescriptor.EndpointMetadata.Any(x =>
-                    x is ArticulateDynamicRouteAttribute))
+                && umbracoRouteValues.ControllerActionDescriptor.EndpointMetadata.Any(x => x is ArticulateDynamicRouteAttribute))
             {
                 for (var i = 0; i < candidates.Count; i++)
                 {

@@ -10,127 +10,93 @@ namespace Articulate.Models
 {
     public static class PublishedContentExtensions
     {
-        //public static string GetArticulateCropUrl(this IPublishedContent content, string propertyAlias,
-        //    VariationContext variationContext)
-        //{
-        //    if (!content.ContentType.VariesByCulture())
-        //    {
-        //        return content.Value<MediaWithCrops>(propertyAlias)?.GetCropUrl(imageCropMode: ImageCropMode.Max) ??
-        //               string.Empty;
-        //    }
 
-        //    var property = content.GetProperty(propertyAlias);
-        //    if (property == null)
-        //    {
-        //        return string.Empty;
-        //    }
+        public static IPublishedContent Next(this IPublishedContent content)
+        {
+            var found = false;
+            foreach (var sibling in content.Parent.Children)
+            {
+                if (found)
+                    return sibling;
 
-        //    var culture = property.PropertyType.VariesByCulture()
-        //        ? variationContext?.Culture
-        //        : string.Empty; // must be string empty, not null since that won't work :/ 
+                if (sibling.Id == content.Id)
+                    found = true;
+            }
 
-        //    return content.Value<MediaWithCrops>(propertyAlias, culture)
-        //        ?.GetCropUrl(imageCropMode: ImageCropMode.Max) ?? string.Empty;
-        //}
+            return null;
+        }
 
-        //public static IPublishedContent Next(this IPublishedContent content)
-        //{
-        //    var found = false;
-        //    foreach (var sibling in content.Parent?.Children())
-        //    {
-        //        if (found)
-        //        {
-        //            return sibling;
-        //        }
+        public static IPublishedContent Previous(this IPublishedContent content)
+        {
+            var found = false;
+            IPublishedContent last = null;
+            foreach (var sibling in content.Parent.Children)
+            {
+                if (found)
+                    return last;
 
-        //        if (sibling.Id == content.Id)
-        //        {
-        //            found = true;
-        //        }
-        //    }
+                if (sibling.Id == content.Id)
+                {
+                    found = true;
+                }
+                else
+                {
+                    last = sibling;
+                }
+            }
 
-        //    return null;
-        //}
+            //it could have been at the end
+            if (found)
+                return last;
 
-        //public static IPublishedContent Previous(this IPublishedContent content)
-        //{
-        //    var found = false;
-        //    IPublishedContent last = null;
-        //    foreach (var sibling in content.Parent.Children)
-        //    {
-        //        if (found)
-        //        {
-        //            return last;
-        //        }
+            return null;
+        }
 
-        //        if (sibling.Id == content.Id)
-        //        {
-        //            found = true;
-        //        }
-        //        else
-        //        {
-        //            last = sibling;
-        //        }
-        //    }
+        /// <summary>
+        /// Returns true if there is more than x items
+        /// </summary>
+        /// <param name="source"></param>
+        /// <param name="count"></param>
+        /// <returns></returns>
+        /// <summary>
+        /// Returns true if source has at least <paramref name="count"/> elements efficiently.
+        /// </summary>
+        /// <remarks>Based on int Enumerable.Count() method.</remarks>
+        public static bool HasMoreThan<TSource>(this IEnumerable<TSource> source, int count)
+        {
+            if (source == null)
+                throw new ArgumentNullException(nameof(source));
+            var collection = source as ICollection<TSource>;
+            if (collection != null)
+            {
+                return collection.Count > count;
+            }
 
-        //    //it could have been at the end
-        //    if (found)
-        //    {
-        //        return last;
-        //    }
+            var collection2 = source as ICollection;
+            if (collection2 != null)
+            {
+                return collection2.Count > count;
+            }
 
-        //    return null;
-        //}
+            int num = 0;
+            checked
+            {
+                using (var enumerator = source.GetEnumerator())
+                {
+                    while (enumerator.MoveNext())
+                    {
+                        num++;
+                        if (num > count)
+                        {
+                            return true;
+                        }
+                    }
+                }
+            }
 
-        ///// <summary>
-        ///// Returns true if there is more than x items
-        ///// </summary>
-        ///// <param name="source"></param>
-        ///// <param name="count"></param>
-        ///// <returns></returns>
-        ///// <summary>
-        ///// Returns true if source has at least <paramref name="count"/> elements efficiently.
-        ///// </summary>
-        ///// <remarks>Based on int Enumerable.Count() method.</remarks>
-        //public static bool HasMoreThan<TSource>(this IEnumerable<TSource> source, int count)
-        //{
-        //    if (source == null)
-        //    {
-        //        throw new ArgumentNullException(nameof(source));
-        //    }
-
-        //    var collection = source as ICollection<TSource>;
-        //    if (collection != null)
-        //    {
-        //        return collection.Count > count;
-        //    }
-
-        //    var collection2 = source as ICollection;
-        //    if (collection2 != null)
-        //    {
-        //        return collection2.Count > count;
-        //    }
-
-        //    int num = 0;
-        //    checked
-        //    {
-        //        using (var enumerator = source.GetEnumerator())
-        //        {
-        //            while (enumerator.MoveNext())
-        //            {
-        //                num++;
-        //                if (num > count)
-        //                {
-        //                    return true;
-        //                }
-        //            }
-        //        }
-        //    }
-
-        //    return false; // < count
-        //}
-
-        // TODO: This should not be needed once PostImage migration is complete
+            return false; // < count
+        }
+        // TODO: Not needed once PostImage migration complete
         public static string GetBaseImageUrl(this IPublishedContent content, string propertyAlias)
         {
             if (content == null)

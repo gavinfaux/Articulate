@@ -15,10 +15,10 @@ namespace Articulate.Options
         {
             GenerateExcerpt = val => val == null || val.DetectIsJson()
                 ? string.Empty
-                : val.StripHtml()
+                : string.Join("", val.StripHtml()
                     .DecodeHtml()
                     .NewLinesToSpaces()
-                    .TruncateAtWord(200, "");
+                    .TruncateAtWord(200, ""));
         }
 
         /// <summary>
@@ -30,5 +30,6 @@ namespace Articulate.Options
         /// The default generator will truncate the post content with 200 chars
         /// </summary>
         public Func<string, string> GenerateExcerpt { get; set; }
+
     }
 }
