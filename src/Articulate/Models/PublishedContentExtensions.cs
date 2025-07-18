@@ -17,10 +17,14 @@ namespace Articulate.Models
             foreach (var sibling in content.Parent.Children)
             {
                 if (found)
+                {
                     return sibling;
+                }
 
                 if (sibling.Id == content.Id)
+                {
                     found = true;
+                }
             }
 
             return null;
@@ -33,7 +37,9 @@ namespace Articulate.Models
             foreach (var sibling in content.Parent.Children)
             {
                 if (found)
+                {
                     return last;
+                }
 
                 if (sibling.Id == content.Id)
                 {
@@ -47,7 +53,9 @@ namespace Articulate.Models
 
             //it could have been at the end
             if (found)
+            {
                 return last;
+            }
 
             return null;
         }
@@ -65,7 +73,10 @@ namespace Articulate.Models
         public static bool HasMoreThan<TSource>(this IEnumerable<TSource> source, int count)
         {
             if (source == null)
+            {
                 throw new ArgumentNullException(nameof(source));
+            }
+
             var collection = source as ICollection<TSource>;
             if (collection != null)
             {
