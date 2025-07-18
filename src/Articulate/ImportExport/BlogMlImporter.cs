@@ -9,7 +9,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Argotic.Syndication.Specialized;
-using Articulate.Models.ManagementApi;
+using Articulate.Models.Api;
 using Microsoft.AspNetCore.Html;
 using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Core;

@@ -1,7 +1,7 @@
 using System;
 using System.ComponentModel.DataAnnotations;
 
-namespace Articulate.Models.ManagementApi
+namespace Articulate.Models.Api
 {
     /// <summary>
     /// Represents the options for importing blog data from a BlogML file.

@@ -2,7 +2,7 @@ import { html as p, nothing as Be, css as C, property as J, state as h, query as
 import { UmbLitElement as V } from "@umbraco-cms/backoffice/lit-element";
 import { UmbTextStyles as N } from "@umbraco-cms/backoffice/style";
 import { UMB_MODAL_MANAGER_CONTEXT as Oe } from "@umbraco-cms/backoffice/modal";
-import { f as at, B as K, T as Fe } from "./error-utils-CnK0auGd.js";
+import { f as at, B as K, T as Fe } from "./error-utils-CUHXtQBu.js";
 import { UMB_DOCUMENT_PICKER_MODAL as st } from "@umbraco-cms/backoffice/document";
 import { DocumentTypeService as nt, DocumentService as lt } from "@umbraco-cms/backoffice/external/backend-api";
 import { UMB_NOTIFICATION_CONTEXT as ut } from "@umbraco-cms/backoffice/notification";
@@ -1245,7 +1245,7 @@ const Dt = [
     path: "theme/options",
     name: "Theme Options",
     icon: "icon-color-bucket",
-    description: "Themean Articulate theme for customization"
+    description: "Duplicate an Articulate default theme for customization"
   }
 ];
 let I = class extends V {

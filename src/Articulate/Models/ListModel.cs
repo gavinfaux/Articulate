@@ -49,8 +49,7 @@ namespace Articulate.Models
             }
         }
 
-        public ListModel(IPublishedContent content, IPublishedValueFallback publishedValueFallback,
-            IVariationContextAccessor variationContextAccessor)
+        public ListModel(IPublishedContent content, IPublishedValueFallback publishedValueFallback, IVariationContextAccessor variationContextAccessor)
             : base(content, publishedValueFallback, variationContextAccessor)
         {
         }
@@ -74,22 +73,21 @@ namespace Articulate.Models
 
                 if (_listItems == null)
                 {
-                    _resolvedList = ChildrenForAllCultures
-                        .Select(x => new PostModel(x, PublishedValueFallback, VariationContextAccessor)).ToArray();
+                    _resolvedList = ChildrenForAllCultures.Select(x => new PostModel(x, PublishedValueFallback, VariationContextAccessor)).ToArray();
                     return _resolvedList;
                 }
 
                 if (_listItems != null && Pages != null)
                 {
                     _resolvedList = _listItems
-                        //Skip will already be done in this case, but we'll take again anyways just to be safe                    
+                    //Skip will already be done in this case, but we'll take again anyways just to be safe                    
                         .Take(Pages.PageSize)
                         .Select(x => new PostModel(x, PublishedValueFallback, VariationContextAccessor))
                         .ToArray();
                 }
                 else
                 {
-                    _resolvedList = [];
+                    _resolvedList = Enumerable.Empty<PostModel>();
                 }
 
                 return _resolvedList;

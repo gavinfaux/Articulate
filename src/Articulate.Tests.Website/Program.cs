@@ -32,10 +32,10 @@ builder.Services.AddSmidge(builder.Configuration.GetSection("smidge")).Configure
     if (builder.Environment.IsDevelopment())
     {
         options.CacheOptions.UseInMemoryCache = true;
+        //change some of the bundle options for rendering in Debug mode:
+        options.DefaultBundleOptions.DebugOptions.SetCacheBusterType<TimestampCacheBuster>();
+        options.DefaultBundleOptions.DebugOptions.FileWatchOptions.Enabled = true;
     }
-    //change some of the bundle options for rendering in Debug mode:
-    options.DefaultBundleOptions.DebugOptions.SetCacheBusterType<TimestampCacheBuster>();
-    options.DefaultBundleOptions.DebugOptions.FileWatchOptions.Enabled = true;
 });
 
 // Articulate may require increasing the maximum request size in order to process large requests,

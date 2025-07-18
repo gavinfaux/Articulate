@@ -1,4 +1,4 @@
-﻿/* BLOG SPECIFIC */
+/* BLOG SPECIFIC */
 .blog-logo {
   display: block;
   position: relative;
@@ -13,17 +13,17 @@
   margin: 0;
   padding: 0;
   line-height: 1;
-  color: #444444;
+  color: whitesmoke;
 }
-.blog-title :hover {
-  color: #444444;
-}
+  .blog-title :hover {
+    color: whitesmoke;
+  }
 .blog-description {
   font-size: 1em;
   margin: 0;
   padding: 0;
   line-height: 1;
-  color: #444444;
+  color: whitesmoke;
 }
 /* LAYOUT - MOBILE FIRST */
 .container {

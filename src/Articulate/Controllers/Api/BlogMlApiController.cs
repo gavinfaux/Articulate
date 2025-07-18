@@ -3,7 +3,7 @@ using System.IO;
 using System.Threading.Tasks;
 using Articulate.Attributes;
 using Articulate.ImportExport;
-using Articulate.Models.ManagementApi;
+using Articulate.Models.Api;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -16,7 +16,7 @@ using Umbraco.Cms.Core.Security;
 using Umbraco.Cms.Web.Common.Authorization;
 using Umbraco.Extensions;
 
-namespace Articulate.Controllers.ManagementApi
+namespace Articulate.Controllers.Api
 {
     /// <summary>
     /// Provides import and export of Articulate blog data using BlogML and Disqus formats.
@@ -26,12 +26,12 @@ namespace Articulate.Controllers.ManagementApi
     [Authorize(Policy = AuthorizationPolicies.SectionAccessSettings)]
     [VersionedApiBackOfficeRoute("articulate/blogml")]
     [MapToApi(ArticulateConstants.ManagementApi.Name)]
-    public class BlogMlController(
+    public class BlogMlApiController(
         BlogMlExporter blogMlExporter,
         BlogMlImporter blogMlImporter,
         IBackOfficeSecurityAccessor backOfficeSecurityAccessor,
         ArticulateTempFileSystem articulateTempFileSystem,
-        ILogger<BlogMlController> logger)
+        ILogger<BlogMlApiController> logger)
         : ManagementApiControllerBase
     {
         /// <summary>

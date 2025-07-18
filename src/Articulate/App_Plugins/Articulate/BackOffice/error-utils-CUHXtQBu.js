@@ -1,9 +1,5 @@
 import { c as r, f as n } from "./client.gen-BDEIDh_1.js";
 class y {
-  /**
-   * Exports blog data as a BlogML XML file.
-   * @deprecated
-   */
   static postArticulateBlogmlExport(e) {
     return ((e == null ? void 0 : e.client) ?? r).post({
       security: [
@@ -20,10 +16,6 @@ class y {
       }
     });
   }
-  /**
-   * Downloads the exported Disqus comment XML file.
-   * @deprecated
-   */
   static getArticulateBlogmlExportDisqus(e) {
     return ((e == null ? void 0 : e.client) ?? r).get({
       security: [
@@ -36,10 +28,6 @@ class y {
       ...e
     });
   }
-  /**
-   * Imports blog data from a previously uploaded BlogML XML file.
-   * @deprecated
-   */
   static postArticulateBlogmlImport(e) {
     return ((e == null ? void 0 : e.client) ?? r).post({
       security: [
@@ -56,11 +44,6 @@ class y {
       }
     });
   }
-  /**
-   * Begins the BlogML import process by accepting an uploaded XML file.
-   * The name specified in the form's element or FormData must match the name of the parameter, e.g., <input type="file" name="importFile">
-   * @deprecated
-   */
   static postArticulateBlogmlImportFile(e) {
     return ((e == null ? void 0 : e.client) ?? r).post({
       ...n,
@@ -110,10 +93,6 @@ class b {
   }
 }
 class f {
-  /**
-   * Gets the list of all available Articulate themes, both default and user-defined.
-   * This endpoint returns the names of all available themes, including both default and user-defined themes.
-   */
   static getArticulateEditorsThemePickerThemes(e) {
     return ((e == null ? void 0 : e.client) ?? r).get({
       security: [

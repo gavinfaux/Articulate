@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.IO;
 
-namespace Articulate.Models.ManagementApi
+namespace Articulate.Models.Api
 {
     /// <summary>
     /// Represents the data required to copy an existing theme to a new theme name.

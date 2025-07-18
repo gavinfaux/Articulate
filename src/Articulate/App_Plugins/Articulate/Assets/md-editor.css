@@ -85,8 +85,21 @@ textarea {
   margin: 5px;
 }
 
-.ng-dirty .ng-invalid {
+.app-error {
+    position: fixed;
+    bottom: 50px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 201;
+    text-align: center;
+}
+.app-error .mdl-textfield__error {
+    font-weight: bold;
+}
+
+.mdl-textfield.is-dirty-invalid .mdl-textfield__input {
   border-bottom: 2px dashed rgb(68,138,255) !important;
+  box-shadow: none !important; 
 }
 
 .hidden-insert-file {

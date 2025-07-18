@@ -8,9 +8,6 @@ namespace Articulate
     {
         public enum ManagementApi
         {
-            [StringValue(ArticulateConstants.ManagementApi.Authentication)]
-            Authentication,
-
             [StringValue(ArticulateConstants.ManagementApi.BlogMl)]
             BlogMl,
 

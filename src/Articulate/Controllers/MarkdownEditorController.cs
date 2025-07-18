@@ -1,4 +1,4 @@
-using Articulate.Controllers.ManagementApi;
+using Articulate.Controllers.Api;
 using Articulate.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
@@ -21,26 +21,14 @@ namespace Articulate.Controllers
         public ViewResult NewPost()
         {
             var managementApiUrls = apiDescriptionProvider.ForGroups([
-                ArticulateConstants.ManagementApi.Authentication, ArticulateConstants.ManagementApi.MarkdownEditor
+                ArticulateConstants.ManagementApi.MarkdownEditor
             ]);
 
             var vm = new MarkdownEditorInitModel
             {
                 ArticulateNodeId = CurrentPage.Id,
-                AuthSignInUrl =
-                    managementApiUrls
-                        [GetKey<BackOfficeAuthenticationController>(nameof(BackOfficeAuthenticationController.Login))],
-                AuthSignOutUrl =
-                    managementApiUrls
-                        [GetKey<BackOfficeAuthenticationController>(nameof(BackOfficeAuthenticationController.Logout))],
-                AuthCsrfTokenUrl =
-                    managementApiUrls
-                        [GetKey<BackOfficeAuthenticationController>(nameof(BackOfficeAuthenticationController.GetCsrfToken))],
-                AuthStatusUrl =
-                    managementApiUrls
-                        [GetKey<BackOfficeAuthenticationController>(nameof(BackOfficeAuthenticationController.GetStatus))],
-                PostUrl = managementApiUrls[
-                    GetKey<ManagementApi.MarkdownEditorController>(nameof(ManagementApi.MarkdownEditorController
+                EditorPostUrl = managementApiUrls[
+                    GetKey<MarkdownEditorApiController>(nameof(MarkdownEditorApiController
                         .CreatePost))]
             };
 

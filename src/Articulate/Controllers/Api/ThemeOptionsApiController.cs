@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using Articulate.Attributes;
-using Articulate.Models.ManagementApi;
+using Articulate.Models.Api;
 using Articulate.Services;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
@@ -15,14 +15,14 @@ using Umbraco.Cms.Api.Management.Controllers;
 using Umbraco.Cms.Api.Management.Routing;
 using Umbraco.Cms.Web.Common.Authorization;
 
-namespace Articulate.Controllers.ManagementApi
+namespace Articulate.Controllers.Api
 {
     [ManagementApi(ArticulateEnum.ManagementApi.ThemeOptions)]
     [ApiVersion("1.0")]
     [Authorize(Policy = AuthorizationPolicies.SectionAccessSettings)]
     [VersionedApiBackOfficeRoute("articulate/theme")]
     [MapToApi(ArticulateConstants.ManagementApi.Name)]
-    public class ThemeOptionsController(IThemeService themeService, ILogger<ThemeOptionsController> logger) : ManagementApiControllerBase
+    public class ThemeOptionsApiController(IThemeService themeService, ILogger<ThemeOptionsApiController> logger) : ManagementApiControllerBase
     {
         [HttpPost("copy")]
         [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
@@ -56,11 +56,11 @@ namespace Articulate.Controllers.ManagementApi
         [HttpGet("default")]
         [ProducesResponseType(typeof(IEnumerable<string>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
-        public IActionResult GetDefaultThemes()
+        public async Task<IActionResult> GetDefaultThemes()
         {
             try
             {
-                var themes = themeService.GetDefaultThemes();
+                var themes = await themeService.GetDefaultThemesAsync();
                 return Ok(themes);
             }
             catch (Exception e)

@@ -3,7 +3,7 @@ import { html as h, css as m, property as p, state as u, customElement as f } fr
 import { UmbLitElement as v } from "@umbraco-cms/backoffice/lit-element";
 import { UmbPropertyValueChangeEvent as _ } from "@umbraco-cms/backoffice/property-editor";
 import { UmbTextStyles as d } from "@umbraco-cms/backoffice/style";
-import { a as y, f as O } from "./error-utils-CnK0auGd.js";
+import { a as y, f as O } from "./error-utils-CUHXtQBu.js";
 var b = Object.defineProperty, S = Object.getOwnPropertyDescriptor, a = (e, t, r, o) => {
   for (var s = o > 1 ? void 0 : o ? S(t, r) : t, i = e.length - 1, n; i >= 0; i--)
     (n = e[i]) && (s = (o ? n(t, r, s) : n(s)) || s);

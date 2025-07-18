@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Articulate.Attributes;
 using Articulate.Services;
 using Asp.Versioning;
@@ -12,7 +13,7 @@ using Umbraco.Cms.Api.Management.Controllers;
 using Umbraco.Cms.Api.Management.Routing;
 using Umbraco.Cms.Web.Common.Authorization;
 
-namespace Articulate.Controllers.ManagementApi
+namespace Articulate.Controllers.Api
 {
     // NOTE: ManagementApiControllerBase [ApiController] attribute will automatically validate the model
     // [ApiController] attribute also infers [FromBody] for model binding
@@ -25,7 +26,7 @@ namespace Articulate.Controllers.ManagementApi
     [Authorize(Policy = AuthorizationPolicies.BackOfficeAccess)]
     [VersionedApiBackOfficeRoute("articulate/editors/theme-picker")]
     [MapToApi(ArticulateConstants.ManagementApi.Name)]
-    public class ThemePickerController(IThemeService themeService, ILogger<ThemePickerController> logger) : ManagementApiControllerBase
+    public class ThemePickerApiController(IThemeService themeService, ILogger<ThemePickerApiController> logger) : ManagementApiControllerBase
     {
         /// <summary>
         /// Gets the list of all available Articulate themes, both default and user-defined.
@@ -40,11 +41,11 @@ namespace Articulate.Controllers.ManagementApi
         [HttpGet("themes")]
         [ProducesResponseType<IEnumerable<string>>(StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
-        public ActionResult<IEnumerable<string>> GetAllThemes()
+        public async Task<ActionResult<IEnumerable<string>>> GetAllThemes()
         {
             try
             {
-                return Ok(themeService.GetAllThemes());
+                return Ok(await themeService.GetAllThemesAsync());
             }
             catch (Exception e)
             {

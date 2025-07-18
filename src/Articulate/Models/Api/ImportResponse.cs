@@ -1,4 +1,4 @@
-namespace Articulate.Models.ManagementApi
+namespace Articulate.Models.Api
 {
     /// <summary>
     /// Represents the result of a BlogML import with operation statistics.
