@@ -1,17 +1,17 @@
-# General ignores for all sub-projects
-**/node_modules/
-**/build/
-**/dist/
-**/public/
-**/package-lock.json
+# General ignores
+node_modules/
+build/
+dist/
+public/
+package-lock.json
 
 # Ignore generated API clients
-**/src/api/
+src/api/
 
 # Ignore project-specific configs and folders
-**/.vscode/
-**/docs/
-**/vite.config.ts
+.vscode/
+docs/
+vite.config.ts
 **/tsconfig.json
 
 # Ignore specific assets

@@ -1,12 +1,10 @@
 import eslintConfigPrettier from "eslint-config-prettier";
 import tseslint from "typescript-eslint";
 
-// This configuration is based on the user's provided working example.
-// It is simplified to ensure parsing works correctly before adding more rules.
 export default tseslint.config(
   {
     // Global ignores
-    ignores: ["App_Plugins/**", "vite.config.ts", "src/api/**", "src/packages/**"],
+    ignores: ["vite.config.ts", "src/api/**", "src/packages/**"],
   },
 
   // Apply the recommended configurations from typescript-eslint.

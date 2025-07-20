@@ -12,7 +12,7 @@
                                                                                         
 
 == Requirements ==
-* Node LTS Version 20.17.0+
+* Node LTS Version 22+
 * Use a tool such as NVM (Node Version Manager) for your OS to help manage multiple versions of Node
 
 == Node Version Manager tools ==
@@ -24,12 +24,13 @@
 * Open a terminal inside the `\Client` folder
 * Run `npm install` to install all the dependencies
 * Run `npm run build` to build the project
-* The build output is copied to `wwwroot\App_Plugins\Articulate\articulate.js`
+* The build output is copied to `App_Plugins\Articulate\BackOffice\articulate.js`
 
 == File Watching ==
-* Add this Razor Class Library Project as a project reference to an Umbraco Website project
+* Add this Class Library Project as a project reference to an Umbraco Website project
 * From the `\Client` folder run the command `npm run watch` this will monitor the changes to the *.ts files and rebuild the project
-* With the Umbraco website project running the Razor Class Library Project will refresh the browser when the build is complete
+* With the Umbraco website project running the Class Library Project *should* refresh the browser when the build is complete
+* If the browser does not refresh, you can run the website with `dotnet watch --no-hot-reload` and manually refresh the browser. `no-hot-reload` is only required to avoid refreshes due to token authentication requests by the backoffice.
 
 == Suggestion ==
 * Use VSCode as the editor of choice as it has good tooling support for TypeScript and it will recommend a VSCode Extension for good Lit WebComponent completions

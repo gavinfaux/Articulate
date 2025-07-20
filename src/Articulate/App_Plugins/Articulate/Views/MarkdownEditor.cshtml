@@ -35,8 +35,8 @@
 <body x-data="markdownEditor" x-init="init" x-cloak
       data-articulate-node-id="@Model.ArticulateNodeId"
       data-auth-url="@Model.AuthorizeUrl"
-      data-auth-token-url="@Model.TokenUrl"
       data-auth-end-url="@Model.EndSessionUrl"
+      data-token-url="@Model.TokenUrl"
       data-current-user-url="@Model.CurrentUserUrl"
       data-editor-post-url="@Model.EditorPostUrl">
 
@@ -44,7 +44,10 @@
         <header class="mdl-layout__header">
             <div class="mdl-layout__header-row">
                 <span class="mdl-layout-title" x-text="caption"></span>
-                <div class="mdl-layout-spacer"></div>
+                                <div class="mdl-layout-spacer"></div>
+                <nav class="mdl-navigation" x-show="isLoggedIn">
+                    <a class="mdl-navigation__link" href="#" @@click.prevent="handleLogout">Logout</a>
+                </nav>
                 <div x-show="isLoading" class="mdl-spinner mdl-js-spinner is-active"></div>
             </div>
         </header>
@@ -56,28 +59,12 @@
                 <template x-if="isLoginStep">
                     <div x-ref="loginView" class="mdl-card mdl-shadow--2dp fill-height">
                         <div class="mdl-card__supporting-text">
-                            <form @@submit.prevent="handleLogin" novalidate>
-                                <div class="mdl-textfield mdl-js-textfield" :class="loginEmailErrorClass">
-                                    <input class="mdl-textfield__input" type="text" id="email" :value="loginEmail" @@input="updateLoginEmail" @@blur="handleBlur" autocomplete="username" required>
-                                    <label class="mdl-textfield__label" for="email">Username...</label>
-                                </div>
-
-                                <div class="mdl-textfield mdl-js-textfield" :class="loginPasswordErrorClass">
-                                    <input class="mdl-textfield__input" type="password" id="password" :value="loginPassword" @@input="updateLoginPassword" @@blur="handleBlur"  autocomplete="current-password" required>
-                                    <label class="mdl-textfield__label" for="password">Password...</label>
-                                    <span class="mdl-textfield__error" x-show="showLoginError" x-text="loginErrorMessage"></span>
-                                </div>
-
-                                <div class="btn-raised-right">
-                                    <button type="submit" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent" :disabled="submitting">
-                                        <span x-text="loginButtonText"></span>
-                                    </button>
-                                </div>
-
-                                <template x-if="twoFactorUrl">
-                                    <p style="margin-top: 16px;">Please <a :href="twoFactorUrl">click here</a> to complete your login.</p>
-                                </template>
-                            </form>
+                            <p>You need to log in to create a post.</p>
+                            <div class="btn-raised-right">
+                                <button @@click.prevent="redirectToLogin" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">
+                                    Login
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </template>
@@ -91,8 +78,7 @@
                                 <label class="mdl-textfield__label" for="title">Title...</label>
                             </div>
                             <div class="mdl-textfield mdl-js-textfield md-input">
-                                <textarea x-ref="editor" id="editor" class="mdl-textfield__input"></textarea>
-                                <label class="mdl-textfield__label" for="editor">## Start writing your post here...</label>
+                                <textarea x-ref="editor" id="editor" class="mdl-textfield__input" placeholder="## Start writing your post here..."></textarea>
                             </div>
                         </div>
                     </div>
