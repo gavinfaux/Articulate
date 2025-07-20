@@ -19,9 +19,9 @@ namespace Articulate.Components
                 theme.CreateBundles(_bundleManager);
             }
 
-            //todo: why these render as https://localhost:44366/a-new/md-editor-
-            _bundleManager.CreateJs("md-editor-js", "~/App_Plugins/Articulate/Assets");
-            _bundleManager.CreateCss("md-editor-css", "~/App_Plugins/Articulate/Assets");
+            // Create bundles for the markdown editor from the new subdirectories
+            _bundleManager.CreateJs("md-editor-js", "~/App_Plugins/Articulate/Assets/md-editor/js");
+            _bundleManager.CreateCss("md-editor-css", "~/App_Plugins/Articulate/Assets/md-editor/css");
         }
 
         public void Terminate()

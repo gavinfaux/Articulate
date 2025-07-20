@@ -36,6 +36,25 @@ namespace Articulate.Controllers.Api
     // NOTE: ManagementApiControllerBase [ApiController] attribute will automatically validate the model
     // [ApiController] attribute also infers [FromBody] for model binding
 
+    /* TODO: Review security
+     * 1) Stored XSS via Markdown
+       Risk: An attacker saving a post with malicious markdown (e.g., <script>alert('pwned')</script> or [click me](javascript:alert('pwned'))).
+       Mitigation: Only authorized back office users may post and must log in first. Once logged in, any XSS concerns must be handled by the backend. The backend, before ever rendering this content as HTML on the public-facing blog, must process it through a robust HTML sanitization library. This library should strip all dangerous tags (<script>, <iframe>) and attributes (onclick, onerror).
+       Actions: Review if an HTML sanitization library should be used, or if Umbraco provides appropriate mitigations. MarkdownHelper could be adapted to provide this, or DI services (Markdown parser, HTML sanitizer) could be added.
+
+       2) File Upload Security
+       Risk: An attacker could upload a malicious file (e.g., a file named my-image.jpg that is actually an HTML file containing scripts).
+       Mitigation: As before, only authorized back office users may post and must log in first.
+       Actions: Review file validation, e.g. [FileSignatures](https://github.com/neilharvey/FileSignatures/) could be used to inspect the file's actual content (magic bytes), trusting the Content-Type header sent by the browser or file extension is not sufficient.
+       Enforce Limits: Enforce file size limits.
+       Sanitize Filename: Avoid using the user-provided filename for storage on the server. Generate a new, random, and safe filename.
+       Serve Securely: When serving uploaded files, ensure they are sent with the correct Content-Type header (e.g., image/jpeg) to prevent the browser from interpreting them as HTML/script.
+
+       3) Token Storage (localStorage):
+       Risk: We store the JWT in localStorage. If an XSS vulnerability were to be found on the site, an attacker could steal this token.
+       Mitigation & Context: This is a well-known and widely accepted trade-off for SPAs. The primary mitigation is a strong XSS defense (which we have with our CSP). The alternative, storing tokens in memory, would require a re-login on every page refresh, which is a poor user experience. Given the context, this is a reasonable and standard approach, but it highlights the absolute importance of the backend sanitization mentioned in point #1.
+       */
+
     /// <summary>
     /// Controller for handling the a-new markdown editor endpoint for creating blog posts
     /// </summary>
@@ -45,7 +64,6 @@ namespace Articulate.Controllers.Api
     [Authorize(AuthorizationPolicies.MediaPermissionByResource)]
     [MapToApi(ArticulateConstants.ManagementApi.Name)]
     [VersionedApiBackOfficeRoute("articulate/editors/markdown")]
-    // [UseArticulateCookieAuth]
     public class MarkdownEditorApiController : ManagementApiControllerBase
     {
         private readonly ServiceContext _services;
@@ -270,7 +288,7 @@ namespace Articulate.Controllers.Api
 
             var bodyText = ArticulateMardownEditorRegexes.ImageTagPlaceholderRegex().Replace(body, m =>
             {
-                // Get the full temporary URL from the match (e.g., "tmp:0:my-cat.jpg").
+                // Get the full temporary URL from the match (e.g., "tmp:0:my-cat.jpg" or "tmp:1679339417_a1b2c3d4e:my-image.png", strips ![image title...] and starting/ending parentheses).
                 var tempUrl = m.Groups[1].Value;
 
                 // Find the uploaded file by its name, which the frontend set to our temporary URL.
