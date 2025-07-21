@@ -25,6 +25,7 @@ document.addEventListener('alpine:init', () => {
             onConfirm: () => {},
         },
         currentUser: null,
+        successUrl: null,
 
         // --- Getters for CSP-compliant logic ---
         get hasErrorDetails() {
@@ -86,9 +87,10 @@ document.addEventListener('alpine:init', () => {
 
             try {
                 const result = await apiService.createPost(this.post, this.fileMap);
-                // On success, redirect to the newly created post
+                // On success, display url
                 if (result.url) {
-                    window.location.href = result.url;
+                    this.successUrl = result.url
+                    //window.location.href = result.url;
                 } else {
                     throw new Error("Received an empty or invalid URL from the server.");
                 }

@@ -128,7 +128,7 @@
     <None Remove="Packaging\package.zip" />
   </ItemGroup>
 
-    <ItemGroup>
+  <ItemGroup>
     <EmbeddedResource Include="Packaging\author.jpg" />
     <EmbeddedResource Include="Packaging\banner.jpg" />
     <EmbeddedResource Include="Packaging\logo.png" />

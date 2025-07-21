@@ -1,3 +1,9 @@
+/* Simple OAuth2 client for Articulate
+alternative: oidc-client-ts: replace auth calls with this library: 
+<script src="https://cdn.jsdelivr.net/npm/oidc-client-ts@3.3.0/dist/browser/oidc-client-ts.min.js" integrity="sha256-DYkis2iqspb2cTcme2DYHL8VsYe2sRBkFzb+pVBfNkQ=" crossorigin="anonymous"></script>
+[authorization-code-grant-with-pkce](https://github.com/authts/oidc-client-ts/blob/main/docs/protocols/authorization-code-grant-with-pkce.md)
+*/
+
 import { config } from './config.js';
 
 // Helper functions for PKCE
