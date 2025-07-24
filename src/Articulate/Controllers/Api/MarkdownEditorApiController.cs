@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using Articulate.Attributes;
 using Articulate.Models.Api;
 using Asp.Versioning;
@@ -129,7 +130,7 @@ namespace Articulate.Controllers.Api
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status422UnprocessableEntity)]
-        public ActionResult<CreatePostResponse> CreatePost(
+        public async Task<ActionResult<CreatePostResponse>> CreatePost(
             [FromForm(Name = "json")] string jsonModel,
             IFormFileCollection files)
         {
@@ -193,7 +194,7 @@ namespace Articulate.Controllers.Api
                 return Forbid();
             }
 
-            var parsedImageResponse = ParseImages(model.Body, files, extractFirstImageAsProperty);
+            var parsedImageResponse = await ParseImages(model.Body, files, extractFirstImageAsProperty);
 
             model.Body = parsedImageResponse.BodyText;
 
@@ -271,115 +272,98 @@ namespace Articulate.Controllers.Api
             return Ok(new CreatePostResponse { Url = published?.Url() ?? "#" });
         }
 
-        private ParseImageResponse ParseImages(string body, IFormFileCollection formFiles,
-            bool extractFirstImageAsProperty)
+        private async Task<ParseImageResponse> ParseImages(string body, IFormFileCollection formFiles,
+    bool extractFirstImageAsProperty)
         {
-            // security validation list
-            var reservedNames = new HashSet<string>
-            {
-                "con",
-                "prn",
-                "aux",
-                "nul",
-                "com1",
-                "lpt1"
-            };
+            var reservedNames = new HashSet<string> { "con", "prn", "aux", "nul", "com1", "lpt1" };
             var firstImage = string.Empty;
+            var bodyText = body; // Start with the original body text
 
-            var bodyText = ArticulateMardownEditorRegexes.ImageTagPlaceholderRegex().Replace(body, m =>
+            // Key: The original markdown tag, e.g., "![alt](tmp:0:image.png)"
+            // Value: The final URL or an empty string to remove it.
+            var replacementMap = new Dictionary<string, string>();
+
+            //  STEP 1: Find all potential image tags and gather the info needed for processing. ---
+            var matches = ArticulateMardownEditorRegexes.ImageTagPlaceholderRegex().Matches(body);
+
+            foreach (Match match in matches)
             {
-                // Get the full temporary URL from the match (e.g., "tmp:0:my-cat.jpg" or "tmp:1679339417_a1b2c3d4e:my-image.png", strips ![image title...] and starting/ending parentheses).
-                var tempUrl = m.Groups[1].Value;
 
-                // Find the uploaded file by its name, which the frontend set to our temporary URL.
+                //TODO: clean/validate the supplied user label for media name/markdown replacement
+                var userLabel = match.Groups[1].Value;
+                var tempUrl = match.Groups[2].Value;
+
                 var file = formFiles.FirstOrDefault(f => f.Name == tempUrl);
+
+                // STEP 2: For each match, VALIDATE and PROCESS it asynchronously. 
 
                 if (file == null)
                 {
-                    // The file referenced in the markdown was not found in the form upload.
-                    _logger.LogWarning(
-                        "Markdown image placeholder for {TempUrl} found, but no corresponding file was uploaded.",
-                        tempUrl);
-                    return m.Value; // Return the original markdown tag so it's not lost?
+                    _logger.LogWarning("Markdown image placeholder for {TempUrl} found, but no corresponding file was uploaded.", tempUrl);
+                    // The file is missing. We will replace its tag with nothing.
+                    replacementMap[match.Value] = string.Empty;
+                    continue; // Move to the next match
                 }
 
-                // To get the index for 'extractFirstImageAsProperty' logic, we parse the tempUrl.
-                int? imageIndex = null;
-                var parts = tempUrl.Split([':'], 3);
-                if (parts.Length == 3 && int.TryParse(parts[1], out var parsedIndex))
-                {
-                    imageIndex = parsedIndex;
-                }
-
-                // security and filename validation, original filename uploaded by user.
                 var untrustedFileName = Path.GetFullPath(file.FileName);
                 if (untrustedFileName.StartsWith("..") || untrustedFileName.Contains("/.."))
                 {
-                    return string.Empty; // Path traversal attempt
+                    // Path traversal attempt. Strip from markdown.
+                    replacementMap[match.Value] = string.Empty;
+                    continue;
                 }
 
+                //TODO: generate a safe filename instead of relying on user supplied 
                 var filename = Path.GetFileName(file.FileName);
-                var fileExtension = Path.GetExtension(filename).ToLowerInvariant();
-
                 var cleanFileName = string.Join("_", filename.Split(Path.GetInvalidFileNameChars()));
-                if (cleanFileName.IsNullOrWhiteSpace() || cleanFileName.Length > 100 ||
-                    reservedNames.Contains(cleanFileName.ToLowerInvariant()))
+                if (cleanFileName.IsNullOrWhiteSpace() || cleanFileName.Length > 100 || reservedNames.Contains(cleanFileName.ToLowerInvariant()))
                 {
-                    return string.Empty;
+                    // Invalid filename. Strip from markdown.
+                    replacementMap[match.Value] = string.Empty;
+                    continue;
                 }
+                // TODO: better file validation file sizes, mimetypes, file signatures etc, plus return validation results for UX
 
-                // We use the cleaned filename going forward.
+                // validation passed, save the file
                 var safeFileNameWithExt = cleanFileName;
+                var altText = !string.IsNullOrWhiteSpace(userLabel) ? userLabel : safeFileNameWithExt;
+                int? imageIndex = int.TryParse(tempUrl.Split([':'], 3).ElementAtOrDefault(1), out var idx) ? idx : null;
 
-                // Check if the 'extractFirstImage' feature should be used.
-                if (extractFirstImageAsProperty && imageIndex.HasValue && imageIndex.Value == 0)
+                using var stream = new MemoryStream();
+                await file.CopyToAsync(stream);
+
+                if (extractFirstImageAsProperty && imageIndex == 0)
                 {
-                    // logic for creating a proper Umbraco Media Item for the first image.
-                    using var stream = new MemoryStream();
-                    file.CopyTo(stream);
-                    if (stream.Length is 0 or > 10 * 1024 * 1024)
-                    {
-                        return string.Empty; // 10MB limit
-                    }
-
-                    var mediaItem = _mediaService.CreateMedia(safeFileNameWithExt, _articulateRootMediaFolder.Value,
-                        Constants.Conventions.MediaTypes.Image);
-                    mediaItem.SetValue(_mediaFileManager, _mediaUrlGenerators, _shortStringHelper,
-                        _contentTypeBaseServiceProvider, Constants.Conventions.Media.File, safeFileNameWithExt, stream);
-                    _ = _mediaService.Save(mediaItem);
-
+                    var mediaItem = _mediaService.CreateMedia(altText, _articulateRootMediaFolder.Value, Constants.Conventions.MediaTypes.Image);
+                    mediaItem.SetValue(_mediaFileManager, _mediaUrlGenerators, _shortStringHelper, _contentTypeBaseServiceProvider, Constants.Conventions.Media.File, safeFileNameWithExt, stream);
+                    _mediaService.Save(mediaItem);
                     var media = _umbracoHelper.Media(mediaItem.Key);
-                    if (media == null)
-                    {
-                        return string.Empty;
-                    }
 
-                    if (string.IsNullOrEmpty(firstImage))
+                    if (media != null)
                     {
                         firstImage = Udi.Create(Constants.UdiEntityType.Media, media.Key).ToString();
-                        // We've extracted it as a property, so remove it from the body text.
-                        return string.Empty;
+                        // The first image was extracted. Strip its tag from the body.
+                        replacementMap[match.Value] = string.Empty;
                     }
-
-                    // If for some reason it's not the first, fallback to inserting it.
-                    return $"![{media.Name}]({media.Url()})";
                 }
                 else
                 {
-                    // logic for saving other images to the custom 'articulate/' folder.
                     var rndId = Guid.NewGuid().ToString("N");
-                    using var stream = new MemoryStream();
-                    file.CopyTo(stream);
-
                     var fileUrl = $"articulate/{rndId}/{safeFileNameWithExt}";
                     _mediaFileManager.FileSystem.AddFile(fileUrl, stream);
-
                     var mediaRootPath = _hostingEnvironment.ToAbsolute(_globalSettings.UmbracoMediaPath);
                     var mediaFilePath = $"{mediaRootPath.TrimEnd('/')}/{fileUrl}";
 
-                    return $"![{safeFileNameWithExt}]({mediaFilePath})";
+                    // Replace its tag with the final URL.
+                    replacementMap[match.Value] = $"![{altText}]({mediaFilePath})";
                 }
-            });
+            }
+
+            // STEP 3: Apply markdown replacements
+            if (replacementMap.Any())
+            {
+                bodyText = ArticulateMardownEditorRegexes.ImageTagPlaceholderRegex().Replace(body, m => replacementMap.TryGetValue(m.Value, out var replacement) ? replacement : m.Value);
+            }
 
             return new ParseImageResponse { BodyText = bodyText, FirstImage = firstImage };
         }
@@ -394,8 +378,8 @@ namespace Articulate.Controllers.Api
 
     internal static partial class ArticulateMardownEditorRegexes
     {
-        // regex finds the image placeholder markdown tag and captures the temporary URL.
-        [GeneratedRegex(@"!\[.*?\]\((tmp:[^)]+)\)", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase | RegexOptions.Compiled)]
+        // regex finds the image placeholder markdown tag and captures the users label and temporary URL.
+        [GeneratedRegex(@"!\[(.*?)\]\((tmp:.*?)\)", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase | RegexOptions.Compiled)]
         public static partial Regex ImageTagPlaceholderRegex();
     }
 }

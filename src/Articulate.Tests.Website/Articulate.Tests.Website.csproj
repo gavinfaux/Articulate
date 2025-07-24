@@ -18,11 +18,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Articulate\Articulate.csproj" />
+    <ProjectReference Include="..\path\to\Articulate\Articulate.csproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <CopyStaticWebAssetsToPublish>true</CopyStaticWebAssetsToPublish>
+    </ProjectReference>
   </ItemGroup>
-
-  <Import Project="..\Articulate\build\Articulate.targets" />
-
+  
   <ItemGroup>
     <Compile Remove="umbraco\**" />
     <Content Remove="umbraco\**" />

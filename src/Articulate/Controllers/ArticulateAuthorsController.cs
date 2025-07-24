@@ -17,26 +17,22 @@ namespace Articulate.Controllers
     public class ArticulateAuthorsController : RenderController
     {
         private readonly IPublishedValueFallback _publishedValueFallback;
-        private readonly IVariationContextAccessor _variationContextAccessor;
 
         public ArticulateAuthorsController(
             ILogger<RenderController> logger,
             ICompositeViewEngine compositeViewEngine,
             IUmbracoContextAccessor umbracoContextAccessor,
-            IPublishedValueFallback publishedValueFallback,
-            IVariationContextAccessor variationContextAccessor)
+            IPublishedValueFallback publishedValueFallback)
             : base(logger, compositeViewEngine, umbracoContextAccessor)
         {
             _publishedValueFallback = publishedValueFallback;
-            _variationContextAccessor = variationContextAccessor;
         }
 
         public override IActionResult Index()
         {
             var root = new MasterModel(
                 CurrentPage,
-                _publishedValueFallback,
-                _variationContextAccessor);
+                _publishedValueFallback);
 
             //TODO: Should we have another setting for authors?
             if (root.RootBlogNode.Value<bool>("redirectArchive"))

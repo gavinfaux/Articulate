@@ -162,7 +162,7 @@ namespace Articulate.ImportExport
                     }
 
                     // commit
-                    _ = scope.Complete();
+                    scope.Complete();
                     returnModel.Completed = true;
                     return returnModel;
                 }

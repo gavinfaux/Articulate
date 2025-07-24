@@ -19,16 +19,14 @@ namespace Articulate.Services
     internal class ArticulateTagRepository : RepositoryBase, IArticulateTagRepository
     {
         private readonly IPublishedValueFallback _publishedValueFallback;
-        private readonly IVariationContextAccessor _variationContextAccessor;
 
         public ArticulateTagRepository(
             IScopeAccessor scopeAccessor,
             AppCaches appCaches,
-            IPublishedValueFallback publishedValueFallback,
-            IVariationContextAccessor variationContextAccessor) : base(scopeAccessor, appCaches)
+            IPublishedValueFallback publishedValueFallback
+            ) : base(scopeAccessor, appCaches)
         {
             _publishedValueFallback = publishedValueFallback;
-            _variationContextAccessor = variationContextAccessor;
         }
 
         /// <summary>
@@ -96,7 +94,7 @@ namespace Articulate.Services
                     var publishedContent = helper.Content(groupedTags.Select(t => t.NodeId).Distinct()).WhereNotNull();
 
                     var model = new PostsByTagModel(
-                        publishedContent.Select(c => new PostModel(c, _publishedValueFallback, _variationContextAccessor)).OrderByDescending(c => c.PublishedDate),
+                        publishedContent.Select(c => new PostModel(c, _publishedValueFallback)).OrderByDescending(c => c.PublishedDate),
                         tagName,
                         masterModel.RootBlogNode.Url().EnsureEndsWith('/') + baseUrlName + "/" + tagName.ToLowerInvariant());
 
@@ -165,7 +163,7 @@ WHERE {Constants.DatabaseSchema.Tables.ContentType}.alias = @contentTypeAlias AN
                 var publishedContent = helper.Content(taggedContent.Items).WhereNotNull();
 
                 var model = new PostsByTagModel(
-                    publishedContent.Select(c => new PostModel(c, _publishedValueFallback, _variationContextAccessor)),
+                    publishedContent.Select(c => new PostModel(c, _publishedValueFallback)),
                     tag,
                     masterModel.RootBlogNode.Url().EnsureEndsWith('/') + baseUrlName + "/" + tag.ToLowerInvariant(),
                     Convert.ToInt32(taggedContent.TotalItems));

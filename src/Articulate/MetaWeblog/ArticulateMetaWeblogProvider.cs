@@ -3,7 +3,6 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Security.Authentication;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Articulate.Models;
 using Microsoft.Extensions.Logging;
@@ -42,7 +41,6 @@ namespace Articulate.MetaWeblog
         private readonly IJsonSerializer _jsonSerializer;
         private readonly MediaFileManager _mediaFileManager;
         private readonly IPublishedValueFallback _publishedValueFallback;
-        private readonly IVariationContextAccessor _variationContextAccessor;
         private readonly ITagService _tagService;
         private readonly int _articulateBlogRootNodeId;
 
@@ -59,7 +57,6 @@ namespace Articulate.MetaWeblog
             IJsonSerializer jsonSerializer,
             MediaFileManager mediaFileManager,
             IPublishedValueFallback publishedValueFallback,
-            IVariationContextAccessor variationContextAccessor,
             ITagService tagService,
             IContentTypeBaseServiceProvider contentTypeBaseServiceProvider,
             ILogger<ArticulateMetaWeblogProvider> logger,
@@ -79,7 +76,6 @@ namespace Articulate.MetaWeblog
             _jsonSerializer = jsonSerializer;
             _mediaFileManager = mediaFileManager;
             _publishedValueFallback = publishedValueFallback;
-            _variationContextAccessor = variationContextAccessor;
             _tagService = tagService;
             _articulateBlogRootNodeId = articulateBlogRootNodeId;
             _contentTypeBaseServiceProvider = contentTypeBaseServiceProvider;
@@ -223,7 +219,7 @@ namespace Articulate.MetaWeblog
             var post = _umbracoContextAccessor.GetRequiredUmbracoContext().Content.GetById(asInt.Result);
             if (post != null)
             {
-                var fromPost = FromPost(new PostModel(post, _publishedValueFallback, _variationContextAccessor));
+                var fromPost = FromPost(new PostModel(post, _publishedValueFallback));
                 return fromPost;
             }
 
@@ -505,15 +501,5 @@ namespace Articulate.MetaWeblog
 
             return _userService.GetByUsername(username);
         }
-    }
-
-    internal static partial class ArticulateMetaWeblogRegexes
-    {
-        // regex finds the image placeholder markdown tag and captures the temporary URL.
-        [GeneratedRegex(" src=(?:\"|')(?:http|https)://(?:[\\w\\d:/-]+?)(articulate/.*?)(?:\"|')", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase | RegexOptions.Compiled)]
-        public static partial Regex MediaSourceRegex();
-
-        [GeneratedRegex(" href=(?:\"|')(?:http|https)://(?:[\\w\\d:/-]+?)(articulate/.*?)(?:\"|')", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase | RegexOptions.Compiled)]
-        public static partial Regex MediaHrefRegex();
     }
 }

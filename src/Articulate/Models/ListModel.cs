@@ -20,7 +20,6 @@ namespace Articulate.Models
         /// <param name="listItems"></param>
         /// <param name="pager"></param>
         /// <param name="publishedValueFallback"></param>
-        /// <param name="variationContextAccessor"></param>
         /// <remarks>
         /// Default sorting by published date will be disabled for this list model, it is assumed that the list items will
         /// already be sorted.
@@ -29,16 +28,17 @@ namespace Articulate.Models
             IPublishedContent content,
             PagerModel pager,
             IEnumerable<IPublishedContent> listItems,
-            IPublishedValueFallback publishedValueFallback,
-            IVariationContextAccessor variationContextAccessor)
-            : base(content, publishedValueFallback, variationContextAccessor)
+            IPublishedValueFallback publishedValueFallback)
+            : base(content, publishedValueFallback)
         {
-            ArgumentNullException.ThrowIfNull(content);
-            ArgumentNullException.ThrowIfNull(listItems);
-            ArgumentNullException.ThrowIfNull(pager);
 
-            Pages = pager;
-            _listItems = listItems;
+            if (content == null)
+            {
+                throw new ArgumentNullException(nameof(content));
+            }
+
+            Pages = pager ?? throw new ArgumentNullException(nameof(pager));
+            _listItems = listItems ?? throw new ArgumentNullException(nameof(listItems));
             if (content.ContentType.Alias.Equals(ArticulateConstants.ContentType.ArticulateArchive))
             {
                 PageTitle = BlogTitle + " - " + BlogDescription;
@@ -49,8 +49,8 @@ namespace Articulate.Models
             }
         }
 
-        public ListModel(IPublishedContent content, IPublishedValueFallback publishedValueFallback, IVariationContextAccessor variationContextAccessor)
-            : base(content, publishedValueFallback, variationContextAccessor)
+        public ListModel(IPublishedContent content, IPublishedValueFallback publishedValueFallback)
+            : base(content, publishedValueFallback)
         {
         }
 
@@ -73,7 +73,7 @@ namespace Articulate.Models
 
                 if (_listItems == null)
                 {
-                    _resolvedList = ChildrenForAllCultures.Select(x => new PostModel(x, PublishedValueFallback, VariationContextAccessor)).ToArray();
+                    _resolvedList = ChildrenForAllCultures.Select(x => new PostModel(x, PublishedValueFallback)).ToArray();
                     return _resolvedList;
                 }
 
@@ -82,7 +82,7 @@ namespace Articulate.Models
                     _resolvedList = _listItems
                     //Skip will already be done in this case, but we'll take again anyways just to be safe                    
                         .Take(Pages.PageSize)
-                        .Select(x => new PostModel(x, PublishedValueFallback, VariationContextAccessor))
+                        .Select(x => new PostModel(x, PublishedValueFallback))
                         .ToArray();
                 }
                 else

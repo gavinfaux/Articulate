@@ -16,12 +16,4 @@ namespace Articulate.PropertyEditors
 
         protected override IConfigurationEditor CreateConfigurationEditor() => new ThemePickerConfigurationEditor(_ioHelper);
     }
-
-    public class ThemePickerConfigurationEditor : ConfigurationEditor
-    {
-        public ThemePickerConfigurationEditor(IIOHelper ioHelper) : base()
-        {
-            // No specific configuration needed for theme picker
-        }
-    }
 }

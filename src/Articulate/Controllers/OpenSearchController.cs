@@ -1,4 +1,5 @@
 using System.Xml.Linq;
+using Articulate.Attributes;
 using Articulate.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
@@ -14,12 +15,10 @@ namespace Articulate.Controllers
     public class OpenSearchController : RenderController
     {
         private readonly IPublishedValueFallback _publishedValueFallback;
-        private readonly IVariationContextAccessor _variationContextAccessor;
         private readonly UmbracoHelper _umbraco;
 
         public OpenSearchController(
             IPublishedValueFallback publishedValueFallback,
-            IVariationContextAccessor variationContextAccessor,
             UmbracoHelper umbraco,
             ILogger<RenderController> logger,
             ICompositeViewEngine compositeViewEngine,
@@ -27,7 +26,6 @@ namespace Articulate.Controllers
             : base(logger, compositeViewEngine, umbracoContextAccessor)
         {
             _publishedValueFallback = publishedValueFallback;
-            _variationContextAccessor = variationContextAccessor;
             _umbraco = umbraco;
         }
 
@@ -70,7 +68,7 @@ namespace Articulate.Controllers
                 return new NotFoundResult();
             }
 
-            var model = new MasterModel(node, _publishedValueFallback, _variationContextAccessor);
+            var model = new MasterModel(node, _publishedValueFallback);
 
             var searchTemplateUrl = Url.ArticulateSearchUrl(model, includeDomain: true) + "?term={searchTerms}";
 

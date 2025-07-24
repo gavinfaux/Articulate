@@ -1,33 +1,26 @@
+using System.Threading;
+using System.Threading.Tasks;
 using Smidge;
 using Umbraco.Cms.Core.Composing;
 
 namespace Articulate.Components
 {
-    public class ArticulateComponent : IComponent
+    public class ArticulateComponent(IBundleManager bundleManager) : IAsyncComponent
     {
-        private readonly IBundleManager _bundleManager;
-
-        public ArticulateComponent(IBundleManager bundleManager)
-        {
-            _bundleManager = bundleManager;
-        }
-
-        public void Initialize()
+        public Task InitializeAsync(bool isRestarting, CancellationToken cancellationToken)
         {
             foreach (var theme in DefaultThemes.AllThemes)
             {
-                theme.CreateBundles(_bundleManager);
+                theme.CreateBundles(bundleManager);
             }
 
-            // Create bundles for the markdown editor from the new subdirectories
-            _bundleManager.CreateJs("md-editor-js", "~/App_Plugins/Articulate/Assets/md-editor/js");
-            _bundleManager.CreateCss("md-editor-css", "~/App_Plugins/Articulate/Assets/md-editor/css");
+            // Create bundles for the markdown editor from the new subdirectories.
+            bundleManager.CreateJs("md-editor-js", "~/App_Plugins/Articulate/Assets/md-editor/js");
+            bundleManager.CreateCss("md-editor-css", "~/App_Plugins/Articulate/Assets/md-editor/css");
+
+            return Task.CompletedTask;
         }
 
-        public void Terminate()
-        {
-        }
-
+        public Task TerminateAsync(bool isRestarting, CancellationToken cancellationToken) => Task.CompletedTask;
     }
-
 }

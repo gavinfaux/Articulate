@@ -5,7 +5,7 @@ namespace Articulate.Models
 {
     public class AuthorListModel : MasterModel
     {
-        public AuthorListModel(IPublishedContent content, IPublishedValueFallback publishedValueFallback, IVariationContextAccessor variationContextAccessor) : base(content, publishedValueFallback, variationContextAccessor)
+        public AuthorListModel(IPublishedContent content, IPublishedValueFallback publishedValueFallback) : base(content, publishedValueFallback)
         {
         }
 

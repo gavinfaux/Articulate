@@ -1,5 +1,6 @@
 
 using System.Collections.Generic;
+using Articulate.Attributes;
 using Articulate.Models;
 using Articulate.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -36,11 +37,10 @@ namespace Articulate.Controllers
             IUmbracoContextAccessor umbracoContextAccessor,
             IPublishedUrlProvider publishedUrlProvider,
             IPublishedValueFallback publishedValueFallback,
-            IVariationContextAccessor variationContextAccessor,
             UmbracoHelper umbracoHelper,
             ArticulateTagService articulateTagService,
             ITagQuery tagQuery)
-            : base(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider, publishedValueFallback, variationContextAccessor)
+            : base(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider, publishedValueFallback)
         {
             _umbracoHelper = umbracoHelper;
             _articulateTagService = articulateTagService;
@@ -80,7 +80,7 @@ namespace Articulate.Controllers
         private IActionResult RenderTagsOrCategories(string tagGroup, string baseUrl)
         {
             //create a blog model of the main page
-            var rootPageModel = new MasterModel(CurrentPage, PublishedValueFallback, VariationContextAccessor);
+            var rootPageModel = new MasterModel(CurrentPage, PublishedValueFallback);
 
             IEnumerable<PostsByTagModel> contentByTags = _articulateTagService.GetContentByTags(
                 _umbracoHelper,
@@ -94,16 +94,15 @@ namespace Articulate.Controllers
                 CurrentPage.Name,
                 rootPageModel.PageSize,
                 new PostTagCollection(contentByTags),
-                PublishedValueFallback,
-                VariationContextAccessor);
+                PublishedValueFallback);
 
-            return View(PathHelper.GetThemeViewPath(tagListModel, "Tags"), tagListModel);
+            return View("Tags", tagListModel);
         }
 
         private IActionResult RenderByTagOrCategory(string tag, int? p, string tagGroup, string baseUrl)
         {
             //create a master model
-            var masterModel = new MasterModel(CurrentPage, PublishedValueFallback, VariationContextAccessor);
+            var masterModel = new MasterModel(CurrentPage, PublishedValueFallback);
 
             PostsByTagModel contentByTag = _articulateTagService.GetContentByTag(
                 _umbracoHelper,

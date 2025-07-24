@@ -1,7 +1,9 @@
-<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk.Razor">
   <PropertyGroup>
     <TargetFrameworks>net9.0</TargetFrameworks>
     <OutputType>Library</OutputType>
+    <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
+    <StaticWebAssetBasePath>/</StaticWebAssetBasePath>
     <!-- Temporary, resolve in later PRs and enable-->
     <Nullable>warnings</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
@@ -51,19 +53,15 @@
     </PackageReference>
   </ItemGroup>  
 
-  <!-- Framework References-->
-  <ItemGroup>
-    <FrameworkReference Include="Microsoft.AspNetCore.App" />
-  </ItemGroup>
-
   <!-- Nuget Package Dependencies -->
   <ItemGroup>
-    <PackageReference Include="Markdig" Version="0.41.3" />
-    <PackageReference Include="Umbraco.Cms.Web.Website" Version="15.2.3" />
-    <PackageReference Include="Umbraco.Cms.Web.Common" Version="15.2.3" />
-    <PackageReference Include="Umbraco.Cms.Api.Common" Version="15.2.3" />
-    <PackageReference Include="Umbraco.Cms.Api.Management" Version="15.2.3" />
+    <PackageReference Include="Umbraco.Cms.Web.Website" Version="$(UmbracoVersion)" />
+    <PackageReference Include="Umbraco.Cms.Web.Common" Version="$(UmbracoVersion)" />
+    <PackageReference Include="Umbraco.Cms.Api.Common" Version="$(UmbracoVersion)" />
+    <PackageReference Include="Umbraco.Cms.Api.Management" Version="$(UmbracoVersion)" />
+
     <PackageReference Include="Argotic.Core" Version="3001.0.0" />
+    <PackageReference Include="Markdig" Version="0.41.3" />
     <PackageReference Include="Smidge" Version="4.5.1" />
     <PackageReference Include="System.ServiceModel.Syndication" Version="9.0.6" />
     <PackageReference Include="WilderMinds.MetaWeblog" Version="5.1.3" />
@@ -100,15 +98,7 @@
 
     <Touch Files="$(IntermediateOutputPath)client.build.timestamp" AlwaysCreate="true" Condition="'$(ClientBuildExitCode)' == '0'" />
   </Target>
-
-  <ItemGroup>
-    <None Include="App_Plugins\**\*" Pack="true" PackagePath="App_Plugins\" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="build\**\*.*" Pack="True" PackagePath="buildTransitive" />
-  </ItemGroup>
-
+  
   <ItemGroup>
     <Compile Update="Controllers\Resources.Designer.cs">
       <AutoGen>True</AutoGen>

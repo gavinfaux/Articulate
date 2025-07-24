@@ -27,9 +27,8 @@ namespace Articulate.Controllers
             IUmbracoContextAccessor umbracoContextAccessor,
             IPublishedUrlProvider publishedUrlProvider,
             IPublishedValueFallback publishedValueFallback,
-            IVariationContextAccessor variationContextAccessor,
             UmbracoHelper umbracoHelper)
-            : base(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider, publishedValueFallback, variationContextAccessor)
+            : base(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider, publishedValueFallback)
         {
             _umbracoHelper = umbracoHelper;
         }
@@ -56,7 +55,7 @@ namespace Articulate.Controllers
                 throw new InvalidOperationException("An ArticulateArchive document must exist under the root Articulate document");
             }
 
-            var master = new MasterModel(model.Content, PublishedValueFallback, VariationContextAccessor);
+            var master = new MasterModel(model.Content, PublishedValueFallback);
 
             var count = _umbracoHelper.GetPostCount(listNodes.Select(x => x.Id).ToArray());
 
@@ -64,8 +63,7 @@ namespace Articulate.Controllers
                 master,
                 p ?? 1,
                 master.PageSize,
-                PublishedValueFallback,
-                VariationContextAccessor);
+                PublishedValueFallback);
 
             return GetPagedListView(master, listNodes[0], posts, count, p);
 

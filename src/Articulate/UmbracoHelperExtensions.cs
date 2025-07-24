@@ -106,14 +106,12 @@ namespace Articulate
         /// <param name="masterModel"></param>
         /// <param name="count"></param>
         /// <param name="publishedValueFallback"></param>
-        /// <param name="variationContextAccessor"></param>
         /// <returns></returns>
         public static IEnumerable<PostModel> GetRecentPosts(
             this UmbracoHelper helper,
             IMasterModel masterModel,
             int count,
-            IPublishedValueFallback publishedValueFallback,
-            IVariationContextAccessor variationContextAccessor)
+            IPublishedValueFallback publishedValueFallback)
         {
             var listNodes = GetListNodes(masterModel);
 
@@ -123,7 +121,7 @@ namespace Articulate
 
             var listItems = helper.GetPostsSortedByPublishedDate(pager, null, listNodeIds);
 
-            var rootPageModel = new ListModel(listNodes[0], pager, listItems, publishedValueFallback, variationContextAccessor);
+            var rootPageModel = new ListModel(listNodes[0], pager, listItems, publishedValueFallback);
             return rootPageModel.Posts;
         }
 
@@ -135,15 +133,13 @@ namespace Articulate
         /// <param name="page"></param>
         /// <param name="pageSize"></param>
         /// <param name="publishedValueFallback"></param>
-        /// <param name="variationContextAccessor"></param>
         /// <returns></returns>
         public static IEnumerable<PostModel> GetRecentPosts(
             this UmbracoHelper helper,
             IMasterModel masterModel,
             int page,
             int pageSize,
-            IPublishedValueFallback publishedValueFallback,
-            IVariationContextAccessor variationContextAccessor)
+            IPublishedValueFallback publishedValueFallback)
         {
             var listNodes = GetListNodes(masterModel);
 
@@ -153,7 +149,7 @@ namespace Articulate
 
             var listItems = helper.GetPostsSortedByPublishedDate(pager, null, listNodeIds);
 
-            var rootPageModel = new ListModel(listNodes[0], pager, listItems, publishedValueFallback, variationContextAccessor);
+            var rootPageModel = new ListModel(listNodes[0], pager, listItems, publishedValueFallback);
             return rootPageModel.Posts;
         }
 
@@ -165,21 +161,19 @@ namespace Articulate
         /// <param name="page"></param>
         /// <param name="pageSize"></param>
         /// <param name="publishedValueFallback"></param>
-        /// <param name="variationContextAccessor"></param>
         /// <returns></returns>
         public static IEnumerable<PostModel> GetRecentPostsByArchive(
             this UmbracoHelper helper,
             IMasterModel masterModel,
             int page,
             int pageSize,
-            IPublishedValueFallback publishedValueFallback,
-            IVariationContextAccessor variationContextAccessor)
+            IPublishedValueFallback publishedValueFallback)
         {
             var pager = new PagerModel(pageSize, page - 1, 1);
 
             var listItems = helper.GetPostsSortedByPublishedDate(pager, null, masterModel.Id);
 
-            var rootPageModel = new ListModel(masterModel, pager, listItems, publishedValueFallback, variationContextAccessor);
+            var rootPageModel = new ListModel(masterModel, pager, listItems, publishedValueFallback);
             return rootPageModel.Posts;
         }
 
@@ -188,14 +182,13 @@ namespace Articulate
             IPublishedContent[] listNodes,
             string authorName,
             PagerModel pager,
-            IPublishedValueFallback publishedValueFallback,
-            IVariationContextAccessor variationContextAccessor)
+            IPublishedValueFallback publishedValueFallback)
         {
             var listNodeIds = listNodes.Select(x => x.Id).ToArray();
 
             var postWithAuthor = helper.GetPostsSortedByPublishedDate(pager, x => string.Equals(x.Value<string>("author"), authorName.Replace("-", " "), StringComparison.InvariantCultureIgnoreCase), listNodeIds);
 
-            var rootPageModel = new ListModel(listNodes[0], pager, postWithAuthor, publishedValueFallback, variationContextAccessor);
+            var rootPageModel = new ListModel(listNodes[0], pager, postWithAuthor, publishedValueFallback);
             return rootPageModel.Posts;
         }
 

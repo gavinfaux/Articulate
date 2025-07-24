@@ -21,14 +21,14 @@
 * https://docs.volta.sh/guide/getting-started
 
 == Steps ==
-* Open a terminal inside the `\Client` folder
+* Open a terminal inside the `Client` folder
 * Run `npm install` to install all the dependencies
 * Run `npm run build` to build the project
-* The build output is copied to `App_Plugins\Articulate\BackOffice\articulate.js`
+* The build output is copied to `wwwroot/App_Plugins/Articulate/BackOffice/articulate.js`
 
 == File Watching ==
 * Add this Class Library Project as a project reference to an Umbraco Website project
-* From the `\Client` folder run the command `npm run watch` this will monitor the changes to the *.ts files and rebuild the project
+* From the `Client` folder run the command `npm run watch` this will monitor the changes to the *.ts files and rebuild the project
 * With the Umbraco website project running the Class Library Project *should* refresh the browser when the build is complete
 * If the browser does not refresh, you can run the website with `dotnet watch --no-hot-reload` and manually refresh the browser. `no-hot-reload` is only required to avoid refreshes due to token authentication requests by the backoffice when signed in.
 

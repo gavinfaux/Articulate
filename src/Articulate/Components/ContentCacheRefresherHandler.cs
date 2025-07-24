@@ -7,7 +7,6 @@ using Umbraco.Cms.Core.PublishedCache;
 using Umbraco.Cms.Core.Services.Changes;
 using Umbraco.Cms.Core.Sync;
 using Umbraco.Cms.Core.Web;
-using Umbraco.Cms.Infrastructure.Scoping;
 using Umbraco.Extensions;
 
 namespace Articulate.Components
@@ -16,18 +15,16 @@ namespace Articulate.Components
     {
         private readonly IUmbracoContextAccessor _umbracoContextAccessor;
         private readonly AppCaches _appCaches;
-        private readonly IScopeProvider _scopeProvider;
         private readonly IPublishedContentTypeCache _publishedContentTypeCache;
         private readonly IDocumentCacheService _documentCacheService;
 
         public ContentCacheRefresherHandler(
             IUmbracoContextAccessor umbracoContextAccessor,
-            AppCaches appCaches, IScopeProvider scopeProvider,
+            AppCaches appCaches,
             IPublishedContentTypeCache publishedContentTypeCache, IDocumentCacheService documentCacheService)
         {
             _umbracoContextAccessor = umbracoContextAccessor;
             _appCaches = appCaches;
-            _scopeProvider = scopeProvider;
             _publishedContentTypeCache = publishedContentTypeCache;
             _documentCacheService = documentCacheService;
         }
@@ -83,47 +80,44 @@ namespace Articulate.Components
                 return;
             }
 
-            using (_scopeProvider.CreateScope(autoComplete: true))
-            {
-                var item = umbracoContext.Content.GetById(id);
+            var item = umbracoContext.Content.GetById(id);
 
-                // if it's directly related to an articulate node
-                if (item != null && item.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.Articulate))
+            // if it's directly related to an articulate node
+            if (item != null && item.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.Articulate))
+            {
+                //ensure routes are rebuilt
+                _appCaches.RequestCache.GetCacheItem(ArticulateConstants.RefreshRoutesToken, () => true);
+                return;
+            }
+
+            // We need to handle cases where the state of siblings at a lower sort order directly affect an Articulate node's routing.
+            // This will happen on copy, move, sort, unpublish, delete
+            if (item == null)
+            {
+                item = umbracoContext.Content.GetById(true, id);
+
+                // This will occur on delete, then what?
+                // TODO: How would we know this is a node that might be at the same level/above?
+                // For now we have no choice, rebuild routes on each delete :/
+                if (item == null)
                 {
-                    //ensure routes are rebuilt
                     _appCaches.RequestCache.GetCacheItem(ArticulateConstants.RefreshRoutesToken, () => true);
                     return;
                 }
+            }
 
-                // We need to handle cases where the state of siblings at a lower sort order directly affect an Articulate node's routing.
-                // This will happen on copy, move, sort, unpublish, delete
-                if (item == null)
+            var articulateContentType = _publishedContentTypeCache.Get(PublishedItemType.Content, ArticulateConstants.ContentType.Articulate);
+            if (articulateContentType != null)
+            {
+                var articulateNodes = _documentCacheService.GetByContentType(articulateContentType);
+                foreach (var node in articulateNodes)
                 {
-                    item = umbracoContext.Content.GetById(true, id);
-
-                    // This will occur on delete, then what?
-                    // TODO: How would we know this is a node that might be at the same level/above?
-                    // For now we have no choice, rebuild routes on each delete :/
-                    if (item == null)
+                    // if the item is same level with a lower sort order it can directly affect the articulate node's route
+                    if (node.Level == item.Level && node.SortOrder > item.SortOrder)
                     {
+                        //ensure routes are rebuilt
                         _appCaches.RequestCache.GetCacheItem(ArticulateConstants.RefreshRoutesToken, () => true);
                         return;
-                    }
-                }
-
-                var articulateContentType = _publishedContentTypeCache.Get(PublishedItemType.Content, ArticulateConstants.ContentType.Articulate);
-                if (articulateContentType != null)
-                {
-                    var articulateNodes = _documentCacheService.GetByContentType(articulateContentType);
-                    foreach (var node in articulateNodes)
-                    {
-                        // if the item is same level with a lower sort order it can directly affect the articulate node's route
-                        if (node.Level == item.Level && node.SortOrder > item.SortOrder)
-                        {
-                            //ensure routes are rebuilt
-                            _appCaches.RequestCache.GetCacheItem(ArticulateConstants.RefreshRoutesToken, () => true);
-                            return;
-                        }
                     }
                 }
             }

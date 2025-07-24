@@ -9,9 +9,8 @@ namespace Articulate.Models
             string name,
             int pageSize,
             PostTagCollection tags,
-            IPublishedValueFallback publishedValueFallback,
-            IVariationContextAccessor variationContextAccessor)
-            : base(masterModel.RootBlogNode, publishedValueFallback, variationContextAccessor)
+            IPublishedValueFallback publishedValueFallback)
+            : base(masterModel.RootBlogNode, publishedValueFallback)
         {
             Name = name;
             Theme = masterModel.Theme;

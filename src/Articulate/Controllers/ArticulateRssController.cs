@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using Articulate.Attributes;
 using Articulate.Models;
 using Articulate.Services;
 using Articulate.Syndication;
@@ -27,7 +28,6 @@ namespace Articulate.Controllers
     {
         private readonly IRssFeedGenerator _feedGenerator;
         private readonly IPublishedValueFallback _publishedValueFallback;
-        private readonly IVariationContextAccessor _variationContextAccessor;
         private readonly UmbracoHelper _umbracoHelper;
         private readonly ArticulateTagService _articulateTagService;
 
@@ -37,14 +37,12 @@ namespace Articulate.Controllers
             IUmbracoContextAccessor umbracoContextAccessor,
             IRssFeedGenerator feedGenerator,
             IPublishedValueFallback publishedValueFallback,
-            IVariationContextAccessor variationContextAccessor,
             UmbracoHelper umbracoHelper,
             ArticulateTagService articulateTagService)
             : base(logger, compositeViewEngine, umbracoContextAccessor)
         {
             _feedGenerator = feedGenerator;
             _publishedValueFallback = publishedValueFallback;
-            _variationContextAccessor = variationContextAccessor;
             _umbracoHelper = umbracoHelper;
             _articulateTagService = articulateTagService;
         }
@@ -78,8 +76,7 @@ namespace Articulate.Controllers
                 listNodes[0],
                 pager,
                 listItems,
-                _publishedValueFallback,
-                _variationContextAccessor);
+                _publishedValueFallback);
 
             /*
               TODO: Raise issue / debug Umbraco Core - This returns null, when it should be two with the default content installed
@@ -96,7 +93,7 @@ namespace Articulate.Controllers
             // Work around for above issue
             var posts = _umbracoHelper.GetPostsSortedByPublishedDate(
                     pager, null, new[] { rootPageModel.Id })
-                .Select(x => new PostModel(x, _publishedValueFallback, _variationContextAccessor));
+                .Select(x => new PostModel(x, _publishedValueFallback));
 
             var feed = _feedGenerator.GetFeed(rootPageModel, posts);
 
@@ -117,7 +114,7 @@ namespace Articulate.Controllers
             }
 
             //create a master model
-            var masterModel = new MasterModel(author, _publishedValueFallback, _variationContextAccessor);
+            var masterModel = new MasterModel(author, _publishedValueFallback);
 
             var listNodes = masterModel.RootBlogNode.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive).ToArray();
 
@@ -125,10 +122,9 @@ namespace Articulate.Controllers
                 listNodes,
                 author.Name,
                 new PagerModel(maxItems.Value, 0, 1),
-                _publishedValueFallback,
-                _variationContextAccessor);
+                _publishedValueFallback);
 
-            var feed = _feedGenerator.GetFeed(masterModel, authorContenet.Select(x => new PostModel(x, _publishedValueFallback, _variationContextAccessor)));
+            var feed = _feedGenerator.GetFeed(masterModel, authorContenet.Select(x => new PostModel(x, _publishedValueFallback)));
 
             return new RssResult(feed, masterModel);
         }
@@ -166,7 +162,7 @@ namespace Articulate.Controllers
         public IActionResult RenderTagsOrCategoriesRss(string tagGroup, string baseUrl, int maxItems, string tag)
         {
             //create a blog model of the main page
-            var rootPageModel = new MasterModel(CurrentPage, _publishedValueFallback, _variationContextAccessor);
+            var rootPageModel = new MasterModel(CurrentPage, _publishedValueFallback);
 
             PostsByTagModel contentByTag = _articulateTagService.GetContentByTag(
                 _umbracoHelper,

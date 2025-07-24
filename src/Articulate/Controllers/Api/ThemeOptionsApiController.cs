@@ -22,7 +22,7 @@ namespace Articulate.Controllers.Api
     [Authorize(Policy = AuthorizationPolicies.SectionAccessSettings)]
     [VersionedApiBackOfficeRoute("articulate/theme")]
     [MapToApi(ArticulateConstants.ManagementApi.Name)]
-    public class ThemeOptionsApiController(IThemeService themeService, ILogger<ThemeOptionsApiController> logger) : ManagementApiControllerBase
+    public class ThemeOptionsApiController(IArticulateThemeService themeService, ILogger<ThemeOptionsApiController> logger) : ManagementApiControllerBase
     {
         [HttpPost("copy")]
         [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]

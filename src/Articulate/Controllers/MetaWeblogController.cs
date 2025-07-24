@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
+using Articulate.Attributes;
 using Articulate.MetaWeblog;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
@@ -53,13 +54,13 @@ namespace Articulate.Controllers
             // create the service using the provider
             var service = ActivatorUtilities.CreateInstance<MetaWeblogService>(_serviceProvider, provider);
 
-            string rawContent;
+            var rawContent = string.Empty;
             using (var reader = new StreamReader(Request.Body))
             {
                 rawContent = await reader.ReadToEndAsync();
             }
 
-            var result = await service.InvokeAsync(rawContent);
+            string result = await service.InvokeAsync(rawContent);
             return Content(result, "text/xml", Encoding.UTF8);
         }
     }

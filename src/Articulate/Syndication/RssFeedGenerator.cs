@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.ServiceModel.Syndication;
-using System.Text.RegularExpressions;
 using Articulate.Models;
 using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Core.Hosting;
@@ -127,14 +126,5 @@ namespace Articulate.Syndication
 
             return logoUri;
         }
-    }
-
-    internal static partial class RssFeedGeneratorRegexes
-    {
-        [GeneratedRegex(" src=(?:\"|')(?:http|https)://(?:[\\w\\d:/-]+?)(articulate/.*?)(?:\"|')", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase | RegexOptions.Compiled)]
-        public static partial Regex RelativeMediaSrcRegex();
-
-        [GeneratedRegex(" href=(?:\"|')(/media/.*?)(?:\"|')", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase | RegexOptions.Compiled)]
-        public static partial Regex RelativeMediaHrefRegex();
     }
 }

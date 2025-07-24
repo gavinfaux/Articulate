@@ -24,9 +24,8 @@ namespace Articulate.Controllers
             IUmbracoContextAccessor umbracoContextAccessor,
             IPublishedUrlProvider publishedUrlProvider,
             IPublishedValueFallback publishedValueFallback,
-            IVariationContextAccessor variationContextAccessor,
             UmbracoHelper umbraco)
-            : base(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider, publishedValueFallback, variationContextAccessor)
+            : base(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider, publishedValueFallback)
         {
             Umbraco = umbraco;
         }
@@ -49,7 +48,7 @@ namespace Articulate.Controllers
 
         private IActionResult RenderView(IContentModel model, int? p = null)
         {
-            var archive = new MasterModel(model.Content, PublishedValueFallback, VariationContextAccessor);
+            var archive = new MasterModel(model.Content, PublishedValueFallback);
 
             // redirect to root node when "redirectArchive" is configured
             if (archive.RootBlogNode.Value<bool>("redirectArchive"))
@@ -69,8 +68,7 @@ namespace Articulate.Controllers
                 archive,
                 1,
                 pageSize,
-                PublishedValueFallback,
-                VariationContextAccessor);
+                PublishedValueFallback);
 
             return GetPagedListView(archive, archive, posts, count, null);
         }

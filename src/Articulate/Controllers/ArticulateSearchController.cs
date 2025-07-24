@@ -1,4 +1,5 @@
 using System.Linq;
+using Articulate.Attributes;
 using Articulate.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
@@ -26,9 +27,8 @@ namespace Articulate.Controllers
             IUmbracoContextAccessor umbracoContextAccessor,
             IPublishedUrlProvider publishedUrlProvider,
             IPublishedValueFallback publishedValueFallback,
-            IVariationContextAccessor variationContextAccessor,
             IArticulateSearcher articulateSearcher)
-            : base(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider, publishedValueFallback, variationContextAccessor)
+            : base(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider, publishedValueFallback)
         {
             _articulateSearcher = articulateSearcher;
         }
@@ -51,7 +51,7 @@ namespace Articulate.Controllers
         public IActionResult Search(string term, string provider = null, int? p = null)
         {
             //create a master model
-            var masterModel = new MasterModel(CurrentPage, PublishedValueFallback, VariationContextAccessor);
+            var masterModel = new MasterModel(CurrentPage, PublishedValueFallback);
 
             if (term == null)
             {
@@ -60,10 +60,9 @@ namespace Articulate.Controllers
                     CurrentPage,
                     new PagerModel(masterModel.PageSize, 0, 0),
                     Enumerable.Empty<IPublishedContent>(),
-                    PublishedValueFallback,
-                    VariationContextAccessor);
+                    PublishedValueFallback);
 
-                return View(PathHelper.GetThemeViewPath(emptyList, "List"), emptyList);
+                return View("List", emptyList);
             }
 
             if (p != null && p.Value == 1)

@@ -16,9 +16,8 @@ namespace Articulate.Models
             IEnumerable<IPublishedContent> listItems,
             PagerModel pager,
             int postCount,
-            IPublishedValueFallback publishedValueFallback,
-            IVariationContextAccessor variationContextAccessor)
-            : base(content, pager, listItems, publishedValueFallback, variationContextAccessor)
+            IPublishedValueFallback publishedValueFallback)
+            : base(content, pager, listItems, publishedValueFallback)
         {
             PostCount = postCount;
         }

@@ -52,7 +52,7 @@ namespace Articulate.Components
                         }
                         else
                         {
-                            var articles = _contentService.CreateAndSave(ArticulateConstants.Convention.ArticlesDocument, c, ArticulateConstants.ContentType.ArticulateArchive);
+                            _contentService.CreateAndSave(ArticulateConstants.Convention.ArticlesDocument, c, ArticulateConstants.ContentType.ArticulateArchive);
                         }
                     }
                 }
@@ -65,12 +65,12 @@ namespace Articulate.Components
                         if (authorContentType.VariesByCulture())
                         {
                             var authors = _contentService.Create("", c, ArticulateConstants.ContentType.ArticulateAuthors);
-                            authors.SetCultureName(ArticulateConstants.Convention.ArticlesDocument, defaultLang);
+                            authors.SetCultureName(ArticulateConstants.Convention.AuthorsDocument, defaultLang);
                             _contentService.Save(authors);
                         }
                         else
                         {
-                            var authors = _contentService.CreateAndSave(ArticulateConstants.Convention.ArticlesDocument, c, ArticulateConstants.ContentType.ArticulateAuthors);
+                            var authors = _contentService.CreateAndSave(ArticulateConstants.Convention.AuthorsDocument, c, ArticulateConstants.ContentType.ArticulateAuthors);
                         }
                     }
                 }

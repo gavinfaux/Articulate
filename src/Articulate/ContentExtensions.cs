@@ -11,7 +11,6 @@ namespace Articulate
 {
     public static class ContentExtensions
     {
-
         public static IContent CreateWithInvariantOrDefaultCultureName(
             this IContentService contentService,
             string name,

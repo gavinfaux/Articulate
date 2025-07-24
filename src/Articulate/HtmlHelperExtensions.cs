@@ -230,40 +230,6 @@ namespace Articulate
             return new HtmlString(string.Empty);
         }
 
-        /// <summary>
-        /// Renders a partial view in the current theme based on the current IMasterModel
-        /// </summary>
-        /// <param name="html"></param>
-        /// <param name="model"></param>
-        /// <param name="partialName"></param>
-        /// <param name="viewModel"></param>
-        /// <param name="viewData"></param>
-        /// <returns></returns>
-        public static Task<IHtmlContent> ThemedPartialAsync(this IHtmlHelper html, IMasterModel model, string partialName, object viewModel, ViewDataDictionary viewData = null)
-        {
-            var path = PathHelper.GetThemePartialViewPath(model, partialName);
-            return html.PartialAsync(path, viewModel, viewData);
-        }
-
-        /// <summary>
-        /// Renders a partial view in the current theme based on the current IMasterModel
-        /// </summary>
-        /// <param name="html"></param>
-        /// <param name="model"></param>
-        /// <param name="partialName"></param>
-        /// <param name="viewData"></param>
-        /// <returns></returns>
-        public static Task<IHtmlContent> ThemedPartialAsync(this IHtmlHelper html, IMasterModel model, string partialName, ViewDataDictionary viewData = null)
-        {
-            if (viewData == null)
-            {
-                viewData = html.ViewData;
-            }
-
-            var path = PathHelper.GetThemePartialViewPath(model, partialName);
-            return html.PartialAsync(path, viewData);
-        }
-
         public static IHtmlContent TagCloud(this IHtmlHelper html, PostTagCollection model, decimal maxWeight, int maxResults)
         {
             var tagsAndWeight = model.Select(x => new { tag = x, weight = model.GetTagWeight(x, maxWeight) })

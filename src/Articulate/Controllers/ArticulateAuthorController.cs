@@ -25,9 +25,8 @@ namespace Articulate.Controllers
             IUmbracoContextAccessor umbracoContextAccessor,
             IPublishedUrlProvider publishedUrlProvider,
             IPublishedValueFallback publishedValueFallback,
-            IVariationContextAccessor variationContextAccessor,
             UmbracoHelper umbracoHelper)
-            : base(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider, publishedValueFallback, variationContextAccessor)
+            : base(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider, publishedValueFallback)
         {
             _umbracoHelper = umbracoHelper;
         }
@@ -42,7 +41,7 @@ namespace Articulate.Controllers
         public IActionResult Index(int? p)
         {
             //create a master model
-            var masterModel = new MasterModel(CurrentPage, PublishedValueFallback, VariationContextAccessor);
+            var masterModel = new MasterModel(CurrentPage, PublishedValueFallback);
 
             var listNodes = masterModel.RootBlogNode.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive).ToArray();
             if (listNodes.Length == 0)
@@ -64,18 +63,16 @@ namespace Articulate.Controllers
                 listNodes,
                 CurrentPage.Name,
                 pager,
-                PublishedValueFallback,
-                VariationContextAccessor);
+                PublishedValueFallback);
 
             var author = new AuthorModel(
                 CurrentPage,
                 authorPosts,
                 pager,
                 totalPosts,
-                PublishedValueFallback,
-                VariationContextAccessor);
+                PublishedValueFallback);
 
-            return View(PathHelper.GetThemeViewPath(author, "Author"), author);
+            return View("Author", author);
         }
 
     }

@@ -124,15 +124,13 @@ namespace Articulate.ImportExport
 
         private void WriteFile(BlogMLDocument blogMlDoc, string fileName)
         {
-            using (var stream = new MemoryStream())
+            using var stream = new MemoryStream();
+            blogMlDoc.Save(stream, new SyndicationResourceSaveSettings()
             {
-                blogMlDoc.Save(stream, new SyndicationResourceSaveSettings()
-                {
-                    CharacterEncoding = Encoding.UTF8
-                });
-                stream.Position = 0;
-                _articulateTempFileSystem.AddFile(fileName, stream, true);
-            }
+                CharacterEncoding = Encoding.UTF8
+            });
+            stream.Position = 0;
+            _articulateTempFileSystem.AddFile(fileName, stream, true);
         }
 
         private void AddBlogCategories(BlogMLDocument blogMlDoc, string tagGroup)
@@ -190,14 +188,15 @@ namespace Articulate.ImportExport
                         continue;
                     }
 
-                    string content = "";
+                    var content = "";
                     if (child.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateRichText))
                     {
-                        //TODO: this would also need to export all macros
+                        //TODO: this would also need to handle RTE extensions e.g Blocks
                         content = child.GetValue<string>("richText");
                     }
                     else if (child.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateMarkdown))
                     {
+                        //TODO: this would also need to handle Markdown extensions if supported e.g MDX
                         content = MarkdownHelper.ToHtml(child.GetValue<string>("markdown"));
                     }
 
@@ -261,14 +260,10 @@ namespace Articulate.ImportExport
 
                                         if (exportImagesAsBase64)
                                         {
-                                            using (var mediaFileStream = _mediaFileManager.GetFile(media, out _))
-                                            {
-                                                using (var memoryStream = new MemoryStream())
-                                                {
-                                                    mediaFileStream.CopyTo(memoryStream);
-                                                    attachment.Content = Convert.ToBase64String(memoryStream.ToArray());
-                                                }
-                                            }
+                                            using var mediaFileStream = _mediaFileManager.GetFile(media, out _);
+                                            using var memoryStream = new MemoryStream();
+                                            mediaFileStream.CopyTo(memoryStream);
+                                            attachment.Content = Convert.ToBase64String(memoryStream.ToArray());
                                         }
                                         else
                                         {
@@ -295,18 +290,20 @@ namespace Articulate.ImportExport
 
         private static string ImageMimeType(string src)
         {
-            var ext = Path.GetExtension(src).ToLowerInvariant();
-            switch (ext)
+            var ext = Path.GetExtension(src).Trim('.').ToLowerInvariant();
+            return ext switch
             {
-                case ".jpg":
-                    return "image/jpeg";
-                case ".png":
-                    return "image/png";
-                case ".gif":
-                    return "image/gif";
-                default:
-                    return null;
-            }
+                "jpg" => "image/jpeg",
+                "svg" => "image/svg+xml",
+                "png" => "image/png",
+                "gif" => "image/gif",
+                "webp" => "image/webp",
+                "avif" => "image/avif",
+                "bmp" => "image/bmp",
+                "tiff" => "image/tiff",
+                _ when !string.IsNullOrWhiteSpace(ext) => $"image/{ext}",
+                _ => string.Empty
+            };
         }
     }
 }

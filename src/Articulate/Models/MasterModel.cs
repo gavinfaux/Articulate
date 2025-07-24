@@ -10,11 +10,10 @@ namespace Articulate.Models
     /// </summary>
     public class MasterModel : PublishedContentWrapped, IMasterModel
     {
-        public MasterModel(IPublishedContent content, IPublishedValueFallback publishedValueFallback, IVariationContextAccessor variationContextAccessor)
+        public MasterModel(IPublishedContent content, IPublishedValueFallback publishedValueFallback)
             : base(content, publishedValueFallback)
         {
             PublishedValueFallback = publishedValueFallback;
-            VariationContextAccessor = variationContextAccessor;
         }
 
         /// <summary>
@@ -147,6 +146,5 @@ namespace Articulate.Models
 
         public string PageTags { get; protected set; }
         public IPublishedValueFallback PublishedValueFallback { get; }
-        public IVariationContextAccessor VariationContextAccessor { get; }
     }
 }

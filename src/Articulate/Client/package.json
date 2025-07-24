@@ -23,7 +23,7 @@
   "scripts": {
     "watch": "npm-run-all2 --parallel dev:*",
     "dev:vite": "vite build --watch",
-    "dev:copy": "chokidar \"../App_Plugins/Articulate/BackOffice/**/*\" --ignore \"**/umbraco-package.json\" -c \"node ./scripts/post-build.js --copy\"",
+    "dev:copy": "chokidar \"../wwwroot/App_Plugins/Articulate/BackOffice/**/*\" --ignore \"**/umbraco-package.json\" -c \"node ./scripts/post-build.js --copy\"",
     "build": "vite build && node ./scripts/post-build.js",
     "build:copy": "vite build && node ./scripts/post-build.js --copy",
     "build:release": "npm run set-version && vite build && node ./scripts/post-build.js",
@@ -34,7 +34,7 @@
     "set-version": "node ./scripts/update-version.js ./package.json"
   },
   "dependenciesComments": {
-    "monaco-editor": "Articulate Markdown Editor, only required until Umbraco Core editor supports better markdown to HTML processing; see https://github.com/umbraco/Umbraco-CMS/issues/19500"
+    "monaco-editor": "Articulate Markdown Editor property editor (not the mobile markdown editor), only required until Umbraco Core editor supports better markdown to HTML processing; see https://github.com/umbraco/Umbraco-CMS/issues/19500"
   },
   "devDependencies": {
     "@hey-api/openapi-ts": "^0.78.3",

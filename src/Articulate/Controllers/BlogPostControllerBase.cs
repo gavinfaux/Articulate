@@ -11,24 +11,21 @@ namespace Articulate.Controllers
     public abstract class BlogPostControllerBase : RenderController
     {
         private readonly IPublishedValueFallback _publishedValueFallback;
-        private readonly IVariationContextAccessor _variationContextAccessor;
 
         protected BlogPostControllerBase(
             ILogger<RenderController> logger,
             ICompositeViewEngine compositeViewEngine,
             IUmbracoContextAccessor umbracoContextAccessor,
-            IPublishedValueFallback publishedValueFallback,
-            IVariationContextAccessor variationContextAccessor)
+            IPublishedValueFallback publishedValueFallback)
             : base(logger, compositeViewEngine, umbracoContextAccessor)
         {
             _publishedValueFallback = publishedValueFallback;
-            _variationContextAccessor = variationContextAccessor;
         }
 
         public override IActionResult Index()
         {
-            var post = new PostModel(CurrentPage, _publishedValueFallback, _variationContextAccessor);
-            return View(PathHelper.GetThemeViewPath(post, "Post"), post);
+            var post = new PostModel(CurrentPage, _publishedValueFallback);
+            return View("Post", post);
         }
     }
 }

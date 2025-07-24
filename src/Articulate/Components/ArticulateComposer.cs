@@ -4,6 +4,7 @@ using Articulate.Options;
 using Articulate.Routing;
 using Articulate.Services;
 using Articulate.Syndication;
+using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -14,6 +15,7 @@ using Umbraco.Cms.Core.Routing;
 
 namespace Articulate.Components
 {
+
     public class ArticulateComposer : ComponentComposer<ArticulateComponent>
     {
         public override void Compose(IUmbracoBuilder builder)
@@ -37,8 +39,12 @@ namespace Articulate.Components
             services.AddSingleton<RouteCacheRefresherFilter>();
             services.AddSingleton<ArticulateFrontEndFilterConvention>();
             builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<MatcherPolicy, ArticulateDynamicRouteSelectorPolicy>());
-            builder.Services.TryAddScoped<IThemeService, IThemeService.ThemeService>();
-
+            builder.Services.TryAddScoped<IArticulateThemeService, ArticulateThemeService>();
+            builder.Services.Configure<RazorViewEngineOptions>(options =>
+            {
+                var themeService = builder.Services.BuildServiceProvider().GetRequiredService<IArticulateThemeService>();
+                options.ViewLocationExpanders.Add(new ArticulateThemeViewLocationExpander(themeService));
+            });
             builder.UrlProviders().InsertBefore<NewDefaultUrlProvider, DateFormattedUrlProvider>();
 
             builder.ContentFinders().InsertBefore<ContentFinderByUrlNew, DateFormattedPostContentFinder>();

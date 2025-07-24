@@ -1,8 +1,15 @@
+using System;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.Mvc.Razor;
+using Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Smidge;
 using Smidge.Cache;
 using Smidge.Options;
@@ -10,6 +17,10 @@ using Umbraco.Cms.Core.DependencyInjection;
 using Umbraco.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// only required for SDK style projects not RCL
+builder.Services.AddControllersWithViews()
+    .AddRazorRuntimeCompilation();
 
 builder.CreateUmbracoBuilder()
     .AddBackOffice()
@@ -58,13 +69,59 @@ builder.Services.Configure<FormOptions>(x =>
 });
 
 // Only required for Razor page support in Pages folder (just a Debug helper at present)
-// builder.Services.AddRazorPages();
+builder.Services.AddRazorPages();
+
+// Only required for static assets in Release mode when running from IDE (e.g. back office) - not required for published release
+builder.WebHost.UseStaticWebAssets();
 
 var app = builder.Build();
 
 await app.BootUmbracoAsync();
 
-if (app.Environment.IsDevelopment())
+var loggerFactory = app.Services.GetRequiredService<ILoggerFactory>();
+var startupLogger = loggerFactory.CreateLogger("Articulate.StartupDiagnostics");
+
+try
+{
+    // Get the configured options for the runtime compiler
+    var runtimeCompilationOptions = app.Services.GetRequiredService<IOptions<MvcRazorRuntimeCompilationOptions>>().Value;
+
+    startupLogger.LogCritical("--- Articulate: Verifying Registered File Providers ---");
+
+    // Check how many providers are registered.
+    var providerCount = runtimeCompilationOptions.FileProviders.Count;
+    if (providerCount > 0)
+    {
+        startupLogger.LogCritical("{Count} file providers are registered with the runtime compiler.", providerCount);
+        var i = 0;
+        foreach (var provider in runtimeCompilationOptions.FileProviders)
+        {
+            // Try to cast to PhysicalFileProvider to get useful path information
+            if (provider is PhysicalFileProvider pfp)
+            {
+                startupLogger.LogCritical("  [{Index}] Provider Type: PhysicalFileProvider, Root: '{Root}'", i, pfp.Root);
+            }
+            else
+            {
+                startupLogger.LogCritical("  [{Index}] Provider Type: {Type}", i, provider.GetType().Name);
+            }
+
+            i++;
+        }
+    }
+    else
+    {
+        startupLogger.LogCritical("No file providers are registered with the runtime compiler. Custom views may not be found.");
+    }
+
+    startupLogger.LogCritical("--- End of Verification ---");
+}
+catch (Exception ex)
+{
+    startupLogger.LogError(ex, "An error occurred during Articulate startup diagnostics.");
+}
+
+if(app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
 }
@@ -72,8 +129,8 @@ if (app.Environment.IsDevelopment())
 app.UseUmbraco()
     .WithMiddleware(u =>
     {
-        u.UseBackOffice();
-        u.UseWebsite();
+         u.UseBackOffice();
+         u.UseWebsite();
     })
     .WithEndpoints(u =>
     {
@@ -101,18 +158,18 @@ app.UseUmbraco()
         //}
 
         // Only required for Razor page support in Pages folder (just a Debug helper at present)
-        // u.EndpointRouteBuilder.MapRazorPages();
+         u.EndpointRouteBuilder.MapRazorPages();
 
         // Enables the Umbraco Preview Hub for previewing content unpublished content
-        u.UseUmbracoPreviewEndpoints();
+         u.UseUmbracoPreviewEndpoints();
 
-        u.UseBackOfficeEndpoints();
-        u.UseWebsiteEndpoints();
+         u.UseBackOfficeEndpoints();
+         u.UseWebsiteEndpoints();
     });
 
 if (!app.Environment.IsDevelopment())
 {
-    app.UseHttpsRedirection();
+     app.UseHttpsRedirection();
 }
 
 // Articulate requires Smidge

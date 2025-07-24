@@ -13,8 +13,8 @@ namespace Articulate.Models
     {
         private PostAuthorModel _author;
 
-        public PostModel(IPublishedContent content, IPublishedValueFallback publishedValueFallback, IVariationContextAccessor variationContextAccessor)
-            : base(content, publishedValueFallback, variationContextAccessor)
+        public PostModel(IPublishedContent content, IPublishedValueFallback publishedValueFallback)
+            : base(content, publishedValueFallback)
         {
             PageTitle = Name + " - " + BlogTitle;
             PageDescription = Excerpt;

@@ -10,7 +10,6 @@ using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.PublishedCache;
 using Umbraco.Cms.Core.Routing;
 using Umbraco.Cms.Core.Web;
-using Umbraco.Cms.Infrastructure.Scoping;
 using Umbraco.Cms.Web.Common.Controllers;
 using Umbraco.Cms.Web.Website.Routing;
 using Umbraco.Extensions;
@@ -31,17 +30,15 @@ namespace Articulate.Routing
 
         private readonly Dictionary<ArticulateRouteTemplate, ArticulateRootNodeCache> _routeCache = new();
         private readonly IControllerActionSearcher _controllerActionSearcher;
-        private readonly IScopeProvider _scopeProvider;
 
         /// <summary>
         /// Constructor
         /// </summary>
         /// <param name="controllerActionSearcher"></param>
         /// <param name="scopeProvider"></param>
-        public ArticulateRouter(IControllerActionSearcher controllerActionSearcher, IScopeProvider scopeProvider)
+        public ArticulateRouter(IControllerActionSearcher controllerActionSearcher)
         {
             _controllerActionSearcher = controllerActionSearcher;
-            _scopeProvider = scopeProvider;
         }
 
         public bool TryMatch(PathString path, RouteValueDictionary routeValues, out ArticulateRootNodeCache articulateRootNodeCache)
@@ -72,63 +69,61 @@ namespace Articulate.Routing
         {
             lock (s_locker)
             {
-                using (var scope = _scopeProvider.CreateCoreScope(autoComplete: true))
+
+                IPublishedContentType articulateCt = publishedContentTypeCache.Get(PublishedItemType.Content, ArticulateConstants.ContentType.Articulate);
+                if (articulateCt == null)
                 {
+                    return;
+                }
 
-                    IPublishedContentType articulateCt = publishedContentTypeCache.Get(PublishedItemType.Content, ArticulateConstants.ContentType.Articulate);
-                    if (articulateCt == null)
+                var articulateNodes = documentCacheService.GetByContentType(articulateCt).ToList();
+
+                var domains = umbracoContext.Domains.GetAll(false).ToList();
+
+                // Ensure we always start with an empty cache
+                // We may call this MapRoutes method again when Articulate root node is published
+                // and any of the dynamic URLs from the content node change
+                // So we clear this out, otherwise we will have the previous working URL and the updated URL (Until the site restarts)
+                _routeCache.Clear();
+
+                // For each articulate root, we need to create some custom route, BUT routes can overlap
+                // based on multi-tenency so we need to deal with that. 
+                // For example a root articulate node might yield a route like:
+                //      /
+                // and another articulate root node that has a domain might have this url:
+                //      http://mydomain/
+                // but when that is processed through RoutePathFromNodeUrl, it becomes:
+                //      /
+                // which already exists and is already assigned to a specific node ID.
+                // So what we need to do in these cases is use a special route handler that takes
+                // into account the domain assigned to the route.
+                var articulateNodesGroupedByUriPath = articulateNodes
+                    .GroupBy(x => RouteCollectionExtensions.RoutePathFromNodeUrl(httpContext, x.Url()))
+                    // This is required to ensure that we create routes that are more specific first
+                    // before creating routes that are less specific
+                    .OrderByDescending(x => x.Key.Split('/').Length);
+
+                foreach (var nodeByPathGroup in articulateNodesGroupedByUriPath)
+                {
+                    var rootNodePath = nodeByPathGroup.Key.EnsureEndsWith('/');
+
+                    foreach (IPublishedContent articulateRootNode in nodeByPathGroup)
                     {
-                        return;
-                    }
+                        MapRssRoute(httpContext, rootNodePath, articulateRootNode, domains);
+                        MapMarkdownEditorRoute(httpContext, rootNodePath, articulateRootNode, domains);
+                        MapAuthorsRssRoute(httpContext, rootNodePath, articulateRootNode, domains);
 
-                    var articulateNodes = documentCacheService.GetByContentType(articulateCt).ToList();
+                        MapSearchRoute(httpContext, rootNodePath, articulateRootNode, domains);
+                        MapMetaWeblogRoute(httpContext, rootNodePath, articulateRootNode, domains);
+                        MapManifestRoute(httpContext, rootNodePath, articulateRootNode, domains);
+                        MapRsdRoute(httpContext, rootNodePath, articulateRootNode, domains);
+                        MapOpenSearchRoute(httpContext, rootNodePath, articulateRootNode, domains);
 
-                    var domains = umbracoContext.Domains.GetAll(false).ToList();
-
-                    // Ensure we always start with an empty cache
-                    // We may call this MapRoutes method again when Articulate root node is published
-                    // and any of the dynamic URLs from the content node change
-                    // So we clear this out, otherwise we will have the previous working URL and the updated URL (Until the site restarts)
-                    _routeCache.Clear();
-
-                    // For each articulate root, we need to create some custom route, BUT routes can overlap
-                    // based on multi-tenency so we need to deal with that. 
-                    // For example a root articulate node might yield a route like:
-                    //      /
-                    // and another articulate root node that has a domain might have this url:
-                    //      http://mydomain/
-                    // but when that is processed through RoutePathFromNodeUrl, it becomes:
-                    //      /
-                    // which already exists and is already assigned to a specific node ID.
-                    // So what we need to do in these cases is use a special route handler that takes
-                    // into account the domain assigned to the route.
-                    var articulateNodesGroupedByUriPath = articulateNodes
-                        .GroupBy(x => RouteCollectionExtensions.RoutePathFromNodeUrl(httpContext, x.Url()))
-                        // This is required to ensure that we create routes that are more specific first
-                        // before creating routes that are less specific
-                        .OrderByDescending(x => x.Key.Split('/').Length);
-
-                    foreach (var nodeByPathGroup in articulateNodesGroupedByUriPath)
-                    {
-                        var rootNodePath = nodeByPathGroup.Key.EnsureEndsWith('/');
-
-                        foreach (IPublishedContent articulateRootNode in nodeByPathGroup)
-                        {
-                            MapRssRoute(httpContext, rootNodePath, articulateRootNode, domains);
-                            MapMarkdownEditorRoute(httpContext, rootNodePath, articulateRootNode, domains);
-                            MapAuthorsRssRoute(httpContext, rootNodePath, articulateRootNode, domains);
-
-                            MapSearchRoute(httpContext, rootNodePath, articulateRootNode, domains);
-                            MapMetaWeblogRoute(httpContext, rootNodePath, articulateRootNode, domains);
-                            MapManifestRoute(httpContext, rootNodePath, articulateRootNode, domains);
-                            MapRsdRoute(httpContext, rootNodePath, articulateRootNode, domains);
-                            MapOpenSearchRoute(httpContext, rootNodePath, articulateRootNode, domains);
-
-                            // tags/cats routes are the least specific
-                            MapTagsAndCategoriesRoute(httpContext, rootNodePath, articulateRootNode, domains);
-                        }
+                        // tags/cats routes are the least specific
+                        MapTagsAndCategoriesRoute(httpContext, rootNodePath, articulateRootNode, domains);
                     }
                 }
+
             }
         }
 
