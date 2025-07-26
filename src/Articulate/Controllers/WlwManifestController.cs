@@ -3,6 +3,7 @@ using Articulate.Attributes;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Logging;
+using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.Web;
 using Umbraco.Cms.Web.Common;
 using Umbraco.Cms.Web.Common.Controllers;
@@ -30,7 +31,7 @@ namespace Articulate.Controllers
         [HttpGet]
         public ActionResult Index(int id)
         {
-            var node = _umbraco.Content(id);
+            IPublishedContent node = _umbraco.Content(id);
             if (node == null)
             {
                 return new NotFoundResult();
@@ -38,8 +39,10 @@ namespace Articulate.Controllers
 
             var ns = XNamespace.Get("http://schemas.microsoft.com/wlw/manifest/weblog");
 
-            var rsd = new XElement(ns + "manifest",
-                new XElement(ns + "options",
+            var rsd = new XElement(
+                ns + "manifest",
+                new XElement(
+                    ns + "options",
                     new XElement(ns + "clientType", "Metaweblog"),
                     new XElement(ns + "supportsNewCategories", "Yes"),
                     new XElement(ns + "supportsPostAsDraft", "Yes"),

@@ -7,7 +7,7 @@ namespace Articulate
 {
     public static class StringExtensions
     {
-        public static string NewLinesToSpaces(this string input) => input.Replace("\r", " ").Replace("\n", " ").Replace("  ", "");
+        public static string NewLinesToSpaces(this string input) => input.Replace("\r", " ").Replace("\n", " ").Replace("  ", string.Empty);
 
         public static string DecodeHtml(this string text) => HttpUtility.HtmlDecode(text);
 
@@ -40,7 +40,7 @@ namespace Articulate
                     return urlPath;
                 }
 
-                if (Uri.TryCreate(urlPath, UriKind.Absolute, out var url))
+                if (Uri.TryCreate(urlPath, UriKind.Absolute, out Uri url))
                 {
                     return url.GetLeftPart(UriPartial.Authority) + url.AbsolutePath + url.Query;
                 }
@@ -52,8 +52,9 @@ namespace Articulate
 
         private static string EncodePath(string urlPath)
         {
-            return string.Join("/",
-                urlPath.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries)
+            return string.Join(
+                "/",
+                urlPath.Split(['/'], StringSplitOptions.RemoveEmptyEntries)
                     .Select(x => HttpUtility.UrlEncode(x).Replace("+", "%20"))
                     .WhereNotNull()
                     //we are not supporting dots in our URLs it's just too difficult to

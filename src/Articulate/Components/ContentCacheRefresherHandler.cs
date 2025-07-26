@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Umbraco.Cms.Core.Cache;
 using Umbraco.Cms.Core.Events;
 using Umbraco.Cms.Core.Models;
@@ -21,7 +22,8 @@ namespace Articulate.Components
         public ContentCacheRefresherHandler(
             IUmbracoContextAccessor umbracoContextAccessor,
             AppCaches appCaches,
-            IPublishedContentTypeCache publishedContentTypeCache, IDocumentCacheService documentCacheService)
+            IPublishedContentTypeCache publishedContentTypeCache,
+            IDocumentCacheService documentCacheService)
         {
             _umbracoContextAccessor = umbracoContextAccessor;
             _appCaches = appCaches;
@@ -42,7 +44,7 @@ namespace Articulate.Components
             {
                 case MessageType.RefreshByPayload:
                     //This is the standard case for content cache refresher
-                    foreach (var payload in (ContentCacheRefresher.JsonPayload[])notification.MessageObject)
+                    foreach (ContentCacheRefresher.JsonPayload payload in (ContentCacheRefresher.JsonPayload[])notification.MessageObject)
                     {
                         if (payload.ChangeTypes.HasTypesAny(TreeChangeTypes.Remove | TreeChangeTypes.RefreshBranch | TreeChangeTypes.RefreshNode))
                         {
@@ -57,8 +59,7 @@ namespace Articulate.Components
                     break;
                 case MessageType.RefreshByInstance:
                 case MessageType.RemoveByInstance:
-                    var content = notification.MessageObject as IContent;
-                    if (content == null)
+                    if (notification.MessageObject is not IContent content)
                     {
                         return;
                     }
@@ -75,12 +76,12 @@ namespace Articulate.Components
 
         private void RefreshById(int id)
         {
-            if (!_umbracoContextAccessor.TryGetUmbracoContext(out var umbracoContext))
+            if (!_umbracoContextAccessor.TryGetUmbracoContext(out IUmbracoContext umbracoContext))
             {
                 return;
             }
 
-            var item = umbracoContext.Content.GetById(id);
+            IPublishedContent item = umbracoContext.Content.GetById(id);
 
             // if it's directly related to an articulate node
             if (item != null && item.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.Articulate))
@@ -106,11 +107,11 @@ namespace Articulate.Components
                 }
             }
 
-            var articulateContentType = _publishedContentTypeCache.Get(PublishedItemType.Content, ArticulateConstants.ContentType.Articulate);
+            IPublishedContentType articulateContentType = _publishedContentTypeCache.Get(PublishedItemType.Content, ArticulateConstants.ContentType.Articulate);
             if (articulateContentType != null)
             {
-                var articulateNodes = _documentCacheService.GetByContentType(articulateContentType);
-                foreach (var node in articulateNodes)
+                IEnumerable<IPublishedContent> articulateNodes = _documentCacheService.GetByContentType(articulateContentType);
+                foreach (IPublishedContent node in articulateNodes)
                 {
                     // if the item is same level with a lower sort order it can directly affect the articulate node's route
                     if (node.Level == item.Level && node.SortOrder > item.SortOrder)

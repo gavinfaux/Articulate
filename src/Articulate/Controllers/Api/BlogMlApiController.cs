@@ -12,6 +12,7 @@ using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Api.Common.Attributes;
 using Umbraco.Cms.Api.Management.Controllers;
 using Umbraco.Cms.Api.Management.Routing;
+using Umbraco.Cms.Core.Models.Membership;
 using Umbraco.Cms.Core.Security;
 using Umbraco.Cms.Web.Common.Authorization;
 using Umbraco.Extensions;
@@ -94,7 +95,7 @@ namespace Articulate.Controllers.Api
                 await blogMlExporter.ExportAsync(model.ArticulateBlogNode, exportFileName, model.ExportImagesAsBase64);
                 var downloadFileName = $"articulate-export-{DateTime.UtcNow:yyyyMMddHHmmss}.xml";
 
-                var fileStream = articulateTempFileSystem.OpenFile(exportFileName);
+                Stream fileStream = articulateTempFileSystem.OpenFile(exportFileName);
 
                 Response.OnCompleted(() =>
                 {
@@ -108,10 +109,8 @@ namespace Articulate.Controllers.Api
             }
             catch (InvalidOperationException ex)
             {
-                logger.LogError(ex,
-                    "Export failed due to an invalid operation, likely a missing or invalid blog node.");
-                return Problem(title: "Service Unavailable", detail: ex.Message,
-                    statusCode: StatusCodes.Status503ServiceUnavailable);
+                logger.LogError(ex, "Export failed due to an invalid operation, likely a missing or invalid blog node.");
+                return Problem(title: "Service Unavailable", detail: ex.Message, statusCode: StatusCodes.Status503ServiceUnavailable);
             }
             catch (Exception ex)
             {
@@ -134,16 +133,15 @@ namespace Articulate.Controllers.Api
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> PostImportBlogMl(ImportModel model)
         {
-            var currentUser = backOfficeSecurityAccessor.BackOfficeSecurity?.CurrentUser;
+            IUser currentUser = backOfficeSecurityAccessor.BackOfficeSecurity?.CurrentUser;
             if (currentUser is null)
             {
-                return Problem(title: "Unauthorized", detail: "Could not determine the current user.",
-                    statusCode: StatusCodes.Status401Unauthorized);
+                return Problem(title: "Unauthorized", detail: "Could not determine the current user.", statusCode: StatusCodes.Status401Unauthorized);
             }
 
             try
             {
-                var result = await blogMlImporter.Import(
+                ImportResponse result = await blogMlImporter.Import(
                     currentUser.Id,
                     model.TempFile,
                     model.ArticulateBlogNode,
@@ -192,12 +190,11 @@ namespace Articulate.Controllers.Api
             const string disqusExportFile = "DisqusXmlExport.xml";
             if (!articulateTempFileSystem.FileExists(disqusExportFile))
             {
-                return Problem(title: "File Not Found", detail: "Disqus comments export file not found.",
-                    statusCode: StatusCodes.Status404NotFound);
+                return Problem(title: "File Not Found", detail: "Disqus comments export file not found.", statusCode: StatusCodes.Status404NotFound);
             }
 
             var downloadFileName = $"articulate-disqus-comments-{DateTime.UtcNow:yyyyMMddHHmmss}.xml";
-            var fileStream = articulateTempFileSystem.OpenFile(disqusExportFile);
+            Stream fileStream = articulateTempFileSystem.OpenFile(disqusExportFile);
 
             Response.OnCompleted(() =>
             {

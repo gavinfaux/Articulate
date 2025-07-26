@@ -264,7 +264,7 @@
 
 //        private MigrationResult TryGetSourceUrl(IContent post)
 //        {
-//            //TODO: Remove 
+//            //TODO: Remove
 
 //            if (!post.HasProperty(PostImagePropertyTypeAlias))
 //            {

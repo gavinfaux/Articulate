@@ -41,11 +41,11 @@ namespace Articulate.Routing
                     }
                 }
 
-                var date = content.Value<DateTime?>("publishedDate");
+                DateTime? date = content.Value<DateTime?>("publishedDate");
                 if (date != null)
                 {
                     var urlFolder = string.Format("{0}/{1:d2}/{2:d2}", date.Value.Year, date.Value.Month, date.Value.Day);
-                    var parentPath = base.GetUrl(content.Parent(), mode, culture, current);
+                    UrlInfo parentPath = base.GetUrl(content.Parent(), mode, culture, current);
                     var newUrl = parentPath.Text.EnsureEndsWith("/") + urlFolder + "/" + content.UrlSegment.EnsureEndsWith("/");
 
                     return UrlInfo.Url(newUrl, culture);

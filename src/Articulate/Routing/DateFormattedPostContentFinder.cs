@@ -2,6 +2,7 @@ using System;
 using System.Globalization;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.Routing;
 using Umbraco.Cms.Core.Web;
 using Umbraco.Extensions;
@@ -53,7 +54,7 @@ namespace Articulate.Routing
                 newRoute = contentRequest.Domain.ContentId + DomainUtilities.PathRelativeToDomain(contentRequest.Domain.Uri, newRoute);
             }
 
-            var node = FindContent(contentRequest, newRoute);
+            IPublishedContent node = FindContent(contentRequest, newRoute);
 
             // If by chance something matches the format pattern I check again if there is sucn a node and if it's an articulate post
             if (node == null || (node.ContentType.Alias != ArticulateConstants.ContentType.ArticulateRichText && node.ContentType.Alias != ArticulateConstants.ContentType.ArticulateMarkdown))

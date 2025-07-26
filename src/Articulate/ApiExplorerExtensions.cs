@@ -35,8 +35,7 @@ namespace Articulate
                         var cad = (ControllerActionDescriptor)desc.ActionDescriptor;
                         return $"{cad.ControllerTypeInfo.Name}.{cad.ActionName}";
                     },
-                    desc => $"/{desc.RelativePath?.TrimStart('/')}"
-                );
+                    desc => $"/{desc.RelativePath?.TrimStart('/')}");
         }
     }
 }

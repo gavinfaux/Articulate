@@ -16,7 +16,7 @@ namespace Articulate.Routing
 
         public void Apply(ApplicationModel application)
         {
-            foreach (var controller in application.Controllers)
+            foreach (ControllerModel controller in application.Controllers)
             {
                 controller.Filters.Add(new RouteCacheRefresherFilter(_publishedContentTypeCache, _documentCacheService));
             }

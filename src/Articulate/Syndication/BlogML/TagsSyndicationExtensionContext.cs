@@ -28,10 +28,10 @@ namespace Articulate.Syndication.BlogML
             Guard.ArgumentNotNull(manager, "manager");
             if (source.HasChildren)
             {
-                var xpathNavigator = source.SelectSingleNode("tags");
+                XPathNavigator xpathNavigator = source.SelectSingleNode("tags");
                 if (xpathNavigator != null)
                 {
-                    var xpathTagIterator = source.Select("tag");
+                    XPathNodeIterator xpathTagIterator = source.Select("tag");
                     if (xpathTagIterator.Count > 0)
                     {
                         while (xpathTagIterator.MoveNext())

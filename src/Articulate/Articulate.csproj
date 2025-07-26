@@ -3,39 +3,49 @@
     <TargetFrameworks>net9.0</TargetFrameworks>
     <OutputType>Library</OutputType>
     <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
-    <StaticWebAssetBasePath>/</StaticWebAssetBasePath>
-    <!-- Temporary, resolve in later PRs and enable-->
+    <StaticWebAssetBasePath>/App_Plugins/Articulate</StaticWebAssetBasePath>
+    <!--<EnableDefaultContentItems>false</EnableDefaultContentItems>-->
+    <CompressionEnabled>false</CompressionEnabled>
+    <!-- TODO: Temporary, resolve in later PRs and enable-->
     <Nullable>warnings</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
-    <CompressionEnabled>false</CompressionEnabled>
+    <!-- Build properites to help with back office client packing-->
     <IsPacking Condition="'$(IsPacking)' == ''">false</IsPacking>
-    <IsPacking Condition="'$(GeneratePackageOnBuild)' == 'true'">true</IsPacking>    
+    <IsPacking Condition="'$(GeneratePackageOnBuild)' == 'true'">true</IsPacking>
   </PropertyGroup>
 
   <!-- NuGet package metadata -->
   <PropertyGroup>
-    <PackageId>Articulate</PackageId>
-    <Product>Articulate</Product>
     <Title>Articulate</Title>
-    <Authors>Shannon Deminick</Authors>
     <Description>A wonderful Blog engine built on Umbraco</Description>
-    <PackageIcon>Icon-transparent.png</PackageIcon>
-    <PackageTags>blog umbraco umbraco-marketplace oss tags markdown richtext</PackageTags>
+    <Company>Shannon Deminick</Company>
+    <Authors>Shannon Deminick</Authors>
+    <Copyright>Copyright © $(Company) $([System.DateTime]::Today.ToString('yyyy'))</Copyright>
+    <Product>Articulate</Product>
     <PackageProjectUrl>https://github.com/Shazwazza/Articulate</PackageProjectUrl>
     <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/Shazwazza/Articulate</RepositoryUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <Company>Shannon Deminick</Company>
-    <Copyright>Copyright © $(Company) $([System.DateTime]::Now.Year)</Copyright>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <PackageTags>blog umbraco umbraco-marketplace oss tags markdown richtext</PackageTags>
   </PropertyGroup>
-  
-  <!-- NoWarn for missing XML comments on public API-->
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+
+  <!--
+  NoWarn for missing XML comments on public API
+  (If you want to use XML comments for API Documentation with Swagger, but
+  don't want build to warn about missing comments for other public members!)
+  -->
   <PropertyGroup>
     <NoWarn>$(NoWarn);1591</NoWarn>
   </PropertyGroup>
 
-<!--
+  <!--
   Nuget - Dotnet SourceLink & Symbol Package
   https://github.com/dotnet/sourcelink#using-source-link-in-net-projects
   https://devblogs.microsoft.com/dotnet/producing-packages-with-source-link/
@@ -44,29 +54,33 @@
   Use package Dotnet.ReproducibleBuilds
   This sets the same properties as above URLs and a few additional build properties
   ie less work - just include this package & be done...
-  https://github.com/dotnet/reproducible-builds  
+  https://github.com/dotnet/reproducible-builds
   -->
   <ItemGroup>
     <PackageReference Include="DotNet.ReproducibleBuilds" Version="1.2.25">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
-  </ItemGroup>  
+  </ItemGroup>
 
+  <PropertyGroup>
+    <UmbracoCmsPackageVersion>[15.2.3, 16.999.999)</UmbracoCmsPackageVersion>
+  </PropertyGroup>
   <!-- Nuget Package Dependencies -->
   <ItemGroup>
-    <PackageReference Include="Umbraco.Cms.Web.Website" Version="$(UmbracoVersion)" />
-    <PackageReference Include="Umbraco.Cms.Web.Common" Version="$(UmbracoVersion)" />
-    <PackageReference Include="Umbraco.Cms.Api.Common" Version="$(UmbracoVersion)" />
-    <PackageReference Include="Umbraco.Cms.Api.Management" Version="$(UmbracoVersion)" />
+    <PackageReference Include="Umbraco.Cms.Web.Website" Version="$(UmbracoCmsPackageVersion)" />
+    <PackageReference Include="Umbraco.Cms.Web.Common" Version="$(UmbracoCmsPackageVersion)" />
+    <PackageReference Include="Umbraco.Cms.Api.Common" Version="$(UmbracoCmsPackageVersion)" />
+    <PackageReference Include="Umbraco.Cms.Api.Management" Version="$(UmbracoCmsPackageVersion)" />
 
     <PackageReference Include="Argotic.Core" Version="3001.0.0" />
     <PackageReference Include="Markdig" Version="0.41.3" />
     <PackageReference Include="Smidge" Version="4.5.1" />
     <PackageReference Include="System.ServiceModel.Syndication" Version="9.0.6" />
     <PackageReference Include="WilderMinds.MetaWeblog" Version="5.1.3" />
+    <PackageReference Include="Microsoft.CodeAnalysis" Version="4.14.0" />
   </ItemGroup>
-  
+
   <!-- Build backoffice client-->
   <ItemGroup>
     <BackOfficeClientAssetsInputs Include="Client/**" Exclude="$(DefaultItemExcludes)" />
@@ -76,7 +90,7 @@
     <Message Importance="high" Text="Restoring BackOffice Client NPM packages..." />
     <Exec Command="npm i" WorkingDirectory="Client" />
   </Target>
-      
+
   <Target Name="BuildBackOfficeClient" BeforeTargets="CoreBuild" Inputs="@(BackOfficeClientAssetsInputs)" Outputs="$(IntermediateOutputPath)client.build.timestamp">
     <!-- Show message before running the build -->
     <Message Importance="High" Condition="'$(IsPacking)' == 'true'" Text="[Articulate] Executing BackOffice Client NPM production release build script..." />
@@ -98,7 +112,7 @@
 
     <Touch Files="$(IntermediateOutputPath)client.build.timestamp" AlwaysCreate="true" Condition="'$(ClientBuildExitCode)' == '0'" />
   </Target>
-  
+
   <ItemGroup>
     <Compile Update="Controllers\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -106,14 +120,14 @@
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
   </ItemGroup>
-  
+
   <ItemGroup>
     <EmbeddedResource Update="Controllers\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
-  
+
   <ItemGroup>
     <None Remove="Packaging\package.zip" />
   </ItemGroup>
@@ -133,19 +147,29 @@
       <PackagePath>\</PackagePath>
     </None>
   </ItemGroup>
-  
+
   <ItemGroup>
-    <None Include="..\..\assets\Icon-transparent.png">
-      <Pack>True</Pack>
-      <PackagePath>\</PackagePath>
-    </None>
+    <!-- Don't back back-office client source files! -->
+    <Compile Remove="Client\**" />
+    <Compile Remove="wwwroot\Legacy\**" />
+    <Content Remove="Client\**" />
+    <Content Remove="wwwroot\Legacy\**" />
+    <EmbeddedResource Remove="Client\**" />
+    <EmbeddedResource Remove="wwwroot\Legacy\**" />
+    <None Remove="Client\**" />
+    <None Remove="wwwroot\Legacy\**" />
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Remove="Client\node_modules\**" />
-    <Content Remove="Client\node_modules\**" />
-    <EmbeddedResource Remove="Client\node_modules\**" />
-    <None Remove="Client\node_modules\**" />
+    <!--
+    This tells the compiler to embed all files in this folder directly
+    into the Articulate.dll as manifest resources.
+    The 'LogicalName' part is important. It creates a clean, predictable
+    path inside the assembly that we can use to find the files to copy
+    for the theme customisation feature. Embedding the files is less flakey
+    then attempting to copy from the nuget cache folder, we may not have access
+    to it and can't assume the 'default' location uses standard conventions.
+    -->
+    <EmbeddedResource Include="wwwroot\Views\Articulate\Themes\**" LogicalName="Articulate.Themes/%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
-
 </Project>

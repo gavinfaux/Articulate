@@ -55,11 +55,11 @@ export default class ThemeOptionsElement extends UmbLitElement implements IFormC
    */
   @state() private _selectedTheme: string | undefined = undefined;
   /**
-   * The name for the new, duplicated theme.
+   * The name for the copied theme.
    * @private
    * @type {string | undefined}
    */
-  @state() private _newThemeName: string | undefined = undefined;
+  @state() private _themeName: string | undefined = undefined;
 
   /**
    * The form element for duplicating a theme.
@@ -88,7 +88,7 @@ export default class ThemeOptionsElement extends UmbLitElement implements IFormC
       this._formState = undefined;
       this._formError = null;
       this._selectedTheme = undefined;
-      this._newThemeName = undefined;
+      this._themeName = undefined;
     }
   }
 
@@ -110,14 +110,14 @@ export default class ThemeOptionsElement extends UmbLitElement implements IFormC
   }
 
   /**
-   * Sets the selected theme and pre-fills the new theme name.
+   * Sets the selected theme and pre-fills the theme name.
    * @param {string} theme The name of the theme to select.
    * @private
    */
   #selectTheme(theme: string) {
     this.resetState(true);
     this._selectedTheme = theme;
-    this._newThemeName = `${theme} - Copy`;
+    this._themeName = `Custom${theme}Theme`;
   }
 
   /**
@@ -158,14 +158,14 @@ export default class ThemeOptionsElement extends UmbLitElement implements IFormC
   }
 
   /**
-   * Handles changes to the new theme name input field.
+   * Handles changes to the theme name input field.
    * @param {Event} e The input event.
    * @private
    */
-  #onNewThemeNameChange = (e: Event) => {
+  #onThemeNameChange = (e: Event) => {
     this._formError = null;
     this._formState = undefined;
-    this._newThemeName = (e.target as HTMLInputElement).value;
+    this._themeName = (e.target as HTMLInputElement).value;
   };
 
   /**
@@ -186,8 +186,8 @@ export default class ThemeOptionsElement extends UmbLitElement implements IFormC
     }
 
     // validate() does not appear to work with other some uui elements, so backup validation, likely un-needed for a input box...
-    if (!this._selectedTheme || !this._newThemeName) {
-      const validationError = new Error("Please select a theme to duplicate and provide a new theme name.");
+    if (!this._selectedTheme || !this._themeName) {
+      const validationError = new Error("Please select a theme to copy and provide the theme name.");
       validationError.name = "Validation Error";
       setFormError(this, validationError, validationError.name);
       return;
@@ -202,18 +202,18 @@ export default class ThemeOptionsElement extends UmbLitElement implements IFormC
       const result = await ThemeOptions.postArticulateThemeCopy({
         body: {
           themeName: this._selectedTheme!,
-          newThemeName: this._newThemeName!,
+          newThemeName: this._themeName!,
         },
       });
       if (!result.response.ok) {
-        throw result.error || new Error("Failed to duplicate theme.");
+        throw result.error || new Error("Failed to copy theme.");
       }
 
       this._formState = "success";
-      await showUmbracoNotification(this, "Theme duplicated successfully!", "positive");
+      await showUmbracoNotification(this, "Theme copied successfully!", "positive");
       this.resetState(true);
     } catch (error) {
-      setFormError(this, error, "Duplication Failed");
+      setFormError(this, error, "Copy Failed");
     }
   }
 
@@ -228,7 +228,7 @@ export default class ThemeOptionsElement extends UmbLitElement implements IFormC
   };
 
   private get _submitButtonColor(): "positive" | "primary" {
-    return this._selectedTheme && this._newThemeName ? "positive" : "primary";
+    return this._selectedTheme && this._themeName ? "positive" : "primary";
   }
 
   /**
@@ -292,7 +292,7 @@ export default class ThemeOptionsElement extends UmbLitElement implements IFormC
   }
 
   /**
-   * Renders the form for entering the new theme name.
+   * Renders the form for entering the theme name.
    * @returns {TemplateResult} The rendered HTML template.
    * @private
    */
@@ -303,8 +303,8 @@ export default class ThemeOptionsElement extends UmbLitElement implements IFormC
 
     return html`
       <div class="duplicate-form">
-        <h3>Duplicate '${this._selectedTheme}' Theme</h3>
-        <p>Create a copy of this theme that you can customize.</p>
+        <h3>Copy '${this._selectedTheme}' Theme</h3>
+        <p>Create a copy of this theme that you can customise.</p>
         <uui-form>
           <form
             @submit=${this.#handleSubmit}
@@ -315,15 +315,15 @@ export default class ThemeOptionsElement extends UmbLitElement implements IFormC
           >
             <uui-form-validation-message>
               <uui-form-layout-item>
-                <uui-label for="newThemeName" slot="label" required>New theme name</uui-label>
+                <uui-label for="themeName" slot="label" required>Theme name</uui-label>
                 <uui-input
-                  id="newThemeName"
-                  name="newThemeName"
-                  .value=${this._newThemeName ?? ""}
-                  @input=${this.#onNewThemeNameChange}
+                  id="themeName"
+                  name="themeName"
+                  .value=${this._themeName ?? ""}
+                  @input=${this.#onThemeNameChange}
                   required
-                  required-message="You must provide a new name for the theme."
-                  label="New theme name"
+                  required-message="You must provide a name for the theme."
+                  label="Theme name"
                 ></uui-input>
               </uui-form-layout-item>
             </uui-form-validation-message>
@@ -335,7 +335,7 @@ export default class ThemeOptionsElement extends UmbLitElement implements IFormC
                 .color=${this._submitButtonColor}
                 .state=${this._formState}
               >
-                Duplicate
+                Create Theme
               </uui-button>
               <uui-button id="cancelButton" type="reset" look="secondary" @click=${this.#handleReset}>
                 Cancel
@@ -349,13 +349,94 @@ export default class ThemeOptionsElement extends UmbLitElement implements IFormC
 
   override render() {
     return html`
-      <uui-box headline="Theme Duplication">
+      <uui-box headline="Theme Options">
         ${renderHeaderActions(this.routerPath)}
         <div class="container">
+          <h3>Creating and Customising Themes</h3>
           <p>
-            You can duplicate any of Articulate's built-in themes to customize them yourself. The duplicated theme will
-            be copied to the ~/Views/Articulate folder where you can edit it. Then you can select this theme from the
-            themes drop down on your Articulate root node to use it.
+            Articulate's theming engine allows you to either create a brand new theme or make small, safe customisations
+            to a built-in one.
+          </p>
+          <hr />
+
+          <h4>Option 1: Creating a Brand New Theme</h4>
+          <p>
+            Use this option if you want a complete copy of a theme to use as a starting point for heavy customisation.
+          </p>
+          <ol>
+            <li>
+              Select a built-in theme from the
+              <strong>Template</strong>
+              options (e.g., "VAPOR").
+            </li>
+            <li>Enter a <em>new, unique name</em> for your theme (e.g., "CustomVaporTheme").</li>
+            <li>
+              Click
+              <strong>Create Theme</strong>
+              .
+            </li>
+          </ol>
+          <p>
+            A full copy of the template's files will be created in your
+            <code>~/Views/ArticulateThemes/</code>
+            folder. You can now edit any file in this new theme. Once you are ready, select it from the "Theme" dropdown
+            on your Articulate root node.
+          </p>
+
+          <hr />
+
+          <h4>Option 2: Customising a Built-in Theme</h4>
+          <p>
+            Use this option if you like a built-in theme but just want to change one or two things, like the layout of
+            the post page or the site's colours. This method ensures your customisations are safe from package upgrades.
+          </p>
+
+          <h5>Step 1: Create the Override Folder</h5>
+          <p>First, you need to create a local copy of the theme you wish to customise.</p>
+          <ol>
+            <li>
+              Select the built-in theme you want to change from the
+              <strong>Template</strong>
+              options (e.g., "VAPOR").
+            </li>
+            <li>
+              In the
+              <strong>Theme Name</strong>
+              field, enter the
+              <strong>exact same name</strong>
+              ("VAPOR").
+            </li>
+            <li>
+              Click
+              <strong>Create Theme</strong>
+              .
+            </li>
+          </ol>
+          <p>
+            This will create a full copy of all the original "VAPOR" theme files in
+            <code>~/Views/ArticulateThemes/VAPOR/</code>
+            . This folder now has the highest priority.
+          </p>
+
+          <h5>Step 2: Create the Override Folder</h5>
+
+          <h5>Step 2: Delete Untouched Files to Enable Fallback</h5>
+          <p>
+            This next step is the most important part. To get the benefits of easy maintenance and automatic updates,
+            you should <em>delete any files from your new theme folder that you do not intend to change.</em>
+          </p>
+          <p>
+            This might seem unusual, but it's very powerful. When you delete a file from your folder (for example,
+            <code>List.cshtml</code>
+            ), you are telling Articulate: "For this file, please use the built-in version from the original theme."
+          </p>
+          <p>
+            <strong>Example: To only change the Post page layout.</strong>
+            <br />
+            After creating your "VAPOR" override folder in Step 1, go into that folder and <em>delete everything except
+            for</em> <code>Post.cshtml</code>. Now you can edit <code>Post.cshtml</code> to make your changes. Your website will use your custom
+            post page, but will automatically fall back to the built-in, up-to-date versions for the List page, Pager,
+            Tags, and everything else.
           </p>
         </div>
         <div class="container">${this.#renderThemeGrid()} ${this.#renderDuplicateForm()}</div>

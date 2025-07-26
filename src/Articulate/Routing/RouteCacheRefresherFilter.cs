@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.DependencyInjection;
+using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.Cache;
 using Umbraco.Cms.Core.PublishedCache;
 using Umbraco.Cms.Core.Web;
@@ -34,16 +35,16 @@ namespace Articulate.Routing
 
         private void PerformRefresh(HttpContext context)
         {
-            var appCaches = context.RequestServices.GetRequiredService<AppCaches>();
+            AppCaches appCaches = context.RequestServices.GetRequiredService<AppCaches>();
 
             if (appCaches.RequestCache.GetCacheItem<bool?>(ArticulateConstants.RefreshRoutesToken) == true)
             {
-                var umbracoContextFactory = context.RequestServices.GetRequiredService<IUmbracoContextFactory>();
-                var articulateRouter = context.RequestServices.GetRequiredService<ArticulateRouter>();
+                IUmbracoContextFactory umbracoContextFactory = context.RequestServices.GetRequiredService<IUmbracoContextFactory>();
+                ArticulateRouter articulateRouter = context.RequestServices.GetRequiredService<ArticulateRouter>();
 
-                using (var umbracoContextReference = umbracoContextFactory.EnsureUmbracoContext())
+                using (UmbracoContextReference umbracoContextReference = umbracoContextFactory.EnsureUmbracoContext())
                 {
-                    var umbCtx = umbracoContextReference.UmbracoContext;
+                    IUmbracoContext umbCtx = umbracoContextReference.UmbracoContext;
 
                     // Regenerate the generated routes
                     articulateRouter.MapRoutes(context, umbCtx, _publishedContentTypeCache, _documentCacheService);

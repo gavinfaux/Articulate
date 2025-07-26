@@ -4,11 +4,14 @@ namespace Articulate.Models.Api
 {
     public class MardownEditorModel
     {
-        [Required] public int? ArticulateNodeId { get; set; }
+        [Required]
+        public int? ArticulateNodeId { get; set; }
 
-        [Required] public string Title { get; set; }
+        [Required]
+        public string Title { get; set; }
 
-        [Required] public string Body { get; set; }
+        [Required]
+        public string Body { get; set; }
 
         public string Tags { get; set; }
 

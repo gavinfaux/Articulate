@@ -28,14 +28,15 @@ namespace Articulate.Syndication
 
             await using (var txtWriter = new Utf8StringWriter())
             {
-                var xmlWriter = XmlWriter.Create(txtWriter,
+                var xmlWriter = XmlWriter.Create(
+                    txtWriter,
                     new XmlWriterSettings { Encoding = Encoding.UTF8, Indent = true, OmitXmlDeclaration = false, Async = true });
 
                 // Write the Processing Instruction node.
                 var xsltHeader = string.Format("type=\"text/xsl\" href=\"{0}\"", _model.RootBlogNode.Url(mode: UrlMode.Absolute).EnsureEndsWith('/') + "rss/xslt");
                 await xmlWriter.WriteProcessingInstructionAsync("xml-stylesheet", xsltHeader);
 
-                var formatter = _feed.GetRss20Formatter();
+                Rss20FeedFormatter formatter = _feed.GetRss20Formatter();
                 formatter.WriteTo(xmlWriter);
 
                 await xmlWriter.FlushAsync();

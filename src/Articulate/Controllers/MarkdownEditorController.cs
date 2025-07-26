@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Articulate.Attributes;
 using Articulate.Controllers.Api;
 using Articulate.Models;
@@ -21,7 +22,7 @@ namespace Articulate.Controllers
         [HttpGet]
         public ViewResult NewPost()
         {
-            var managementApiUrls = apiDescriptionProvider.ForGroups([
+            IReadOnlyDictionary<string, string> managementApiUrls = apiDescriptionProvider.ForGroups([
                 ArticulateConstants.ManagementApi.MarkdownEditor
             ]);
 
@@ -35,7 +36,7 @@ namespace Articulate.Controllers
 
             Response.Headers["Permissions-Policy"] = "camera=(self)";
 
-            return View("~/App_Plugins/Articulate/Views/MarkdownEditor.cshtml", vm);
+            return View("~/Views/Articulate/MarkdownEditor.cshtml", vm);
 
             static string GetKey<T>(string actionName) => $"{typeof(T).Name}.{actionName}";
         }

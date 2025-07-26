@@ -22,7 +22,7 @@ namespace Articulate.Components
         {
             base.Compose(builder);
 
-            var services = builder.Services;
+            IServiceCollection services = builder.Services;
             services.AddSingleton<ContentUrls>();
             services.AddSingleton<BlogMlExporter>();
             services.AddSingleton<ArticulateTempFileSystem>();
@@ -39,11 +39,12 @@ namespace Articulate.Components
             services.AddSingleton<RouteCacheRefresherFilter>();
             services.AddSingleton<ArticulateFrontEndFilterConvention>();
             builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<MatcherPolicy, ArticulateDynamicRouteSelectorPolicy>());
-            builder.Services.TryAddScoped<IArticulateThemeService, ArticulateThemeService>();
+            builder.Services.AddSingleton<IArticulateThemeRepository, ArticulateThemeRepository>();
+            builder.Services.AddScoped<IArticulateThemeResolver, ArticulateThemeResolver>();
             builder.Services.Configure<RazorViewEngineOptions>(options =>
             {
-                var themeService = builder.Services.BuildServiceProvider().GetRequiredService<IArticulateThemeService>();
-                options.ViewLocationExpanders.Add(new ArticulateThemeViewLocationExpander(themeService));
+                IArticulateThemeResolver themeResolver = builder.Services.BuildServiceProvider().GetRequiredService<IArticulateThemeResolver>();
+                options.ViewLocationExpanders.Add(new ArticulateViewLocationExpander(themeResolver));
             });
             builder.UrlProviders().InsertBefore<NewDefaultUrlProvider, DateFormattedUrlProvider>();
 

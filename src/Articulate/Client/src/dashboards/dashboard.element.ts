@@ -79,7 +79,7 @@ export default class ArticulateDashboardElement extends UmbLitElement {
       <umb-body-layout>
         <div slot="header" class="header-container">
           <div class="articulate-header">
-            <h3 class="header-title">Articulate Management</h3>
+            <h1 class="header-title">Articulate Management</h1>
             <div class="header-logo">ã</div>
           </div>
         </div>

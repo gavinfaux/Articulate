@@ -1,4 +1,3 @@
-
 using System.Collections.Generic;
 using Articulate.Attributes;
 using Articulate.Models;
@@ -124,7 +123,8 @@ namespace Articulate.Controllers
                     tag.Replace('-', '.'),
                     tagGroup,
                     baseUrl,
-                    p ?? 1, masterModel.PageSize);
+                    p ?? 1,
+                    masterModel.PageSize);
             }
 
             if (contentByTag == null)

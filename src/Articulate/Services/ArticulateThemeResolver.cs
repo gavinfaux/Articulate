@@ -1,4 +1,5 @@
 using Umbraco.Cms.Core.Cache;
+using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.Web;
 using Umbraco.Extensions;
 
@@ -14,13 +15,13 @@ namespace Articulate.Services
                 "Articulate_CurrentRequestThemeName",
                 () =>
                 {
-                    if (!umbracoContextAccessor.TryGetUmbracoContext(out var umbracoContext) ||
+                    if (!umbracoContextAccessor.TryGetUmbracoContext(out IUmbracoContext umbracoContext) ||
                         umbracoContext.PublishedRequest?.PublishedContent == null)
                     {
                         return string.Empty;
                     }
 
-                    var articulateRoot =
+                    IPublishedContent articulateRoot =
                         umbracoContext.PublishedRequest.PublishedContent.AncestorOrSelf(ArticulateConstants.ContentType
                             .Articulate);
                     if (articulateRoot == null)

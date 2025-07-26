@@ -20,7 +20,7 @@ const dashboards = [
     path: "theme/options",
     name: "Theme Options",
     icon: "icon-color-bucket",
-    description: "Duplicate an Articulate default theme for customization",
+    description: "Create or customise Articulate themes",
   },
 ];
 
@@ -43,7 +43,7 @@ export default class DashboardOptionsElement extends UmbLitElement {
    */
   render() {
     return html`
-      <uui-box headline="Options">
+      <uui-box headline="Articulate Options" headlinevariant="h2">
         <div slot="header-actions">
           <uui-button look="default" compact href="https://github.com/Shazwazza/Articulate/wiki" label="Wiki">
             <uui-icon name="icon-help-alt" label="Wiki"></uui-icon>

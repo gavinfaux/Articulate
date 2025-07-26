@@ -2,6 +2,11 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Encodings.Web;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Html;
+using Microsoft.AspNetCore.Mvc.Razor;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Extensions;
@@ -14,7 +19,7 @@ namespace Articulate.Models
         public static IPublishedContent Next(this IPublishedContent content)
         {
             var found = false;
-            foreach (var sibling in content.Parent.Children)
+            foreach (IPublishedContent sibling in content.Parent.Children)
             {
                 if (found)
                 {
@@ -34,7 +39,7 @@ namespace Articulate.Models
         {
             var found = false;
             IPublishedContent last = null;
-            foreach (var sibling in content.Parent.Children)
+            foreach (IPublishedContent sibling in content.Parent.Children)
             {
                 if (found)
                 {
@@ -77,14 +82,12 @@ namespace Articulate.Models
                 throw new ArgumentNullException(nameof(source));
             }
 
-            var collection = source as ICollection<TSource>;
-            if (collection != null)
+            if (source is ICollection<TSource> collection)
             {
                 return collection.Count > count;
             }
 
-            var collection2 = source as ICollection;
-            if (collection2 != null)
+            if (source is ICollection collection2)
             {
                 return collection2.Count > count;
             }
@@ -92,7 +95,7 @@ namespace Articulate.Models
             int num = 0;
             checked
             {
-                using (var enumerator = source.GetEnumerator())
+                using (IEnumerator<TSource> enumerator = source.GetEnumerator())
                 {
                     while (enumerator.MoveNext())
                     {
@@ -129,8 +132,7 @@ namespace Articulate.Models
             return url;
         }
 
-        public static string GetCroppedImageUrl(this IPublishedContent content, string propertyAlias, string cropAlias,
-            ImageCropMode imageCropMode = ImageCropMode.Max)
+        public static string GetCroppedImageUrl(this IPublishedContent content, string propertyAlias, string cropAlias, ImageCropMode imageCropMode = ImageCropMode.Max)
         {
             if (content == null || string.IsNullOrWhiteSpace(cropAlias) || string.IsNullOrWhiteSpace(propertyAlias))
             {
@@ -158,7 +160,7 @@ namespace Articulate.Models
         {
             if (list != null)
             {
-                var rng = Random.Shared;
+                Random rng = Random.Shared;
                 for (var i = list.Count - 1; i >= 1; i--)
                 {
                     var j = rng.Next(i + 1);
@@ -184,6 +186,324 @@ namespace Articulate.Models
             }
 
             throw new ArgumentNullException(nameof(source));
+        }
+
+        /// <summary>
+        /// Returns the main rss feed url for this blog
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
+        public static string ArticulateRssUrl(this IMasterModel model)
+        {
+            return model.CustomRssFeed.IsNullOrWhiteSpace()
+                ? model.RootBlogNode.Url(mode: UrlMode.Absolute).EnsureEndsWith('/') + "rss"
+                : model.CustomRssFeed;
+        }
+
+        public static string ArticulateCreateBlogEntryUrl(this IMasterModel model)
+        {
+            return model.RootBlogNode == null
+                ? null
+                : model.RootBlogNode.Url().EnsureEndsWith('/') + "a-new/";
+        }
+
+        /// <summary>
+        /// Returns an RSS feed URL specific to this tag
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
+        public static string ArticulateTagRssUrl(this PostsByTagModel model) => model.TagUrl.EnsureEndsWith('/') + "rss";
+
+        /// <summary>
+        /// Returns an RSS feed URL specific to this author
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
+        public static string ArticulateAuthorRssUrl(this AuthorModel model)
+        {
+            return model.RootBlogNode == null
+                ? null
+                : model.RootBlogNode.Url().EnsureEndsWith('/') + "author/" + model.Id + "/rss";
+        }
+
+        /// <summary>
+        /// Get the search url without the 'term' query string
+        /// </summary>
+        /// <param name="model"></param>
+        /// <param name="includeDomain"></param>
+        /// <returns></returns>
+        public static string ArticulateSearchUrl(this IMasterModel model, bool includeDomain = false)
+        {
+            return model.RootBlogNode == null
+                ? null
+                : (includeDomain
+                      ? model.RootBlogNode.Url(mode: UrlMode.Absolute).EnsureEndsWith('/')
+                      : model.RootBlogNode.Url().EnsureEndsWith('/')) +
+                  model.RootBlogNode.Value<string>("searchUrlName");
+        }
+
+        /// <summary>
+        /// The Home Blog Url
+        /// </summary>
+        public static string ArticulateRootUrl(this IMasterModel model) => model.RootBlogNode?.Url();
+
+        /// <summary>
+        /// Returns the default categories list URL for blog posts
+        /// </summary>
+        public static string ArticulateCategoriesUrl(this IMasterModel model)
+        {
+            return model.RootBlogNode == null
+                ? null
+                : model.RootBlogNode.Url().EnsureEndsWith('/') +
+                  model.RootBlogNode.Value<string>("categoriesUrlName");
+        }
+
+        /// <summary>
+        /// Returns the authors list URL
+        /// </summary>
+        public static string ArticulateAuthorsUrl(this IMasterModel model) => model.RootBlogNode?.ChildrenOfType(ArticulateConstants.ContentType.ArticulateAuthors).FirstOrDefault()?.Url();
+
+        /// <summary>
+        /// Returns the URL for the tag list
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
+        public static string ArticulateTagsUrl(this IMasterModel model)
+        {
+            return model.RootBlogNode == null
+                ? null
+                : model.RootBlogNode.Url().EnsureEndsWith('/') +
+                  model.RootBlogNode.Value<string>("tagsUrlName");
+        }
+
+        /// <summary>
+        /// Returns the url for a single tag
+        /// </summary>
+        /// <param name="model"></param>
+        /// <param name="tag"></param>
+        /// <returns></returns>
+        public static string ArticulateTagUrl(this IMasterModel model, string tag)
+        {
+            return model.RootBlogNode == null
+                ? null
+                : model.RootBlogNode.Url().EnsureEndsWith('/') +
+                  model.RootBlogNode.Value<string>("tagsUrlName").EnsureEndsWith('/') +
+                  tag.SafeEncodeUrlSegments();
+        }
+
+        /// <summary>
+        /// Returns the url for a single category
+        /// </summary>
+        /// <param name="model"></param>
+        /// <param name="category"></param>
+        /// <returns></returns>
+        public static string ArticulateCategoryUrl(this IMasterModel model, string category)
+        {
+            return model.RootBlogNode == null
+                ? null
+                : model.RootBlogNode.Url().EnsureEndsWith('/') +
+                  model.RootBlogNode.Value<string>("categoriesUrlName").EnsureEndsWith('/') +
+                  category.SafeEncodeUrlSegments();
+        }
+
+        /// <summary>
+        /// Renders the Post date with Author details if author details are supplied
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
+        public static IHtmlContent AuthorCitation(this PostModel model)
+        {
+            var builder = new HtmlContentBuilder();
+            if (model.Author != null)
+            {
+                builder.AppendHtml("<span>");
+                builder.Append("By ");
+
+                //TODO: Check if the current theme has an Author.cshtml theme file otherwise don't render a link!
+                //In that case we should have a 'ThemeSupport' class that will check to see what a theme supports.
+                if (model.Author.BlogUrl.IsNullOrWhiteSpace())
+                {
+                    builder.Append(model.Author.Name);
+                }
+                else
+                {
+                    builder.AppendHtml($@"<a href=""{model.Author.BlogUrl}"">{model.Author.Name}</a>");
+                }
+
+                builder.AppendHtml("&nbsp;on&nbsp;");
+                builder.AppendHtml("</span>");
+            }
+
+            return builder;
+        }
+
+        public static IHtmlContent RenderOpenSearch(this IMasterModel model)
+        {
+            var openSearchUrl = model.RootBlogNode.Url(mode: UrlMode.Absolute).EnsureEndsWith('/') + "opensearch/" + model.RootBlogNode.Id;
+            var tag = $@"<link rel=""search"" type=""application/opensearchdescription+xml"" href=""{openSearchUrl}"" title=""Search {model.RootBlogNode.Name}"" >";
+
+            return new HtmlString(tag);
+        }
+
+        public static IHtmlContent RssFeed(this IMasterModel model)
+        {
+            var url = model.CustomRssFeed.IsNullOrWhiteSpace()
+                ? model.RootBlogNode.Url(mode: UrlMode.Absolute).EnsureEndsWith('/') + "rss"
+                : model.CustomRssFeed;
+
+            return new HtmlString(
+                $@"<link rel=""alternate"" type=""application/rss+xml"" title=""RSS"" href=""{url}"" />");
+        }
+
+        public static IHtmlContent AuthorRssFeed(this AuthorModel model)
+        {
+            var url = model.ArticulateAuthorRssUrl();
+
+            return new HtmlString(
+                $@"<link rel=""alternate"" type=""application/rss+xml"" title=""RSS"" href=""{url}"" />");
+        }
+
+        public static IHtmlContent AdvertiseWeblogApi(this IMasterModel model)
+        {
+            var rsdUrl = model.RootBlogNode.Url(mode: UrlMode.Absolute).EnsureEndsWith('/') + "rsd/" + model.RootBlogNode.Id;
+            var manifestUrl = model.RootBlogNode.Url(mode: UrlMode.Absolute).EnsureEndsWith('/') + "wlwmanifest/" + model.RootBlogNode.Id;
+
+            return new HtmlString(
+                string.Concat(
+                    $@"<link type=""application/rsd+xml"" rel=""edituri"" title=""RSD"" href=""{rsdUrl}"" />",
+                    Environment.NewLine,
+                    $@"<link rel=""wlwmanifest"" type=""application/wlwmanifest+xml"" href=""{manifestUrl}"" />"));
+        }
+
+        public static IHtmlContent MetaTags(this IMasterModel model)
+        {
+            var htmlContent = new HtmlContentBuilder();
+
+            var metaDescriptionTag = new TagBuilder("meta")
+            {
+                TagRenderMode = TagRenderMode.SelfClosing
+            };
+            metaDescriptionTag.Attributes["name"] = "description";
+            metaDescriptionTag.Attributes["content"] = model.PageDescription;
+            htmlContent.AppendHtml(metaDescriptionTag);
+
+            if (!string.IsNullOrWhiteSpace(model.PageTags))
+            {
+                var tagsTag = new TagBuilder("meta")
+                {
+                    TagRenderMode = TagRenderMode.SelfClosing
+                };
+                tagsTag.Attributes["name"] = "tags";
+                tagsTag.Attributes["content"] = model.PageTags;
+                htmlContent.AppendHtml(tagsTag);
+            }
+
+            return htmlContent;
+        }
+
+        public static IHtmlContent GoogleAnalyticsTracking(this IMasterModel model)
+        {
+            if (model.RootBlogNode.Value<string>("googleAnalyticsId").IsNullOrWhiteSpace() == false
+                && model.RootBlogNode.Value<string>("googleAnalyticsName").IsNullOrWhiteSpace() == false)
+            {
+                return new HtmlString(@"<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', '" + model.RootBlogNode.Value<string>("googleAnalyticsId") + @"', '" + model.RootBlogNode.Value<string>("googleAnalyticsName") + @"');
+  ga('send', 'pageview');
+</script>");
+            }
+
+            return new HtmlString(string.Empty);
+        }
+
+        public static IHtmlContent TagCloud(this PostTagCollection model, decimal maxWeight, int maxResults)
+        {
+            var tagsAndWeight = model.Select(x => new { tag = x, weight = model.GetTagWeight(x, maxWeight) })
+                .OrderByDescending(x => x.weight)
+                .Take(maxResults).InRandomOrder();
+
+            var ul = new TagBuilder("ul");
+            ul.AddCssClass("tag-cloud");
+            foreach (var tag in tagsAndWeight)
+            {
+                var a = new TagBuilder("a");
+                a.MergeAttribute("href", tag.tag.TagUrl);
+                a.MergeAttribute("title", tag.tag.TagName);
+                a.InnerHtml.SetContent(tag.tag.TagName);
+
+                var li = new TagBuilder("li");
+                li.AddCssClass("tag-cloud-" + tag.weight);
+                li.InnerHtml.AppendHtml(a);
+
+                ul.InnerHtml.AppendHtml(li);
+            }
+
+            return ul;
+        }
+
+        public static IHtmlContent TagCloud(this PostTagCollection model, Func<PostsByTagModel, HelperResult> tagLink, decimal maxWeight, int maxResults)
+            => new HelperResult(writer =>
+            {
+                var tagsAndWeight = model.Select(x => new { tag = x, weight = model.GetTagWeight(x, maxWeight) })
+                    .OrderByDescending(x => x.weight)
+                    .Take(maxResults).InRandomOrder();
+
+                var ul = new TagBuilder("ul");
+                ul.AddCssClass("tag-cloud");
+                foreach (var tag in tagsAndWeight)
+                {
+                    var li = new TagBuilder("li");
+                    li.AddCssClass("tag-cloud-" + tag.weight);
+
+                    li.InnerHtml.AppendHtml(tagLink(tag.tag));
+
+                    ul.InnerHtml.AppendHtml(li);
+                }
+
+                ul.WriteTo(writer, HtmlEncoder.Default);
+
+                return Task.CompletedTask;
+            });
+
+        public static IHtmlContent ListTags(this PostModel model, Func<string, HelperResult> tagLink, string delimiter = ", ") => HtmlHelperExtensions.ListCategoriesOrTags(model.Tags.ToArray(), tagLink, delimiter);
+        public static IHtmlContent ListCategories(this PostModel model, Func<string, HelperResult> tagLink, string delimiter = ", ") => HtmlHelperExtensions.ListCategoriesOrTags(model.Categories.ToArray(), tagLink, delimiter);
+
+        public static void SocialMetaTags(this IPublishedContent model, IHtmlContentBuilder builder)
+        {
+            var twitterTag = new TagBuilder("meta")
+            {
+                TagRenderMode = TagRenderMode.StartTag //non-closing since that's just the way it is
+            };
+            twitterTag.Attributes["name"] = "twitter:card";
+            twitterTag.Attributes["content"] = "summary";
+            builder.AppendHtml(twitterTag);
+
+            var openGraphTitle = new TagBuilder("meta")
+            {
+                TagRenderMode = TagRenderMode.SelfClosing
+            };
+            openGraphTitle.Attributes["property"] = "og:title";
+            openGraphTitle.Attributes["content"] = model.Name;
+            builder.AppendHtml(openGraphTitle);
+
+            var openGraphType = new TagBuilder("meta")
+            {
+                TagRenderMode = TagRenderMode.SelfClosing
+            };
+            openGraphType.Attributes["property"] = "og:type";
+            openGraphType.Attributes["content"] = "article";
+            builder.AppendHtml(openGraphType);
+
+            var openGraphUrl = new TagBuilder("meta")
+            {
+                TagRenderMode = TagRenderMode.SelfClosing
+            };
+            openGraphUrl.Attributes["property"] = "og:url";
+            openGraphUrl.Attributes["content"] = model.Url(mode: UrlMode.Absolute);
+            builder.AppendHtml(openGraphUrl);
         }
     }
 }

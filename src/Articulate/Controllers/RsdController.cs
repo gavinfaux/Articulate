@@ -21,7 +21,8 @@ namespace Articulate.Controllers
     {
         private readonly UmbracoHelper _umbracoHelper;
 
-        public RsdController(UmbracoHelper umbracoHelper,
+        public RsdController(
+            UmbracoHelper umbracoHelper,
             ILogger<RenderController> logger,
             ICompositeViewEngine compositeViewEngine,
             IUmbracoContextAccessor umbracoContextAccessor)
@@ -38,20 +39,24 @@ namespace Articulate.Controllers
         [HttpGet]
         public ActionResult Index(int id)
         {
-            var node = _umbracoHelper.Content(id);
+            IPublishedContent node = _umbracoHelper.Content(id);
             if (node == null)
             {
                 return new NotFoundResult();
             }
 
-            var rsd = new XElement("rsd",
+            var rsd = new XElement(
+                "rsd",
                 new XAttribute("version", "1.0"),
-                new XElement("service",
+                new XElement(
+                    "service",
                     new XElement("engineName", "Articulate, powered by Umbraco"),
                     new XElement("engineLink", "https://github.com/shazwazza/articulate"),
                     new XElement("homePageLink", node.Url(mode: UrlMode.Absolute))),
-                new XElement("apis",
-                    new XElement("api",
+                new XElement(
+                    "apis",
+                    new XElement(
+                        "api",
                         new XAttribute("name", "MetaWeblog"),
                         new XAttribute("preferred", true),
                         new XAttribute("apiLink", node.Url(mode: UrlMode.Absolute).EnsureEndsWith('/') + "metaweblog/" + id),

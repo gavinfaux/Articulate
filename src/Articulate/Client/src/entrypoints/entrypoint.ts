@@ -14,6 +14,9 @@ import { client } from "../api/client.gen";
 //   return getCookie("UMB-XSRF-V");
 // }
 
+// TODO: review hot-reload - the custom watch and dev scripts should not
+// be needed. instead we run the standard 'npm run dev' 
+
 /**
  * The entry point for the Articulate package extensions.
  * This function is called when the extension is initialized.

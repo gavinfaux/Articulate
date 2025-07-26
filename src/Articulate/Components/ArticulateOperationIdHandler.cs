@@ -18,7 +18,8 @@ namespace Articulate.Components
 
         private readonly IOptions<ApiVersioningOptions> _apiVersioningOptions = apiVersioningOptions;
 
-        protected override bool CanHandle(ApiDescription apiDescription,
+        protected override bool CanHandle(
+            ApiDescription apiDescription,
             ControllerActionDescriptor controllerActionDescriptor)
             => controllerActionDescriptor.ControllerTypeInfo.Namespace?.StartsWith(
                 "Articulate.Controllers.ManagementApi",
@@ -34,7 +35,7 @@ namespace Articulate.Components
                 throw new ArgumentException($"This handler operates only on {nameof(ControllerActionDescriptor)}.");
             }
 
-            var defaultVersion = _apiVersioningOptions.Value.DefaultApiVersion;
+            ApiVersion defaultVersion = _apiVersioningOptions.Value.DefaultApiVersion;
             var httpMethod = apiDescription.HttpMethod?.ToLower().ToFirstUpper() ?? "Get";
 
             var relativePath = apiDescription.RelativePath;

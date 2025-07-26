@@ -266,7 +266,7 @@ export default class BlogMlExporterElement extends UmbLitElement implements IFor
 
   override render() {
     return html`
-      <uui-box headline="BlogML Exporter">
+      <uui-box headline="BlogML Exporter" headlinevariant="h2">
         ${renderHeaderActions(this.routerPath)}
         <uui-form>
           <form

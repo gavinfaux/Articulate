@@ -35,31 +35,28 @@ namespace Articulate.Syndication.BlogML
                 return 1;
             }
 
-            var syndicationExtension = obj as TagsSyndicationExtension;
-            if (syndicationExtension != null)
+            if (obj is TagsSyndicationExtension syndicationExtension)
             {
                 return
                     string.Compare(Description, syndicationExtension.Description, StringComparison.OrdinalIgnoreCase) |
-                    Uri.Compare(Documentation, syndicationExtension.Documentation, UriComponents.AbsoluteUri,
-                        UriFormat.SafeUnescaped, StringComparison.OrdinalIgnoreCase) |
+                    Uri.Compare(Documentation, syndicationExtension.Documentation, UriComponents.AbsoluteUri, UriFormat.SafeUnescaped, StringComparison.OrdinalIgnoreCase) |
                     string.Compare(Name, syndicationExtension.Name, StringComparison.OrdinalIgnoreCase) |
                     Version.CompareTo(syndicationExtension.Version) |
                     string.Compare(XmlNamespace, syndicationExtension.XmlNamespace, StringComparison.Ordinal) |
                     string.Compare(XmlPrefix, syndicationExtension.XmlPrefix, StringComparison.Ordinal) |
-                    ComparisonUtility.CompareSequence(Context.Tags, syndicationExtension.Context.Tags,
-                        StringComparison.OrdinalIgnoreCase);
+                    ComparisonUtility.CompareSequence(Context.Tags, syndicationExtension.Context.Tags, StringComparison.OrdinalIgnoreCase);
             }
 
             throw new ArgumentException(
-                string.Format(null, "obj is not of type {0}, type was found to be '{1}'.", (object)GetType().FullName,
-                    (object)obj.GetType().FullName), nameof(obj));
+                string.Format(null, "obj is not of type {0}, type was found to be '{1}'.", GetType().FullName,obj.GetType().FullName),
+                nameof(obj));
         }
 
         /// <inheritdoc />
         public override bool Load(IXPathNavigable source)
         {
             Guard.ArgumentNotNull(source, "source");
-            var navigator = source.CreateNavigator();
+            XPathNavigator navigator = source.CreateNavigator();
             var flag = Context.Load(navigator, CreateNamespaceManager(navigator));
             OnExtensionLoaded(new SyndicationExtensionLoadedEventArgs(source, this));
             return flag;

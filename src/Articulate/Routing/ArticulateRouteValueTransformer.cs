@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.Routing;
 using Umbraco.Cms.Core;
+using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.PublishedCache;
 using Umbraco.Cms.Core.Routing;
 using Umbraco.Cms.Core.Services;
@@ -29,7 +30,7 @@ namespace Articulate.Routing
         private readonly IRoutableDocumentFilter _routableDocumentFilter;
         private readonly ArticulateRouter _articulateRouter;
         private readonly UmbracoRouteValueTransformer _umbracoRouteValueTransformer;
-        private bool _hasCache = false;
+        private bool _hasCache;
         private bool _disposedValue;
         private readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
         private readonly IPublishedContentTypeCache _publishedContentTypeCache;
@@ -69,7 +70,7 @@ namespace Articulate.Routing
             {
                 // This can occur in Umbraco Cloud since some plugin that is used there prevents the UmbracoRouteValues from
                 // being set the normal way. In this case, we'll need to force route it.
-                var routeValues = await _umbracoRouteValueTransformer.TransformAsync(httpContext, values);
+                RouteValueDictionary routeValues = await _umbracoRouteValueTransformer.TransformAsync(httpContext, values);
 
                 umbracoRouteValues = httpContext.Features.Get<UmbracoRouteValues>();
                 if (umbracoRouteValues == null)
@@ -130,15 +131,15 @@ namespace Articulate.Routing
         {
             // Since we are executing after Umbraco's dynamic transformer, it means Umbraco has already
             // gone ahead and matched a domain (if any). So we will use this to match our document.
-            var assignedDomain = umbracoRouteValues.PublishedRequest?.Domain;
+            DomainAndUri? assignedDomain = umbracoRouteValues.PublishedRequest?.Domain;
             var contentId = dynamicRouteValues.GetContentId(assignedDomain);
 
-            var publishedContent = umbracoContext.Content.GetById(contentId)
-                ?? throw new InvalidOperationException("Could not resolve content by id " + contentId);
+            IPublishedContent publishedContent = umbracoContext.Content.GetById(contentId)
+                                                 ?? throw new InvalidOperationException("Could not resolve content by id " + contentId);
 
             // instantiate, prepare and process the published content request
             // important to use CleanedUmbracoUrl - lowercase path-only version of the current url
-            var requestBuilder = await _publishedRouter.CreateRequestAsync(umbracoContext.CleanedUmbracoUrl);
+            IPublishedRequestBuilder requestBuilder = await _publishedRouter.CreateRequestAsync(umbracoContext.CleanedUmbracoUrl);
 
             // re-assign the domain if there was one.
             if (assignedDomain != null)

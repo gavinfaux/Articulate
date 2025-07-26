@@ -21,7 +21,7 @@ namespace Articulate.Models
         /// </summary>
         public string Theme
         {
-            get => _theme ??= base.Unwrap().Value<string>("theme", fallback: Fallback.ToAncestors);
+            get => _theme ??= Unwrap().Value<string>("theme", fallback: Fallback.ToAncestors);
             protected set => _theme = value;
         }
 
@@ -29,7 +29,7 @@ namespace Articulate.Models
         {
             get
             {
-                var root = base.Unwrap().AncestorOrSelf(ArticulateConstants.ContentType.Articulate);
+                IPublishedContent root = Unwrap().AncestorOrSelf(ArticulateConstants.ContentType.Articulate);
                 _rootBlogNode = root ?? throw new InvalidOperationException("Could not find the Articulate root document for the current rendered page");
                 return _rootBlogNode;
             }
@@ -61,7 +61,7 @@ namespace Articulate.Models
         {
             get
             {
-                var list = RootBlogNode.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive).FirstOrDefault();
+                IPublishedContent list = RootBlogNode.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive).FirstOrDefault();
                 _blogListNode = list ?? throw new InvalidOperationException("Could not find the ArticulateArchive document for the current rendered page");
                 return _blogListNode;
             }
@@ -75,7 +75,7 @@ namespace Articulate.Models
         {
             get
             {
-                var authors = RootBlogNode.ChildrenOfType(ArticulateConstants.ContentType.ArticulateAuthors).FirstOrDefault();
+                IPublishedContent authors = RootBlogNode.ChildrenOfType(ArticulateConstants.ContentType.ArticulateAuthors).FirstOrDefault();
                 _blogAuthorsNode = authors ?? throw new InvalidOperationException("Could not find the ArticulateAuthors document for the current rendered page");
                 return _blogAuthorsNode;
             }
@@ -84,37 +84,37 @@ namespace Articulate.Models
 
         public string DisqusShortName
         {
-            get => _disqusShortName ?? (_disqusShortName = base.Unwrap().Value<string>("disqusShortname", fallback: Fallback.ToAncestors));
+            get => _disqusShortName ??= Unwrap().Value<string>("disqusShortname", fallback: Fallback.ToAncestors);
             protected set => _disqusShortName = value;
         }
 
         public string CustomRssFeed
         {
-            get => _customRssFeed ?? (_customRssFeed = RootBlogNode.Value<string>("customRssFeedUrl"));
+            get => _customRssFeed ??= RootBlogNode.Value<string>("customRssFeedUrl");
             protected set => _customRssFeed = value;
         }
 
         public string BlogLogo
         {
-            get => _blogLogo ?? (_blogLogo = RootBlogNode.GetCroppedImageUrl("blogLogo", "square"));
+            get => _blogLogo ??= RootBlogNode.GetCroppedImageUrl("blogLogo", "square");
             protected set => _blogLogo = value;
         }
 
         public string BlogBanner
         {
-            get => _blogBanner ?? (_blogBanner = RootBlogNode.GetCroppedImageUrl("blogBanner", "wide"));
+            get => _blogBanner ??= RootBlogNode.GetCroppedImageUrl("blogBanner", "wide");
             protected set => _blogBanner = value;
         }
 
         public string BlogTitle
         {
-            get => _blogTitle ?? (_blogTitle = base.Unwrap().Value<string>("blogTitle", fallback: Fallback.ToAncestors));
+            get => _blogTitle ??= Unwrap().Value<string>("blogTitle", fallback: Fallback.ToAncestors);
             protected set => _blogTitle = value;
         }
 
         public string BlogDescription
         {
-            get => _blogDescription ?? (_blogDescription = base.Unwrap().Value<string>("blogDescription", fallback: Fallback.ToAncestors));
+            get => _blogDescription ??= Unwrap().Value<string>("blogDescription", fallback: Fallback.ToAncestors);
             protected set => _blogDescription = value;
         }
 
@@ -124,7 +124,7 @@ namespace Articulate.Models
             {
                 if (_pageSize.HasValue == false)
                 {
-                    _pageSize = base.Unwrap().Value<int>("pageSize", fallback: Fallback.To(Fallback.Ancestors, Fallback.DefaultValue), defaultValue: 10);
+                    _pageSize = Unwrap().Value("pageSize", fallback: Fallback.To(Fallback.Ancestors, Fallback.DefaultValue), defaultValue: 10);
                 }
 
                 return _pageSize.Value;
@@ -134,13 +134,13 @@ namespace Articulate.Models
 
         public string PageTitle
         {
-            get => _pageTitle ?? (_pageTitle = Name + " - " + BlogTitle);
+            get => _pageTitle ??= Name + " - " + BlogTitle;
             protected set => _pageTitle = value;
         }
 
         public string PageDescription
         {
-            get => _pageDescription ?? (_pageDescription = BlogDescription);
+            get => _pageDescription ??= BlogDescription;
             protected set => _pageDescription = value;
         }
 

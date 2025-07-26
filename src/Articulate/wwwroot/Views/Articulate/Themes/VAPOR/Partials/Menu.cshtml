@@ -1,0 +1,12 @@
+@using Articulate
+@model IMasterModel
+
+<nav class="menu" role="navigation" aria-label="Main navigation">
+    <ul>
+        <li><a title="View Categories" href="@Model.ArticulateCategoriesUrl()">Categories</a></li>
+        <li><a title="View Tags" href="@Model.ArticulateTagsUrl()">Tags</a></li>
+        <li>
+            @await Html.PartialAsync("SearchBox", Model)
+        </li>
+    </ul>
+</nav>

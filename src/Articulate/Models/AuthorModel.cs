@@ -27,12 +27,12 @@ namespace Articulate.Models
         public string AuthorUrl => this.Value<string>("authorUrl");
 
         private MediaWithCrops _image;
-        public MediaWithCrops Image => (_image ??= base.Unwrap().Value<MediaWithCrops>("authorImage"));
+        public MediaWithCrops Image => _image ??= Unwrap().Value<MediaWithCrops>("authorImage");
 
         public int PostCount { get; }
 
         //We know the list of posts passed in is already ordered descending so get the first
-        public DateTime? LastPostDate => _lastPostDate ?? (_lastPostDate = Children.FirstOrDefault()?.Value<DateTime>("publishedDate"));
+        public DateTime? LastPostDate => _lastPostDate ??= Children.FirstOrDefault()?.Value<DateTime>("publishedDate");
 
         string IImageModel.Url => this.Url();
     }

@@ -14,6 +14,6 @@ namespace Articulate.PropertyEditors
             _ioHelper = ioHelper;
         }
 
-        protected override IConfigurationEditor CreateConfigurationEditor() => new ThemePickerConfigurationEditor(_ioHelper);
+        protected override IConfigurationEditor CreateConfigurationEditor() => new ThemePickerConfigurationEditor();
     }
 }

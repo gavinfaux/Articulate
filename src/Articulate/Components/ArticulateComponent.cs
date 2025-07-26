@@ -9,14 +9,14 @@ namespace Articulate.Components
     {
         public Task InitializeAsync(bool isRestarting, CancellationToken cancellationToken)
         {
-            foreach (var theme in DefaultThemes.AllThemes)
+            foreach (DefaultThemes.DefaultTheme theme in DefaultThemes.AllThemes)
             {
                 theme.CreateBundles(bundleManager);
             }
 
             // Create bundles for the markdown editor from the new subdirectories.
-            bundleManager.CreateJs("md-editor-js", "~/App_Plugins/Articulate/Assets/md-editor/js");
-            bundleManager.CreateCss("md-editor-css", "~/App_Plugins/Articulate/Assets/md-editor/css");
+            bundleManager.CreateJs("md-editor-js", "~/assets/md-editor/js");
+            bundleManager.CreateCss("md-editor-css", "~/assets/md-editor/css");
 
             return Task.CompletedTask;
         }

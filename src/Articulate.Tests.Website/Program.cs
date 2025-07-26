@@ -16,7 +16,7 @@ using Smidge.Options;
 using Umbraco.Cms.Core.DependencyInjection;
 using Umbraco.Extensions;
 
-var builder = WebApplication.CreateBuilder(args);
+WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // only required for SDK style projects not RCL
 builder.Services.AddControllersWithViews()
@@ -28,7 +28,7 @@ builder.CreateUmbracoBuilder()
     .AddComposers()
     .Build();
 
-/* 
+/*
 * Articulate requires Smidge
 *   add the following to your appsettings.json
 *   "smidge": {
@@ -37,7 +37,7 @@ builder.CreateUmbracoBuilder()
 *   }
 */
 
-// DX: dotnet watch run --environment Development 
+// DX: dotnet watch run --environment Development
 builder.Services.AddSmidge(builder.Configuration.GetSection("smidge")).Configure<SmidgeOptions>(options =>
 {
     if (builder.Environment.IsDevelopment())
@@ -74,17 +74,17 @@ builder.Services.AddRazorPages();
 // Only required for static assets in Release mode when running from IDE (e.g. back office) - not required for published release
 builder.WebHost.UseStaticWebAssets();
 
-var app = builder.Build();
+WebApplication app = builder.Build();
 
 await app.BootUmbracoAsync();
 
-var loggerFactory = app.Services.GetRequiredService<ILoggerFactory>();
-var startupLogger = loggerFactory.CreateLogger("Articulate.StartupDiagnostics");
+ILoggerFactory loggerFactory = app.Services.GetRequiredService<ILoggerFactory>();
+ILogger startupLogger = loggerFactory.CreateLogger("Articulate.StartupDiagnostics");
 
 try
 {
     // Get the configured options for the runtime compiler
-    var runtimeCompilationOptions = app.Services.GetRequiredService<IOptions<MvcRazorRuntimeCompilationOptions>>().Value;
+    MvcRazorRuntimeCompilationOptions runtimeCompilationOptions = app.Services.GetRequiredService<IOptions<MvcRazorRuntimeCompilationOptions>>().Value;
 
     startupLogger.LogCritical("--- Articulate: Verifying Registered File Providers ---");
 
@@ -94,7 +94,7 @@ try
     {
         startupLogger.LogCritical("{Count} file providers are registered with the runtime compiler.", providerCount);
         var i = 0;
-        foreach (var provider in runtimeCompilationOptions.FileProviders)
+        foreach (IFileProvider provider in runtimeCompilationOptions.FileProviders)
         {
             // Try to cast to PhysicalFileProvider to get useful path information
             if (provider is PhysicalFileProvider pfp)

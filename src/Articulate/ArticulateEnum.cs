@@ -24,14 +24,14 @@ namespace Articulate
         public static string GetStringValue(this Enum enumValue)
         {
             // Get the MemberInfo object for the enum member
-            var memberInfo = enumValue.GetType().GetField(enumValue.ToString());
+            FieldInfo memberInfo = enumValue.GetType().GetField(enumValue.ToString());
             if (memberInfo == null)
             {
                 return enumValue.ToString();
             }
 
             // Get the StringValueAttribute from the member
-            var stringValueAttribute = memberInfo.GetCustomAttribute<StringValueAttribute>(false);
+            StringValueAttribute stringValueAttribute = memberInfo.GetCustomAttribute<StringValueAttribute>(false);
 
             // Return the attribute's value, or fall back to the enum member's name
             return stringValueAttribute?.Value ?? enumValue.ToString();

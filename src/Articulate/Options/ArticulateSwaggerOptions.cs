@@ -1,4 +1,6 @@
 using System;
+using System.IO;
+using System.Reflection;
 using Articulate.Components;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.Extensions.DependencyInjection;
@@ -42,22 +44,22 @@ namespace Articulate.Options
                     }
                 });
 
-            //try
-            //{
-            //    var assembly = typeof(ArticulateSwaggerOptions).Assembly;
-            //    var xmlFile = $"{assembly.GetName().Name}.xml";
-            //    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-            //    if (File.Exists(xmlPath))
-            //    {
-            //        options.IncludeXmlComments(typeof(ArticulateSwaggerOptions).Assembly);
-            //    }
+            try
+            {
+                Assembly assembly = typeof(ArticulateSwaggerOptions).Assembly;
+                var xmlFile = $"{assembly.GetName().Name}.xml";
+                var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+                if (File.Exists(xmlPath))
+                {
+                    options.IncludeXmlComments(typeof(ArticulateSwaggerOptions).Assembly);
+                }
 
-            //    logger.LogWarning("Articulate XML comments not available for Swagger UI");
-            //}
-            //catch (Exception e)
-            //{
-            //    logger.LogWarning(e, "Articulate XML comments not available for Swagger UI");
-            //}
+                logger.LogWarning("Articulate XML comments not available for Swagger UI");
+            }
+            catch (Exception e)
+            {
+                logger.LogWarning(e, "Articulate XML comments not available for Swagger UI");
+            }
 
             options.OperationFilter<ArticulateOperationSecurityFilter>();
 

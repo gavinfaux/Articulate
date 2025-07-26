@@ -62,7 +62,7 @@ namespace Articulate
             Func<IPublishedContent, bool> filter,
             params int[] articulateArchiveIds)
         {
-            var posts = articulateArchiveIds
+            IEnumerable<IPublishedContent> posts = articulateArchiveIds
                 .Select(helper.Content)
                 .WhereNotNull()
                 .SelectMany(x => x.Descendants());
@@ -113,13 +113,13 @@ namespace Articulate
             int count,
             IPublishedValueFallback publishedValueFallback)
         {
-            var listNodes = GetListNodes(masterModel);
+            IPublishedContent[] listNodes = GetListNodes(masterModel);
 
             var listNodeIds = listNodes.Select(x => x.Id).ToArray();
 
             var pager = new PagerModel(count, 0, 1);
 
-            var listItems = helper.GetPostsSortedByPublishedDate(pager, null, listNodeIds);
+            IEnumerable<IPublishedContent> listItems = helper.GetPostsSortedByPublishedDate(pager, null, listNodeIds);
 
             var rootPageModel = new ListModel(listNodes[0], pager, listItems, publishedValueFallback);
             return rootPageModel.Posts;
@@ -141,13 +141,13 @@ namespace Articulate
             int pageSize,
             IPublishedValueFallback publishedValueFallback)
         {
-            var listNodes = GetListNodes(masterModel);
+            IPublishedContent[] listNodes = GetListNodes(masterModel);
 
             var listNodeIds = listNodes.Select(x => x.Id).ToArray();
 
             var pager = new PagerModel(pageSize, page - 1, 1);
 
-            var listItems = helper.GetPostsSortedByPublishedDate(pager, null, listNodeIds);
+            IEnumerable<IPublishedContent> listItems = helper.GetPostsSortedByPublishedDate(pager, null, listNodeIds);
 
             var rootPageModel = new ListModel(listNodes[0], pager, listItems, publishedValueFallback);
             return rootPageModel.Posts;
@@ -171,7 +171,7 @@ namespace Articulate
         {
             var pager = new PagerModel(pageSize, page - 1, 1);
 
-            var listItems = helper.GetPostsSortedByPublishedDate(pager, null, masterModel.Id);
+            IEnumerable<IPublishedContent> listItems = helper.GetPostsSortedByPublishedDate(pager, null, masterModel.Id);
 
             var rootPageModel = new ListModel(masterModel, pager, listItems, publishedValueFallback);
             return rootPageModel.Posts;
@@ -186,7 +186,7 @@ namespace Articulate
         {
             var listNodeIds = listNodes.Select(x => x.Id).ToArray();
 
-            var postWithAuthor = helper.GetPostsSortedByPublishedDate(pager, x => string.Equals(x.Value<string>("author"), authorName.Replace("-", " "), StringComparison.InvariantCultureIgnoreCase), listNodeIds);
+            IEnumerable<IPublishedContent> postWithAuthor = helper.GetPostsSortedByPublishedDate(pager, x => string.Equals(x.Value<string>("author"), authorName.Replace("-", " "), StringComparison.InvariantCultureIgnoreCase), listNodeIds);
 
             var rootPageModel = new ListModel(listNodes[0], pager, postWithAuthor, publishedValueFallback);
             return rootPageModel.Posts;
@@ -194,7 +194,7 @@ namespace Articulate
 
         private static IPublishedContent[] GetListNodes(IMasterModel masterModel)
         {
-            var listNodes = masterModel.RootBlogNode.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive).ToArray();
+            IPublishedContent[] listNodes = masterModel.RootBlogNode.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive).ToArray();
             if (listNodes.Length == 0)
             {
                 throw new InvalidOperationException(

@@ -23,14 +23,13 @@ namespace Articulate.Services
         public ArticulateTagRepository(
             IScopeAccessor scopeAccessor,
             AppCaches appCaches,
-            IPublishedValueFallback publishedValueFallback
-            ) : base(scopeAccessor, appCaches)
+            IPublishedValueFallback publishedValueFallback) : base(scopeAccessor, appCaches)
         {
             _publishedValueFallback = publishedValueFallback;
         }
 
         /// <summary>
-        /// Returns a list of all categories belonging to this articualte root
+        /// Returns a list of all categories belonging to this articulate root
         /// </summary>
         /// <param name="masterModel"></param>
         /// <returns></returns>
@@ -39,14 +38,14 @@ namespace Articulate.Services
         {
             //TODO: We want to use the core for this but it's not available, this needs to be implemented: http://issues.umbraco.org/issue/U4-9290
 
-            var sql = GetTagQuery($"{Constants.DatabaseSchema.Tables.Tag}.id, {Constants.DatabaseSchema.Tables.Tag}.tag, {Constants.DatabaseSchema.Tables.Tag}.[group], Count(*) as NodeCount", masterModel)
+            Sql sql = GetTagQuery($"{Constants.DatabaseSchema.Tables.Tag}.id, {Constants.DatabaseSchema.Tables.Tag}.tag, {Constants.DatabaseSchema.Tables.Tag}.[group], Count(*) as NodeCount", masterModel)
                 .Where($"{Constants.DatabaseSchema.Tables.Tag}." + SqlSyntax.GetQuotedColumnName("group") + " = @tagGroup", new
                 {
                     tagGroup = ArticulateConstants.DataType.ArticulateCategories
                 })
-                .GroupBy($"{Constants.DatabaseSchema.Tables.Tag}.id", $"{Constants.DatabaseSchema.Tables.Tag}.tag", $"{Constants.DatabaseSchema.Tables.Tag}." + SqlSyntax.GetQuotedColumnName("group") + @"");
+                .GroupBy($"{Constants.DatabaseSchema.Tables.Tag}.id", $"{Constants.DatabaseSchema.Tables.Tag}.tag", $"{Constants.DatabaseSchema.Tables.Tag}." + SqlSyntax.GetQuotedColumnName("group") + string.Empty);
 
-            var results = Database.Fetch<TagDto>(sql).Select(x => x.Tag).WhereNotNull().OrderBy(x => x);
+            IOrderedEnumerable<string> results = Database.Fetch<TagDto>(sql).Select(x => x.Tag).WhereNotNull().OrderBy(x => x);
 
             return results;
         }
@@ -71,27 +70,27 @@ namespace Articulate.Services
                 var taggedContent = new List<TagDto>();
 
                 //process in groups to not exceed the max SQL params
-                foreach (var tagBatch in tags.InGroupsOf(2000))
+                foreach (IEnumerable<TagModel> tagBatch in tags.InGroupsOf(2000))
                 {
-                    var sql = GetTagQuery($"{Constants.DatabaseSchema.Tables.TagRelationship}.nodeId, {Constants.DatabaseSchema.Tables.TagRelationship}.tagId, {Constants.DatabaseSchema.Tables.Tag}.tag", masterModel)
+                    Sql sql = GetTagQuery($"{Constants.DatabaseSchema.Tables.TagRelationship}.nodeId, {Constants.DatabaseSchema.Tables.TagRelationship}.tagId, {Constants.DatabaseSchema.Tables.Tag}.tag", masterModel)
                         .Where("tagId IN (@tagIds) AND cmsTags." + SqlSyntax.GetQuotedColumnName("group") + " = @tagGroup", new
                         {
                             tagIds = tagBatch.Select(x => x.Id).ToArray(),
-                            tagGroup = tagGroup
+                            tagGroup
                         });
 
-                    var dbTags = Database.Fetch<TagDto>(sql);
+                    List<TagDto> dbTags = Database.Fetch<TagDto>(sql);
 
                     taggedContent.AddRange(dbTags);
                 }
 
                 var result = new List<PostsByTagModel>();
-                foreach (var groupedTags in taggedContent.GroupBy(x => x.TagId))
+                foreach (IGrouping<int, TagDto> groupedTags in taggedContent.GroupBy(x => x.TagId))
                 {
                     //will be the same tag name for all of these tag Ids
                     var tagName = groupedTags.First().Tag;
 
-                    var publishedContent = helper.Content(groupedTags.Select(t => t.NodeId).Distinct()).WhereNotNull();
+                    IEnumerable<IPublishedContent> publishedContent = helper.Content(groupedTags.Select(t => t.NodeId).Distinct()).WhereNotNull();
 
                     var model = new PostsByTagModel(
                         publishedContent.Select(c => new PostModel(c, _publishedValueFallback)).OrderByDescending(c => c.PublishedDate),
@@ -128,27 +127,29 @@ namespace Articulate.Services
 
             PostsByTagModel GetResult()
             {
-                var sqlTags = GetTagQuery($"{Constants.DatabaseSchema.Tables.Node}.id", masterModel);
+                Sql sqlTags = GetTagQuery($"{Constants.DatabaseSchema.Tables.Node}.id", masterModel);
 
-                //For whatever reason, SQLCE and even SQL SERVER are not willing to lookup 
+                //For whatever reason, SQLCE and even SQL SERVER are not willing to lookup
                 //tags with hyphens in them, it's super strange, so we force the tag column to be - what it already is!! what tha.
 
                 sqlTags.Where($"CAST({Constants.DatabaseSchema.Tables.Tag}.tag AS NVARCHAR(200)) = @tagName AND {Constants.DatabaseSchema.Tables.Tag}." + SqlSyntax.GetQuotedColumnName("group") + " = @tagGroup", new
                 {
                     tagName = tag,
-                    tagGroup = tagGroup
+                    tagGroup
                 });
 
                 //get the publishedDate property type id on the ArticulatePost content type
-                var publishedDatePropertyTypeId = Database.ExecuteScalar<int>($@"SELECT {Constants.DatabaseSchema.Tables.PropertyType}.id FROM {Constants.DatabaseSchema.Tables.ContentType}
+                var publishedDatePropertyTypeId = Database.ExecuteScalar<int>(
+                    $@"SELECT {Constants.DatabaseSchema.Tables.PropertyType}.id FROM {Constants.DatabaseSchema.Tables.ContentType}
 INNER JOIN {Constants.DatabaseSchema.Tables.PropertyType} ON {Constants.DatabaseSchema.Tables.PropertyType}.contentTypeId = {Constants.DatabaseSchema.Tables.ContentType}.nodeId
-WHERE {Constants.DatabaseSchema.Tables.ContentType}.alias = @contentTypeAlias AND {Constants.DatabaseSchema.Tables.PropertyType}.alias = @propertyTypeAlias", new { contentTypeAlias = ArticulateConstants.ContentType.ArticulatePost, propertyTypeAlias = "publishedDate" });
+WHERE {Constants.DatabaseSchema.Tables.ContentType}.alias = @contentTypeAlias AND {Constants.DatabaseSchema.Tables.PropertyType}.alias = @propertyTypeAlias",
+                    new { contentTypeAlias = ArticulateConstants.ContentType.ArticulatePost, propertyTypeAlias = "publishedDate" });
 
-                var sqlContent = GetContentByTagQueryForPaging($"{Constants.DatabaseSchema.Tables.Node}.id, {Constants.DatabaseSchema.Tables.PropertyData}.dateValue", masterModel, publishedDatePropertyTypeId);
+                Sql sqlContent = GetContentByTagQueryForPaging($"{Constants.DatabaseSchema.Tables.Node}.id, {Constants.DatabaseSchema.Tables.PropertyData}.dateValue", masterModel, publishedDatePropertyTypeId);
 
                 sqlContent.Append($"WHERE ({Constants.DatabaseSchema.Tables.Node}.id IN (").Append(sqlTags).Append("))");
 
-                //order by the dateValue field which will be the publishedDate 
+                //order by the dateValue field which will be the publishedDate
                 sqlContent.OrderBy($"({Constants.DatabaseSchema.Tables.PropertyData}.dateValue) DESC");
 
                 //Put on a single line! NPoco paging does weird stuff on multiline
@@ -156,11 +157,11 @@ WHERE {Constants.DatabaseSchema.Tables.ContentType}.alias = @contentTypeAlias AN
 
                 //TODO: ARGH This still returns multiple non distinct Ids :(
 
-                var taggedContent = Database.Page<int>(page, pageSize, sqlContent);
+                Page<int> taggedContent = Database.Page<int>(page, pageSize, sqlContent);
 
                 var result = new List<PostsByTagModel>();
 
-                var publishedContent = helper.Content(taggedContent.Items).WhereNotNull();
+                IEnumerable<IPublishedContent> publishedContent = helper.Content(taggedContent.Items).WhereNotNull();
 
                 var model = new PostsByTagModel(
                     publishedContent.Select(c => new PostModel(c, _publishedValueFallback)),
@@ -198,7 +199,7 @@ WHERE {Constants.DatabaseSchema.Tables.ContentType}.alias = @contentTypeAlias AN
         /// </remarks>
         private Sql GetContentByTagQueryForPaging(string selectCols, IMasterModel masterModel, int publishedDatePropertyTypeId)
         {
-            var sql = new Sql()
+            Sql sql = new Sql()
                 .Select(selectCols)
                 .From(Constants.DatabaseSchema.Tables.Node)
                 .InnerJoin(Constants.DatabaseSchema.Tables.Document)
@@ -231,7 +232,7 @@ WHERE {Constants.DatabaseSchema.Tables.ContentType}.alias = @contentTypeAlias AN
         /// </remarks>
         private Sql GetTagQuery(string selectCols, IMasterModel masterModel)
         {
-            var sql = new Sql()
+            Sql sql = new Sql()
                 .Select(selectCols)
                 .From(Constants.DatabaseSchema.Tables.Tag)
                 .InnerJoin(Constants.DatabaseSchema.Tables.TagRelationship)

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using Articulate.Attributes;
 using Articulate.Models;
@@ -78,7 +79,7 @@ namespace Articulate.Controllers
                 p = 1;
             }
 
-            var searchResult = _articulateSearcher.Search(term, provider, masterModel.BlogArchiveNode.Id, masterModel.PageSize, p.Value - 1, out var totalPosts);
+            IEnumerable<IPublishedContent> searchResult = _articulateSearcher.Search(term, provider, masterModel.BlogArchiveNode.Id, masterModel.PageSize, p.Value - 1, out var totalPosts);
 
             return GetPagedListView(masterModel, CurrentPage, searchResult, totalPosts, p);
         }

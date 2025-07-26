@@ -1,0 +1,10 @@
+@using PublishedContentExtensions = Articulate.Models.PublishedContentExtensions
+@using UrlHelperExtensions = Articulate.UrlHelperExtensions
+@model IMasterModel
+
+<div class="articulate-search">
+    <form method="get" action="@PublishedContentExtensions.ArticulateSearchUrl(Model)">
+        <input type="text" name="term" placeholder="Search..." />
+        <button type="submit">Search</button>
+    </form>
+</div>

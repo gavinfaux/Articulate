@@ -43,7 +43,7 @@ namespace Articulate.Controllers
             //create a master model
             var masterModel = new MasterModel(CurrentPage, PublishedValueFallback);
 
-            var listNodes = masterModel.RootBlogNode.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive).ToArray();
+            IPublishedContent[] listNodes = masterModel.RootBlogNode.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive).ToArray();
             if (listNodes.Length == 0)
             {
                 throw new InvalidOperationException("An ArticulateArchive document must exist under the root Articulate document");
@@ -51,7 +51,7 @@ namespace Articulate.Controllers
 
             var totalPosts = _umbracoHelper.GetPostCount(CurrentPage.Name, listNodes.Select(x => x.Id).ToArray());
 
-            if (!GetPagerModel(masterModel, totalPosts, p, out var pager))
+            if (!GetPagerModel(masterModel, totalPosts, p, out PagerModel pager))
             {
                 return new RedirectToUmbracoPageResult(
                     CurrentPage.Parent,

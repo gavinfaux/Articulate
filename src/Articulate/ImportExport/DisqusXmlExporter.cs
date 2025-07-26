@@ -6,6 +6,7 @@ using System.Xml.Linq;
 using Argotic.Syndication.Specialized;
 using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Core.Models;
+using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.Routing;
 using Umbraco.Extensions;
 
@@ -35,7 +36,8 @@ namespace Articulate.ImportExport
             var xChannel = new XElement("channel");
 
             var xDoc = new XDocument(
-                new XElement("rss",
+                new XElement(
+                    "rss",
                     new XAttribute("version", "2.0"),
                     new XAttribute(XNamespace.Xmlns + "content", nsContent),
                     new XAttribute(XNamespace.Xmlns + "dsq", nsDsq),
@@ -43,9 +45,9 @@ namespace Articulate.ImportExport
                     new XAttribute(XNamespace.Xmlns + "wp", nsWp),
                     xChannel));
 
-            foreach (var post in posts)
+            foreach (IContent post in posts)
             {
-                var blogMlPost = document.Posts.FirstOrDefault(x => x.Title.Content == post.Name);
+                BlogMLPost blogMlPost = document.Posts.FirstOrDefault(x => x.Title.Content == post.Name);
 
                 if (blogMlPost == null)
                 {
@@ -65,15 +67,16 @@ namespace Articulate.ImportExport
                     body = MarkdownHelper.ToHtml(post.GetValue<string>("markdown"));
                 }
 
-                var xItem = new XElement("item",
+                var xItem = new XElement(
+                    "item",
                     new XElement("title", post.Name),
-                    new XElement("link", _publishedUrlProvider.GetUrl(post.Id, Umbraco.Cms.Core.Models.PublishedContent.UrlMode.Absolute) ?? string.Empty),
+                    new XElement("link", _publishedUrlProvider.GetUrl(post.Id, UrlMode.Absolute) ?? string.Empty),
                     new XElement(nsContent + "encoded", new XCData(body)),
                     new XElement(nsDsq + "thread_identifier", post.Key.ToString()),
                     new XElement(nsWp + "post_date_gmt", post.GetValue<DateTime>("publishedDate").ToUniversalTime().ToIsoString()),
                     new XElement(nsWp + "comment_status", "open"));
 
-                foreach (var comment in blogMlPost.Comments)
+                foreach (BlogMLComment comment in blogMlPost.Comments)
                 {
                     string commentText = comment.Content.Content;
 
@@ -82,7 +85,8 @@ namespace Articulate.ImportExport
                         commentText = Encoding.UTF8.GetString(Convert.FromBase64String(comment.Content.Content));
                     }
 
-                    var xComment = new XElement(nsWp + "comment",
+                    var xComment = new XElement(
+                        nsWp + "comment",
                         new XElement(nsWp + "comment_id", comment.Id),
                         new XElement(nsWp + "comment_author", comment.UserName),
                         new XElement(nsWp + "comment_author_email", comment.UserEmailAddress),

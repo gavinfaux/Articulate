@@ -1,9 +1,31 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <ItemGroup>
-    <PackageReference Include="Nerdbank.GitVersioning" Condition="!Exists('packages.config')">
-      <PrivateAssets>all</PrivateAssets>
-      <Version>3.7.115</Version>
-    </PackageReference>
-  </ItemGroup>
+	<PropertyGroup>
+		<TargetFramework>net9.0</TargetFramework>
+		<LangVersion>latest</LangVersion>
+		<!-- TODO:Temporary, resolve in later PRs and enable-->
+		<Nullable>warnings</Nullable>
+		<!--<WarningsAsErrors>Nullable</WarningsAsErrors>-->
+		<ImplicitUsings>disable</ImplicitUsings>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<PackageIcon>Icon-transparent.png</PackageIcon>
+	</PropertyGroup>
+	<PropertyGroup>
+		<!-- TODO: Enable when 6.0 version is shipped -->
+		<EnablePackageValidation>false</EnablePackageValidation>
+		<PackageValidationBaselineVersion>6.0.0</PackageValidationBaselineVersion>
+		<EnableStrictModeForCompatibleFrameworksInPackage>true</EnableStrictModeForCompatibleFrameworksInPackage>
+		<EnableStrictModeForCompatibleTfms>true</EnableStrictModeForCompatibleTfms>
+		<GenerateCompatibilitySuppressionFile>true</GenerateCompatibilitySuppressionFile>
+	</PropertyGroup>
+	<ItemGroup>
+		<PackageReference Include="Nerdbank.GitVersioning" Condition="!Exists('packages.config')" Version="3.7.115" PrivateAssets="all" IsImplicitlyDefined="true" />
+		<PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.556" PrivateAssets="all" IsImplicitlyDefined="true" />
+	</ItemGroup>
+	<PropertyGroup>
+		<GitVersionBaseDirectory>$(MSBuildThisFileDirectory)</GitVersionBaseDirectory>
+	</PropertyGroup>
+	<ItemGroup>
+		<Content Include="$(MSBuildThisFileDirectory)icon.png" Pack="true" PackagePath="" Visible="false" />
+	</ItemGroup>
 </Project>

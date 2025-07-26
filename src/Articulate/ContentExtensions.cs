@@ -19,7 +19,7 @@ namespace Articulate
             ILocalizationService localizationService,
             int userId = -1)
         {
-            var content = contentService.Create(name, parent, contentType.Alias, userId);
+            IContent content = contentService.Create(name, parent, contentType.Alias, userId);
             content.SetInvariantOrDefaultCultureName(name, contentType, localizationService);
             return content;
         }
@@ -32,7 +32,7 @@ namespace Articulate
             ILocalizationService localizationService,
             int userId = -1)
         {
-            var content = contentService.Create(name, parent, contentType.Alias, userId);
+            IContent content = contentService.Create(name, parent, contentType.Alias, userId);
             content.SetInvariantOrDefaultCultureName(name, contentType, localizationService);
             return content;
         }
@@ -149,9 +149,9 @@ namespace Articulate
             if (content.ContentType.VariesByCulture())
             {
                 // iterate over any existing cultures defined on the content item
-                foreach (var c in content.CultureInfos)
+                foreach (ContentCultureInfos c in content.CultureInfos)
                 {
-                    var propertyType = contentType.CompositionPropertyTypes.FirstOrDefault(x => x.Alias == propertyAlias) ?? throw new InvalidOperationException($"No property type found by alias {propertyAlias}");
+                    IPropertyType propertyType = contentType.CompositionPropertyTypes.FirstOrDefault(x => x.Alias == propertyAlias) ?? throw new InvalidOperationException($"No property type found by alias {propertyAlias}");
 
                     var valueToSet = propertyValueGetter(content, contentType, c);
                     if (valueToSet == null || (valueToSet is string propValAsString && string.IsNullOrWhiteSpace(propValAsString)))

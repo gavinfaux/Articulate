@@ -7,7 +7,7 @@ namespace Articulate
 {
     public static class DefaultThemes
     {
-        private static readonly IReadOnlyDictionary<string, DefaultTheme> s_defaultThemes
+        private static readonly IReadOnlyDictionary<string, DefaultTheme> _sDefaultThemes
             = new Dictionary<string, DefaultTheme>(StringComparer.InvariantCultureIgnoreCase)
             {
                 [Vapor.Name] = new Vapor(),
@@ -16,10 +16,10 @@ namespace Articulate
                 [Mini.Name] = new Mini()
             };
 
-        public static DefaultTheme[] AllThemes { get; } = s_defaultThemes.Values.ToArray();
+        public static DefaultTheme[] AllThemes { get; } = _sDefaultThemes.Values.ToArray();
 
         public static bool IsDefaultTheme(string themeName)
-            => s_defaultThemes.ContainsKey(themeName);
+            => _sDefaultThemes.ContainsKey(themeName);
 
         private class Vapor : DefaultTheme
         {

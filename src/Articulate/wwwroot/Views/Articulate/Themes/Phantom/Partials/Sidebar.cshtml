@@ -1,0 +1,29 @@
+@using Articulate
+@model IMasterModel
+
+@{
+    var backgroundStyle = !Model.BlogBanner.IsNullOrWhiteSpace() 
+        ? "background-image: url(" + Model.BlogBanner + ");"
+        : "";
+}
+<div class="sidebar" role="heading" style="@backgroundStyle">
+
+    <header class="header">
+
+        @if (!Model.BlogLogo.IsNullOrWhiteSpace())
+        {
+            <a href="@Model.ArticulateRootUrl()">
+                <img id="blog" class="logo" src="@Model.BlogLogo">
+            </a>
+        }
+
+        <h1 class="title"><a href="@Model.RootBlogNode.Url()">@Model.BlogTitle</a></h1>
+        
+        <p class="description">@Model.BlogDescription<a href="@Model.ArticulateRssUrl()" class="icon-rss"></a></p>
+       
+        <div class="separator"></div>
+
+        @await Html.PartialAsync("SearchBox", Model)
+
+    </header>
+</div>

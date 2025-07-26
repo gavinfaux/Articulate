@@ -43,7 +43,7 @@ namespace Articulate
 
             var fieldQuery = new StringBuilder();
             //build field query
-            foreach (var field in fields)
+            foreach (KeyValuePair<string, int> field in fields)
             {
                 //full exact match (which has a higher boost)
                 fieldQuery.Append($"{field.Key}:{"\"" + term + "\""}^{field.Value * exactMatch}");
@@ -57,7 +57,7 @@ namespace Articulate
                     fieldQuery.Append($"{field.Key}:{s}^{field.Value * termMatch}");
                     fieldQuery.Append(" ");
 
-                    //match on each term, with wildcard 
+                    //match on each term, with wildcard
                     fieldQuery.Append($"{field.Key}:{s}*");
                     fieldQuery.Append(" ");
                 }
@@ -70,16 +70,16 @@ namespace Articulate
                 throw new InvalidOperationException("No index found by name " + indexName);
             }
 
-            var searcher = index.Searcher;
+            ISearcher searcher = index.Searcher;
 
-            var criteria = searcher.CreateQuery()
+            IBooleanOperation criteria = searcher.CreateQuery()
                 .Field("parentID", blogArchiveNodeId)
                 .And()
                 .NativeQuery($" +({fieldQuery})");
 
-            var searchResult = criteria.Execute(QueryOptions.SkipTake(pageIndex * pageSize, pageSize));
+            ISearchResults searchResult = criteria.Execute(QueryOptions.SkipTake(pageIndex * pageSize, pageSize));
 
-            var result = searchResult
+            IEnumerable<PublishedSearchResult> result = searchResult
                 .Skip(pageIndex * pageSize)
                 .ToPublishedSearchResults(_umbracoContextAccessor.GetRequiredUmbracoContext().Content);
 

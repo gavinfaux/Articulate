@@ -1,5 +1,6 @@
 using System.Linq;
 using Umbraco.Cms.Core.Events;
+using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Notifications;
 using Umbraco.Cms.Core.Services;
 using Umbraco.Extensions;
@@ -25,9 +26,9 @@ namespace Articulate.Components
 
         public void Handle(ContentSavedNotification notification)
         {
-            var e = notification;
+            ContentSavedNotification e = notification;
 
-            foreach (var c in e.SavedEntities)
+            foreach (IContent c in e.SavedEntities)
             {
                 if (!c.WasPropertyDirty("Id") || !c.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.Articulate))
                 {
@@ -41,12 +42,12 @@ namespace Articulate.Components
                 var children = _contentService.GetPagedChildren(c.Id, 0, 10, out var total).ToList();
                 if (total == 0 || children.All(x => x.ContentType.Alias != ArticulateConstants.ContentType.ArticulateArchive))
                 {
-                    var archiveContentType = _contentTypeService.Get(ArticulateConstants.ContentType.ArticulateArchive);
+                    IContentType archiveContentType = _contentTypeService.Get(ArticulateConstants.ContentType.ArticulateArchive);
                     if (archiveContentType != null)
                     {
                         if (archiveContentType.VariesByCulture())
                         {
-                            var articles = _contentService.Create("", c, ArticulateConstants.ContentType.ArticulateArchive);
+                            IContent articles = _contentService.Create(string.Empty, c, ArticulateConstants.ContentType.ArticulateArchive);
                             articles.SetCultureName(ArticulateConstants.Convention.ArticlesDocument, defaultLang);
                             _contentService.Save(articles);
                         }
@@ -59,18 +60,18 @@ namespace Articulate.Components
 
                 if (total == 0 || children.All(x => x.ContentType.Alias != ArticulateConstants.ContentType.ArticulateAuthors))
                 {
-                    var authorContentType = _contentTypeService.Get(ArticulateConstants.ContentType.ArticulateAuthors);
+                    IContentType authorContentType = _contentTypeService.Get(ArticulateConstants.ContentType.ArticulateAuthors);
                     if (authorContentType != null)
                     {
                         if (authorContentType.VariesByCulture())
                         {
-                            var authors = _contentService.Create("", c, ArticulateConstants.ContentType.ArticulateAuthors);
+                            IContent authors = _contentService.Create(string.Empty, c, ArticulateConstants.ContentType.ArticulateAuthors);
                             authors.SetCultureName(ArticulateConstants.Convention.AuthorsDocument, defaultLang);
                             _contentService.Save(authors);
                         }
                         else
                         {
-                            var authors = _contentService.CreateAndSave(ArticulateConstants.Convention.AuthorsDocument, c, ArticulateConstants.ContentType.ArticulateAuthors);
+                            IContent authors = _contentService.CreateAndSave(ArticulateConstants.Convention.AuthorsDocument, c, ArticulateConstants.ContentType.ArticulateAuthors);
                         }
                     }
                 }

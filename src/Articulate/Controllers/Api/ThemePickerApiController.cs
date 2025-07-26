@@ -26,7 +26,7 @@ namespace Articulate.Controllers.Api
     [Authorize(Policy = AuthorizationPolicies.BackOfficeAccess)]
     [VersionedApiBackOfficeRoute("articulate/editors/theme-picker")]
     [MapToApi(ArticulateConstants.ManagementApi.Name)]
-    public class ThemePickerApiController(IArticulateThemeService themeService, ILogger<ThemePickerApiController> logger) : ManagementApiControllerBase
+    public class ThemePickerApiController(IArticulateThemeRepository themeRepository, ILogger<ThemePickerApiController> logger) : ManagementApiControllerBase
     {
         /// <summary>
         /// Gets the list of all available Articulate themes, both default and user-defined.
@@ -45,7 +45,7 @@ namespace Articulate.Controllers.Api
         {
             try
             {
-                return Ok(await themeService.GetAllThemesAsync());
+                return Ok(await themeRepository.GetAllThemesAsync());
             }
             catch (Exception e)
             {

@@ -24,7 +24,7 @@ namespace Articulate.Routing
 
         public int GetContentId(Domain currentDomain)
         {
-            var found = _content.First(x =>
+            KeyValuePair<int, IReadOnlyList<Domain>> found = _content.First(x =>
                 (currentDomain == null && x.Value.Count == 0) || x.Value.Any(x => x.Id == currentDomain?.Id));
 
             return found.Key;

@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.ServiceModel.Syndication;
 using Articulate.Attributes;
 using Articulate.Models;
 using Articulate.Services;
@@ -58,7 +60,7 @@ namespace Articulate.Controllers
                 maxItems = 25;
             }
 
-            var listNodes = CurrentPage.Children()
+            IPublishedContent[] listNodes = CurrentPage.Children()
                 .Where(x => x.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateArchive))
                 .ToArray();
             if (listNodes.Length == 0)
@@ -70,7 +72,7 @@ namespace Articulate.Controllers
 
             var listNodeIds = listNodes.Select(x => x.Id).ToArray();
 
-            var listItems = _umbracoHelper.GetPostsSortedByPublishedDate(pager, null, listNodeIds);
+            IEnumerable<IPublishedContent> listItems = _umbracoHelper.GetPostsSortedByPublishedDate(pager, null, listNodeIds);
 
             var rootPageModel = new ListModel(
                 listNodes[0],
@@ -84,25 +86,25 @@ namespace Articulate.Controllers
               var feed = _feedGenerator.GetFeed(rootPageModel, rootPageModel.Children<PostModel>());
 
               where .Children<PostModel>() calls this:
-              
+
               public static IEnumerable<T>? Children<T>(this IPublishedContent content, string? culture = null)
                  where T : class, IPublishedContent
                     => content.Children<T>(GetNavigationQueryService(content), GetPublishedStatusFilteringService(content), culture);
             */
 
             // Work around for above issue
-            var posts = _umbracoHelper.GetPostsSortedByPublishedDate(
-                    pager, null, new[] { rootPageModel.Id })
+            IEnumerable<PostModel> posts = _umbracoHelper.GetPostsSortedByPublishedDate(
+                    pager, null, rootPageModel.Id)
                 .Select(x => new PostModel(x, _publishedValueFallback));
 
-            var feed = _feedGenerator.GetFeed(rootPageModel, posts);
+            SyndicationFeed feed = _feedGenerator.GetFeed(rootPageModel, posts);
 
             return new RssResult(feed, rootPageModel);
         }
 
         public IActionResult Author(int authorId, int? maxItems)
         {
-            var author = _umbracoHelper.Content(authorId);
+            IPublishedContent author = _umbracoHelper.Content(authorId);
             if (author == null)
             {
                 throw new ArgumentNullException(nameof(author));
@@ -116,15 +118,15 @@ namespace Articulate.Controllers
             //create a master model
             var masterModel = new MasterModel(author, _publishedValueFallback);
 
-            var listNodes = masterModel.RootBlogNode.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive).ToArray();
+            IPublishedContent[] listNodes = masterModel.RootBlogNode.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive).ToArray();
 
-            var authorContenet = _umbracoHelper.GetContentByAuthor(
+            IEnumerable<IPublishedContent> authorContenet = _umbracoHelper.GetContentByAuthor(
                 listNodes,
                 author.Name,
                 new PagerModel(maxItems.Value, 0, 1),
                 _publishedValueFallback);
 
-            var feed = _feedGenerator.GetFeed(masterModel, authorContenet.Select(x => new PostModel(x, _publishedValueFallback)));
+            SyndicationFeed feed = _feedGenerator.GetFeed(masterModel, authorContenet.Select(x => new PostModel(x, _publishedValueFallback)));
 
             return new RssResult(feed, masterModel);
         }
@@ -183,7 +185,8 @@ namespace Articulate.Controllers
                     tag.Replace('-', '.'),
                     tagGroup,
                     baseUrl,
-                    1, maxItems);
+                    1,
+                    maxItems);
             }
 
             if (contentByTag == null || contentByTag.PostCount == 0)
@@ -191,7 +194,7 @@ namespace Articulate.Controllers
                 return NotFound();
             }
 
-            var feed = _feedGenerator.GetFeed(rootPageModel, contentByTag.Posts.Take(maxItems));
+            SyndicationFeed feed = _feedGenerator.GetFeed(rootPageModel, contentByTag.Posts.Take(maxItems));
 
             return new RssResult(feed, rootPageModel);
         }

@@ -28,10 +28,10 @@ namespace Articulate
         internal HashSet<string> GetContentUrls(IPublishedContent publishedContent)
         {
             HashSet<string> allUrls;
-            var other = _publishedUrlProvider.GetOtherUrls(publishedContent.Id).ToArray();
+            UrlInfo[] other = _publishedUrlProvider.GetOtherUrls(publishedContent.Id).ToArray();
             if (other.Length > 0)
             {
-                var urls = other.Where(x => x.IsUrl && string.IsNullOrEmpty(x.Text) == false).Select(x => x.Text);
+                IEnumerable<string> urls = other.Where(x => x.IsUrl && string.IsNullOrEmpty(x.Text) == false).Select(x => x.Text);
 
                 //this means there are domains assigned
                 allUrls = new HashSet<string>(urls)
@@ -41,7 +41,7 @@ namespace Articulate
             }
             else
             {
-                allUrls = new HashSet<string>()
+                allUrls = new HashSet<string>
                 {
                     publishedContent.Url()
                 };

@@ -47,12 +47,12 @@ namespace Articulate.Controllers
             }
 
             // create the provider using the start node
-            var provider = ActivatorUtilities.CreateInstance<ArticulateMetaWeblogProvider>(
+            ArticulateMetaWeblogProvider provider = ActivatorUtilities.CreateInstance<ArticulateMetaWeblogProvider>(
                 _serviceProvider,
                 id);
 
             // create the service using the provider
-            var service = ActivatorUtilities.CreateInstance<MetaWeblogService>(_serviceProvider, provider);
+            MetaWeblogService service = ActivatorUtilities.CreateInstance<MetaWeblogService>(_serviceProvider, provider);
 
             var rawContent = string.Empty;
             using (var reader = new StreamReader(Request.Body))

@@ -15,10 +15,10 @@ namespace Articulate.Options
         {
             GenerateExcerpt = val => val == null || val.DetectIsJson()
                 ? string.Empty
-                : string.Join("", val.StripHtml()
+                : string.Join(string.Empty, val.StripHtml()
                     .DecodeHtml()
                     .NewLinesToSpaces()
-                    .TruncateAtWord(200, ""));
+                    .TruncateAtWord(200, string.Empty));
         }
 
         /// <summary>

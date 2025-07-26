@@ -46,7 +46,7 @@ namespace Articulate.Routing
 
         public Task ApplyAsync(HttpContext httpContext, CandidateSet candidates)
         {
-            var umbracoRouteValues = httpContext.Features.Get<UmbracoRouteValues>();
+            UmbracoRouteValues? umbracoRouteValues = httpContext.Features.Get<UmbracoRouteValues>();
 
             // If the request has been dynamically routed by articulate to an
             // Articulate controller

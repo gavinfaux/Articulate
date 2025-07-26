@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Articulate.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -49,7 +50,7 @@ namespace Articulate.Controllers
 
         private IActionResult RenderView(ContentModel model, int? p = null)
         {
-            var listNodes = model.Content.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive).ToArray();
+            IPublishedContent[] listNodes = model.Content.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive).ToArray();
             if (listNodes.Length == 0)
             {
                 throw new InvalidOperationException("An ArticulateArchive document must exist under the root Articulate document");
@@ -59,7 +60,7 @@ namespace Articulate.Controllers
 
             var count = _umbracoHelper.GetPostCount(listNodes.Select(x => x.Id).ToArray());
 
-            var posts = _umbracoHelper.GetRecentPosts(
+            IEnumerable<PostModel> posts = _umbracoHelper.GetRecentPosts(
                 master,
                 p ?? 1,
                 master.PageSize,

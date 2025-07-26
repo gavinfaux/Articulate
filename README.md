@@ -96,7 +96,7 @@ Articulate version 6+ is only compatible with Umbraco 15.4.3+ and 16+
 
 ## [Documentation](https://github.com/Shazwazza/Articulate/wiki)
 
-Docs on installation, creating posts, customizing/creating themes, etc...
+Docs on installation, creating posts, customising/creating themes, etc...
 
 ## [Discussions](https://our.umbraco.org/projects/starter-kits/articulate/discussions)
 

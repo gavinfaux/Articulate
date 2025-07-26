@@ -3,6 +3,7 @@ using System.Linq;
 using Articulate.Options;
 using Microsoft.Extensions.Options;
 using Umbraco.Cms.Core.Events;
+using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Notifications;
 using Umbraco.Cms.Core.Security;
 using Umbraco.Cms.Core.Services;
@@ -41,7 +42,7 @@ namespace Articulate.Components
 
             var contentTypes = _contentTypeService.GetMany(saved.Select(x => x.ContentTypeId).ToArray()).ToDictionary(x => x.Id);
 
-            foreach (var content in saved)
+            foreach (IContent content in saved)
             {
                 if (content.ContentType.Alias.InvariantEquals("ArticulateRichText")
                     || content.ContentType.Alias.InvariantEquals("ArticulateMarkdown"))
@@ -49,13 +50,13 @@ namespace Articulate.Components
                     content.SetAllPropertyCultureValues(
                         "publishedDate",
                         contentTypes[content.ContentTypeId],
-                        // if the publishedDate is not already set, then set it 
+                        // if the publishedDate is not already set, then set it
                         (c, ct, culture) => c.GetValue("publishedDate", culture?.Culture) == null ? (DateTime?)DateTime.Now : null);
 
                     content.SetAllPropertyCultureValues(
                         "author",
                         contentTypes[content.ContentTypeId],
-                        // if the author is not already set, then set it 
+                        // if the author is not already set, then set it
                         (c, ct, culture) => c.GetValue("author", culture?.Culture) == null ? _backOfficeSecurityAccessor.BackOfficeSecurity?.CurrentUser?.Name : null);
 
                     if (!content.HasIdentity)
@@ -89,13 +90,13 @@ namespace Articulate.Components
 
                                 if (content.HasProperty("richText"))
                                 {
-                                    var richTextProperty = ct.CompositionPropertyTypes.First(x => x.Alias == "richText");
+                                    IPropertyType richTextProperty = ct.CompositionPropertyTypes.First(x => x.Alias == "richText");
                                     var val = c.GetValue<string>("richText", richTextProperty.VariesByCulture() ? culture?.Culture : null);
                                     return _articulateOptions.GenerateExcerpt(val);
                                 }
                                 else
                                 {
-                                    var markdownProperty = ct.CompositionPropertyTypes.First(x => x.Alias == "markdown");
+                                    IPropertyType markdownProperty = ct.CompositionPropertyTypes.First(x => x.Alias == "markdown");
                                     var val = c.GetValue<string>("markdown", markdownProperty.VariesByCulture() ? culture?.Culture : null);
                                     var html = MarkdownHelper.ToHtml(val);
                                     return _articulateOptions.GenerateExcerpt(html);
@@ -117,7 +118,7 @@ namespace Articulate.Components
                                         return null;
                                     }
 
-                                    var excerptProperty = ct.CompositionPropertyTypes.First(x => x.Alias == "excerpt");
+                                    IPropertyType excerptProperty = ct.CompositionPropertyTypes.First(x => x.Alias == "excerpt");
                                     return content.GetValue<string>("excerpt", excerptProperty.VariesByCulture() ? culture?.Culture : null);
                                 });
                         }

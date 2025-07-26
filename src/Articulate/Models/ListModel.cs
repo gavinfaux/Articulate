@@ -80,7 +80,7 @@ namespace Articulate.Models
                 if (_listItems != null && Pages != null)
                 {
                     _resolvedList = _listItems
-                    //Skip will already be done in this case, but we'll take again anyways just to be safe                    
+                    //Skip will already be done in this case, but we'll take again anyways just to be safe
                         .Take(Pages.PageSize)
                         .Select(x => new PostModel(x, PublishedValueFallback))
                         .ToArray();

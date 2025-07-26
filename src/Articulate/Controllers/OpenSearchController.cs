@@ -53,16 +53,16 @@ namespace Articulate.Controllers
             //</OpenSearchDescription>
 
             //<?xml version="1.0" encoding="UTF-8"?>
-            //<OpenSearchDescription xmlns:moz="http://www.mozilla.org/2006/browser/search/" 
+            //<OpenSearchDescription xmlns:moz="http://www.mozilla.org/2006/browser/search/"
             //      xmlns="http://a9.com/-/spec/opensearch/1.1/">
             //  <ShortName>aaron.pk</ShortName>
             //  <Description>Search aaron.pk</Description>
             //  <InputEncoding>UTF-8</InputEncoding>
-            //  <Url method="get" type="text/html" 
+            //  <Url method="get" type="text/html"
             //      template="http://aaron.pk/search?q={searchTerms}"/>
             //</OpenSearchDescription>
 
-            var node = _umbraco.Content(id);
+            IPublishedContent node = _umbraco.Content(id);
             if (node == null)
             {
                 return new NotFoundResult();
@@ -70,15 +70,17 @@ namespace Articulate.Controllers
 
             var model = new MasterModel(node, _publishedValueFallback);
 
-            var searchTemplateUrl = Url.ArticulateSearchUrl(model, includeDomain: true) + "?term={searchTerms}";
+            var searchTemplateUrl = model.ArticulateSearchUrl(includeDomain: true) + "?term={searchTerms}";
 
             XNamespace ns = "http://a9.com/-/spec/opensearch/1.1/";
 
-            var rsd = new XElement(ns + "OpenSearchDescription",
+            var rsd = new XElement(
+                ns + "OpenSearchDescription",
                 new XElement(ns + "ShortName", model.PageTitle),
                 new XElement(ns + "Description", model.PageDescription),
                 new XElement(ns + "InputEncoding", "UTF-8"),
-                new XElement(ns + "Url",
+                new XElement(
+                    ns + "Url",
                     new XAttribute("type", "text/html"),
                     new XAttribute("method", "get"),
                     new XAttribute("template", searchTemplateUrl)));

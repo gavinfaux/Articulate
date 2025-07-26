@@ -57,7 +57,7 @@ namespace Articulate.Controllers
                 throw new ArgumentNullException(nameof(listItems));
             }
 
-            if (!GetPagerModel(masterModel, totalPosts, p, out var pager))
+            if (!GetPagerModel(masterModel, totalPosts, p, out PagerModel pager))
             {
                 return new RedirectToUmbracoPageResult(
                     masterModel.RootBlogNode,
@@ -110,10 +110,10 @@ namespace Articulate.Controllers
                 p.Value - 1,
                 totalPages,
                 totalPages > p
-                    ? GetPagedUrl(masterModel.Url(), (p + 1), queryStrings.ToString())
+                    ? GetPagedUrl(masterModel.Url(), p + 1, queryStrings.ToString())
                     : null,
                 p > 2
-                    ? GetPagedUrl(masterModel.Url(), (p - 1), queryStrings.ToString())
+                    ? GetPagedUrl(masterModel.Url(), p - 1, queryStrings.ToString())
                     : p > 1
                         ? GetPagedUrl(masterModel.Url(), null, queryStrings.ToString())
                         : null);

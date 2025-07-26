@@ -22,7 +22,7 @@ namespace Articulate.Controllers.Api
     [Authorize(Policy = AuthorizationPolicies.SectionAccessSettings)]
     [VersionedApiBackOfficeRoute("articulate/theme")]
     [MapToApi(ArticulateConstants.ManagementApi.Name)]
-    public class ThemeOptionsApiController(IArticulateThemeService themeService, ILogger<ThemeOptionsApiController> logger) : ManagementApiControllerBase
+    public class ThemeOptionsApiController(IArticulateThemeRepository themeRepository, ILogger<ThemeOptionsApiController> logger) : ManagementApiControllerBase
     {
         [HttpPost("copy")]
         [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
@@ -33,7 +33,7 @@ namespace Articulate.Controllers.Api
         {
             try
             {
-                await themeService.CopyThemeAsync(model.ThemeName, model.NewThemeName);
+                await themeRepository.CopyThemeAsync(model.ThemeName, model.NewThemeName);
                 return Ok(model.NewThemeName);
             }
             catch (DirectoryNotFoundException ex)
@@ -60,7 +60,7 @@ namespace Articulate.Controllers.Api
         {
             try
             {
-                var themes = await themeService.GetDefaultThemesAsync();
+                IEnumerable<string> themes = await themeRepository.GetDefaultThemesAsync();
                 return Ok(themes);
             }
             catch (Exception e)
