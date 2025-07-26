@@ -3,8 +3,8 @@ const w = (s, t, e) => {
 }, F = {
   bodySerializer: (s) => {
     const t = new FormData();
-    return Object.entries(s).forEach(([e, o]) => {
-      o != null && (Array.isArray(o) ? o.forEach((a) => w(t, e, a)) : w(t, e, o));
+    return Object.entries(s).forEach(([e, a]) => {
+      a != null && (Array.isArray(a) ? a.forEach((o) => w(t, e, o)) : w(t, e, a));
     }), t;
   }
 }, I = {
@@ -53,12 +53,12 @@ const w = (s, t, e) => {
   allowReserved: s,
   explode: t,
   name: e,
-  style: o,
-  value: a
+  style: a,
+  value: o
 }) => {
   if (!t) {
-    const r = (s ? a : a.map((c) => encodeURIComponent(c))).join(T(o));
-    switch (o) {
+    const r = (s ? o : o.map((c) => encodeURIComponent(c))).join(T(a));
+    switch (a) {
       case "label":
         return `.${r}`;
       case "matrix":
@@ -69,12 +69,12 @@ const w = (s, t, e) => {
         return `${e}=${r}`;
     }
   }
-  const i = U(o), n = a.map((r) => o === "label" || o === "simple" ? s ? r : encodeURIComponent(r) : m({
+  const i = U(a), n = o.map((r) => a === "label" || a === "simple" ? s ? r : encodeURIComponent(r) : m({
     allowReserved: s,
     name: e,
     value: r
   })).join(i);
-  return o === "label" || o === "matrix" ? i + n : n;
+  return a === "label" || a === "matrix" ? i + n : n;
 }, m = ({
   allowReserved: s,
   name: t,
@@ -91,15 +91,15 @@ const w = (s, t, e) => {
   allowReserved: s,
   explode: t,
   name: e,
-  style: o,
-  value: a,
+  style: a,
+  value: o,
   valueOnly: i
 }) => {
-  if (a instanceof Date)
-    return i ? a.toISOString() : `${e}=${a.toISOString()}`;
-  if (o !== "deepObject" && !t) {
+  if (o instanceof Date)
+    return i ? o.toISOString() : `${e}=${o.toISOString()}`;
+  if (a !== "deepObject" && !t) {
     let c = [];
-    Object.entries(a).forEach(([d, b]) => {
+    Object.entries(o).forEach(([d, b]) => {
       c = [
         ...c,
         d,
@@ -107,7 +107,7 @@ const w = (s, t, e) => {
       ];
     });
     const l = c.join(",");
-    switch (o) {
+    switch (a) {
       case "form":
         return `${e}=${l}`;
       case "label":
@@ -118,34 +118,34 @@ const w = (s, t, e) => {
         return l;
     }
   }
-  const n = P(o), r = Object.entries(a).map(
+  const n = P(a), r = Object.entries(o).map(
     ([c, l]) => m({
       allowReserved: s,
-      name: o === "deepObject" ? `${e}[${c}]` : c,
+      name: a === "deepObject" ? `${e}[${c}]` : c,
       value: l
     })
   ).join(n);
-  return o === "label" || o === "matrix" ? n + r : r;
+  return a === "label" || a === "matrix" ? n + r : r;
 }, D = /\{[^{}]+\}/g, W = ({ path: s, url: t }) => {
   let e = t;
-  const o = t.match(D);
-  if (o)
-    for (const a of o) {
-      let i = !1, n = a.substring(1, a.length - 1), r = "simple";
+  const a = t.match(D);
+  if (a)
+    for (const o of a) {
+      let i = !1, n = o.substring(1, o.length - 1), r = "simple";
       n.endsWith("*") && (i = !0, n = n.substring(0, n.length - 1)), n.startsWith(".") ? (n = n.substring(1), r = "label") : n.startsWith(";") && (n = n.substring(1), r = "matrix");
       const c = s[n];
       if (c == null)
         continue;
       if (Array.isArray(c)) {
         e = e.replace(
-          a,
+          o,
           O({ explode: i, name: n, style: r, value: c })
         );
         continue;
       }
       if (typeof c == "object") {
         e = e.replace(
-          a,
+          o,
           $({
             explode: i,
             name: n,
@@ -158,7 +158,7 @@ const w = (s, t, e) => {
       }
       if (r === "matrix") {
         e = e.replace(
-          a,
+          o,
           `;${m({
             name: n,
             value: c
@@ -169,18 +169,18 @@ const w = (s, t, e) => {
       const l = encodeURIComponent(
         r === "label" ? `.${c}` : c
       );
-      e = e.replace(a, l);
+      e = e.replace(o, l);
     }
   return e;
 }, C = ({
   allowReserved: s,
   array: t,
   object: e
-} = {}) => (a) => {
+} = {}) => (o) => {
   const i = [];
-  if (a && typeof a == "object")
-    for (const n in a) {
-      const r = a[n];
+  if (o && typeof o == "object")
+    for (const n in o) {
+      const r = o[n];
       if (r != null)
         if (Array.isArray(r)) {
           const c = O({
@@ -213,17 +213,16 @@ const w = (s, t, e) => {
     }
   return i.join("&");
 }, V = (s) => {
-  var e;
   if (!s)
     return "stream";
-  const t = (e = s.split(";")[0]) == null ? void 0 : e.trim();
+  const t = s.split(";")[0]?.trim();
   if (t) {
     if (t.startsWith("application/json") || t.endsWith("+json"))
       return "json";
     if (t === "multipart/form-data")
       return "formData";
     if (["application/", "audio/", "image/", "video/"].some(
-      (o) => t.startsWith(o)
+      (e) => t.startsWith(e)
     ))
       return "blob";
     if (t.startsWith("text/"))
@@ -234,20 +233,20 @@ const w = (s, t, e) => {
   ...t
 }) => {
   for (const e of s) {
-    const o = await _(e, t.auth);
-    if (!o)
+    const a = await _(e, t.auth);
+    if (!a)
       continue;
-    const a = e.name ?? "Authorization";
+    const o = e.name ?? "Authorization";
     switch (e.in) {
       case "query":
-        t.query || (t.query = {}), t.query[a] = o;
+        t.query || (t.query = {}), t.query[o] = a;
         break;
       case "cookie":
-        t.headers.append("Cookie", `${a}=${o}`);
+        t.headers.append("Cookie", `${o}=${a}`);
         break;
       case "header":
       default:
-        t.headers.set(a, o);
+        t.headers.set(o, a);
         break;
     }
     return;
@@ -262,32 +261,31 @@ const w = (s, t, e) => {
   baseUrl: s,
   path: t,
   query: e,
-  querySerializer: o,
-  url: a
+  querySerializer: a,
+  url: o
 }) => {
-  const i = a.startsWith("/") ? a : `/${a}`;
+  const i = o.startsWith("/") ? o : `/${o}`;
   let n = (s ?? "") + i;
   t && (n = W({ path: t, url: n }));
-  let r = e ? o(e) : "";
+  let r = e ? a(e) : "";
   return r.startsWith("?") && (r = r.substring(1)), r && (n += `?${r}`), n;
 }, z = (s, t) => {
-  var o;
   const e = { ...s, ...t };
-  return (o = e.baseUrl) != null && o.endsWith("/") && (e.baseUrl = e.baseUrl.substring(0, e.baseUrl.length - 1)), e.headers = q(s.headers, t.headers), e;
-}, q = (...s) => {
+  return e.baseUrl?.endsWith("/") && (e.baseUrl = e.baseUrl.substring(0, e.baseUrl.length - 1)), e.headers = E(s.headers, t.headers), e;
+}, E = (...s) => {
   const t = new Headers();
   for (const e of s) {
     if (!e || typeof e != "object")
       continue;
-    const o = e instanceof Headers ? e.entries() : Object.entries(e);
-    for (const [a, i] of o)
+    const a = e instanceof Headers ? e.entries() : Object.entries(e);
+    for (const [o, i] of a)
       if (i === null)
-        t.delete(a);
+        t.delete(o);
       else if (Array.isArray(i))
         for (const n of i)
-          t.append(a, n);
+          t.append(o, n);
       else i !== void 0 && t.set(
-        a,
+        o,
         typeof i == "object" ? JSON.stringify(i) : i
       );
   }
@@ -312,8 +310,8 @@ class g {
     this._fns[e] && (this._fns[e] = null);
   }
   update(t, e) {
-    const o = this.getInterceptorIndex(t);
-    return this._fns[o] ? (this._fns[o] = e, t) : !1;
+    const a = this.getInterceptorIndex(t);
+    return this._fns[a] ? (this._fns[a] = e, t) : !1;
   }
   use(t) {
     return this._fns = [...this._fns, t], this._fns.length - 1;
@@ -335,20 +333,20 @@ const k = () => ({
   }
 }), R = {
   "Content-Type": "application/json"
-}, E = (s = {}) => ({
+}, q = (s = {}) => ({
   ...I,
   headers: R,
   parseAs: "auto",
   querySerializer: B,
   ...s
 }), J = (s = {}) => {
-  let t = z(E(), s);
-  const e = () => ({ ...t }), o = (n) => (t = z(t, n), e()), a = k(), i = async (n) => {
+  let t = z(q(), s);
+  const e = () => ({ ...t }), a = (n) => (t = z(t, n), e()), o = k(), i = async (n) => {
     const r = {
       ...t,
       ...n,
       fetch: n.fetch ?? t.fetch ?? globalThis.fetch,
-      headers: q(t.headers, n.headers)
+      headers: E(t.headers, n.headers)
     };
     r.security && await H({
       ...r,
@@ -359,11 +357,11 @@ const k = () => ({
       ...r
     };
     let d = new Request(c, l);
-    for (const u of a.request._fns)
+    for (const u of o.request._fns)
       u && (d = await u(d, r));
     const b = r.fetch;
     let f = await b(d);
-    for (const u of a.response._fns)
+    for (const u of o.response._fns)
       u && (f = await u(f, d, r));
     const y = {
       request: d,
@@ -404,7 +402,7 @@ const k = () => ({
     }
     const x = S ?? j;
     let p = x;
-    for (const u of a.error._fns)
+    for (const u of o.error._fns)
       u && (p = await u(x, f, d, r));
     if (p = p || {}, r.throwOnError)
       throw p;
@@ -420,19 +418,21 @@ const k = () => ({
     get: (n) => i({ ...n, method: "GET" }),
     getConfig: e,
     head: (n) => i({ ...n, method: "HEAD" }),
-    interceptors: a,
+    interceptors: o,
     options: (n) => i({ ...n, method: "OPTIONS" }),
     patch: (n) => i({ ...n, method: "PATCH" }),
     post: (n) => i({ ...n, method: "POST" }),
     put: (n) => i({ ...n, method: "PUT" }),
     request: i,
-    setConfig: o,
+    setConfig: a,
     trace: (n) => i({ ...n, method: "TRACE" })
   };
-}, L = J(E({
-  baseUrl: "https://localhost:44366"
+}, L = J(q({
+  baseUrl: "https://localhost:44366",
+  throwOnError: !0
 }));
 export {
   L as c,
   F as f
 };
+//# sourceMappingURL=client.gen-CFzwjCm_.js.map

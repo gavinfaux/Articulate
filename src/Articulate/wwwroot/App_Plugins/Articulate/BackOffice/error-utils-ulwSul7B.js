@@ -1,7 +1,7 @@
-import { c as r, f as n } from "./client.gen-BDEIDh_1.js";
-class y {
+import { c as r, f as p } from "./client.gen-CFzwjCm_.js";
+class g {
   static postArticulateBlogmlExport(e) {
-    return ((e == null ? void 0 : e.client) ?? r).post({
+    return (e?.client ?? r).post({
       security: [
         {
           scheme: "bearer",
@@ -12,12 +12,12 @@ class y {
       ...e,
       headers: {
         "Content-Type": "application/json",
-        ...e == null ? void 0 : e.headers
+        ...e?.headers
       }
     });
   }
   static getArticulateBlogmlExportDisqus(e) {
-    return ((e == null ? void 0 : e.client) ?? r).get({
+    return (e?.client ?? r).get({
       security: [
         {
           scheme: "bearer",
@@ -29,7 +29,7 @@ class y {
     });
   }
   static postArticulateBlogmlImport(e) {
-    return ((e == null ? void 0 : e.client) ?? r).post({
+    return (e?.client ?? r).post({
       security: [
         {
           scheme: "bearer",
@@ -40,13 +40,13 @@ class y {
       ...e,
       headers: {
         "Content-Type": "application/json",
-        ...e == null ? void 0 : e.headers
+        ...e?.headers
       }
     });
   }
   static postArticulateBlogmlImportFile(e) {
-    return ((e == null ? void 0 : e.client) ?? r).post({
-      ...n,
+    return (e?.client ?? r).post({
+      ...p,
       security: [
         {
           scheme: "bearer",
@@ -57,14 +57,14 @@ class y {
       ...e,
       headers: {
         "Content-Type": null,
-        ...e == null ? void 0 : e.headers
+        ...e?.headers
       }
     });
   }
 }
-class b {
+class d {
   static postArticulateThemeCopy(e) {
-    return ((e == null ? void 0 : e.client) ?? r).post({
+    return (e?.client ?? r).post({
       security: [
         {
           scheme: "bearer",
@@ -75,12 +75,12 @@ class b {
       ...e,
       headers: {
         "Content-Type": "application/json",
-        ...e == null ? void 0 : e.headers
+        ...e?.headers
       }
     });
   }
   static getArticulateThemeDefault(e) {
-    return ((e == null ? void 0 : e.client) ?? r).get({
+    return (e?.client ?? r).get({
       security: [
         {
           scheme: "bearer",
@@ -92,9 +92,9 @@ class b {
     });
   }
 }
-class f {
+class y {
   static getArticulateEditorsThemePickerThemes(e) {
-    return ((e == null ? void 0 : e.client) ?? r).get({
+    return (e?.client ?? r).get({
       security: [
         {
           scheme: "bearer",
@@ -106,28 +106,28 @@ class f {
     });
   }
 }
-function g(t) {
+function o(t) {
   return (t.startsWith("$.") ? t.substring(2) : t).replace(/([a-z0-9])([A-Z])/g, "$1 $2").replace(/^./, (a) => a.toUpperCase());
 }
-function p(t, e) {
+function b(t, e) {
   if (console.warn("[formatApiError] Received error:", t), t !== null && typeof t == "object" && "title" in t && typeof t.title == "string") {
     const a = t;
     if (a.errors) {
-      const c = Object.entries(a.errors).flatMap(([u, i]) => {
-        const s = g(u);
-        return i.filter((m) => !!m).map((m) => {
-          const h = m.split(" Path: $.")[0] || m;
-          return `${s}: ${h}`;
+      const i = Object.entries(a.errors).flatMap(([s, n]) => {
+        const m = o(s);
+        return n.filter((c) => !!c).map((c) => {
+          const u = c.split(" Path: $.")[0] || c;
+          return `${m}: ${u}`;
         });
       });
-      if (c.length > 0)
+      if (i.length > 0)
         return {
           title: a.title || "One or more validation errors occurred",
-          details: c
+          details: i
         };
     }
     const l = [];
-    return a.detail && l.push(a.detail), a.errors && l.push(...Object.values(a.errors).flatMap((c) => c)), {
+    return a.detail && l.push(a.detail), a.errors && l.push(...Object.values(a.errors).flatMap((i) => i)), {
       title: a.title ?? e,
       details: l
     };
@@ -139,8 +139,9 @@ function p(t, e) {
   return typeof t == "string" ? { title: e, details: [t] } : { title: e, details: [] };
 }
 export {
-  y as B,
-  b as T,
-  f as a,
-  p as f
+  g as B,
+  d as T,
+  y as a,
+  b as f
 };
+//# sourceMappingURL=error-utils-ulwSul7B.js.map

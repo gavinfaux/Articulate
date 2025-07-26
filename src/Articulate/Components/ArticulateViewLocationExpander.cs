@@ -28,17 +28,19 @@ namespace Articulate.Components
      * 4. REPURPOSE THE 'COPY THEME' FEATURE:
      *   - Modify the 'Copy Theme' service so it either no longer clones an entire theme, or add a 'New Theme' option that acts as a "scaffolding" tool, creating a new, empty theme folder with perhaps a readme.txt and a few example override files to get the user started.
      *
-     Views/
+     App_Plugins/
        Articulate/
        |-- _ViewImports.cshtml             <-- GLOBAL imports for ALL views (themes, frontend, backoffice, etc.)
-       |-- MarkdownEditor.cshtml           <-- Markdown editor (other non theme views can be added here)
+       |-- MarkdownEditor                  <-- Markdown editor (group by feature)
+       |-- |-- MarkdownEditor.cshtml
+       |   |   |-- Assets/
        |-- Themes/                         <-- Parent folder for ALL theme-related views.
        |   |-- Shared/                     <-- "BASE" or "FALLBACK" THEME.
        |   |   |-- _Layout.cshtml
-       |   |   |-- _ViewStart.cshtml       <-- Layout, View bag etc. EVERY theme has even if 'same', for clarity/control/override
+       |   |   |-- _ViewStart.cshtml       <-- Layout, View bag etc. EVERY theme has even if 'same' (for override)
        |   |   |-- Assets/
-       |   |       |-- base.css
-       |   |       |-- base.js
+       |   |       |-- css/base.css
+       |   |       |-- js/base.js
        |   |       |-- base.json
        |   |   |-- List.cshtml
        |   |   |-- Post.cshtml
@@ -52,8 +54,8 @@ namespace Articulate.Components
        |   |     |-- Partials/
        |   |           |-- Pager.cshtml    <-- Overrides the Shared/Partials/Pager.cshtml
        |   |   |-- Assets/
-       |   |       |-- theme.css           <-- Overrides/extends the Shared/Assets/base.css
-       |   |       |-- theme.js            <-- Overrides/extends the Shared/Assets/base.js
+       |   |       |-- css/theme.css       <-- Overrides/extends the Shared/Assets/base.css
+       |   |       |-- /js/theme.js        <-- Overrides/extends the Shared/Assets/base.js
        |   |       |-- theme.json          <-- Overrides/extends system settings (e.g. number of posts per page)
        |   |-- Material/
        |   |   |-- _ViewStart.cshtml       <-- REQUIRED, minimal @{ Layout = "_Layout.cshtml"; }, uses theme or fallback to shared
@@ -62,7 +64,6 @@ namespace Articulate.Components
 
     // This will first try to find the View in User themes, then in System themes.
     // User themes can override System themes (a Post.cshtml in User theme folder with the same name as a system theme will take precedence).
-    // Routes based off Articulate root node, so this covers all views, not just themes.
     public class ArticulateViewLocationExpander(IArticulateThemeResolver themeResolver) : IViewLocationExpander
     {
         private const string ThemeKey = "articulate-theme";
@@ -77,30 +78,30 @@ namespace Articulate.Components
         {
             if (context.Values.TryGetValue(ThemeKey, out var themeName) && !string.IsNullOrEmpty(themeName))
             {
-                var articulateLocations = new[]
+                var themeLocations = new[]
                 {
                     // User themes take priority over system themes, allows overriding system themes.
                     $"/Views/ArticulateThemes/{themeName}/{{0}}.cshtml",
                     $"/Views/ArticulateThemes/{themeName}/Partials/{{0}}.cshtml",
 
                     // System themes
-                    $"/Views/Articulate/Themes/{themeName}/{{0}}.cshtml",
-                    $"/Views/Articulate/Themes/{themeName}/Partials/{{0}}.cshtml",
+                    $"/App_Plugins/Articulate/Themes/{themeName}/{{0}}.cshtml",
+                    $"/App_Plugins/Articulate/Themes/{themeName}/Partials/{{0}}.cshtml",
 
                     // Future base theme
-                    // "/Views/Articulate/Themes/Shared/{0}.cshtml",
-                    // "/Views/Articulate/Themes/Shared/Partials/{0}.cshtml",
-
-                    // Other Views (not themes related, e.g. markdown editor)
-                    "/Views/Articulate/{0}.cshtml",
-                    "/Views/Articulate/Partials/{0}.cshtml",
-
+                    // "/App_Plugins/Articulate/Themes/Shared/{0}.cshtml",
+                    // "/App_Plugins/Articulate/Themes/Shared/Partials/{0}.cshtml",
                 };
 
-                return articulateLocations.Concat(viewLocations);
+                return themeLocations.Concat(viewLocations);
             }
 
-            return viewLocations;
+            var locations = new[]
+            {
+                "/Views/Articulate/MarkdownEditor/{0}.cshtml",
+            };
+
+            return locations.Concat(viewLocations);
         }
     }
 }

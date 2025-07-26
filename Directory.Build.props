@@ -6,9 +6,9 @@
 		<!-- TODO:Temporary, resolve in later PRs and enable-->
 		<Nullable>warnings</Nullable>
 		<!--<WarningsAsErrors>Nullable</WarningsAsErrors>-->
-		<ImplicitUsings>disable</ImplicitUsings>
+		<ImplicitUsings>enable</ImplicitUsings>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
-		<PackageIcon>Icon-transparent.png</PackageIcon>
+		<PackageIcon>icon.png</PackageIcon>
 	</PropertyGroup>
 	<PropertyGroup>
 		<!-- TODO: Enable when 6.0 version is shipped -->

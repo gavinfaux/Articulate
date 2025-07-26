@@ -1,4 +1,4 @@
-import type { ProblemDetails } from "../api/types.gen";
+import type { ProblemDetails } from '../api/types.gen.js';
 
 // ---
 // TODO: Remove this when we have proper error handling for the API, using hey-api for now & sends ProblemDetails. Form validator does not catch all issues client side, e.g. uui-input-file and node picker.

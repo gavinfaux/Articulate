@@ -1,7 +1,7 @@
 import type { LitElement } from "@umbraco-cms/backoffice/external/lit";
 import type { UUIButtonState } from "@umbraco-cms/backoffice/external/uui";
 
-import { formatApiError } from "./error-utils";
+import { formatApiError } from './error-utils.js';
 
 /**
  * Defines the contract for a LitElement-based component that manages form state.

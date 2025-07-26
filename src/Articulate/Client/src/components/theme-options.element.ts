@@ -1,11 +1,12 @@
 import { css, customElement, html, property, query, state } from "@umbraco-cms/backoffice/external/lit";
-import { UUIButtonState } from "@umbraco-cms/backoffice/external/uui";
+import type { UUIButtonState } from "@umbraco-cms/backoffice/external/uui";
 import { UmbLitElement } from "@umbraco-cms/backoffice/lit-element";
 import { UmbTextStyles } from "@umbraco-cms/backoffice/style";
 
-import { ThemeOptions } from "../api/sdk.gen";
-import { IFormController, setFormError } from "../utils/form-utils";
-import { showUmbracoNotification } from "../utils/notification-utils";
+import { UmbValidationContext } from "@umbraco-cms/backoffice/validation";
+import { ThemeOptions } from '../api/sdk.gen.js';
+import { type IFormController, setFormError } from '../utils/form-utils.js';
+import { showUmbracoNotification } from '../utils/notification-utils.js';
 import {
   BoxStyles,
   ErrorBoxStyles,
@@ -13,8 +14,7 @@ import {
   HostStyles,
   renderErrorMessage,
   renderHeaderActions,
-} from "../utils/template-utils";
-import { UmbValidationContext } from "@umbraco-cms/backoffice/validation";
+} from '../utils/template-utils.js';
 
 /**
  * A LitElement-based component for copying an existing theme.

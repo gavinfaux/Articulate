@@ -1,5 +1,5 @@
 import type { UmbLitElement } from "@umbraco-cms/backoffice/lit-element";
-import { UMB_NOTIFICATION_CONTEXT, UmbNotificationColor } from "@umbraco-cms/backoffice/notification";
+import { type UmbNotificationColor , UMB_NOTIFICATION_CONTEXT } from "@umbraco-cms/backoffice/notification";
 
 /**
  * Shows a global Umbraco notification.

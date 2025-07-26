@@ -1,4 +1,6 @@
 import { defineConfig } from "vite";
+import tsconfigPaths from "vite-tsconfig-paths";
+import { outputPath } from "./config.outputPath.js";
 
 export default defineConfig(({ mode }) => {
   return {
@@ -8,12 +10,14 @@ export default defineConfig(({ mode }) => {
         formats: ["es"],
         fileName: "articulate",
       },
-      outDir: "../wwwroot/App_Plugins/Articulate/",
+      outDir: "../wwwroot/App_Plugins/Articulate/BackOffice",
       emptyOutDir: true,
-      sourcemap: mode === "development",
+      sourcemap: true,
       rollupOptions: {
         external: [/^@umbraco/],
+        onwarn: () => { },
       },
     },
+    plugins: [tsconfigPaths()]
   };
 });

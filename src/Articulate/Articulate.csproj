@@ -4,14 +4,10 @@
     <OutputType>Library</OutputType>
     <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
     <StaticWebAssetBasePath>/App_Plugins/Articulate</StaticWebAssetBasePath>
-    <!--<EnableDefaultContentItems>false</EnableDefaultContentItems>-->
     <CompressionEnabled>false</CompressionEnabled>
     <!-- TODO: Temporary, resolve in later PRs and enable-->
     <Nullable>warnings</Nullable>
-    <ImplicitUsings>disable</ImplicitUsings>
-    <!-- Build properites to help with back office client packing-->
-    <IsPacking Condition="'$(IsPacking)' == ''">false</IsPacking>
-    <IsPacking Condition="'$(GeneratePackageOnBuild)' == 'true'">true</IsPacking>
+    <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
   <!-- NuGet package metadata -->
@@ -34,7 +30,6 @@
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
-
 
   <!--
   NoWarn for missing XML comments on public API
@@ -66,6 +61,7 @@
   <PropertyGroup>
     <UmbracoCmsPackageVersion>[15.2.3, 16.999.999)</UmbracoCmsPackageVersion>
   </PropertyGroup>
+
   <!-- Nuget Package Dependencies -->
   <ItemGroup>
     <PackageReference Include="Umbraco.Cms.Web.Website" Version="$(UmbracoCmsPackageVersion)" />
@@ -82,35 +78,52 @@
   </ItemGroup>
 
   <!-- Build backoffice client-->
-  <ItemGroup>
-    <BackOfficeClientAssetsInputs Include="Client/**" Exclude="$(DefaultItemExcludes)" />
-  </ItemGroup>
+  <Import Project="build\Microsoft.AspNetCore.ClientAssets.targets" />
+  <PropertyGroup>
+    <ShouldRunClientAssetsBuild>true</ShouldRunClientAssetsBuild>
+  </PropertyGroup>
 
-  <Target Name="RestoreBackOfficeClient" BeforeTargets="BuildBackOfficeClient">
-    <Message Importance="high" Text="Restoring BackOffice Client NPM packages..." />
-    <Exec Command="npm i" WorkingDirectory="Client" />
+  <Target Name="ClientAssetsBuildOutputPath" BeforeTargets="ClientAssetsBuild">
+    <WriteLinesToFile File="Client\config.outputPath.js" Lines="export const outputPath = '../$(IntermediateOutputPath.Replace('\', '/'))clientassets';" Overwrite="true" />
   </Target>
 
-  <Target Name="BuildBackOfficeClient" BeforeTargets="CoreBuild" Inputs="@(BackOfficeClientAssetsInputs)" Outputs="$(IntermediateOutputPath)client.build.timestamp">
-    <!-- Show message before running the build -->
-    <Message Importance="High" Condition="'$(IsPacking)' == 'true'" Text="[Articulate] Executing BackOffice Client NPM production release build script..." />
-    <Message Importance="Normal" Condition="'$(IsPacking)' != 'true'" Text="[Articulate] Executing BackOffice Client NPM development build script..." />
+  <Target Name="ClientAssetsBuild" Condition="'$(ShouldRunClientAssetsBuild)' == 'true'" DependsOnTargets="ClientAssetsRestore" BeforeTargets="AssignTargetPaths" Inputs="@(ClientAssetsInputs)" Outputs="$(IntermediateOutputPath)clientassetsbuild.complete.txt">
 
-    <!-- Run different npm commands based on IsPacking -->
-    <Exec Condition="'$(IsPacking)' == 'true'" Command="npm run build:release" WorkingDirectory="Client" ContinueOnError="true">
+    <PropertyGroup>
+      <_ClientAssetsOutputFullPath>$([System.IO.Path]::GetFullPath('$(IntermediateOutputPath)clientassets'))</_ClientAssetsOutputFullPath>
+    </PropertyGroup>
+
+    <PropertyGroup>
+      <!-- Default to the standard build command. -->
+      <_FinalBuildCommand>npm run build</_FinalBuildCommand>
+      <!-- If we are packing, override the command with the release version. -->
+      <_FinalBuildCommand Condition="'$(GeneratePackageOnBuild)' == 'true'">npm run build:release</_FinalBuildCommand>
+    </PropertyGroup>
+
+    <!-- Step 2: Show a message -->
+    <Message Importance="High" Text="[Articulate] Executing NPM command: $(_FinalBuildCommand)" />
+
+    <!-- Step 3: Execute the command stored in the variable -->
+    <Exec Condition="'$(GeneratePackageOnBuild)' != 'true'"
+          Command="$(_FinalBuildCommand)"
+          WorkingDirectory="$(ClientAssetsDirectory)"
+          ContinueOnError="true">
       <Output TaskParameter="ExitCode" PropertyName="ClientBuildExitCode" />
     </Exec>
-    <Exec Condition="'$(IsPacking)' != 'true'" Command="npm run build" WorkingDirectory="Client" ContinueOnError="true">
+
+    <Exec Condition="'$(GeneratePackageOnBuild)' == 'true'"
+          Command="$(_FinalBuildCommand)"
+          WorkingDirectory="$(ClientAssetsDirectory)">
       <Output TaskParameter="ExitCode" PropertyName="ClientBuildExitCode" />
     </Exec>
 
-    <!-- Issue a WARNING on failure during a normal build -->
-    <Warning Condition="'$(IsPacking)' != 'true' AND '$(ClientBuildExitCode)' != '0'" Text="[Articulate] The BackOffice client-side build (npm run build) failed." />
+    <!-- =============================================================== -->
 
-    <!-- Issue an ERROR on failure during a pack -->
-    <Error Condition="'$(IsPacking)' == 'true' AND '$(ClientBuildExitCode)' != '0'" Text="[Articulate] The BackOffice client-side build (npm run build:release) FAILED. The package cannot be created." />
+    <!-- The error handling part remains the same. -->
+    <Warning Condition="'$(GeneratePackageOnBuild)' != 'true' AND '$(ClientBuildExitCode)' != '0'" Text="[Articulate] The BackOffice client-side build failed. The .NET build will continue." />
+    <Error Condition="'$(GeneratePackageOnBuild)' == 'true' AND '$(ClientBuildExitCode)' != '0'" Text="[Articulate] The BackOffice client-side build FAILED. The NuGet package cannot be created." />
 
-    <Touch Files="$(IntermediateOutputPath)client.build.timestamp" AlwaysCreate="true" Condition="'$(ClientBuildExitCode)' == '0'" />
+    <WriteLinesToFile File="$(IntermediateOutputPath)clientassetsbuild.complete.txt" Lines="Build Succeeded" Overwrite="true" Condition="'$(ClientBuildExitCode)' == '0'" />
   </Target>
 
   <ItemGroup>
@@ -149,18 +162,19 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Don't back back-office client source files! -->
+    <!-- Don't pack back-office client source files! -->
     <Compile Remove="Client\**" />
-    <Compile Remove="wwwroot\Legacy\**" />
     <Content Remove="Client\**" />
-    <Content Remove="wwwroot\Legacy\**" />
     <EmbeddedResource Remove="Client\**" />
-    <EmbeddedResource Remove="wwwroot\Legacy\**" />
     <None Remove="Client\**" />
-    <None Remove="wwwroot\Legacy\**" />
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="build\**" Pack="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+
     <!--
     This tells the compiler to embed all files in this folder directly
     into the Articulate.dll as manifest resources.
@@ -170,6 +184,6 @@
     then attempting to copy from the nuget cache folder, we may not have access
     to it and can't assume the 'default' location uses standard conventions.
     -->
-    <EmbeddedResource Include="wwwroot\Views\Articulate\Themes\**" LogicalName="Articulate.Themes/%(RecursiveDir)%(Filename)%(Extension)" />
+    <EmbeddedResource Include="wwwroot\App_Plugins\Articulate\Themes\**" LogicalName="Articulate.Themes/%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
 </Project>

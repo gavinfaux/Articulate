@@ -1,4 +1,4 @@
-import { css, html, nothing, TemplateResult } from "@umbraco-cms/backoffice/external/lit";
+import { type TemplateResult , css, html, nothing } from "@umbraco-cms/backoffice/external/lit";
 
 /**
  * Renders a header action button that navigates back to the Articulate dashboard.

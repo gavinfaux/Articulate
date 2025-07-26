@@ -1,13 +1,14 @@
 import { customElement, html, property, query, state } from "@umbraco-cms/backoffice/external/lit";
-import { UUIButtonState } from "@umbraco-cms/backoffice/external/uui";
+import type { UUIButtonState } from "@umbraco-cms/backoffice/external/uui";
 import { UmbLitElement } from "@umbraco-cms/backoffice/lit-element";
-import { UMB_MODAL_MANAGER_CONTEXT, UmbModalManagerContext } from "@umbraco-cms/backoffice/modal";
+import { type UmbModalManagerContext , UMB_MODAL_MANAGER_CONTEXT } from "@umbraco-cms/backoffice/modal";
 import { UmbTextStyles } from "@umbraco-cms/backoffice/style";
-import { ExportModel } from "../api";
-import { BlogMl } from "../api/sdk.gen";
-import { ArticulateDocumentTypeKey, DocumentById, openNodePicker } from "../utils/document-node-utils";
-import { IFormController, setFormError } from "../utils/form-utils";
-import { showUmbracoNotification } from "../utils/notification-utils";
+import { UmbValidationContext } from "@umbraco-cms/backoffice/validation";
+import type { ExportModel } from '../api/types.gen.js';
+import { BlogMl } from '../api/sdk.gen.js';
+import { ArticulateDocumentTypeKey, DocumentById, openNodePicker } from '../utils/document-node-utils.js';
+import { type IFormController, setFormError } from '../utils/form-utils.js';
+import { showUmbracoNotification } from '../utils/notification-utils.js';
 import {
   BoxStyles,
   ErrorBoxStyles,
@@ -16,8 +17,7 @@ import {
   NodePickerStyles,
   renderErrorMessage,
   renderHeaderActions,
-} from "../utils/template-utils";
-import { UmbValidationContext } from "@umbraco-cms/backoffice/validation";
+} from '../utils/template-utils.js';
 
 /**
  * A LitElement-based component for exporting blog content in BlogML format.

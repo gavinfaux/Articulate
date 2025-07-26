@@ -1,7 +1,7 @@
 import { css, customElement, html, property } from "@umbraco-cms/backoffice/external/lit";
 import { UmbLitElement } from "@umbraco-cms/backoffice/lit-element";
 import { UmbTextStyles } from "@umbraco-cms/backoffice/style";
-import { BoxStyles, HostStyles } from "../utils/template-utils";
+import { BoxStyles, HostStyles } from '../utils/template-utils.js';
 
 const dashboards = [
   {

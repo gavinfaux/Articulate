@@ -8,8 +8,8 @@ import {
 } from "@umbraco-cms/backoffice/property-editor";
 import { UmbTextStyles } from "@umbraco-cms/backoffice/style";
 
-import { ThemePicker } from "../api/sdk.gen";
-import { formatApiError } from "../utils/error-utils";
+import { ThemePicker } from '../api/sdk.gen.js';
+import { formatApiError } from '../utils/error-utils.js';
 
 /**
  * A custom element for picking an Articulate theme.
@@ -99,7 +99,7 @@ export default class ThemePickerElement extends UmbElementMixin(UmbLitElement) i
    * @private
    */
   private _handleInput(event: Event) {
-    const newValue = (event.target as any).value as string | undefined;
+    const newValue = (event.target as HTMLSelectElement).value as string | undefined;
 
     if (this.value !== newValue) {
       this.value = newValue;

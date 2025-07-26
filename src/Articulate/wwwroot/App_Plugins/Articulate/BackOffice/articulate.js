@@ -1,13 +1,13 @@
-const t = [
+const e = [
   {
     type: "dashboard",
     alias: "Articulate.BackOffice.Dashboard",
-    name: "Articulate Dashboard",
-    js: async () => await import("./dashboard.element-0ht6i95c.js"),
+    name: "Articulate BackOffice Dashboard",
+    js: async () => await import("./dashboard.element-BRKgwKii.js"),
     weight: 10,
     meta: {
-      label: "Articulate",
-      pathname: "articulate"
+      label: "Articulate Dashboard",
+      pathname: "articulate-dashboard"
     },
     conditions: [
       {
@@ -16,13 +16,13 @@ const t = [
       }
     ]
   }
-], e = [
+], t = [
   {
     type: "propertyEditorUi",
     alias: "ArticulateThemePicker.UI",
     name: "Articulate Theme Picker UI",
     elementName: "theme-picker-element",
-    js: async () => await import("./theme-picker.element-DGDe5ajR.js"),
+    js: async () => await import("./theme-picker.element-Coj8_lSM.js"),
     meta: {
       label: "Articulate Theme Picker",
       propertyEditorSchemaAlias: "Umbraco.Plain.String",
@@ -35,14 +35,14 @@ const t = [
     name: "Articulate Entrypoint",
     alias: "Articulate.Entrypoint",
     type: "backofficeEntryPoint",
-    js: async () => await import("./entrypoint-BaS4H6cd.js")
+    js: async () => await import("./entrypoint-Dn--W8iL.js")
   }
 ], a = [
   {
     type: "propertyEditorUi",
     alias: "Articulate.MarkdownEditor",
     name: "Articulate Markdown Editor",
-    element: () => import("./property-editor-ui-markdown-editor.element-DSAJGhWL.js"),
+    element: () => import("./property-editor-ui-markdown-editor.element-UZXc7HKT.js"),
     meta: {
       label: "Articulate Markdown Editor",
       propertyEditorSchemaAlias: "Umbraco.MarkdownEditor",
@@ -67,7 +67,8 @@ const t = [
       }
     }
   }
-], r = [...a], o = [...i, ...t, ...e, ...r];
+], r = [...a], o = [...i, ...e, ...t, ...r];
 export {
   o as manifests
 };
+//# sourceMappingURL=articulate.js.map

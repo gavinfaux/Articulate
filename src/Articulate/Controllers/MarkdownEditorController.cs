@@ -36,7 +36,7 @@ namespace Articulate.Controllers
 
             Response.Headers["Permissions-Policy"] = "camera=(self)";
 
-            return View("~/Views/Articulate/MarkdownEditor.cshtml", vm);
+            return View("~/App_Plugins/Articulate/MarkdownEditor/MarkdownEditor.cshtml", vm);
 
             static string GetKey<T>(string actionName) => $"{typeof(T).Name}.{actionName}";
         }
