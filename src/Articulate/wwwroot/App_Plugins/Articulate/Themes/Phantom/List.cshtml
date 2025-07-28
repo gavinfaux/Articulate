@@ -5,7 +5,7 @@
 
 <main role="main">
     
-    @if (!Model.Children.Any())
+    @if (!Model.Children().Any())
     {
         <article>No blog posts found</article>
     }

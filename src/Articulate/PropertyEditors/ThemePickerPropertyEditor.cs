@@ -1,3 +1,4 @@
+#nullable enable
 using Umbraco.Cms.Core.IO;
 using Umbraco.Cms.Core.PropertyEditors;
 

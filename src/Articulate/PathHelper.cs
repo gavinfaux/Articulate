@@ -1,4 +1,4 @@
-using System;
+#nullable enable
 using Articulate.Models;
 using Microsoft.AspNetCore.Http;
 

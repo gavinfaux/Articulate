@@ -1,3 +1,4 @@
+#nullable enable
 using Articulate.Routing;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;

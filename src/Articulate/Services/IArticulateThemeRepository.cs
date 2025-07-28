@@ -1,7 +1,4 @@
 #nullable enable
-using System.Collections.Generic;
-using System.Threading.Tasks;
-
 namespace Articulate.Services
 {
     public interface IArticulateThemeRepository
@@ -11,7 +8,7 @@ namespace Articulate.Services
         public Task<IEnumerable<string>> GetDefaultThemesAsync();
         public Task<IEnumerable<string>> GetUserThemesAsync();
 
-        public Task<IEnumerable<string>> GetAllThemesAsync();
+        public Task<IEnumerable<string>?> GetAllThemesAsync();
     }
 
 }

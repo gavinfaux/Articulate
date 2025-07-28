@@ -1,4 +1,4 @@
-using System;
+#nullable enable
 using Umbraco.Extensions;
 
 namespace Articulate.Options
@@ -15,10 +15,10 @@ namespace Articulate.Options
         {
             GenerateExcerpt = val => val == null || val.DetectIsJson()
                 ? string.Empty
-                : string.Join(string.Empty, val.StripHtml()
+                : val.StripHtml()
                     .DecodeHtml()
                     .NewLinesToSpaces()
-                    .TruncateAtWord(200, string.Empty));
+                    .TruncateAtWord(200, string.Empty);
         }
 
         /// <summary>

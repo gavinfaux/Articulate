@@ -14,7 +14,7 @@
 
     <!--- MAIN COLUMN --->
     <div class="main-col">
-        @if (!Model.Children.Any())
+        @if (!Model.Children().Any())
         {
             <article>No blog posts found</article>
         }

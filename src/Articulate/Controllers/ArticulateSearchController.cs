@@ -1,5 +1,4 @@
-using System.Collections.Generic;
-using System.Linq;
+#nullable enable
 using Articulate.Attributes;
 using Articulate.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -9,7 +8,6 @@ using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.Routing;
 using Umbraco.Cms.Core.Web;
 using Umbraco.Cms.Web.Common.Controllers;
-using Umbraco.Cms.Web.Common.Routing;
 using Umbraco.Cms.Web.Website.ActionResults;
 
 namespace Articulate.Controllers
@@ -21,9 +19,10 @@ namespace Articulate.Controllers
     public class ArticulateSearchController : ListControllerBase
     {
         private readonly IArticulateSearcher _articulateSearcher;
+        private readonly ILogger<ArticulateSearchController> _logger;
 
         public ArticulateSearchController(
-            ILogger<RenderController> logger,
+            ILogger<ArticulateSearchController> logger,
             ICompositeViewEngine compositeViewEngine,
             IUmbracoContextAccessor umbracoContextAccessor,
             IPublishedUrlProvider publishedUrlProvider,
@@ -32,11 +31,8 @@ namespace Articulate.Controllers
             : base(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider, publishedValueFallback)
         {
             _articulateSearcher = articulateSearcher;
+            _logger = logger;
         }
-
-        protected override UmbracoRouteValues UmbracoRouteValues => base.UmbracoRouteValues;
-
-        public override IActionResult Index() => base.Index();
 
         /// <summary>
         /// Used to render the search result listing (virtual node)
@@ -44,15 +40,26 @@ namespace Articulate.Controllers
         /// <param name="term">
         /// The search term
         /// </param>
-        /// <param name="provider">
+        /// <param name="indexName">
         /// The searcher name (optional)
         /// </param>
         /// <param name="p"></param>
         /// <returns></returns>
-        public IActionResult Search(string term, string provider = null, int? p = null)
+        public IActionResult Search(string? term, string? indexName = null, int? p = null)
         {
+            if (CurrentPage == null)
+            {
+                _logger.LogWarning("ArticulateSearchController.Search: CurrentPage is null, returning 404");
+                return NotFound();
+            }
+
             //create a master model
             var masterModel = new MasterModel(CurrentPage, PublishedValueFallback);
+
+            if (masterModel.BlogArchiveNode == null)
+            {
+                throw new InvalidOperationException("An ArticulateArchive document must exist under the root Articulate document");
+            }
 
             if (term == null)
             {
@@ -60,13 +67,13 @@ namespace Articulate.Controllers
                 var emptyList = new ListModel(
                     CurrentPage,
                     new PagerModel(masterModel.PageSize, 0, 0),
-                    Enumerable.Empty<IPublishedContent>(),
+                    [],
                     PublishedValueFallback);
 
                 return View("List", emptyList);
             }
 
-            if (p != null && p.Value == 1)
+            if (p is 1)
             {
                 return new RedirectToUmbracoPageResult(
                     CurrentPage,
@@ -74,14 +81,14 @@ namespace Articulate.Controllers
                     UmbracoContextAccessor);
             }
 
-            if (p == null || p.Value <= 0)
+            if (p is not > 0)
             {
                 p = 1;
             }
 
-            IEnumerable<IPublishedContent> searchResult = _articulateSearcher.Search(term, provider, masterModel.BlogArchiveNode.Id, masterModel.PageSize, p.Value - 1, out var totalPosts);
+            IEnumerable<IPublishedContent>? searchResult = _articulateSearcher.Search(term, indexName, masterModel.BlogArchiveNode.Id, masterModel.PageSize, p.Value - 1, out var totalPosts);
 
-            return GetPagedListView(masterModel, CurrentPage, searchResult, totalPosts, p);
+            return GetPagedListView(masterModel, CurrentPage, searchResult ?? [], totalPosts, p);
         }
     }
 }

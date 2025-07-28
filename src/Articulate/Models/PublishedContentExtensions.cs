@@ -1,9 +1,5 @@
-using System;
 using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text.Encodings.Web;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Html;
 using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -16,10 +12,19 @@ namespace Articulate.Models
     public static class PublishedContentExtensions
     {
 
+        [Obsolete("Obsolete")]
         public static IPublishedContent Next(this IPublishedContent content)
         {
+
+            IPublishedContent parent = content?.Parent();
+
+            if (parent?.Children == null || content == null)
+            {
+                return null;
+            }
+
             var found = false;
-            foreach (IPublishedContent sibling in content.Parent.Children)
+            foreach (IPublishedContent sibling in parent.Children)
             {
                 if (found)
                 {
@@ -35,11 +40,18 @@ namespace Articulate.Models
             return null;
         }
 
+        [Obsolete("Obsolete")]
         public static IPublishedContent Previous(this IPublishedContent content)
         {
+            IPublishedContent parent = content?.Parent();
+
+            if (parent?.Children == null || content == null)
+            {
+                return null;
+            }
             var found = false;
             IPublishedContent last = null;
-            foreach (IPublishedContent sibling in content.Parent.Children)
+            foreach (IPublishedContent sibling in parent.Children)
             {
                 if (found)
                 {

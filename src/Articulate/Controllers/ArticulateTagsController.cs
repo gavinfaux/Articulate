@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+#nullable enable
 using Articulate.Attributes;
 using Articulate.Models;
 using Articulate.Services;
@@ -29,9 +29,11 @@ namespace Articulate.Controllers
         private readonly UmbracoHelper _umbracoHelper;
         private readonly ArticulateTagService _articulateTagService;
         private readonly ITagQuery _tagQuery;
+        private readonly ILogger<ArticulateTagsController> _logger;
+
 
         public ArticulateTagsController(
-            ILogger<RenderController> logger,
+            ILogger<ArticulateTagsController> logger,
             ICompositeViewEngine compositeViewEngine,
             IUmbracoContextAccessor umbracoContextAccessor,
             IPublishedUrlProvider publishedUrlProvider,
@@ -44,6 +46,7 @@ namespace Articulate.Controllers
             _umbracoHelper = umbracoHelper;
             _articulateTagService = articulateTagService;
             _tagQuery = tagQuery;
+            _logger = logger;
         }
 
         /// <summary>
@@ -54,11 +57,17 @@ namespace Articulate.Controllers
         /// <returns></returns>
         public IActionResult Categories(string tag, int? p)
         {
-            var caturlName = CurrentPage.Value<string>("categoriesUrlName");
+            if (CurrentPage == null)
+            {
+                _logger.LogWarning("ArticulateTagsController.Categories: CurrentPage is null, returning 404");
+                return NotFound();
+            }
+
+            var categoriesUrlName = CurrentPage.Value<string>("categoriesUrlName") ?? "categories";
 
             return tag.IsNullOrWhiteSpace()
-                ? RenderTagsOrCategories(ArticulateConstants.DataType.ArticulateCategories, caturlName)
-                : RenderByTagOrCategory(tag, p, ArticulateConstants.DataType.ArticulateCategories, caturlName);
+                ? RenderTagsOrCategories(ArticulateConstants.DataType.ArticulateCategories, categoriesUrlName)
+                : RenderByTagOrCategory(tag, p, ArticulateConstants.DataType.ArticulateCategories, categoriesUrlName);
         }
 
         /// <summary>
@@ -69,24 +78,41 @@ namespace Articulate.Controllers
         /// <returns></returns>
         public IActionResult Tags(string tag, int? p)
         {
-            var tagurlName = CurrentPage.Value<string>("tagsUrlName");
+            if (CurrentPage == null)
+            {
+                _logger.LogWarning("ArticulateTagsController.Tags: CurrentPage is null, returning 404");
+                return NotFound();
+            }
+
+            var tagUrlName = CurrentPage.Value<string>("tagsUrlName") ?? "tags";
 
             return tag.IsNullOrWhiteSpace()
-                ? RenderTagsOrCategories(ArticulateConstants.DataType.ArticulateTags, tagurlName)
-                : RenderByTagOrCategory(tag, p, ArticulateConstants.DataType.ArticulateTags, tagurlName);
+                ? RenderTagsOrCategories(ArticulateConstants.DataType.ArticulateTags, tagUrlName)
+                : RenderByTagOrCategory(tag, p, ArticulateConstants.DataType.ArticulateTags, tagUrlName);
         }
 
         private IActionResult RenderTagsOrCategories(string tagGroup, string baseUrl)
         {
+            if (CurrentPage == null)
+            {
+                _logger.LogWarning("ArticulateTagsController.RenderTagsOrCategories: CurrentPage is null, returning 404");
+                return NotFound();
+            }
+
             //create a blog model of the main page
             var rootPageModel = new MasterModel(CurrentPage, PublishedValueFallback);
 
-            IEnumerable<PostsByTagModel> contentByTags = _articulateTagService.GetContentByTags(
+            IEnumerable<PostsByTagModel>? contentByTags = _articulateTagService.GetContentByTags(
                 _umbracoHelper,
                 _tagQuery,
                 rootPageModel,
                 tagGroup,
                 baseUrl);
+
+            if (contentByTags == null)
+            {
+                return NotFound();
+            }
 
             var tagListModel = new TagListModel(
                 rootPageModel,
@@ -100,10 +126,16 @@ namespace Articulate.Controllers
 
         private IActionResult RenderByTagOrCategory(string tag, int? p, string tagGroup, string baseUrl)
         {
+            if (CurrentPage == null)
+            {
+                _logger.LogWarning("ArticulateTagsController.RenderByTagOrCategory: CurrentPage is null, returning 404");
+                return NotFound();
+            }
+
             //create a master model
             var masterModel = new MasterModel(CurrentPage, PublishedValueFallback);
 
-            PostsByTagModel contentByTag = _articulateTagService.GetContentByTag(
+            PostsByTagModel? contentByTag = _articulateTagService.GetContentByTag(
                 _umbracoHelper,
                 masterModel,
                 tag,
@@ -111,6 +143,7 @@ namespace Articulate.Controllers
                 baseUrl,
                 p ?? 1,
                 masterModel.PageSize);
+
 
             //this is a special case in the event that a tag contains a '.', when this happens we change it to a '-'
             // when generating the URL. So if the above doesn't return any tags and the tag contains a '-', then we
@@ -127,12 +160,7 @@ namespace Articulate.Controllers
                     masterModel.PageSize);
             }
 
-            if (contentByTag == null)
-            {
-                return new NotFoundResult();
-            }
-
-            return GetPagedListView(masterModel, CurrentPage, contentByTag.Posts, contentByTag.PostCount, p);
+            return contentByTag is not { Posts: not null } ? NotFound() : GetPagedListView(masterModel, CurrentPage, contentByTag.Posts, contentByTag.PostCount, p);
         }
     }
 }

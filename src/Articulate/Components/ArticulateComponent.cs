@@ -1,5 +1,4 @@
-using System.Threading;
-using System.Threading.Tasks;
+#nullable enable
 using Smidge;
 using Umbraco.Cms.Core.Composing;
 
@@ -9,9 +8,12 @@ namespace Articulate.Components
     {
         public Task InitializeAsync(bool isRestarting, CancellationToken cancellationToken)
         {
-            foreach (DefaultThemes.DefaultTheme theme in DefaultThemes.AllThemes)
+            if (DefaultThemes.AllThemes != null)
             {
-                theme.CreateBundles(bundleManager);
+                foreach (DefaultThemes.DefaultTheme theme in DefaultThemes.AllThemes)
+                {
+                    theme.CreateBundles(bundleManager);
+                }
             }
 
             // Create bundles for the markdown editor from the new subdirectories.

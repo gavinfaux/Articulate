@@ -1,7 +1,4 @@
-using System;
-using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
 using System.ServiceModel.Syndication;
 using Articulate.Models;
 using Microsoft.Extensions.Logging;
@@ -63,7 +60,7 @@ namespace Articulate.Syndication
                     return $" href=\"{rootUrl.TrimEnd('/')}{match.Groups[1].Value.EnsureStartsWith('/')}\"";
                 }
 
-                return null;
+                return string.Empty;
             });
             content = RssFeedGeneratorRegexes.RelativeMediaSrcRegex().Replace(content, match =>
             {
@@ -72,7 +69,7 @@ namespace Articulate.Syndication
                     return $" src=\"{mediaRoot}{match.Groups[1].Value.EnsureStartsWith('/')}\"";
                 }
 
-                return null;
+                return string.Empty;
             });
 
             var item = new SyndicationItem(

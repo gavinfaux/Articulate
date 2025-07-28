@@ -1,6 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
+#nullable enable
 using Articulate.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
@@ -18,9 +16,10 @@ namespace Articulate.Controllers
     public class ArticulateAuthorController : ListControllerBase
     {
         private readonly UmbracoHelper _umbracoHelper;
+        private readonly ILogger<ArticulateAuthorController> _logger;
 
         public ArticulateAuthorController(
-            ILogger<RenderController> logger,
+            ILogger<ArticulateAuthorController> logger,
             ICompositeViewEngine compositeViewEngine,
             IUmbracoContextAccessor umbracoContextAccessor,
             IPublishedUrlProvider publishedUrlProvider,
@@ -29,6 +28,7 @@ namespace Articulate.Controllers
             : base(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider, publishedValueFallback)
         {
             _umbracoHelper = umbracoHelper;
+            _logger = logger;
         }
 
         /// <summary>
@@ -40,34 +40,41 @@ namespace Articulate.Controllers
 
         public IActionResult Index(int? p)
         {
+            if (CurrentPage == null)
+            {
+                _logger.LogWarning("ArticulateAuthorController.Index: CurrentPage is null, returning 404");
+                return NotFound();
+            }
+
             //create a master model
             var masterModel = new MasterModel(CurrentPage, PublishedValueFallback);
 
-            IPublishedContent[] listNodes = masterModel.RootBlogNode.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive).ToArray();
-            if (listNodes.Length == 0)
+            IPublishedContent[]? listNodes = masterModel.RootBlogNode?.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive)?.ToArray();
+            if (listNodes == null || listNodes.Length == 0)
             {
                 throw new InvalidOperationException("An ArticulateArchive document must exist under the root Articulate document");
             }
 
             var totalPosts = _umbracoHelper.GetPostCount(CurrentPage.Name, listNodes.Select(x => x.Id).ToArray());
 
-            if (!GetPagerModel(masterModel, totalPosts, p, out PagerModel pager))
+            if (!GetPagerModel(masterModel, totalPosts, p, out PagerModel? pager) || pager == null)
             {
                 return new RedirectToUmbracoPageResult(
-                    CurrentPage.Parent,
+                    CurrentPage.Parent(),
                     PublishedUrlProvider,
                     UmbracoContextAccessor);
             }
 
-            IEnumerable<IPublishedContent> authorPosts = _umbracoHelper.GetContentByAuthor(
+            IEnumerable<IPublishedContent>? authorPosts = _umbracoHelper.GetContentByAuthor(
                 listNodes,
                 CurrentPage.Name,
                 pager,
                 PublishedValueFallback);
 
+
             var author = new AuthorModel(
                 CurrentPage,
-                authorPosts,
+                authorPosts ?? [],
                 pager,
                 totalPosts,
                 PublishedValueFallback);

@@ -1,5 +1,4 @@
-using System.Collections.Generic;
-using System.Linq;
+#nullable enable
 using Articulate.Services;
 using Microsoft.AspNetCore.Mvc.Razor;
 
@@ -76,32 +75,32 @@ namespace Articulate.Components
 
         public IEnumerable<string> ExpandViewLocations(ViewLocationExpanderContext context, IEnumerable<string> viewLocations)
         {
-            if (context.Values.TryGetValue(ThemeKey, out var themeName) && !string.IsNullOrEmpty(themeName))
+            if (!context.Values.TryGetValue(ThemeKey, out var themeName) || string.IsNullOrEmpty(themeName))
             {
-                var themeLocations = new[]
-                {
-                    // User themes take priority over system themes, allows overriding system themes.
-                    $"/Views/ArticulateThemes/{themeName}/{{0}}.cshtml",
-                    $"/Views/ArticulateThemes/{themeName}/Partials/{{0}}.cshtml",
-
-                    // System themes
-                    $"/App_Plugins/Articulate/Themes/{themeName}/{{0}}.cshtml",
-                    $"/App_Plugins/Articulate/Themes/{themeName}/Partials/{{0}}.cshtml",
-
-                    // Future base theme
-                    // "/App_Plugins/Articulate/Themes/Shared/{0}.cshtml",
-                    // "/App_Plugins/Articulate/Themes/Shared/Partials/{0}.cshtml",
-                };
-
-                return themeLocations.Concat(viewLocations);
+                return viewLocations;
             }
 
-            var locations = new[]
+            var themeLocations = new[]
             {
-                "/Views/Articulate/MarkdownEditor/{0}.cshtml",
+                // User themes take priority over system themes, allows overriding system themes.
+                $"/Views/ArticulateThemes/{themeName}/{{0}}.cshtml",
+                $"/Views/ArticulateThemes/{themeName}/Partials/{{0}}.cshtml",
+
+                // System themes
+                $"/App_Plugins/Articulate/Themes/{themeName}/{{0}}.cshtml",
+                $"/App_Plugins/Articulate/Themes/{themeName}/Partials/{{0}}.cshtml",
+
+                // Markdown Editor (does not have a theme, but
+                "/Views/Articulate/MarkdownEditor/{0}.cshtml"
+
+
+                // Future base theme
+                // "/App_Plugins/Articulate/Themes/Shared/{0}.cshtml",
+                // "/App_Plugins/Articulate/Themes/Shared/Partials/{0}.cshtml",
             };
 
-            return locations.Concat(viewLocations);
+            return themeLocations.Concat(viewLocations);
+
         }
     }
 }

@@ -1,3 +1,4 @@
+#nullable enable
 namespace Articulate
 {
     public static class ArticulateConstants

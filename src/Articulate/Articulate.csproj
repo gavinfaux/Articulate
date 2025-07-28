@@ -1,13 +1,15 @@
 <Project Sdk="Microsoft.NET.Sdk.Razor">
   <PropertyGroup>
+    <EnableDefaultContentItems>false</EnableDefaultContentItems>
     <TargetFrameworks>net9.0</TargetFrameworks>
     <OutputType>Library</OutputType>
     <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
-    <StaticWebAssetBasePath>/App_Plugins/Articulate</StaticWebAssetBasePath>
+    <StaticWebAssetBasePath>/App_Plugins/Articulate/BackOffice</StaticWebAssetBasePath>
     <CompressionEnabled>false</CompressionEnabled>
     <!-- TODO: Temporary, resolve in later PRs and enable-->
     <Nullable>warnings</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <WarningsAsErrors>Nullable</WarningsAsErrors>
   </PropertyGroup>
 
   <!-- NuGet package metadata -->
@@ -77,16 +79,50 @@
     <PackageReference Include="Microsoft.CodeAnalysis" Version="4.14.0" />
   </ItemGroup>
 
-  <!-- Build backoffice client-->
+  <!--
+  ==========================================================================================
+  CLIENT-SIDE ASSET BUILD & PACKAGING (Vite, NPM, Static Web Assets)
+  ==========================================================================================
+  The following sections configure how the Vite-based BackOffice client application is built
+  and packaged into the final NuGet package.
+  -->
+
+  <!--
+  Step 1: Import the standard MSBuild targets for handling client assets.
+  This file contains the default, reusable logic for running 'npm install' and 'npm build'.
+  We then override parts of this logic below to customize it for Articulate's specific needs.
+  -->
   <Import Project="build\Microsoft.AspNetCore.ClientAssets.targets" />
   <PropertyGroup>
     <ShouldRunClientAssetsBuild>true</ShouldRunClientAssetsBuild>
   </PropertyGroup>
 
+  <!--
+  Step 2: Override the Vite output path for clean packaging builds.
+  This target runs *before* the main client asset build. Its purpose is to ensure a clean,
+  isolated build for packaging. It dynamically overwrites the 'Client/config.outputPath.js'
+  file, forcing Vite to build into a temporary intermediate folder ('/obj/...') instead of
+  directly into '/wwwroot'.
+
+  WHY? This prevents the build from polluting the source '/wwwroot' directory. The .NET Static
+  Web Assets system then picks up the assets from this temporary folder, ensuring that only
+  the correct, newly-built files are included in the NuGet package.
+  -->
   <Target Name="ClientAssetsBuildOutputPath" BeforeTargets="ClientAssetsBuild">
     <WriteLinesToFile File="Client\config.outputPath.js" Lines="export const outputPath = '../$(IntermediateOutputPath.Replace('\', '/'))clientassets';" Overwrite="true" />
   </Target>
 
+  <!--
+  Step 3: Override the main client asset build target.
+  This target completely overrides the default 'ClientAssetsBuild' target from the imported
+  .targets file. This allows for more advanced logic.
+
+  The key customization here is choosing which NPM script to run:
+  - For a normal build (e.g., F5 in Visual Studio), it runs 'npm run build'.
+  - For a release/packaging build (e.g., 'dotnet pack'), it runs 'npm run build:release',
+    which includes the versioning script.
+  This ensures that official packages have the correct version information baked in.
+  -->
   <Target Name="ClientAssetsBuild" Condition="'$(ShouldRunClientAssetsBuild)' == 'true'" DependsOnTargets="ClientAssetsRestore" BeforeTargets="AssignTargetPaths" Inputs="@(ClientAssetsInputs)" Outputs="$(IntermediateOutputPath)clientassetsbuild.complete.txt">
 
     <PropertyGroup>
@@ -117,6 +153,9 @@
       <Output TaskParameter="ExitCode" PropertyName="ClientBuildExitCode" />
     </Exec>
 
+    <ItemGroup>
+      <_ClientAssetsBuildOutput Include="$(_ClientAssetsOutputFullPath)\**" />
+    </ItemGroup>
     <!-- =============================================================== -->
 
     <!-- The error handling part remains the same. -->
@@ -171,6 +210,38 @@
 
   <ItemGroup>
     <None Include="build\**" Pack="false" />
+  </ItemGroup>
+
+  <!--
+  ==========================================================================================
+  STATIC CONTENT PACKAGING
+  ==========================================================================================
+  The following sections define how static content (non-BackOffice files) are included
+  in the NuGet package. This is handled separately from the Vite build and uses standard
+  MSBuild <Content> items.
+  -->
+  <ItemGroup>
+    <!--
+    Rule 1: Handle the umbraco-package.json manifest.
+    This rule specifically finds the package manifest and ensures it's placed at the
+    correct root level for Umbraco to discover it (`/App_Plugins/Articulate/`).
+    This is critical for the package to be recognized by the CMS.
+    -->
+    <Content Include="wwwroot\App_Plugins\Articulate\umbraco-package.json">
+      <Pack>true</Pack>
+      <PackagePath>staticwebassets\App_Plugins\Articulate\umbraco-package.json</PackagePath>
+    </Content>
+
+    <!--
+    Rule 2: Handle all other static assets (Themes, MarkdownEditor, etc.).
+    This rule includes all other files under '/wwwroot/App_Plugins/Articulate/', but
+    explicitly excludes the BackOffice folder (handled by Vite) and the package manifest
+    (handled by the rule above) to prevent duplication.
+    -->
+    <Content Include="wwwroot\App_Plugins\Articulate\**\*.*" Exclude="wwwroot\App_Plugins\Articulate\BackOffice\**\*.*;wwwroot\App_Plugins\Articulate\umbraco-package.json">
+      <Pack>true</Pack>
+      <PackagePath>staticwebassets\App_Plugins\Articulate\%(RecursiveDir)%(Filename)%(Extension)</PackagePath>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>

@@ -1,4 +1,4 @@
-using System;
+#nullable enable
 using System.ComponentModel.DataAnnotations;
 
 namespace Articulate.Models.Api

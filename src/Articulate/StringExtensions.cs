@@ -1,5 +1,4 @@
-using System;
-using System.Linq;
+#nullable enable
 using System.Web;
 using Umbraco.Extensions;
 
@@ -15,7 +14,7 @@ namespace Articulate
         {
             if (text == null || (text = text.Trim()).Length <= maxCharacters)
             {
-                return text;
+                return text ?? string.Empty;
             }
 
             int trailLength = trailingStringIfTextCut.StartsWith("&") ? 1
@@ -40,7 +39,7 @@ namespace Articulate
                     return urlPath;
                 }
 
-                if (Uri.TryCreate(urlPath, UriKind.Absolute, out Uri url))
+                if (Uri.TryCreate(urlPath, UriKind.Absolute, out Uri? url))
                 {
                     return url.GetLeftPart(UriPartial.Authority) + url.AbsolutePath + url.Query;
                 }

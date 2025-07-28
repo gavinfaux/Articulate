@@ -1,6 +1,4 @@
-using System;
 using System.Globalization;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.Routing;
@@ -11,7 +9,7 @@ namespace Articulate.Routing
 {
     public class DateFormattedPostContentFinder : ContentFinderByUrl
     {
-        public DateFormattedPostContentFinder(ILogger<ContentFinderByUrl> logger, IUmbracoContextAccessor umbracoContextAccessor) : base(logger, umbracoContextAccessor)
+        public DateFormattedPostContentFinder(ILogger<DateFormattedPostContentFinder> logger, IUmbracoContextAccessor umbracoContextAccessor) : base(logger, umbracoContextAccessor)
         {
         }
 

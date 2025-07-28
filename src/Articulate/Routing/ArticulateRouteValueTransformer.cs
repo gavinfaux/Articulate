@@ -1,8 +1,5 @@
 #nullable enable
 
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.Routing;
@@ -61,9 +58,9 @@ namespace Articulate.Routing
         {
             // check if Umbraco has already matched content, we don't want to execute if things
             // are already matching.
-            if (!ShouldCheck(httpContext, out IUmbracoContext umbracoContext, out UmbracoRouteValues umbracoRouteValues))
+            if (!ShouldCheck(httpContext, out IUmbracoContext? umbracoContext, out UmbracoRouteValues? umbracoRouteValues))
             {
-                return null;
+                return [];
             }
 
             if (umbracoRouteValues == null)
@@ -100,10 +97,10 @@ namespace Articulate.Routing
                 routeResult = await TryRoute(umbracoContext, umbracoRouteValues, httpContext, newValues);
             }
 
-            return routeResult.routeSuccess ? newValues : null;
+            return routeResult.routeSuccess ? newValues : [];
         }
 
-        private async Task<(bool hasCache, bool routeSuccess)> TryRoute(IUmbracoContext umbracoContext, UmbracoRouteValues umbracoRouteValues, HttpContext httpContext, RouteValueDictionary values)
+        private async Task<(bool hasCache, bool routeSuccess)> TryRoute(IUmbracoContext? umbracoContext, UmbracoRouteValues? umbracoRouteValues, HttpContext httpContext, RouteValueDictionary values)
         {
             _lock.EnterReadLock();
             try
@@ -127,7 +124,7 @@ namespace Articulate.Routing
             return (false, false);
         }
 
-        private async Task WriteRouteValues(IUmbracoContext umbracoContext, HttpContext httpContext, ArticulateRootNodeCache dynamicRouteValues, UmbracoRouteValues umbracoRouteValues, RouteValueDictionary values)
+        private async Task WriteRouteValues(IUmbracoContext? umbracoContext, HttpContext httpContext, ArticulateRootNodeCache dynamicRouteValues, UmbracoRouteValues? umbracoRouteValues, RouteValueDictionary values)
         {
             // Since we are executing after Umbraco's dynamic transformer, it means Umbraco has already
             // gone ahead and matched a domain (if any). So we will use this to match our document.
@@ -169,8 +166,8 @@ namespace Articulate.Routing
 
         private bool ShouldCheck(
             HttpContext httpContext,
-            out IUmbracoContext umbracoContext,
-            out UmbracoRouteValues umbracoRouteValues)
+            out IUmbracoContext? umbracoContext,
+            out UmbracoRouteValues? umbracoRouteValues)
         {
             umbracoRouteValues = httpContext.Features.Get<UmbracoRouteValues>();
 

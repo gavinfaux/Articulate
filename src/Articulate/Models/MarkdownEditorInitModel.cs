@@ -1,9 +1,10 @@
+#nullable enable
 namespace Articulate.Models
 {
     public class MarkdownEditorInitModel
     {
         public int ArticulateNodeId { get; set; }
-        public string EditorPostUrl { get; set; }
+        public string? EditorPostUrl { get; set; }
 
         public string AuthorizeUrl => "/umbraco/management/api/v1/security/back-office/authorize";
 

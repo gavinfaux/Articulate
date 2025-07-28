@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using Articulate.Models;
 using Articulate.Services;
 using Umbraco.Cms.Core.Models.PublishedContent;
@@ -186,7 +183,7 @@ namespace Articulate
         {
             var listNodeIds = listNodes.Select(x => x.Id).ToArray();
 
-            IEnumerable<IPublishedContent> postWithAuthor = helper.GetPostsSortedByPublishedDate(pager, x => string.Equals(x.Value<string>("author"), authorName.Replace("-", " "), StringComparison.InvariantCultureIgnoreCase), listNodeIds);
+            IEnumerable<IPublishedContent> postWithAuthor = helper.GetPostsSortedByPublishedDate(pager, x => string.Equals(x.Value<string>("author"), authorName.Replace('-', ' '), StringComparison.InvariantCultureIgnoreCase), listNodeIds);
 
             var rootPageModel = new ListModel(listNodes[0], pager, postWithAuthor, publishedValueFallback);
             return rootPageModel.Posts;

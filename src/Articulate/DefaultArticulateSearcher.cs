@@ -1,6 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
+#nullable enable
 using System.Text;
 using Examine;
 using Examine.Search;
@@ -22,7 +20,7 @@ namespace Articulate
             _examineManager = examineManager;
         }
 
-        public IEnumerable<IPublishedContent> Search(string term, string indexName, int blogArchiveNodeId, int pageSize, int pageIndex, out long totalResults)
+        public IEnumerable<IPublishedContent>? Search(string term, string? indexName, int blogArchiveNodeId, int pageSize, int pageIndex, out long totalResults)
         {
             var splitSearch = term.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
 
@@ -47,7 +45,7 @@ namespace Articulate
             {
                 //full exact match (which has a higher boost)
                 fieldQuery.Append($"{field.Key}:{"\"" + term + "\""}^{field.Value * exactMatch}");
-                fieldQuery.Append(" ");
+                fieldQuery.Append(' ');
                 //NOTE: Phrase match wildcard isn't really supported unless you use the Lucene
                 // API like ComplexPhraseWildcardSomethingOrOther...
                 //split match
@@ -55,17 +53,17 @@ namespace Articulate
                 {
                     //match on each term, no wildcard, higher boost
                     fieldQuery.Append($"{field.Key}:{s}^{field.Value * termMatch}");
-                    fieldQuery.Append(" ");
+                    fieldQuery.Append(' ');
 
                     //match on each term, with wildcard
                     fieldQuery.Append($"{field.Key}:{s}*");
-                    fieldQuery.Append(" ");
+                    fieldQuery.Append(' ');
                 }
             }
 
             indexName = indexName.IsNullOrWhiteSpace() ? Constants.UmbracoIndexes.ExternalIndexName : indexName;
 
-            if (!_examineManager.TryGetIndex(indexName, out IIndex index))
+            if (!_examineManager.TryGetIndex(indexName, out IIndex? index) || index == null)
             {
                 throw new InvalidOperationException("No index found by name " + indexName);
             }

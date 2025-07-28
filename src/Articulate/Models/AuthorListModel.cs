@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+#nullable enable
 using Umbraco.Cms.Core.Models.PublishedContent;
 
 namespace Articulate.Models
@@ -9,6 +9,6 @@ namespace Articulate.Models
         {
         }
 
-        public IEnumerable<AuthorModel> Authors { get; set; }
+        public IEnumerable<AuthorModel>? Authors { get; set; }
     }
 }

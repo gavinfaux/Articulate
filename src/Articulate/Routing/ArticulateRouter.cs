@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
 using Articulate.Controllers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Controllers;
@@ -156,7 +152,7 @@ namespace Articulate.Routing
 
         private List<Domain> DomainsForContent(IPublishedContent content, IReadOnlyList<Domain> domains)
         {
-            var nodePaths = new HashSet<int>(content.Path.Split(",").Select(int.Parse).ToList());
+            var nodePaths = new HashSet<int>(content.Path.Split(',').Select(int.Parse).ToList());
 
             return domains.Where(domain => nodePaths.Contains(domain.ContentId)).ToList();
         }

@@ -1,3 +1,4 @@
+#nullable enable
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.PropertyEditors;
 using Umbraco.Cms.Core.PropertyEditors.ValueConverters;
@@ -16,10 +17,10 @@ namespace Articulate.PropertyEditors
             IPublishedElement owner,
             IPublishedPropertyType propertyType,
             PropertyCacheLevel referenceCacheLevel,
-            object inter,
+            object? inter,
             bool preview)
         {
-            var md = (string)inter;
+            var md = inter as string;
             return new HtmlEncodedString(inter == null ? string.Empty : MarkdownHelper.ToHtml(md));
         }
     }

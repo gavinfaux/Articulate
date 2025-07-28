@@ -1,9 +1,5 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
+#nullable enable
 using System.Reflection;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Core.Cache;
@@ -34,8 +30,6 @@ namespace Articulate.Services
 
         public async Task CopyThemeAsync(string themeName, string newThemeName)
         {
-            // TODO: WIP - amend to extract built-in themes from embedded resource
-
             var userThemesPath = _hostingEnvironment.MapPathContentRoot(PathHelper.UserVirtualThemePath);
             var destinationPhysicalPath = Path.Combine(userThemesPath, newThemeName);
 
@@ -70,12 +64,20 @@ namespace Articulate.Services
 
                     var destinationFilePath = Path.Combine(destinationPhysicalPath, finalRelativePath);
 
-                    // Ensure the sub-directory exists (e.g., .../VAPOR/Assets/css/)
-                    Directory.CreateDirectory(Path.GetDirectoryName(destinationFilePath));
+                    if (Path.GetDirectoryName(destinationFilePath) is { } directoryPath)
+                    {
+                        Directory.CreateDirectory(directoryPath);
+                    }
+                    else
+                    {
+                        _logger.LogError("Could not determine a valid directory path from '{destinationFilePath}' for '{ResourceName}'. Skipping file creation.", destinationFilePath, resourceName);
+                        continue;
+                    }
 
-                    await using Stream stream = _articulateAssembly.GetManifestResourceStream(resourceName);
+                    await using Stream? stream = _articulateAssembly.GetManifestResourceStream(resourceName);
                     if (stream == null)
                     {
+                        _logger.LogError("Could not find resource stream for '{ResourceName}'. Skipping file creation.", resourceName);
                         continue;
                     }
 
@@ -106,7 +108,7 @@ namespace Articulate.Services
 
         public Task<IEnumerable<string>> GetUserThemesAsync() => Task.Run(() => GetThemesFromPathAsync(PathHelper.UserVirtualThemePath));
 
-        public async Task<IEnumerable<string>> GetAllThemesAsync()
+        public async Task<IEnumerable<string>?> GetAllThemesAsync()
         {
             return await _appCaches.RuntimeCache.GetCacheItemAsync(
                 AllThemesCacheKey,

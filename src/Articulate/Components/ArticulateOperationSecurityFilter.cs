@@ -1,3 +1,4 @@
+#nullable enable
 using Umbraco.Cms.Api.Management.OpenApi;
 
 namespace Articulate.Components

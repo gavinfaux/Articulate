@@ -1,12 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Net;
-using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using System.Xml.Linq;
 using Argotic.Syndication.Specialized;
 using Articulate.Models.Api;
@@ -40,7 +34,7 @@ namespace Articulate.ImportExport
         private readonly IDataTypeService _dataTypeService;
         private readonly ISqlContext _sqlContext;
         private readonly IScopeProvider _scopeProvider;
-        private readonly ILocalizationService _localizationService;
+        private readonly ILanguageService _languageService;
         private readonly IShortStringHelper _shortStringHelper;
         private readonly MediaFileManager _mediaFileManager;
         private readonly MediaUrlGeneratorCollection _mediaUrlGenerators;
@@ -60,7 +54,7 @@ namespace Articulate.ImportExport
             IDataTypeService dataTypeService,
             ISqlContext sqlContext,
             IScopeProvider scopeProvider,
-            ILocalizationService localizationService,
+            ILanguageService languageService,
             IShortStringHelper shortStringHelper,
             MediaFileManager mediaFileManager,
             MediaUrlGeneratorCollection mediaUrlGenerators,
@@ -78,7 +72,7 @@ namespace Articulate.ImportExport
             _dataTypeService = dataTypeService;
             _sqlContext = sqlContext;
             _scopeProvider = scopeProvider;
-            _localizationService = localizationService;
+            _languageService = languageService;
             _shortStringHelper = shortStringHelper;
             _mediaFileManager = mediaFileManager;
             _mediaUrlGenerators = mediaUrlGenerators;
@@ -114,6 +108,11 @@ namespace Articulate.ImportExport
             bool importFirstImage = false)
         {
             // not inside try block because we don't want to proceed further, and caller should handle
+
+            if (string.IsNullOrWhiteSpace(fileName))
+            {
+                throw new InvalidOperationException("Filename is required");
+            }
 
             if (!_articulateTempFileSystem.FileExists(fileName))
             {
@@ -221,7 +220,7 @@ namespace Articulate.ImportExport
             if (authorsNode == null)
             {
                 //create the authors node
-                authorsNode = _contentService.CreateWithInvariantOrDefaultCultureName(ArticulateConstants.Convention.AuthorsDocument, rootNode, authorsType, _localizationService);
+                authorsNode = _contentService.CreateWithInvariantOrDefaultCultureName(ArticulateConstants.Convention.AuthorsDocument, rootNode, authorsType, _languageService);
 
                 _contentService.Save(authorsNode, userId: userId);
                 _contentService.Publish(authorsNode, ["*"], userId: userId);
@@ -249,7 +248,7 @@ namespace Articulate.ImportExport
                     {
                         //create an author with the same name as the user - we'll need to wire up that
                         // name to posts later on
-                        authorNode = _contentService.CreateWithInvariantOrDefaultCultureName(found.Name, authorsNode, authorType, _localizationService);
+                        authorNode = _contentService.CreateWithInvariantOrDefaultCultureName(found.Name, authorsNode, authorType, _languageService);
 
                         _contentService.Save(authorNode, userId: userId);
                         _contentService.Publish(authorNode, ["*"], userId: userId);
@@ -266,7 +265,7 @@ namespace Articulate.ImportExport
                     if (authorNode == null)
                     {
                         //create a new author node with this title
-                        authorNode = _contentService.CreateWithInvariantOrDefaultCultureName(author.Title.Content, authorsNode, authorType, _localizationService);
+                        authorNode = _contentService.CreateWithInvariantOrDefaultCultureName(author.Title.Content, authorsNode, authorType, _languageService);
 
                         _contentService.Save(authorNode, userId: userId);
                         _contentService.Publish(authorNode, ["*"], userId: userId);
@@ -286,7 +285,8 @@ namespace Articulate.ImportExport
             IContentType postType = _contentTypeService.Get(ArticulateConstants.ContentType.ArticulateRichText)
                 ?? throw new InvalidOperationException("Articulate is not installed properly, the 'ArticulateRichText' doc type could not be found");
 
-            IContentType archiveDocType = _contentTypeService.Get(ArticulateConstants.ContentType.ArticulateArchive);
+            IContentType archiveDocType = _contentTypeService.Get(ArticulateConstants.ContentType.ArticulateArchive) ?? throw new InvalidOperationException("Articulate is not installed properly, the 'ArticulateArchive' doc type could not be found");
+
 
             // get the archive container node for this articulate root
             IEnumerable<IContent> archive = _contentService.GetPagedOfType(
@@ -301,7 +301,7 @@ namespace Articulate.ImportExport
             if (archiveNode == null)
             {
                 //create the authors node
-                archiveNode = _contentService.CreateWithInvariantOrDefaultCultureName(ArticulateConstants.Convention.AuthorsDocument, rootNode, archiveDocType, _localizationService);
+                archiveNode = _contentService.CreateWithInvariantOrDefaultCultureName(ArticulateConstants.Convention.AuthorsDocument, rootNode, archiveDocType, _languageService);
 
                 _contentService.Save(archiveNode);
             }
@@ -329,8 +329,10 @@ namespace Articulate.ImportExport
                 {
                     //Use the "slug" (post name) if post.id is not there
                     postNode = allPostNodes
-                        .FirstOrDefault(x => x.GetValue<string>(Constants.Conventions.Content.UrlName) != null
-                                             && x.GetValue<string>(Constants.Conventions.Content.UrlName).InvariantStartsWith(post.Name.Content));
+                        .Select(x => new { Node = x, UrlName = x.GetValue<string>(Constants.Conventions.Content.UrlName) })
+                        .Where(x => x.UrlName != null && post.Name!=null && x.UrlName.InvariantStartsWith(post.Name.Content))
+                        .Select(x => x.Node)
+                        .FirstOrDefault();
                 }
 
                 //it exists and we don't wanna overwrite, skip it
@@ -343,13 +345,13 @@ namespace Articulate.ImportExport
                 if (postNode == null)
                 {
                     var title = WebUtility.HtmlDecode(post.Title.Content);
-                    postNode = _contentService.CreateWithInvariantOrDefaultCultureName(title, archiveNode, postType, _localizationService);
+                    postNode = _contentService.CreateWithInvariantOrDefaultCultureName(title, archiveNode, postType, _languageService);
                 }
 
                 // Not used?
                 // IPropertyType propType = postType.CompositionPropertyTypes.First(x => x.Alias == "publishedDate");
 
-                postNode.SetInvariantOrDefaultCultureValue("publishedDate", post.CreatedOn, postType, _localizationService);
+                postNode.SetInvariantOrDefaultCultureValue("publishedDate", post.CreatedOn, postType, _languageService);
 
                 if (post.Excerpt != null && post.Excerpt.Content.IsNullOrWhiteSpace() == false)
                 {
@@ -360,10 +362,10 @@ namespace Articulate.ImportExport
                         excerpt = Encoding.UTF8.GetString(Convert.FromBase64String(post.Excerpt.Content));
                     }
 
-                    postNode.SetInvariantOrDefaultCultureValue("excerpt", excerpt, postType, _localizationService);
+                    postNode.SetInvariantOrDefaultCultureValue("excerpt", excerpt, postType, _languageService);
                 }
 
-                postNode.SetInvariantOrDefaultCultureValue("importId", post.Id, postType, _localizationService);
+                postNode.SetInvariantOrDefaultCultureValue("importId", post.Id, postType, _languageService);
 
                 var content = post.Content.Content;
 
@@ -380,9 +382,9 @@ namespace Articulate.ImportExport
 
                 // This apparently now needs to be saved as an HtmlString before hand,
                 // see https://docs.umbraco.com/umbraco-cms/fundamentals/backoffice/property-editors/built-in-umbraco-property-editors/rich-text-editor#add-values-programmatically
-                postNode.SetInvariantOrDefaultCultureValue("richText", new HtmlString(content), postType, _localizationService);
+                postNode.SetInvariantOrDefaultCultureValue("richText", new HtmlString(content), postType, _languageService);
 
-                postNode.SetInvariantOrDefaultCultureValue("enableComments", true, postType, _localizationService);
+                postNode.SetInvariantOrDefaultCultureValue("enableComments", true, postType, _languageService);
 
                 if (post.Url != null && !string.IsNullOrWhiteSpace(post.Url.OriginalString))
                 {
@@ -404,7 +406,7 @@ namespace Articulate.ImportExport
                         slug = fileName.TrimEnd("." + ext);
                     }
 
-                    postNode.SetInvariantOrDefaultCultureValue(Constants.Conventions.Content.UrlName, slug, postType, _localizationService);
+                    postNode.SetInvariantOrDefaultCultureValue(Constants.Conventions.Content.UrlName, slug, postType, _languageService);
                 }
 
                 if (post.Authors.Count > 0)
@@ -414,7 +416,7 @@ namespace Articulate.ImportExport
                     if (author != null)
                     {
                         var name = authorIdsToName[author.Id];
-                        postNode.SetInvariantOrDefaultCultureValue("author", name, postType, _localizationService);
+                        postNode.SetInvariantOrDefaultCultureValue("author", name, postType, _languageService);
                     }
                 }
 
@@ -443,7 +445,7 @@ namespace Articulate.ImportExport
                 result.Add(postNode);
             }
 
-            return await Task.FromResult(result);
+            return await Task.FromResult(result).ConfigureAwait(false);
         }
 
         private async Task ImportFirstImageAsync(IContentBase postNode, IContentType postType, BlogMLPost post)
@@ -485,7 +487,7 @@ namespace Articulate.ImportExport
                 using (stream)
                 {
                     // create a media item
-                    IMedia media = _mediaService.CreateMedia(postNode.Name, _articulateRootMediaFolder.Value, Constants.Conventions.MediaTypes.Image);
+                    IMedia media = _mediaService.CreateMedia(postNode.Name ?? $"Post {post.Id} image", _articulateRootMediaFolder.Value, Constants.Conventions.MediaTypes.Image);
                     media.SetValue(
                         _mediaFileManager,
                         _mediaUrlGenerators,
@@ -507,7 +509,7 @@ namespace Articulate.ImportExport
                         "postImage",
                         udi.ToString(),
                         postType,
-                        _localizationService);
+                        _languageService);
                 }
             }
         }
@@ -547,11 +549,15 @@ namespace Articulate.ImportExport
                 .Select(x => x.Title.Content)
                 .ToArray();
 
-            postNode.AssignInvariantOrDefaultCultureTags("categories", postCats, postType, _localizationService, _dataTypeService, _dataEditors, _jsonSerializer);
+            postNode.AssignInvariantOrDefaultCultureTags("categories", postCats, postType, _languageService, _dataTypeService, _dataEditors, _jsonSerializer);
         }
 
         private void ImportTags(XDocument xdoc, IContent postNode, BlogMLPost post, IContentType postType)
         {
+            if (xdoc == null || xdoc.Root == null)
+            {
+                return;
+            }
             //since this blobml serializer doesn't support tags (can't find one that does) we need to manually take care of that
             XElement xmlPost = xdoc.Descendants(XName.Get("post", xdoc.Root.Name.NamespaceName))
                 .SingleOrDefault(x => (string)x.Attribute("id") == post.Id);
@@ -567,7 +573,7 @@ namespace Articulate.ImportExport
 
             var tags = xmlPost.Descendants(XName.Get("tag", xdoc.Root.Name.NamespaceName)).Select(x => (string)x.Attribute("ref")).ToArray();
 
-            postNode.AssignInvariantOrDefaultCultureTags("tags", tags, postType, _localizationService, _dataTypeService, _dataEditors, _jsonSerializer);
+            postNode.AssignInvariantOrDefaultCultureTags("tags", tags, postType, _languageService, _dataTypeService, _dataEditors, _jsonSerializer);
         }
     }
 }

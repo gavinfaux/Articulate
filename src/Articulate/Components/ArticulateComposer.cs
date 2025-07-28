@@ -1,4 +1,4 @@
-using System;
+#nullable enable
 using Articulate.ImportExport;
 using Articulate.Options;
 using Articulate.Routing;
@@ -63,12 +63,12 @@ namespace Articulate.Components
 
             builder.Services.AddOutputCache(options =>
             {
-                options.AddPolicy("Articulate120", builder =>
-                    builder.Expire(TimeSpan.FromSeconds(120)));
-                options.AddPolicy("Articulate300", builder =>
-                    builder.Expire(TimeSpan.FromSeconds(300)));
-                options.AddPolicy("Articulate60", builder =>
-                    builder.Expire(TimeSpan.FromSeconds(60)));
+                options.AddPolicy("Articulate120", policyBuilder =>
+                    policyBuilder.Expire(TimeSpan.FromSeconds(120)));
+                options.AddPolicy("Articulate300", policyBuilder =>
+                    policyBuilder.Expire(TimeSpan.FromSeconds(300)));
+                options.AddPolicy("Articulate60", policyBuilder =>
+                    policyBuilder.Expire(TimeSpan.FromSeconds(60)));
             });
         }
     }

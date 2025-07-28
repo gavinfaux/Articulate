@@ -1,3 +1,4 @@
+#nullable enable
 using System.Xml.Linq;
 using Articulate.Attributes;
 using Microsoft.AspNetCore.Mvc;
@@ -17,7 +18,7 @@ namespace Articulate.Controllers
 
         public WlwManifestController(
             UmbracoHelper umbraco,
-            ILogger<RenderController> logger,
+            ILogger<WlwManifestController> logger,
             ICompositeViewEngine compositeViewEngine,
             IUmbracoContextAccessor umbracoContextAccessor)
             : base(logger, compositeViewEngine, umbracoContextAccessor)
@@ -31,7 +32,7 @@ namespace Articulate.Controllers
         [HttpGet]
         public ActionResult Index(int id)
         {
-            IPublishedContent node = _umbraco.Content(id);
+            IPublishedContent? node = _umbraco.Content(id);
             if (node == null)
             {
                 return new NotFoundResult();

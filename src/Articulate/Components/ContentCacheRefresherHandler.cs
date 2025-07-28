@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+#nullable enable
 using Umbraco.Cms.Core.Cache;
 using Umbraco.Cms.Core.Events;
 using Umbraco.Cms.Core.Models;
@@ -71,17 +71,21 @@ namespace Articulate.Components
                     }
 
                     break;
+                case MessageType.RefreshAll:
+                case MessageType.RefreshByJson:
+                default:
+                    break;
             }
         }
 
         private void RefreshById(int id)
         {
-            if (!_umbracoContextAccessor.TryGetUmbracoContext(out IUmbracoContext umbracoContext))
+            if (!_umbracoContextAccessor.TryGetUmbracoContext(out IUmbracoContext? umbracoContext))
             {
                 return;
             }
 
-            IPublishedContent item = umbracoContext.Content.GetById(id);
+            IPublishedContent? item = umbracoContext.Content.GetById(id);
 
             // if it's directly related to an articulate node
             if (item != null && item.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.Articulate))
@@ -108,19 +112,19 @@ namespace Articulate.Components
             }
 
             IPublishedContentType articulateContentType = _publishedContentTypeCache.Get(PublishedItemType.Content, ArticulateConstants.ContentType.Articulate);
-            if (articulateContentType != null)
+
+            IEnumerable<IPublishedContent> articulateNodes = _documentCacheService.GetByContentType(articulateContentType);
+            foreach (IPublishedContent node in articulateNodes)
             {
-                IEnumerable<IPublishedContent> articulateNodes = _documentCacheService.GetByContentType(articulateContentType);
-                foreach (IPublishedContent node in articulateNodes)
+                // if the item is same level with a lower sort order it can directly affect the articulate node's route
+                if (node.Level != item.Level || node.SortOrder <= item.SortOrder)
                 {
-                    // if the item is same level with a lower sort order it can directly affect the articulate node's route
-                    if (node.Level == item.Level && node.SortOrder > item.SortOrder)
-                    {
-                        //ensure routes are rebuilt
-                        _appCaches.RequestCache.GetCacheItem(ArticulateConstants.RefreshRoutesToken, () => true);
-                        return;
-                    }
+                    continue;
                 }
+
+                //ensure routes are rebuilt
+                _appCaches.RequestCache.GetCacheItem(ArticulateConstants.RefreshRoutesToken, () => true);
+                return;
             }
         }
     }

@@ -1,3 +1,4 @@
+#nullable enable
 using System.Xml.Linq;
 using Articulate.Attributes;
 using Articulate.Models;
@@ -20,7 +21,7 @@ namespace Articulate.Controllers
         public OpenSearchController(
             IPublishedValueFallback publishedValueFallback,
             UmbracoHelper umbraco,
-            ILogger<RenderController> logger,
+            ILogger<OpenSearchController> logger,
             ICompositeViewEngine compositeViewEngine,
             IUmbracoContextAccessor umbracoContextAccessor)
             : base(logger, compositeViewEngine, umbracoContextAccessor)
@@ -62,7 +63,7 @@ namespace Articulate.Controllers
             //      template="http://aaron.pk/search?q={searchTerms}"/>
             //</OpenSearchDescription>
 
-            IPublishedContent node = _umbraco.Content(id);
+            IPublishedContent? node = _umbraco.Content(id);
             if (node == null)
             {
                 return new NotFoundResult();

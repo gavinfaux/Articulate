@@ -1,5 +1,3 @@
-using System;
-using System.IO;
 using System.Xml;
 using System.Xml.XPath;
 using Argotic.Common;

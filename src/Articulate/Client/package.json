@@ -19,17 +19,16 @@
   "license": "MIT",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
-    "build:release": "tsc && npm run set-version && vite build",
+    "build": "tsc && vite build && node ./scripts/post-build.js",
+    "build:release": "tsc && npm run set-version && vite build && node ./scripts/post-build.js",
     "preview": "vite preview",
     "watch": "vite build --watch",
     "lint:errors": "npm run lint -- --quiet",
     "lint:fix": "npm run lint -- --fix",
     "lint": "eslint src",
     "check": "tsc --noEmit",
-    "generate:api": "cross-env NODE_TLS_REJECT_UNAUTHORIZED=0 openapi-ts -f openapi-ts.config.ts",
-    "generate-client": "node ./scripts/generate-openapi.js http://localhost:44169/umbraco/swagger/articulate/swagger.json ./src/api --excludeTags 'Markdown Editor'",
-    "set-version": "node ./scripts/update-version.js ./package.json"
+    "generate:api": "cross-env NODE_TLS_REJECT_UNAUTHORIZED=0 node ./scripts/generate-api.js http://localhost:44169/umbraco/swagger/articulate/swagger.json ./src/api --excludeTags 'Markdown Editor'",
+    "set-version": "node ./scripts/set-version.js ./package.json"
   },
   "dependenciesComments": {
     "monaco-editor": "Articulate Markdown Editor property editor (not the mobile markdown editor), only required until Umbraco Core editor supports better markdown to HTML processing; see https://github.com/umbraco/Umbraco-CMS/issues/19500"

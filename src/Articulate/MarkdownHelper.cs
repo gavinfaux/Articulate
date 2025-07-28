@@ -1,3 +1,4 @@
+#nullable enable
 using Markdig;
 
 namespace Articulate
@@ -8,6 +9,6 @@ namespace Articulate
             .UseAdvancedExtensions()
             .Build();
 
-        public static string ToHtml(string input) => Markdown.ToHtml(input, _sMarkdownPipeline);
+        public static string ToHtml(string? input) => string.IsNullOrWhiteSpace(input) ? string.Empty : Markdown.ToHtml(input, _sMarkdownPipeline);
     }
 }

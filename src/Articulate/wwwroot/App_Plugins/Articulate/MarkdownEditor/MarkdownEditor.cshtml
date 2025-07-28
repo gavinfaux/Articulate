@@ -2,6 +2,14 @@
 
 @{
     Layout = null;
+    if (Model?.ArticulateNodeId == null)
+    {
+        throw new InvalidOperationException("Missing ArticulateNodeId parameter.");
+    }
+    if (Model?.EditorPostUrl == null)
+    {
+        throw new InvalidOperationException("Missing EditorPostUrl parameter.");
+    }
 }
 
 <!doctype html>

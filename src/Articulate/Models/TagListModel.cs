@@ -1,3 +1,4 @@
+#nullable enable
 using Umbraco.Cms.Core.Models.PublishedContent;
 
 namespace Articulate.Models

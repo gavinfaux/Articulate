@@ -1,6 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
+#nullable enable
 using Articulate.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
@@ -21,9 +19,10 @@ namespace Articulate.Controllers
     public class ArticulateController : ListControllerBase
     {
         private readonly UmbracoHelper _umbracoHelper;
+        private readonly ILogger<ArticulateController> _logger;
 
         public ArticulateController(
-            ILogger<RenderController> logger,
+            ILogger<ArticulateController> logger,
             ICompositeViewEngine compositeViewEngine,
             IUmbracoContextAccessor umbracoContextAccessor,
             IPublishedUrlProvider publishedUrlProvider,
@@ -32,6 +31,7 @@ namespace Articulate.Controllers
             : base(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider, publishedValueFallback)
         {
             _umbracoHelper = umbracoHelper;
+            _logger = logger;
         }
 
         /// <summary>
@@ -39,7 +39,17 @@ namespace Articulate.Controllers
         /// </summary>
         /// <param name="p"></param>
         /// <returns></returns>
-        public IActionResult Index(int? p) => RenderView(new ContentModel(CurrentPage), p);
+        public IActionResult Index(int? p)
+        {
+            if (CurrentPage != null)
+            {
+                return RenderView(new ContentModel(CurrentPage), p);
+            }
+
+            _logger.LogWarning("ArticulateController.Index: CurrentPage is null, returning 404");
+            return NotFound();
+
+        }
 
         /// <summary>
         /// Override and declare a NonAction so that we get routed to the Index action with the optional page route
@@ -50,8 +60,9 @@ namespace Articulate.Controllers
 
         private IActionResult RenderView(ContentModel model, int? p = null)
         {
-            IPublishedContent[] listNodes = model.Content.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive).ToArray();
-            if (listNodes.Length == 0)
+            IPublishedContent[]? listNodes = model.Content.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive)?.ToArray();
+
+            if (listNodes == null || listNodes.Length == 0)
             {
                 throw new InvalidOperationException("An ArticulateArchive document must exist under the root Articulate document");
             }
@@ -64,7 +75,7 @@ namespace Articulate.Controllers
                 master,
                 p ?? 1,
                 master.PageSize,
-                PublishedValueFallback);
+                PublishedValueFallback) ?? [];
 
             return GetPagedListView(master, listNodes[0], posts, count, p);
 

@@ -1,5 +1,15 @@
 <Project>
   <!--
+  ==========================================================================================
+  DEFAULT CLIENT-SIDE ASSET BUILD LOGIC
+  ==========================================================================================
+  This file defines the standard, reusable MSBuild logic for handling client-side assets
+  (like a Vite/NPM project). It provides default commands and targets for restoring NPM
+  packages and running a build script. The main .csproj file can override these defaults
+  to customize the build process.
+  -->
+
+  <!--
         This file was copied from https://github.com/umbraco/Umbraco.AuthorizedServices/blob/main/src/Umbraco.AuthorizedServices/build/Microsoft.AspNetCore.ClientAssets.targets
 
         Copied from: https://github.com/aspnet/AspLabs/blob/main/src/ClientAssets/Microsoft.AspNetCore.ClientAssets/build/netstandard2.0/Microsoft.AspNetCore.ClientAssets.targets
@@ -9,10 +19,19 @@
         - https://github.com/dotnet/aspnetcore/issues/38445
     -->
   <PropertyGroup>
+    <!--
+    Defines default properties for the client asset build.
+    - ClientAssetsDirectory: The location of the client-side project.
+    - ClientAssetsRestore*: Properties defining how to check if 'npm install' is needed.
+    - ClientAssetsBuildCommand: The default command to run for building assets. This is overridden in Articulate.csproj.
+    -->
     <ClientAssetsDirectory Condition="'$(ClientAssetsDirectory)' == ''">Client\</ClientAssetsDirectory>
     <ClientAssetsRestoreInputs Condition="'$(ClientAssetsRestoreInputs)' == ''">$(ClientAssetsDirectory)\package-lock.json;$(ClientAssetsDirectory)\package.json</ClientAssetsRestoreInputs>
     <ClientAssetsRestoreOutputs Condition="'$(ClientAssetsRestoreOutputs)' == ''">$(ClientAssetsDirectory)node_modules\.package-lock.json</ClientAssetsRestoreOutputs>
-    <ClientAssetsRestoreCommand Condition="'$(ClientAssetsRestoreCommand)' == ''">npm ci --no-fund --no-audit --prefer-offline</ClientAssetsRestoreCommand>
+    <!-- Default to 'npm install' for local development to avoid file locking issues. -->
+    <ClientAssetsRestoreCommand Condition="'$(ClientAssetsRestoreCommand)' == ''">npm install --no-fund --no-audit --prefer-offline</ClientAssetsRestoreCommand>
+    <!-- For CI/release builds, override to 'npm ci' for a clean, fast, and reliable package restore. -->
+    <ClientAssetsRestoreCommand Condition="'$(GeneratePackageOnBuild)' == 'true'">npm ci --no-fund --no-audit --prefer-offline</ClientAssetsRestoreCommand>
     <ClientAssetsBuildCommand Condition="'$(ClientAssetsBuildCommand)' == ''">npm run build</ClientAssetsBuildCommand>
 
     <!-- Include project file to pick up changes in the above values -->
@@ -24,14 +43,25 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ClientAssetsInputs Include="$(ClientAssetsDirectory)**" Exclude="$(DefaultItemExcludes)" />
+    <ClientAssetsInputs Include="$(ClientAssetsDirectory)**" Exclude="$(ClientAssetsDirectory)config.outputPath.js;$(DefaultItemExcludes)" />
   </ItemGroup>
 
-  <Target Name="ClientAssetsRestore" BeforeTargets="$(ClientAssetsRestoreBeforeTargets)" Inputs="$(ClientAssetsRestoreInputs)" Outputs="$(ClientAssetsRestoreOutputs)">
+  <!--
+  TARGET: ClientAssetsRestore
+  This target runs 'npm ci' to restore NPM packages. It only runs if the package.json or package-lock.json has changed.
+  -->
+  <Target Name="ClientAssetsRestore" Condition="'$(ShouldRunClientAssetsBuild)' == 'true'" BeforeTargets="$(ClientAssetsRestoreBeforeTargets)" Inputs="$(ClientAssetsRestoreInputs)" Outputs="$(ClientAssetsRestoreOutputs)">
     <Message Text="Restoring NPM packages" Importance="high" />
     <Exec Command="$(ClientAssetsRestoreCommand)" WorkingDirectory="$(ClientAssetsDirectory)"/>
   </Target>
 
+  <!--
+  TARGET: ClientAssetsBuild (DEFAULT)
+  This is the main target for building the client-side assets.
+  By default, it just runs the command defined in $(ClientAssetsBuildCommand).
+  In Articulate.csproj, we completely override this target to add more complex logic,
+  such as choosing between 'npm run build' and 'npm run build:release'.
+  -->
   <Target Name="ClientAssetsBuild" Condition="'$(ShouldRunClientAssetsBuild)' == 'true'" DependsOnTargets="ClientAssetsRestore" BeforeTargets="AssignTargetPaths" Inputs="@(ClientAssetsInputs)" Outputs="$(IntermediateOutputPath)clientassetsbuild.complete.txt">
     <PropertyGroup>
       <_ClientAssetsOutputFullPath>$([System.IO.Path]::GetFullPath('$(IntermediateOutputPath)clientassets'))</_ClientAssetsOutputFullPath>
@@ -49,6 +79,14 @@
     <WriteLinesToFile File="$(IntermediateOutputPath)clientassetsbuild.complete.txt" Lines="@(_ClientAssetsBuildOutput)" />
   </Target>
 
+  <!--
+  TARGET: DefineClientAssets
+  This target is the key to integrating with the .NET SDK's Static Web Assets system.
+  After the client assets are built (by the ClientAssetsBuild target), this target takes all the output files
+  and defines them as 'StaticWebAsset' items. This tells the .NET build system to include these files
+  in the final NuGet package and makes them available to be served at runtime.
+  The 'BasePath' metadata, set in the .csproj, determines the URL path where the assets will be served from.
+  -->
   <Target Name="DefineClientAssets" AfterTargets="ClientAssetsBuild" DependsOnTargets="ResolveStaticWebAssetsConfiguration">
     <ItemGroup>
       <FileWrites Include="@(_ClientAssetsBuildOutput)" />

@@ -1,11 +1,6 @@
-using System;
-using System.Collections.Generic;
 using System.Globalization;
-using System.IO;
-using System.Linq;
 using System.Security.Authentication;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using Articulate.Models;
 using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Core;
@@ -35,7 +30,7 @@ namespace Articulate.MetaWeblog
         private readonly IUmbracoContextAccessor _umbracoContextAccessor;
         private readonly IUserService _userService;
         private readonly IContentTypeService _contentTypeService;
-        private readonly ILocalizationService _localizationService;
+        private readonly ILanguageService _languageService;
         private readonly IBackOfficeUserManager _backOfficeUserManager;
         private readonly IContentService _contentService;
         private readonly IShortStringHelper _shortStringHelper;
@@ -51,7 +46,7 @@ namespace Articulate.MetaWeblog
             IUmbracoContextAccessor umbracoContextAccessor,
             IUserService userService,
             IContentTypeService contentTypeService,
-            ILocalizationService localizationService,
+            ILanguageService languageService,
             IBackOfficeUserManager backOfficeUserManager,
             IContentService contentService,
             IShortStringHelper shortStringHelper,
@@ -70,7 +65,7 @@ namespace Articulate.MetaWeblog
             _umbracoContextAccessor = umbracoContextAccessor;
             _userService = userService;
             _contentTypeService = contentTypeService;
-            _localizationService = localizationService;
+            _languageService = languageService;
             _backOfficeUserManager = backOfficeUserManager;
             _contentService = contentService;
             _shortStringHelper = shortStringHelper;
@@ -174,7 +169,7 @@ namespace Articulate.MetaWeblog
             IContentType contentType = _contentTypeService.Get(ArticulateConstants.ContentType.ArticulateRichText) ?? throw new InvalidOperationException("No content type found with alias 'ArticulateRichText'");
 
             IContent content = _contentService.CreateWithInvariantOrDefaultCultureName(
-                post.title, node.Id, contentType, _localizationService, user.Id);
+                post.title, node.Id, contentType, _languageService, user.Id);
 
             var extractFirstImageAsProperty = false;
             if (root.HasProperty("extractFirstImage"))
@@ -301,9 +296,9 @@ namespace Articulate.MetaWeblog
 
         private void AddOrUpdateContent(IContent content, IContentType contentType, Post post, IUser user, bool publish, bool extractFirstImageAsProperty)
         {
-            content.SetInvariantOrDefaultCultureName(post.title, contentType, _localizationService);
+            content.SetInvariantOrDefaultCultureName(post.title, contentType, _languageService);
 
-            content.SetInvariantOrDefaultCultureValue("author", user.Name, contentType, _localizationService);
+            content.SetInvariantOrDefaultCultureValue("author", user.Name, contentType, _languageService);
             if (content.HasProperty("richText"))
             {
                 Match firstImageMatch = ArticulateMetaWeblogRegexes.MediaSourceRegex().Match(post.description);
@@ -328,7 +323,7 @@ namespace Articulate.MetaWeblog
                         return " src=\"" + mediaFileSystemPath + "\"";
                     }
 
-                    return null;
+                    return string.Empty;
                 });
 
                 var imagesProcessed = 0;
@@ -351,10 +346,10 @@ namespace Articulate.MetaWeblog
                         return href;
                     }
 
-                    return null;
+                    return string.Empty;
                 });
 
-                content.SetInvariantOrDefaultCultureValue("richText", contentToSave, contentType, _localizationService);
+                content.SetInvariantOrDefaultCultureValue("richText", contentToSave, contentType, _languageService);
                 if (extractFirstImageAsProperty
                     && content.HasProperty("postImage")
                         && !firstImageRelativePath.IsNullOrWhiteSpace())
@@ -385,7 +380,7 @@ namespace Articulate.MetaWeblog
                                     "postImage",
                                     udi.ToString(),
                                     contentType,
-                                    _localizationService);
+                                    _languageService);
                             }
                         }
                         catch (Exception ex)
@@ -399,37 +394,37 @@ namespace Articulate.MetaWeblog
 
             if (!post.link.IsNullOrWhiteSpace())
             {
-                content.SetInvariantOrDefaultCultureValue(Constants.Conventions.Content.UrlName, post.link, contentType, _localizationService);
+                content.SetInvariantOrDefaultCultureValue(Constants.Conventions.Content.UrlName, post.link, contentType, _languageService);
             }
 
             if (!post.mt_excerpt.IsNullOrWhiteSpace())
             {
-                content.SetInvariantOrDefaultCultureValue("excerpt", post.mt_excerpt, contentType, _localizationService);
+                content.SetInvariantOrDefaultCultureValue("excerpt", post.mt_excerpt, contentType, _languageService);
             }
 
             if (post.mt_allow_comments == 1)
             {
-                content.SetInvariantOrDefaultCultureValue("enableComments", 1, contentType, _localizationService);
+                content.SetInvariantOrDefaultCultureValue("enableComments", 1, contentType, _languageService);
             }
             else if (post.mt_allow_comments == 2)
             {
-                content.SetInvariantOrDefaultCultureValue("enableComments", 0, contentType, _localizationService);
+                content.SetInvariantOrDefaultCultureValue("enableComments", 0, contentType, _languageService);
             }
 
-            content.AssignInvariantOrDefaultCultureTags("categories", post.categories, contentType, _localizationService, _dataTypeService, _propertyEditors, _jsonSerializer);
+            content.AssignInvariantOrDefaultCultureTags("categories", post.categories, contentType, _languageService, _dataTypeService, _propertyEditors, _jsonSerializer);
             var tags = post.mt_keywords
                 .Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
                 .Select(x => x.Trim())
                 .Distinct()
                 .ToArray();
 
-            content.AssignInvariantOrDefaultCultureTags("tags", tags, contentType, _localizationService, _dataTypeService, _propertyEditors, _jsonSerializer);
+            content.AssignInvariantOrDefaultCultureTags("tags", tags, contentType, _languageService, _dataTypeService, _propertyEditors, _jsonSerializer);
 
             if (publish)
             {
                 if (post.dateCreated != DateTime.MinValue)
                 {
-                    content.SetInvariantOrDefaultCultureValue("publishedDate", post.dateCreated, contentType, _localizationService);
+                    content.SetInvariantOrDefaultCultureValue("publishedDate", post.dateCreated, contentType, _languageService);
                 }
 
                 _contentService.Save(content, userId: user.Id);
@@ -461,7 +456,7 @@ namespace Articulate.MetaWeblog
             postid = post.Id.ToString(CultureInfo.InvariantCulture),
             wp_slug = post.Url(),
             mt_excerpt = post.Excerpt,
-            mt_keywords = string.Join(",", post.Tags.ToArray()),
+            mt_keywords = string.Join(',', post.Tags.ToArray()),
             title = post.Name
         };
 
@@ -474,7 +469,7 @@ namespace Articulate.MetaWeblog
             link = string.Empty,
 
             mt_keywords = string.IsNullOrWhiteSpace(post.GetValue<string>("tags")) == false
-            ? string.Join(",", post.GetValue<string>("tags").Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+            ? string.Join(',', post.GetValue<string>("tags").Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
             : string.Empty,
 
             categories = string.IsNullOrEmpty(post.GetValue<string>("categories")) == false

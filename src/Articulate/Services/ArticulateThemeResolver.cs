@@ -1,3 +1,4 @@
+#nullable enable
 using Umbraco.Cms.Core.Cache;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.Web;
@@ -8,14 +9,14 @@ namespace Articulate.Services
     public class ArticulateThemeResolver(IUmbracoContextAccessor umbracoContextAccessor, AppCaches appCaches)
         : IArticulateThemeResolver
     {
-        public string GetCurrentThemeName()
+        public string? GetCurrentThemeName()
         {
             // cache a single request.
             return appCaches.RequestCache.GetCacheItem(
                 "Articulate_CurrentRequestThemeName",
                 () =>
                 {
-                    if (!umbracoContextAccessor.TryGetUmbracoContext(out IUmbracoContext umbracoContext) ||
+                    if (!umbracoContextAccessor.TryGetUmbracoContext(out IUmbracoContext? umbracoContext) ||
                         umbracoContext.PublishedRequest?.PublishedContent == null)
                     {
                         return string.Empty;

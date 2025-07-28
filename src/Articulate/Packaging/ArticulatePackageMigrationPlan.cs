@@ -1,3 +1,4 @@
+#nullable enable
 using Umbraco.Cms.Infrastructure.Packaging;
 
 namespace Articulate.Packaging

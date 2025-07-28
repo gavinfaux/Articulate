@@ -12,7 +12,7 @@
 </div>
 <div class="demo-blog__posts mdl-grid">
 
-    @if (!Model.Children.Any())
+    @if (!Model.Children().Any())
     {
         <div class="mdl-card mdl-cell mdl-cell--12-col comments">
 
@@ -45,7 +45,7 @@
             {
 				<div class="mdl-card mdl-cell mdl-cell--12-col">
                     @{await PostInfo(post);}
-                </div>                
+                </div>
             }
         }
 
@@ -56,9 +56,10 @@
 </div>
 
 @functions{
-	public async Task PostInfo(PostModel post, bool withExcerpt = true)
+
+    private async Task PostInfo(PostModel post, bool withExcerpt = true)
 	{
-		@await Html.PartialAsync( "PostImageHeader", post);
+		@await Html.PartialAsync( "PostImageHeader", post)
 
 		if (withExcerpt)
 		{

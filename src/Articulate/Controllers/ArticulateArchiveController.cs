@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+#nullable enable
 using Articulate.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
@@ -18,8 +18,10 @@ namespace Articulate.Controllers
     /// </summary>
     public class ArticulateArchiveController : ListControllerBase
     {
+        private readonly ILogger<ArticulateArchiveController> _logger;
+
         public ArticulateArchiveController(
-            ILogger<RenderController> logger,
+            ILogger<ArticulateArchiveController> logger,
             ICompositeViewEngine compositeViewEngine,
             IUmbracoContextAccessor umbracoContextAccessor,
             IPublishedUrlProvider publishedUrlProvider,
@@ -28,16 +30,26 @@ namespace Articulate.Controllers
             : base(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider, publishedValueFallback)
         {
             Umbraco = umbraco;
+            _logger = logger;
         }
 
-        public UmbracoHelper Umbraco { get; }
+        private UmbracoHelper Umbraco { get; }
 
         /// <summary>
         /// Declare new Index action with optional page number
         /// </summary>
         /// <param name="p"></param>
         /// <returns></returns>
-        public IActionResult Index(int? p) => RenderView(new ContentModel(CurrentPage), p);
+        public IActionResult Index(int? p)
+        {
+            if (CurrentPage != null)
+            {
+                return RenderView(new ContentModel(CurrentPage), p);
+            }
+
+            _logger.LogWarning("ArticulateArchiveController.Index: CurrentPage is null, returning 404");
+            return NotFound();
+        }
 
         /// <summary>
         /// Override and declare a NonAction so that we get routed to the Index action with the optional page route
@@ -51,7 +63,7 @@ namespace Articulate.Controllers
             var archive = new MasterModel(model.Content, PublishedValueFallback);
 
             // redirect to root node when "redirectArchive" is configured
-            if (archive.RootBlogNode.Value<bool>("redirectArchive"))
+            if (archive.RootBlogNode?.Value<bool>("redirectArchive") ?? false)
             {
                 return RedirectPermanent(archive.RootBlogNode.Url());
             }
@@ -59,16 +71,16 @@ namespace Articulate.Controllers
             //Get post count by xpath is much faster than iterating all children to get a count
             var count = Umbraco.GetPostCount(archive.Id);
 
-            if (!int.TryParse(archive.RootBlogNode.Value<string>("pageSize"), out int pageSize))
+            if (!int.TryParse(archive.RootBlogNode?.Value<string>("pageSize"), out var pageSize))
             {
                 pageSize = 10;
             }
 
             IEnumerable<PostModel> posts = Umbraco.GetRecentPostsByArchive(
                 archive,
-                1,
+                p ?? 1,
                 pageSize,
-                PublishedValueFallback);
+                PublishedValueFallback) ?? [];
 
             return GetPagedListView(archive, archive, posts, count, null);
         }

@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.ServiceModel.Syndication;
 using Articulate.Attributes;
 using Articulate.Models;
@@ -32,9 +29,10 @@ namespace Articulate.Controllers
         private readonly IPublishedValueFallback _publishedValueFallback;
         private readonly UmbracoHelper _umbracoHelper;
         private readonly ArticulateTagService _articulateTagService;
+        private readonly ILogger<ArticulateRssController> _logger;
 
         public ArticulateRssController(
-            ILogger<RenderController> logger,
+            ILogger<ArticulateRssController> logger,
             ICompositeViewEngine compositeViewEngine,
             IUmbracoContextAccessor umbracoContextAccessor,
             IRssFeedGenerator feedGenerator,
@@ -47,6 +45,7 @@ namespace Articulate.Controllers
             _publishedValueFallback = publishedValueFallback;
             _umbracoHelper = umbracoHelper;
             _articulateTagService = articulateTagService;
+            _logger = logger;
         }
 
         //NonAction so it is not routed since we want to use an overload below
@@ -55,10 +54,13 @@ namespace Articulate.Controllers
 
         public IActionResult Index(int? maxItems)
         {
-            if (!maxItems.HasValue)
+            if (CurrentPage == null)
             {
-                maxItems = 25;
+                _logger.LogWarning("ArticulateRssController.Index: CurrentPage is null, returning 404");
+                return NotFound();
             }
+
+            maxItems ??= 25;
 
             IPublishedContent[] listNodes = CurrentPage.Children()
                 .Where(x => x.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateArchive))
@@ -72,7 +74,7 @@ namespace Articulate.Controllers
 
             var listNodeIds = listNodes.Select(x => x.Id).ToArray();
 
-            IEnumerable<IPublishedContent> listItems = _umbracoHelper.GetPostsSortedByPublishedDate(pager, null, listNodeIds);
+            IEnumerable<IPublishedContent> listItems = _umbracoHelper.GetPostsSortedByPublishedDate(pager, null, listNodeIds) ?? [];
 
             var rootPageModel = new ListModel(
                 listNodes[0],
@@ -118,15 +120,19 @@ namespace Articulate.Controllers
             //create a master model
             var masterModel = new MasterModel(author, _publishedValueFallback);
 
-            IPublishedContent[] listNodes = masterModel.RootBlogNode.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive).ToArray();
+            IPublishedContent[] listNodes = masterModel.RootBlogNode.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive)?.ToArray();
+            if (listNodes == null || listNodes.Length == 0)
+            {
+                throw new InvalidOperationException("An ArticulateArchive document must exist under the root Articulate document");
+            }
 
-            IEnumerable<IPublishedContent> authorContenet = _umbracoHelper.GetContentByAuthor(
+            IEnumerable<IPublishedContent> authorContent = _umbracoHelper.GetContentByAuthor(
                 listNodes,
                 author.Name,
                 new PagerModel(maxItems.Value, 0, 1),
                 _publishedValueFallback);
 
-            SyndicationFeed feed = _feedGenerator.GetFeed(masterModel, authorContenet.Select(x => new PostModel(x, _publishedValueFallback)));
+            SyndicationFeed feed = _feedGenerator.GetFeed(masterModel, authorContent.Select(x => new PostModel(x, _publishedValueFallback)));
 
             return new RssResult(feed, masterModel);
         }
@@ -194,7 +200,7 @@ namespace Articulate.Controllers
                 return NotFound();
             }
 
-            SyndicationFeed feed = _feedGenerator.GetFeed(rootPageModel, contentByTag.Posts.Take(maxItems));
+            SyndicationFeed feed = _feedGenerator.GetFeed(rootPageModel, contentByTag.Posts?.Take(maxItems));
 
             return new RssResult(feed, rootPageModel);
         }

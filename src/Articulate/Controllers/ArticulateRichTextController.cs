@@ -1,3 +1,4 @@
+#nullable enable
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Core.Models.PublishedContent;
@@ -9,7 +10,7 @@ namespace Articulate.Controllers
     //TODO: http://issues.umbraco.org/issue/U4-2565
     public class ArticulateRichTextController : BlogPostControllerBase
     {
-        public ArticulateRichTextController(ILogger<RenderController> logger, ICompositeViewEngine compositeViewEngine, IUmbracoContextAccessor umbracoContextAccessor, IPublishedValueFallback publishedValueFallback)
+        public ArticulateRichTextController(ILogger<ArticulateRichTextController> logger, ICompositeViewEngine compositeViewEngine, IUmbracoContextAccessor umbracoContextAccessor, IPublishedValueFallback publishedValueFallback)
             : base(logger, compositeViewEngine, umbracoContextAccessor, publishedValueFallback)
         {
         }

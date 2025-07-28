@@ -8,8 +8,13 @@
 
     <article>
         <h1>@Model.Name</h1>
+        @{
+            var isTagsAction = ViewContext.RouteData.Values["action"]
+                ?.ToString()
+                ?.Equals("Tags", StringComparison.OrdinalIgnoreCase) == true;
+        }
 
-        @if (ViewContext.RouteData.Values["action"].ToString().Equals("Tags", StringComparison.OrdinalIgnoreCase))
+    @if (isTagsAction)
         {
             <div class="tag-cloud-large">
             @Model.Tags.TagCloud(@<a href="#tag-@item.HtmlId" title="View Posts with the tag @item.TagName">@item.TagName</a>, 5, 50)

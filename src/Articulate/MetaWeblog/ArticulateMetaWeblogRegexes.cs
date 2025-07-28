@@ -1,3 +1,4 @@
+#nullable enable
 using System.Text.RegularExpressions;
 
 namespace Articulate.MetaWeblog

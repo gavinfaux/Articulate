@@ -1,7 +1,6 @@
-using System.Linq;
+#nullable enable
 using Articulate.Models;
 using Microsoft.AspNetCore.Mvc;
-using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Extensions;
 
 namespace Articulate

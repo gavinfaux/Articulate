@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.PropertyEditors;
 using Umbraco.Cms.Core.Serialization;
@@ -16,11 +13,11 @@ namespace Articulate
             string name,
             IContent parent,
             IContentTypeComposition contentType,
-            ILocalizationService localizationService,
+            ILanguageService languageService,
             int userId = -1)
         {
             IContent content = contentService.Create(name, parent, contentType.Alias, userId);
-            content.SetInvariantOrDefaultCultureName(name, contentType, localizationService);
+            content.SetInvariantOrDefaultCultureName(name, contentType, languageService);
             return content;
         }
 
@@ -29,11 +26,11 @@ namespace Articulate
             string name,
             int parent,
             IContentTypeComposition contentType,
-            ILocalizationService localizationService,
+            ILanguageService languageService,
             int userId = -1)
         {
             IContent content = contentService.Create(name, parent, contentType.Alias, userId);
-            content.SetInvariantOrDefaultCultureName(name, contentType, localizationService);
+            content.SetInvariantOrDefaultCultureName(name, contentType, languageService);
             return content;
         }
 
@@ -41,7 +38,7 @@ namespace Articulate
             this IContentBase content,
             string name,
             IContentTypeComposition contentType,
-            ILocalizationService localizationService)
+            ILanguageService languageService)
         {
             if (contentType is null)
             {
@@ -52,7 +49,7 @@ namespace Articulate
 
             if (variesByCulure)
             {
-                content.SetCultureName(name, localizationService.GetDefaultLanguageIsoCode());
+                content.SetCultureName(name, Task.Run(languageService.GetDefaultIsoCodeAsync).GetAwaiter().GetResult());
             }
             else
             {
@@ -73,7 +70,7 @@ namespace Articulate
             string propertyTypeAlias,
             object value,
             IContentTypeComposition contentType,
-            ILocalizationService localizationService)
+            ILanguageService languageService)
         {
             if (contentType is null)
             {
@@ -85,7 +82,7 @@ namespace Articulate
             content.SetValue(
                 propertyTypeAlias,
                 value,
-                variesByCulture ? localizationService.GetDefaultLanguageIsoCode() : null);
+                variesByCulture ? Task.Run(languageService.GetDefaultIsoCodeAsync).GetAwaiter().GetResult() : null);
         }
 
         /// <summary>
@@ -101,7 +98,7 @@ namespace Articulate
             string propertyTypeAlias,
             IEnumerable<string> tags,
             IContentTypeComposition contentType,
-            ILocalizationService localizationService,
+            ILanguageService languageService,
             IDataTypeService dataTypeService,
             PropertyEditorCollection dataEditors,
             IJsonSerializer jsonSerializer,
@@ -121,7 +118,7 @@ namespace Articulate
                 propertyTypeAlias,
                 tags,
                 merge,
-                variesByCulture ? localizationService.GetDefaultLanguageIsoCode() : null);
+                variesByCulture ? Task.Run(languageService.GetDefaultIsoCodeAsync).GetAwaiter().GetResult() : null);
         }
 
         /// <summary>
@@ -146,7 +143,7 @@ namespace Articulate
                 throw new ArgumentNullException(nameof(contentType));
             }
 
-            if (content.ContentType.VariesByCulture())
+            if (content.ContentType.VariesByCulture() && content.CultureInfos != null)
             {
                 // iterate over any existing cultures defined on the content item
                 foreach (ContentCultureInfos c in content.CultureInfos)

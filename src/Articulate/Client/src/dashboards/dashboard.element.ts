@@ -1,4 +1,5 @@
 import { css, customElement, html, state } from "@umbraco-cms/backoffice/external/lit";
+import { when } from "lit/directives/when.js";
 import { UmbLitElement } from "@umbraco-cms/backoffice/lit-element";
 import type { UmbRoute, UmbRouterSlotInitEvent } from "@umbraco-cms/backoffice/router";
 import { UmbTextStyles } from "@umbraco-cms/backoffice/style";
@@ -35,9 +36,13 @@ export default class ArticulateDashboardElement extends UmbLitElement {
    * @private
    * @type {string}
    */
+
+
+  @state() private _buildInfo?: { version: string; date: string; commit: string };
+
   constructor() {
     super();
-
+    this._getBuildInfo();
     const createSetup = <T extends UmbLitElement & { routerPath?: string }>(component: new () => T) => {
       return (el: Element | undefined) => {
         if (this._routerBasePath && el instanceof component) {
@@ -74,6 +79,22 @@ export default class ArticulateDashboardElement extends UmbLitElement {
     ];
   }
 
+  private async _getBuildInfo(): Promise<void> {
+    try {
+      const res = await fetch('/build-info.json');
+      if (!res.ok) throw new Error('Failed to fetch build info');
+      const data = await res.json();
+      this._buildInfo = {
+        version: data.version ?? 'Development',
+        date: data.date ?? '',
+        commit: data.commit ?? '',
+      };
+      console.info('Build Info:', this._buildInfo);
+    } catch (err) {
+      console.warn('Could not load build-info.json', err);
+      this._buildInfo = { version: 'Development', date: '', commit: '' };
+    }
+  }
   override render() {
     return html`
       <umb-body-layout>
@@ -92,7 +113,12 @@ export default class ArticulateDashboardElement extends UmbLitElement {
           ></umb-router-slot>
         </div>
         <footer slot="footer">
-          <p slot="footer-info" class="articulate-footer-info"></p>
+          <p slot="footer-info" class="articulate-footer-info">
+            ${when(
+              this._buildInfo?.version,
+              () => html`Articulate | Version: ${this._buildInfo!.version}`
+            )}
+          </p>
         </footer>
       </umb-body-layout>
     `;

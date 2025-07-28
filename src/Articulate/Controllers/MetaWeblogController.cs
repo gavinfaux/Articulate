@@ -1,7 +1,5 @@
-using System;
-using System.IO;
+#nullable enable
 using System.Text;
-using System.Threading.Tasks;
 using Articulate.Attributes;
 using Articulate.MetaWeblog;
 using Microsoft.AspNetCore.Mvc;
@@ -27,15 +25,17 @@ namespace Articulate.Controllers
     public class MetaWeblogController : RenderController
     {
         private readonly IServiceProvider _serviceProvider;
+        private readonly ILogger<MetaWeblogController> _logger;
 
         public MetaWeblogController(
-            ILogger<RenderController> logger,
+            ILogger<MetaWeblogController> logger,
             ICompositeViewEngine compositeViewEngine,
             IUmbracoContextAccessor umbracoContextAccessor,
             IServiceProvider serviceProvider)
             : base(logger, compositeViewEngine, umbracoContextAccessor)
         {
             _serviceProvider = serviceProvider;
+            _logger = logger;
         }
 
         [HttpPost]
@@ -54,14 +54,30 @@ namespace Articulate.Controllers
             // create the service using the provider
             MetaWeblogService service = ActivatorUtilities.CreateInstance<MetaWeblogService>(_serviceProvider, provider);
 
-            var rawContent = string.Empty;
+            string rawContent;
             using (var reader = new StreamReader(Request.Body))
             {
                 rawContent = await reader.ReadToEndAsync();
             }
 
-            string result = await service.InvokeAsync(rawContent);
-            return Content(result, "text/xml", Encoding.UTF8);
+            try
+            {
+                var result = await service.InvokeAsync(rawContent);
+                return Content(result, "text/xml", Encoding.UTF8);
+            }
+            catch (NullReferenceException ex)
+            {
+                _logger.LogError("A NullReferenceException occurred processing a metaWeblog request. Raw Content: {RawXml}", rawContent);
+
+                _logger.LogError(ex, "NullReferenceException details for metaWeblog call:");
+
+                return StatusCode(500, "An error occurred while processing the request.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An unexpected exception occurred in metaWeblog service.");
+                return StatusCode(500, "An error occurred while processing the request.");
+            }
         }
     }
 }

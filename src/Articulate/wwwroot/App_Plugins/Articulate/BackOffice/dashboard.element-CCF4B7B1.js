@@ -1,12 +1,20 @@
-import { html as p, nothing as Se, css as N, property as Z, state as d, query as fe, customElement as L } from "@umbraco-cms/backoffice/external/lit";
+import { html as m, nothing as Se, css as N, property as Z, state as d, query as ge, customElement as L } from "@umbraco-cms/backoffice/external/lit";
 import { UmbLitElement as W } from "@umbraco-cms/backoffice/lit-element";
 import { UmbTextStyles as C } from "@umbraco-cms/backoffice/style";
-import { UMB_MODAL_MANAGER_CONTEXT as Ie } from "@umbraco-cms/backoffice/modal";
-import { UmbValidationContext as ge } from "@umbraco-cms/backoffice/validation";
+import { UMB_MODAL_MANAGER_CONTEXT as Oe } from "@umbraco-cms/backoffice/modal";
+import { UmbValidationContext as _e } from "@umbraco-cms/backoffice/validation";
 import { f as rt, B as Y, T as Fe } from "./error-utils-ulwSul7B.js";
 import { UMB_DOCUMENT_PICKER_MODAL as at } from "@umbraco-cms/backoffice/document";
 import { DocumentTypeService as st, DocumentService as nt } from "@umbraco-cms/backoffice/external/backend-api";
 import { UMB_NOTIFICATION_CONTEXT as lt } from "@umbraco-cms/backoffice/notification";
+/**
+ * @license
+ * Copyright 2021 Google LLC
+ * SPDX-License-Identifier: BSD-3-Clause
+ */
+function ut(t, e, i) {
+  return t ? e(t) : i?.(t);
+}
 async function Re(t) {
   try {
     return (await nt.getDocumentById({ id: t }))?.variants?.[0] ?? null;
@@ -47,7 +55,7 @@ async function ze(t, e, i) {
 function f(t, e, i) {
   t._formState = "failed", t._formError = rt(e, i), t.resetState();
 }
-async function _e(t, e, i, o = !1) {
+async function ve(t, e, i, o = !1) {
   const r = await t.getContext(lt);
   if (!r) {
     console.error("UMB_NOTIFICATION_CONTEXT not found. Could not display notification.", {
@@ -62,8 +70,8 @@ async function _e(t, e, i, o = !1) {
     data: { message: e }
   });
 }
-function ve(t) {
-  return p`
+function ye(t) {
+  return m`
     <div slot="header-actions">
       <uui-button
         label="Back to Articulate dashboard options"
@@ -76,17 +84,17 @@ function ve(t) {
     </div>
   `;
 }
-function ye(t) {
+function be(t) {
   if (!t)
     return console.info("At validation event: renderErrorMessage returning nothing as errors object is null"), Se;
   const { title: e, details: i } = t;
-  return p`
+  return m`
     <div class="articulate-error-box">
       <strong>${e}</strong>
-      ${i.length > 0 ? p`
+      ${i.length > 0 ? m`
             <ul class="articulate-error-list">
               ${i.map(
-    (o) => p`
+    (o) => m`
                   <li>${o}</li>
                 `
   )}
@@ -101,7 +109,7 @@ const J = N`
     max-width: var(--uui-size-content);
     margin-inline: auto;
   }
-`, be = N`
+`, $e = N`
   .container {
     max-width: var(--uui-size-content);
     margin-inline: auto;
@@ -126,7 +134,7 @@ const J = N`
     align-items: center;
     gap: var(--uui-size-space-3);
   }
-`, $e = N`
+`, we = N`
   .articulate-error-box {
     padding: var(--uui-size-space-4);
     margin-block: 1rem;
@@ -151,22 +159,22 @@ const J = N`
     }
   }
 `;
-var ut = Object.defineProperty, ct = Object.getOwnPropertyDescriptor, qe = (t) => {
+var ct = Object.defineProperty, ht = Object.getOwnPropertyDescriptor, qe = (t) => {
   throw TypeError(t);
 }, P = (t, e, i, o) => {
-  for (var r = o > 1 ? void 0 : o ? ct(e, i) : e, a = t.length - 1, s; a >= 0; a--)
+  for (var r = o > 1 ? void 0 : o ? ht(e, i) : e, a = t.length - 1, s; a >= 0; a--)
     (s = t[a]) && (r = (o ? s(e, i, r) : s(r)) || r);
-  return o && r && ut(e, i, r), r;
-}, ht = (t, e, i) => e.has(t) || qe("Cannot " + i), I = (t, e, i) => (ht(t, e, "read from private field"), i ? i.call(t) : e.get(t)), F = (t, e, i) => e.has(t) ? qe("Cannot add the same private member more than once") : e instanceof WeakSet ? e.add(t) : e.set(t, i), ie, oe, re, ae, se;
+  return o && r && ct(e, i, r), r;
+}, dt = (t, e, i) => e.has(t) || qe("Cannot " + i), F = (t, e, i) => (dt(t, e, "read from private field"), i ? i.call(t) : e.get(t)), R = (t, e, i) => e.has(t) ? qe("Cannot add the same private member more than once") : e instanceof WeakSet ? e.add(t) : e.set(t, i), oe, re, ae, se, ne;
 let y = class extends W {
   constructor() {
-    super(), this._formState = void 0, this._formError = null, this._articulateBlogNode = void 0, this._selectedBlogNodeName = "", this._archiveDoctypeUdi = void 0, F(this, ie, new ge(this)), F(this, oe, (t, e) => {
+    super(), this._formState = void 0, this._formError = null, this._articulateBlogNode = void 0, this._selectedBlogNodeName = "", this._archiveDoctypeUdi = void 0, R(this, oe, new _e(this)), R(this, re, (t, e) => {
       const i = window.URL.createObjectURL(t), o = document.createElement("a");
       o.style.display = "none", o.href = i, o.download = e, document.body.appendChild(o), o.click(), window.URL.revokeObjectURL(i), o.remove();
-    }), F(this, re, (t) => t instanceof Blob), F(this, ae, async (t) => {
+    }), R(this, ae, (t) => t instanceof Blob), R(this, se, async (t) => {
       if (t.preventDefault(), !!this._form) {
         try {
-          await I(this, ie).validate();
+          await F(this, oe).validate();
         } catch (e) {
           f(this, e, "Validation Failed");
           return;
@@ -179,13 +187,13 @@ let y = class extends W {
         if (this._formState !== "waiting") {
           this._formState = "waiting", this._formError = null;
           try {
-            await I(this, se).call(this), this._formState = "success", await _e(this, "BlogML exported successfully!", "positive"), this.resetState(!0);
+            await F(this, ne).call(this), this._formState = "success", await ve(this, "BlogML exported successfully!", "positive"), this.resetState(!0);
           } catch (e) {
             f(this, e, "Export Failed");
           }
         }
       }
-    }), F(this, se, async () => {
+    }), R(this, ne, async () => {
       const e = new FormData(this._form).get("embedImages") === "on", i = {
         articulateBlogNode: this._articulateBlogNode,
         exportImagesAsBase64: e
@@ -193,7 +201,7 @@ let y = class extends W {
       if (!o.response.ok || !o.data)
         throw o.error || new Error("The server returned an invalid response during export.");
       const r = o.data;
-      if (!I(this, re).call(this, r))
+      if (!F(this, ae).call(this, r))
         throw new Error("The server did not return a file. Please check the server logs.");
       const a = o.response.headers.get("content-disposition");
       let s = "blog-export.xml";
@@ -206,10 +214,10 @@ let y = class extends W {
           n && n.length > 1 && n[1] && (s = n[1]);
         }
       }
-      I(this, oe).call(this, r, s);
+      F(this, re).call(this, r, s);
     }), this._handleReset = (t) => {
       t.preventDefault(), this.resetState(!0);
-    }, this.consumeContext(Ie, (t) => {
+    }, this.consumeContext(Oe, (t) => {
       this._modalManagerContext = t;
     });
   }
@@ -254,13 +262,13 @@ let y = class extends W {
     return this._articulateBlogNode ? "positive" : "primary";
   }
   render() {
-    return p`
+    return m`
       <uui-box headline="BlogML Exporter" headlinevariant="h2">
-        ${ve(this.routerPath)}
+        ${ye(this.routerPath)}
         <uui-form>
           <form
             id="blogMlExportForm"
-            @submit=${I(this, ae)}
+            @submit=${F(this, se)}
             @input=${() => {
       this._formError = null, this._formState = void 0;
     }}
@@ -309,24 +317,24 @@ let y = class extends W {
             </div>
           </form>
         </uui-form>
-        ${this._formError ? ye(this._formError) : ""}
+        ${this._formError ? be(this._formError) : ""}
       </uui-box>
     `;
   }
 };
-ie = /* @__PURE__ */ new WeakMap();
 oe = /* @__PURE__ */ new WeakMap();
 re = /* @__PURE__ */ new WeakMap();
 ae = /* @__PURE__ */ new WeakMap();
 se = /* @__PURE__ */ new WeakMap();
+ne = /* @__PURE__ */ new WeakMap();
 y.styles = [
   C,
   C,
   C,
   V,
   J,
+  we,
   $e,
-  be,
   He
 ];
 P([
@@ -345,7 +353,7 @@ P([
   d()
 ], y.prototype, "_selectedBlogNodeName", 2);
 P([
-  fe("#blogMlExportForm")
+  ge("#blogMlExportForm")
 ], y.prototype, "_form", 2);
 y = P([
   L("blogml-exporter")
@@ -355,40 +363,40 @@ y = P([
  * Copyright 2017 Google LLC
  * SPDX-License-Identifier: BSD-3-Clause
  */
-const we = globalThis, K = we.trustedTypes, ke = K ? K.createPolicy("lit-html", { createHTML: (t) => t }) : void 0, Le = "$lit$", A = `lit$${Math.random().toFixed(9).slice(2)}$`, We = "?" + A, dt = `<${We}>`, M = document, G = () => M.createComment(""), U = (t) => t === null || typeof t != "object" && typeof t != "function", xe = Array.isArray, mt = (t) => xe(t) || typeof t?.[Symbol.iterator] == "function", te = `[ 	
-\f\r]`, R = /<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g, Be = /-->/g, Me = />/g, T = RegExp(`>|${te}(?:([^\\s"'>=/]+)(${te}*=${te}*(?:[^ 	
-\f\r"'\`<>=]|("|')|))|$)`, "g"), Pe = /'/g, De = /"/g, Ve = /^(?:script|style|textarea|title)$/i, z = Symbol.for("lit-noChange"), u = Symbol.for("lit-nothing"), Oe = /* @__PURE__ */ new WeakMap(), B = M.createTreeWalker(M, 129);
+const xe = globalThis, K = xe.trustedTypes, ke = K ? K.createPolicy("lit-html", { createHTML: (t) => t }) : void 0, Le = "$lit$", A = `lit$${Math.random().toFixed(9).slice(2)}$`, We = "?" + A, mt = `<${We}>`, M = document, G = () => M.createComment(""), z = (t) => t === null || typeof t != "object" && typeof t != "function", Ae = Array.isArray, pt = (t) => Ae(t) || typeof t?.[Symbol.iterator] == "function", ie = `[ 	
+\f\r]`, U = /<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g, Be = /-->/g, Me = />/g, T = RegExp(`>|${ie}(?:([^\\s"'>=/]+)(${ie}*=${ie}*(?:[^ 	
+\f\r"'\`<>=]|("|')|))|$)`, "g"), Pe = /'/g, De = /"/g, Ve = /^(?:script|style|textarea|title)$/i, H = Symbol.for("lit-noChange"), u = Symbol.for("lit-nothing"), Ie = /* @__PURE__ */ new WeakMap(), B = M.createTreeWalker(M, 129);
 function je(t, e) {
-  if (!xe(t) || !t.hasOwnProperty("raw")) throw Error("invalid template strings array");
+  if (!Ae(t) || !t.hasOwnProperty("raw")) throw Error("invalid template strings array");
   return ke !== void 0 ? ke.createHTML(e) : e;
 }
-const pt = (t, e) => {
+const ft = (t, e) => {
   const i = t.length - 1, o = [];
-  let r, a = e === 2 ? "<svg>" : e === 3 ? "<math>" : "", s = R;
+  let r, a = e === 2 ? "<svg>" : e === 3 ? "<math>" : "", s = U;
   for (let c = 0; c < i; c++) {
     const n = t[c];
-    let h, m, l = -1, b = 0;
-    for (; b < n.length && (s.lastIndex = b, m = s.exec(n), m !== null); ) b = s.lastIndex, s === R ? m[1] === "!--" ? s = Be : m[1] !== void 0 ? s = Me : m[2] !== void 0 ? (Ve.test(m[2]) && (r = RegExp("</" + m[2], "g")), s = T) : m[3] !== void 0 && (s = T) : s === T ? m[0] === ">" ? (s = r ?? R, l = -1) : m[1] === void 0 ? l = -2 : (l = s.lastIndex - m[2].length, h = m[1], s = m[3] === void 0 ? T : m[3] === '"' ? De : Pe) : s === De || s === Pe ? s = T : s === Be || s === Me ? s = R : (s = T, r = void 0);
+    let h, p, l = -1, b = 0;
+    for (; b < n.length && (s.lastIndex = b, p = s.exec(n), p !== null); ) b = s.lastIndex, s === U ? p[1] === "!--" ? s = Be : p[1] !== void 0 ? s = Me : p[2] !== void 0 ? (Ve.test(p[2]) && (r = RegExp("</" + p[2], "g")), s = T) : p[3] !== void 0 && (s = T) : s === T ? p[0] === ">" ? (s = r ?? U, l = -1) : p[1] === void 0 ? l = -2 : (l = s.lastIndex - p[2].length, h = p[1], s = p[3] === void 0 ? T : p[3] === '"' ? De : Pe) : s === De || s === Pe ? s = T : s === Be || s === Me ? s = U : (s = T, r = void 0);
     const x = s === T && t[c + 1].startsWith("/>") ? " " : "";
-    a += s === R ? n + dt : l >= 0 ? (o.push(h), n.slice(0, l) + Le + n.slice(l) + A + x) : n + A + (l === -2 ? c : x);
+    a += s === U ? n + mt : l >= 0 ? (o.push(h), n.slice(0, l) + Le + n.slice(l) + A + x) : n + A + (l === -2 ? c : x);
   }
   return [je(t, a + (t[i] || "<?>") + (e === 2 ? "</svg>" : e === 3 ? "</math>" : "")), o];
 };
-class H {
+class q {
   constructor({ strings: e, _$litType$: i }, o) {
     let r;
     this.parts = [];
     let a = 0, s = 0;
-    const c = e.length - 1, n = this.parts, [h, m] = pt(e, i);
-    if (this.el = H.createElement(h, o), B.currentNode = this.el.content, i === 2 || i === 3) {
+    const c = e.length - 1, n = this.parts, [h, p] = ft(e, i);
+    if (this.el = q.createElement(h, o), B.currentNode = this.el.content, i === 2 || i === 3) {
       const l = this.el.content.firstChild;
       l.replaceWith(...l.childNodes);
     }
     for (; (r = B.nextNode()) !== null && n.length < c; ) {
       if (r.nodeType === 1) {
         if (r.hasAttributes()) for (const l of r.getAttributeNames()) if (l.endsWith(Le)) {
-          const b = m[s++], x = r.getAttribute(l).split(A), j = /([.?@])?(.*)/.exec(b);
-          n.push({ type: 1, index: a, name: j[2], strings: x, ctor: j[1] === "." ? gt : j[1] === "?" ? _t : j[1] === "@" ? vt : ee }), r.removeAttribute(l);
+          const b = p[s++], x = r.getAttribute(l).split(A), j = /([.?@])?(.*)/.exec(b);
+          n.push({ type: 1, index: a, name: j[2], strings: x, ctor: j[1] === "." ? _t : j[1] === "?" ? vt : j[1] === "@" ? yt : ee }), r.removeAttribute(l);
         } else l.startsWith(A) && (n.push({ type: 6, index: a }), r.removeAttribute(l));
         if (Ve.test(r.tagName)) {
           const l = r.textContent.split(A), b = l.length - 1;
@@ -412,12 +420,12 @@ class H {
   }
 }
 function D(t, e, i = t, o) {
-  if (e === z) return e;
+  if (e === H) return e;
   let r = o !== void 0 ? i._$Co?.[o] : i._$Cl;
-  const a = U(e) ? void 0 : e._$litDirective$;
+  const a = z(e) ? void 0 : e._$litDirective$;
   return r?.constructor !== a && (r?._$AO?.(!1), a === void 0 ? r = void 0 : (r = new a(t), r._$AT(t, i, o)), o !== void 0 ? (i._$Co ??= [])[o] = r : i._$Cl = r), r !== void 0 && (e = D(t, r._$AS(t, e.values), r, o)), e;
 }
-class ft {
+class gt {
   constructor(e, i) {
     this._$AV = [], this._$AN = void 0, this._$AD = e, this._$AM = i;
   }
@@ -434,7 +442,7 @@ class ft {
     for (; n !== void 0; ) {
       if (s === n.index) {
         let h;
-        n.type === 2 ? h = new Q(a, a.nextSibling, this, e) : n.type === 1 ? h = new n.ctor(a, n.name, n.strings, this, e) : n.type === 6 && (h = new yt(a, this, e)), this._$AV.push(h), n = o[++c];
+        n.type === 2 ? h = new Q(a, a.nextSibling, this, e) : n.type === 1 ? h = new n.ctor(a, n.name, n.strings, this, e) : n.type === 6 && (h = new bt(a, this, e)), this._$AV.push(h), n = o[++c];
       }
       s !== n?.index && (a = B.nextNode(), s++);
     }
@@ -464,7 +472,7 @@ class Q {
     return this._$AB;
   }
   _$AI(e, i = this) {
-    e = D(this, e, i), U(e) ? e === u || e == null || e === "" ? (this._$AH !== u && this._$AR(), this._$AH = u) : e !== this._$AH && e !== z && this._(e) : e._$litType$ !== void 0 ? this.$(e) : e.nodeType !== void 0 ? this.T(e) : mt(e) ? this.k(e) : this._(e);
+    e = D(this, e, i), z(e) ? e === u || e == null || e === "" ? (this._$AH !== u && this._$AR(), this._$AH = u) : e !== this._$AH && e !== H && this._(e) : e._$litType$ !== void 0 ? this.$(e) : e.nodeType !== void 0 ? this.T(e) : pt(e) ? this.k(e) : this._(e);
   }
   O(e) {
     return this._$AA.parentNode.insertBefore(e, this._$AB);
@@ -473,22 +481,22 @@ class Q {
     this._$AH !== e && (this._$AR(), this._$AH = this.O(e));
   }
   _(e) {
-    this._$AH !== u && U(this._$AH) ? this._$AA.nextSibling.data = e : this.T(M.createTextNode(e)), this._$AH = e;
+    this._$AH !== u && z(this._$AH) ? this._$AA.nextSibling.data = e : this.T(M.createTextNode(e)), this._$AH = e;
   }
   $(e) {
-    const { values: i, _$litType$: o } = e, r = typeof o == "number" ? this._$AC(e) : (o.el === void 0 && (o.el = H.createElement(je(o.h, o.h[0]), this.options)), o);
+    const { values: i, _$litType$: o } = e, r = typeof o == "number" ? this._$AC(e) : (o.el === void 0 && (o.el = q.createElement(je(o.h, o.h[0]), this.options)), o);
     if (this._$AH?._$AD === r) this._$AH.p(i);
     else {
-      const a = new ft(r, this), s = a.u(this.options);
+      const a = new gt(r, this), s = a.u(this.options);
       a.p(i), this.T(s), this._$AH = a;
     }
   }
   _$AC(e) {
-    let i = Oe.get(e.strings);
-    return i === void 0 && Oe.set(e.strings, i = new H(e)), i;
+    let i = Ie.get(e.strings);
+    return i === void 0 && Ie.set(e.strings, i = new q(e)), i;
   }
   k(e) {
-    xe(this._$AH) || (this._$AH = [], this._$AR());
+    Ae(this._$AH) || (this._$AH = [], this._$AR());
     const i = this._$AH;
     let o, r = 0;
     for (const a of e) r === i.length ? i.push(o = new Q(this.O(G()), this.O(G()), this, this.options)) : o = i[r], o._$AI(a), r++;
@@ -517,11 +525,11 @@ class ee {
   _$AI(e, i = this, o, r) {
     const a = this.strings;
     let s = !1;
-    if (a === void 0) e = D(this, e, i, 0), s = !U(e) || e !== this._$AH && e !== z, s && (this._$AH = e);
+    if (a === void 0) e = D(this, e, i, 0), s = !z(e) || e !== this._$AH && e !== H, s && (this._$AH = e);
     else {
       const c = e;
       let n, h;
-      for (e = a[0], n = 0; n < a.length - 1; n++) h = D(this, c[o + n], i, n), h === z && (h = this._$AH[n]), s ||= !U(h) || h !== this._$AH[n], h === u ? e = u : e !== u && (e += (h ?? "") + a[n + 1]), this._$AH[n] = h;
+      for (e = a[0], n = 0; n < a.length - 1; n++) h = D(this, c[o + n], i, n), h === H && (h = this._$AH[n]), s ||= !z(h) || h !== this._$AH[n], h === u ? e = u : e !== u && (e += (h ?? "") + a[n + 1]), this._$AH[n] = h;
     }
     s && !r && this.j(e);
   }
@@ -529,7 +537,7 @@ class ee {
     e === u ? this.element.removeAttribute(this.name) : this.element.setAttribute(this.name, e ?? "");
   }
 }
-class gt extends ee {
+class _t extends ee {
   constructor() {
     super(...arguments), this.type = 3;
   }
@@ -537,7 +545,7 @@ class gt extends ee {
     this.element[this.name] = e === u ? void 0 : e;
   }
 }
-class _t extends ee {
+class vt extends ee {
   constructor() {
     super(...arguments), this.type = 4;
   }
@@ -545,12 +553,12 @@ class _t extends ee {
     this.element.toggleAttribute(this.name, !!e && e !== u);
   }
 }
-class vt extends ee {
+class yt extends ee {
   constructor(e, i, o, r, a) {
     super(e, i, o, r, a), this.type = 5;
   }
   _$AI(e, i = this) {
-    if ((e = D(this, e, i, 0) ?? u) === z) return;
+    if ((e = D(this, e, i, 0) ?? u) === H) return;
     const o = this._$AH, r = e === u && o !== u || e.capture !== o.capture || e.once !== o.once || e.passive !== o.passive, a = e !== u && (o === u || r);
     r && this.element.removeEventListener(this.name, this, o), a && this.element.addEventListener(this.name, this, e), this._$AH = e;
   }
@@ -558,7 +566,7 @@ class vt extends ee {
     typeof this._$AH == "function" ? this._$AH.call(this.options?.host ?? this.element, e) : this._$AH.handleEvent(e);
   }
 }
-class yt {
+class bt {
   constructor(e, i, o) {
     this.element = e, this.type = 6, this._$AN = void 0, this._$AM = i, this.options = o;
   }
@@ -569,15 +577,15 @@ class yt {
     D(this, e);
   }
 }
-const bt = we.litHtmlPolyfillSupport;
-bt?.(H, Q), (we.litHtmlVersions ??= []).push("3.3.1");
+const $t = xe.litHtmlPolyfillSupport;
+$t?.(q, Q), (xe.litHtmlVersions ??= []).push("3.3.1");
 /**
  * @license
  * Copyright 2017 Google LLC
  * SPDX-License-Identifier: BSD-3-Clause
  */
-const $t = (t) => (...e) => ({ _$litDirective$: t, values: e });
-let wt = class {
+const wt = (t) => (...e) => ({ _$litDirective$: t, values: e });
+let xt = class {
   constructor(e) {
   }
   get _$AU() {
@@ -598,13 +606,13 @@ let wt = class {
  * Copyright 2020 Google LLC
  * SPDX-License-Identifier: BSD-3-Clause
  */
-const xt = {}, At = (t, e = xt) => t._$AH = e;
+const At = {}, Ct = (t, e = At) => t._$AH = e;
 /**
  * @license
  * Copyright 2021 Google LLC
  * SPDX-License-Identifier: BSD-3-Clause
  */
-const Ct = $t(class extends wt {
+const Nt = wt(class extends xt {
   constructor() {
     super(...arguments), this.key = u;
   }
@@ -612,25 +620,25 @@ const Ct = $t(class extends wt {
     return this.key = t, e;
   }
   update(t, [e, i]) {
-    return e !== this.key && (At(t), this.key = e), i;
+    return e !== this.key && (Ct(t), this.key = e), i;
   }
 });
-var Nt = Object.defineProperty, Et = Object.getOwnPropertyDescriptor, Xe = (t) => {
+var Et = Object.defineProperty, Tt = Object.getOwnPropertyDescriptor, Xe = (t) => {
   throw TypeError(t);
 }, w = (t, e, i, o) => {
-  for (var r = o > 1 ? void 0 : o ? Et(e, i) : e, a = t.length - 1, s; a >= 0; a--)
+  for (var r = o > 1 ? void 0 : o ? Tt(e, i) : e, a = t.length - 1, s; a >= 0; a--)
     (s = t[a]) && (r = (o ? s(e, i, r) : s(r)) || r);
-  return o && r && Nt(e, i, r), r;
-}, Tt = (t, e, i) => e.has(t) || Xe("Cannot " + i), S = (t, e, i) => (Tt(t, e, "read from private field"), i ? i.call(t) : e.get(t)), k = (t, e, i) => e.has(t) ? Xe("Cannot add the same private member more than once") : e instanceof WeakSet ? e.add(t) : e.set(t, i), ne, le, ue, ce, he, de, me;
+  return o && r && Et(e, i, r), r;
+}, St = (t, e, i) => e.has(t) || Xe("Cannot " + i), S = (t, e, i) => (St(t, e, "read from private field"), i ? i.call(t) : e.get(t)), k = (t, e, i) => e.has(t) ? Xe("Cannot add the same private member more than once") : e instanceof WeakSet ? e.add(t) : e.set(t, i), le, ue, ce, he, de, me, pe;
 let g = class extends W {
   constructor() {
-    super(), this._formState = void 0, this._formError = null, this._articulateBlogNode = void 0, this._selectedBlogNodeName = "", this._postCount = void 0, this._formRenderKey = 0, this._archiveDoctypeUdi = void 0, k(this, ne, new ge(this)), k(this, le, (t, e) => {
+    super(), this._formState = void 0, this._formError = null, this._articulateBlogNode = void 0, this._selectedBlogNodeName = "", this._postCount = void 0, this._formRenderKey = 0, this._archiveDoctypeUdi = void 0, k(this, le, new _e(this)), k(this, ue, (t, e) => {
       const i = window.URL.createObjectURL(t), o = document.createElement("a");
       o.style.display = "none", o.href = i, o.download = e, document.body.appendChild(o), o.click(), window.URL.revokeObjectURL(i), o.remove();
-    }), k(this, ue, (t) => t instanceof Blob), k(this, ce, async (t) => {
+    }), k(this, ce, (t) => t instanceof Blob), k(this, he, async (t) => {
       if (t.preventDefault(), !this._form) return;
       try {
-        await S(this, ne).validate();
+        await S(this, le).validate();
       } catch (a) {
         f(this, a, "Validation Failed");
         return;
@@ -653,12 +661,12 @@ let g = class extends W {
       if (this._formState !== "waiting") {
         this._formState = "waiting", this._formError = null, this._postCount = void 0;
         try {
-          const a = await S(this, he).call(this, i);
+          const a = await S(this, de).call(this, i);
           this._postCount = a.postCount, this.requestUpdate("_postCount");
-          const s = await S(this, de).call(this, e, a.temporaryFileName);
-          e.get("exportDisqusXml") === "on" && s.commentCount > 0 && await S(this, me).call(this), this._formState = "success";
+          const s = await S(this, me).call(this, e, a.temporaryFileName);
+          e.get("exportDisqusXml") === "on" && s.commentCount > 0 && await S(this, pe).call(this), this._formState = "success";
           const c = e.get("exportDisqusXml") === "on" && s.commentCount > 0 ? `${s.commentCount} comments exported.` : e.get("exportDisqusXml") === "on" ? "No comments found to export." : "";
-          await _e(
+          await ve(
             this,
             `BlogML imported successfully! ${s.authorCount} authors, ${this._postCount} posts imported. ${c}`,
             "positive",
@@ -668,12 +676,12 @@ let g = class extends W {
           f(this, a, "Import Failed");
         }
       }
-    }), k(this, he, async (t) => {
+    }), k(this, de, async (t) => {
       const e = await Y.postArticulateBlogmlImportFile({ body: { importFile: t } });
       if (!e.response.ok || !e.data?.temporaryFileName || !e.data?.postCount)
         throw e.error || new Error("Failed to upload blog content.");
       return e.data;
-    }), k(this, de, async (t, e) => {
+    }), k(this, me, async (t, e) => {
       const i = {
         articulateBlogNode: this._articulateBlogNode,
         overwrite: t.get("overwrite") === "on",
@@ -687,12 +695,12 @@ let g = class extends W {
       if (!o.response.ok || !o.data?.completed)
         throw o.error || new Error("Failed to import blog content.");
       return o.data;
-    }), k(this, me, async () => {
+    }), k(this, pe, async () => {
       const t = await Y.getArticulateBlogmlExportDisqus();
       if (!t.response.ok || !t.data)
         throw t.error || new Error("Failed to export Disqus comments.");
       const e = t.data;
-      if (!S(this, ue).call(this, e))
+      if (!S(this, ce).call(this, e))
         throw new Error("Invalid file received for Disqus export.");
       const i = t.response.headers.get("content-disposition");
       let o = "disqus-comments.xml";
@@ -705,10 +713,10 @@ let g = class extends W {
           a && a.length > 1 && a[1] && (o = a[1]);
         }
       }
-      S(this, le).call(this, e, o);
+      S(this, ue).call(this, e, o);
     }), this._handleReset = (t) => {
       t.preventDefault(), this.resetState(!0);
-    }, this.consumeContext(Ie, (t) => {
+    }, this.consumeContext(Oe, (t) => {
       this._modalManagerContext = t;
     });
   }
@@ -750,16 +758,16 @@ let g = class extends W {
     }
   }
   render() {
-    return p`
+    return m`
       <uui-box headline="BlogML Importer" headlinevariant="h2">
-        ${ve(this.routerPath)}
+        ${ye(this.routerPath)}
         <uui-form>
-          ${Ct(
+          ${Nt(
       this._formRenderKey,
-      p`
+      m`
               <form
                 id="blogMlImportForm"
-                @submit=${S(this, ce)}
+                @submit=${S(this, he)}
                 @input=${() => {
         this._formError = null, this._formState = void 0;
       }}
@@ -850,7 +858,7 @@ let g = class extends W {
                   </uui-form-layout-item>
                 </uui-form-validation-message>
                 <div class="form-actions">
-                  ${this._postCount !== void 0 && this._postCount > 0 ? p`
+                  ${this._postCount !== void 0 && this._postCount > 0 ? m`
                         <uui-tag look="secondary" color="positive" style="margin-right: 1em;">
                           ${this._postCount} posts in uploaded file.
                         </uui-tag>
@@ -867,25 +875,25 @@ let g = class extends W {
     )}
         </uui-form>
 
-        ${this._formError ? ye(this._formError) : ""}
+        ${this._formError ? be(this._formError) : ""}
       </uui-box>
     `;
   }
 };
-ne = /* @__PURE__ */ new WeakMap();
 le = /* @__PURE__ */ new WeakMap();
 ue = /* @__PURE__ */ new WeakMap();
 ce = /* @__PURE__ */ new WeakMap();
 he = /* @__PURE__ */ new WeakMap();
 de = /* @__PURE__ */ new WeakMap();
 me = /* @__PURE__ */ new WeakMap();
+pe = /* @__PURE__ */ new WeakMap();
 g.styles = [
   C,
   C,
   V,
   J,
+  we,
   $e,
-  be,
   He
 ];
 w([
@@ -910,23 +918,23 @@ w([
   d()
 ], g.prototype, "_formRenderKey", 2);
 w([
-  fe("#blogMlImportForm")
+  ge("#blogMlImportForm")
 ], g.prototype, "_form", 2);
 g = w([
   L("blogml-importer")
 ], g);
-var St = Object.defineProperty, kt = Object.getOwnPropertyDescriptor, Ye = (t) => {
+var kt = Object.defineProperty, Bt = Object.getOwnPropertyDescriptor, Ye = (t) => {
   throw TypeError(t);
 }, E = (t, e, i, o) => {
-  for (var r = o > 1 ? void 0 : o ? kt(e, i) : e, a = t.length - 1, s; a >= 0; a--)
+  for (var r = o > 1 ? void 0 : o ? Bt(e, i) : e, a = t.length - 1, s; a >= 0; a--)
     (s = t[a]) && (r = (o ? s(e, i, r) : s(r)) || r);
-  return o && r && St(e, i, r), r;
-}, Ke = (t, e, i) => e.has(t) || Ye("Cannot " + i), pe = (t, e, i) => (Ke(t, e, "read from private field"), i ? i.call(t) : e.get(t)), X = (t, e, i) => e.has(t) ? Ye("Cannot add the same private member more than once") : e instanceof WeakSet ? e.add(t) : e.set(t, i), $ = (t, e, i) => (Ke(t, e, "access private method"), i), Ae, v, Ge, Ce, Ze, Je, Qe, Ne, et, Ee, tt, it;
+  return o && r && kt(e, i, r), r;
+}, Ke = (t, e, i) => e.has(t) || Ye("Cannot " + i), fe = (t, e, i) => (Ke(t, e, "read from private field"), i ? i.call(t) : e.get(t)), X = (t, e, i) => e.has(t) ? Ye("Cannot add the same private member more than once") : e instanceof WeakSet ? e.add(t) : e.set(t, i), $ = (t, e, i) => (Ke(t, e, "access private method"), i), Ce, v, Ge, Ne, Ze, Je, Qe, Ee, et, Te, tt, it;
 let _ = class extends W {
   constructor() {
-    super(...arguments), X(this, v), this._formState = void 0, this._formError = null, this._themes = [], this._selectedTheme = void 0, this._themeName = void 0, X(this, Ae, new ge(this)), X(this, Ne, (t) => {
+    super(...arguments), X(this, v), this._formState = void 0, this._formError = null, this._themes = [], this._selectedTheme = void 0, this._themeName = void 0, X(this, Ce, new _e(this)), X(this, Ee, (t) => {
       this._formError = null, this._formState = void 0, this._themeName = t.target.value;
-    }), X(this, Ee, (t) => {
+    }), X(this, Te, (t) => {
       t.preventDefault(), this.resetState(!0);
     });
   }
@@ -948,9 +956,9 @@ let _ = class extends W {
     return this._selectedTheme && this._themeName ? "positive" : "primary";
   }
   render() {
-    return p`
+    return m`
       <uui-box headline="Theme Options">
-        ${ve(this.routerPath)}
+        ${ye(this.routerPath)}
         <div class="container">
           <h3>Creating and Customising Themes</h3>
           <p>
@@ -1040,12 +1048,12 @@ let _ = class extends W {
           </p>
         </div>
         <div class="container">${$(this, v, tt).call(this)} ${$(this, v, it).call(this)}</div>
-        ${this._formError ? ye(this._formError) : ""}
+        ${this._formError ? be(this._formError) : ""}
       </uui-box>
     `;
   }
 };
-Ae = /* @__PURE__ */ new WeakMap();
+Ce = /* @__PURE__ */ new WeakMap();
 v = /* @__PURE__ */ new WeakSet();
 Ge = async function() {
   try {
@@ -1057,25 +1065,25 @@ Ge = async function() {
     f(this, t, "Could not load themes");
   }
 };
-Ce = function(t) {
+Ne = function(t) {
   this.resetState(!0), this._selectedTheme = t, this._themeName = `Custom${t}Theme`;
 };
 Ze = function(t, e) {
-  t.stopPropagation(), $(this, v, Ce).call(this, e);
+  t.stopPropagation(), $(this, v, Ne).call(this, e);
 };
 Je = function(t) {
   const i = t.target.getAttribute("data-theme");
-  i && $(this, v, Ce).call(this, i);
+  i && $(this, v, Ne).call(this, i);
 };
 Qe = function(t) {
   const i = t.target.getAttribute("data-theme");
   i && i === this._selectedTheme && this.resetState(!0);
 };
-Ne = /* @__PURE__ */ new WeakMap();
+Ee = /* @__PURE__ */ new WeakMap();
 et = async function(t) {
   if (t.preventDefault(), !!this._form) {
     try {
-      await pe(this, Ae).validate();
+      await fe(this, Ce).validate();
     } catch (e) {
       f(this, e, "Validation Failed");
       return;
@@ -1096,19 +1104,19 @@ et = async function(t) {
         });
         if (!e.response.ok)
           throw e.error || new Error("Failed to copy theme.");
-        this._formState = "success", await _e(this, "Theme copied successfully!", "positive"), this.resetState(!0);
+        this._formState = "success", await ve(this, "Theme copied successfully!", "positive"), this.resetState(!0);
       } catch (e) {
         f(this, e, "Copy Failed");
       }
     }
   }
 };
-Ee = /* @__PURE__ */ new WeakMap();
+Te = /* @__PURE__ */ new WeakMap();
 tt = function() {
-  return p`
+  return m`
       <div class="theme-grid">
         ${(this._themes ?? []).map(
-    (t) => p`
+    (t) => m`
             <uui-card-media
               class="theme-card"
               .name=${t}
@@ -1154,7 +1162,7 @@ tt = function() {
     `;
 };
 it = function() {
-  return this._selectedTheme ? p`
+  return this._selectedTheme ? m`
       <div class="duplicate-form">
         <h3>Copy '${this._selectedTheme}' Theme</h3>
         <p>Create a copy of this theme that you can customise.</p>
@@ -1172,7 +1180,7 @@ it = function() {
                   id="themeName"
                   name="themeName"
                   .value=${this._themeName ?? ""}
-                  @input=${pe(this, Ne)}
+                  @input=${fe(this, Ee)}
                   required
                   required-message="You must provide a name for the theme."
                   label="Theme name"
@@ -1189,21 +1197,21 @@ it = function() {
               >
                 Create Theme
               </uui-button>
-              <uui-button id="cancelButton" type="reset" look="secondary" @click=${pe(this, Ee)}>
+              <uui-button id="cancelButton" type="reset" look="secondary" @click=${fe(this, Te)}>
                 Cancel
               </uui-button>
             </div>
           </form>
         </uui-form>
       </div>
-    ` : p``;
+    ` : m``;
 };
 _.styles = [
   C,
   V,
   J,
+  we,
   $e,
-  be,
   N`
       .theme-grid {
         display: grid;
@@ -1282,17 +1290,17 @@ E([
   d()
 ], _.prototype, "_themeName", 2);
 E([
-  fe("form")
+  ge("form")
 ], _.prototype, "_form", 2);
 _ = E([
   L("theme-options")
 ], _);
-var Bt = Object.defineProperty, Mt = Object.getOwnPropertyDescriptor, ot = (t, e, i, o) => {
-  for (var r = o > 1 ? void 0 : o ? Mt(e, i) : e, a = t.length - 1, s; a >= 0; a--)
+var Mt = Object.defineProperty, Pt = Object.getOwnPropertyDescriptor, ot = (t, e, i, o) => {
+  for (var r = o > 1 ? void 0 : o ? Pt(e, i) : e, a = t.length - 1, s; a >= 0; a--)
     (s = t[a]) && (r = (o ? s(e, i, r) : s(r)) || r);
-  return o && r && Bt(e, i, r), r;
+  return o && r && Mt(e, i, r), r;
 };
-const Pt = [
+const Dt = [
   {
     path: "blogml/import",
     name: "BlogML Import",
@@ -1312,7 +1320,7 @@ const Pt = [
     description: "Create or customise Articulate themes"
   }
 ];
-let O = class extends W {
+let I = class extends W {
   constructor() {
     super(...arguments), this.routerPath = "";
   }
@@ -1322,7 +1330,7 @@ let O = class extends W {
    * @returns {TemplateResult} The rendered dashboard options template.
    */
   render() {
-    return p`
+    return m`
       <uui-box headline="Articulate Options" headlinevariant="h2">
         <div slot="header-actions">
           <uui-button look="default" compact href="https://github.com/Shazwazza/Articulate/wiki" label="Wiki">
@@ -1330,9 +1338,9 @@ let O = class extends W {
           </uui-button>
         </div>
         <div class="tools-grid">
-          ${Pt.map((t) => {
+          ${Dt.map((t) => {
       const i = `${this.routerPath?.replace(/\/$/, "")}/${t.path}`;
-      return p`
+      return m`
               <uui-card-block-type class="tool-card" name="${t.name}" description="${t.description}" href=${i}>
                 <uui-icon name="${t.icon}"></uui-icon>
               </uui-card-block-type>
@@ -1343,7 +1351,7 @@ let O = class extends W {
     `;
   }
 };
-O.styles = [
+I.styles = [
   C,
   V,
   J,
@@ -1390,23 +1398,18 @@ O.styles = [
 ];
 ot([
   Z({ type: String })
-], O.prototype, "routerPath", 2);
-O = ot([
+], I.prototype, "routerPath", 2);
+I = ot([
   L("dashboard-options")
-], O);
-var Dt = Object.defineProperty, Ot = Object.getOwnPropertyDescriptor, Te = (t, e, i, o) => {
+], I);
+var It = Object.defineProperty, Ot = Object.getOwnPropertyDescriptor, te = (t, e, i, o) => {
   for (var r = o > 1 ? void 0 : o ? Ot(e, i) : e, a = t.length - 1, s; a >= 0; a--)
     (s = t[a]) && (r = (o ? s(e, i, r) : s(r)) || r);
-  return o && r && Dt(e, i, r), r;
+  return o && r && It(e, i, r), r;
 };
-let q = class extends W {
-  /**
-   * The build date of the package, injected by the build process.
-   * @private
-   * @type {string}
-   */
+let O = class extends W {
   constructor() {
-    super();
+    super(), this._getBuildInfo();
     const t = (e) => (i) => {
       this._routerBasePath && i instanceof e && (i.routerPath = this._routerBasePath);
     };
@@ -1428,8 +1431,8 @@ let q = class extends W {
       },
       {
         path: "",
-        component: O,
-        setup: t(O)
+        component: I,
+        setup: t(I)
       },
       {
         path: "**",
@@ -1437,8 +1440,22 @@ let q = class extends W {
       }
     ];
   }
+  async _getBuildInfo() {
+    try {
+      const t = await fetch("/build-info.json");
+      if (!t.ok) throw new Error("Failed to fetch build info");
+      const e = await t.json();
+      this._buildInfo = {
+        version: e.version ?? "Development",
+        date: e.date ?? "",
+        commit: e.commit ?? ""
+      }, console.info("Build Info:", this._buildInfo);
+    } catch (t) {
+      console.warn("Could not load build-info.json", t), this._buildInfo = { version: "Development", date: "", commit: "" };
+    }
+  }
   render() {
-    return p`
+    return m`
       <umb-body-layout>
         <div slot="header" class="header-container">
           <div class="articulate-header">
@@ -1455,13 +1472,18 @@ let q = class extends W {
           ></umb-router-slot>
         </div>
         <footer slot="footer">
-          <p slot="footer-info" class="articulate-footer-info"></p>
+          <p slot="footer-info" class="articulate-footer-info">
+            ${ut(
+      this._buildInfo?.version,
+      () => m`Articulate | Version: ${this._buildInfo.version}`
+    )}
+          </p>
         </footer>
       </umb-body-layout>
     `;
   }
 };
-q.styles = [
+O.styles = [
   C,
   V,
   N`
@@ -1521,16 +1543,19 @@ q.styles = [
       }
     `
 ];
-Te([
+te([
   d()
-], q.prototype, "_routerBasePath", 2);
-Te([
+], O.prototype, "_routerBasePath", 2);
+te([
   d()
-], q.prototype, "_routes", 2);
-q = Te([
+], O.prototype, "_routes", 2);
+te([
+  d()
+], O.prototype, "_buildInfo", 2);
+O = te([
   L("articulate-dashboard")
-], q);
+], O);
 export {
-  q as default
+  O as default
 };
-//# sourceMappingURL=dashboard.element-BRKgwKii.js.map
+//# sourceMappingURL=dashboard.element-CCF4B7B1.js.map

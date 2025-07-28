@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using Microsoft.AspNetCore.Html;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Models.PublishedContent;
@@ -9,7 +6,7 @@ using Umbraco.Extensions;
 
 namespace Articulate.Models
 {
-    public class PostModel : MasterModel, IImageModel
+    public sealed class PostModel : MasterModel, IImageModel
     {
         private PostAuthorModel _author;
 
@@ -17,27 +14,13 @@ namespace Articulate.Models
             : base(content, publishedValueFallback)
         {
             PageTitle = Name + " - " + BlogTitle;
-            PageDescription = Excerpt;
-            PageTags = string.Join(",", Tags);
+            PageDescription = Excerpt ?? string.Empty;
+            PageTags = string.Join(",", Tags ?? []);
         }
 
-        public IEnumerable<string> Tags
-        {
-            get
-            {
-                IEnumerable<string> tags = this.Value<IEnumerable<string>>("tags");
-                return tags ?? Enumerable.Empty<string>();
-            }
-        }
+        public IEnumerable<string> Tags => this.Value<IEnumerable<string>>("tags") ?? [];
 
-        public IEnumerable<string> Categories
-        {
-            get
-            {
-                IEnumerable<string> tags = this.Value<IEnumerable<string>>("categories");
-                return tags ?? Enumerable.Empty<string>();
-            }
-        }
+        public IEnumerable<string> Categories => this.Value<IEnumerable<string>>("categories") ?? [];
 
         public bool EnableComments => Unwrap().Value<bool>("enableComments", fallback: Fallback.ToAncestors);
 
@@ -56,15 +39,18 @@ namespace Articulate.Models
                 };
 
                 //look up assocated author node if we can
-                IPublishedContent authors = RootBlogNode?.Children(content => content.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateAuthors)).FirstOrDefault();
-                IPublishedContent authorNode = authors?.Children(content => content.Name.InvariantEquals(_author.Name)).FirstOrDefault();
-                if (authorNode != null)
+                IPublishedContent authors = RootBlogNode?.Children(content => content.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateAuthors))?.FirstOrDefault();
+                IPublishedContent authorNode = authors?.Children(content => content.Name.InvariantEquals(_author.Name))?.FirstOrDefault();
+
+                if (authorNode == null)
                 {
-                    _author.Bio = authorNode.Value<string>("authorBio");
-                    _author.Url = authorNode.Value<string>("authorUrl");
-                    _author.Image = authorNode.Value<MediaWithCrops>("authorImage");
-                    _author.BlogUrl = authorNode.Url();
+                    return _author;
                 }
+
+                _author.Bio = authorNode.Value<string>("authorBio");
+                _author.Url = authorNode.Value<string>("authorUrl");
+                _author.Image = authorNode.Value<MediaWithCrops>("authorImage");
+                _author.BlogUrl = authorNode.Url();
 
                 return _author;
             }
@@ -118,7 +104,7 @@ namespace Articulate.Models
                 return new HtmlString(
                     this.Value<IHtmlEncodedString>(
                         this.HasProperty("richText") ? "richText" : "markdown")
-                    .ToHtmlString());
+                        ?.ToHtmlString());
 
             }
         }

@@ -17,11 +17,21 @@ if (!targetPackageJsonPath) {
 // Resolve path from the script's location (BackOffice/scripts)
 const fullPkgPath = path.resolve(__dirname, "..", targetPackageJsonPath);
 
+//get solution/git root
+const gitRoot = execSync("git rev-parse --show-toplevel", { encoding: "utf8" }).trim();
+
 // Get version from nbgv, running from the solution root
 const version = execSync("dotnet nbgv get-version -v SemVer2", {
   encoding: "utf8",
-  cwd: path.resolve(__dirname, "..", "..", "..", ".."), // Go up four levels to the solution root
+  cwd: gitRoot,
 }).trim();
+
+//ensure valid semver
+const validSemver = /^\d+\.\d+\.\d+(-[a-zA-Z0-9.-]+)?$/;
+if (!validSemver.test(version)) {
+  console.error(`Invalid semver version returned: ${version}`);
+  process.exit(1);
+}
 
 // Update package.json
 const pkg = JSON.parse(fs.readFileSync(fullPkgPath, "utf8"));
@@ -37,3 +47,16 @@ if (fs.existsSync(umbracoPkgPath)) {
   fs.writeFileSync(umbracoPkgPath, JSON.stringify(umbracoPkg, null, 2) + "\n");
   console.log(`Set umbraco-package.json version to ${version}`);
 }
+
+// Get commit hash
+const commit = execSync('git rev-parse --short HEAD').toString().trim();
+
+// Update build-info.json
+const publicDir = path.dirname(umbracoPkgPath);
+const buildInfoPath = path.join(publicDir, 'build-info.json');
+fs.writeFileSync(buildInfoPath, JSON.stringify({
+  version,
+  commit,
+  date: new Date().toISOString()
+}, null, 2));
+

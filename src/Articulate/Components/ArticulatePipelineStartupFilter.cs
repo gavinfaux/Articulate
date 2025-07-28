@@ -1,3 +1,4 @@
+#nullable enable
 using Articulate.Routing;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Options;
@@ -14,7 +15,7 @@ namespace Articulate.Components
                 {
                     endpoints.MapDynamicControllerRoute<ArticulateRouteValueTransformer>(
                         "/{any}/{**slug}",
-                        null,
+                        null!,
                         1000); // Ensure it runs AFTER Umbraco so that we can check if things are already matched.
                 })
             });

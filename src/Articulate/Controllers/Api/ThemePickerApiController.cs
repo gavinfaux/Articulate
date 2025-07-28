@@ -1,6 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+#nullable enable
 using Articulate.Attributes;
 using Articulate.Services;
 using Asp.Versioning;
@@ -21,7 +19,7 @@ namespace Articulate.Controllers.Api
     /// <summary>
     /// Provides API endpoints for copying an Articulate default theme to a new theme name to allow customisation.
     /// </summary>
-    [ManagementApi(ArticulateEnum.ManagementApi.ThemePicker)]
+    [ManagementApi(ArticulateConstants.ManagementApi.ThemePicker)]
     [ApiVersion("1.0")]
     [Authorize(Policy = AuthorizationPolicies.BackOfficeAccess)]
     [VersionedApiBackOfficeRoute("articulate/editors/theme-picker")]

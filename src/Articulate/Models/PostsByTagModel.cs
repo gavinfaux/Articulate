@@ -1,6 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
+#nullable enable
 using Umbraco.Extensions;
 
 namespace Articulate.Models
@@ -35,7 +33,7 @@ namespace Articulate.Models
             }
         }
 
-        public IEnumerable<PostModel> Posts { get; }
+        public IEnumerable<PostModel>? Posts { get; }
         public string TagName { get; }
         public string TagUrl { get; }
 
@@ -51,7 +49,7 @@ namespace Articulate.Models
             {
                 if (_count.HasValue == false)
                 {
-                    _count = Posts.Count();
+                    _count = (Posts ?? []).Count();
                 }
 
                 return _count.Value;

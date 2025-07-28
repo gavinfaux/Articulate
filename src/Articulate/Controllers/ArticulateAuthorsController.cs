@@ -1,3 +1,4 @@
+#nullable enable
 using Articulate.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
@@ -17,32 +18,41 @@ namespace Articulate.Controllers
     public class ArticulateAuthorsController : RenderController
     {
         private readonly IPublishedValueFallback _publishedValueFallback;
+        private readonly ILogger<ArticulateAuthorsController> _logger;
+
 
         public ArticulateAuthorsController(
-            ILogger<RenderController> logger,
+            ILogger<ArticulateAuthorsController> logger,
             ICompositeViewEngine compositeViewEngine,
             IUmbracoContextAccessor umbracoContextAccessor,
             IPublishedValueFallback publishedValueFallback)
             : base(logger, compositeViewEngine, umbracoContextAccessor)
         {
             _publishedValueFallback = publishedValueFallback;
+            _logger = logger;
         }
 
         public override IActionResult Index()
         {
+            if (CurrentPage == null)
+            {
+                _logger.LogWarning("ArticulateAuthorsController.Index: CurrentPage is null, returning 404");
+                return NotFound();
+            }
+
             var root = new MasterModel(
                 CurrentPage,
                 _publishedValueFallback);
 
             //TODO: Should we have another setting for authors?
-            if (root.RootBlogNode.Value<bool>("redirectArchive"))
+            if (root.RootBlogNode?.Value<bool>("redirectArchive") ?? false)
             {
-                return RedirectPermanent(root.RootBlogNode.Url());
+                return RedirectPermanent(root.RootBlogNode?.Url() ?? "/");
             }
 
             //default
 
-            var action = ControllerContext.RouteData.Values["action"].ToString();
+            var action = ControllerContext.RouteData.Values["action"]?.ToString();
             if (!EnsurePhsyicalViewExists(action))
             {
                 return new PublishedContentNotFoundResult(UmbracoContext);

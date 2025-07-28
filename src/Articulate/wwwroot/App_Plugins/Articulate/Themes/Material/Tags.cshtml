@@ -19,8 +19,13 @@
             <h1 class="mdl-card__title-text">@Model.Name</h1>
         </div>
         <div class="mdl-card__supporting-text">
-            
-            @if (ViewContext.RouteData.Values["action"].ToString().Equals("Tags", StringComparison.OrdinalIgnoreCase))
+
+            @{
+                var isTagsAction = ViewContext.RouteData.Values["action"]
+                    ?.ToString()
+                    ?.Equals("Tags", StringComparison.OrdinalIgnoreCase) == true;
+            }
+            @if (isTagsAction)
             {
                 <div class="tag-cloud-large">
                     @Model.Tags.TagCloud(@<a href="#tag-@item.HtmlId">@item.TagName</a>, 5, 50)
@@ -37,8 +42,8 @@
                     }
                 </ul>
             }
-            
-            
+
+
         </div>
         <div class="mdl-card__menu">
         </div>
@@ -49,11 +54,11 @@
     @for (var i = 0; i < asArray.Length; i++)
     {
         <div class="mdl-card mdl-cell mdl-cell--12-col tag-card">
-            <div class="mdl-card__title mdl-color-text--primary mdl-color--accent-contrast">     
+            <div class="mdl-card__title mdl-color-text--primary mdl-color--accent-contrast">
                 <h4 class="mdl-card__title-text">
                     <a id="tag-@asArray[i].HtmlId" href="@asArray[i].TagUrl">@asArray[i].TagName</a>
                 </h4>
-            </div> 
+            </div>
             <div class="mdl-card__supporting-text">
                 @asArray[i].Posts.OrderByDescending(x => x.PublishedDate).Table(new {@class = "mdl-data-table mdl-js-data-table full-box-width"},
                     new[] {"Date", "Name", ""},

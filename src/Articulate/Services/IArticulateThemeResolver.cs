@@ -4,7 +4,7 @@ namespace Articulate.Services
 
     public interface IArticulateThemeResolver
     {
-        public string GetCurrentThemeName();
+        public string? GetCurrentThemeName();
 
     }
 }

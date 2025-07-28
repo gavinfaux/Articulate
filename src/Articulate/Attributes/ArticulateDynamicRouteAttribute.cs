@@ -1,9 +1,6 @@
-using System;
-
+#nullable enable
 namespace Articulate.Attributes
 {
     [AttributeUsage(AttributeTargets.Class)]
-    public sealed class ArticulateDynamicRouteAttribute : Attribute
-    {
-    }
+    public sealed class ArticulateDynamicRouteAttribute : Attribute;
 }

@@ -1,5 +1,4 @@
-using System;
-using System.Linq;
+#nullable enable
 using Articulate.Options;
 using Microsoft.Extensions.Options;
 using Umbraco.Cms.Core.Events;
@@ -7,7 +6,6 @@ using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Notifications;
 using Umbraco.Cms.Core.Security;
 using Umbraco.Cms.Core.Services;
-using Umbraco.Cms.Core.Web;
 using Umbraco.Extensions;
 
 namespace Articulate.Components
@@ -16,18 +14,15 @@ namespace Articulate.Components
     public sealed class ContentSavingHandler : INotificationHandler<ContentSavingNotification>
     {
         private readonly IContentTypeService _contentTypeService;
-        private readonly IUmbracoContextAccessor _umbracoContextAccessor;
         private readonly IBackOfficeSecurityAccessor _backOfficeSecurityAccessor;
         private readonly ArticulateOptions _articulateOptions;
 
         public ContentSavingHandler(
             IContentTypeService contentTypeService,
-            IUmbracoContextAccessor umbracoContextAccessor,
             IBackOfficeSecurityAccessor backOfficeSecurityAccessor,
             IOptions<ArticulateOptions> articulateOptions)
         {
             _contentTypeService = contentTypeService;
-            _umbracoContextAccessor = umbracoContextAccessor;
             _backOfficeSecurityAccessor = backOfficeSecurityAccessor;
             _articulateOptions = articulateOptions.Value;
         }
@@ -51,13 +46,13 @@ namespace Articulate.Components
                         "publishedDate",
                         contentTypes[content.ContentTypeId],
                         // if the publishedDate is not already set, then set it
-                        (c, ct, culture) => c.GetValue("publishedDate", culture?.Culture) == null ? (DateTime?)DateTime.Now : null);
+                        (c, _, culture) => c.GetValue("publishedDate", culture?.Culture) == null ? (DateTime?)DateTime.Now : null);
 
                     content.SetAllPropertyCultureValues(
                         "author",
                         contentTypes[content.ContentTypeId],
                         // if the author is not already set, then set it
-                        (c, ct, culture) => c.GetValue("author", culture?.Culture) == null ? _backOfficeSecurityAccessor.BackOfficeSecurity?.CurrentUser?.Name : null);
+                        (c, _, culture) => c.GetValue("author", culture?.Culture) == null ? _backOfficeSecurityAccessor.BackOfficeSecurity?.CurrentUser?.Name : null);
 
                     if (!content.HasIdentity)
                     {
@@ -65,7 +60,7 @@ namespace Articulate.Components
                         content.SetAllPropertyCultureValues(
                             "enableComments",
                             contentTypes[content.ContentTypeId],
-                            (c, ct, culture) => 1);
+                            (_, _, _) => 1);
                     }
                 }
 
@@ -92,12 +87,17 @@ namespace Articulate.Components
                                 {
                                     IPropertyType richTextProperty = ct.CompositionPropertyTypes.First(x => x.Alias == "richText");
                                     var val = c.GetValue<string>("richText", richTextProperty.VariesByCulture() ? culture?.Culture : null);
-                                    return _articulateOptions.GenerateExcerpt(val);
+                                    return string.IsNullOrWhiteSpace(val) ? string.Empty : _articulateOptions.GenerateExcerpt(val);
                                 }
                                 else
                                 {
                                     IPropertyType markdownProperty = ct.CompositionPropertyTypes.First(x => x.Alias == "markdown");
                                     var val = c.GetValue<string>("markdown", markdownProperty.VariesByCulture() ? culture?.Culture : null);
+                                    if (string.IsNullOrWhiteSpace(val))
+                                    {
+                                        return string.Empty;
+                                    }
+
                                     var html = MarkdownHelper.ToHtml(val);
                                     return _articulateOptions.GenerateExcerpt(html);
                                 }
@@ -125,23 +125,22 @@ namespace Articulate.Components
                     }
                 }
 
-                if (content.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.Articulate))
+                if (!content.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.Articulate))
+                {
+                    continue;
+                }
+
                 {
                     if (content.HasProperty("theme"))
                     {
                         content.SetAllPropertyCultureValues(
                             "theme",
                             contentTypes[content.ContentTypeId],
-                            (c, ct, culture) =>
+                            (c, _, culture) =>
                             {
                                 // don't set it if it's already set
                                 var current = c.GetValue("theme", culture?.Culture)?.ToString();
-                                if (!current.IsNullOrWhiteSpace())
-                                {
-                                    return null;
-                                }
-
-                                return "VAPOR";
+                                return !current.IsNullOrWhiteSpace() ? null : "VAPOR";
                             });
                     }
 
@@ -150,7 +149,7 @@ namespace Articulate.Components
                         content.SetAllPropertyCultureValues(
                             "pageSize",
                             contentTypes[content.ContentTypeId],
-                            (c, ct, culture) =>
+                            (c, _, culture) =>
                             {
                                 // don't set it if it's already set
                                 var current = c.GetValue("pageSize", culture?.Culture)?.ToString();
@@ -168,16 +167,11 @@ namespace Articulate.Components
                         content.SetAllPropertyCultureValues(
                             "categoriesUrlName",
                             contentTypes[content.ContentTypeId],
-                            (c, ct, culture) =>
+                            (c, _, culture) =>
                             {
                                 // don't set it if it's already set
                                 var current = c.GetValue("categoriesUrlName", culture?.Culture)?.ToString();
-                                if (!current.IsNullOrWhiteSpace())
-                                {
-                                    return null;
-                                }
-
-                                return "categories";
+                                return !current.IsNullOrWhiteSpace() ? null : "categories";
                             });
                     }
 
@@ -186,16 +180,11 @@ namespace Articulate.Components
                         content.SetAllPropertyCultureValues(
                             "tagsUrlName",
                             contentTypes[content.ContentTypeId],
-                            (c, ct, culture) =>
+                            (c, _, culture) =>
                             {
                                 // don't set it if it's already set
                                 var current = c.GetValue("tagsUrlName", culture?.Culture)?.ToString();
-                                if (!current.IsNullOrWhiteSpace())
-                                {
-                                    return null;
-                                }
-
-                                return "tags";
+                                return !current.IsNullOrWhiteSpace() ? null : "tags";
                             });
                     }
 
@@ -204,16 +193,11 @@ namespace Articulate.Components
                         content.SetAllPropertyCultureValues(
                             "searchUrlName",
                             contentTypes[content.ContentTypeId],
-                            (c, ct, culture) =>
+                            (c, _, culture) =>
                             {
                                 // don't set it if it's already set
                                 var current = c.GetValue("searchUrlName", culture?.Culture)?.ToString();
-                                if (!current.IsNullOrWhiteSpace())
-                                {
-                                    return null;
-                                }
-
-                                return "search";
+                                return !current.IsNullOrWhiteSpace() ? null : "search";
                             });
                     }
 
@@ -222,16 +206,11 @@ namespace Articulate.Components
                         content.SetAllPropertyCultureValues(
                             "categoriesPageName",
                             contentTypes[content.ContentTypeId],
-                            (c, ct, culture) =>
+                            (c, _, culture) =>
                             {
                                 // don't set it if it's already set
                                 var current = c.GetValue("categoriesPageName", culture?.Culture)?.ToString();
-                                if (!current.IsNullOrWhiteSpace())
-                                {
-                                    return null;
-                                }
-
-                                return "Categories";
+                                return !current.IsNullOrWhiteSpace() ? null : "Categories";
                             });
                     }
 
@@ -240,16 +219,11 @@ namespace Articulate.Components
                         content.SetAllPropertyCultureValues(
                             "tagsPageName",
                             contentTypes[content.ContentTypeId],
-                            (c, ct, culture) =>
+                            (c, _, culture) =>
                             {
                                 // don't set it if it's already set
                                 var current = c.GetValue("tagsPageName", culture?.Culture)?.ToString();
-                                if (!current.IsNullOrWhiteSpace())
-                                {
-                                    return null;
-                                }
-
-                                return "Tags";
+                                return !current.IsNullOrWhiteSpace() ? null : "Tags";
                             });
                     }
 
@@ -258,19 +232,13 @@ namespace Articulate.Components
                         content.SetAllPropertyCultureValues(
                             "searchPageName",
                             contentTypes[content.ContentTypeId],
-                            (c, ct, culture) =>
+                            (c, _, culture) =>
                             {
                                 // don't set it if it's already set
                                 var current = c.GetValue("searchPageName", culture?.Culture)?.ToString();
-                                if (!current.IsNullOrWhiteSpace())
-                                {
-                                    return null;
-                                }
-
-                                return "Search results";
+                                return !current.IsNullOrWhiteSpace() ? null : "Search results";
                             });
                     }
-
                 }
 
             }

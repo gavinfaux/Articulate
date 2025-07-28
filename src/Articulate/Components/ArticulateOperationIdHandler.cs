@@ -1,4 +1,4 @@
-using System;
+#nullable enable
 using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.Mvc.Controllers;
@@ -28,7 +28,7 @@ namespace Articulate.Components
         public override string Handle(ApiDescription apiDescription)
             => ArticulateOperationId(apiDescription);
 
-        protected string ArticulateOperationId(ApiDescription apiDescription)
+        private string ArticulateOperationId(ApiDescription apiDescription)
         {
             if (apiDescription.ActionDescriptor is not ControllerActionDescriptor controllerActionDescriptor)
             {
@@ -63,12 +63,12 @@ namespace Articulate.Components
                 .Replace(formattedOperationId, m => m.Groups[1].Value.ToUpper());
 
             // Get map to version attribute
-            string version = null;
+            var version = string.Empty;
 
             var versionAttributeValue = controllerActionDescriptor.MethodInfo.GetMapToApiVersionAttributeValue();
 
             // We only want to add a version, if it is not the default one.
-            if (string.Equals(versionAttributeValue, defaultVersion.ToString()) == false)
+            if (!string.IsNullOrEmpty(versionAttributeValue) && string.Equals(versionAttributeValue, defaultVersion.ToString()) == false)
             {
                 version = versionAttributeValue;
             }

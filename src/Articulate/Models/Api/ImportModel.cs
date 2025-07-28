@@ -1,4 +1,4 @@
-using System;
+#nullable enable
 using System.ComponentModel.DataAnnotations;
 
 namespace Articulate.Models.Api
@@ -22,12 +22,12 @@ namespace Articulate.Models.Api
         /// <summary>
         /// Gets or sets the regular expression pattern to match in post content during import.
         /// </summary>
-        public string RegexMatch { get; set; }
+        public string? RegexMatch { get; set; }
 
         /// <summary>
         /// Gets or sets the replacement string for the regular expression match in post content.
         /// </summary>
-        public string RegexReplace { get; set; }
+        public string? RegexReplace { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether to publish imported posts.
@@ -38,7 +38,7 @@ namespace Articulate.Models.Api
         /// Gets or sets the temporary file name of the uploaded BlogML file.
         /// </summary>
         [Required(AllowEmptyStrings = false)]
-        public string TempFile { get; set; }
+        public required string TempFile { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether to export Disqus XML after import.

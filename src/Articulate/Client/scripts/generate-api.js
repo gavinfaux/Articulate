@@ -13,20 +13,27 @@ const outputPath = args[1];
 const includeIndex = args.indexOf("--includeTags");
 const excludeIndex = args.indexOf("--excludeTags");
 
-const includeTags = includeIndex !== -1 && args[includeIndex + 1] ? args[includeIndex + 1].split(",") : undefined;
-const excludeTags = excludeIndex !== -1 && args[excludeIndex + 1] ? args[excludeIndex + 1].split(",") : undefined;
+const includeTags =
+  includeIndex !== -1 && args[includeIndex + 1]
+    ? args[includeIndex + 1].split(",")
+    : undefined;
+const excludeTags =
+  excludeIndex !== -1 && args[excludeIndex + 1]
+    ? args[excludeIndex + 1].split(",")
+    : undefined;
 
 if (swaggerUrl === undefined || outputPath === undefined) {
   console.error(chalk.red(`ERROR: Missing URL to OpenAPI spec or output path`));
-  console.error(`Please provide the URL and output path as the first two arguments.`);
   console.error(
-    `Example: node generate-openapi.js ${chalk.yellow("https://.../swagger.json")} ${chalk.yellow("./src/api")}`,
+    `Please provide the URL and output path as the first two arguments.`
+  );
+  console.error(
+    `Example: node generate-openapi.js ${chalk.yellow(
+      "https://.../swagger.json"
+    )} ${chalk.yellow("./src/api")}`
   );
   process.exit(1);
 }
-
-// Needed to ignore self-signed certificates from running Umbraco on https on localhost
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
 // Start checking to see if we can connect to the OpenAPI spec
 console.log("Ensure your Umbraco instance is running");
@@ -37,32 +44,51 @@ fetch(swaggerUrl)
     if (!response.ok) {
       console.error(
         chalk.red(
-          `ERROR: OpenAPI spec returned with a non OK (200) response: ${response.status} ${response.statusText}`,
-        ),
-      );
-      console.error(`The URL to your Umbraco instance may be wrong or the instance is not running`);
-      console.error(
-        `Please verify or change the URL in the ${chalk.yellow("package.json")} for the script ${chalk.yellow("generate-openapi")}`,
+          `ERROR: OpenAPI spec returned with a non OK (200) response: ${response.status} ${response.statusText}`
+        )
       );
       console.error(
-        `Or review back office logs, ${chalk.yellow("Swagger")} may not be able to generate a valid schema due to ${chalk.yellow("route conflicts or duplicate API attributes")}; (e.g. multiple GET methods for the same route, or decorating methods with '[ProducesResponseType(StatusCodes.Status401Unauthorized)]' which Swagger already does).`,
+        `The URL to your Umbraco instance may be wrong or the instance is not running`
+      );
+      console.error(
+        `Please verify or change the URL in the ${chalk.yellow(
+          "package.json"
+        )} for the script ${chalk.yellow("generate-openapi")}`
+      );
+      console.error(
+        `Or review back office logs, ${chalk.yellow(
+          "Swagger"
+        )} may not be able to generate a valid schema due to ${chalk.yellow(
+          "route conflicts or duplicate API attributes"
+        )}; (e.g. multiple GET methods for the same route, or decorating methods with '[ProducesResponseType(StatusCodes.Status401Unauthorized)]' which Swagger already does).`
       );
       process.exit(1);
     }
 
     console.log(`OpenAPI spec fetched successfully`);
-    console.log(`Calling ${chalk.yellow("hey-api")} to generate TypeScript client`);
+    console.log(
+      `Calling ${chalk.yellow("hey-api")} to generate TypeScript client`
+    );
 
     const config = {
+      logs: {
+        level: "debug",
+      },
       input: {
         path: swaggerUrl,
       },
       output: {
+        indexFile: false,
         path: outputPath,
       },
       plugins: [
         ...defaultPlugins,
-        "@hey-api/client-fetch",
+        {
+          name: "@hey-api/client-fetch",
+          bundle: false,
+          exportFromIndex: true,
+          throwOnError: true,
+        },
         {
           name: "@hey-api/typescript",
           enums: "typescript",
@@ -89,7 +115,13 @@ fetch(swaggerUrl)
     process.exit(0);
   })
   .catch((error) => {
-    console.error(`ERROR: Failed to connect to the OpenAPI spec: ${chalk.red(error.message)}`);
-    console.error(`The URL to your Umbraco instance may be wrong or the instance is not running`);
+    console.error(
+      `ERROR: Failed to connect to the OpenAPI spec: ${chalk.red(
+        error.message
+      )}`
+    );
+    console.error(
+      `The URL to your Umbraco instance may be wrong or the instance is not running`
+    );
     process.exit(1); // Exit with error
   });

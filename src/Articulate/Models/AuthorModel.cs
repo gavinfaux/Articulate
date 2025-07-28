@@ -1,6 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
+#nullable enable
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Extensions;
@@ -12,9 +10,9 @@ namespace Articulate.Models
         private DateTime? _lastPostDate;
 
         public AuthorModel(
-            IPublishedContent content,
-            IEnumerable<IPublishedContent> listItems,
-            PagerModel pager,
+            IPublishedContent? content,
+            IEnumerable<IPublishedContent>? listItems,
+            PagerModel? pager,
             int postCount,
             IPublishedValueFallback publishedValueFallback)
             : base(content, pager, listItems, publishedValueFallback)
@@ -22,16 +20,17 @@ namespace Articulate.Models
             PostCount = postCount;
         }
 
-        public string Bio => this.Value<string>("authorBio");
+        public string Bio => this.Value<string>("authorBio") ?? string.Empty;
 
-        public string AuthorUrl => this.Value<string>("authorUrl");
+        public string AuthorUrl => this.Value<string>("authorUrl") ?? string.Empty;
 
-        private MediaWithCrops _image;
-        public MediaWithCrops Image => _image ??= Unwrap().Value<MediaWithCrops>("authorImage");
+        private MediaWithCrops? _image;
+        public MediaWithCrops? Image => _image ??= Unwrap().Value<MediaWithCrops>("authorImage");
 
         public int PostCount { get; }
 
         //We know the list of posts passed in is already ordered descending so get the first
+        [Obsolete("Obsolete")]
         public DateTime? LastPostDate => _lastPostDate ??= Children.FirstOrDefault()?.Value<DateTime>("publishedDate");
 
         string IImageModel.Url => this.Url();

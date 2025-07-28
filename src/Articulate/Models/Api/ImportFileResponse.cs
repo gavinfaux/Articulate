@@ -1,3 +1,4 @@
+#nullable enable
 using System.ComponentModel.DataAnnotations;
 
 namespace Articulate.Models.Api
@@ -11,7 +12,7 @@ namespace Articulate.Models.Api
         /// Gets or sets the temporary file name used for the uploaded BlogML file.
         /// </summary>
         [Required(AllowEmptyStrings = false)]
-        public string TemporaryFileName { get; set; }
+        public required string TemporaryFileName { get; set; }
 
         /// <summary>
         /// Gets or sets the number of posts detected in the BlogML file.

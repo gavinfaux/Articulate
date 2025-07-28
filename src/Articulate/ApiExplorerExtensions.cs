@@ -1,6 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
+#nullable enable
 using System.Reflection;
 using Articulate.Attributes;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
@@ -10,14 +8,19 @@ namespace Articulate
 {
     public static class ApiExplorerExtensions
     {
-        public static IReadOnlyDictionary<string, string> ForGroups(
-            this IApiDescriptionGroupCollectionProvider provider,
+        public static IReadOnlyDictionary<string, string>? ManagementApiUrlMap(
+            this IApiDescriptionGroupCollectionProvider? provider,
             string[] apiGroupNames)
         {
+
+            if (provider?.ApiDescriptionGroups.Items == null)
+            {
+                return null;
+            }
+
             var groupNameSet = new HashSet<string>(apiGroupNames, StringComparer.OrdinalIgnoreCase);
 
-            return provider.ApiDescriptionGroups.Items
-                .Where(group => group.GroupName != null && groupNameSet.Contains(group.GroupName))
+            return provider.ApiDescriptionGroups.Items.Where(group => group.GroupName != null && groupNameSet.Contains(group.GroupName))
                 .SelectMany(group => group.Items)
                 .Where(desc =>
                 {
