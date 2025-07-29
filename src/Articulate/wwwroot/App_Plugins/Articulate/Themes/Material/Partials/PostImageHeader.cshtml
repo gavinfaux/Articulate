@@ -2,10 +2,10 @@
 @{
     var postBg = "none";
 
-    if (Model.Image != null)
+    if (Model.Image is not null)
     {
         var bgUrl = Model.Image.GetCropUrl("wide");
-        if (bgUrl != null)
+        if (bgUrl is not null)
         {
             postBg = "url('" + bgUrl + "')";
         }

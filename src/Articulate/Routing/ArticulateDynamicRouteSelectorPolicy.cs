@@ -1,5 +1,4 @@
 #nullable enable
-
 using Articulate.Attributes;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -31,14 +30,14 @@ namespace Articulate.Routing
             foreach (Endpoint endpoint in endpoints)
             {
                 ControllerAttribute? controller = endpoint.Metadata.GetMetadata<ControllerAttribute>();
-                if (controller != null)
+                if (controller is not null)
                 {
                     return false;
                 }
             }
 
             // then ensure this is only applied if all endpoints are IDynamicEndpointMetadata
-            return endpoints.All(x => x.Metadata.GetMetadata<IDynamicEndpointMetadata>() != null);
+            return endpoints.All(x => x.Metadata.GetMetadata<IDynamicEndpointMetadata>() is not null);
         }
 
         public Task ApplyAsync(HttpContext httpContext, CandidateSet candidates)
@@ -47,13 +46,13 @@ namespace Articulate.Routing
 
             // If the request has been dynamically routed by articulate to an
             // Articulate controller
-            if (umbracoRouteValues != null
+            if (umbracoRouteValues is not null
                 && umbracoRouteValues.ControllerActionDescriptor.EndpointMetadata.Any(x => x is ArticulateDynamicRouteAttribute))
             {
                 for (var i = 0; i < candidates.Count; i++)
                 {
                     // If the candidate is an Articulate dynamic controller, set valid
-                    if (candidates[i].Endpoint?.Metadata?.GetMetadata<ArticulateDynamicRouteAttribute>() is not null)
+                    if (candidates[i].Endpoint?.Metadata.GetMetadata<ArticulateDynamicRouteAttribute>() is not null)
                     {
                         candidates.SetValidity(i, true);
                     }

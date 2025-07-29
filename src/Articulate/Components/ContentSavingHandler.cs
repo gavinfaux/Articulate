@@ -46,13 +46,13 @@ namespace Articulate.Components
                         "publishedDate",
                         contentTypes[content.ContentTypeId],
                         // if the publishedDate is not already set, then set it
-                        (c, _, culture) => c.GetValue("publishedDate", culture?.Culture) == null ? (DateTime?)DateTime.Now : null);
+                        (c, _, culture) => c.GetValue("publishedDate", culture?.Culture) is null ? (DateTime?)DateTime.Now : null);
 
                     content.SetAllPropertyCultureValues(
                         "author",
                         contentTypes[content.ContentTypeId],
                         // if the author is not already set, then set it
-                        (c, _, culture) => c.GetValue("author", culture?.Culture) == null ? _backOfficeSecurityAccessor.BackOfficeSecurity?.CurrentUser?.Name : null);
+                        (c, _, culture) => c.GetValue("author", culture?.Culture) is null ? _backOfficeSecurityAccessor.BackOfficeSecurity?.CurrentUser?.Name : null);
 
                     if (!content.HasIdentity)
                     {

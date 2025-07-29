@@ -1,3 +1,4 @@
+#nullable enable
 using System.Collections.ObjectModel;
 using System.Text;
 using System.Text.Json;
@@ -67,17 +68,17 @@ namespace Articulate.ImportExport
                     throw new InvalidOperationException($"The node with id {blogRootNode} is not an Articulate root node");
                 }
 
-                IContentType postType = _contentTypeService.Get(ArticulateConstants.ContentType.ArticulateRichText) ??
+                IContentType unused = _contentTypeService.Get(ArticulateConstants.ContentType.ArticulateRichText) ??
                                throw new InvalidOperationException(
                                    "Articulate is not installed properly, the 'ArticulateRichText' doc type could not be found");
                 IDataType categoryDataType = await _dataTypeService.GetAsync("Articulate Categories") ??
                                        throw new InvalidOperationException(
                                            "No Data Type named 'Articulate Categories' found");
-                TagConfiguration categoryConfiguration = categoryDataType.ConfigurationAs<TagConfiguration>();
+                TagConfiguration? categoryConfiguration = categoryDataType.ConfigurationAs<TagConfiguration>();
                 var categoryGroup = categoryConfiguration?.Group;
                 IDataType tagDataType = await _dataTypeService.GetAsync("Articulate Tags") ??
                                   throw new InvalidOperationException("No Data Type named 'Articulate Tags' found");
-                TagConfiguration tagConfiguration = tagDataType.ConfigurationAs<TagConfiguration>();
+                TagConfiguration? tagConfiguration = tagDataType.ConfigurationAs<TagConfiguration>();
                 var tagGroup = tagConfiguration?.Group;
                 //TODO: See: http://argotic.codeplex.com/wikipage?title=Generating%20portable%20web%20log%20content&referringTitle=Home
 
@@ -138,7 +139,7 @@ namespace Articulate.ImportExport
             _articulateTempFileSystem.AddFile(fileName, stream, true);
         }
 
-        private void AddBlogCategories(BlogMLDocument blogMlDoc, string tagGroup)
+        private void AddBlogCategories(BlogMLDocument blogMlDoc, string? tagGroup)
         {
             IEnumerable<ITag> categories = _tagService.GetAllContentTags(tagGroup);
             foreach (ITag category in categories)
@@ -177,7 +178,7 @@ namespace Articulate.ImportExport
             }
         }
 
-        private void AddBlogPosts(IContent archiveNode, BlogMLDocument blogMlDoc, string categoryGroup, string tagGroup, bool exportImagesAsBase64)
+        private void AddBlogPosts(IContent archiveNode, BlogMLDocument blogMlDoc, string? categoryGroup, string? tagGroup, bool exportImagesAsBase64)
         {
             const int pageSize = 1000;
             var pageIndex = 0;
@@ -221,8 +222,8 @@ namespace Articulate.ImportExport
                         Url = postUrl
                     };
 
-                    BlogMLAuthor author = blogMlDoc.Authors.FirstOrDefault(x => x.Title != null && x.Title.Content.InvariantEquals(child.GetValue<string>("author")));
-                    if (author != null)
+                    BlogMLAuthor? author = blogMlDoc.Authors?.FirstOrDefault(x => x.Title is not null && x.Title.Content.InvariantEquals(child.GetValue<string>("author")));
+                    if (author is not null)
                     {
                         blogMlPost.Authors.Add(author.Id);
                     }
@@ -248,8 +249,8 @@ namespace Articulate.ImportExport
 
                             if (Guid.TryParse(mediaKeyStr, out Guid mediaKey))
                             {
-                                IMedia media = _mediaService.GetById(mediaKey);
-                                if (media != null && media.GetValue<string>(Constants.Conventions.Media.File) is { } mediaFilePath)
+                                IMedia? media = _mediaService.GetById(mediaKey);
+                                if (media?.GetValue<string>(Constants.Conventions.Media.File) is { } mediaFilePath)
                                 {
                                     var mime = ImageMimeType(mediaFilePath);
                                     if (!string.IsNullOrWhiteSpace(mime))

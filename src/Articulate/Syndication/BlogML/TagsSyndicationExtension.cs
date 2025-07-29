@@ -1,3 +1,4 @@
+//TODO: #nullable enable
 using System.Xml;
 using System.Xml.XPath;
 using Argotic.Common;
@@ -7,7 +8,7 @@ namespace Articulate.Syndication.BlogML
 {
     public class TagsSyndicationExtension : SyndicationExtension, IComparable
     {
-        public const string Namespace = "https://github.com/Shazwazza/Articulate/blogml/";
+        private const string Namespace = "https://github.com/Shazwazza/Articulate/blogml/";
 
         private TagsSyndicationExtensionContext _extensionContext = new TagsSyndicationExtensionContext();
 
@@ -28,7 +29,7 @@ namespace Articulate.Syndication.BlogML
 
         public int CompareTo(object obj)
         {
-            if (obj == null)
+            if (obj is null)
             {
                 return 1;
             }
@@ -55,6 +56,11 @@ namespace Articulate.Syndication.BlogML
         {
             Guard.ArgumentNotNull(source, "source");
             XPathNavigator navigator = source.CreateNavigator();
+            if (navigator is null)
+            {
+                return false;
+            }
+
             var flag = Context.Load(navigator, CreateNamespaceManager(navigator));
             OnExtensionLoaded(new SyndicationExtensionLoadedEventArgs(source, this));
             return flag;
@@ -98,7 +104,7 @@ namespace Articulate.Syndication.BlogML
 
         public override bool Equals(object obj)
         {
-            if (!(obj is TagsSyndicationExtension))
+            if (obj is not TagsSyndicationExtension)
             {
                 return false;
             }

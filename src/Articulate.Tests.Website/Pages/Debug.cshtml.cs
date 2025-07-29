@@ -6,6 +6,7 @@ namespace Articulate.Tests.Website.Pages
     {
         public void OnGet()
         {
+
         }
     }
 }

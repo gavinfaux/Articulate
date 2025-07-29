@@ -64,7 +64,7 @@ namespace Articulate.Controllers
             //</OpenSearchDescription>
 
             IPublishedContent? node = _umbraco.Content(id);
-            if (node == null)
+            if (node is null)
             {
                 return new NotFoundResult();
             }

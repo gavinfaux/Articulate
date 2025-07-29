@@ -41,22 +41,22 @@ namespace Articulate.Controllers
         /// </summary>
         protected IActionResult GetPagedListView(IMasterModel masterModel, IPublishedContent pageNode, IEnumerable<IPublishedContent> listItems, long totalPosts, int? p)
         {
-            if (masterModel == null)
+            if (masterModel is null)
             {
                 throw new ArgumentNullException(nameof(masterModel));
             }
 
-            if (pageNode == null)
+            if (pageNode is null)
             {
                 throw new ArgumentNullException(nameof(pageNode));
             }
 
-            if (listItems == null)
+            if (listItems is null)
             {
                 throw new ArgumentNullException(nameof(listItems));
             }
 
-            if (!GetPagerModel(masterModel, totalPosts, p, out PagerModel? pager) || pager == null)
+            if (!GetPagerModel(masterModel, totalPosts, p, out PagerModel? pager) || pager is null)
             {
                 return new RedirectToUmbracoPageResult(
                     masterModel.RootBlogNode,
@@ -73,7 +73,7 @@ namespace Articulate.Controllers
         {
             var pageNumber = p is > 0 ? p.Value : 1;
 
-            var pageSize = masterModel?.PageSize ?? 10;
+            var pageSize = masterModel.PageSize;
             var totalPages = totalPosts == 0 ? 1 : Convert.ToInt32(Math.Ceiling((double)totalPosts / pageSize));
 
             //Invalid page, redirect without pages
@@ -108,18 +108,18 @@ namespace Articulate.Controllers
                 pageNumber - 1,
                 totalPages,
                 totalPages > pageNumber
-                    ? GetPagedUrl(masterModel?.Url(), pageNumber + 1, queryStrings.ToString())
-                    : null,
+                    ? GetPagedUrl(masterModel.Url(), pageNumber + 1, queryStrings.ToString())
+                    : string.Empty,
                 pageNumber > 2
-                    ? GetPagedUrl(masterModel?.Url(), pageNumber - 1, queryStrings.ToString())
+                    ? GetPagedUrl(masterModel.Url(), pageNumber - 1, queryStrings.ToString())
                     : pageNumber > 1
-                        ? GetPagedUrl(masterModel?.Url(), null, queryStrings.ToString())
-                        : null);
+                        ? GetPagedUrl(masterModel.Url(), null, queryStrings.ToString())
+                        : string.Empty);
 
             return true;
         }
 
-        private static string? GetPagedUrl(string? baseUrl, int? page, string queryStrings)
+        private static string GetPagedUrl(string? baseUrl, int? page, string queryStrings)
             => page.HasValue
                 ? $"{baseUrl?.EnsureEndsWith('?')}p={page}{queryStrings}"
                 : $"{baseUrl?.EnsureEndsWith('?')}{queryStrings.TrimStart('&')}";

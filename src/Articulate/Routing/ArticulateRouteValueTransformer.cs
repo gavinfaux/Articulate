@@ -1,5 +1,4 @@
-#nullable enable
-
+//TODO: #nullable enable
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.Routing;
@@ -58,19 +57,19 @@ namespace Articulate.Routing
         {
             // check if Umbraco has already matched content, we don't want to execute if things
             // are already matching.
-            if (!ShouldCheck(httpContext, out IUmbracoContext? umbracoContext, out UmbracoRouteValues? umbracoRouteValues))
+            if (!ShouldCheck(httpContext, out IUmbracoContext umbracoContext, out UmbracoRouteValues umbracoRouteValues))
             {
                 return [];
             }
 
-            if (umbracoRouteValues == null)
+            if (umbracoRouteValues is null)
             {
                 // This can occur in Umbraco Cloud since some plugin that is used there prevents the UmbracoRouteValues from
                 // being set the normal way. In this case, we'll need to force route it.
                 RouteValueDictionary routeValues = await _umbracoRouteValueTransformer.TransformAsync(httpContext, values);
 
                 umbracoRouteValues = httpContext.Features.Get<UmbracoRouteValues>();
-                if (umbracoRouteValues == null)
+                if (umbracoRouteValues is null)
                 {
                     // Most likely will be null
                     return routeValues;
@@ -100,7 +99,7 @@ namespace Articulate.Routing
             return routeResult.routeSuccess ? newValues : [];
         }
 
-        private async Task<(bool hasCache, bool routeSuccess)> TryRoute(IUmbracoContext? umbracoContext, UmbracoRouteValues? umbracoRouteValues, HttpContext httpContext, RouteValueDictionary values)
+        private async Task<(bool hasCache, bool routeSuccess)> TryRoute(IUmbracoContext umbracoContext, UmbracoRouteValues umbracoRouteValues, HttpContext httpContext, RouteValueDictionary values)
         {
             _lock.EnterReadLock();
             try
@@ -124,14 +123,16 @@ namespace Articulate.Routing
             return (false, false);
         }
 
-        private async Task WriteRouteValues(IUmbracoContext? umbracoContext, HttpContext httpContext, ArticulateRootNodeCache dynamicRouteValues, UmbracoRouteValues? umbracoRouteValues, RouteValueDictionary values)
+        private async Task WriteRouteValues(IUmbracoContext umbracoContext, HttpContext httpContext, ArticulateRootNodeCache dynamicRouteValues, UmbracoRouteValues umbracoRouteValues, RouteValueDictionary values)
         {
             // Since we are executing after Umbraco's dynamic transformer, it means Umbraco has already
             // gone ahead and matched a domain (if any). So we will use this to match our document.
-            DomainAndUri? assignedDomain = umbracoRouteValues.PublishedRequest?.Domain;
+            DomainAndUri assignedDomain = umbracoRouteValues?.PublishedRequest.Domain;
+            // if we have a domain
+
             var contentId = dynamicRouteValues.GetContentId(assignedDomain);
 
-            IPublishedContent publishedContent = umbracoContext.Content.GetById(contentId)
+            IPublishedContent publishedContent = umbracoContext?.Content.GetById(contentId)
                                                  ?? throw new InvalidOperationException("Could not resolve content by id " + contentId);
 
             // instantiate, prepare and process the published content request
@@ -162,12 +163,13 @@ namespace Articulate.Routing
             {
                 values[ActionToken] = dynamicRouteValues.ControllerActionDescriptor.ActionName;
             }
+
         }
 
         private bool ShouldCheck(
             HttpContext httpContext,
-            out IUmbracoContext? umbracoContext,
-            out UmbracoRouteValues? umbracoRouteValues)
+            out IUmbracoContext umbracoContext,
+            out UmbracoRouteValues umbracoRouteValues)
         {
             umbracoRouteValues = httpContext.Features.Get<UmbracoRouteValues>();
 
@@ -187,18 +189,13 @@ namespace Articulate.Routing
             // If route values have already been assigned, then Umbraco has matched content, we will not proceed.
             // A 404 can be matched by Umbraco too which will occur for Articulate dynamic routes, so we need to
             // proceed to see if it is actually a 404.
-            if (umbracoRouteValues?.PublishedRequest?.PublishedContent != null
-                && umbracoRouteValues?.PublishedRequest?.ResponseStatusCode != 404)
+            if (umbracoRouteValues?.PublishedRequest.PublishedContent is not null
+                && umbracoRouteValues.PublishedRequest.ResponseStatusCode != 404)
             {
                 return false;
             }
 
-            if (!_routableDocumentFilter.IsDocumentRequest(httpContext.Request.Path))
-            {
-                return false;
-            }
-
-            return true;
+            return _routableDocumentFilter.IsDocumentRequest(httpContext.Request.Path);
         }
 
         protected virtual void Dispose(bool disposing)

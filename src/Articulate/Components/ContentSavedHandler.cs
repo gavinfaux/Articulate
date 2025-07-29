@@ -40,7 +40,7 @@ namespace Articulate.Components
                 if (total == 0 || children.All(x => x.ContentType.Alias != ArticulateConstants.ContentType.ArticulateArchive))
                 {
                     IContentType? archiveContentType = _contentTypeService.Get(ArticulateConstants.ContentType.ArticulateArchive);
-                    if (archiveContentType != null)
+                    if (archiveContentType is not null)
                     {
                         if (archiveContentType.VariesByCulture())
                         {
@@ -61,7 +61,7 @@ namespace Articulate.Components
                 }
 
                 IContentType? authorContentType = _contentTypeService.Get(ArticulateConstants.ContentType.ArticulateAuthors);
-                if (authorContentType == null)
+                if (authorContentType is null)
                 {
                     continue;
                 }

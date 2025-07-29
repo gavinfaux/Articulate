@@ -7,7 +7,6 @@ using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.Routing;
 using Umbraco.Cms.Core.Web;
-using Umbraco.Cms.Web.Common.Controllers;
 using Umbraco.Cms.Web.Website.ActionResults;
 
 namespace Articulate.Controllers
@@ -47,7 +46,7 @@ namespace Articulate.Controllers
         /// <returns></returns>
         public IActionResult Search(string? term, string? indexName = null, int? p = null)
         {
-            if (CurrentPage == null)
+            if (CurrentPage is null)
             {
                 _logger.LogWarning("ArticulateSearchController.Search: CurrentPage is null, returning 404");
                 return NotFound();
@@ -56,12 +55,12 @@ namespace Articulate.Controllers
             //create a master model
             var masterModel = new MasterModel(CurrentPage, PublishedValueFallback);
 
-            if (masterModel.BlogArchiveNode == null)
+            if (masterModel.BlogArchiveNode is null)
             {
                 throw new InvalidOperationException("An ArticulateArchive document must exist under the root Articulate document");
             }
 
-            if (term == null)
+            if (term is null)
             {
                 //nothing to search, just render the view
                 var emptyList = new ListModel(

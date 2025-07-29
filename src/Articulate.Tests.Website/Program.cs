@@ -18,10 +18,6 @@ using Umbraco.Extensions;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
-// only required for SDK style projects not RCL
-builder.Services.AddControllersWithViews()
-    .AddRazorRuntimeCompilation();
-
 builder.CreateUmbracoBuilder()
     .AddBackOffice()
     .AddWebsite()
@@ -71,55 +67,14 @@ builder.Services.Configure<FormOptions>(x =>
 // Only required for Razor page support in Pages folder (just a Debug helper at present)
 builder.Services.AddRazorPages();
 
-// Only required for static assets in Release mode when running from IDE (e.g. back office) - not required for published release
-builder.WebHost.UseStaticWebAssets();
+// Only required for static assets in Release mode when running from IDE (e.g. back office) - not required for published release.
+//builder.WebHost.UseStaticWebAssets();
 
 WebApplication app = builder.Build();
 
+//app.UseStaticFiles();
+
 await app.BootUmbracoAsync();
-
-ILoggerFactory loggerFactory = app.Services.GetRequiredService<ILoggerFactory>();
-ILogger startupLogger = loggerFactory.CreateLogger("Articulate.StartupDiagnostics");
-
-try
-{
-    // Get the configured options for the runtime compiler
-    MvcRazorRuntimeCompilationOptions runtimeCompilationOptions = app.Services.GetRequiredService<IOptions<MvcRazorRuntimeCompilationOptions>>().Value;
-
-    startupLogger.LogCritical("--- Articulate: Verifying Registered File Providers ---");
-
-    // Check how many providers are registered.
-    var providerCount = runtimeCompilationOptions.FileProviders.Count;
-    if (providerCount > 0)
-    {
-        startupLogger.LogCritical("{Count} file providers are registered with the runtime compiler.", providerCount);
-        var i = 0;
-        foreach (IFileProvider provider in runtimeCompilationOptions.FileProviders)
-        {
-            // Try to cast to PhysicalFileProvider to get useful path information
-            if (provider is PhysicalFileProvider pfp)
-            {
-                startupLogger.LogCritical("  [{Index}] Provider Type: PhysicalFileProvider, Root: '{Root}'", i, pfp.Root);
-            }
-            else
-            {
-                startupLogger.LogCritical("  [{Index}] Provider Type: {Type}", i, provider.GetType().Name);
-            }
-
-            i++;
-        }
-    }
-    else
-    {
-        startupLogger.LogCritical("No file providers are registered with the runtime compiler. Custom views may not be found.");
-    }
-
-    startupLogger.LogCritical("--- End of Verification ---");
-}
-catch (Exception ex)
-{
-    startupLogger.LogError(ex, "An error occurred during Articulate startup diagnostics.");
-}
 
 if(app.Environment.IsDevelopment())
 {

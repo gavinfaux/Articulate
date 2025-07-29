@@ -1,3 +1,4 @@
+#nullable enable
 using System.Collections.ObjectModel;
 using System.Xml;
 using System.Xml.XPath;
@@ -27,15 +28,15 @@ namespace Articulate.Syndication.BlogML
             Guard.ArgumentNotNull(manager, "manager");
             if (source.HasChildren)
             {
-                XPathNavigator xpathNavigator = source.SelectSingleNode("tags");
-                if (xpathNavigator != null)
+                XPathNavigator? xpathNavigator = source.SelectSingleNode("tags");
+                if (xpathNavigator is not null)
                 {
                     XPathNodeIterator xpathTagIterator = source.Select("tag");
                     if (xpathTagIterator.Count > 0)
                     {
                         while (xpathTagIterator.MoveNext())
                         {
-                            if (xpathTagIterator.Current.HasAttributes)
+                            if (xpathTagIterator.Current is { HasAttributes: true })
                             {
                                 var tag = xpathTagIterator.Current.GetAttribute("ref", manager.DefaultNamespace);
                                 if (!string.IsNullOrEmpty(tag))

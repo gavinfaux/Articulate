@@ -1,3 +1,4 @@
+#nullable enable
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Umbraco.Cms.Core.PublishedCache;
 

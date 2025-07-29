@@ -1,3 +1,4 @@
+#nullable enable
 using System.ServiceModel.Syndication;
 using Articulate.Attributes;
 using Articulate.Models;
@@ -54,7 +55,7 @@ namespace Articulate.Controllers
 
         public IActionResult Index(int? maxItems)
         {
-            if (CurrentPage == null)
+            if (CurrentPage is null)
             {
                 _logger.LogWarning("ArticulateRssController.Index: CurrentPage is null, returning 404");
                 return NotFound();
@@ -106,22 +107,19 @@ namespace Articulate.Controllers
 
         public IActionResult Author(int authorId, int? maxItems)
         {
-            IPublishedContent author = _umbracoHelper.Content(authorId);
-            if (author == null)
+            IPublishedContent? author = _umbracoHelper.Content(authorId);
+            if (author is null)
             {
                 throw new ArgumentNullException(nameof(author));
             }
 
-            if (!maxItems.HasValue)
-            {
-                maxItems = 25;
-            }
+            maxItems ??= 25;
 
             //create a master model
             var masterModel = new MasterModel(author, _publishedValueFallback);
 
-            IPublishedContent[] listNodes = masterModel.RootBlogNode.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive)?.ToArray();
-            if (listNodes == null || listNodes.Length == 0)
+            IPublishedContent[]? listNodes = masterModel.RootBlogNode.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive)?.ToArray();
+            if (listNodes is null || listNodes.Length == 0)
             {
                 throw new InvalidOperationException("An ArticulateArchive document must exist under the root Articulate document");
             }
@@ -139,30 +137,24 @@ namespace Articulate.Controllers
 
         public IActionResult Categories(string tag, int? maxItems)
         {
-            if (tag == null)
+            if (tag is null)
             {
                 throw new ArgumentNullException(nameof(tag));
             }
 
-            if (!maxItems.HasValue)
-            {
-                maxItems = 25;
-            }
+            maxItems ??= 25;
 
             return RenderTagsOrCategoriesRss(ArticulateConstants.DataType.ArticulateCategories, "categories", maxItems.Value, tag);
         }
 
         public IActionResult Tags(string tag, int? maxItems)
         {
-            if (tag == null)
+            if (tag is null)
             {
                 throw new ArgumentNullException(nameof(tag));
             }
 
-            if (!maxItems.HasValue)
-            {
-                maxItems = 25;
-            }
+            maxItems ??= 25;
 
             return RenderTagsOrCategoriesRss(ArticulateConstants.DataType.ArticulateTags, "tags", maxItems.Value, tag);
         }
@@ -183,7 +175,7 @@ namespace Articulate.Controllers
 
             //super hack - but this is because we are replacing '.' with '-' in StringExtensions.EncodePath method
             // so if we get nothing, we'll retry with replacing back
-            if ((contentByTag == null || contentByTag.PostCount == 0) && tag.Contains('-'))
+            if (contentByTag.PostCount == 0 && tag.Contains('-'))
             {
                 contentByTag = _articulateTagService.GetContentByTag(
                     _umbracoHelper,
@@ -195,12 +187,12 @@ namespace Articulate.Controllers
                     maxItems);
             }
 
-            if (contentByTag == null || contentByTag.PostCount == 0)
+            if (contentByTag.PostCount == 0 || contentByTag.Posts is null)
             {
                 return NotFound();
             }
 
-            SyndicationFeed feed = _feedGenerator.GetFeed(rootPageModel, contentByTag.Posts?.Take(maxItems));
+            SyndicationFeed feed = _feedGenerator.GetFeed(rootPageModel, contentByTag.Posts.Take(maxItems));
 
             return new RssResult(feed, rootPageModel);
         }

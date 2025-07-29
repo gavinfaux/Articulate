@@ -2,10 +2,10 @@
 
 @if (!Model.Author.Name.IsNullOrWhiteSpace())
 {
-    if (Model.Author.Image != null)
+    if (Model.Author.Image is not null)
     {
         var thumbnail = Model.Author.Image.GetCropUrl("thumbnail");
-        <div class="minilogo" style="background: url(@thumbnail)"></div>        
+        <div class="minilogo" style="background: url(@thumbnail)"></div>
     }
     <div>
         <strong>

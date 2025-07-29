@@ -38,12 +38,13 @@ namespace Articulate.Components
             services.AddSingleton<ArticulateRouter>();
             services.AddSingleton<RouteCacheRefresherFilter>();
             services.AddSingleton<ArticulateFrontEndFilterConvention>();
-            builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<MatcherPolicy, ArticulateDynamicRouteSelectorPolicy>());
-            builder.Services.AddSingleton<IArticulateThemeRepository, ArticulateThemeRepository>();
-            builder.Services.AddScoped<IArticulateThemeResolver, ArticulateThemeResolver>();
-            builder.Services.Configure<RazorViewEngineOptions>(options =>
+            services.TryAddEnumerable(ServiceDescriptor.Singleton<MatcherPolicy, ArticulateDynamicRouteSelectorPolicy>());
+            services.AddSingleton<IArticulateThemeRepository, ArticulateThemeRepository>();
+            services.AddScoped<IArticulateThemeResolver, ArticulateThemeResolver>();
+            services.AddScoped<BackOfficeAuthService>();
+            services.Configure<RazorViewEngineOptions>(options =>
             {
-                IArticulateThemeResolver themeResolver = builder.Services.BuildServiceProvider().GetRequiredService<IArticulateThemeResolver>();
+                IArticulateThemeResolver themeResolver = services.BuildServiceProvider().GetRequiredService<IArticulateThemeResolver>();
                 options.ViewLocationExpanders.Add(new ArticulateViewLocationExpander(themeResolver));
             });
             builder.UrlProviders().InsertBefore<NewDefaultUrlProvider, DateFormattedUrlProvider>();
@@ -58,10 +59,10 @@ namespace Articulate.Components
             builder.AddNotificationHandler<ContentCacheRefresherNotification, ContentCacheRefresherHandler>();
             builder.AddNotificationHandler<DomainCacheRefresherNotification, DomainCacheRefresherHandler>();
 
-            builder.Services.ConfigureOptions<ArticulatePipelineStartupFilter>();
-            builder.Services.ConfigureOptions<ConfigureArticulateMvcOptions>();
+            services.ConfigureOptions<ArticulatePipelineStartupFilter>();
+            services.ConfigureOptions<ConfigureArticulateMvcOptions>();
 
-            builder.Services.AddOutputCache(options =>
+            services.AddOutputCache(options =>
             {
                 options.AddPolicy("Articulate120", policyBuilder =>
                     policyBuilder.Expire(TimeSpan.FromSeconds(120)));

@@ -1,15 +1,14 @@
 @model PagerModel
 
-
 @if (Model.HasNext || Model.HasPrevious)
 {
     <nav class="demo-nav mdl-color-text--grey-50 mdl-cell mdl-cell--12-col">
         @if (Model.HasPrevious)
         {
             <a href="@Model.PreviousUrl" class="demo-nav__button">
-                <button class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon">
+                <span class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon">
                     <i class="material-icons">arrow_back</i>
-                </button>
+                </span>
                 Newer
             </a>
         }
@@ -18,9 +17,9 @@
         {
             <a href="@Model.NextUrl" class="demo-nav__button">
                 Older
-                <button class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon">
+                <span class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon">
                     <i class="material-icons">arrow_forward</i>
-                </button>
+                </span>
             </a>
         }
     </nav>

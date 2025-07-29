@@ -1,12 +1,12 @@
-<Project Sdk="Microsoft.NET.Sdk.Razor">
+﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
   <PropertyGroup>
     <EnableDefaultContentItems>false</EnableDefaultContentItems>
     <TargetFrameworks>net9.0</TargetFrameworks>
     <OutputType>Library</OutputType>
     <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
-    <StaticWebAssetBasePath>/App_Plugins/Articulate/BackOffice</StaticWebAssetBasePath>
+    <StaticWebAssetBasePath>/App_Plugins/Articulate</StaticWebAssetBasePath>
     <CompressionEnabled>false</CompressionEnabled>
-    <!-- TODO: Temporary, resolve in later PRs and enable-->
+    <!--TODO: Enable after phased migration. https://learn.microsoft.com/en-us/dotnet/csharp/nullable-migration-strategies-->
     <Nullable>warnings</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <WarningsAsErrors>Nullable</WarningsAsErrors>
@@ -15,15 +15,15 @@
   <!-- NuGet package metadata -->
   <PropertyGroup>
     <Title>Articulate</Title>
+    <PackageId>Articulate</PackageId>
     <Description>A wonderful Blog engine built on Umbraco</Description>
     <Company>Shannon Deminick</Company>
     <Authors>Shannon Deminick</Authors>
-    <Copyright>Copyright © $(Company) $([System.DateTime]::Today.ToString('yyyy'))</Copyright>
+    <Copyright>Copyright $(Company) $([System.DateTime]::Today.ToString('yyyy'))</Copyright>
     <Product>Articulate</Product>
     <PackageProjectUrl>https://github.com/Shazwazza/Articulate</PackageProjectUrl>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/Shazwazza/Articulate</RepositoryUrl>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageTags>blog umbraco umbraco-marketplace oss tags markdown richtext</PackageTags>
@@ -94,7 +94,9 @@
   -->
   <Import Project="build\Microsoft.AspNetCore.ClientAssets.targets" />
   <PropertyGroup>
+    <!--Disable when you don't want Client to build, e.g. working on API updates.-->
     <ShouldRunClientAssetsBuild>true</ShouldRunClientAssetsBuild>
+    <PackageIcon></PackageIcon>
   </PropertyGroup>
 
   <!--
@@ -140,23 +142,42 @@
     <Message Importance="High" Text="[Articulate] Executing NPM command: $(_FinalBuildCommand)" />
 
     <!-- Step 3: Execute the command stored in the variable -->
-    <Exec Condition="'$(GeneratePackageOnBuild)' != 'true'"
-          Command="$(_FinalBuildCommand)"
-          WorkingDirectory="$(ClientAssetsDirectory)"
-          ContinueOnError="true">
+    <Exec Condition="'$(GeneratePackageOnBuild)' != 'true'" Command="$(_FinalBuildCommand)" WorkingDirectory="$(ClientAssetsDirectory)" ContinueOnError="true">
       <Output TaskParameter="ExitCode" PropertyName="ClientBuildExitCode" />
     </Exec>
 
-    <Exec Condition="'$(GeneratePackageOnBuild)' == 'true'"
-          Command="$(_FinalBuildCommand)"
-          WorkingDirectory="$(ClientAssetsDirectory)">
+    <Exec Condition="'$(GeneratePackageOnBuild)' == 'true'" Command="$(_FinalBuildCommand)" WorkingDirectory="$(ClientAssetsDirectory)">
       <Output TaskParameter="ExitCode" PropertyName="ClientBuildExitCode" />
     </Exec>
 
+    <!--
+    ==========================================================================================
+    DEFINE STATIC WEB ASSETS
+    ==========================================================================================
+    After the Vite build is complete, we now have all the client assets in the temporary
+    output directory. The following logic correctly defines them as Static Web Assets for packaging.
+    This overrides the default behavior in the imported .targets file.
+    -->
     <ItemGroup>
-      <_ClientAssetsBuildOutput Include="$(_ClientAssetsOutputFullPath)\**" />
+      <!-- Get all files from the Vite build output -->
+      <_AllClientAssets Include="$(_ClientAssetsOutputFullPath)\**\*" />
+
+      <!-- Isolate the package manifest -->
+      <_PackageManifestFile Include="$(_ClientAssetsOutputFullPath)\umbraco-package.json" />
+
+      <!-- Isolate all other BackOffice assets by excluding the manifest -->
+      <_BackOfficeAssets Include="@(_AllClientAssets)" Exclude="@(_PackageManifestFile)" />
     </ItemGroup>
-    <!-- =============================================================== -->
+
+    <!-- Define the asset for the package manifest at the correct root level -->
+    <DefineStaticWebAssets CandidateAssets="@(_PackageManifestFile)" SourceId="$(PackageId)" SourceType="Computed" ContentRoot="$(_ClientAssetsOutputFullPath)" BasePath="/App_Plugins/Articulate">
+      <Output TaskParameter="Assets" ItemName="StaticWebAsset" />
+    </DefineStaticWebAssets>
+
+    <!-- Define all other assets for the BackOffice subdirectory -->
+    <DefineStaticWebAssets CandidateAssets="@(_BackOfficeAssets)" SourceId="$(PackageId)" SourceType="Computed" ContentRoot="$(_ClientAssetsOutputFullPath)" BasePath="$(StaticWebAssetBasePath)">
+      <Output TaskParameter="Assets" ItemName="StaticWebAsset" />
+    </DefineStaticWebAssets>
 
     <!-- The error handling part remains the same. -->
     <Warning Condition="'$(GeneratePackageOnBuild)' != 'true' AND '$(ClientBuildExitCode)' != '0'" Text="[Articulate] The BackOffice client-side build failed. The .NET build will continue." />
@@ -194,6 +215,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="..\..\LICENSE">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
     <None Include="..\..\README.md">
       <Pack>true</Pack>
       <PackagePath>\</PackagePath>
@@ -222,30 +247,17 @@
   -->
   <ItemGroup>
     <!--
-    Rule 1: Handle the umbraco-package.json manifest.
-    This rule specifically finds the package manifest and ensures it's placed at the
-    correct root level for Umbraco to discover it (`/App_Plugins/Articulate/`).
-    This is critical for the package to be recognized by the CMS.
+    Rule for packaging static assets like Themes and the Markdown Editor.
+    This rule includes all files under '/wwwroot/App_Plugins/Articulate/' but
+    explicitly excludes the BackOffice folder, which is handled by the Vite build.
     -->
-    <Content Include="wwwroot\App_Plugins\Articulate\umbraco-package.json">
-      <Pack>true</Pack>
-      <PackagePath>staticwebassets\App_Plugins\Articulate\umbraco-package.json</PackagePath>
-    </Content>
-
-    <!--
-    Rule 2: Handle all other static assets (Themes, MarkdownEditor, etc.).
-    This rule includes all other files under '/wwwroot/App_Plugins/Articulate/', but
-    explicitly excludes the BackOffice folder (handled by Vite) and the package manifest
-    (handled by the rule above) to prevent duplication.
-    -->
-    <Content Include="wwwroot\App_Plugins\Articulate\**\*.*" Exclude="wwwroot\App_Plugins\Articulate\BackOffice\**\*.*;wwwroot\App_Plugins\Articulate\umbraco-package.json">
+    <Content Include="wwwroot\App_Plugins\Articulate\**\*.*" Exclude="wwwroot\App_Plugins\Articulate\BackOffice\**\*.*">
       <Pack>true</Pack>
       <PackagePath>staticwebassets\App_Plugins\Articulate\%(RecursiveDir)%(Filename)%(Extension)</PackagePath>
     </Content>
   </ItemGroup>
 
   <ItemGroup>
-
     <!--
     This tells the compiler to embed all files in this folder directly
     into the Articulate.dll as manifest resources.
@@ -256,5 +268,12 @@
     to it and can't assume the 'default' location uses standard conventions.
     -->
     <EmbeddedResource Include="wwwroot\App_Plugins\Articulate\Themes\**" LogicalName="Articulate.Themes/%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Remove="wwwroot\App_Plugins\Articulate\Themes\Material\_ViewImports.cshtml" />
+    <EmbeddedResource Remove="wwwroot\App_Plugins\Articulate\Themes\Mini\_ViewImports.cshtml" />
+    <EmbeddedResource Remove="wwwroot\App_Plugins\Articulate\Themes\Phantom\_ViewImports.cshtml" />
+    <EmbeddedResource Remove="wwwroot\App_Plugins\Articulate\Themes\VAPOR\_ViewImports.cshtml" />
   </ItemGroup>
 </Project>

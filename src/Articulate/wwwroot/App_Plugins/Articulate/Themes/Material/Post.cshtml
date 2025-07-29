@@ -17,7 +17,7 @@
 <div class="demo-blog__posts mdl-grid">
     <div class="mdl-card mdl-shadow--4dp mdl-cell mdl-cell--12-col">
 
-        @await Html.PartialAsync( "PostImageHeader", Model)
+        @await Html.PartialAsync("PostImageHeader", Model)
 
         <div class="mdl-color-text--grey-700 mdl-card__supporting-text meta">
             @await Html.PartialAsync("AuthorInfo", Model)
@@ -67,23 +67,23 @@
 
     }
     <nav class="demo-nav mdl-color-text--grey-50 mdl-cell mdl-cell--12-col">
-        @if (next != null)
+        @if (next is not null)
         {
             <a href="@next.Url()" class="demo-nav__button">
-                <button class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon mdl-color--white mdl-color-text--grey-900" role="presentation">
+                <span class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon mdl-color--white mdl-color-text--grey-900" role="presentation">
                     <i class="material-icons">arrow_back</i>
-                </button>
+                </span>
                 Newer
             </a>
         }
         <div class="section-spacer"></div>
-        @if (prev != null)
+        @if (prev is not null)
         {
             <a href="@prev.Url()" class="demo-nav__button">
                 Older
-                <button class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon mdl-color--white mdl-color-text--grey-900" role="presentation">
+                <span class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon mdl-color--white mdl-color-text--grey-900" role="presentation">
                     <i class="material-icons">arrow_forward</i>
-                </button>
+                </span>
             </a>
         }
     </nav>

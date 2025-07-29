@@ -13,14 +13,14 @@ namespace Articulate
             string[] apiGroupNames)
         {
 
-            if (provider?.ApiDescriptionGroups.Items == null)
+            if (provider?.ApiDescriptionGroups.Items is null)
             {
                 return null;
             }
 
             var groupNameSet = new HashSet<string>(apiGroupNames, StringComparer.OrdinalIgnoreCase);
 
-            return provider.ApiDescriptionGroups.Items.Where(group => group.GroupName != null && groupNameSet.Contains(group.GroupName))
+            return provider.ApiDescriptionGroups.Items.Where(group => group.GroupName is not null && groupNameSet.Contains(group.GroupName))
                 .SelectMany(group => group.Items)
                 .Where(desc =>
                 {
@@ -29,7 +29,7 @@ namespace Articulate
                         return false;
                     }
 
-                    return controllerActionDescriptor.ControllerTypeInfo.GetCustomAttribute<ManagementApiAttribute>() != null;
+                    return controllerActionDescriptor.ControllerTypeInfo.GetCustomAttribute<ManagementApiAttribute>() is not null;
                 })
 
                 .ToDictionary(

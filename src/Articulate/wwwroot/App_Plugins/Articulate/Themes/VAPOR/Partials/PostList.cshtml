@@ -1,15 +1,14 @@
 @model IEnumerable<PostModel>
 
-
 <div>
     <ul class="nostyle recent-posts">
         @foreach (var post in Model)
         {
             <li>
-                @if (post.PostImage != null)
+                @if (post.PostImage is not null)
                 {
                     var thumbnail = post.PostImage.GetCropUrl("blogPost");
-                    if (thumbnail != null)
+                    if (thumbnail is not null)
                     {
                         <div class="postthumb" style="background: url(@thumbnail)"></div>
                     }

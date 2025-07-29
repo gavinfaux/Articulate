@@ -1,3 +1,4 @@
+#nullable enable
 using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -81,8 +82,8 @@ namespace Articulate.ImportExport
             _articulateTempFileSystem = articulateTempFileSystem;
             _articulateRootMediaFolder = new Lazy<IMedia>(() =>
             {
-                IMedia root = _mediaService.GetRootMedia().FirstOrDefault(x => x.Name == ArticulateConstants.Convention.Articulate && x.ContentType.Alias.InvariantEquals(Constants.Conventions.MediaTypes.Folder));
-                return root ??= _mediaService.CreateMediaWithIdentity(ArticulateConstants.Convention.Articulate, Constants.System.Root, Constants.Conventions.MediaTypes.Folder);
+                IMedia? root = _mediaService.GetRootMedia().FirstOrDefault(x => x.Name == ArticulateConstants.Convention.Articulate && x.ContentType.Alias.InvariantEquals(Constants.Conventions.MediaTypes.Folder));
+                return root ?? _mediaService.CreateMediaWithIdentity(ArticulateConstants.Convention.Articulate, Constants.System.Root, Constants.Conventions.MediaTypes.Folder);
             });
         }
 
@@ -101,8 +102,8 @@ namespace Articulate.ImportExport
             string fileName,
             Guid blogRootNode,
             bool overwrite,
-            string regexMatch,
-            string regexReplace,
+            string? regexMatch,
+            string? regexReplace,
             bool publishAll,
             bool exportDisqusXml = false,
             bool importFirstImage = false)
@@ -213,11 +214,11 @@ namespace Articulate.ImportExport
                 authorsType.Id,
                 0,
                 int.MaxValue,
-                out long totalAuthorsNodes,
+                out var totalAuthorsNodes,
                 _sqlContext.Query<IContent>().Where(x => x.ParentId == rootNode.Id && x.Trashed == false));
 
-            IContent authorsNode = allAuthorsNodes.FirstOrDefault();
-            if (authorsNode == null)
+            IContent? authorsNode = allAuthorsNodes.FirstOrDefault();
+            if (authorsNode is null)
             {
                 //create the authors node
                 authorsNode = _contentService.CreateWithInvariantOrDefaultCultureName(ArticulateConstants.Convention.AuthorsDocument, rootNode, authorsType, _languageService);
@@ -231,20 +232,20 @@ namespace Articulate.ImportExport
                 authorType.Id,
                 0,
                 int.MaxValue,
-                out long totalAuthorNodes,
+                out var totalAuthorNodes,
                 _sqlContext.Query<IContent>().Where(x => x.ParentId == authorsNode.Id && x.Trashed == false));
 
             foreach (BlogMLAuthor author in authors)
             {
                 //first check if a user exists by email
-                IUser found = _userService.GetByEmail(author.EmailAddress);
-                if (found != null)
+                IUser? found = _userService.GetByEmail(author.EmailAddress);
+                if (found is not null)
                 {
                     //check if an author node exists for this user
-                    IContent authorNode = allAuthorNodes.FirstOrDefault(x => x.Name.InvariantEquals(found.Name));
+                    IContent? authorNode = allAuthorNodes?.FirstOrDefault(x => x.Name.InvariantEquals(found.Name));
 
                     //nope not found so create a node for this user name
-                    if (authorNode == null)
+                    if (authorNode is null)
                     {
                         //create an author with the same name as the user - we'll need to wire up that
                         // name to posts later on
@@ -254,15 +255,15 @@ namespace Articulate.ImportExport
                         _contentService.Publish(authorNode, ["*"], userId: userId);
                     }
 
-                    result.Add(author.Id, authorNode.Name);
+                    result.Add(author.Id, authorNode.Name!);
                 }
                 else
                 {
                     //no user existsw with this email, so check if a node exists with the current author's title
-                    IContent authorNode = allAuthorNodes.FirstOrDefault(x => x.Name.InvariantEquals(author.Title.Content));
+                    IContent? authorNode = allAuthorNodes?.FirstOrDefault(x => x.Name.InvariantEquals(author.Title.Content));
 
                     //nope, not found so create one
-                    if (authorNode == null)
+                    if (authorNode is null)
                     {
                         //create a new author node with this title
                         authorNode = _contentService.CreateWithInvariantOrDefaultCultureName(author.Title.Content, authorsNode, authorType, _languageService);
@@ -271,14 +272,14 @@ namespace Articulate.ImportExport
                         _contentService.Publish(authorNode, ["*"], userId: userId);
                     }
 
-                    result.Add(author.Id, authorNode.Name);
+                    result.Add(author.Id, authorNode.Name!);
                 }
             }
 
             return result;
         }
 
-        private async Task<IEnumerable<IContent>> ImportPosts(int userId, XDocument xdoc, IContent rootNode, IEnumerable<BlogMLPost> posts, BlogMLAuthor[] authors, BlogMLCategory[] categories, IDictionary<string, string> authorIdsToName, bool overwrite, string regexMatch, string regexReplace, bool publishAll, bool importFirstImage = false)
+        private async Task<IEnumerable<IContent>> ImportPosts(int userId, XDocument xdoc, IContent rootNode, IEnumerable<BlogMLPost> posts, BlogMLAuthor[] authors, BlogMLCategory[] categories, IDictionary<string, string> authorIdsToName, bool overwrite, string? regexMatch, string? regexReplace, bool publishAll, bool importFirstImage = false)
         {
             var result = new List<IContent>();
 
@@ -293,12 +294,12 @@ namespace Articulate.ImportExport
                 archiveDocType.Id,
                 0,
                 int.MaxValue,
-                out long totalArchives,
+                out var totalArchives,
                 _sqlContext.Query<IContent>().Where(x => x.ParentId == rootNode.Id && x.Trashed == false));
 
-            IContent archiveNode = archive.FirstOrDefault();
+            IContent? archiveNode = archive.FirstOrDefault();
 
-            if (archiveNode == null)
+            if (archiveNode is null)
             {
                 //create the authors node
                 archiveNode = _contentService.CreateWithInvariantOrDefaultCultureName(ArticulateConstants.Convention.AuthorsDocument, rootNode, archiveDocType, _languageService);
@@ -311,14 +312,14 @@ namespace Articulate.ImportExport
                 archiveNode.Id,
                 0,
                 int.MaxValue,
-                out long totalPostNodes,
+                out var totalPostNodes,
                 _sqlContext.Query<IContent>().Where(x => x.ParentId == archiveNode.Id && x.Trashed == false));
 
             foreach (BlogMLPost post in posts)
             {
                 //check if one exists
 
-                IContent postNode;
+                IContent? postNode;
 
                 //Use post.id if it's there
                 if (!string.IsNullOrWhiteSpace(post.Id))
@@ -330,19 +331,19 @@ namespace Articulate.ImportExport
                     //Use the "slug" (post name) if post.id is not there
                     postNode = allPostNodes
                         .Select(x => new { Node = x, UrlName = x.GetValue<string>(Constants.Conventions.Content.UrlName) })
-                        .Where(x => x.UrlName != null && post.Name!=null && x.UrlName.InvariantStartsWith(post.Name.Content))
+                        .Where(x => x.UrlName is not null && post.Name!=null && x.UrlName.InvariantStartsWith(post.Name.Content))
                         .Select(x => x.Node)
                         .FirstOrDefault();
                 }
 
                 //it exists and we don't wanna overwrite, skip it
-                if (!overwrite && postNode != null)
+                if (!overwrite && postNode is not null)
                 {
                     continue;
                 }
 
                 //create it if it doesn't exist
-                if (postNode == null)
+                if (postNode is null)
                 {
                     var title = WebUtility.HtmlDecode(post.Title.Content);
                     postNode = _contentService.CreateWithInvariantOrDefaultCultureName(title, archiveNode, postType, _languageService);
@@ -353,7 +354,7 @@ namespace Articulate.ImportExport
 
                 postNode.SetInvariantOrDefaultCultureValue("publishedDate", post.CreatedOn, postType, _languageService);
 
-                if (post.Excerpt != null && post.Excerpt.Content.IsNullOrWhiteSpace() == false)
+                if (post.Excerpt is not null && post.Excerpt.Content.IsNullOrWhiteSpace() == false)
                 {
                     var excerpt = post.Excerpt.Content;
 
@@ -386,11 +387,11 @@ namespace Articulate.ImportExport
 
                 postNode.SetInvariantOrDefaultCultureValue("enableComments", true, postType, _languageService);
 
-                if (post.Url != null && !string.IsNullOrWhiteSpace(post.Url.OriginalString))
+                if (post.Url is not null && !string.IsNullOrWhiteSpace(post.Url.OriginalString))
                 {
-                    var slug = string.Empty;
+                    string slug;
                     //we take the post-name BlogML element as slug for the post
-                    if (post.Name != null)
+                    if (post.Name is not null)
                     {
                         slug = post.Name.Content;
                     }
@@ -411,9 +412,9 @@ namespace Articulate.ImportExport
 
                 if (post.Authors.Count > 0)
                 {
-                    BlogMLAuthor author = authors.FirstOrDefault(x => x.Id.InvariantEquals(post.Authors[0]));
+                    BlogMLAuthor? author = authors.FirstOrDefault(x => x.Id.InvariantEquals(post.Authors[0]));
 
-                    if (author != null)
+                    if (author is not null)
                     {
                         var name = authorIdsToName[author.Id];
                         postNode.SetInvariantOrDefaultCultureValue("author", name, postType, _languageService);
@@ -454,20 +455,20 @@ namespace Articulate.ImportExport
 
             var imageMimeTypes = new List<string> { "image/jpeg", "image/gif", "image/png" };
 
-            BlogMLAttachment attachment = post.Attachments.FirstOrDefault(p => imageMimeTypes.Contains(p.MimeType));
-            if (attachment == null)
+            BlogMLAttachment? attachment = post.Attachments.FirstOrDefault(p => imageMimeTypes.Contains(p.MimeType));
+            if (attachment is null)
             {
                 return;
             }
 
-            Stream stream = null;
+            Stream? stream = null;
             if (!attachment.Content.IsNullOrWhiteSpace())
             {
                 //the image is base64
                 var bytes = Convert.FromBase64String(attachment.Content);
                 stream = new MemoryStream(bytes);
             }
-            else if (attachment.ExternalUri != null && attachment.ExternalUri.IsAbsoluteUri)
+            else if (attachment.ExternalUri is not null && attachment.ExternalUri.IsAbsoluteUri)
             {
                 try
                 {
@@ -482,9 +483,9 @@ namespace Articulate.ImportExport
                 }
             }
 
-            if (stream != null)
+            if (stream is not null)
             {
-                using (stream)
+                await using (stream)
                 {
                     // create a media item
                     IMedia media = _mediaService.CreateMedia(postNode.Name ?? $"Post {post.Id} image", _articulateRootMediaFolder.Value, Constants.Conventions.MediaTypes.Image);
@@ -526,7 +527,7 @@ namespace Articulate.ImportExport
         //            comment.Content.Content,
         //            comment.UserName,
         //            comment.UserEmailAddress,
-        //            comment.UserUrl != null ? comment.UserUrl.ToString() : string.Empty,
+        //            comment.UserUrl is not null ? comment.UserUrl.ToString() : string.Empty,
         //            comment.CreatedOn);
 
         //        if (!result)
@@ -554,24 +555,24 @@ namespace Articulate.ImportExport
 
         private void ImportTags(XDocument xdoc, IContent postNode, BlogMLPost post, IContentType postType)
         {
-            if (xdoc == null || xdoc.Root == null)
+            if (xdoc.Root is null)
             {
                 return;
             }
             //since this blobml serializer doesn't support tags (can't find one that does) we need to manually take care of that
-            XElement xmlPost = xdoc.Descendants(XName.Get("post", xdoc.Root.Name.NamespaceName))
-                .SingleOrDefault(x => (string)x.Attribute("id") == post.Id);
+            XElement? xmlPost = xdoc.Descendants(XName.Get("post", xdoc.Root.Name.NamespaceName))
+                .SingleOrDefault(x => x.Attribute("id")?.Value.ToString() == post.Id);
 
             xmlPost ??= xdoc.Descendants(XName.Get("post", xdoc.Root.Name.NamespaceName))
                                 .SingleOrDefault(x => x.Descendants(XName.Get("post-name", xdoc.Root.Name.NamespaceName))
-                                .SingleOrDefault(s => s.Value == post.Name.Content) != null);
+                                .SingleOrDefault(s => s.Value == post.Name.Content) is not null);
 
-            if (xmlPost == null)
+            if (xmlPost is null)
             {
                 return;
             }
 
-            var tags = xmlPost.Descendants(XName.Get("tag", xdoc.Root.Name.NamespaceName)).Select(x => (string)x.Attribute("ref")).ToArray();
+            var tags = xmlPost.Descendants(XName.Get("tag", xdoc.Root.Name.NamespaceName)).Select(x => x.Attribute("ref")?.Value.ToString()).ToArray();
 
             postNode.AssignInvariantOrDefaultCultureTags("tags", tags, postType, _languageService, _dataTypeService, _dataEditors, _jsonSerializer);
         }

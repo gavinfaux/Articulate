@@ -8,7 +8,7 @@
     <!-- HEADER COLUMN --->
     <div class="header-col">
         <header>
-            @await Html.PartialAsync("Header",Model)
+            @await Html.PartialAsync("Header", Model)
         </header>
     </div>
 
@@ -35,10 +35,10 @@
                             <a href="@post.Url()" class="post-list-link">
                                 <div>
                                     <h2>@post.Name</h2>
-                                    @if (post.PostImage != null)
+                                    @if (post.PostImage is not null)
                                     {
                                         var thumbnail = post.PostImage.GetCropUrl("thumbnail");
-                                        if (thumbnail != null)
+                                        if (thumbnail is not null)
                                         {
                                             <img class="thumb" src="@thumbnail" alt="@post.Name" />
                                         }
@@ -51,13 +51,13 @@
                                 </div>
                             </a>
                             <div class="post-info">
-                                
+
                                 @if (post.Tags.Any())
                                 {
                                     <div class="tags">
                                         <i class="fa-solid fa-tags fa-lg"></i>
                                         @await Html.PartialAsync("PostTags", post)
-                                    </div>    
+                                    </div>
                                 }
 
                             </div>
@@ -66,10 +66,10 @@
                 </div>
             }
         }
-        
-        @await Html.PartialAsync( "Pager", Model.Pages)
-        
-        @await Html.PartialAsync( "Footer")
+
+        @await Html.PartialAsync("Pager", Model.Pages)
+
+        @await Html.PartialAsync("Footer")
 
     </div>
 </div>

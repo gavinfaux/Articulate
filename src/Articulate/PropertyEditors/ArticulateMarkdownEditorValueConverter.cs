@@ -21,7 +21,7 @@ namespace Articulate.PropertyEditors
             bool preview)
         {
             var md = inter as string;
-            return new HtmlEncodedString(inter == null ? string.Empty : MarkdownHelper.ToHtml(md));
+            return new HtmlEncodedString(inter is null ? string.Empty : MarkdownHelper.ToHtml(md));
         }
     }
 }

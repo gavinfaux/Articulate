@@ -41,7 +41,7 @@
                         {
                             <div class="tags">
                                 <i class="fa-solid fa-tags fa-lg"></i>
-                                @await Html.PartialAsync( "PostTags", Model)
+                                @await Html.PartialAsync("PostTags", Model)
                             </div>
                         }
                     </div>
@@ -56,7 +56,7 @@
                 </article>
 
                 <!--- Sharing Section --->
-                @await Html.PartialAsync( "Share", Model)
+                @await Html.PartialAsync("Share", Model)
 
                 <!--- Comment sections - using DISQUS as default --->
                 @if (Model.EnableComments)

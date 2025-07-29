@@ -11,7 +11,6 @@ using Umbraco.Cms.Core.PublishedCache;
 using Umbraco.Cms.Core.Routing;
 using Umbraco.Cms.Core.Web;
 using Umbraco.Cms.Web.Common;
-using Umbraco.Cms.Web.Common.Controllers;
 using Umbraco.Extensions;
 
 namespace Articulate.Controllers
@@ -57,7 +56,7 @@ namespace Articulate.Controllers
         /// <returns></returns>
         public IActionResult Categories(string tag, int? p)
         {
-            if (CurrentPage == null)
+            if (CurrentPage is null)
             {
                 _logger.LogWarning("ArticulateTagsController.Categories: CurrentPage is null, returning 404");
                 return NotFound();
@@ -78,7 +77,7 @@ namespace Articulate.Controllers
         /// <returns></returns>
         public IActionResult Tags(string tag, int? p)
         {
-            if (CurrentPage == null)
+            if (CurrentPage is null)
             {
                 _logger.LogWarning("ArticulateTagsController.Tags: CurrentPage is null, returning 404");
                 return NotFound();
@@ -93,7 +92,7 @@ namespace Articulate.Controllers
 
         private IActionResult RenderTagsOrCategories(string tagGroup, string baseUrl)
         {
-            if (CurrentPage == null)
+            if (CurrentPage is null)
             {
                 _logger.LogWarning("ArticulateTagsController.RenderTagsOrCategories: CurrentPage is null, returning 404");
                 return NotFound();
@@ -102,17 +101,12 @@ namespace Articulate.Controllers
             //create a blog model of the main page
             var rootPageModel = new MasterModel(CurrentPage, PublishedValueFallback);
 
-            IEnumerable<PostsByTagModel>? contentByTags = _articulateTagService.GetContentByTags(
+            IEnumerable<PostsByTagModel> contentByTags = _articulateTagService.GetContentByTags(
                 _umbracoHelper,
                 _tagQuery,
                 rootPageModel,
                 tagGroup,
                 baseUrl);
-
-            if (contentByTags == null)
-            {
-                return NotFound();
-            }
 
             var tagListModel = new TagListModel(
                 rootPageModel,
@@ -126,7 +120,7 @@ namespace Articulate.Controllers
 
         private IActionResult RenderByTagOrCategory(string tag, int? p, string tagGroup, string baseUrl)
         {
-            if (CurrentPage == null)
+            if (CurrentPage is null)
             {
                 _logger.LogWarning("ArticulateTagsController.RenderByTagOrCategory: CurrentPage is null, returning 404");
                 return NotFound();
@@ -135,7 +129,7 @@ namespace Articulate.Controllers
             //create a master model
             var masterModel = new MasterModel(CurrentPage, PublishedValueFallback);
 
-            PostsByTagModel? contentByTag = _articulateTagService.GetContentByTag(
+            PostsByTagModel contentByTag = _articulateTagService.GetContentByTag(
                 _umbracoHelper,
                 masterModel,
                 tag,
@@ -148,7 +142,7 @@ namespace Articulate.Controllers
             //this is a special case in the event that a tag contains a '.', when this happens we change it to a '-'
             // when generating the URL. So if the above doesn't return any tags and the tag contains a '-', then we
             // will replace them with '.' and do the lookup again
-            if ((contentByTag == null || contentByTag.PostCount == 0) && tag.Contains('-'))
+            if (contentByTag.PostCount == 0 && tag.Contains('-'))
             {
                 contentByTag = _articulateTagService.GetContentByTag(
                     _umbracoHelper,

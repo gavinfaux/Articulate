@@ -1,3 +1,4 @@
+#nullable enable
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Umbraco.Cms.Core.Routing;
 
@@ -20,10 +21,10 @@ namespace Articulate.Routing
         public void Add(int contentId, IReadOnlyList<Domain> domains)
             => _content.Add(contentId, domains);
 
-        public int GetContentId(Domain currentDomain)
+        public int GetContentId(Domain? currentDomain)
         {
             KeyValuePair<int, IReadOnlyList<Domain>> found = _content.First(x =>
-                (currentDomain == null && x.Value.Count == 0) || x.Value.Any(x => x.Id == currentDomain?.Id));
+                (currentDomain is null && x.Value.Count == 0) || x.Value.Any(d => d.Id == currentDomain?.Id));
 
             return found.Key;
         }

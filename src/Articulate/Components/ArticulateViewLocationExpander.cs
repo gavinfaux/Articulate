@@ -40,7 +40,7 @@ namespace Articulate.Components
        |   |   |-- Assets/
        |   |       |-- css/base.css
        |   |       |-- js/base.js
-       |   |       |-- base.json
+       |   |       |-- base.json           <-- theme-specific settings (e.g. version)
        |   |   |-- List.cshtml
        |   |   |-- Post.cshtml
        |   |   |-- Partials/
@@ -55,7 +55,7 @@ namespace Articulate.Components
        |   |   |-- Assets/
        |   |       |-- css/theme.css       <-- Overrides/extends the Shared/Assets/base.css
        |   |       |-- /js/theme.js        <-- Overrides/extends the Shared/Assets/base.js
-       |   |       |-- theme.json          <-- Overrides/extends system settings (e.g. number of posts per page)
+       |   |       |-- theme.json          <-- Overrides/extends system settings
        |   |-- Material/
        |   |   |-- _ViewStart.cshtml       <-- REQUIRED, minimal @{ Layout = "_Layout.cshtml"; }, uses theme or fallback to shared
        |   |-- ... etc ...
@@ -83,15 +83,15 @@ namespace Articulate.Components
             var themeLocations = new[]
             {
                 // User themes take priority over system themes, allows overriding system themes.
-                $"/Views/ArticulateThemes/{themeName}/{{0}}.cshtml",
-                $"/Views/ArticulateThemes/{themeName}/Partials/{{0}}.cshtml",
+                $"/wwwroot/Views/ArticulateThemes/{themeName}/{{0}}.cshtml",
+                $"/wwwroot/Views/ArticulateThemes/{themeName}/Partials/{{0}}.cshtml",
 
                 // System themes
-                $"/App_Plugins/Articulate/Themes/{themeName}/{{0}}.cshtml",
-                $"/App_Plugins/Articulate/Themes/{themeName}/Partials/{{0}}.cshtml",
+                $"/wwwroot/App_Plugins/Articulate/Themes/{themeName}/{{0}}.cshtml",
+                $"/wwwroot/App_Plugins/Articulate/Themes/{themeName}/Partials/{{0}}.cshtml",
 
-                // Markdown Editor (does not have a theme, but
-                "/Views/Articulate/MarkdownEditor/{0}.cshtml"
+                // Markdown Editor (does not have a theme, but routed via Articulate root node, so themeName found)
+                "/wwwroot/App_Plugins/Articulate/MarkdownEditor/{0}.cshtml"
 
 
                 // Future base theme
@@ -99,7 +99,9 @@ namespace Articulate.Components
                 // "/App_Plugins/Articulate/Themes/Shared/Partials/{0}.cshtml",
             };
 
-            return themeLocations.Concat(viewLocations);
+            var locations = themeLocations.Concat(viewLocations);
+
+            return locations;
 
         }
     }

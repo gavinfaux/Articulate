@@ -17,7 +17,7 @@ namespace Articulate.Services
                 () =>
                 {
                     if (!umbracoContextAccessor.TryGetUmbracoContext(out IUmbracoContext? umbracoContext) ||
-                        umbracoContext.PublishedRequest?.PublishedContent == null)
+                        umbracoContext.PublishedRequest?.PublishedContent is null)
                     {
                         return string.Empty;
                     }
@@ -25,10 +25,6 @@ namespace Articulate.Services
                     IPublishedContent articulateRoot =
                         umbracoContext.PublishedRequest.PublishedContent.AncestorOrSelf(ArticulateConstants.ContentType
                             .Articulate);
-                    if (articulateRoot == null)
-                    {
-                        return string.Empty;
-                    }
 
                     var themeName = articulateRoot.Value<string>("theme");
                     return themeName ?? string.Empty;

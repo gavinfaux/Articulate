@@ -12,12 +12,12 @@ namespace Articulate.Models
 
         public PostsByTagModel(IEnumerable<PostModel> posts, string tagName, string tagUrl, int count)
         {
-            if (posts == null)
+            if (posts is null)
             {
                 throw new ArgumentNullException(nameof(posts));
             }
 
-            if (tagUrl == null)
+            if (tagUrl is null)
             {
                 throw new ArgumentNullException(nameof(tagUrl));
             }

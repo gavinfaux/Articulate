@@ -1,4 +1,3 @@
-#nullable enable
 namespace Articulate.Attributes
 {
     [AttributeUsage(AttributeTargets.Class)]

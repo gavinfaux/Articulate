@@ -32,7 +32,7 @@
 
                     <div class="hrule"></div>
                     <div class="postContent">
-                        @if (Model.Image != null)
+                        @if (Model.Image is not null)
                         {
                             var imgUrl = Model.Image.GetCropUrl("wide");
                             <img class="postImage" alt="@Model.Name" src="@imgUrl" />

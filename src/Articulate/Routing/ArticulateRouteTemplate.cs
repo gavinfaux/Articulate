@@ -1,8 +1,9 @@
+//TODO: #nullable enable
 using Microsoft.AspNetCore.Routing.Template;
 
 namespace Articulate.Routing
 {
-    internal struct ArticulateRouteTemplate : IEquatable<ArticulateRouteTemplate>
+    internal readonly struct ArticulateRouteTemplate : IEquatable<ArticulateRouteTemplate>
     {
         private readonly string _template;
 

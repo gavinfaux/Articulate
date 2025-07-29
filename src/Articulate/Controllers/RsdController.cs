@@ -40,7 +40,7 @@ namespace Articulate.Controllers
         public ActionResult Index(int id)
         {
             IPublishedContent? node = _umbracoHelper.Content(id);
-            if (node == null)
+            if (node is null)
             {
                 return new NotFoundResult();
             }

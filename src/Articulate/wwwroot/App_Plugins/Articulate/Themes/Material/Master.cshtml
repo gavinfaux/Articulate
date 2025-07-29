@@ -1,5 +1,3 @@
-@addTagHelper *, Smidge
-@using Articulate
 @model IMasterModel
 
 <!doctype html>
@@ -30,7 +28,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
     <link rel="preconnect" href="https://code.getmdl.io">
-    
+
     <title>@Model.PageTitle</title>
     @Model.MetaTags()
     @Html.SocialMetaTags(Model)
@@ -52,11 +50,11 @@
     @if (!blogBanner.IsNullOrWhiteSpace())
     {
         <style>
-        body::before {
-            background-image: url('@Html.Raw(Model.BlogBanner)');
-            background-size: cover;
-            background-attachment: fixed;
-        }
+            body::before {
+                background-image: url('@Html.Raw(Model.BlogBanner)');
+                background-size: cover;
+                background-attachment: fixed;
+            }
         </style>
     }
 
@@ -77,19 +75,19 @@
 
     @*This is kinda dumb but it's how google made the material design, this ensures media cards are clickable if they contain a link*@
     <script type="text/javascript">
-    Array.prototype.forEach.call(document.querySelectorAll('.mdl-card__media'), function(el) {
-      var link = el.querySelector('a');
-      if(!link) {
-        return;
-      }
-      var target = link.getAttribute('href');
-      if(!target) {
-        return;
-      }
-      el.addEventListener('click', function() {
-        location.href = target;
-      });
-    });
+        Array.prototype.forEach.call(document.querySelectorAll('.mdl-card__media'), function(el) {
+          var link = el.querySelector('a');
+          if(!link) {
+            return;
+          }
+          var target = link.getAttribute('href');
+          if(!target) {
+            return;
+          }
+          el.addEventListener('click', function() {
+            location.href = target;
+          });
+        });
     </script>
 
 </body>

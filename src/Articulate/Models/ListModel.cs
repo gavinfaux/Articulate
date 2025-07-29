@@ -1,3 +1,4 @@
+#nullable enable
 using Umbraco.Cms.Core.Models.PublishedContent;
 
 namespace Articulate.Models
@@ -7,8 +8,8 @@ namespace Articulate.Models
     /// </summary>
     public class ListModel : MasterModel
     {
-        private readonly IEnumerable<IPublishedContent> _listItems;
-        private IEnumerable<PostModel> _resolvedList;
+        private readonly IEnumerable<IPublishedContent>? _listItems;
+        private IEnumerable<PostModel>? _resolvedList;
 
         /// <summary>
         /// Constructor accepting an explicit list of child items
@@ -22,14 +23,14 @@ namespace Articulate.Models
         /// already be sorted.
         /// </remarks>
         public ListModel(
-            IPublishedContent content,
-            PagerModel pager,
-            IEnumerable<IPublishedContent> listItems,
+            IPublishedContent? content,
+            PagerModel? pager,
+            IEnumerable<IPublishedContent>? listItems,
             IPublishedValueFallback publishedValueFallback)
             : base(content, publishedValueFallback)
         {
 
-            if (content == null)
+            if (content is null)
             {
                 throw new ArgumentNullException(nameof(content));
             }
@@ -54,7 +55,7 @@ namespace Articulate.Models
         /// <summary>
         /// The pager model
         /// </summary>
-        public PagerModel Pages { get; }
+        public PagerModel? Pages { get; }
 
         /// <summary>
         /// Strongly typed access to the list of blog posts
@@ -63,18 +64,18 @@ namespace Articulate.Models
         {
             get
             {
-                if (_resolvedList != null)
+                if (_resolvedList is not null)
                 {
                     return _resolvedList;
                 }
 
-                if (_listItems == null)
+                if (_listItems is null)
                 {
                     _resolvedList = ChildrenForAllCultures.Select(x => new PostModel(x, PublishedValueFallback)).ToArray();
                     return _resolvedList;
                 }
 
-                if (_listItems != null && Pages != null)
+                if (_listItems is not null && Pages is not null)
                 {
                     _resolvedList = _listItems
                     //Skip will already be done in this case, but we'll take again anyways just to be safe
@@ -94,7 +95,7 @@ namespace Articulate.Models
         /// <summary>
         /// The list of blog posts
         /// </summary>
-        [Obsolete("Please use TryGetChildrenKeys() on IDocumentNavigationQueryService or IMediaNavigationQueryService instead. Scheduled for removal in V16.")]
+        [Obsolete("Please use TryGetChildrenKeys() on IDocumentNavigationQueryService or IMediaNavigationQueryService instead. Scheduled for removal in V16.", false)]
         public override IEnumerable<IPublishedContent> Children => Posts;
 
         public IEnumerable<IPublishedContent> ChildrenForAllCultures => Posts;

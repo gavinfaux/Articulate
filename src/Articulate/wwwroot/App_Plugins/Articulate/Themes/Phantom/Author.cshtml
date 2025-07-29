@@ -14,7 +14,7 @@
     <h1 class="post-title">@Model.Name<a href="@Model.ArticulateAuthorRssUrl()" class="icon-rss"></a></h1>
 
     <section class="post-content">
-        @if (Model.Image != null)
+        @if (Model.Image is not null)
         {
             var imgUrl = Model.Image.GetCropUrl("wide");
             <img class="postImage" alt="@Model.Name" src="@imgUrl" />
@@ -29,7 +29,6 @@
     </section>
 
     <footer class="post-footer">
-      
     </footer>
 
 </article>

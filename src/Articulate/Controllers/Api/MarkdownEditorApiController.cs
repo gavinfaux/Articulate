@@ -179,7 +179,7 @@ namespace Articulate.Controllers.Api
             }
 
             IContent? articulateNode = _contentService.GetById(model.ArticulateBlogNode);
-            if (articulateNode == null)
+            if (articulateNode is null)
             {
                 return Problem(
                     $"No Articulate node found with the specified id: {model.ArticulateBlogNode}",
@@ -192,7 +192,7 @@ namespace Articulate.Controllers.Api
             IContent? archive = _contentService.GetPagedChildren(model.ArticulateBlogNode, 0, 1, out _)
                 .FirstOrDefault(x =>
                     x.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateArchive));
-            if (archive == null)
+            if (archive is null)
             {
                 return Problem(
                     "No Articulate Archive node found for the specified id.",
@@ -200,7 +200,7 @@ namespace Articulate.Controllers.Api
             }
 
             IUser? currentUser = _backOfficeSecurityAccessor.BackOfficeSecurity?.CurrentUser;
-            if (currentUser == null)
+            if (currentUser is null)
             {
                 // This shouldn't happen due to the [Authorize] attribute, but it's a good safeguard.
                 return Unauthorized();
@@ -217,7 +217,7 @@ namespace Articulate.Controllers.Api
             model.Body = parsedImageResponse.BodyText;
 
             IContentType? contentType = _contentTypeService.Get("ArticulateMarkdown");
-            if (contentType == null)
+            if (contentType is null)
             {
                 _logger.LogError("Server configuration error: The 'ArticulateMarkdown' content type was not found.");
                 return Problem(
@@ -232,7 +232,7 @@ namespace Articulate.Controllers.Api
                 _languageService,
                 currentUser.Id);
 
-            if (content == null)
+            if (content is null)
             {
                 _logger.LogError("Content could not be created.");
                 return Problem(
@@ -308,7 +308,7 @@ namespace Articulate.Controllers.Api
             // TODO: Generate a safe filename instead of relying on user supplied filename
             // TODO: Better file validation file sizes, mimetypes, file signatures etc, extract to use elsewhere (MetaWeblog, BlogML import), plus return validation results for UX
 
-            if (body == null)
+            if (body is null)
             {
                 return new ParseImageResponse();
             }
@@ -334,7 +334,7 @@ namespace Articulate.Controllers.Api
 
                 // STEP 2: For each match, VALIDATE and PROCESS it asynchronously.
 
-                if (file == null)
+                if (file is null)
                 {
                     _logger.LogWarning("Markdown image placeholder for {TempUrl} found, but no corresponding file was uploaded.", tempUrl);
                     // The file is missing. We will replace its tag with nothing.
@@ -373,7 +373,7 @@ namespace Articulate.Controllers.Api
                     _mediaService.Save(mediaItem);
                     IPublishedContent? media = _umbracoHelper.Media(mediaItem.Key);
 
-                    if (media == null)
+                    if (media is null)
                     {
                         continue;
                     }

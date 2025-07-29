@@ -19,15 +19,15 @@
   "license": "MIT",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build && node ./scripts/post-build.js",
-    "build:release": "tsc && npm run set-version && vite build && node ./scripts/post-build.js",
+    "build": "tsc && vite build",
+    "build:release": "tsc && npm run set-version && vite build",
     "preview": "vite preview",
     "watch": "vite build --watch",
     "lint:errors": "npm run lint -- --quiet",
     "lint:fix": "npm run lint -- --fix",
     "lint": "eslint src",
     "check": "tsc --noEmit",
-    "generate:api": "cross-env NODE_TLS_REJECT_UNAUTHORIZED=0 node ./scripts/generate-api.js http://localhost:44169/umbraco/swagger/articulate/swagger.json ./src/api --excludeTags 'Markdown Editor'",
+    "generate:api": "cross-env NODE_TLS_REJECT_UNAUTHORIZED=0 node ./scripts/generate-api.js https://localhost:44366/umbraco/swagger/articulate/swagger.json ./src/api --excludeTags 'Markdown Editor'",
     "set-version": "node ./scripts/set-version.js ./package.json"
   },
   "dependenciesComments": {

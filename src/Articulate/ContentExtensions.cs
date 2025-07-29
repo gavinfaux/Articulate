@@ -1,3 +1,4 @@
+// TODO: #nullable enable
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.PropertyEditors;
 using Umbraco.Cms.Core.Serialization;
@@ -143,7 +144,7 @@ namespace Articulate
                 throw new ArgumentNullException(nameof(contentType));
             }
 
-            if (content.ContentType.VariesByCulture() && content.CultureInfos != null)
+            if (content.ContentType.VariesByCulture() && content.CultureInfos is not null)
             {
                 // iterate over any existing cultures defined on the content item
                 foreach (ContentCultureInfos c in content.CultureInfos)
@@ -151,7 +152,7 @@ namespace Articulate
                     IPropertyType propertyType = contentType.CompositionPropertyTypes.FirstOrDefault(x => x.Alias == propertyAlias) ?? throw new InvalidOperationException($"No property type found by alias {propertyAlias}");
 
                     var valueToSet = propertyValueGetter(content, contentType, c);
-                    if (valueToSet == null || (valueToSet is string propValAsString && string.IsNullOrWhiteSpace(propValAsString)))
+                    if (valueToSet is null || (valueToSet is string propValAsString && string.IsNullOrWhiteSpace(propValAsString)))
                     {
                         continue;
                     }
@@ -162,7 +163,7 @@ namespace Articulate
             else
             {
                 var propertyValue = propertyValueGetter(content, contentType, null);
-                if (propertyValue == null || (propertyValue is string propValAsString && string.IsNullOrWhiteSpace(propValAsString)))
+                if (propertyValue is null || (propertyValue is string propValAsString && string.IsNullOrWhiteSpace(propValAsString)))
                 {
                     return;
                 }

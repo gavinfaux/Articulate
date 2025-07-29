@@ -64,14 +64,14 @@ namespace Articulate.Options
 
             options.TagActionsBy(api =>
             {
-                return api.GroupName != null
+                return api.GroupName is not null
                     ? [api.GroupName]
                     : api.ActionDescriptor is ControllerActionDescriptor controllerActionDescriptor
                         ? new[] { controllerActionDescriptor.ControllerName }
                         : throw new InvalidOperationException("Unable to determine tag for endpoint.");
             });
 
-            options.DocInclusionPredicate((name, api) => true);
+            options.DocInclusionPredicate((_, _) => true);
         }
     }
 }

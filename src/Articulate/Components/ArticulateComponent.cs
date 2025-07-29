@@ -8,12 +8,9 @@ namespace Articulate.Components
     {
         public Task InitializeAsync(bool isRestarting, CancellationToken cancellationToken)
         {
-            if (DefaultThemes.AllThemes != null)
+            foreach (DefaultThemes.DefaultTheme theme in DefaultThemes.AllThemes)
             {
-                foreach (DefaultThemes.DefaultTheme theme in DefaultThemes.AllThemes)
-                {
-                    theme.CreateBundles(bundleManager);
-                }
+                theme.CreateBundles(bundleManager);
             }
 
             // Create bundles for the markdown editor from the new subdirectories.

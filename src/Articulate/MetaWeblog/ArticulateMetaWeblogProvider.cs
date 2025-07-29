@@ -1,3 +1,4 @@
+#nullable enable
 using System.Globalization;
 using System.Security.Authentication;
 using System.Text.RegularExpressions;
@@ -82,10 +83,10 @@ namespace Articulate.MetaWeblog
             _mediaUrlGenerators = mediaUrlGenerators;
             _articulateRootMediaFolder = new Lazy<IMedia>(() =>
             {
-                IMedia root = _mediaService.GetRootMedia().FirstOrDefault(x =>
+                IMedia? root = _mediaService.GetRootMedia().FirstOrDefault(x =>
                     x.Name == ArticulateConstants.Convention.Articulate && x.ContentType.Alias.InvariantEquals(
                         Constants.Conventions.MediaTypes.Folder));
-                return root ??= _mediaService.CreateMediaWithIdentity(
+                return root ?? _mediaService.CreateMediaWithIdentity(
                     ArticulateConstants.Convention.Articulate,
                     Constants.System.Root,
                     Constants.Conventions.MediaTypes.Folder);
@@ -148,10 +149,10 @@ namespace Articulate.MetaWeblog
         {
             await ValidateUser(username, password);
 
-            IPublishedContent node = BlogRoot()?.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive).FirstOrDefault() ?? throw new InvalidOperationException("No Articulate Archive node found");
+            IPublishedContent node = BlogRoot().ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive)?.FirstOrDefault() ?? throw new InvalidOperationException("No Articulate Archive node found");
 
             Post[] recent = _contentService
-                    .GetPagedChildren(node.Id, 0, numberOfPosts, out long totalPosts, ordering: Ordering.By("updateDate", direction: Direction.Descending))
+                    .GetPagedChildren(node.Id, 0, numberOfPosts, out var totalPosts, ordering: Ordering.By("updateDate", direction: Direction.Descending))
                     .Select(FromContent)
                     .ToArray();
 
@@ -164,7 +165,7 @@ namespace Articulate.MetaWeblog
 
             IPublishedContent root = BlogRoot();
 
-            IPublishedContent node = root?.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive).FirstOrDefault() ?? throw new InvalidOperationException("No Articulate Archive node found");
+            IPublishedContent node = root.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive)?.FirstOrDefault() ?? throw new InvalidOperationException("No Articulate Archive node found");
 
             IContentType contentType = _contentTypeService.Get(ArticulateConstants.ContentType.ArticulateRichText) ?? throw new InvalidOperationException("No content type found with alias 'ArticulateRichText'");
 
@@ -195,8 +196,8 @@ namespace Articulate.MetaWeblog
             }
 
             //first see if it's published
-            IContent content = _contentService.GetById(asInt.Result);
-            if (content == null)
+            IContent? content = _contentService.GetById(asInt.Result);
+            if (content is null)
             {
                 return false;
             }
@@ -217,8 +218,8 @@ namespace Articulate.MetaWeblog
             }
 
             //first see if it's published
-            IPublishedContent post = _umbracoContextAccessor.GetRequiredUmbracoContext().Content.GetById(asInt.Result);
-            if (post != null)
+            IPublishedContent? post = _umbracoContextAccessor.GetRequiredUmbracoContext().Content.GetById(asInt.Result);
+            if (post is not null)
             {
                 Post fromPost = FromPost(new PostModel(post, _publishedValueFallback));
                 return fromPost;
@@ -264,7 +265,12 @@ namespace Articulate.MetaWeblog
                 throw new InvalidOperationException("The id could not be parsed to an integer");
             }
 
-            IContent umbracoContent = _contentService.GetById(asInt.Result);
+            IContent? umbracoContent = _contentService.GetById(asInt.Result);
+
+            if (umbracoContent is null)
+            {
+                throw new InvalidOperationException($"The content with id {asInt.Result} could not be found");
+            }
 
             IContentType contentType = _contentTypeService.Get(ArticulateConstants.ContentType.ArticulateRichText) ?? throw new InvalidOperationException("No content type found with alias 'ArticulateRichText'");
 
@@ -302,8 +308,8 @@ namespace Articulate.MetaWeblog
             if (content.HasProperty("richText"))
             {
                 Match firstImageMatch = ArticulateMetaWeblogRegexes.MediaSourceRegex().Match(post.description);
-                string firstImageRelativePath = null;
-                if (firstImageMatch.Success && firstImageMatch.Groups.Count == 2)
+                var firstImageRelativePath = string.Empty;
+                if (firstImageMatch is { Success: true, Groups.Count: 2 })
                 {
                     firstImageRelativePath = firstImageMatch.Groups[1].Value;
                 }
@@ -469,11 +475,11 @@ namespace Articulate.MetaWeblog
             link = string.Empty,
 
             mt_keywords = string.IsNullOrWhiteSpace(post.GetValue<string>("tags")) == false
-            ? string.Join(',', post.GetValue<string>("tags").Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+            ? string.Join(',', post.GetValue<string>("tags")?.Split([','], StringSplitOptions.RemoveEmptyEntries) ?? [])
             : string.Empty,
 
             categories = string.IsNullOrEmpty(post.GetValue<string>("categories")) == false
-            ? post.GetValue<string>("categories").Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+            ? post.GetValue<string>("categories")?.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
             : Array.Empty<string>(),
 
             description = post.ContentType.Alias == ArticulateConstants.ContentType.ArticulateRichText
@@ -481,8 +487,8 @@ namespace Articulate.MetaWeblog
             : MarkdownHelper.ToHtml(post.GetValue<string>("markdown")),
 
             permalink = post.GetValue<string>(Constants.Conventions.Content.UrlName).IsNullOrWhiteSpace()
-            ? post.Name.ToUrlSegment(_shortStringHelper)
-            : post.GetValue<string>(Constants.Conventions.Content.UrlName).ToUrlSegment(_shortStringHelper)
+            ? post.Name?.ToUrlSegment(_shortStringHelper)
+            : post.GetValue<string>(Constants.Conventions.Content.UrlName)?.ToUrlSegment(_shortStringHelper)
         };
 
         private IPublishedContent BlogRoot()
@@ -497,10 +503,16 @@ namespace Articulate.MetaWeblog
             if (await _backOfficeUserManager.ValidateCredentialsAsync(username, password) == false)
             {
                 // Throw some error if not valid credentials - so we exit out early of stuff
-                throw new AuthenticationException("Failed to validate user credentials");
+                throw new AuthenticationException($"Failed to validate user credentials for {username}");
             }
 
-            return _userService.GetByUsername(username);
+            IUser? user =_userService.GetByUsername(username);
+            if (user is null)
+            {
+                throw new InvalidOperationException($"Failed to find user for {username}");
+            }
+
+            return user;
         }
     }
 }

@@ -34,7 +34,7 @@ namespace Articulate.Controllers
 
         public override IActionResult Index()
         {
-            if (CurrentPage == null)
+            if (CurrentPage is null)
             {
                 _logger.LogWarning("ArticulateAuthorsController.Index: CurrentPage is null, returning 404");
                 return NotFound();
@@ -45,9 +45,9 @@ namespace Articulate.Controllers
                 _publishedValueFallback);
 
             //TODO: Should we have another setting for authors?
-            if (root.RootBlogNode?.Value<bool>("redirectArchive") ?? false)
+            if (root.RootBlogNode.Value<bool>("redirectArchive"))
             {
-                return RedirectPermanent(root.RootBlogNode?.Url() ?? "/");
+                return RedirectPermanent(root.RootBlogNode.Url());
             }
 
             //default

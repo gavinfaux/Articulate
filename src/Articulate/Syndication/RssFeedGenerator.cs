@@ -1,3 +1,4 @@
+#nullable enable
 using System.Globalization;
 using System.ServiceModel.Syndication;
 using Articulate.Models;
@@ -39,7 +40,7 @@ namespace Articulate.Syndication
 
         protected virtual string GetPostContent(PostModel model) => model.Body.ToHtmlString();
 
-        protected virtual SyndicationItem GetFeedItem(IMasterModel model, PostModel post, string rootUrl)
+        protected virtual SyndicationItem? GetFeedItem(PostModel post, string rootUrl)
         {
             var posturl = post.Url(mode: UrlMode.Absolute);
 
@@ -79,7 +80,7 @@ namespace Articulate.Syndication
                 post.Id.ToString(CultureInfo.InvariantCulture),
                 post.PublishedDate)
             {
-                PublishDate = post.PublishedDate,
+                PublishDate = post.PublishedDate
 
                 //don't include this as it will override the main content bits
                 //Summary = new TextSyndicationContent(post.Excerpt)
@@ -104,12 +105,12 @@ namespace Articulate.Syndication
                 return new List<SyndicationItem>();
             }
 
-            return posts.Select(post => GetFeedItem(model, post, rootUrl)).WhereNotNull().ToList();
+            return posts.Select(post => GetFeedItem(post, rootUrl)).WhereNotNull().ToList();
         }
 
-        protected virtual Uri GetBlogImage(IMasterModel rootPageModel)
+        protected virtual Uri? GetBlogImage(IMasterModel rootPageModel)
         {
-            Uri logoUri = null;
+            Uri? logoUri = null;
             try
             {
                 logoUri = rootPageModel.BlogLogo.IsNullOrWhiteSpace()

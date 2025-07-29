@@ -1,3 +1,4 @@
+//TODO: #nullable enable
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Extensions;
 
@@ -59,8 +60,9 @@ namespace Articulate.Models
         {
             get
             {
-                IPublishedContent list = RootBlogNode.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive).FirstOrDefault();
-                _blogListNode = list ?? throw new InvalidOperationException("Could not find the ArticulateArchive document for the current rendered page");
+                    IPublishedContent list = RootBlogNode.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive)?.FirstOrDefault();
+                    _blogListNode = list ?? throw new InvalidOperationException("Could not find the ArticulateArchive document for the current rendered page");
+
                 return _blogListNode;
             }
             protected set => _blogListNode = value;
@@ -73,7 +75,7 @@ namespace Articulate.Models
         {
             get
             {
-                IPublishedContent authors = RootBlogNode.ChildrenOfType(ArticulateConstants.ContentType.ArticulateAuthors).FirstOrDefault();
+                IPublishedContent authors = RootBlogNode.ChildrenOfType(ArticulateConstants.ContentType.ArticulateAuthors)?.FirstOrDefault();
                 _blogAuthorsNode = authors ?? throw new InvalidOperationException("Could not find the ArticulateAuthors document for the current rendered page");
                 return _blogAuthorsNode;
             }
@@ -143,6 +145,6 @@ namespace Articulate.Models
         }
 
         public string PageTags { get; protected set; }
-        public IPublishedValueFallback PublishedValueFallback { get; }
+        protected IPublishedValueFallback PublishedValueFallback { get; }
     }
 }

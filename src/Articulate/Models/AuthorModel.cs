@@ -30,7 +30,7 @@ namespace Articulate.Models
         public int PostCount { get; }
 
         //We know the list of posts passed in is already ordered descending so get the first
-        [Obsolete("Obsolete")]
+        [Obsolete("Please use TryGetChildrenKeys() on IDocumentNavigationQueryService or IMediaNavigationQueryService instead. Scheduled for removal in V16.", false)]
         public DateTime? LastPostDate => _lastPostDate ??= Children.FirstOrDefault()?.Value<DateTime>("publishedDate");
 
         string IImageModel.Url => this.Url();

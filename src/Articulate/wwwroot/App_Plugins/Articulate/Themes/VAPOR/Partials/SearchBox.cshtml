@@ -1,8 +1,7 @@
-@using PublishedContentExtensions = Articulate.Models.PublishedContentExtensions
 @model IMasterModel
 
 <div class="articulate-search">
-    <form method="get" action="@PublishedContentExtensions.ArticulateSearchUrl(Model)" role="search">
+    <form method="get" action="@Model.ArticulateSearchUrl()" role="search">
         <label for="search-term" class="sr-only">Search</label>
         <input type="search" id="search-term" name="term" placeholder="Search..." aria-label="Search articles" />
         <button type="submit" aria-label="Submit search">

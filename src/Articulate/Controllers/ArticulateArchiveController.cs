@@ -8,7 +8,6 @@ using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.Routing;
 using Umbraco.Cms.Core.Web;
 using Umbraco.Cms.Web.Common;
-using Umbraco.Cms.Web.Common.Controllers;
 using Umbraco.Extensions;
 
 namespace Articulate.Controllers
@@ -42,7 +41,7 @@ namespace Articulate.Controllers
         /// <returns></returns>
         public IActionResult Index(int? p)
         {
-            if (CurrentPage != null)
+            if (CurrentPage is not null)
             {
                 return RenderView(new ContentModel(CurrentPage), p);
             }
@@ -63,7 +62,7 @@ namespace Articulate.Controllers
             var archive = new MasterModel(model.Content, PublishedValueFallback);
 
             // redirect to root node when "redirectArchive" is configured
-            if (archive.RootBlogNode?.Value<bool>("redirectArchive") ?? false)
+            if (archive.RootBlogNode.Value<bool>("redirectArchive"))
             {
                 return RedirectPermanent(archive.RootBlogNode.Url());
             }
@@ -71,7 +70,7 @@ namespace Articulate.Controllers
             //Get post count by xpath is much faster than iterating all children to get a count
             var count = Umbraco.GetPostCount(archive.Id);
 
-            if (!int.TryParse(archive.RootBlogNode?.Value<string>("pageSize"), out var pageSize))
+            if (!int.TryParse(archive.RootBlogNode.Value<string>("pageSize"), out var pageSize))
             {
                 pageSize = 10;
             }

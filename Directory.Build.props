@@ -3,9 +3,9 @@
 	<PropertyGroup>
 		<TargetFramework>net9.0</TargetFramework>
 		<LangVersion>latest</LangVersion>
-		<!-- TODO:Temporary, resolve in later PRs and enable-->
+		<!--TODO: Enable after phased migration. https://learn.microsoft.com/en-us/dotnet/csharp/nullable-migration-strategies-->
 		<Nullable>warnings</Nullable>
-		<!--<WarningsAsErrors>Nullable</WarningsAsErrors>-->
+		<WarningsAsErrors>Nullable</WarningsAsErrors>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<PackageIcon>icon.png</PackageIcon>

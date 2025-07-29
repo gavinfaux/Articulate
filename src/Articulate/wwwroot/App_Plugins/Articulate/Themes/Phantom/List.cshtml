@@ -4,7 +4,7 @@
 }
 
 <main role="main">
-    
+
     @if (!Model.Children().Any())
     {
         <article>No blog posts found</article>
@@ -26,10 +26,10 @@
 
                 </header>
                 <section class="post-excerpt">
-                    @if (post.PostImage != null)
+                    @if (post.PostImage is not null)
                     {
                         var thumbnail = post.PostImage.GetCropUrl("thumbnail");
-                        if (thumbnail != null)
+                        if (thumbnail is not null)
                         {
                             <img class="thumb" src="@thumbnail" alt="@post.Name" />
                         }
@@ -38,8 +38,8 @@
                 </section>
             </article>
         }
-        
-        @await Html.PartialAsync( "Pager", Model.Pages)
+
+        @await Html.PartialAsync("Pager", Model.Pages)
     }
 
 </main>

@@ -22,7 +22,7 @@ namespace Articulate.Controllers
         [HttpGet]
         public IActionResult NewPost()
         {
-            if (CurrentPage == null)
+            if (CurrentPage is null)
             {
                 logger.LogWarning("MarkdownEditorController.NewPost: CurrentPage is null, returning 404");
                 return NotFound();

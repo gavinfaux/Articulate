@@ -1,3 +1,4 @@
+#nullable enable
 using System.Text;
 using System.Xml.Linq;
 using Argotic.Syndication.Specialized;
@@ -44,11 +45,11 @@ namespace Articulate.ImportExport
 
             foreach (IContent post in posts)
             {
-                BlogMLPost blogMlPost = document.Posts.FirstOrDefault(x => x.Title.Content == post.Name);
+                BlogMLPost? blogMlPost = document.Posts?.FirstOrDefault(x => x.Title.Content == post.Name);
 
-                if (blogMlPost == null)
+                if (blogMlPost is null)
                 {
-                    _logger.LogWarning("Cannot find blog ml post XML element with post name " + post.Name);
+                    _logger.LogWarning("Cannot find blog ml post XML element with post name {PostName}", post.Name);
                     continue;
                 }
 
@@ -67,7 +68,7 @@ namespace Articulate.ImportExport
                 var xItem = new XElement(
                     "item",
                     new XElement("title", post.Name),
-                    new XElement("link", _publishedUrlProvider.GetUrl(post.Id, UrlMode.Absolute) ?? string.Empty),
+                    new XElement("link", _publishedUrlProvider.GetUrl(post.Id, UrlMode.Absolute)),
                     new XElement(nsContent + "encoded", new XCData(body)),
                     new XElement(nsDsq + "thread_identifier", post.Key.ToString()),
                     new XElement(nsWp + "post_date_gmt", post.GetValue<DateTime>("publishedDate").ToUniversalTime().ToIsoString()),
@@ -75,7 +76,7 @@ namespace Articulate.ImportExport
 
                 foreach (BlogMLComment comment in blogMlPost.Comments)
                 {
-                    string commentText = comment.Content.Content;
+                    var commentText = comment.Content.Content;
 
                     if (comment.Content.ContentType == BlogMLContentType.Base64)
                     {
@@ -87,7 +88,7 @@ namespace Articulate.ImportExport
                         new XElement(nsWp + "comment_id", comment.Id),
                         new XElement(nsWp + "comment_author", comment.UserName),
                         new XElement(nsWp + "comment_author_email", comment.UserEmailAddress),
-                        new XElement(nsWp + "comment_author_url", comment.UserUrl == null ? string.Empty : comment.UserUrl.ToString()),
+                        new XElement(nsWp + "comment_author_url", comment.UserUrl is null ? string.Empty : comment.UserUrl.ToString()),
                         new XElement(nsWp + "comment_date_gmt", comment.CreatedOn.ToUniversalTime().ToIsoString()),
                         new XElement(nsWp + "comment_content", commentText),
                         new XElement(nsWp + "comment_approved", comment.ApprovalStatus == BlogMLApprovalStatus.Approved ? 1 : 0));

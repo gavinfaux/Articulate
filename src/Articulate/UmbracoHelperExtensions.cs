@@ -1,3 +1,4 @@
+//TODO: #nullable enable
 using Articulate.Models;
 using Articulate.Services;
 using Umbraco.Cms.Core.Models.PublishedContent;
@@ -65,7 +66,7 @@ namespace Articulate
                 .SelectMany(x => x.Descendants());
 
             //apply a filter if there is one
-            if (filter != null)
+            if (filter is not null)
             {
                 posts = posts.Where(filter);
             }
@@ -84,7 +85,7 @@ namespace Articulate
             ITagQuery tagQuery,
             ArticulateTagService articulateTagService)
         {
-            var tagsBaseUrl = masterModel.RootBlogNode.Value<string>("tagsUrlName");
+            var tagsBaseUrl = masterModel.RootBlogNode.Value<string>("tagsUrlName") ?? "tags";
 
             IEnumerable<PostsByTagModel> contentByTags = articulateTagService.GetContentByTags(
                 helper,
@@ -191,8 +192,8 @@ namespace Articulate
 
         private static IPublishedContent[] GetListNodes(IMasterModel masterModel)
         {
-            IPublishedContent[] listNodes = masterModel.RootBlogNode.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive).ToArray();
-            if (listNodes.Length == 0)
+            IPublishedContent[] listNodes = masterModel.RootBlogNode.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive)?.ToArray();
+            if (listNodes?.Length == 0)
             {
                 throw new InvalidOperationException(
                     "An ArticulateArchive document must exist under the root Articulate document");

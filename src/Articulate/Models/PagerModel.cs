@@ -1,8 +1,9 @@
+#nullable enable
 namespace Articulate.Models
 {
     public class PagerModel
     {
-        public PagerModel(int pageSize, int currentIndex, int totalPages, string nextUrl = null, string previousUrl = null)
+        public PagerModel(int pageSize, int currentIndex, int totalPages, string? nextUrl = "", string? previousUrl = "")
         {
             PageSize = pageSize;
             CurrentPageIndex = currentIndex;
@@ -17,12 +18,12 @@ namespace Articulate.Models
 
         public int CurrentPageIndex { get; }
 
-        public string NextUrl { get; }
+        public string? NextUrl { get; }
 
-        public string PreviousUrl { get; }
+        public string? PreviousUrl { get; }
 
-        public bool HasNext => NextUrl != null;
+        public bool HasNext => NextUrl is not null;
 
-        public bool HasPrevious => PreviousUrl != null;
+        public bool HasPrevious => PreviousUrl is not null;
     }
 }

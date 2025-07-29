@@ -1,3 +1,4 @@
+//TODO: #nullable enable
 using Articulate.Models;
 using NPoco;
 using Umbraco.Cms.Core;
@@ -105,8 +106,13 @@ namespace Articulate.Services
 #else
             //cache this result for a short amount of time
             return (IEnumerable<PostsByTagModel>)AppCaches.RuntimeCache.Get(
-                string.Concat(typeof(UmbracoHelperExtensions).Name, "GetContentByTags", masterModel.RootBlogNode.Id, tagGroup),
-                GetResult, TimeSpan.FromSeconds(30));
+                string.Concat(
+                typeof(UmbracoHelperExtensions).Name,
+                "GetContentByTags",
+                masterModel.RootBlogNode.Id,
+                tagGroup),
+                GetResult,
+                TimeSpan.FromSeconds(30));
 #endif
 
         }
@@ -175,10 +181,18 @@ WHERE {Constants.DatabaseSchema.Tables.ContentType}.alias = @contentTypeAlias AN
             return GetResult();
 #else
             //cache this result for a short amount of time
-            
+
             return (PostsByTagModel)AppCaches.RuntimeCache.Get(
-                string.Concat(typeof(UmbracoHelperExtensions).Name, "GetContentByTag", masterModel.RootBlogNode.Id, tagGroup, tag, page, pageSize),
-                GetResult, TimeSpan.FromSeconds(30));
+                string.Concat(
+                typeof(UmbracoHelperExtensions).Name,
+                "GetContentByTag",
+                masterModel.RootBlogNode.Id,
+                tagGroup,
+                tag,
+                page,
+                pageSize),
+                GetResult,
+                TimeSpan.FromSeconds(30));
 #endif
         }
 

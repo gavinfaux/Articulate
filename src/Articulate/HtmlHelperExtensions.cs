@@ -1,3 +1,4 @@
+#nullable enable
 using System.Text.Encodings.Web;
 using Articulate.Models;
 using Microsoft.AspNetCore.Html;
@@ -113,7 +114,7 @@ namespace Articulate
         /// </summary>
         public static IHtmlContent Table<T>(
             this IEnumerable<T> collection,
-            object htmlAttributes,
+            object? htmlAttributes,
             string[] headers,
             string[] cssClasses,
             params Func<T, HelperResult>[] cellTemplates) where T : class
@@ -128,16 +129,16 @@ namespace Articulate
                     }
 
                     var table = new TagBuilder("table");
-                    if (htmlAttributes != null)
+                    if (htmlAttributes is not null)
                     {
-                        IDictionary<string, object> atts = HtmlHelper.AnonymousObjectToHtmlAttributes(htmlAttributes);
+                        IDictionary<string, object?> atts = HtmlHelper.AnonymousObjectToHtmlAttributes(htmlAttributes);
                         table.MergeAttributes(atts);
                     }
 
                     var thead = new TagBuilder("thead");
                     var tr = new TagBuilder("tr");
 
-                    for (int i = 0; i < cols; i++)
+                    for (var i = 0; i < cols; i++)
                     {
                         var th = new TagBuilder("th");
                         th.AddCssClass(cssClasses.Length - 1 >= 1 ? cssClasses[i] : string.Empty);
@@ -160,13 +161,10 @@ namespace Articulate
                             tdContent.AddCssClass(cssClasses.Length - 1 >= 1 ? cssClasses[colIndex] : string.Empty);
 
                             T item = items[rowIndex];
-                            if (item != null)
-                            {
-                                //if there's an item at that grid location, call its template
-                                tdContent.InnerHtml.SetHtmlContent(cellTemplates[colIndex](item));
+                            //if there's an item at that grid location, call its template
+                            tdContent.InnerHtml.SetHtmlContent(cellTemplates[colIndex](item));
 
-                                //cellTemplates[colIndex](item).WriteTo(writer, HtmlEncoder.Default);
-                            }
+                            //cellTemplates[colIndex](item).WriteTo(writer, HtmlEncoder.Default);
 
                             trContent.InnerHtml.AppendHtml(tdContent);
                         }

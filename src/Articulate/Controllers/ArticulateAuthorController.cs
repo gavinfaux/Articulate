@@ -7,7 +7,6 @@ using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.Routing;
 using Umbraco.Cms.Core.Web;
 using Umbraco.Cms.Web.Common;
-using Umbraco.Cms.Web.Common.Controllers;
 using Umbraco.Cms.Web.Website.ActionResults;
 using Umbraco.Extensions;
 
@@ -40,7 +39,7 @@ namespace Articulate.Controllers
 
         public IActionResult Index(int? p)
         {
-            if (CurrentPage == null)
+            if (CurrentPage is null)
             {
                 _logger.LogWarning("ArticulateAuthorController.Index: CurrentPage is null, returning 404");
                 return NotFound();
@@ -49,15 +48,15 @@ namespace Articulate.Controllers
             //create a master model
             var masterModel = new MasterModel(CurrentPage, PublishedValueFallback);
 
-            IPublishedContent[]? listNodes = masterModel.RootBlogNode?.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive)?.ToArray();
-            if (listNodes == null || listNodes.Length == 0)
+            IPublishedContent[]? listNodes = masterModel.RootBlogNode.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive)?.ToArray();
+            if (listNodes is null || listNodes.Length == 0)
             {
                 throw new InvalidOperationException("An ArticulateArchive document must exist under the root Articulate document");
             }
 
             var totalPosts = _umbracoHelper.GetPostCount(CurrentPage.Name, listNodes.Select(x => x.Id).ToArray());
 
-            if (!GetPagerModel(masterModel, totalPosts, p, out PagerModel? pager) || pager == null)
+            if (!GetPagerModel(masterModel, totalPosts, p, out PagerModel? pager) || pager is null)
             {
                 return new RedirectToUmbracoPageResult(
                     CurrentPage.Parent(),

@@ -1,8 +1,10 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+<Project Sdk="Microsoft.NET.Sdk.Web">
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
-    <ImplicitUsings>disable</ImplicitUsings>
+    <!--TODO: Enable after phased migration. https://learn.microsoft.com/en-us/dotnet/csharp/nullable-migration-strategies-->
     <Nullable>warnings</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <WarningsAsErrors>Nullable</WarningsAsErrors>
     <!-- Disable compression. E.g. for umbraco backoffice files. These files should be precompressed by node and not let dotnet handle it -->
     <CompressionEnabled>false</CompressionEnabled>
   </PropertyGroup>
@@ -20,11 +22,11 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Articulate\Articulate.csproj">
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
       <CopyStaticWebAssetsToPublish>true</CopyStaticWebAssetsToPublish>
     </ProjectReference>
   </ItemGroup>
-  
+
   <ItemGroup>
     <Compile Remove="umbraco\**" />
     <Content Remove="umbraco\**" />
@@ -36,7 +38,7 @@
     <!-- tells 'dotnet watch' to ignore any file changes  under the umbraco/ folder and its subdirectories. -->
     <Watch Remove="umbraco\**\*" />
   </ItemGroup>
-  
+
   <PropertyGroup>
     <!-- Razor files are needed for the backoffice to work correctly -->
     <CopyRazorGenerateFilesToPublishDirectory>true</CopyRazorGenerateFilesToPublishDirectory>

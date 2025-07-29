@@ -1,3 +1,4 @@
+#nullable enable
 using System.Globalization;
 using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Core.Models.PublishedContent;
@@ -47,20 +48,22 @@ namespace Articulate.Routing
 
             // if there's a domain attached we need to lookup the content with the domain Id
             // and the domain's path stripped from the start
-            if (contentRequest.HasDomain())
+            if (contentRequest.HasDomain() && contentRequest.Domain?.Uri is not null)
             {
-                newRoute = contentRequest.Domain.ContentId + DomainUtilities.PathRelativeToDomain(contentRequest.Domain.Uri, newRoute);
+                DomainAndUri domain = contentRequest.Domain;
+                Uri uri = domain.Uri;
+                newRoute = domain.ContentId + DomainUtilities.PathRelativeToDomain(uri, newRoute);
             }
 
-            IPublishedContent node = FindContent(contentRequest, newRoute);
+            IPublishedContent? node = FindContent(contentRequest, newRoute);
 
             // If by chance something matches the format pattern I check again if there is sucn a node and if it's an articulate post
-            if (node == null || (node.ContentType.Alias != ArticulateConstants.ContentType.ArticulateRichText && node.ContentType.Alias != ArticulateConstants.ContentType.ArticulateMarkdown))
+            if (node is null || (node.ContentType.Alias != ArticulateConstants.ContentType.ArticulateRichText && node.ContentType.Alias != ArticulateConstants.ContentType.ArticulateMarkdown))
             {
                 return false;
             }
 
-            if (!node.Parent().Parent().Value<bool>("useDateFormatForUrl"))
+            if (!node.Parent()?.Parent()?.Value<bool>("useDateFormatForUrl") == false)
             {
                 return false;
             }

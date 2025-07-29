@@ -10,18 +10,18 @@ namespace Articulate
 
         public static string DecodeHtml(this string text) => HttpUtility.HtmlDecode(text);
 
-        public static string TruncateAtWord(this string text, int maxCharacters, string trailingStringIfTextCut = "&hellip;")
+        public static string TruncateAtWord(this string? text, int maxCharacters, string trailingStringIfTextCut = "&hellip;")
         {
-            if (text == null || (text = text.Trim()).Length <= maxCharacters)
+            if (text is null || (text = text.Trim()).Length <= maxCharacters)
             {
                 return text ?? string.Empty;
             }
 
-            int trailLength = trailingStringIfTextCut.StartsWith("&") ? 1
+            var trailLength = trailingStringIfTextCut.StartsWith("&") ? 1
                                                                       : trailingStringIfTextCut.Length;
             maxCharacters = maxCharacters - trailLength >= 0 ? maxCharacters - trailLength
                                                              : 0;
-            int pos = text.LastIndexOf(" ", maxCharacters, StringComparison.Ordinal);
+            var pos = text.LastIndexOf(" ", maxCharacters, StringComparison.Ordinal);
             if (pos >= 0)
             {
                 return text[..pos] + trailingStringIfTextCut;

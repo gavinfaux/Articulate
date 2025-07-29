@@ -1,3 +1,4 @@
+#nullable enable
 using Microsoft.AspNetCore.Html;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Models.PublishedContent;
@@ -8,14 +9,14 @@ namespace Articulate.Models
 {
     public sealed class PostModel : MasterModel, IImageModel
     {
-        private PostAuthorModel _author;
+        private PostAuthorModel? _author;
 
         public PostModel(IPublishedContent content, IPublishedValueFallback publishedValueFallback)
             : base(content, publishedValueFallback)
         {
             PageTitle = Name + " - " + BlogTitle;
-            PageDescription = Excerpt ?? string.Empty;
-            PageTags = string.Join(",", Tags ?? []);
+            PageDescription = Excerpt;
+            PageTags = string.Join(",", Tags);
         }
 
         public IEnumerable<string> Tags => this.Value<IEnumerable<string>>("tags") ?? [];
@@ -28,7 +29,7 @@ namespace Articulate.Models
         {
             get
             {
-                if (_author != null)
+                if (_author is not null)
                 {
                     return _author;
                 }
@@ -39,10 +40,10 @@ namespace Articulate.Models
                 };
 
                 //look up assocated author node if we can
-                IPublishedContent authors = RootBlogNode?.Children(content => content.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateAuthors))?.FirstOrDefault();
-                IPublishedContent authorNode = authors?.Children(content => content.Name.InvariantEquals(_author.Name))?.FirstOrDefault();
+                IPublishedContent? authors = RootBlogNode.Children(content => content.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateAuthors))?.FirstOrDefault();
+                IPublishedContent? authorNode = authors?.Children(content => content.Name.InvariantEquals(_author.Name))?.FirstOrDefault();
 
-                if (authorNode == null)
+                if (authorNode is null)
                 {
                     return _author;
                 }
@@ -56,18 +57,18 @@ namespace Articulate.Models
             }
         }
 
-        public string Excerpt => this.Value<string>("excerpt");
+        public string Excerpt => this.Value<string>("excerpt") ?? string.Empty;
 
         public DateTime PublishedDate => Unwrap().Value<DateTime>("publishedDate");
 
-        private MediaWithCrops _postImage;
+        private MediaWithCrops? _postImage;
 
         /// <summary>
         /// Some blog post may have an associated image
         /// </summary>
-        public MediaWithCrops PostImage => _postImage ??= Unwrap().Value<MediaWithCrops>("postImage");
+        public MediaWithCrops? PostImage => _postImage ??= Unwrap().Value<MediaWithCrops>("postImage");
 
-        private string _croppedPostImageUrl;
+        private string? _croppedPostImageUrl;
 
         /// <summary>
         /// Cropped version of the PostImageUrl
@@ -76,18 +77,18 @@ namespace Articulate.Models
         {
             get
             {
-                if (_croppedPostImageUrl != null)
+                if (_croppedPostImageUrl is not null)
                 {
                     return _croppedPostImageUrl;
                 }
 
-                if (PostImage == null)
+                if (PostImage is null)
                 {
-                    return null;
+                    return string.Empty;
                 }
 
                 var wideCropUrl = PostImage.GetCropUrl("wide");
-                _croppedPostImageUrl = (wideCropUrl ?? string.Empty) + (wideCropUrl != null && wideCropUrl.Contains('?') ? "&" : "?");
+                _croppedPostImageUrl = (wideCropUrl ?? string.Empty) + (wideCropUrl is not null && wideCropUrl.Contains('?') ? "&" : "?");
                 return _croppedPostImageUrl;
             }
         }
@@ -95,7 +96,7 @@ namespace Articulate.Models
         /// <summary>
         /// Social Meta Description
         /// </summary>
-        public string SocialMetaDescription => this.Value<string>("socialDescription");
+        public string SocialMetaDescription => this.Value<string>("socialDescription") ?? string.Empty;
 
         public IHtmlContent Body
         {
@@ -109,9 +110,9 @@ namespace Articulate.Models
             }
         }
 
-        public string ExternalUrl => this.Value<string>("externalUrl");
+        public string ExternalUrl => this.Value<string>("externalUrl") ?? string.Empty;
 
-        MediaWithCrops IImageModel.Image => PostImage;
+        MediaWithCrops? IImageModel.Image => PostImage;
 
         string IImageModel.Name => Name;
         string IImageModel.Url => this.Url();

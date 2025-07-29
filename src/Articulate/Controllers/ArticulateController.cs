@@ -8,7 +8,6 @@ using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.Routing;
 using Umbraco.Cms.Core.Web;
 using Umbraco.Cms.Web.Common;
-using Umbraco.Cms.Web.Common.Controllers;
 using Umbraco.Extensions;
 
 namespace Articulate.Controllers
@@ -41,7 +40,7 @@ namespace Articulate.Controllers
         /// <returns></returns>
         public IActionResult Index(int? p)
         {
-            if (CurrentPage != null)
+            if (CurrentPage is not null)
             {
                 return RenderView(new ContentModel(CurrentPage), p);
             }
@@ -62,7 +61,7 @@ namespace Articulate.Controllers
         {
             IPublishedContent[]? listNodes = model.Content.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive)?.ToArray();
 
-            if (listNodes == null || listNodes.Length == 0)
+            if (listNodes is null || listNodes.Length == 0)
             {
                 throw new InvalidOperationException("An ArticulateArchive document must exist under the root Articulate document");
             }

@@ -1,3 +1,4 @@
+//TODO: #nullable enable
 using System.Collections;
 using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Html;
@@ -12,19 +13,18 @@ namespace Articulate.Models
     public static class PublishedContentExtensions
     {
 
-        [Obsolete("Obsolete")]
         public static IPublishedContent Next(this IPublishedContent content)
         {
 
             IPublishedContent parent = content?.Parent();
 
-            if (parent?.Children == null || content == null)
+            if (parent?.Children() is null || content is null)
             {
                 return null;
             }
 
             var found = false;
-            foreach (IPublishedContent sibling in parent.Children)
+            foreach (IPublishedContent sibling in parent.Children())
             {
                 if (found)
                 {
@@ -40,18 +40,17 @@ namespace Articulate.Models
             return null;
         }
 
-        [Obsolete("Obsolete")]
         public static IPublishedContent Previous(this IPublishedContent content)
         {
             IPublishedContent parent = content?.Parent();
 
-            if (parent?.Children == null || content == null)
+            if (parent?.Children() is null || content is null)
             {
                 return null;
             }
             var found = false;
             IPublishedContent last = null;
-            foreach (IPublishedContent sibling in parent.Children)
+            foreach (IPublishedContent sibling in parent.Children())
             {
                 if (found)
                 {
@@ -69,12 +68,7 @@ namespace Articulate.Models
             }
 
             //it could have been at the end
-            if (found)
-            {
-                return last;
-            }
-
-            return null;
+            return found ? last : null;
         }
 
         /// <summary>
@@ -89,7 +83,7 @@ namespace Articulate.Models
         /// <remarks>Based on int Enumerable.Count() method.</remarks>
         public static bool HasMoreThan<TSource>(this IEnumerable<TSource> source, int count)
         {
-            if (source == null)
+            if (source is null)
             {
                 throw new ArgumentNullException(nameof(source));
             }
@@ -104,7 +98,7 @@ namespace Articulate.Models
                 return collection2.Count > count;
             }
 
-            int num = 0;
+            var num = 0;
             checked
             {
                 using (IEnumerator<TSource> enumerator = source.GetEnumerator())
@@ -123,9 +117,9 @@ namespace Articulate.Models
             return false; // < count
         }
         // TODO: Not needed once PostImage migration complete
-        public static string GetBaseImageUrl(this IPublishedContent content, string propertyAlias)
+        private static string GetBaseImageUrl(this IPublishedContent content, string propertyAlias)
         {
-            if (content == null)
+            if (content is null)
             {
                 return null;
             }
@@ -135,7 +129,7 @@ namespace Articulate.Models
             if (string.IsNullOrWhiteSpace(url))
             {
                 url = content.GetProperty(propertyAlias)?.GetSourceValue()?.ToString();
-                if (url == null || url.IsNullOrWhiteSpace() || url.Equals("[]"))
+                if (url is null || url.IsNullOrWhiteSpace() || url.Equals("[]"))
                 {
                     url = string.Empty;
                 }
@@ -146,7 +140,7 @@ namespace Articulate.Models
 
         public static string GetCroppedImageUrl(this IPublishedContent content, string propertyAlias, string cropAlias, ImageCropMode imageCropMode = ImageCropMode.Max)
         {
-            if (content == null || string.IsNullOrWhiteSpace(cropAlias) || string.IsNullOrWhiteSpace(propertyAlias))
+            if (content is null || string.IsNullOrWhiteSpace(cropAlias) || string.IsNullOrWhiteSpace(propertyAlias))
             {
                 return null;
             }
@@ -168,9 +162,9 @@ namespace Articulate.Models
         /// <summary>
         ///     Shuffles a List&lt;T&gt; in-place.
         /// </summary>
-        public static void Shuffle<T>(this IList<T> list)
+        private static void Shuffle<T>(this IList<T> list)
         {
-            if (list != null)
+            if (list is not null)
             {
                 Random rng = Random.Shared;
                 for (var i = list.Count - 1; i >= 1; i--)
@@ -190,7 +184,7 @@ namespace Articulate.Models
         /// </summary>
         public static List<T> InRandomOrder<T>(this IEnumerable<T> source)
         {
-            if (source != null)
+            if (source is not null)
             {
                 var list = source.ToList();
                 list.Shuffle();
@@ -214,9 +208,7 @@ namespace Articulate.Models
 
         public static string ArticulateCreateBlogEntryUrl(this IMasterModel model)
         {
-            return model.RootBlogNode == null
-                ? null
-                : model.RootBlogNode.Url().EnsureEndsWith('/') + "a-new/";
+            return model.RootBlogNode.Url().EnsureEndsWith('/') + "a-new/";
         }
 
         /// <summary>
@@ -233,9 +225,7 @@ namespace Articulate.Models
         /// <returns></returns>
         public static string ArticulateAuthorRssUrl(this AuthorModel model)
         {
-            return model.RootBlogNode == null
-                ? null
-                : model.RootBlogNode.Url().EnsureEndsWith('/') + "author/" + model.Id + "/rss";
+            return model.RootBlogNode.Url().EnsureEndsWith('/') + "author/" + model.Id + "/rss";
         }
 
         /// <summary>
@@ -246,34 +236,30 @@ namespace Articulate.Models
         /// <returns></returns>
         public static string ArticulateSearchUrl(this IMasterModel model, bool includeDomain = false)
         {
-            return model.RootBlogNode == null
-                ? null
-                : (includeDomain
-                      ? model.RootBlogNode.Url(mode: UrlMode.Absolute).EnsureEndsWith('/')
-                      : model.RootBlogNode.Url().EnsureEndsWith('/')) +
-                  model.RootBlogNode.Value<string>("searchUrlName");
+            return (includeDomain
+                       ? model.RootBlogNode.Url(mode: UrlMode.Absolute).EnsureEndsWith('/')
+                       : model.RootBlogNode.Url().EnsureEndsWith('/')) +
+                   model.RootBlogNode.Value<string>("searchUrlName");
         }
 
         /// <summary>
         /// The Home Blog Url
         /// </summary>
-        public static string ArticulateRootUrl(this IMasterModel model) => model.RootBlogNode?.Url();
+        public static string ArticulateRootUrl(this IMasterModel model) => model.RootBlogNode.Url();
 
         /// <summary>
         /// Returns the default categories list URL for blog posts
         /// </summary>
         public static string ArticulateCategoriesUrl(this IMasterModel model)
         {
-            return model.RootBlogNode == null
-                ? null
-                : model.RootBlogNode.Url().EnsureEndsWith('/') +
-                  model.RootBlogNode.Value<string>("categoriesUrlName");
+            return model.RootBlogNode.Url().EnsureEndsWith('/') +
+                   model.RootBlogNode.Value<string>("categoriesUrlName");
         }
 
         /// <summary>
         /// Returns the authors list URL
         /// </summary>
-        public static string ArticulateAuthorsUrl(this IMasterModel model) => model.RootBlogNode?.ChildrenOfType(ArticulateConstants.ContentType.ArticulateAuthors).FirstOrDefault()?.Url();
+        public static string ArticulateAuthorsUrl(this IMasterModel model) => model.RootBlogNode.ChildrenOfType(ArticulateConstants.ContentType.ArticulateAuthors)?.FirstOrDefault()?.Url();
 
         /// <summary>
         /// Returns the URL for the tag list
@@ -282,10 +268,8 @@ namespace Articulate.Models
         /// <returns></returns>
         public static string ArticulateTagsUrl(this IMasterModel model)
         {
-            return model.RootBlogNode == null
-                ? null
-                : model.RootBlogNode.Url().EnsureEndsWith('/') +
-                  model.RootBlogNode.Value<string>("tagsUrlName");
+            return model.RootBlogNode.Url().EnsureEndsWith('/') +
+                   model.RootBlogNode.Value<string>("tagsUrlName");
         }
 
         /// <summary>
@@ -296,11 +280,9 @@ namespace Articulate.Models
         /// <returns></returns>
         public static string ArticulateTagUrl(this IMasterModel model, string tag)
         {
-            return model.RootBlogNode == null
-                ? null
-                : model.RootBlogNode.Url().EnsureEndsWith('/') +
-                  model.RootBlogNode.Value<string>("tagsUrlName").EnsureEndsWith('/') +
-                  tag.SafeEncodeUrlSegments();
+            return model.RootBlogNode.Url().EnsureEndsWith('/') +
+                   model.RootBlogNode.Value<string>("tagsUrlName")?.EnsureEndsWith('/') +
+                   tag.SafeEncodeUrlSegments();
         }
 
         /// <summary>
@@ -311,11 +293,9 @@ namespace Articulate.Models
         /// <returns></returns>
         public static string ArticulateCategoryUrl(this IMasterModel model, string category)
         {
-            return model.RootBlogNode == null
-                ? null
-                : model.RootBlogNode.Url().EnsureEndsWith('/') +
-                  model.RootBlogNode.Value<string>("categoriesUrlName").EnsureEndsWith('/') +
-                  category.SafeEncodeUrlSegments();
+            return model.RootBlogNode.Url().EnsureEndsWith('/') +
+                   model.RootBlogNode.Value<string>("categoriesUrlName")?.EnsureEndsWith('/') +
+                   category.SafeEncodeUrlSegments();
         }
 
         /// <summary>
@@ -326,25 +306,22 @@ namespace Articulate.Models
         public static IHtmlContent AuthorCitation(this PostModel model)
         {
             var builder = new HtmlContentBuilder();
-            if (model.Author != null)
+            builder.AppendHtml("<span>");
+            builder.Append("By ");
+
+            //TODO: Check if the current theme has an Author.cshtml theme file otherwise don't render a link!
+            //In that case we should have a 'ThemeSupport' class that will check to see what a theme supports.
+            if (model.Author.BlogUrl.IsNullOrWhiteSpace())
             {
-                builder.AppendHtml("<span>");
-                builder.Append("By ");
-
-                //TODO: Check if the current theme has an Author.cshtml theme file otherwise don't render a link!
-                //In that case we should have a 'ThemeSupport' class that will check to see what a theme supports.
-                if (model.Author.BlogUrl.IsNullOrWhiteSpace())
-                {
-                    builder.Append(model.Author.Name);
-                }
-                else
-                {
-                    builder.AppendHtml($@"<a href=""{model.Author.BlogUrl}"">{model.Author.Name}</a>");
-                }
-
-                builder.AppendHtml("&nbsp;on&nbsp;");
-                builder.AppendHtml("</span>");
+                builder.Append(model.Author.Name);
             }
+            else
+            {
+                builder.AppendHtml($@"<a href=""{model.Author.BlogUrl}"">{model.Author.Name}</a>");
+            }
+
+            builder.AppendHtml("&nbsp;on&nbsp;");
+            builder.AppendHtml("</span>");
 
             return builder;
         }
@@ -480,8 +457,8 @@ namespace Articulate.Models
                 return Task.CompletedTask;
             });
 
-        public static IHtmlContent ListTags(this PostModel model, Func<string, HelperResult> tagLink, string delimiter = ", ") => HtmlHelperExtensions.ListCategoriesOrTags(model.Tags.ToArray(), tagLink, delimiter);
-        public static IHtmlContent ListCategories(this PostModel model, Func<string, HelperResult> tagLink, string delimiter = ", ") => HtmlHelperExtensions.ListCategoriesOrTags(model.Categories.ToArray(), tagLink, delimiter);
+        public static IHtmlContent ListTags(this PostModel model, Func<string, HelperResult> tagLink, string delimiter = ", ") => model.Tags.ToArray().ListCategoriesOrTags(tagLink, delimiter);
+        public static IHtmlContent ListCategories(this PostModel model, Func<string, HelperResult> tagLink, string delimiter = ", ") => model.Categories.ToArray().ListCategoriesOrTags(tagLink, delimiter);
 
         public static void SocialMetaTags(this IPublishedContent model, IHtmlContentBuilder builder)
         {

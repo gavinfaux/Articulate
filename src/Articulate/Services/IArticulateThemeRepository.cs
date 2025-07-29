@@ -6,7 +6,6 @@ namespace Articulate.Services
         public Task CopyThemeAsync(string themeName, string newThemeName);
 
         public Task<IEnumerable<string>> GetDefaultThemesAsync();
-        public Task<IEnumerable<string>> GetUserThemesAsync();
 
         public Task<IEnumerable<string>?> GetAllThemesAsync();
     }

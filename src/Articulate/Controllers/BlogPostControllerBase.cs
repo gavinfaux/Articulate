@@ -27,7 +27,7 @@ namespace Articulate.Controllers
 
         public override IActionResult Index()
         {
-            if (CurrentPage == null)
+            if (CurrentPage is null)
             {
                 _logger.LogWarning("BlogPostControllerBase.Index: CurrentPage is null, returning 404");
                 return NotFound();

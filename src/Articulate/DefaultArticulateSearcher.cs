@@ -20,7 +20,7 @@ namespace Articulate
             _examineManager = examineManager;
         }
 
-        public IEnumerable<IPublishedContent>? Search(string term, string? indexName, int blogArchiveNodeId, int pageSize, int pageIndex, out long totalResults)
+        public IEnumerable<IPublishedContent> Search(string term, string? indexName, int blogArchiveNodeId, int pageSize, int pageIndex, out long totalResults)
         {
             var splitSearch = term.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
 
@@ -63,7 +63,7 @@ namespace Articulate
 
             indexName = indexName.IsNullOrWhiteSpace() ? Constants.UmbracoIndexes.ExternalIndexName : indexName;
 
-            if (!_examineManager.TryGetIndex(indexName, out IIndex? index) || index == null)
+            if (!_examineManager.TryGetIndex(indexName, out IIndex? index) || index is null)
             {
                 throw new InvalidOperationException("No index found by name " + indexName);
             }

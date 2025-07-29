@@ -1,3 +1,4 @@
+#nullable enable
 using System.ServiceModel.Syndication;
 using Articulate.Models;
 

@@ -1,3 +1,4 @@
+#nullable enable
 using System.ServiceModel.Syndication;
 using System.Text;
 using System.Xml;
@@ -43,7 +44,7 @@ namespace Articulate.Syndication
             }
         }
 
-        public sealed class Utf8StringWriter : StringWriter
+        private sealed class Utf8StringWriter : StringWriter
         {
             public override Encoding Encoding => Encoding.UTF8;
         }

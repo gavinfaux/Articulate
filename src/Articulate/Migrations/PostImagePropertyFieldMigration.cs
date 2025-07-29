@@ -1,3 +1,4 @@
+//#nullable enable
 //using System;
 //using System.Collections.Generic;
 //using System.IO;
@@ -122,7 +123,7 @@
 //            bool relative = true)
 //        {
 //            deserializedValue = null;
-//            if (propVal == null || propVal is not string str)
+//            if (propVal is null || propVal is not string str)
 //            {
 //                return null;
 //            }
@@ -137,7 +138,7 @@
 //                deserializedValue = GetCropJsonObject(str, true);
 //            }
 
-//            if (deserializedValue?["src"] == null)
+//            if (deserializedValue?["src"] is null)
 //            {
 //                return null;
 //            }
@@ -219,7 +220,7 @@
 //                    var guidString = udi.ToString().Replace("umb://media/", "");
 //                    if (Guid.TryParse(guidString, out var guid))
 //                    {
-//                        if (udi == null || guid.Equals(Guid.Empty))
+//                        if (udi is null || guid.Equals(Guid.Empty))
 //                        {
 //                            _logger.LogError("Invalid UDI for media item for post {PostKey} from source {Url}",
 //                                post.Key,

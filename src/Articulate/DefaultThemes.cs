@@ -15,6 +15,7 @@ namespace Articulate
             };
 
         public static DefaultTheme[] AllThemes { get; } = _sDefaultThemes.Values.ToArray();
+        public static IEnumerable<string> AllThemeNames => _sDefaultThemes.Keys;
 
         public static bool IsDefaultTheme(string themeName)
             => _sDefaultThemes.ContainsKey(themeName);

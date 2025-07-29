@@ -1,3 +1,4 @@
+#nullable enable
 using Microsoft.AspNetCore.Http;
 using Umbraco.Extensions;
 
@@ -15,7 +16,7 @@ namespace Articulate.Routing
         {
             var virtualPath = $"{httpContext.Request.Scheme}://{httpContext.Request.Host}{httpContext.Request.PathBase}";
 
-            var rootRoutePath = (Uri.TryCreate(routePath, UriKind.Absolute, out Uri result)
+            var rootRoutePath = (Uri.TryCreate(routePath, UriKind.Absolute, out Uri? result)
                 ? result.PathAndQuery
                 : routePath).EnsureEndsWith('/');
 

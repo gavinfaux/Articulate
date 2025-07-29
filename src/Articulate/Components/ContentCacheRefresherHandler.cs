@@ -88,7 +88,7 @@ namespace Articulate.Components
             IPublishedContent? item = umbracoContext.Content.GetById(id);
 
             // if it's directly related to an articulate node
-            if (item != null && item.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.Articulate))
+            if (item is not null && item.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.Articulate))
             {
                 //ensure routes are rebuilt
                 _appCaches.RequestCache.GetCacheItem(ArticulateConstants.RefreshRoutesToken, () => true);
@@ -97,14 +97,14 @@ namespace Articulate.Components
 
             // We need to handle cases where the state of siblings at a lower sort order directly affect an Articulate node's routing.
             // This will happen on copy, move, sort, unpublish, delete
-            if (item == null)
+            if (item is null)
             {
                 item = umbracoContext.Content.GetById(true, id);
 
                 // This will occur on delete, then what?
                 // TODO: How would we know this is a node that might be at the same level/above?
                 // For now we have no choice, rebuild routes on each delete :/
-                if (item == null)
+                if (item is null)
                 {
                     _appCaches.RequestCache.GetCacheItem(ArticulateConstants.RefreshRoutesToken, () => true);
                     return;

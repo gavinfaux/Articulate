@@ -1,4 +1,3 @@
-@using Articulate
 @model ListModel
 @{
     Layout = "Master.cshtml";
@@ -18,14 +17,14 @@
 
             @await Html.PartialAsync("SearchBox", Model)
 
-            @if (Context.Request.Query.TryGetValue("term", out var term) && !((string)term).IsNullOrWhiteSpace())
+            @if (Context.Request.Query.TryGetValue("term", out var term) && !term.ToString().IsNullOrWhiteSpace())
             {
                 <div class="mdl-card__media mdl-color-text--grey-50">
                     <h3>No blog posts found</h3>
                 </div>
             }
         </div>
-	}
+    }
     else
     {
         var doneFirst = false;
@@ -35,42 +34,46 @@
             {
                 doneFirst = true;
 
-				<div class="mdl-card mdl-cell mdl-cell--8-col">
-                    @{await PostInfo(post, false);}
+                <div class="mdl-card mdl-cell mdl-cell--8-col">
+                    @{
+                        await PostInfo(post, false);
+                    }
                 </div>
 
                 @await Html.PartialAsync("TitleTile", Model)
-	}
+            }
             else
             {
-				<div class="mdl-card mdl-cell mdl-cell--12-col">
-                    @{await PostInfo(post);}
+                <div class="mdl-card mdl-cell mdl-cell--12-col">
+                    @{
+                        await PostInfo(post);
+                    }
                 </div>
             }
         }
 
-        @await Html.PartialAsync( "Pager", Model.Pages)
+        @await Html.PartialAsync("Pager", Model.Pages)
     }
 
 
 </div>
 
-@functions{
+@functions {
 
     private async Task PostInfo(PostModel post, bool withExcerpt = true)
-	{
-		@await Html.PartialAsync( "PostImageHeader", post)
+    {
+        @await Html.PartialAsync("PostImageHeader", post)
 
-		if (withExcerpt)
-		{
-			<div class="mdl-card__supporting-text mdl-color-text--grey-600">
-				@post.Excerpt&hellip;
-			</div>
-		}
+        if (withExcerpt)
+        {
+            <div class="mdl-card__supporting-text mdl-color-text--grey-600">
+                @post.Excerpt&hellip;
+            </div>
+        }
 
 
-		<div class="mdl-card__supporting-text meta mdl-color-text--grey-600">
-			@await Html.PartialAsync( "AuthorInfo", post)
-		</div>
-	}
+        <div class="mdl-card__supporting-text meta mdl-color-text--grey-600">
+            @await Html.PartialAsync("AuthorInfo", post)
+        </div>
+    }
 }
