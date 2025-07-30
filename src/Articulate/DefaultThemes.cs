@@ -1,5 +1,6 @@
 #nullable enable
 using Smidge;
+using Smidge.Models;
 
 namespace Articulate
 {
@@ -26,8 +27,8 @@ namespace Articulate
 
             public override void CreateBundles(IBundleManager bundleManager)
             {
-                bundleManager.CreateJs("articulate-vapor-js", RequiredThemedJsFolder(Name));
                 bundleManager.CreateCss("articulate-vapor-css", RequiredThemedCssFolder(Name));
+                bundleManager.CreateJs("articulate-vapor-js", RequiredThemedJsFolder(Name));
             }
         }
 
@@ -37,8 +38,8 @@ namespace Articulate
 
             public override void CreateBundles(IBundleManager bundleManager)
             {
-                bundleManager.CreateJs("articulate-material-js", RequiredThemedJsFolder(Name));
                 bundleManager.CreateCss("articulate-material-css", RequiredThemedCssFolder(Name));
+                bundleManager.CreateJs("articulate-material-js", RequiredThemedJsFolder(Name));
             }
         }
 
@@ -47,7 +48,10 @@ namespace Articulate
             public const string Name = "Phantom";
 
             public override void CreateBundles(IBundleManager bundleManager)
-                => bundleManager.CreateCss("articulate-phantom-css", RequiredThemedCssFolder(Name));
+            {
+                bundleManager.CreateCss("articulate-phantom-css", RequiredThemedCssFolder(Name));
+                bundleManager.CreateJs("articulate-phantom-js", RequiredThemedJsFolder(Name));
+            }
         }
 
         private class Mini : DefaultTheme
@@ -55,7 +59,11 @@ namespace Articulate
             public const string Name = "Mini";
 
             public override void CreateBundles(IBundleManager bundleManager)
-                => bundleManager.CreateCss("articulate-mini-css", RequiredThemedCssFolder(Name));
+            {
+                bundleManager.CreateCss("articulate-mini-css", RequiredThemedCssFolder(Name));
+                bundleManager.CreateJs("articulate-mini-js", RequiredThemedJsFolder(Name));
+            }
+
         }
 
         public abstract class DefaultTheme
@@ -63,10 +71,10 @@ namespace Articulate
             public abstract void CreateBundles(IBundleManager bundleManager);
 
             protected static string RequiredThemedCssFolder(string theme)
-                => PathHelper.GetThemePath(theme) + "Assets/css";
+                => PathHelper.GetThemePath(theme).TrimEnd('/') + "/Assets/css/**/*.css";
 
             protected static string RequiredThemedJsFolder(string theme)
-                => PathHelper.GetThemePath(theme) + "Assets/js";
+                => PathHelper.GetThemePath(theme).TrimEnd('/') + "/Assets/js/**/*.js";
         }
     }
 }

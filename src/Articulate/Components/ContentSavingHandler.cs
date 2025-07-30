@@ -30,7 +30,7 @@ namespace Articulate.Components
         public void Handle(ContentSavingNotification notification)
         {
             var saved = notification.SavedEntities.ToList();
-            if (saved.Count == 0)
+            if (!saved.Any())
             {
                 return;
             }

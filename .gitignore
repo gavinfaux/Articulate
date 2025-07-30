@@ -485,3 +485,4 @@ $RECYCLE.BIN/
 /src/Articulate.Tests.Website/umbraco/ 
 /src/.vscode
 /src/Articulate.Tests.Website/wwwroot/media
+/src/Articulate.Tests.Website/Views/ArticulateThemes

@@ -166,9 +166,11 @@
     path inside the assembly that we can use to find the files to copy
     for the theme customisation feature. Embedding the files is less flakey
     then attempting to copy from the nuget cache folder, we may not have access
-    to it and can't assume the 'default' location uses standard conventions.
+    to it (deployed application) and can't assume the 'default' location uses standard conventions.
     -->
-    <EmbeddedResource Include="wwwroot\App_Plugins\Articulate\Themes\**" LogicalName="Articulate.Themes/%(RecursiveDir)%(Filename)%(Extension)" />
+    <EmbeddedResource Include="wwwroot\App_Plugins\Articulate\Themes\**">
+      <LogicalName>Articulate.Themes/$([System.String]::Copy('%(RecursiveDir)').Replace('\', '/'))%(Filename)%(Extension)</LogicalName>
+    </EmbeddedResource>
   </ItemGroup>
 
 

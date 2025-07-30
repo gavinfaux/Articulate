@@ -10,7 +10,7 @@ namespace Articulate
     /// </summary>
     public static class PathHelper
     {
-        public const string VirtualThemePath = "~/App_Plugins/Articulate/Themes";
+        public const string VirtualThemePath = "/App_Plugins/Articulate/Themes";
         public const string UserVirtualThemePath = "~/Views/ArticulateThemes";
 
         /// <summary>

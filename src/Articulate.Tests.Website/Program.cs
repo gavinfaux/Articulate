@@ -1,20 +1,8 @@
-using System;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http.Features;
-using Microsoft.AspNetCore.Mvc.Razor;
-using Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.FileProviders;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Smidge;
 using Smidge.Cache;
 using Smidge.Options;
-using Umbraco.Cms.Core.DependencyInjection;
-using Umbraco.Extensions;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -23,6 +11,8 @@ builder.CreateUmbracoBuilder()
     .AddWebsite()
     .AddComposers()
     .Build();
+
+// TODO: move all these comments to docs/wiki
 
 /*
 * Articulate requires Smidge
@@ -33,9 +23,8 @@ builder.CreateUmbracoBuilder()
 *   }
 */
 
-
-
 // DX: dotnet watch run --environment Development
+// only works with DEBUG tag helpers: <script src="js-bundle" type="text/javascript" debug="true"></script>
 builder.Services.AddSmidge(builder.Configuration.GetSection("smidge")).Configure<SmidgeOptions>(options =>
 {
     if (builder.Environment.IsDevelopment())
@@ -52,6 +41,23 @@ builder.Services.AddSmidge(builder.Configuration.GetSection("smidge")).Configure
 
 // Defaults to 30,000,000 bytes (~28.6 MB)
 builder.Services.Configure<IISServerOptions>(options => options.MaxRequestBodySize = int.MaxValue);
+
+/*
+ * For IIS you may need to increase the maximum request size in your web.config file
+ * For development this is located in src\.vs\Articulate\config\applicationhost.config
+
+ <configuration>
+   <system.webServer>
+     <security>
+       <requestFiltering>
+         <!-- Default: 30,000,000 bytes (~28.6 MB); 52428800 (~50 MB); 2147483647 (~2.GB)  -->
+         <requestLimits maxAllowedContentLength="2147483647" />
+       </requestFiltering>
+     </security>
+   </system.webServer>
+ </configuration>
+
+*/
 
 // Defaults to 30,000,000 bytes (~28.6 MB)
 builder.Services.Configure<KestrelServerOptions>(options => options.Limits.MaxRequestBodySize = int.MaxValue);
@@ -74,11 +80,11 @@ builder.Services.AddRazorPages();
 
 WebApplication app = builder.Build();
 
-app.UseStaticFiles();
+//app.UseStaticFiles();
 
 await app.BootUmbracoAsync();
 
-if(app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
 }
@@ -86,8 +92,8 @@ if(app.Environment.IsDevelopment())
 app.UseUmbraco()
     .WithMiddleware(u =>
     {
-         u.UseBackOffice();
-         u.UseWebsite();
+        u.UseBackOffice();
+        u.UseWebsite();
     })
     .WithEndpoints(u =>
     {
@@ -115,18 +121,18 @@ app.UseUmbraco()
         //}
 
         // Only required for Razor page support in Pages folder (just a Debug helper at present)
-         u.EndpointRouteBuilder.MapRazorPages();
+        u.EndpointRouteBuilder.MapRazorPages();
 
         // Enables the Umbraco Preview Hub for previewing content unpublished content
-         u.UseUmbracoPreviewEndpoints();
+        u.UseUmbracoPreviewEndpoints();
 
-         u.UseBackOfficeEndpoints();
-         u.UseWebsiteEndpoints();
+        u.UseBackOfficeEndpoints();
+        u.UseWebsiteEndpoints();
     });
 
 if (!app.Environment.IsDevelopment())
 {
-     app.UseHttpsRedirection();
+    app.UseHttpsRedirection();
 }
 
 // Articulate requires Smidge

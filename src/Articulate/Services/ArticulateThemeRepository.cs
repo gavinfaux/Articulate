@@ -1,7 +1,6 @@
 #nullable enable
 using System.Reflection;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Hosting.Internal;
 using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Core.Cache;
 using Umbraco.Cms.Core.Extensions;
@@ -86,7 +85,7 @@ namespace Articulate.Services
                     await stream.CopyToAsync(fileStream);
                 }
 
-                _appCaches.RuntimeCache.ClearByKey("Articulate_AllThemes");
+                _appCaches.RuntimeCache.ClearByKey(AllThemesCacheKey);
             }
             catch (Exception ex)
             {
@@ -115,27 +114,6 @@ namespace Articulate.Services
                 TimeSpan.FromSeconds(30)).ConfigureAwait(false);
         }
 
-        //private static async Task CopyDirectoryAsync(string sourcePath, string destinationPath)
-        //{
-        //    var sourceInfo = new DirectoryInfo(sourcePath);
-        //    Directory.CreateDirectory(destinationPath);
-
-        //    foreach (FileInfo file in sourceInfo.GetFiles())
-        //    {
-        //        var destinationFile = Path.Combine(destinationPath, file.Name);
-        //        await using FileStream sourceStream = file.OpenRead();
-        //        await using var destinationStream =
-        //            new FileStream(destinationFile, FileMode.CreateNew, FileAccess.Write);
-        //        await sourceStream.CopyToAsync(destinationStream);
-        //    }
-
-        //    foreach (DirectoryInfo dir in sourceInfo.GetDirectories())
-        //    {
-        //        var destinationDir = Path.Combine(destinationPath, dir.Name);
-        //        await CopyDirectoryAsync(dir.FullName, destinationDir);
-        //    }
-        //}
-
         private Task<IEnumerable<string>> GetThemesFromPathAsync(string virtualPath)
         {
             var physicalPath = _hostingEnvironment.MapPathContentRoot(virtualPath);
@@ -143,7 +121,7 @@ namespace Articulate.Services
             {
                 return Directory.Exists(physicalPath)
                     ? new DirectoryInfo(physicalPath).GetDirectories().Select(d => d.Name)
-                    : Enumerable.Empty<string>();
+                    : [];
             });
         }
     }

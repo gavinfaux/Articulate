@@ -69,7 +69,7 @@ namespace Articulate.Routing
         {
             lock (_sLocker)
             {
-                using (var scope = _scopeProvider.CreateCoreScope(autoComplete: true))
+                using (_scopeProvider.CreateCoreScope(autoComplete: true))
                 {
                     IPublishedContentType articulateCt = publishedContentTypeCache.Get(PublishedItemType.Content, ArticulateConstants.ContentType.Articulate);
 

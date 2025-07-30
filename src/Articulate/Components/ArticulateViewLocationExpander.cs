@@ -34,7 +34,7 @@ namespace Articulate.Components
        |-- |-- MarkdownEditor.cshtml
        |   |   |-- Assets/
        |-- Themes/                         <-- Parent folder for ALL theme-related views.
-       |   |-- Shared/                     <-- "BASE" or "FALLBACK" THEME.
+       |   |-- Shared/                     <-- "BASE" or "FALLBACK" THEME. (Base/ may be better than Shared/?)
        |   |   |-- _Layout.cshtml
        |   |   |-- _ViewStart.cshtml       <-- Layout, View bag etc. EVERY theme has even if 'same' (for override)
        |   |   |-- Assets/
@@ -83,8 +83,8 @@ namespace Articulate.Components
             var themeLocations = new[]
             {
                 // User themes take priority over system themes, allows overriding system themes.
-                $"/wwwroot/Views/ArticulateThemes/{themeName}/{{0}}.cshtml",
-                $"/wwwroot/Views/ArticulateThemes/{themeName}/Partials/{{0}}.cshtml",
+                $"/Views/ArticulateThemes/{themeName}/{{0}}.cshtml",
+                $"/Views/ArticulateThemes/{themeName}/Partials/{{0}}.cshtml",
 
                 // System themes
                 $"/wwwroot/App_Plugins/Articulate/Themes/{themeName}/{{0}}.cshtml",
@@ -93,10 +93,6 @@ namespace Articulate.Components
                 // Markdown Editor (does not have a theme, but routed via Articulate root node, so themeName found)
                 "/wwwroot/App_Plugins/Articulate/MarkdownEditor/{0}.cshtml"
 
-
-                // Future base theme
-                // "/App_Plugins/Articulate/Themes/Shared/{0}.cshtml",
-                // "/App_Plugins/Articulate/Themes/Shared/Partials/{0}.cshtml",
             };
 
             var locations = themeLocations.Concat(viewLocations);
