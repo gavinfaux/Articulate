@@ -37,11 +37,14 @@ jobs:
 
     - name: Validate Git Tag
       run: |
-        if git describe --tags --exact-match &> /dev/null; then
+        git describe --tags --exact-match *>$null
+
+        if ($?) {
             echo "Git tag found."
-        else
+        }
+        else {
             echo "Git tag missing, release build may not be traceable."
-        fi
+        }
 
     - name: Add MSBuild to PATH
       uses: microsoft/setup-msbuild@v2
