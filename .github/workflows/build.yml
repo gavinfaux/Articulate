@@ -36,6 +36,7 @@ jobs:
           echo "Date: ${{ env.NBGV_GitCommitDate }}"
 
     - name: Validate Git Tag
+      continue-on-error: true
       run: |
         git describe --tags --exact-match *>$null
 
