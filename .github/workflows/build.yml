@@ -31,13 +31,17 @@ jobs:
     - name: Log Build Context
       run: |
           echo "Articulate Build Context"
-          echo "Version: $NBGV_SemVer2"
-          echo "Commit: $NBGV_GitCommitIdShort"
-          echo "Date: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+          echo "Version: ${{ env.NBGV_SemVer2 }}"
+          echo "Commit: ${{ env.NBGV_GitCommitIdShort }}"
+          echo "Date: ${{ env.NBGV_GitCommitDate }}"
 
     - name: Validate Git Tag
       run: |
-        git describe --tags --exact-match || echo "Git tag missing, release build may not be traceable."
+        if git describe --tags --exact-match &> /dev/null; then
+            echo "Git tag found."
+        else
+            echo "Git tag missing, release build may not be traceable."
+        fi
 
     - name: Add MSBuild to PATH
       uses: microsoft/setup-msbuild@v2
