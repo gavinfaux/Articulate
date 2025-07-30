@@ -1,6 +1,5 @@
 import { defineConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
-import { outputPath } from "./config.outputPath.js";
 
 export default defineConfig(({ mode }) => {
   return {
@@ -10,7 +9,7 @@ export default defineConfig(({ mode }) => {
         formats: ["es"],
         fileName: "articulate",
       },
-      outDir: outputPath, //"../wwwroot/App_Plugins/Articulate/BackOffice",
+      outDir: "../wwwroot/App_Plugins/Articulate/Backoffice",
       emptyOutDir: true,
       sourcemap: true,
       rollupOptions: {

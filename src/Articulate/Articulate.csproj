@@ -1,15 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
   <PropertyGroup>
-    <EnableDefaultContentItems>false</EnableDefaultContentItems>
     <TargetFrameworks>net9.0</TargetFrameworks>
-    <OutputType>Library</OutputType>
     <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
-    <StaticWebAssetBasePath>/App_Plugins/Articulate</StaticWebAssetBasePath>
     <CompressionEnabled>false</CompressionEnabled>
-    <!--TODO: Enable after phased migration. https://learn.microsoft.com/en-us/dotnet/csharp/nullable-migration-strategies-->
-    <Nullable>warnings</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <WarningsAsErrors>Nullable</WarningsAsErrors>
+    <StaticWebAssetBasePath>/</StaticWebAssetBasePath>
   </PropertyGroup>
 
   <!-- NuGet package metadata -->
@@ -28,10 +22,6 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageTags>blog umbraco umbraco-marketplace oss tags markdown richtext</PackageTags>
   </PropertyGroup>
-
-  <ItemGroup>
-    <FrameworkReference Include="Microsoft.AspNetCore.App" />
-  </ItemGroup>
 
   <!--
   NoWarn for missing XML comments on public API
@@ -79,112 +69,55 @@
     <PackageReference Include="Microsoft.CodeAnalysis" Version="4.14.0" />
   </ItemGroup>
 
-  <!--
-  ==========================================================================================
-  CLIENT-SIDE ASSET BUILD & PACKAGING (Vite, NPM, Static Web Assets)
-  ==========================================================================================
-  The following sections configure how the Vite-based BackOffice client application is built
-  and packaged into the final NuGet package.
-  -->
+  <!-- First, define the group of files that trigger a rebuild. -->
+  <ItemGroup>
+    <ClientAssetsInputs Include="Client\**" Exclude="$(DefaultItemExcludes)" />
+    <Content Remove="Client\**" />
+  </ItemGroup>
 
-  <!--
-  Step 1: Import the standard MSBuild targets for handling client assets.
-  This file contains the default, reusable logic for running 'npm install' and 'npm build'.
-  We then override parts of this logic below to customize it for Articulate's specific needs.
-  -->
-  <Import Project="build\Microsoft.AspNetCore.ClientAssets.targets" />
+  <!-- Restore NPM packages if package.json has changed -->
+  <Target Name="RestoreNpmPackages" Inputs="Client\package.json;Client\package-lock.json" Outputs="Client\node_modules\.install-stamp">
+    <!-- First, dynamically set the restore command variable. -->
+    <PropertyGroup>
+      <!-- Default to 'npm install' for local development. -->
+      <_RestoreCommand>npm install</_RestoreCommand>
+      <!-- If we are packing, override the command to use 'npm ci' for a clean, reproducible install. -->
+      <_RestoreCommand Condition="'$(GeneratePackageOnBuild)' == 'true'">npm ci</_RestoreCommand>
+    </PropertyGroup>
+
+    <Message Text="Restoring NPM packages with command: $(_RestoreCommand)..." Importance="high" />
+
+    <!-- Now, execute the command stored in the variable. -->
+    <Exec Command="$(_RestoreCommand)" WorkingDirectory="Client" />
+
+    <Touch Files="Client\node_modules\.install-stamp" AlwaysCreate="true" />
+  </Target>
+
+  <Target Name="BuildBackOfficeClient" BeforeTargets="CoreBuild" Inputs="@(ClientAssetsInputs)" Outputs="$(IntermediateOutputPath)clientbuild.timestamp">
+
+  <!-- Now, run the build, which depends on the restore being complete -->
+  <CallTarget Targets="RestoreNpmPackages" />
+
   <PropertyGroup>
-    <!--Disable when you don't want Client to build, e.g. working on API updates.-->
-    <ShouldRunClientAssetsBuild>true</ShouldRunClientAssetsBuild>
-    <PackageIcon></PackageIcon>
+    <_FinalBuildCommand>npm run build</_FinalBuildCommand>
+    <_FinalBuildCommand Condition="'$(GeneratePackageOnBuild)' == 'true'">npm run build:release</_FinalBuildCommand>
   </PropertyGroup>
 
-  <!--
-  Step 2: Override the Vite output path for clean packaging builds.
-  This target runs *before* the main client asset build. Its purpose is to ensure a clean,
-  isolated build for packaging. It dynamically overwrites the 'Client/config.outputPath.js'
-  file, forcing Vite to build into a temporary intermediate folder ('/obj/...') instead of
-  directly into '/wwwroot'.
+  <Message Importance="High" Text="[Articulate] Executing NPM command: $(_FinalBuildCommand)" />
 
-  WHY? This prevents the build from polluting the source '/wwwroot' directory. The .NET Static
-  Web Assets system then picks up the assets from this temporary folder, ensuring that only
-  the correct, newly-built files are included in the NuGet package.
-  -->
-  <Target Name="ClientAssetsBuildOutputPath" BeforeTargets="ClientAssetsBuild">
-    <WriteLinesToFile File="Client\config.outputPath.js" Lines="export const outputPath = '../$(IntermediateOutputPath.Replace('\', '/'))clientassets';" Overwrite="true" />
-  </Target>
+  <Exec Condition="'$(GeneratePackageOnBuild)' != 'true'" Command="$(_FinalBuildCommand)" WorkingDirectory="Client" ContinueOnError="true">
+    <Output TaskParameter="ExitCode" PropertyName="ClientBuildExitCode" />
+  </Exec>
+  <Exec Condition="'$(GeneratePackageOnBuild)' == 'true'" Command="$(_FinalBuildCommand)" WorkingDirectory="Client">
+    <Output TaskParameter="ExitCode" PropertyName="ClientBuildExitCode" />
+  </Exec>
 
-  <!--
-  Step 3: Override the main client asset build target.
-  This target completely overrides the default 'ClientAssetsBuild' target from the imported
-  .targets file. This allows for more advanced logic.
+  <Warning Condition="'$(GeneratePackageOnBuild)' != 'true' AND '$(ClientBuildExitCode)' != '0'" Text="[Articulate] The BackOffice client-side build failed. The .NET build will continue." />
+  <Error Condition="'$(GeneratePackageOnBuild)' == 'true' AND '$(ClientBuildExitCode)' != '0'" Text="[Articulate] The BackOffice client-side build FAILED. The NuGet package cannot be created." />
 
-  The key customization here is choosing which NPM script to run:
-  - For a normal build (e.g., F5 in Visual Studio), it runs 'npm run build'.
-  - For a release/packaging build (e.g., 'dotnet pack'), it runs 'npm run build:release',
-    which includes the versioning script.
-  This ensures that official packages have the correct version information baked in.
-  -->
-  <Target Name="ClientAssetsBuild" Condition="'$(ShouldRunClientAssetsBuild)' == 'true'" DependsOnTargets="ClientAssetsRestore" BeforeTargets="AssignTargetPaths" Inputs="@(ClientAssetsInputs)" Outputs="$(IntermediateOutputPath)clientassetsbuild.complete.txt">
-
-    <PropertyGroup>
-      <_ClientAssetsOutputFullPath>$([System.IO.Path]::GetFullPath('$(IntermediateOutputPath)clientassets'))</_ClientAssetsOutputFullPath>
-    </PropertyGroup>
-
-    <PropertyGroup>
-      <!-- Default to the standard build command. -->
-      <_FinalBuildCommand>npm run build</_FinalBuildCommand>
-      <!-- If we are packing, override the command with the release version. -->
-      <_FinalBuildCommand Condition="'$(GeneratePackageOnBuild)' == 'true'">npm run build:release</_FinalBuildCommand>
-    </PropertyGroup>
-
-    <!-- Step 2: Show a message -->
-    <Message Importance="High" Text="[Articulate] Executing NPM command: $(_FinalBuildCommand)" />
-
-    <!-- Step 3: Execute the command stored in the variable -->
-    <Exec Condition="'$(GeneratePackageOnBuild)' != 'true'" Command="$(_FinalBuildCommand)" WorkingDirectory="$(ClientAssetsDirectory)" ContinueOnError="true">
-      <Output TaskParameter="ExitCode" PropertyName="ClientBuildExitCode" />
-    </Exec>
-
-    <Exec Condition="'$(GeneratePackageOnBuild)' == 'true'" Command="$(_FinalBuildCommand)" WorkingDirectory="$(ClientAssetsDirectory)">
-      <Output TaskParameter="ExitCode" PropertyName="ClientBuildExitCode" />
-    </Exec>
-
-    <!--
-    ==========================================================================================
-    DEFINE STATIC WEB ASSETS
-    ==========================================================================================
-    After the Vite build is complete, we now have all the client assets in the temporary
-    output directory. The following logic correctly defines them as Static Web Assets for packaging.
-    This overrides the default behavior in the imported .targets file.
-    -->
-    <ItemGroup>
-      <!-- Get all files from the Vite build output -->
-      <_AllClientAssets Include="$(_ClientAssetsOutputFullPath)\**\*" />
-
-      <!-- Isolate the package manifest -->
-      <_PackageManifestFile Include="$(_ClientAssetsOutputFullPath)\umbraco-package.json" />
-
-      <!-- Isolate all other BackOffice assets by excluding the manifest -->
-      <_BackOfficeAssets Include="@(_AllClientAssets)" Exclude="@(_PackageManifestFile)" />
-    </ItemGroup>
-
-    <!-- Define the asset for the package manifest at the correct root level -->
-    <DefineStaticWebAssets CandidateAssets="@(_PackageManifestFile)" SourceId="$(PackageId)" SourceType="Computed" ContentRoot="$(_ClientAssetsOutputFullPath)" BasePath="/App_Plugins/Articulate">
-      <Output TaskParameter="Assets" ItemName="StaticWebAsset" />
-    </DefineStaticWebAssets>
-
-    <!-- Define all other assets for the BackOffice subdirectory -->
-    <DefineStaticWebAssets CandidateAssets="@(_BackOfficeAssets)" SourceId="$(PackageId)" SourceType="Computed" ContentRoot="$(_ClientAssetsOutputFullPath)" BasePath="$(StaticWebAssetBasePath)">
-      <Output TaskParameter="Assets" ItemName="StaticWebAsset" />
-    </DefineStaticWebAssets>
-
-    <!-- The error handling part remains the same. -->
-    <Warning Condition="'$(GeneratePackageOnBuild)' != 'true' AND '$(ClientBuildExitCode)' != '0'" Text="[Articulate] The BackOffice client-side build failed. The .NET build will continue." />
-    <Error Condition="'$(GeneratePackageOnBuild)' == 'true' AND '$(ClientBuildExitCode)' != '0'" Text="[Articulate] The BackOffice client-side build FAILED. The NuGet package cannot be created." />
-
-    <WriteLinesToFile File="$(IntermediateOutputPath)clientassetsbuild.complete.txt" Lines="Build Succeeded" Overwrite="true" Condition="'$(ClientBuildExitCode)' == '0'" />
-  </Target>
+  <!-- Create the timestamp file to ensure this target doesn't run again if inputs haven't changed. -->
+  <Touch Files="$(IntermediateOutputPath)clientbuild.timestamp" AlwaysCreate="true" Condition="'$(ClientBuildExitCode)' == '0'" />
+</Target>
 
   <ItemGroup>
     <Compile Update="Controllers\Resources.Designer.cs">
@@ -226,38 +159,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Don't pack back-office client source files! -->
-    <Compile Remove="Client\**" />
-    <Content Remove="Client\**" />
-    <EmbeddedResource Remove="Client\**" />
-    <None Remove="Client\**" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="build\**" Pack="false" />
-  </ItemGroup>
-
-  <!--
-  ==========================================================================================
-  STATIC CONTENT PACKAGING
-  ==========================================================================================
-  The following sections define how static content (non-BackOffice files) are included
-  in the NuGet package. This is handled separately from the Vite build and uses standard
-  MSBuild <Content> items.
-  -->
-  <ItemGroup>
-    <!--
-    Rule for packaging static assets like Themes and the Markdown Editor.
-    This rule includes all files under '/wwwroot/App_Plugins/Articulate/' but
-    explicitly excludes the BackOffice folder, which is handled by the Vite build.
-    -->
-    <Content Include="wwwroot\App_Plugins\Articulate\**\*.*" Exclude="wwwroot\App_Plugins\Articulate\BackOffice\**\*.*">
-      <Pack>true</Pack>
-      <PackagePath>staticwebassets\App_Plugins\Articulate\%(RecursiveDir)%(Filename)%(Extension)</PackagePath>
-    </Content>
-  </ItemGroup>
-
-  <ItemGroup>
     <!--
     This tells the compiler to embed all files in this folder directly
     into the Articulate.dll as manifest resources.
@@ -270,10 +171,5 @@
     <EmbeddedResource Include="wwwroot\App_Plugins\Articulate\Themes\**" LogicalName="Articulate.Themes/%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
 
-  <ItemGroup>
-    <EmbeddedResource Remove="wwwroot\App_Plugins\Articulate\Themes\Material\_ViewImports.cshtml" />
-    <EmbeddedResource Remove="wwwroot\App_Plugins\Articulate\Themes\Mini\_ViewImports.cshtml" />
-    <EmbeddedResource Remove="wwwroot\App_Plugins\Articulate\Themes\Phantom\_ViewImports.cshtml" />
-    <EmbeddedResource Remove="wwwroot\App_Plugins\Articulate\Themes\VAPOR\_ViewImports.cshtml" />
-  </ItemGroup>
+
 </Project>

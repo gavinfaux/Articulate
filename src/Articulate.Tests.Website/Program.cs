@@ -33,6 +33,8 @@ builder.CreateUmbracoBuilder()
 *   }
 */
 
+
+
 // DX: dotnet watch run --environment Development
 builder.Services.AddSmidge(builder.Configuration.GetSection("smidge")).Configure<SmidgeOptions>(options =>
 {
@@ -72,7 +74,7 @@ builder.Services.AddRazorPages();
 
 WebApplication app = builder.Build();
 
-//app.UseStaticFiles();
+app.UseStaticFiles();
 
 await app.BootUmbracoAsync();
 
