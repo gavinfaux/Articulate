@@ -4,6 +4,7 @@
     <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
     <CompressionEnabled>false</CompressionEnabled>
     <StaticWebAssetBasePath>/</StaticWebAssetBasePath>
+    <EnableDefaultContentItems>false</EnableDefaultContentItems>
   </PropertyGroup>
 
   <!-- NuGet package metadata -->
@@ -69,55 +70,31 @@
     <PackageReference Include="Microsoft.CodeAnalysis" Version="4.14.0" />
   </ItemGroup>
 
-  <!-- First, define the group of files that trigger a rebuild. -->
   <ItemGroup>
     <ClientAssetsInputs Include="Client\**" Exclude="$(DefaultItemExcludes)" />
     <Content Remove="Client\**" />
+    <None Include="Client\public\umbraco-package.json" Pack="false" />
   </ItemGroup>
 
-  <!-- Restore NPM packages if package.json has changed -->
-  <Target Name="RestoreNpmPackages" Inputs="Client\package.json;Client\package-lock.json" Outputs="Client\node_modules\.install-stamp">
-    <!-- First, dynamically set the restore command variable. -->
-    <PropertyGroup>
-      <!-- Default to 'npm install' for local development. -->
-      <_RestoreCommand>npm install</_RestoreCommand>
-      <!-- If we are packing, override the command to use 'npm ci' for a clean, reproducible install. -->
-      <_RestoreCommand Condition="'$(GeneratePackageOnBuild)' == 'true'">npm ci</_RestoreCommand>
-    </PropertyGroup>
-
-    <Message Text="Restoring NPM packages with command: $(_RestoreCommand)..." Importance="high" />
-
-    <!-- Now, execute the command stored in the variable. -->
-    <Exec Command="$(_RestoreCommand)" WorkingDirectory="Client" />
-
-    <Touch Files="Client\node_modules\.install-stamp" AlwaysCreate="true" />
+  <!-- Restore and build Client files -->
+  <Target Name="RestoreClient" Inputs="Client\package.json;Client\package-lock.json" Outputs="Client\node_modules\.package-lock.json">
+    <Message Importance="high" Text="Restoring Client NPM packages..." />
+    <Exec Command="npm i" WorkingDirectory="Client" />
   </Target>
 
-  <Target Name="BuildBackOfficeClient" BeforeTargets="CoreBuild" Inputs="@(ClientAssetsInputs)" Outputs="$(IntermediateOutputPath)clientbuild.timestamp">
+  <Target Name="BuildClient" BeforeTargets="AssignTargetPaths" DependsOnTargets="RestoreClient" Inputs="@(ClientAssetsInputs)" Outputs="$(IntermediateOutputPath)client.complete.txt">
+    <Message Importance="high" Text="Executing Client NPM build script..." />
+    <Exec Command="npm run build" WorkingDirectory="Client" />
+    <ItemGroup>
+      <_ClientAssetsBuildOutput Include="wwwroot\App_Plugins\**" />
+    </ItemGroup>
+    <WriteLinesToFile File="$(IntermediateOutputPath)client.complete.txt" Lines="@(_ClientAssetsBuildOutput)" Overwrite="true" />
+  </Target>
 
-  <!-- Now, run the build, which depends on the restore being complete -->
-  <CallTarget Targets="RestoreNpmPackages" />
-
-  <PropertyGroup>
-    <_FinalBuildCommand>npm run build</_FinalBuildCommand>
-    <_FinalBuildCommand Condition="'$(GeneratePackageOnBuild)' == 'true'">npm run build:release</_FinalBuildCommand>
-  </PropertyGroup>
-
-  <Message Importance="High" Text="[Articulate] Executing NPM command: $(_FinalBuildCommand)" />
-
-  <Exec Condition="'$(GeneratePackageOnBuild)' != 'true'" Command="$(_FinalBuildCommand)" WorkingDirectory="Client" ContinueOnError="true">
-    <Output TaskParameter="ExitCode" PropertyName="ClientBuildExitCode" />
-  </Exec>
-  <Exec Condition="'$(GeneratePackageOnBuild)' == 'true'" Command="$(_FinalBuildCommand)" WorkingDirectory="Client">
-    <Output TaskParameter="ExitCode" PropertyName="ClientBuildExitCode" />
-  </Exec>
-
-  <Warning Condition="'$(GeneratePackageOnBuild)' != 'true' AND '$(ClientBuildExitCode)' != '0'" Text="[Articulate] The BackOffice client-side build failed. The .NET build will continue." />
-  <Error Condition="'$(GeneratePackageOnBuild)' == 'true' AND '$(ClientBuildExitCode)' != '0'" Text="[Articulate] The BackOffice client-side build FAILED. The NuGet package cannot be created." />
-
-  <!-- Create the timestamp file to ensure this target doesn't run again if inputs haven't changed. -->
-  <Touch Files="$(IntermediateOutputPath)clientbuild.timestamp" AlwaysCreate="true" Condition="'$(ClientBuildExitCode)' == '0'" />
-</Target>
+  <ItemGroup>
+    <Content Include="wwwroot\**" Pack="True" PackagePath="staticwebassets" />
+    <Folder Include="wwwroot\" />
+  </ItemGroup>
 
   <ItemGroup>
     <Compile Update="Controllers\Resources.Designer.cs">
@@ -159,19 +136,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!--
-    This tells the compiler to embed all files in this folder directly
-    into the Articulate.dll as manifest resources.
-    The 'LogicalName' part is important. It creates a clean, predictable
-    path inside the assembly that we can use to find the files to copy
-    for the theme customisation feature. Embedding the files is less flakey
-    then attempting to copy from the nuget cache folder, we may not have access
-    to it (deployed application) and can't assume the 'default' location uses standard conventions.
-    -->
     <EmbeddedResource Include="wwwroot\App_Plugins\Articulate\Themes\**">
       <LogicalName>Articulate.Themes/$([System.String]::Copy('%(RecursiveDir)').Replace('\', '/'))%(Filename)%(Extension)</LogicalName>
     </EmbeddedResource>
   </ItemGroup>
-
 
 </Project>
