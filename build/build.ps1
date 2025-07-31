@@ -18,12 +18,15 @@ if ((Get-Item $ReleaseFolder -ErrorAction SilentlyContinue) -ne $null)
 # Get the solution path
 # $SolutionPath = Join-Path -Path $SolutionRoot -ChildPath "Articulate.sln"
 
-# Build the project in release mode; don't need to buld the test site, CI will check that
+# Build the *project* in release mode; don't need to buld the test site, CI will check that
 
 # Restore packages
 Write-Host "Restoring nuget packages..."
 # dotnet restore $SolutionPath
 dotnet restore $CodeCSProj
+if (-not $?) {
+    throw "The dotnet restore process returned an error code."
+}
 
 # Clean solution
 Write-Host "Cleaning solution..."
@@ -41,6 +44,9 @@ if (-not $?) {
     throw "The dotnet build process returned an error code."
 }
 
-# dotnet pack (As its a SDK style project, nuget pack was not reading info stored in csproj)
+# dotnet pack
 Write-Host "Packing Articulate..."
-dotnet pack $CodeCSProj --output $ReleaseFolder --configuration Release
+dotnet pack $CodeCSProj --output $ReleaseFolder --configuration Release --no-build
+if (-not $?) {
+    throw "The dotnet pack process returned an error code."
+}
