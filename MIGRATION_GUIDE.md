@@ -227,3 +227,30 @@ These classes define the server-side configuration for the custom property edito
 
 - **`ArticulateApiComposer.cs`**: This composer runs on startup and registers the Swagger/OpenAPI services with Umbraco's dependency injection container.
 - **`ArticulateSwaggerOptions.cs`**: This class configures Swagger to generate the API documentation for the Articulate controllers. It defines the document info (title, version) and ensures that the XML comments from the C# code are included in the generated `swagger.json` file. This file is the single source of truth for the front-end API client.
+
+## 11. Project, Build & Deployment
+
+This section covers the low-level details of the project setup, build process, and deployment, which are critical for both development and creating official releases.
+
+### The Articulate Project (`Articulate.csproj`)
+
+The main `Articulate.csproj` file contains important logic for building the backoffice client and packaging the themes.
+
+- **Client-Side Build**: The project includes two MSBuild targets, `RestoreClient` and `BuildClient`. When the project is built, these targets automatically run `npm i` and `npm run build` in the `src/Articulate/Client` directory. This ensures that the front-end assets are always up-to-date with the latest source code before the .NET project is compiled.
+- **Theme Embedding**: As a Razor Class Library (RCL), the built-in themes located in `src/Articulate/wwwroot/Themes` are automatically included as static web assets. This makes them available to the application at runtime, where they can be bundled by Smidge or copied to the user-editable `~/Views/ArticulateThemes` directory by the `ArticulateThemeRepository`.
+
+### The Test Website (`Articulate.Tests.Website`)
+
+The test website is the primary environment for developing and debugging the Articulate package.
+
+- **Project Reference**: `Articulate.Tests.Website.csproj` references the main `Articulate` project using a `<ProjectReference>`. The setting `<CopyStaticWebAssetsToPublish>true</CopyStaticWebAssetsToPublish>` is crucial, as it ensures that the backoffice assets from the `Articulate` RCL are correctly copied to the test site for development and testing.
+- **`Program.cs` Configuration**:
+  - **Smidge**: The test site's `Program.cs` demonstrates the required setup for Smidge, which is a mandatory dependency for Articulate. It shows how to configure Smidge for development, with in-memory caching and file watching enabled for a better developer experience.
+  - **Request Size Limits**: The file also includes important configuration for increasing the maximum request body size for both Kestrel and IIS. This is necessary to support features like BlogML import and multi-file uploads from the Markdown Editor.
+  - **`UseStaticWebAssets`**: The line `builder.WebHost.UseStaticWebAssets()` is commented out but includes a note explaining its purpose: it is **only** required if you need to run the test site in a simulated `Release` or `Production` environment directly from your IDE. For normal development and debugging, it is not needed.
+
+### Packaging for Release
+
+**IMPORTANT**: To create a valid NuGet package for distribution, you **must** use the **`Pack`** command from within Visual Studio (right-click the `Articulate` project and select `Pack`).
+
+Using the standard `dotnet pack` command from the command line will **not** produce a usable package. It fails to correctly include the static web assets from the `wwwroot` folder and the necessary `.build` props files that allow the package to be correctly installed in a target Umbraco website. This is a known limitation in how .NET handles packaging for complex Razor Class Libraries with front-end assets.
