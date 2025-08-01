@@ -18,7 +18,7 @@ if ((Get-Item $ReleaseFolder -ErrorAction SilentlyContinue) -ne $null)
 # Get the solution path
 $SolutionPath = Join-Path -Path $SolutionRoot -ChildPath "Articulate.sln"
 
-# Build the *project* in release mode; don't need to buld the test site, CI will check that
+# Build the solution in release mode
 
 # Restore packages
 Write-Host "Restoring nuget packages..."

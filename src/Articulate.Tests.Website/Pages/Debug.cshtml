@@ -5,28 +5,10 @@
 @inject EndpointDataSource EndpointsDataSource
 
 @{
-    var rclAssembly = typeof(Articulate.Services.ArticulateThemeResolver).Assembly;
-    var compiledViewTypes = rclAssembly.GetTypes()
-        .Where(t => t.FullName?.Contains("AspNetCore.Views") == true)
-        .Select(t => t.FullName)
-        .ToList();
-
-    if (!compiledViewTypes.Any())
-    {
-        await Response.WriteAsync("FAILURE: No compiled Razor views found in the Articulate assembly.");
-    }
-    else
-    {
-        await Response.WriteAsync("SUCCESS: Found compiled Razor views in the Articulate assembly.");
-        foreach (var compiledViewType in compiledViewTypes)
-            await Response.WriteAsync(compiledViewType!);
-
-
-    }
-//    var endpoints = EndpointsDataSource.Endpoints.ToList();
+    var endpoints = EndpointsDataSource.Endpoints.ToList();
 }
 
-@* <table class="table">
+<table class="table">
     <thead class="thead-dark">
     <tr>
         <th scope="col">Order</th>
@@ -90,4 +72,4 @@
         </tr>
     }
     </tbody>
-</table> *@
+</table>

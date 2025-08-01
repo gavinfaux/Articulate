@@ -25,23 +25,9 @@ namespace Articulate.Controllers.Api
         [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
-        [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status422UnprocessableEntity)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> Copy(ThemeCopyModel model)
         {
-            if (string.IsNullOrWhiteSpace(model.ThemeName) || string.IsNullOrWhiteSpace(model.NewThemeName))
-            {
-                if (string.IsNullOrWhiteSpace(model.ThemeName))
-                {
-                    ModelState.AddModelError(nameof(model.ThemeName), "The name of the theme to copy is required.");
-                }
-                if (string.IsNullOrWhiteSpace(model.NewThemeName))
-                {
-                    ModelState.AddModelError(nameof(model.NewThemeName), "The name of the new theme is required.");
-                }
-                return ValidationProblem(ModelState);
-            }
-
             try
             {
                 await themeRepository.CopyThemeAsync(model.ThemeName, model.NewThemeName);

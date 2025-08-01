@@ -2,11 +2,10 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace Articulate.Tests.Website.Pages
 {
-    public class Debug : PageModel
+    public class DebugModel : PageModel
     {
         public void OnGet()
         {
-
         }
     }
 }

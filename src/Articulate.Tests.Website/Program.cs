@@ -80,7 +80,7 @@ builder.Services.AddRazorPages();
 
 WebApplication app = builder.Build();
 
-//app.UseStaticFiles();
+
 
 await app.BootUmbracoAsync();
 
