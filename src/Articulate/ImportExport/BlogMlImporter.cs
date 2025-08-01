@@ -17,7 +17,6 @@ using Umbraco.Cms.Core.Services;
 using Umbraco.Cms.Core.Strings;
 using Umbraco.Cms.Infrastructure.Persistence;
 using Umbraco.Cms.Infrastructure.Scoping;
-using Umbraco.Extensions;
 using Task = System.Threading.Tasks.Task;
 
 namespace Articulate.ImportExport

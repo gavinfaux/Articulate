@@ -1,7 +1,6 @@
 //TODO: #nullable enable
 using Articulate.Models;
 using Microsoft.AspNetCore.Mvc;
-using Umbraco.Extensions;
 
 namespace Articulate
 {

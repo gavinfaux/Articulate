@@ -4,7 +4,7 @@
     <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
     <CompressionEnabled>false</CompressionEnabled>
     <StaticWebAssetBasePath>/</StaticWebAssetBasePath>
-    <EnableDefaultContentItems>false</EnableDefaultContentItems>
+    <EnableDefaultContentItems>true</EnableDefaultContentItems>
   </PropertyGroup>
 
   <!-- NuGet package metadata -->
@@ -53,6 +53,8 @@
 
   <PropertyGroup>
     <UmbracoCmsPackageVersion>[15.2.3, 16.999.999)</UmbracoCmsPackageVersion>
+    <NuGetAuditMode>direct</NuGetAuditMode>
+    <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <!-- Nuget Package Dependencies -->
@@ -71,12 +73,16 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Using Include="Umbraco.Cms.Core.DependencyInjection" />
+    <Using Include="Umbraco.Extensions" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ClientAssetsInputs Include="Client\**" Exclude="$(DefaultItemExcludes)" />
     <Content Remove="Client\**" />
     <None Include="Client\public\umbraco-package.json" Pack="false" />
   </ItemGroup>
 
-  <!-- Restore and build Client files -->
   <Target Name="RestoreClient" Inputs="Client\package.json;Client\package-lock.json" Outputs="Client\node_modules\.package-lock.json">
     <Message Importance="high" Text="Restoring Client NPM packages..." />
     <Exec Command="npm i" WorkingDirectory="Client" />
@@ -92,7 +98,6 @@
   </Target>
 
   <ItemGroup>
-    <Content Include="wwwroot\**" Pack="True" PackagePath="staticwebassets" />
     <Folder Include="wwwroot\" />
   </ItemGroup>
 

@@ -9,7 +9,6 @@ using Umbraco.Cms.Core.Services.Changes;
 using Umbraco.Cms.Core.Sync;
 using Umbraco.Cms.Core.Web;
 using Umbraco.Cms.Infrastructure.Scoping;
-using Umbraco.Extensions;
 
 
 namespace Articulate.Components

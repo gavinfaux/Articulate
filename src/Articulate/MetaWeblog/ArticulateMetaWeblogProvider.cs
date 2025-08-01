@@ -15,7 +15,6 @@ using Umbraco.Cms.Core.Serialization;
 using Umbraco.Cms.Core.Services;
 using Umbraco.Cms.Core.Strings;
 using Umbraco.Cms.Core.Web;
-using Umbraco.Extensions;
 using WilderMinds.MetaWeblog;
 using Tag = WilderMinds.MetaWeblog.Tag;
 

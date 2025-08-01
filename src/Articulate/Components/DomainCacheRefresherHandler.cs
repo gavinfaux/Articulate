@@ -2,7 +2,6 @@
 using Umbraco.Cms.Core.Cache;
 using Umbraco.Cms.Core.Events;
 using Umbraco.Cms.Core.Notifications;
-using Umbraco.Extensions;
 
 namespace Articulate.Components
 {

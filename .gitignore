@@ -486,3 +486,5 @@ $RECYCLE.BIN/
 /src/.vscode
 /src/Articulate.Tests.Website/wwwroot/media
 /src/Articulate.Tests.Website/Views/ArticulateThemes
+/src/Articulate.Tests.Website/Articulate
+/src/Articulate/wwwroot/App_Plugins/Articulate/BackOffice

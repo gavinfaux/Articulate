@@ -6,7 +6,6 @@ using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.Cache;
 using Umbraco.Cms.Core.PublishedCache;
 using Umbraco.Cms.Core.Web;
-using Umbraco.Extensions;
 
 namespace Articulate.Routing
 {

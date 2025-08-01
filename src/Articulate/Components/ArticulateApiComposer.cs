@@ -3,7 +3,6 @@ using Articulate.Options;
 using Microsoft.Extensions.DependencyInjection;
 using Umbraco.Cms.Api.Common.OpenApi;
 using Umbraco.Cms.Core.Composing;
-using Umbraco.Cms.Core.DependencyInjection;
 
 namespace Articulate.Components
 {

@@ -10,7 +10,6 @@ using Umbraco.Cms.Core.Routing;
 using Umbraco.Cms.Core.Web;
 using Umbraco.Cms.Web.Common.Controllers;
 using Umbraco.Cms.Web.Website.ActionResults;
-using Umbraco.Extensions;
 
 namespace Articulate.Controllers
 {

@@ -9,7 +9,6 @@ using Umbraco.Cms.Core.PublishedCache;
 using Umbraco.Cms.Infrastructure.Persistence.Repositories.Implement;
 using Umbraco.Cms.Infrastructure.Scoping;
 using Umbraco.Cms.Web.Common;
-using Umbraco.Extensions;
 
 namespace Articulate.Services
 {

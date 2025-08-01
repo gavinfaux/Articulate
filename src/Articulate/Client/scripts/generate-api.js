@@ -85,9 +85,9 @@ fetch(swaggerUrl)
         ...defaultPlugins,
         {
           name: "@hey-api/client-fetch",
-          bundle: false,
+          bundle: true,
           exportFromIndex: true,
-          throwOnError: true,
+          throwOnError: false,
         },
         {
           name: "@hey-api/typescript",

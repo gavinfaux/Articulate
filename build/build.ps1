@@ -16,37 +16,37 @@ if ((Get-Item $ReleaseFolder -ErrorAction SilentlyContinue) -ne $null)
 ####### DO THE PROJECT BUILD PART #############
 
 # Get the solution path
-# $SolutionPath = Join-Path -Path $SolutionRoot -ChildPath "Articulate.sln"
+$SolutionPath = Join-Path -Path $SolutionRoot -ChildPath "Articulate.sln"
 
 # Build the *project* in release mode; don't need to buld the test site, CI will check that
 
 # Restore packages
 Write-Host "Restoring nuget packages..."
-# dotnet restore $SolutionPath
-dotnet restore $CodeCSProj
+& dotnet restore $SolutionPath
+#& dotnet restore $CodeCSProj
 if (-not $?) {
     throw "The dotnet restore process returned an error code."
 }
 
 # Clean solution
 Write-Host "Cleaning solution..."
-# dotnet clean $SolutionPath --configuration Release
-dotnet clean $CodeCSProj --configuration Release
+& dotnet clean $SolutionPath --configuration Release
+#& dotnet clean $CodeCSProj --configuration Release
 if (-not $?) {
     throw "The dotnet clean process returned an error code."
 }
 
 # Build solution
-# dotnet build $SolutionPath --configuration Release --no-restore
 Write-Host "Building Articulate..."
-dotnet build $CodeCSProj --configuration Release --no-restore
+& dotnet build $SolutionPath --configuration Release --no-restore
+#& dotnet build $CodeCSProj --configuration Release --no-restore
 if (-not $?) {
     throw "The dotnet build process returned an error code."
 }
 
 # dotnet pack
 Write-Host "Packing Articulate..."
-dotnet pack $CodeCSProj --output $ReleaseFolder --configuration Release --no-build
+& dotnet pack $CodeCSProj --output $ReleaseFolder --configuration Release
 if (-not $?) {
     throw "The dotnet pack process returned an error code."
 }

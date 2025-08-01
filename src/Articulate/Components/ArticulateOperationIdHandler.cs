@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.Extensions.Options;
 using Umbraco.Cms.Api.Common.OpenApi;
-using Umbraco.Extensions;
 
 namespace Articulate.Components
 {
@@ -22,13 +21,13 @@ namespace Articulate.Components
             ApiDescription apiDescription,
             ControllerActionDescriptor controllerActionDescriptor)
             => controllerActionDescriptor.ControllerTypeInfo.Namespace?.StartsWith(
-                "Articulate.Controllers.ManagementApi",
+                "Articulate.Controllers.Api",
                 StringComparison.InvariantCultureIgnoreCase) is true;
 
         public override string Handle(ApiDescription apiDescription)
             => ArticulateOperationId(apiDescription);
 
-        private string ArticulateOperationId(ApiDescription apiDescription)
+        public string ArticulateOperationId(ApiDescription apiDescription)
         {
             if (apiDescription.ActionDescriptor is not ControllerActionDescriptor controllerActionDescriptor)
             {

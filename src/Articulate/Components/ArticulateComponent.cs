@@ -1,6 +1,5 @@
 #nullable enable
 using Smidge;
-using Smidge.Models;
 using Umbraco.Cms.Core.Composing;
 
 namespace Articulate.Components

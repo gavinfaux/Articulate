@@ -13,7 +13,6 @@ using Umbraco.Cms.Api.Management.Routing;
 using Umbraco.Cms.Core.Models.Membership;
 using Umbraco.Cms.Core.Security;
 using Umbraco.Cms.Web.Common.Authorization;
-using Umbraco.Extensions;
 
 namespace Articulate.Controllers.Api
 {

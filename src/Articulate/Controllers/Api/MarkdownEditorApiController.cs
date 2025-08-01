@@ -27,7 +27,6 @@ using Umbraco.Cms.Core.Services;
 using Umbraco.Cms.Core.Strings;
 using Umbraco.Cms.Web.Common;
 using Umbraco.Cms.Web.Common.Authorization;
-using Umbraco.Extensions;
 
 namespace Articulate.Controllers.Api
 {

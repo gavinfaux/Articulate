@@ -1,6 +1,4 @@
 #nullable enable
-using Umbraco.Extensions;
-
 namespace Articulate.Options
 {
     /// <summary>

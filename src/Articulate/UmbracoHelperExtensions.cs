@@ -4,7 +4,6 @@ using Articulate.Services;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.PublishedCache;
 using Umbraco.Cms.Web.Common;
-using Umbraco.Extensions;
 
 namespace Articulate
 {

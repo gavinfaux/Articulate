@@ -11,7 +11,6 @@ using Umbraco.Cms.Core.Web;
 using Umbraco.Cms.Infrastructure.Scoping;
 using Umbraco.Cms.Web.Common.Controllers;
 using Umbraco.Cms.Web.Website.Routing;
-using Umbraco.Extensions;
 
 namespace Articulate.Routing
 {

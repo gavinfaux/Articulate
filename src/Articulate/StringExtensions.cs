@@ -1,6 +1,5 @@
 #nullable enable
 using System.Web;
-using Umbraco.Extensions;
 
 namespace Articulate
 {

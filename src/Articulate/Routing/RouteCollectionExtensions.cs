@@ -1,6 +1,5 @@
 #nullable enable
 using Microsoft.AspNetCore.Http;
-using Umbraco.Extensions;
 
 namespace Articulate.Routing
 {

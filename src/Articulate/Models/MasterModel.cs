@@ -1,6 +1,5 @@
 //TODO: #nullable enable
 using Umbraco.Cms.Core.Models.PublishedContent;
-using Umbraco.Extensions;
 
 namespace Articulate.Models
 {
