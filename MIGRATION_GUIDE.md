@@ -1,10 +1,28 @@
 # Articulate Migration Guide
 
-This guide provides a comprehensive overview of the migration of the Articulate backoffice from its legacy AngularJS implementation to the modern Lit and TypeScript-based architecture for Umbraco 15.
+This guide provides a comprehensive overview of the migration of the Articulate backoffice from its legacy AngularJS implementation to the modern Lit and TypeScript-based architecture for Umbraco 15. The backoffice extensions for Articulate, including property editors and dashboards, have been rebuilt to align with the latest Umbraco standards. This migration involves moving away from deprecated AngularJS controllers and views in favor of Lit-based web components, TypeScript, and the new Umbraco UI (UUI) design system. This document details the key architectural changes, the new development workflow, and the structure of both the front-end and back-end code.
 
-## 1. Introduction
+## 1. Core Architectural Changes
 
-The backoffice extensions for Articulate, including property editors and dashboards, have been rebuilt to align with the latest Umbraco standards. This migration involves moving away from deprecated AngularJS controllers and views in favor of Lit-based web components, TypeScript, and the new Umbraco UI (UUI) design system.
+Several fundamental architectural changes were made during the migration to .NET 8 and Umbraco 15.
+
+### Razor Class Library (RCL)
+
+The project SDK was migrated from `Microsoft.NET.Sdk` to `Microsoft.NET.Sdk.Razor`. This turns the project into a Razor Class Library (RCL), which is the modern standard for shipping packages with compiled Razor views and static assets (`.js`, `.css`, etc.).
+
+### `wwwroot` for Static Assets
+
+As part of the move to RCL, all client-side assets have been moved from the root `App_Plugins` folder to a `wwwroot` directory within the project (`src/Articulate/wwwroot`). This includes:
+
+- The compiled backoffice client application.
+- Razor themes.
+- The mobile-optimized Markdown Editor.
+
+These assets are now published with the package and served as static web assets, which is a more robust and standard way of handling them in .NET.
+
+### Markdown Editor Migration (AngularJS to Alpine.JS)
+
+The mobile-optimized Markdown Editor, a key feature of Articulate, has been migrated from its original AngularJS 1.2 implementation to a modern, lightweight version using the CSP-compliant build of Alpine.JS. This removes the last dependency on AngularJS and improves security and performance.
 
 ## 2. The Old Architecture: AngularJS
 
@@ -181,11 +199,21 @@ These are standard Umbraco API controllers that handle requests from the backoff
 
 These are simple C# classes (POCOs) that define the data structures (Data Transfer Objects or DTOs) for requests and responses used by the API controllers. They ensure that data is consistently structured between the client and server.
 
-### Service Layer & Theming
+### Theme & View Resolution (The New Way)
 
-- **`ArticulateThemeRepository.cs`**: This service is responsible for all logic related to theme management. It handles tasks like retrieving lists of default and user-created themes, and copying themes from embedded resources to the file system so they can be customized.
-- **`DefaultThemes.cs`**: A static class that defines the list of built-in themes that are included with Articulate. These themes are embedded in the Articulate DLL.
-- **`PathHelper.cs`**: A utility class that provides correct virtual paths to theme assets, distinguishing between built-in themes and user-created themes.
+In older versions, view resolution was handled by a custom `IViewEngine` and `PathHelper`. This has been replaced with a modern, Umbraco-idiomatic approach using view location expanders and resolvers.
+
+- **`ArticulateThemeResolver.cs`**: This service is responsible for determining which theme should be active for a given request. It inspects the current content node and its ancestors to find the configured theme.
+- **`ArticulateViewLocationExpander.cs`**: This is the core of the new view resolution system. It plugs into the ASP.NET Core MVC rendering pipeline and tells it where to find the Razor views for a given theme. It uses `ArticulateThemeResolver` to get the active theme and then points MVC to the correct view paths within the theme's directory (e.g., `~/Views/ArticulateThemes/{ThemeName}/{ViewName}.cshtml`).
+
+### Asset Bundling & The Service Layer
+
+With the move to RCL, the bundling and serving of theme assets (CSS, JS) has also been modernized.
+
+- **`ArticulateComponent.cs`**: This component runs on startup and is responsible for creating the client-side bundles for each theme. It iterates through the `DefaultThemes` and uses the `IBundleManager` (from the Smidge package) to register the CSS and JS files for each theme.
+- **`DefaultThemes.cs`**: This static class defines the list of built-in themes. Its primary role now is to provide the asset paths for each theme to the `ArticulateComponent` so they can be bundled correctly as RCL static web assets.
+- **`PathHelper.cs`**: The role of this class has been significantly reduced. It is no longer used for resolving view paths. Instead, it now primarily serves as a helper to provide the correct virtual paths to theme *assets* (CSS/JS) for the bundling process, distinguishing between built-in themes (served from `_content/Articulate/Themes/...`) and user-created themes (served from `~/Views/ArticulateThemes/...`).
+- **`ArticulateThemeRepository.cs`**: This service remains responsible for the business logic of managing themes, such as retrieving theme lists and handling the copying of default themes to the user-editable `~/Views/ArticulateThemes` directory.
 
 ### C# Property Editors (`src/Articulate/PropertyEditors`)
 
