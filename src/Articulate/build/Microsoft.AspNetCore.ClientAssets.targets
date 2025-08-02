@@ -10,10 +10,20 @@
         <ClientAssetsDirectory Condition="'$(ClientAssetsDirectory)' == ''">Client\</ClientAssetsDirectory>
         <ClientAssetsRestoreInputs Condition="'$(ClientAssetsRestoreInputs)' == ''">$(ClientAssetsDirectory)\package-lock.json;$(ClientAssetsDirectory)\package.json</ClientAssetsRestoreInputs>
         <ClientAssetsRestoreOutputs Condition="'$(ClientAssetsRestoreOutputs)' == ''">$(ClientAssetsDirectory)node_modules\.package-lock.json</ClientAssetsRestoreOutputs>
-        <ClientAssetsRestoreCommand Condition="'$(ClientAssetsRestoreCommand)' == ''">npm ci --no-fund --no-audit --prefer-offline</ClientAssetsRestoreCommand>
-        <ClientAssetsBuildCommand Condition="'$(ClientAssetsBuildCommand)' == ''">npm run build</ClientAssetsBuildCommand>
 
-        <!-- Include project file to pick up changes in the above values -->
+        <!-- Default commands for local/Debug development -->
+        <ClientAssetsRestoreCommand Condition="'$(ClientAssetsRestoreCommand)' == ''">npm install --no-fund</ClientAssetsRestoreCommand>
+        <ClientAssetsBuildCommand Condition="'$(ClientAssetsBuildCommand)' == ''">npm run build</ClientAssetsBuildCommand>
+    </PropertyGroup>
+
+    <!-- Override commands for Release builds -->
+    <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+        <ClientAssetsRestoreCommand>npm ci --no-fund --no-audit --prefer-offline</ClientAssetsRestoreCommand>
+        <ClientAssetsBuildCommand>npm run build:release</ClientAssetsBuildCommand>
+    </PropertyGroup>
+
+    <!-- Include project file to pick up changes in the above values -->
+    <PropertyGroup>
         <ClientAssetsRestoreInputs>$(MSBuildProjectFile);$(ClientAssetsRestoreInputs)</ClientAssetsRestoreInputs>
         <!-- Run restore only once for multi targeting builds -->
         <ClientAssetsRestoreBeforeTargets Condition="'$(TargetFramework)' == ''">DispatchToInnerBuilds</ClientAssetsRestoreBeforeTargets>
@@ -33,20 +43,24 @@
     <Target Name="ClientAssetsBuild" Condition="'$(ShouldRunClientAssetsBuild)' == 'true'" DependsOnTargets="ClientAssetsRestore" BeforeTargets="AssignTargetPaths" Inputs="@(ClientAssetsInputs)" Outputs="$(IntermediateOutputPath)clientassetsbuild.complete.txt">
         <PropertyGroup>
             <_ClientAssetsOutputFullPath>$([System.IO.Path]::GetFullPath('$(IntermediateOutputPath)clientassets'))</_ClientAssetsOutputFullPath>
+
+            <!-- Set the default behavior for ContinueOnError -->
+            <_ClientBuildContinueOnError>WarnAndContinue</_ClientBuildContinueOnError>
+            <!-- Override for Release builds to ensure they fail on error -->
+            <_ClientBuildContinueOnError Condition="'$(Configuration)' == 'Release'">false</_ClientBuildContinueOnError>
         </PropertyGroup>
 
         <Message Text="Executing NPM build script" Importance="High" />
 
         <MakeDir Directories="$(_ClientAssetsOutputFullPath)" />
-      <Exec Command="$(ClientAssetsBuildCommand)" WorkingDirectory="$(ClientAssetsDirectory)" />
+        <Exec Command="$(ClientAssetsBuildCommand)" WorkingDirectory="$(ClientAssetsDirectory)" ContinueOnError="$(_ClientBuildContinueOnError)" />
 
-      <ItemGroup>
-            <_ClientAssetsBuildOutput Include="$(IntermediateOutputPath)clientassets\**"></_ClientAssetsBuildOutput>
+        <ItemGroup>
+            <_ClientAssetsBuildOutput Include="$(IntermediateOutputPath)clientassets\**" />
         </ItemGroup>
 
         <WriteLinesToFile File="$(IntermediateOutputPath)clientassetsbuild.complete.txt" Lines="@(_ClientAssetsBuildOutput)" />
     </Target>
-
 
     <Target Name="DefineClientAssets" AfterTargets="CopyStaticAssetsForPackage" DependsOnTargets="ResolveStaticWebAssetsConfiguration">
         <ItemGroup>

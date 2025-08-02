@@ -113,7 +113,9 @@
   <Import Project="build\Microsoft.AspNetCore.ClientAssets.targets" />
   <PropertyGroup>
     <!-- Use this to (temporarily) disable building client assets, e.g. to start the project and generate updated API models -->
-    <ShouldRunClientAssetsBuild>false</ShouldRunClientAssetsBuild>
+    <ShouldRunClientAssetsBuild>true</ShouldRunClientAssetsBuild>
+    <!-- We should always run the build in Release though? -->
+    <ShouldRunClientAssetsBuild Condition="'$(Configuration)' == 'Release'">true</ShouldRunClientAssetsBuild>
   </PropertyGroup>
   <!-- StaticWebAssetBasePath is App_Plugins/Articulate so clientassets will resolve to this, we output the BackOffice to clientassets/BackOffice via writing to Client\config.outputPath.js which vite.config references to set outDir, our versioningPlugin will then move umbraco-package.json from BackOffice up one level to clientassets/ so umbraco-package.json is found by Umbraco at App_Plugins/Articulate/umbraco-package.json -->
   <Target Name="ClientAssetsBuildOutputPath" BeforeTargets="ClientAssetsBuild">
@@ -128,7 +130,7 @@
     <!-- Define the items to include. This finds all files in the Articulate App_Plugin folder... -->
     <ItemGroup>
       <StaticPackageAssets Include="$(ArticulateStaticAssetsSource)/**" />
-      <!-- 
+      <!--
       Define the items to exclude.
       1. Exclude the BackOffice directory since Vite handles that.
       2. Exclude any .cshtml files.
@@ -137,16 +139,12 @@
       <StaticPackageAssets Remove="$(ArticulateStaticAssetsSource)/**/*.cshtml" />
     </ItemGroup>
     <!-- Copy the filtered files to the client assets output path, maintaining the folder structure. -->
-    <Copy
-      SourceFiles="@(StaticPackageAssets)"
-      DestinationFolder="$(IntermediateOutputPath)clientassets/%(RecursiveDir)"
-      SkipUnchangedFiles="true"
-      />
+    <Copy SourceFiles="@(StaticPackageAssets)" DestinationFolder="$(IntermediateOutputPath)clientassets/%(RecursiveDir)" SkipUnchangedFiles="true" />
   </Target>
-  
+
   <!-- Since EnableDefaultContentItems is now false, we need to define the content items to include, currently only the cshtml files so they can be compiled -->
   <ItemGroup>
-    <Content Include="wwwroot\**\*.cshml"/>
+    <Content Include="wwwroot\**\*.cshml" />
   </ItemGroup>
 
   <!-- End of dotnet pack build workaround -->
