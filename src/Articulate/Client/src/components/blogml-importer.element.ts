@@ -1,10 +1,10 @@
-import { customElement, html, property, query, state } from "@umbraco-cms/backoffice/external/lit";
-import type { UUIButtonState } from "@umbraco-cms/backoffice/external/uui";
-import { UmbLitElement } from "@umbraco-cms/backoffice/lit-element";
-import { type UmbModalManagerContext , UMB_MODAL_MANAGER_CONTEXT } from "@umbraco-cms/backoffice/modal";
-import { UmbTextStyles } from "@umbraco-cms/backoffice/style";
-import { UmbValidationContext } from "@umbraco-cms/backoffice/validation";
-import { keyed } from "lit-html/directives/keyed.js";
+import { customElement, html, property, query, state } from '@umbraco-cms/backoffice/external/lit';
+import type { UUIButtonState } from '@umbraco-cms/backoffice/external/uui';
+import { UmbLitElement } from '@umbraco-cms/backoffice/lit-element';
+import { type UmbModalManagerContext, UMB_MODAL_MANAGER_CONTEXT } from '@umbraco-cms/backoffice/modal';
+import { UmbTextStyles } from '@umbraco-cms/backoffice/style';
+import { UmbValidationContext } from '@umbraco-cms/backoffice/validation';
+import { keyed } from 'lit-html/directives/keyed.js';
 import { BlogMl } from '../api/sdk.gen.js';
 import type { ImportModel, ImportResponse, PostArticulateBlogmlImportFileResponse } from '../api/types.gen.js';
 import { ArticulateDocumentTypeKey, DocumentById, openNodePicker } from '../utils/document-node-utils.js';
@@ -27,7 +27,7 @@ import {
  * @extends UmbLitElement
  * @implements {IFormController}
  */
-@customElement("blogml-importer")
+@customElement('blogml-importer')
 export default class BlogMlImporterElement extends UmbLitElement implements IFormController {
   /**
    * Optional router path for the back button.
@@ -57,7 +57,7 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
    * @private
    * @type {string}
    */
-  @state() private _selectedBlogNodeName: string = "";
+  @state() private _selectedBlogNodeName: string = '';
   /**
    * The number of posts found in the uploaded BlogML file.
    * @private
@@ -76,7 +76,7 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
    * @private
    * @type {HTMLFormElement}
    */
-  @query("#blogMlImportForm")
+  @query('#blogMlImportForm')
   private _form!: HTMLFormElement;
 
   /**
@@ -110,9 +110,9 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
     this._archiveDoctypeUdi = await ArticulateDocumentTypeKey();
     if (this._archiveDoctypeUdi === null) {
       const error = new Error(
-        "Could not find the Articulate Archive document type. Please ensure Articulate is installed correctly.",
+        'Could not find the Articulate Archive document type. Please ensure Articulate is installed correctly.',
       );
-      error.name = "Configuration Error";
+      error.name = 'Configuration Error';
       setFormError(this, error, error.name);
     }
   }
@@ -128,7 +128,7 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
       this._formState = undefined;
       this._formError = null;
       this._articulateBlogNode = undefined;
-      this._selectedBlogNodeName = "";
+      this._selectedBlogNodeName = '';
       // Incrementing the key forces Lit to re-render the form from scratch, effectively resetting it.
       // workaround for dirty uui-input-file after form submission and reset
       this._formRenderKey++;
@@ -148,7 +148,7 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
     if (udi) {
       const variant = await DocumentById(udi);
       if (!variant) {
-        setFormError(this, new Error(`Could not find a node with UDI: ${udi}`), "Node Not Found");
+        setFormError(this, new Error(`Could not find a node with UDI: ${udi}`), 'Node Not Found');
         return;
       }
       this._articulateBlogNode = udi;
@@ -163,8 +163,8 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
    */
   #downloadFile = (blob: Blob, fileName: string) => {
     const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.style.display = "none";
+    const a = document.createElement('a');
+    a.style.display = 'none';
     a.href = url;
     a.download = fileName;
     document.body.appendChild(a);
@@ -195,22 +195,22 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
     try {
       await this.#validation.validate();
     } catch (error) {
-      setFormError(this, error, "Validation Failed");
+      setFormError(this, error, 'Validation Failed');
       return;
     }
 
     const formData = new FormData(this._form);
-    const importFile = formData.get("importFile") as File;
+    const importFile = formData.get('importFile') as File;
 
     // validate() does not appear to work with the uui-file-input form element consistently or the node picker, so backup validation
     const validationRules = [
       {
         isValid: !!this._articulateBlogNode,
-        message: "A blog node must be selected before importing.",
+        message: 'A blog node must be selected before importing.',
       },
       {
         isValid: importFile && importFile.size > 0,
-        message: "A BlogML file must be selected for import.",
+        message: 'A BlogML file must be selected for import.',
       },
     ];
 
@@ -218,14 +218,14 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
 
     if (firstInvalidRule) {
       const validationError = new Error(firstInvalidRule.message);
-      validationError.name = "Validation Error";
+      validationError.name = 'Validation Error';
       setFormError(this, validationError, validationError.name);
       return;
     }
 
-    if (this._formState === "waiting") return;
+    if (this._formState === 'waiting') return;
 
-    this._formState = "waiting";
+    this._formState = 'waiting';
     this._formError = null;
     this._postCount = undefined;
 
@@ -233,33 +233,33 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
       // Step 1: Upload the file and get post count
       const initData = await this.#beginImport(importFile);
       this._postCount = initData.postCount;
-      this.requestUpdate("_postCount");
+      this.requestUpdate('_postCount');
 
       // Step 2: Perform import and get results
       const importData = await this.#finalizeImport(formData, initData.temporaryFileName!);
       // Step 3: (Optional) Export Disqus comments if requested and available
-      if (formData.get("exportDisqusXml") === "on" && importData.commentCount > 0) {
+      if (formData.get('exportDisqusXml') === 'on' && importData.commentCount > 0) {
         await this.#exportDisqusComments();
       }
 
       // All steps succeeded
-      this._formState = "success";
+      this._formState = 'success';
       const disqusMessage =
-        formData.get("exportDisqusXml") === "on" && importData.commentCount > 0
+        formData.get('exportDisqusXml') === 'on' && importData.commentCount > 0
           ? `${importData.commentCount} comments exported.`
-          : formData.get("exportDisqusXml") === "on"
-            ? "No comments found to export."
-            : "";
+          : formData.get('exportDisqusXml') === 'on'
+            ? 'No comments found to export.'
+            : '';
 
       await showUmbracoNotification(
         this,
         `BlogML imported successfully! ${importData.authorCount} authors, ${this._postCount} posts imported. ${disqusMessage}`,
-        "positive",
+        'positive',
         true,
       );
       this.resetState(true);
     } catch (error) {
-      setFormError(this, error, "Import Failed");
+      setFormError(this, error, 'Import Failed');
     }
   };
 
@@ -273,7 +273,7 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
   #beginImport = async (importFile: File): Promise<PostArticulateBlogmlImportFileResponse> => {
     const result = await BlogMl.postArticulateBlogmlImportFile({ body: { importFile } });
     if (!result.response.ok || !result.data?.temporaryFileName || !result.data?.postCount) {
-      throw result.error || new Error("Failed to upload blog content.");
+      throw result.error || new Error('Failed to upload blog content.');
     }
     return result.data;
   };
@@ -289,17 +289,17 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
   #finalizeImport = async (formData: FormData, tempFile: string): Promise<ImportResponse> => {
     const payload: ImportModel = {
       articulateBlogNode: this._articulateBlogNode!,
-      overwrite: formData.get("overwrite") === "on",
-      publish: formData.get("publish") === "on",
-      regexMatch: (formData.get("regexMatch") as string) || "",
-      regexReplace: (formData.get("regexReplace") as string) || "",
+      overwrite: formData.get('overwrite') === 'on',
+      publish: formData.get('publish') === 'on',
+      regexMatch: (formData.get('regexMatch') as string) || '',
+      regexReplace: (formData.get('regexReplace') as string) || '',
       tempFile: tempFile,
-      exportDisqusXml: formData.get("exportDisqusXml") === "on",
-      importFirstImage: formData.get("importFirstImage") === "on",
+      exportDisqusXml: formData.get('exportDisqusXml') === 'on',
+      importFirstImage: formData.get('importFirstImage') === 'on',
     };
     const result = await BlogMl.postArticulateBlogmlImport({ body: payload });
     if (!result.response.ok || !result.data?.completed) {
-      throw result.error || new Error("Failed to import blog content.");
+      throw result.error || new Error('Failed to import blog content.');
     }
     return result.data;
   };
@@ -312,14 +312,14 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
   #exportDisqusComments = async () => {
     const result = await BlogMl.getArticulateBlogmlExportDisqus();
     if (!result.response.ok || !result.data) {
-      throw result.error || new Error("Failed to export Disqus comments.");
+      throw result.error || new Error('Failed to export Disqus comments.');
     }
     const blob = result.data;
     if (!this.#isBlob(blob)) {
-      throw new Error("Invalid file received for Disqus export.");
+      throw new Error('Invalid file received for Disqus export.');
     }
-    const contentDisposition = result.response.headers.get("content-disposition");
-    let fileName = "disqus-comments.xml"; // Default filename
+    const contentDisposition = result.response.headers.get('content-disposition');
+    let fileName = 'disqus-comments.xml'; // Default filename
     if (contentDisposition) {
       const fileNameMatch = contentDisposition.match(/filename\*="UTF-8''([^"]+)"/);
       if (fileNameMatch && fileNameMatch.length > 1 && fileNameMatch[1]) {
@@ -358,8 +358,7 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
                 @input=${() => {
                   this._formError = null;
                   this._formState = undefined;
-                }}
-              >
+                }}>
                 <uui-form-validation-message>
                   <uui-form-layout-item>
                     <div class="node-picker-container">
@@ -372,13 +371,11 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
                         readonly
                         required
                         required-message="You must select a blog node"
-                        style="flex-grow: 1;"
-                      ></uui-input>
+                        style="flex-grow: 1;"></uui-input>
                       <uui-button
                         look="outline"
-                        label=${this._articulateBlogNode ? "Change" : "Choose"}
-                        @click=${this._openNodePicker}
-                      ></uui-button>
+                        label=${this._articulateBlogNode ? 'Change' : 'Choose'}
+                        @click=${this._openNodePicker}></uui-button>
                     </div>
                     <div slot="description">Choose the Articulate blog node to export from</div>
                   </uui-form-layout-item>
@@ -390,8 +387,7 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
                       required
                       required-message="You must select a BlogML file to import"
                       name="importFile"
-                      tabindex="0"
-                    ></uui-input-file>
+                      tabindex="0"></uui-input-file>
                     <div slot="description">The XML file to upload for import</div>
                   </uui-form-layout-item>
                   <uui-form-layout-item>
@@ -411,8 +407,7 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
                       style="--auto-width-text-margin-right: 20px"
                       name="regexMatch"
                       auto-width
-                      placeholder="Example to match: (@example.old)"
-                    ></uui-input>
+                      placeholder="Example to match: (@example.old)"></uui-input>
                     <div slot="description">
                       Regex statement used to match content in the blog post to be replaced by the match statement. See
                       the Articulate Wiki Importing page for more information.
@@ -425,8 +420,7 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
                       style="--auto-width-text-margin-right: 20px"
                       name="regexReplace"
                       auto-width
-                      placeholder="Example replacement: @example.new"
-                    ></uui-input>
+                      placeholder="Example replacement: @example.new"></uui-input>
                     <div slot="description">Replacement statement used with the above match statement</div>
                   </uui-form-layout-item>
                   <uui-form-layout-item>
@@ -452,7 +446,7 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
                           ${this._postCount} posts in uploaded file.
                         </uui-tag>
                       `
-                    : ""}
+                    : ''}
                   <uui-button type="submit" look="primary" .state=${this._formState} color="primary" label="Submit">
                     Submit
                   </uui-button>
@@ -465,7 +459,7 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
           )}
         </uui-form>
 
-        ${this._formError ? renderErrorMessage(this._formError) : ""}
+        ${this._formError ? renderErrorMessage(this._formError) : ''}
       </uui-box>
     `;
   }
@@ -488,6 +482,6 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
 
 declare global {
   interface HTMLElementTagNameMap {
-    "blogml-importer": BlogMlImporterElement;
+    'blogml-importer': BlogMlImporterElement;
   }
 }

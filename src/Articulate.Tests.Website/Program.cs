@@ -75,8 +75,12 @@ builder.Services.Configure<FormOptions>(x =>
 // Only required for Razor page support in Pages folder (just a Debug helper at present)
 builder.Services.AddRazorPages();
 
-// Only required for static assets in Release mode when running from IDE (e.g. back office) - not required for published release.
-//builder.WebHost.UseStaticWebAssets();
+// Only required when running from IDE in 'hybrid' Production mode, static assets will not load without this
+// Do not use in development mode or published releases, Umbraco will not start with a circular reference exception
+if (builder.Environment.IsProduction())
+{
+    builder.WebHost.UseStaticWebAssets();
+}
 
 WebApplication app = builder.Build();
 

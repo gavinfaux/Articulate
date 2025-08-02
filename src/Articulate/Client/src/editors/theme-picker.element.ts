@@ -1,12 +1,12 @@
-import { UmbElementMixin } from "@umbraco-cms/backoffice/element-api";
-import { css, customElement, html, property, state } from "@umbraco-cms/backoffice/external/lit";
-import { UmbLitElement } from "@umbraco-cms/backoffice/lit-element";
+import { UmbElementMixin } from '@umbraco-cms/backoffice/element-api';
+import { css, customElement, html, property, state } from '@umbraco-cms/backoffice/external/lit';
+import { UmbLitElement } from '@umbraco-cms/backoffice/lit-element';
 import {
   UmbPropertyValueChangeEvent,
   type UmbPropertyEditorConfigCollection,
   type UmbPropertyEditorUiElement,
-} from "@umbraco-cms/backoffice/property-editor";
-import { UmbTextStyles } from "@umbraco-cms/backoffice/style";
+} from '@umbraco-cms/backoffice/property-editor';
+import { UmbTextStyles } from '@umbraco-cms/backoffice/style';
 
 import { ThemePicker } from '../api/sdk.gen.js';
 import { formatApiError } from '../utils/error-utils.js';
@@ -17,7 +17,7 @@ import { formatApiError } from '../utils/error-utils.js';
  * @extends UmbElementMixin(UmbLitElement)
  * @implements {UmbPropertyEditorUiElement}
  */
-@customElement("theme-picker-element")
+@customElement('theme-picker-element')
 export default class ThemePickerElement extends UmbElementMixin(UmbLitElement) implements UmbPropertyEditorUiElement {
   /**
    * The selected theme name, which is the value saved for the property.
@@ -61,7 +61,7 @@ export default class ThemePickerElement extends UmbElementMixin(UmbLitElement) i
   override updated(changedProperties: Map<PropertyKey, unknown>) {
     super.updated(changedProperties);
 
-    if (changedProperties.has("value") && this._themeSelectOptions.length > 0) {
+    if (changedProperties.has('value') && this._themeSelectOptions.length > 0) {
       this._themeSelectOptions = this._themeSelectOptions.map((option) => ({
         ...option,
         selected: !!this.value && option.value === this.value,
@@ -80,7 +80,7 @@ export default class ThemePickerElement extends UmbElementMixin(UmbLitElement) i
     const result = await ThemePicker.getArticulateEditorsThemePickerThemes();
 
     if (!result.response.ok || !result.data) {
-      this._error = formatApiError(result.error, "Failed to load themes from the server.");
+      this._error = formatApiError(result.error, 'Failed to load themes from the server.');
       return;
     }
 
@@ -109,9 +109,7 @@ export default class ThemePickerElement extends UmbElementMixin(UmbLitElement) i
 
   override render() {
     if (this._error) {
-      return html`
-        <span style="color: var(--uui-color-danger);">${this._error.title}</span>
-      `;
+      return html` <span style="color: var(--uui-color-danger);">${this._error.title}</span> `;
     }
 
     return html`
@@ -119,8 +117,7 @@ export default class ThemePickerElement extends UmbElementMixin(UmbLitElement) i
         .options=${this._themeSelectOptions}
         .value=${this.value}
         @change=${this._handleInput}
-        label="Select a theme"
-      ></uui-select>
+        label="Select a theme"></uui-select>
     `;
   }
 
@@ -141,6 +138,6 @@ export default class ThemePickerElement extends UmbElementMixin(UmbLitElement) i
 
 declare global {
   interface HTMLElementTagNameMap {
-    "theme-picker-element": ThemePickerElement;
+    'theme-picker-element': ThemePickerElement;
   }
 }

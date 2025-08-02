@@ -1,9 +1,9 @@
-import { customElement, html, property, query, state } from "@umbraco-cms/backoffice/external/lit";
-import type { UUIButtonState } from "@umbraco-cms/backoffice/external/uui";
-import { UmbLitElement } from "@umbraco-cms/backoffice/lit-element";
-import { type UmbModalManagerContext , UMB_MODAL_MANAGER_CONTEXT } from "@umbraco-cms/backoffice/modal";
-import { UmbTextStyles } from "@umbraco-cms/backoffice/style";
-import { UmbValidationContext } from "@umbraco-cms/backoffice/validation";
+import { customElement, html, property, query, state } from '@umbraco-cms/backoffice/external/lit';
+import type { UUIButtonState } from '@umbraco-cms/backoffice/external/uui';
+import { UmbLitElement } from '@umbraco-cms/backoffice/lit-element';
+import { type UmbModalManagerContext, UMB_MODAL_MANAGER_CONTEXT } from '@umbraco-cms/backoffice/modal';
+import { UmbTextStyles } from '@umbraco-cms/backoffice/style';
+import { UmbValidationContext } from '@umbraco-cms/backoffice/validation';
 import type { ExportModel } from '../api/types.gen.js';
 import { BlogMl } from '../api/sdk.gen.js';
 import { ArticulateDocumentTypeKey, DocumentById, openNodePicker } from '../utils/document-node-utils.js';
@@ -34,7 +34,7 @@ import {
  * @extends UmbLitElement
  * @implements {IFormController}
  */
-@customElement("blogml-exporter")
+@customElement('blogml-exporter')
 export default class BlogMlExporterElement extends UmbLitElement implements IFormController {
   /**
    * Optional router path for the back button.
@@ -64,14 +64,14 @@ export default class BlogMlExporterElement extends UmbLitElement implements IFor
    * @private
    * @type {string}
    */
-  @state() private _selectedBlogNodeName: string = "";
+  @state() private _selectedBlogNodeName: string = '';
 
   /**
    * The main form element.
    * @private
    * @type {HTMLFormElement}
    */
-  @query("#blogMlExportForm")
+  @query('#blogMlExportForm')
   private _form!: HTMLFormElement;
 
   /**
@@ -105,9 +105,9 @@ export default class BlogMlExporterElement extends UmbLitElement implements IFor
     this._archiveDoctypeUdi = await ArticulateDocumentTypeKey();
     if (this._archiveDoctypeUdi === null) {
       const error = new Error(
-        "Could not find the Articulate Archive document type. Please ensure Articulate is installed correctly.",
+        'Could not find the Articulate Archive document type. Please ensure Articulate is installed correctly.',
       );
-      error.name = "Configuration Error";
+      error.name = 'Configuration Error';
       setFormError(this, error, error.name);
     }
   }
@@ -122,7 +122,7 @@ export default class BlogMlExporterElement extends UmbLitElement implements IFor
       this._formState = undefined;
       this._formError = null;
       this._articulateBlogNode = undefined;
-      this._selectedBlogNodeName = "";
+      this._selectedBlogNodeName = '';
     }
   }
 
@@ -139,7 +139,7 @@ export default class BlogMlExporterElement extends UmbLitElement implements IFor
     if (udi) {
       const variant = await DocumentById(udi);
       if (!variant) {
-        setFormError(this, new Error(`Could not find a node with UDI: ${udi}`), "Node Not Found");
+        setFormError(this, new Error(`Could not find a node with UDI: ${udi}`), 'Node Not Found');
         return;
       }
       this._articulateBlogNode = udi;
@@ -154,8 +154,8 @@ export default class BlogMlExporterElement extends UmbLitElement implements IFor
    */
   #downloadFile = (blob: Blob, fileName: string) => {
     const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.style.display = "none";
+    const a = document.createElement('a');
+    a.style.display = 'none';
     a.href = url;
     a.download = fileName;
     document.body.appendChild(a);
@@ -187,30 +187,30 @@ export default class BlogMlExporterElement extends UmbLitElement implements IFor
     try {
       await this.#validation.validate();
     } catch (error) {
-      setFormError(this, error, "Validation Failed");
+      setFormError(this, error, 'Validation Failed');
       return;
     }
 
     // validate() does not appear to work with the node picker consistently, so backup validation
     if (!this._articulateBlogNode) {
-      const validationError = new Error("A blog node must be selected before exporting.");
-      validationError.name = "Validation Error";
+      const validationError = new Error('A blog node must be selected before exporting.');
+      validationError.name = 'Validation Error';
       setFormError(this, validationError, validationError.name);
       return;
     }
 
-    if (this._formState === "waiting") return;
+    if (this._formState === 'waiting') return;
 
-    this._formState = "waiting";
+    this._formState = 'waiting';
     this._formError = null;
 
     try {
       await this.#performExport();
-      this._formState = "success";
-      await showUmbracoNotification(this, "BlogML exported successfully!", "positive");
+      this._formState = 'success';
+      await showUmbracoNotification(this, 'BlogML exported successfully!', 'positive');
       this.resetState(true);
     } catch (error) {
-      setFormError(this, error, "Export Failed");
+      setFormError(this, error, 'Export Failed');
     }
   };
 
@@ -221,21 +221,21 @@ export default class BlogMlExporterElement extends UmbLitElement implements IFor
    */
   #performExport = async () => {
     const formData = new FormData(this._form);
-    const embedImages = formData.get("embedImages") === "on";
+    const embedImages = formData.get('embedImages') === 'on';
     const payload: ExportModel = {
       articulateBlogNode: this._articulateBlogNode!,
       exportImagesAsBase64: embedImages,
     };
     const result = await BlogMl.postArticulateBlogmlExport({ body: payload });
     if (!result.response.ok || !result.data) {
-      throw result.error || new Error("The server returned an invalid response during export.");
+      throw result.error || new Error('The server returned an invalid response during export.');
     }
     const blob = result.data;
     if (!this.#isBlob(blob)) {
-      throw new Error("The server did not return a file. Please check the server logs.");
+      throw new Error('The server did not return a file. Please check the server logs.');
     }
-    const contentDisposition = result.response.headers.get("content-disposition");
-    let fileName = "blog-export.xml"; // Default filename
+    const contentDisposition = result.response.headers.get('content-disposition');
+    let fileName = 'blog-export.xml'; // Default filename
     if (contentDisposition) {
       const fileNameMatch = contentDisposition.match(/filename\*="UTF-8''([^"]+)"/);
       if (fileNameMatch && fileNameMatch.length > 1 && fileNameMatch[1]) {
@@ -260,8 +260,8 @@ export default class BlogMlExporterElement extends UmbLitElement implements IFor
     this.resetState(true);
   };
 
-  private get _submitButtonColor(): "positive" | "primary" {
-    return this._articulateBlogNode ? "positive" : "primary";
+  private get _submitButtonColor(): 'positive' | 'primary' {
+    return this._articulateBlogNode ? 'positive' : 'primary';
   }
 
   override render() {
@@ -275,8 +275,7 @@ export default class BlogMlExporterElement extends UmbLitElement implements IFor
             @input=${() => {
               this._formError = null;
               this._formState = undefined;
-            }}
-          >
+            }}>
             <uui-form-validation-message>
               <uui-form-layout-item>
                 <div class="node-picker-container">
@@ -289,13 +288,11 @@ export default class BlogMlExporterElement extends UmbLitElement implements IFor
                     readonly
                     required
                     required-message="You must select a blog node"
-                    style="flex-grow: 1;"
-                  ></uui-input>
+                    style="flex-grow: 1;"></uui-input>
                   <uui-button
                     look="outline"
-                    label=${this._articulateBlogNode ? "Change" : "Choose"}
-                    @click=${this._openNodePicker}
-                  ></uui-button>
+                    label=${this._articulateBlogNode ? 'Change' : 'Choose'}
+                    @click=${this._openNodePicker}></uui-button>
                 </div>
                 <div slot="description">Choose the Articulate blog node to export from</div>
               </uui-form-layout-item>
@@ -315,13 +312,12 @@ export default class BlogMlExporterElement extends UmbLitElement implements IFor
                 look="primary"
                 .color=${this._submitButtonColor}
                 .state=${this._formState}
-                label="Submit"
-              ></uui-button>
+                label="Submit"></uui-button>
               <uui-button type="reset" look="secondary" label="Reset" @click=${this._handleReset}></uui-button>
             </div>
           </form>
         </uui-form>
-        ${this._formError ? renderErrorMessage(this._formError) : ""}
+        ${this._formError ? renderErrorMessage(this._formError) : ''}
       </uui-box>
     `;
   }
@@ -345,6 +341,6 @@ export default class BlogMlExporterElement extends UmbLitElement implements IFor
 
 declare global {
   interface HTMLElementTagNameMap {
-    "blogml-exporter": BlogMlExporterElement;
+    'blogml-exporter': BlogMlExporterElement;
   }
 }

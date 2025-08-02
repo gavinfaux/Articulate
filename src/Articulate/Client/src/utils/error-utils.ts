@@ -20,10 +20,10 @@ import type { ProblemDetails } from '../api/types.gen.js';
  */
 function cleanFieldName(fieldName: string): string {
   // Remove leading '$.' if present
-  const cleanedName = fieldName.startsWith("$.") ? fieldName.substring(2) : fieldName;
+  const cleanedName = fieldName.startsWith('$.') ? fieldName.substring(2) : fieldName;
 
   // Add spaces before uppercase letters and capitalize the first letter.
-  return cleanedName.replace(/([a-z0-9])([A-Z])/g, "$1 $2").replace(/^./, (str) => str.toUpperCase());
+  return cleanedName.replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/^./, (str) => str.toUpperCase());
 }
 
 /**
@@ -34,14 +34,14 @@ function cleanFieldName(fieldName: string): string {
  * @returns {{title: string, details: string[]}} A user-friendly error message object with a title and an array of details.
  */
 export function formatApiError(error: unknown, defaultMessage: string): { title: string; details: string[] } {
-  console.warn("[formatApiError] Received error:", error);
+  console.warn('[formatApiError] Received error:', error);
 
   // Check if it's a ProblemDetails-like object from the API
   if (
     error !== null &&
-    typeof error === "object" &&
-    "title" in error &&
-    typeof (error as ProblemDetails).title === "string"
+    typeof error === 'object' &&
+    'title' in error &&
+    typeof (error as ProblemDetails).title === 'string'
   ) {
     const problem = error as ProblemDetails & { detail?: string; errors?: Record<string, string[]> };
 
@@ -54,14 +54,14 @@ export function formatApiError(error: unknown, defaultMessage: string): { title:
           .filter((msg) => !!msg)
           .map((msg) => {
             // Clean up the message, but fall back to the original if the split fails
-            const cleanedMsg = msg.split(" Path: $.")[0] || msg;
+            const cleanedMsg = msg.split(' Path: $.')[0] || msg;
             return `${fieldName}: ${cleanedMsg}`;
           });
       });
 
       if (formattedErrors.length > 0) {
         const result = {
-          title: problem.title || "One or more validation errors occurred",
+          title: problem.title || 'One or more validation errors occurred',
           details: formattedErrors,
         };
         return result;
@@ -86,7 +86,7 @@ export function formatApiError(error: unknown, defaultMessage: string): { title:
 
   if (error instanceof Error) {
     // Use the error's name for the title if it's descriptive, otherwise use the default.
-    const title = error.name !== "Error" ? error.name : defaultMessage;
+    const title = error.name !== 'Error' ? error.name : defaultMessage;
     const details = error.message ? [error.message] : [];
 
     // During development, log the stack trace for much easier debugging.
@@ -94,7 +94,7 @@ export function formatApiError(error: unknown, defaultMessage: string): { title:
     return { title, details };
   }
 
-  if (typeof error === "string") {
+  if (typeof error === 'string') {
     return { title: defaultMessage, details: [error] };
   }
 

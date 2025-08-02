@@ -1,14 +1,13 @@
-import { css, customElement, html, state } from "@umbraco-cms/backoffice/external/lit";
-import { when } from "lit/directives/when.js";
-import { UmbLitElement } from "@umbraco-cms/backoffice/lit-element";
-import type { UmbRoute, UmbRouterSlotInitEvent } from "@umbraco-cms/backoffice/router";
-import { UmbTextStyles } from "@umbraco-cms/backoffice/style";
+import { css, customElement, html, state } from '@umbraco-cms/backoffice/external/lit';
+import { UmbLitElement } from '@umbraco-cms/backoffice/lit-element';
+import type { UmbRoute } from '@umbraco-cms/backoffice/router';
+import { UmbTextStyles } from '@umbraco-cms/backoffice/style';
 
-import BlogMlExporterElement from "../components/blogml-exporter.element.js";
-import BlogMlImporterElement from "../components/blogml-importer.element.js";
-import ThemeOptionsElement from "../components/theme-options.element.js";
-import DashboardOptionsElement from "../components/dashboard-options.element.js";
-import { HostStyles } from "../utils/template-utils.js";
+import BlogMlExporterElement from '../components/blogml-exporter.element.js';
+import BlogMlImporterElement from '../components/blogml-importer.element.js';
+import ThemeOptionsElement from '../components/theme-options.element.js';
+import DashboardOptionsElement from '../components/dashboard-options.element.js';
+import { HostStyles } from '../utils/template-utils.js';
 
 /**
  * The main dashboard element for the Articulate package.
@@ -17,84 +16,54 @@ import { HostStyles } from "../utils/template-utils.js";
  * @element articulate-dashboard
  * @extends {UmbLitElement}
  */
-@customElement("articulate-dashboard")
+@customElement('articulate-dashboard')
 export default class ArticulateDashboardElement extends UmbLitElement {
-  /**
-   * The base path for the router.
-   * @private
-   * @type {string | undefined}
-   */
-  @state() private _routerBasePath?: string;
   /**
    * The routes for the dashboard router.
    * @private
    * @type {UmbRoute[]}
    */
   @state() private _routes: UmbRoute[];
-  /**
-   * The build date of the package, injected by the build process.
-   * @private
-   * @type {string}
-   */
-
-
-  @state() private _buildInfo?: { version: string; date: string; commit: string };
 
   constructor() {
     super();
-    this._getBuildInfo();
+
     const createSetup = <T extends UmbLitElement & { routerPath?: string }>(component: new () => T) => {
       return (el: Element | undefined) => {
-        if (this._routerBasePath && el instanceof component) {
-          el.routerPath = this._routerBasePath;
+        if (el instanceof component) {
+          el.routerPath = '';
         }
       };
     };
 
     this._routes = [
       {
-        path: "blogml/import",
+        path: 'blogml/import',
         component: BlogMlImporterElement,
         setup: createSetup(BlogMlImporterElement),
       },
       {
-        path: "blogml/export",
+        path: 'blogml/export',
         component: BlogMlExporterElement,
         setup: createSetup(BlogMlExporterElement),
       },
       {
-        path: "theme/options",
+        path: 'theme/options',
         component: ThemeOptionsElement,
         setup: createSetup(ThemeOptionsElement),
       },
       {
-        path: "",
+        path: '',
         component: DashboardOptionsElement,
         setup: createSetup(DashboardOptionsElement),
       },
       {
-        path: "**",
-        component: async () => (await import("@umbraco-cms/backoffice/router")).UmbRouteNotFoundElement,
+        path: '**',
+        component: async () => (await import('@umbraco-cms/backoffice/router')).UmbRouteNotFoundElement,
       },
     ];
   }
 
-  private async _getBuildInfo(): Promise<void> {
-    try {
-      const res = await fetch('/build-info.json');
-      if (!res.ok) throw new Error('Failed to fetch build info');
-      const data = await res.json();
-      this._buildInfo = {
-        version: data.version ?? 'Development',
-        date: data.date ?? '',
-        commit: data.commit ?? '',
-      };
-      console.info('Build Info:', this._buildInfo);
-    } catch (err) {
-      console.warn('Could not load build-info.json', err);
-      this._buildInfo = { version: 'Development', date: '', commit: '' };
-    }
-  }
   override render() {
     return html`
       <umb-body-layout>
@@ -105,21 +74,15 @@ export default class ArticulateDashboardElement extends UmbLitElement {
           </div>
         </div>
         <div class="dashboard-container">
-          <umb-router-slot
-            .routes=${this._routes}
-            @init=${(event: UmbRouterSlotInitEvent) => {
-              this._routerBasePath = event.target.absoluteRouterPath;
-            }}
-          ></umb-router-slot>
+          <umb-router-slot .routes=${this._routes}></umb-router-slot>
         </div>
-        <footer slot="footer">
-          <p slot="footer-info" class="articulate-footer-info">
-            ${when(
-              this._buildInfo?.version,
-              () => html`Articulate | Version: ${this._buildInfo!.version}`
-            )}
-          </p>
-        </footer>
+        <umb-footer>
+          <div slot="footer-info">
+            <uui-badge look="secondary" color="default">
+              <span id="version">Version: ${import.meta.env.APP_VERSION}</span>
+            </uui-badge>
+          </div>
+        </umb-footer>
       </umb-body-layout>
     `;
   }
@@ -193,6 +156,6 @@ export default class ArticulateDashboardElement extends UmbLitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    "articulate-dashboard": ArticulateDashboardElement;
+    'articulate-dashboard': ArticulateDashboardElement;
   }
 }

@@ -1,26 +1,26 @@
-import { css, customElement, html, property } from "@umbraco-cms/backoffice/external/lit";
-import { UmbLitElement } from "@umbraco-cms/backoffice/lit-element";
-import { UmbTextStyles } from "@umbraco-cms/backoffice/style";
+import { css, customElement, html, property } from '@umbraco-cms/backoffice/external/lit';
+import { UmbLitElement } from '@umbraco-cms/backoffice/lit-element';
+import { UmbTextStyles } from '@umbraco-cms/backoffice/style';
 import { BoxStyles, HostStyles } from '../utils/template-utils.js';
 
 const dashboards = [
   {
-    path: "blogml/import",
-    name: "BlogML Import",
-    icon: "icon-download-alt",
-    description: "Import content from any BlogML compatible platform",
+    path: 'blogml/import',
+    name: 'BlogML Import',
+    icon: 'icon-download-alt',
+    description: 'Import content from any BlogML compatible platform',
   },
   {
-    path: "blogml/export",
-    name: "BlogML Export",
-    icon: "icon-out",
-    description: "Export content to any BlogML compatible platform",
+    path: 'blogml/export',
+    name: 'BlogML Export',
+    icon: 'icon-out',
+    description: 'Export content to any BlogML compatible platform',
   },
   {
-    path: "theme/options",
-    name: "Theme Options",
-    icon: "icon-color-bucket",
-    description: "Create or customise Articulate themes",
+    path: 'theme/options',
+    name: 'Theme Options',
+    icon: 'icon-color-bucket',
+    description: 'Create or customise Articulate themes',
   },
 ];
 
@@ -31,10 +31,10 @@ const dashboards = [
  * @element dashboard-options
  * @extends UmbLitElement
  */
-@customElement("dashboard-options")
+@customElement('dashboard-options')
 export default class DashboardOptionsElement extends UmbLitElement {
   @property({ type: String })
-  routerPath = "";
+  routerPath = '';
 
   /**
    * Renders the dashboard options grid with navigation cards.
@@ -51,7 +51,7 @@ export default class DashboardOptionsElement extends UmbLitElement {
         </div>
         <div class="tools-grid">
           ${dashboards.map((d) => {
-            const basePath = this.routerPath?.replace(/\/$/, "");
+            const basePath = this.routerPath?.replace(/\/$/, '');
             const fullHref = `${basePath}/${d.path}`;
             return html`
               <uui-card-block-type class="tool-card" name="${d.name}" description="${d.description}" href=${fullHref}>
@@ -75,12 +75,12 @@ export default class DashboardOptionsElement extends UmbLitElement {
         gap: var(--uui-size-space-4);
       }
 
-      [slot="header-actions"] {
+      [slot='header-actions'] {
         display: flex;
         gap: var(--uui-size-space-2);
       }
 
-      [slot="header-actions"] > uui-button {
+      [slot='header-actions'] > uui-button {
         font-size: var(--uui-size-6, 18px);
       }
 
@@ -113,6 +113,6 @@ export default class DashboardOptionsElement extends UmbLitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    "dashboard-options": DashboardOptionsElement;
+    'dashboard-options': DashboardOptionsElement;
   }
 }

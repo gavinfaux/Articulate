@@ -1,9 +1,9 @@
-import { css, customElement, html, property, query, state } from "@umbraco-cms/backoffice/external/lit";
-import type { UUIButtonState } from "@umbraco-cms/backoffice/external/uui";
-import { UmbLitElement } from "@umbraco-cms/backoffice/lit-element";
-import { UmbTextStyles } from "@umbraco-cms/backoffice/style";
+import { css, customElement, html, property, query, state } from '@umbraco-cms/backoffice/external/lit';
+import type { UUIButtonState } from '@umbraco-cms/backoffice/external/uui';
+import { UmbLitElement } from '@umbraco-cms/backoffice/lit-element';
+import { UmbTextStyles } from '@umbraco-cms/backoffice/style';
 
-import { UmbValidationContext } from "@umbraco-cms/backoffice/validation";
+import { UmbValidationContext } from '@umbraco-cms/backoffice/validation';
 import { ThemeOptions } from '../api/sdk.gen.js';
 import { type IFormController, setFormError } from '../utils/form-utils.js';
 import { showUmbracoNotification } from '../utils/notification-utils.js';
@@ -23,7 +23,7 @@ import {
  * @extends UmbLitElement
  * @implements {IFormController}
  */
-@customElement("theme-options")
+@customElement('theme-options')
 export default class ThemeOptionsElement extends UmbLitElement implements IFormController {
   /**
    * Optional router path for the back button.
@@ -66,7 +66,7 @@ export default class ThemeOptionsElement extends UmbLitElement implements IFormC
    * @private
    * @type {HTMLFormElement}
    */
-  @query("form") private _form!: HTMLFormElement;
+  @query('form') private _form!: HTMLFormElement;
 
   #validation = new UmbValidationContext(this);
 
@@ -101,11 +101,11 @@ export default class ThemeOptionsElement extends UmbLitElement implements IFormC
     try {
       const result = await ThemeOptions.getArticulateThemeDefault();
       if (!result.response.ok || !result.data) {
-        throw result.error || new Error("The list of themes could not be retrieved from the server.");
+        throw result.error || new Error('The list of themes could not be retrieved from the server.');
       }
       this._themes = result.data?.map((theme) => theme) ?? [];
     } catch (error) {
-      setFormError(this, error, "Could not load themes");
+      setFormError(this, error, 'Could not load themes');
     }
   }
 
@@ -138,7 +138,7 @@ export default class ThemeOptionsElement extends UmbLitElement implements IFormC
    */
   #onCardSelected(event: Event) {
     const card = event.target as HTMLElement;
-    const theme = card.getAttribute("data-theme");
+    const theme = card.getAttribute('data-theme');
     if (theme) {
       this.#selectTheme(theme);
     }
@@ -151,7 +151,7 @@ export default class ThemeOptionsElement extends UmbLitElement implements IFormC
    */
   #onCardDeselected(event: Event) {
     const card = event.target as HTMLElement;
-    const theme = card.getAttribute("data-theme");
+    const theme = card.getAttribute('data-theme');
     if (theme && theme === this._selectedTheme) {
       this.resetState(true);
     }
@@ -181,21 +181,21 @@ export default class ThemeOptionsElement extends UmbLitElement implements IFormC
     try {
       await this.#validation.validate();
     } catch (error) {
-      setFormError(this, error, "Validation Failed");
+      setFormError(this, error, 'Validation Failed');
       return;
     }
 
     // validate() does not appear to work with other some uui elements, so backup validation, likely un-needed for a input box...
     if (!this._selectedTheme || !this._themeName) {
-      const validationError = new Error("Please select a theme to copy and provide the theme name.");
-      validationError.name = "Validation Error";
+      const validationError = new Error('Please select a theme to copy and provide the theme name.');
+      validationError.name = 'Validation Error';
       setFormError(this, validationError, validationError.name);
       return;
     }
 
-    if (this._formState === "waiting") return;
+    if (this._formState === 'waiting') return;
 
-    this._formState = "waiting";
+    this._formState = 'waiting';
     this._formError = null;
 
     try {
@@ -206,14 +206,14 @@ export default class ThemeOptionsElement extends UmbLitElement implements IFormC
         },
       });
       if (!result.response.ok) {
-        throw result.error || new Error("Failed to copy theme.");
+        throw result.error || new Error('Failed to copy theme.');
       }
 
-      this._formState = "success";
-      await showUmbracoNotification(this, "Theme copied successfully!", "positive");
+      this._formState = 'success';
+      await showUmbracoNotification(this, 'Theme copied successfully!', 'positive');
       this.resetState(true);
     } catch (error) {
-      setFormError(this, error, "Copy Failed");
+      setFormError(this, error, 'Copy Failed');
     }
   }
 
@@ -227,8 +227,8 @@ export default class ThemeOptionsElement extends UmbLitElement implements IFormC
     this.resetState(true);
   };
 
-  private get _submitButtonColor(): "positive" | "primary" {
-    return this._selectedTheme && this._themeName ? "positive" : "primary";
+  private get _submitButtonColor(): 'positive' | 'primary' {
+    return this._selectedTheme && this._themeName ? 'positive' : 'primary';
   }
 
   /**
@@ -244,7 +244,7 @@ export default class ThemeOptionsElement extends UmbLitElement implements IFormC
             <uui-card-media
               class="theme-card"
               .name=${theme}
-              ?selectable=${this._formState !== "waiting"}
+              ?selectable=${this._formState !== 'waiting'}
               ?selected=${this._selectedTheme === theme}
               selectOnly
               @selected=${this.#onCardSelected}
@@ -253,8 +253,7 @@ export default class ThemeOptionsElement extends UmbLitElement implements IFormC
               role="radio"
               aria-checked=${this._selectedTheme === theme}
               aria-label=${`Select theme ${theme}`}
-              tabindex="0"
-            >
+              tabindex="0">
               <img
                 class="theme-preview-img"
                 src="/App_Plugins/Articulate/BackOffice/assets/theme-${theme.toLowerCase()}.png"
@@ -262,25 +261,23 @@ export default class ThemeOptionsElement extends UmbLitElement implements IFormC
                 loading="lazy"
                 @error=${(e: Event) => {
                   const img = e.target as HTMLImageElement;
-                  img.style.display = "none";
+                  img.style.display = 'none';
 
                   const parent = img.parentElement;
                   if (!parent) return;
 
-                  if (!parent.querySelector(":scope > .theme-fallback-initial")) {
-                    const span = document.createElement("span");
-                    span.className = "theme-fallback-initial";
+                  if (!parent.querySelector(':scope > .theme-fallback-initial')) {
+                    const span = document.createElement('span');
+                    span.className = 'theme-fallback-initial';
                     span.textContent = theme.charAt(0).toUpperCase();
                     parent.appendChild(span);
                   }
-                }}
-              />
+                }} />
               <div slot="actions">
                 <uui-button
                   look="primary"
                   label="Select Theme ${theme}"
-                  @click=${(e: Event) => this.#handleSelectThemeButtonClick(e, theme)}
-                >
+                  @click=${(e: Event) => this.#handleSelectThemeButtonClick(e, theme)}>
                   Select
                 </uui-button>
               </div>
@@ -311,20 +308,18 @@ export default class ThemeOptionsElement extends UmbLitElement implements IFormC
             @input=${() => {
               this._formError = null;
               this._formState = undefined;
-            }}
-          >
+            }}>
             <uui-form-validation-message>
               <uui-form-layout-item>
                 <uui-label for="themeName" slot="label" required>Theme name</uui-label>
                 <uui-input
                   id="themeName"
                   name="themeName"
-                  .value=${this._themeName ?? ""}
+                  .value=${this._themeName ?? ''}
                   @input=${this.#onThemeNameChange}
                   required
                   required-message="You must provide a name for the theme."
-                  label="Theme name"
-                ></uui-input>
+                  label="Theme name"></uui-input>
               </uui-form-layout-item>
             </uui-form-validation-message>
             <div class="form-actions">
@@ -333,8 +328,7 @@ export default class ThemeOptionsElement extends UmbLitElement implements IFormC
                 type="submit"
                 look="primary"
                 .color=${this._submitButtonColor}
-                .state=${this._formState}
-              >
+                .state=${this._formState}>
                 Create Theme
               </uui-button>
               <uui-button id="cancelButton" type="reset" look="secondary" @click=${this.#handleReset}>
@@ -349,17 +343,17 @@ export default class ThemeOptionsElement extends UmbLitElement implements IFormC
 
   override render() {
     return html`
-      <uui-box headline="Theme Duplication">
+      <uui-box headline="Theme Options">
         ${renderHeaderActions(this.routerPath)}
         <div class="container">
           <p>
-            You can duplicate any of Articulate's built-in themes to customize them yourself. The duplicated theme will
+            You can duplicate any of Articulate's built-in themes to customise them yourself. The duplicated theme will
             be copied to the ~/Views/Articulate folder where you can edit it. Then you can select this theme from the
             themes drop down on your Articulate root node to use it.
           </p>
         </div>
         <div class="container">${this.#renderThemeGrid()} ${this.#renderDuplicateForm()}</div>
-        ${this._formError ? renderErrorMessage(this._formError) : ""}
+        ${this._formError ? renderErrorMessage(this._formError) : ''}
       </uui-box>
     `;
   }
@@ -438,6 +432,6 @@ export default class ThemeOptionsElement extends UmbLitElement implements IFormC
 
 declare global {
   interface HTMLElementTagNameMap {
-    "theme-options": ThemeOptionsElement;
+    'theme-options': ThemeOptionsElement;
   }
 }

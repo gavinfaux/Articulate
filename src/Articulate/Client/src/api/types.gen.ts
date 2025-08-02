@@ -4,13 +4,7 @@ export type CreatePostResponse = {
     url: string;
 };
 
-export enum EventMessageTypeModel {
-    DEFAULT = 'Default',
-    INFO = 'Info',
-    ERROR = 'Error',
-    SUCCESS = 'Success',
-    WARNING = 'Warning'
-}
+export type EventMessageTypeModel = 'Default' | 'Info' | 'Error' | 'Success' | 'Warning';
 
 /**
  * Represents the options for exporting blog data in BlogML format.
@@ -373,10 +367,6 @@ export type PostArticulateThemeCopyErrors = {
      * Conflict
      */
     409: ProblemDetails;
-    /**
-     * Unprocessable Content
-     */
-    422: ValidationProblemDetails;
     /**
      * Internal Server Error
      */

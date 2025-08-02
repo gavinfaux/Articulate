@@ -1,4 +1,4 @@
-import { type TemplateResult , css, html, nothing } from "@umbraco-cms/backoffice/external/lit";
+import { type TemplateResult, css, html, nothing } from '@umbraco-cms/backoffice/external/lit';
 
 /**
  * Renders a header action button that navigates back to the Articulate dashboard.
@@ -12,8 +12,7 @@ export function renderHeaderActions(routerPath?: string): TemplateResult {
         label="Back to Articulate dashboard options"
         look="outline"
         compact
-        href=${routerPath || "/umbraco/section/settings/dashboard/articulate"}
-      >
+        href=${routerPath || '/umbraco/section/settings/dashboard/articulate'}>
         ← Back
       </uui-button>
     </div>
@@ -29,7 +28,7 @@ export function renderErrorMessage(
   errors: { title: string; details: string[] } | null,
 ): TemplateResult | typeof nothing {
   if (!errors) {
-    console.info("At validation event: renderErrorMessage returning nothing as errors object is null");
+    console.info('At validation event: renderErrorMessage returning nothing as errors object is null');
     return nothing;
   }
 
@@ -41,11 +40,7 @@ export function renderErrorMessage(
       ${details.length > 0
         ? html`
             <ul class="articulate-error-list">
-              ${details.map(
-                (e) => html`
-                  <li>${e}</li>
-                `,
-              )}
+              ${details.map((e) => html` <li>${e}</li> `)}
             </ul>
           `
         : nothing}

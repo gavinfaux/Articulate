@@ -1,5 +1,5 @@
-import type { LitElement } from "@umbraco-cms/backoffice/external/lit";
-import type { UUIButtonState } from "@umbraco-cms/backoffice/external/uui";
+import type { LitElement } from '@umbraco-cms/backoffice/external/lit';
+import type { UUIButtonState } from '@umbraco-cms/backoffice/external/uui';
 
 import { formatApiError } from './error-utils.js';
 
@@ -27,7 +27,7 @@ export interface IFormController extends LitElement {
  * @param {string} defaultMessage A fallback message to display if the error cannot be parsed.
  */
 export function setFormError(host: IFormController, error: unknown, defaultMessage: string) {
-  host._formState = "failed";
+  host._formState = 'failed';
   host._formError = formatApiError(error, defaultMessage);
   // Call the component's own method to reset any other specific state properties.
   host.resetState();

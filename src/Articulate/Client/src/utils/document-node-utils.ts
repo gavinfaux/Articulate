@@ -1,12 +1,18 @@
-import type { UmbControllerHost } from "@umbraco-cms/backoffice/controller-api";
+import type { UmbControllerHost } from '@umbraco-cms/backoffice/controller-api';
 import {
   type UmbDocumentPickerModalData,
   type UmbDocumentPickerModalValue,
   UMB_DOCUMENT_PICKER_MODAL,
   type UmbDocumentItemModel,
-} from "@umbraco-cms/backoffice/document";
-import { type GetDocumentByIdData , type GetItemDocumentTypeSearchData , type DocumentVariantResponseModel , DocumentService, DocumentTypeService } from "@umbraco-cms/backoffice/external/backend-api";
-import type { UmbModalContext, UmbModalManagerContext } from "@umbraco-cms/backoffice/modal";
+} from '@umbraco-cms/backoffice/document';
+import {
+  type GetDocumentByIdData,
+  type GetItemDocumentTypeSearchData,
+  type DocumentVariantResponseModel,
+  DocumentService,
+  DocumentTypeService,
+} from '@umbraco-cms/backoffice/external/backend-api';
+import type { UmbModalContext, UmbModalManagerContext } from '@umbraco-cms/backoffice/modal';
 
 /**
  * Fetches a document variant by its UDI.
@@ -15,11 +21,11 @@ import type { UmbModalContext, UmbModalManagerContext } from "@umbraco-cms/backo
  */
 export async function DocumentById(udi: string): Promise<DocumentVariantResponseModel | null> {
   try {
-    const query:GetDocumentByIdData={ id: udi };
+    const query: GetDocumentByIdData = { id: udi };
     const response = await DocumentService.getDocumentById(query);
     return response?.variants?.[0] ?? null;
   } catch (error) {
-    console.error(error, "Failed to fetch node");
+    console.error(error, 'Failed to fetch node');
     return null;
   }
 }
@@ -30,8 +36,8 @@ export async function DocumentById(udi: string): Promise<DocumentVariantResponse
  */
 export async function ArticulateDocumentTypeKey(): Promise<string | undefined> {
   try {
-    const query:GetItemDocumentTypeSearchData = {
-      query: "Articulate",
+    const query: GetItemDocumentTypeSearchData = {
+      query: 'Articulate',
       skip: 0,
       take: 1,
       isElement: false,
@@ -39,7 +45,7 @@ export async function ArticulateDocumentTypeKey(): Promise<string | undefined> {
     const response = await DocumentTypeService.getItemDocumentTypeSearch(query);
     return response?.items?.[0]?.id ?? undefined;
   } catch (error) {
-    console.error(error, "Failed to fetch Articulate document type");
+    console.error(error, 'Failed to fetch Articulate document type');
     return undefined;
   }
 }
@@ -58,25 +64,24 @@ export async function openNodePicker(
 ): Promise<string | null> {
   try {
     // TODO: filter: no longer works? using pickableFilter as a workaround
-    const modalContext:UmbModalContext<UmbDocumentPickerModalData, UmbDocumentPickerModalValue> = modalManager.open<UmbDocumentPickerModalData, UmbDocumentPickerModalValue>(
-      host,
-      UMB_DOCUMENT_PICKER_MODAL,
-      {
-        data: {
-          multiple: false,
-          pickableFilter: (doc: UmbDocumentItemModel): boolean => {
-            return doc.documentType?.unique === doctypeUdi;
-          },
+    const modalContext: UmbModalContext<UmbDocumentPickerModalData, UmbDocumentPickerModalValue> = modalManager.open<
+      UmbDocumentPickerModalData,
+      UmbDocumentPickerModalValue
+    >(host, UMB_DOCUMENT_PICKER_MODAL, {
+      data: {
+        multiple: false,
+        pickableFilter: (doc: UmbDocumentItemModel): boolean => {
+          return doc.documentType?.unique === doctypeUdi;
         },
       },
-    );
+    });
     const result = await modalContext.onSubmit();
     if (!result || !result.selection || !result.selection[0]) {
       return null;
     }
     return result.selection[0];
   } catch (error) {
-    console.error(error, "Node picker failed");
+    console.error(error, 'Node picker failed');
     return null;
   }
 }

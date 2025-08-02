@@ -1,5 +1,5 @@
-import { UMB_AUTH_CONTEXT } from "@umbraco-cms/backoffice/auth";
-import type { UmbEntryPointOnInit, UmbEntryPointOnUnload } from "@umbraco-cms/backoffice/extension-api";
+import { UMB_AUTH_CONTEXT } from '@umbraco-cms/backoffice/auth';
+import type { UmbEntryPointOnInit, UmbEntryPointOnUnload } from '@umbraco-cms/backoffice/extension-api';
 import { client } from '../api/client.gen.js';
 
 // // Get the Umbraco XSRF token from cookie
@@ -13,7 +13,6 @@ import { client } from '../api/client.gen.js';
 // function getCsrfToken(): string | null {
 //   return getCookie("UMB-XSRF-V");
 // }
-
 
 /**
  * The entry point for the Articulate package extensions.
@@ -29,8 +28,8 @@ export const onInit: UmbEntryPointOnInit = (host, _extensionRegistry) => {
     if (openApiConfig) {
       client.setConfig({
         auth: openApiConfig?.token ?? undefined,
-        baseUrl: openApiConfig?.base ?? "",
-        credentials: openApiConfig?.credentials ?? "same-origin",
+        baseUrl: openApiConfig?.base ?? '',
+        credentials: openApiConfig?.credentials ?? 'same-origin',
       });
     }
 
