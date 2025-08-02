@@ -1,1 +1,1 @@
-export const outputPath = '../obj/Debug/net9.0/clientassets/BackOffice'
+export const outputPath = '../obj/Release/net9.0/clientassets/BackOffice'
