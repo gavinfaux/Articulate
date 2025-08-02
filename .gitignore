@@ -479,13 +479,19 @@ $RECYCLE.BIN/
 # Git
 .orig
 
-##
-## Articulatespecific
-##
-/src/Articulate.Tests.Website/umbraco/ 
-/src/.vscode
-/src/Articulate.Tests.Website/wwwroot/media
-/src/Articulate.Tests.Website/Views/ArticulateThemes
-/src/Articulate.Tests.Website/Articulate
-/src/Articulate/wwwroot/App_Plugins/Articulate/BackOffice
+# Windsurf IDE (no rules in use, but it's in the gitignore for reference)
 .windsurfrules
+
+##
+## Articulate specific
+##
+/src/.vscode
+
+/src/Articulate/wwwroot/App_Plugins/Articulate/BackOffice
+/src/Articulate/wwwroot/App_Plugins/Articulate/umbraco-package.json
+!/src/Articulate/wwwroot/App_Plugins/Articulate/BackOffice/readme.txt
+
+/src/Articulate.Tests.Website/Articulate
+/src/Articulate.Tests.Website/umbraco/
+/src/Articulate.Tests.Website/Views/ArticulateThemes
+/src/Articulate.Tests.Website/wwwroot/media
