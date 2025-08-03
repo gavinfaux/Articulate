@@ -1,12 +1,9 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
+<Project Sdk="Microsoft.NET.Sdk.Razor">
   <PropertyGroup>
     <TargetFrameworks>net9.0</TargetFrameworks>
     <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
     <CompressionEnabled>false</CompressionEnabled>
-    <!-- StaticWebAssetBasePath can be set to default (root folder '/') if packing with Visual Studio.-->
-    <StaticWebAssetBasePath>/App_Plugins/Articulate</StaticWebAssetBasePath>
-    <!-- EnableDefaultContentItems is not needed with Visual Studio Pack. -->
-    <EnableDefaultContentItems>false</EnableDefaultContentItems>
+    <StaticWebAssetBasePath>/</StaticWebAssetBasePath>
   </PropertyGroup>
 
   <!-- NuGet package metadata -->
@@ -26,7 +23,7 @@
     <PackageTags>blog umbraco umbraco-marketplace oss tags markdown richtext</PackageTags>
   </PropertyGroup>
 
-    <!--
+  <!--
     NoWarn for missing XML comments on public API
     (If you want to use XML comments for API Documentation with Swagger, but
     don't want build to warn about missing comments for other public members!)
@@ -35,7 +32,7 @@
     <NoWarn>$(NoWarn);1591</NoWarn>
   </PropertyGroup>
 
-    <!--
+  <!--
     Nuget - Dotnet SourceLink & Symbol Package
     https://github.com/dotnet/sourcelink#using-source-link-in-net-projects
     https://devblogs.microsoft.com/dotnet/producing-packages-with-source-link/
@@ -80,76 +77,58 @@
     <Using Include="Umbraco.Extensions" />
   </ItemGroup>
 
-    <!-- Start of default NPM client build example that just works with Visual Studio Pack -->
-    <!--
-      <ItemGroup>
-      <ClientAssetsInputs Include="Client\**" Exclude="$(DefaultItemExcludes)" />
-      <Content Remove="Client\**" />
-      <None Include="Client\public\umbraco-package.json" Pack="false" />
-    </ItemGroup>
-
-    <Target Name="RestoreClient" Inputs="Client\package.json;Client\package-lock.json" Outputs="Client\node_modules\.package-lock.json">
-      <Message Importance="high" Text="Restoring Client NPM packages..." />
-      <Exec Command="npm i" WorkingDirectory="Client" />
-    </Target>
-
-    <Target Name="BuildClient" BeforeTargets="AssignTargetPaths" DependsOnTargets="RestoreClient" Inputs="@(ClientAssetsInputs)" Outputs="$(IntermediateOutputPath)client.complete.txt">
-      <Message Importance="high" Text="Executing Client NPM build script..." />
-      <Exec Command="npm run build" WorkingDirectory="Client" />
-      <ItemGroup>
-        <_ClientAssetsBuildOutput Include="wwwroot\App_Plugins\**" />
-      </ItemGroup>
-      <WriteLinesToFile File="$(IntermediateOutputPath)client.complete.txt" Lines="@(_ClientAssetsBuildOutput)" Overwrite="true" />
-    </Target>
-    -->
-    <!-- End of default NPM client build example -->
-
-
-  <!-- Start of dotnet pack build workaround -->
-
-  <!-- So, with StaticWebAssets set to root folder '/', EnableDefaultContentItems set to true (or not defined) and vite outDir set to "../wwwroot/App_Plugins/Articulate/Backoffice Visual Studio Pack correctly packages *all* client assets (BackOffice, Themes, MarkdownEditor, etc.) and produces the required build/Articulate.props, build\Microsoft.AspNetCore.StaticWebAssets.props and build\Microsoft.AspNetCore.StaticWebAssetEndpoints.props files in the NuGet package allowing the target Umbraco website project to combine Articulate static assets with Umbraco static assets, and everything just works. However, dotnet pack is not packing *any* Articulate static assets or the Articulate.props file. So we have to take control and do it ourselves :-( -->
-  <!-- Copied from https://github.com/umbraco/Umbraco.AuthorizedServices/blob/main/src/Umbraco.AuthorizedServices/Umbraco.AuthorizedServices.csproj -->
-  <!-- Build client assets using NPM -->
-  <Import Project="build\Microsoft.AspNetCore.ClientAssets.targets" />
+  <!-- Start NPM client build -->
   <PropertyGroup>
-    <!-- Use this to (temporarily) disable building client assets, e.g. to start the project and generate updated API models -->
-    <ShouldRunClientAssetsBuild>true</ShouldRunClientAssetsBuild>
-    <!-- We should always run the build in Release though? -->
-    <ShouldRunClientAssetsBuild Condition="'$(Configuration)' == 'Release'">true</ShouldRunClientAssetsBuild>
+    <ClientAssetsDirectory Condition="'$(ClientAssetsDirectory)' == ''">Client\</ClientAssetsDirectory>
+    <ClientAssetsRestoreInputs Condition="'$(ClientAssetsRestoreInputs)' == ''">$(ClientAssetsDirectory)\package-lock.json;$(ClientAssetsDirectory)\package.json</ClientAssetsRestoreInputs>
+    <ClientAssetsRestoreOutputs Condition="'$(ClientAssetsRestoreOutputs)' == ''">$(ClientAssetsDirectory)node_modules\.package-lock.json</ClientAssetsRestoreOutputs>
+    <!-- Default commands for local/Debug development -->
+    <ClientAssetsRestoreCommand Condition="'$(ClientAssetsRestoreCommand)' == ''">npm install --no-fund</ClientAssetsRestoreCommand>
+    <ClientAssetsBuildCommand Condition="'$(ClientAssetsBuildCommand)' == ''">npm run build</ClientAssetsBuildCommand>
   </PropertyGroup>
-  <!-- StaticWebAssetBasePath is App_Plugins/Articulate so clientassets will resolve to this, we output the BackOffice to clientassets/BackOffice via writing to Client\config.outputPath.js which vite.config references to set outDir, our versioningPlugin will then move umbraco-package.json from BackOffice up one level to clientassets/ so umbraco-package.json is found by Umbraco at App_Plugins/Articulate/umbraco-package.json -->
-  <Target Name="ClientAssetsBuildOutputPath" BeforeTargets="ClientAssetsBuild">
-    <WriteLinesToFile File="Client\config.outputPath.js" Lines="export const outputPath = '../$(IntermediateOutputPath.Replace('\', '/'))clientassets/BackOffice';" Overwrite="true" />
-  </Target>
+  <!-- Override commands for Release builds -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <ClientAssetsRestoreCommand>npm ci --no-fund --no-audit --prefer-offline</ClientAssetsRestoreCommand>
+    <ClientAssetsBuildCommand>npm run build:release</ClientAssetsBuildCommand>
+  </PropertyGroup>
 
-  <!-- So BackOffice is sorted, but we now have to handle any other static assets in our package and ensure they are also in the clientassets folder to be included in the NuGet package. -->
   <PropertyGroup>
-    <ArticulateStaticAssetsSource>$(MSBuildProjectDirectory)/wwwroot/App_Plugins/Articulate</ArticulateStaticAssetsSource>
+    <ClientAssetsRestoreInputs>$(MSBuildProjectFile);$(ClientAssetsRestoreInputs)</ClientAssetsRestoreInputs>
   </PropertyGroup>
-  <Target Name="CopyStaticAssetsForPackage" AfterTargets="ClientAssetsBuild">
-    <!-- Define the items to include. This finds all files in the Articulate App_Plugin folder... -->
-    <ItemGroup>
-      <StaticPackageAssets Include="$(ArticulateStaticAssetsSource)/**" />
-      <!--
-      Define the items to exclude.
-      1. Exclude the BackOffice directory since Vite handles that.
-      2. Exclude any .cshtml files.
-      -->
-      <StaticPackageAssets Remove="$(ArticulateStaticAssetsSource)/Backoffice/**" />
-      <StaticPackageAssets Remove="$(ArticulateStaticAssetsSource)/**/*.cshtml" />
-    </ItemGroup>
-    <!-- Copy the filtered files to the client assets output path, maintaining the folder structure. -->
-    <Copy SourceFiles="@(StaticPackageAssets)" DestinationFolder="$(IntermediateOutputPath)clientassets/%(RecursiveDir)" SkipUnchangedFiles="true" />
-  </Target>
 
-  <!-- Since EnableDefaultContentItems is now false, we need to define the content items to include, currently only the cshtml files so they can be compiled -->
   <ItemGroup>
-    <Content Include="wwwroot\**\*.cshml" />
+    <ClientAssetsInputs Include="$(ClientAssetsDirectory)**" Exclude="$(DefaultItemExcludes)" />
+    <!-- Don't pack client -->
+    <Content Remove="$(ClientAssetsDirectory)**" />
+    <None Include="$(ClientAssetsDirectory)\public\umbraco-package.json" Pack="false" />
   </ItemGroup>
 
-  <!-- End of dotnet pack build workaround -->
+  <Target Name="ClientAssetsRestore" BeforeTargets="$(ClientAssetsRestoreBeforeTargets)" Inputs="$(ClientAssetsRestoreInputs)" Outputs="$(ClientAssetsRestoreOutputs)">
+    <Message Text="Restoring NPM packages" Importance="high" />
+    <Exec Command="$(ClientAssetsRestoreCommand)" WorkingDirectory="$(ClientAssetsDirectory)"/>
+  </Target>
 
-  <!-- We need to embed the themes folder also for the back office Copy Theme feature (RCL compiles views and packs static assets so no 'folder' to copy from) -->
+  <Target Name="ClientAssetsBuild" DependsOnTargets="ClientAssetsRestore" BeforeTargets="AssignTargetPaths" Inputs="@(ClientAssetsInputs)" Outputs="$(IntermediateOutputPath)client.complete.txt">
+    <PropertyGroup>
+
+      <!-- Set the default behavior for ContinueOnError -->
+      <_ClientBuildContinueOnError>WarnAndContinue</_ClientBuildContinueOnError>
+      <!-- Override for Release builds to ensure they fail on error -->
+      <_ClientBuildContinueOnError Condition="'$(Configuration)' == 'Release'">false</_ClientBuildContinueOnError>
+    </PropertyGroup>
+
+    <Message Text="Executing NPM build script" Importance="High" />
+    <Exec Command="$(ClientAssetsBuildCommand)" WorkingDirectory="$(ClientAssetsDirectory)" ContinueOnError="$(_ClientBuildContinueOnError)" />
+    <ItemGroup>
+      <_ClientAssetsBuildOutput Include="wwwroot\App_Plugins\Articulate\BackOffice\**" />
+    </ItemGroup>
+    <WriteLinesToFile File="$(IntermediateOutputPath)client.complete.txt" Lines="@(_ClientAssetsBuildOutput)" Overwrite="true"/>
+  </Target>
+
+  <!-- End NPM client build -->
+
+
+  <!-- We need to embed the themes folder for the back office Copy Theme feature (RCL compiles views and packs static assets so no 'folder' to copy from) -->
   <ItemGroup>
     <EmbeddedResource Include="wwwroot\App_Plugins\Articulate\Themes\**">
       <LogicalName>Articulate.Themes/$([System.String]::Copy('%(RecursiveDir)').Replace('\', '/'))%(Filename)%(Extension)</LogicalName>

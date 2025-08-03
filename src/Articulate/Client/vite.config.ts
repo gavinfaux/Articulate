@@ -3,8 +3,8 @@ import fs from "fs";
 import path from "path";
 import { defineConfig, Plugin } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
-import { outputPath } from "./config.outputPath.js";
 
+const outputPath = "../wwwroot/App_Plugins/Articulate/Backoffice"
 const versioningPlugin = (command: string, mode: string): Plugin => {
   let version = "0.0.0-dev";
   const umbracoPackageJson = "umbraco-package.json";
@@ -33,8 +33,7 @@ const versioningPlugin = (command: string, mode: string): Plugin => {
         return;
       }
       console.log(`Updating ${umbracoPackageJson} version to ${version}`);
-      const outDir = outputPath;
-      const packageJsonPath = path.join(outDir, umbracoPackageJson);
+      const packageJsonPath = path.join(outputPath, umbracoPackageJson);
 
       if (!fs.existsSync(packageJsonPath)) {
         console.error(`Could not find ${packageJsonPath}`);
@@ -45,7 +44,7 @@ const versioningPlugin = (command: string, mode: string): Plugin => {
       packageJson.version = version;
       fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
 
-      const newPath = path.resolve(outDir, "..", umbracoPackageJson);
+      const newPath = path.resolve(outputPath, "..", umbracoPackageJson);
       fs.renameSync(packageJsonPath, newPath);
       console.log(`Moved ${packageJsonPath} to ${newPath}`);
     },
@@ -61,7 +60,7 @@ export default defineConfig(({ command, mode }) => {
         formats: ["es"],
         fileName: "articulate",
       },
-      outDir: outputPath, //  "../wwwroot/App_Plugins/Articulate/Backoffice"
+      outDir: outputPath, 
       emptyOutDir: true,
       sourcemap: true,
       rollupOptions: {
