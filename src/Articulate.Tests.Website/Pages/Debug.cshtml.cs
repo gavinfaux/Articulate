@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace Articulate.Tests.Website.Pages
 {
-    public class DebugModel : PageModel
+    public class Debug : PageModel
     {
         public void OnGet()
         {

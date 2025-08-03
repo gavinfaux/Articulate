@@ -1,6 +1,6 @@
 import { css, customElement, html, state } from '@umbraco-cms/backoffice/external/lit';
 import { UmbLitElement } from '@umbraco-cms/backoffice/lit-element';
-import type { UmbRoute } from '@umbraco-cms/backoffice/router';
+import type { UmbRoute, UmbRouterSlotInitEvent } from '@umbraco-cms/backoffice/router';
 import { UmbTextStyles } from '@umbraco-cms/backoffice/style';
 
 import BlogMlExporterElement from '../components/blogml-exporter.element.js';
@@ -19,6 +19,12 @@ import { HostStyles } from '../utils/template-utils.js';
 @customElement('articulate-dashboard')
 export default class ArticulateDashboardElement extends UmbLitElement {
   /**
+   * The base path for the router.
+   * @private
+   * @type {string | undefined}
+   */
+  @state() private _routerBasePath?: string;
+  /**
    * The routes for the dashboard router.
    * @private
    * @type {UmbRoute[]}
@@ -30,8 +36,8 @@ export default class ArticulateDashboardElement extends UmbLitElement {
 
     const createSetup = <T extends UmbLitElement & { routerPath?: string }>(component: new () => T) => {
       return (el: Element | undefined) => {
-        if (el instanceof component) {
-          el.routerPath = '';
+        if (this._routerBasePath && el instanceof component) {
+          el.routerPath = this._routerBasePath;
         }
       };
     };
@@ -74,15 +80,15 @@ export default class ArticulateDashboardElement extends UmbLitElement {
           </div>
         </div>
         <div class="dashboard-container">
-          <umb-router-slot .routes=${this._routes}></umb-router-slot>
+          <umb-router-slot
+            .routes=${this._routes}
+            @init=${(event: UmbRouterSlotInitEvent) => {
+              this._routerBasePath = event.target.absoluteRouterPath;
+            }}></umb-router-slot>
         </div>
-        <umb-footer>
-          <div slot="footer-info">
-            <uui-badge look="secondary" color="default">
-              <span id="version">Version: ${import.meta.env.APP_VERSION}</span>
-            </uui-badge>
-          </div>
-        </umb-footer>
+        <footer slot="footer">
+          <p slot="footer-info" class="articulate-footer-info">Articulate | Version: ${import.meta.env.APP_VERSION}</p>
+        </footer>
       </umb-body-layout>
     `;
   }

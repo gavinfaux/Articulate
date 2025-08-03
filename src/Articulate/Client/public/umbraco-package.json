@@ -1,5 +1,5 @@
 {
-  "$schema": "../umbraco-package-schema.json",
+  "$schema": "../../../Articulate.Tests.Website/umbraco-package-schema.json",
   "id": "Articulate",
   "name": "Articulate",
   "version": "0.0.0-placeholder",
