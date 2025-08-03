@@ -4,7 +4,7 @@ import path from "path";
 import { defineConfig, Plugin } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 
-const outputPath = "../wwwroot/App_Plugins/Articulate/Backoffice"
+const outputPath = "../wwwroot/App_Plugins/Articulate/BackOffice"
 const versioningPlugin = (command: string, mode: string): Plugin => {
   let version = "0.0.0-dev";
   const umbracoPackageJson = "umbraco-package.json";
@@ -60,16 +60,11 @@ export default defineConfig(({ command, mode }) => {
         formats: ["es"],
         fileName: "articulate",
       },
-      outDir: outputPath, 
+      outDir: outputPath,
       emptyOutDir: true,
       sourcemap: true,
       rollupOptions: {
         external: [/^@umbraco/],
-        output: {
-          entryFileNames: `[name].js`,
-          chunkFileNames: `[name].js`,
-          assetFileNames: `[name].[ext]`,
-        },
       },
     },
     plugins: [tsconfigPaths(), versioningPlugin(command, mode)],
