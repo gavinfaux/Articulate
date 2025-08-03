@@ -36,13 +36,13 @@ export async function DocumentById(udi: string): Promise<DocumentVariantResponse
  */
 export async function ArticulateDocumentTypeKey(): Promise<string | undefined> {
   try {
-    const query: GetItemDocumentTypeSearchData = {
-      query: 'Articulate',
+    const q: GetItemDocumentTypeSearchData = {
+      query: "Articulate",
       skip: 0,
       take: 1,
       isElement: false,
     };
-    const response = await DocumentTypeService.getItemDocumentTypeSearch(query);
+    const response = await DocumentTypeService.getItemDocumentTypeSearch(q);
     return response?.items?.[0]?.id ?? undefined;
   } catch (error) {
     console.error(error, 'Failed to fetch Articulate document type');
