@@ -21,6 +21,7 @@
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageTags>blog umbraco umbraco-marketplace oss tags markdown richtext</PackageTags>
+    <PackageOutputPath>..\..\build\Release</PackageOutputPath>
   </PropertyGroup>
 
   <!--
@@ -78,6 +79,12 @@
   </ItemGroup>
 
   <!-- Start NPM client build -->
+  <Target Name="SetIsPackingFlag" BeforeTargets="Pack">
+    <PropertyGroup>
+      <IsPacking>true</IsPacking>
+    </PropertyGroup>
+  </Target>
+
   <PropertyGroup>
     <ClientAssetsDirectory Condition="'$(ClientAssetsDirectory)' == ''">Client\</ClientAssetsDirectory>
     <ClientAssetsRestoreInputs Condition="'$(ClientAssetsRestoreInputs)' == ''">$(ClientAssetsDirectory)\package-lock.json;$(ClientAssetsDirectory)\package.json</ClientAssetsRestoreInputs>
@@ -87,8 +94,8 @@
     <ClientAssetsBuildCommand Condition="'$(ClientAssetsBuildCommand)' == ''">npm run build</ClientAssetsBuildCommand>
   </PropertyGroup>
   <!-- Override commands for Release builds -->
-  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
-    <ClientAssetsRestoreCommand>npm ci --no-fund --no-audit --prefer-offline</ClientAssetsRestoreCommand>
+  <PropertyGroup Condition="'$(IsPacking)' == 'true'">
+    <ClientAssetsRestoreCommand>npm ci --no-fund --no-audit --prefer-offline"</ClientAssetsRestoreCommand>
     <ClientAssetsBuildCommand>npm run build:release</ClientAssetsBuildCommand>
   </PropertyGroup>
 
