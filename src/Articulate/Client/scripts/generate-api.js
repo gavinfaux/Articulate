@@ -70,14 +70,6 @@ fetch(swaggerUrl)
       `Calling ${chalk.yellow("hey-api")} to generate TypeScript client`
     );
 
-    /* 
-    * If you specify using the @hey-api/client-fetch in the plugins section,
-    * at runtime in production the @hey-api/client-fetch that ships with Umbraco
-    * will be called, not the 'default' bundled fetch client, currently 
-    * this causes GET requests to not be resolved as the query parameters
-    * are not included in the request URL, installing package version of 
-    * @hey-api/client-fetch likely resolves this?
-    */
     const config = {
       logs: {
         level: "debug",
@@ -91,6 +83,14 @@ fetch(swaggerUrl)
       },
       plugins: [
         ...defaultPlugins,
+        {
+          name: "@hey-api/client-fetch",
+          bundle: true,
+        },
+        {
+          name: '@hey-api/typescript',
+          enums: 'typescript'
+        },
         {
           name: "@hey-api/sdk",
           asClass: true,
