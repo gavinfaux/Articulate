@@ -21,8 +21,8 @@ import type { UmbModalContext, UmbModalManagerContext } from '@umbraco-cms/backo
  */
 export async function DocumentById(udi: string): Promise<DocumentVariantResponseModel | null> {
   try {
-    const query: GetDocumentByIdData = { id: udi };
-    const response = await DocumentService.getDocumentById(query);
+    const data: GetDocumentByIdData = { id: udi };
+    const response = await DocumentService.getDocumentById(data);
     return response?.variants?.[0] ?? null;
   } catch (error) {
     console.error(error, 'Failed to fetch node');
@@ -36,13 +36,13 @@ export async function DocumentById(udi: string): Promise<DocumentVariantResponse
  */
 export async function ArticulateDocumentTypeKey(): Promise<string | undefined> {
   try {
-    const q: GetItemDocumentTypeSearchData = {
+    const data: GetItemDocumentTypeSearchData = {
       query: "Articulate",
       skip: 0,
       take: 1,
       isElement: false,
     };
-    const response = await DocumentTypeService.getItemDocumentTypeSearch(q);
+    const response = await DocumentTypeService.getItemDocumentTypeSearch(data);
     return response?.items?.[0]?.id ?? undefined;
   } catch (error) {
     console.error(error, 'Failed to fetch Articulate document type');
@@ -70,7 +70,7 @@ export async function openNodePicker(
     >(host, UMB_DOCUMENT_PICKER_MODAL, {
       data: {
         multiple: false,
-        pickableFilter: (doc: UmbDocumentItemModel): boolean => {
+        filter: (doc: UmbDocumentItemModel): boolean => {
           return doc.documentType?.unique === doctypeUdi;
         },
       },

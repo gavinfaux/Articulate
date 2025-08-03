@@ -10,11 +10,10 @@
       "DOM.Iterable"
     ],
     "skipLibCheck": true,
-    // "esModuleInterop": true,
+    "esModuleInterop": true,
     /* Bundler mode */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
-    // "resolveJsonModule": true,
     "isolatedModules": true,
     "moduleDetection": "force",
     "noEmit": true,

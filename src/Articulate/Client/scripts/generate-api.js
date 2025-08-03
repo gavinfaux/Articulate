@@ -83,10 +83,7 @@ fetch(swaggerUrl)
       },
       plugins: [
         ...defaultPlugins,
-        {
-          name: "@hey-api/client-fetch",
-          bundle: true,
-        },
+        '@hey-api/client-fetch',
         {
           name: '@hey-api/typescript',
           enums: 'typescript'
