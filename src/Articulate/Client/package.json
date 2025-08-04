@@ -1,7 +1,7 @@
 {
   "name": "articulate-backoffice",
   "private": true,
-  "version": "0.0.0-placeholder",
+  "version": "6.0.0-g9715e04ef9",
   "type": "module",
   "description": "Articulate BackOffice extension",
   "engines": {
@@ -39,8 +39,8 @@
     "@eslint/compat": "^1.3.1",
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.32.0",
-    "@hey-api/openapi-ts": "^0.64.10",
     "@hey-api/client-fetch": "^0.8.3",
+    "@hey-api/openapi-ts": "^0.64.10",
     "@typescript-eslint/eslint-plugin": "^8.38.0",
     "@typescript-eslint/parser": "^8.38.0",
     "@umbraco-cms/backoffice": "^15.4.4",

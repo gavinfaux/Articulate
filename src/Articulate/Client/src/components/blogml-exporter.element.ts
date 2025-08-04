@@ -5,7 +5,7 @@ import { type UmbModalManagerContext, UMB_MODAL_MANAGER_CONTEXT } from '@umbraco
 import { UmbTextStyles } from '@umbraco-cms/backoffice/style';
 import { UmbValidationContext } from '@umbraco-cms/backoffice/validation';
 import type { ExportModel } from '../api/types.gen.js';
-import { BlogMl } from '../api/sdk.gen.js';
+import { BlogMlService } from '../api/sdk.gen.js';
 import { ArticulateDocumentTypeKey, DocumentById, openNodePicker } from '../utils/document-node-utils.js';
 import { type IFormController, setFormError } from '../utils/form-utils.js';
 import { showUmbracoNotification } from '../utils/notification-utils.js';
@@ -226,7 +226,7 @@ export default class BlogMlExporterElement extends UmbLitElement implements IFor
       articulateBlogNode: this._articulateBlogNode!,
       exportImagesAsBase64: embedImages,
     };
-    const result = await BlogMl.postArticulateBlogmlExport({ body: payload });
+    const result = await BlogMlService.postArticulateBlogmlExport({ body: payload });
     if (!result.response.ok || !result.data) {
       throw result.error || new Error('The server returned an invalid response during export.');
     }

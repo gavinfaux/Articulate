@@ -37,7 +37,7 @@ export async function DocumentById(udi: string): Promise<DocumentVariantResponse
 export async function ArticulateDocumentTypeKey(): Promise<string | undefined> {
   try {
     const data: GetItemDocumentTypeSearchData = {
-      query: "Articulate",
+      query: 'Articulate',
       skip: 0,
       take: 1,
       isElement: false,

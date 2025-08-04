@@ -5,8 +5,8 @@ import { type UmbModalManagerContext, UMB_MODAL_MANAGER_CONTEXT } from '@umbraco
 import { UmbTextStyles } from '@umbraco-cms/backoffice/style';
 import { UmbValidationContext } from '@umbraco-cms/backoffice/validation';
 import { keyed } from 'lit-html/directives/keyed.js';
-import { BlogMl } from '../api/sdk.gen.js';
-import type { ImportModel, ImportResponse, PostArticulateBlogmlImportFileResponse } from '../api/types.gen.js';
+import { BlogMlService } from '../api/sdk.gen.js';
+import type { ImportFileResponse, ImportModel, ImportResponse } from '../api/types.gen.js';
 import { ArticulateDocumentTypeKey, DocumentById, openNodePicker } from '../utils/document-node-utils.js';
 import { type IFormController, setFormError } from '../utils/form-utils.js';
 import { showUmbracoNotification } from '../utils/notification-utils.js';
@@ -183,6 +183,38 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
   };
 
   /**
+   * Type guard to check if the data is a valid ImportFileResponse.
+   * @param {unknown} data The data to check.
+   * @returns {boolean} True if the data is an ImportFileResponse.
+   */
+  #isImportFileResponse = (data: unknown): data is ImportFileResponse => {
+    return (
+      typeof data === 'object' &&
+      data !== null &&
+      'temporaryFileName' in data &&
+      typeof (data as ImportFileResponse).temporaryFileName === 'string' &&
+      'postCount' in data &&
+      typeof (data as ImportFileResponse).postCount === 'number'
+    );
+  };
+
+  /**
+   * Type guard to check if the data is a valid ImportResponse.
+   * @param {unknown} data The data to check.
+   * @returns {boolean} True if the data is an ImportResponse.
+   */
+  #isImportResponse = (data: unknown): data is ImportResponse => {
+    return (
+      typeof data === 'object' &&
+      data !== null &&
+      'postCount' in data &&
+      'authorCount' in data &&
+      'commentCount' in data &&
+      'completed' in data
+    );
+  };
+
+  /**
    * Handles the form submission by orchestrating the multi-step import process.
    * @param {SubmitEvent} e The submit event.
    * @private
@@ -270,11 +302,18 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
    * @private
    * @async
    */
-  #beginImport = async (importFile: File): Promise<PostArticulateBlogmlImportFileResponse> => {
-    const result = await BlogMl.postArticulateBlogmlImportFile({ body: { importFile } });
-    if (!result.response.ok || !result.data?.temporaryFileName || !result.data?.postCount) {
-      throw result.error || new Error('Failed to upload blog content.');
+  #beginImport = async (importFile: File): Promise<ImportFileResponse> => {
+    const result = await BlogMlService.postArticulateBlogmlImportFile({ body: { importFile } });
+
+    if (!result.response.ok || !this.#isImportFileResponse(result.data)) {
+      throw result.error || new Error('The server returned an invalid response when uploading the file.');
     }
+
+    // Now that the type is confirmed, we can safely validate the content.
+    if (!result.data.temporaryFileName || result.data.postCount <= 0) {
+      throw new Error('The blog import file appears to be empty or invalid.');
+    }
+
     return result.data;
   };
 
@@ -297,10 +336,17 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
       exportDisqusXml: formData.get('exportDisqusXml') === 'on',
       importFirstImage: formData.get('importFirstImage') === 'on',
     };
-    const result = await BlogMl.postArticulateBlogmlImport({ body: payload });
-    if (!result.response.ok || !result.data?.completed) {
-      throw result.error || new Error('Failed to import blog content.');
+    const result = await BlogMlService.postArticulateBlogmlImport({ body: payload });
+
+    if (!result.response.ok || !this.#isImportResponse(result.data)) {
+      throw result.error || new Error('The server returned an invalid response when finalizing the import.');
     }
+
+    // Now that the type is confirmed, we can safely validate the content.
+    if (!result.data.completed) {
+      throw new Error('The server indicated that the import failed to complete.');
+    }
+
     return result.data;
   };
 
@@ -310,7 +356,7 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
    * @async
    */
   #exportDisqusComments = async () => {
-    const result = await BlogMl.getArticulateBlogmlExportDisqus();
+    const result = await BlogMlService.getArticulateBlogmlExportDisqus();
     if (!result.response.ok || !result.data) {
       throw result.error || new Error('Failed to export Disqus comments.');
     }

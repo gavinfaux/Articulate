@@ -4,7 +4,13 @@ export type CreatePostResponse = {
     url: string;
 };
 
-export type EventMessageTypeModel = 'Default' | 'Info' | 'Error' | 'Success' | 'Warning';
+export enum EventMessageTypeModel {
+    DEFAULT = 'Default',
+    INFO = 'Info',
+    ERROR = 'Error',
+    SUCCESS = 'Success',
+    WARNING = 'Warning'
+}
 
 /**
  * Represents the options for exporting blog data in BlogML format.
