@@ -1,3 +1,5 @@
+# NOTE: Script does not respect global.json in src directory, global.json in build folder does (as would moving to solution root?)
+
 $PSScriptFilePath = Get-Item $MyInvocation.MyCommand.Path
 $RepoRoot = $PSScriptFilePath.Directory.Parent.FullName
 $BuildFolder = Join-Path -Path $RepoRoot -ChildPath "build"
@@ -37,16 +39,21 @@ if (-not $?) {
 }
 
 # Build solution
-Write-Host "Building Articulate..."
-& dotnet build $SolutionPath --configuration Release --no-restore
-#& dotnet build $CodeCSProj --configuration Release --no-restore
+#Write-Host "Executing dotnet build with PackageOutputPath: $($ReleaseFolder)"
+# triggers InnerBuild but nupkg contains content/contentFiles instead of staticwebassets and build props
+& dotnet build $SolutionPath --configuration Release --no-restore --bl:fail.binlog
+# same as pack, nupkg is missing staticwebassets and build props
+#& dotnet build $CodeCSProj --configuration Release --no-restore --bl:fail.binlog
+
 if (-not $?) {
     throw "The dotnet build process returned an error code."
 }
 
 # dotnet pack
-Write-Host "Packing Articulate..."
-& dotnet pack $CodeCSProj --output $ReleaseFolder --configuration Release
+#Write-Host "Packing Articulate..."
+# nupkg is missing staticwebassets and build props
+& dotnet pack $SolutionPath --output $ReleaseFolder --configuration Release --bl:fail.binlog
+
 if (-not $?) {
     throw "The dotnet pack process returned an error code."
 }
