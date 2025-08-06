@@ -69,13 +69,16 @@
 
     <!-- Dont include the client folder as part of packaging nuget build -->
     <Content Remove="Client\**" />
+    <Content Remove="wwwroot\Views\MarkdownEditor\assets\css\md-editor.css" />
+    <Content Remove="wwwroot\Views\MarkdownEditor\assets\js\apiService.js" />
+    <Content Remove="wwwroot\Views\MarkdownEditor\assets\js\authService.js" />
+    <Content Remove="wwwroot\Views\MarkdownEditor\assets\js\config.js" />
+    <Content Remove="wwwroot\Views\MarkdownEditor\assets\js\error-formatter.js" />
+    <Content Remove="wwwroot\Views\MarkdownEditor\assets\js\md-editor.js" />
+    <Content Remove="wwwroot\Views\MarkdownEditor\assets\js\uiService.js" />
 
     <!-- However make the Umbraco-package.json included for dotnet pack or nuget package and visible to the solution -->
     <None Include="Client\public\umbraco-package.json" Pack="false" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="wwwroot\" />
   </ItemGroup>
 
   <!-- Restore and build Client files -->
@@ -102,6 +105,13 @@
       <Pack>true</Pack>
       <PackagePath>\</PackagePath>
     </None>
+    <None Include="wwwroot\Views\MarkdownEditor\assets\css\md-editor.css" />
+    <None Include="wwwroot\Views\MarkdownEditor\assets\js\apiService.js" />
+    <None Include="wwwroot\Views\MarkdownEditor\assets\js\authService.js" />
+    <None Include="wwwroot\Views\MarkdownEditor\assets\js\config.js" />
+    <None Include="wwwroot\Views\MarkdownEditor\assets\js\error-formatter.js" />
+    <None Include="wwwroot\Views\MarkdownEditor\assets\js\md-editor.js" />
+    <None Include="wwwroot\Views\MarkdownEditor\assets\js\uiService.js" />
   </ItemGroup>
 
 </Project>

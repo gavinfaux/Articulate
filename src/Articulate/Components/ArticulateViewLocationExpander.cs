@@ -83,15 +83,15 @@ namespace Articulate.Components
             var themeLocations = new[]
             {
                 // User themes take priority over system themes, allows overriding system themes.
-                $"/Views/ArticulateThemes/{themeName}/{{0}}.cshtml",
-                $"/Views/ArticulateThemes/{themeName}/Partials/{{0}}.cshtml",
+                $"wwwroot/Views/ArticulateThemes/{themeName}/{{0}}.cshtml",
+                $"wwwroot/Views/ArticulateThemes/{themeName}/Partials/{{0}}.cshtml",
 
                 // System themes
-                $"/Views/Articulate/Themes/{themeName}/{{0}}.cshtml",
-                $"/Views/Articulate/Themes/{themeName}/Partials/{{0}}.cshtml",
+                $"wwwroot/Views/Articulate/Themes/{themeName}/{{0}}.cshtml",
+                $"wwwroot/Views/Articulate/Themes/{themeName}/Partials/{{0}}.cshtml",
 
                 // Markdown Editor (does not have a theme, but routed via Articulate root node, so themeName found)
-                "Views/Articulate/MarkdownEditor/{0}.cshtml"
+                "wwwroot/Views/Articulate/MarkdownEditor/{0}.cshtml"
 
             };
 
