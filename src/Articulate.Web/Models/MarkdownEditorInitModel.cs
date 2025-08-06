@@ -1,5 +1,5 @@
 #nullable enable
-namespace Articulate.Models
+namespace Articulate.Web.Models
 {
     public class MarkdownEditorInitModel
     {

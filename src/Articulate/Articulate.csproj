@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Razor">
+﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
   <PropertyGroup>
     <TargetFrameworks>net9.0</TargetFrameworks>
     <CompressionEnabled>false</CompressionEnabled>
@@ -63,15 +63,15 @@
     <Using Include="Articulate.Extensions" />
   </ItemGroup>
 
-  <!--<ItemGroup>
+  <ItemGroup>
     <Folder Include="wwwroot\" />
-  </ItemGroup>-->
+  </ItemGroup>
 
-  <!--<ItemGroup>
+  <ItemGroup>
     <EmbeddedResource Include="wwwroot\Views\Articulate\Themes\**">
       <LogicalName>Articulate.Themes/$([System.String]::Copy('%(RecursiveDir)').Replace('\', '/'))%(Filename)%(Extension)</LogicalName>
     </EmbeddedResource>
-  </ItemGroup>-->
+  </ItemGroup>
 
   <ItemGroup>
     <Compile Update="Controllers\Resources.Designer.cs">
@@ -113,41 +113,8 @@
   </ItemGroup>
 
 
-  <!--<ItemGroup>
-     --><!--Define the static assets to be included from the Views folder.
-     This will recursively include all files except for .cshtml files.--><!--
-    <ClientAssetsInputs Include="wwwroot\Views\**\*" Exclude="**\*.cshtml;$(DefaultItemExcludes)" />
-  </ItemGroup>
-
-  <ItemGroup>
-    --><!--<Content Include="wwwroot\**\*.cshtml" Exclude="$(DefaultItemExcludes);" />--><!--
-    <Content Remove="wwwroot\**\assets\**" />
-  </ItemGroup>
-
-  --><!-- This target will now list the static assets instead of building a client project. --><!--
-  <Target Name="ClientAssetsBuild" BeforeTargets="AssignTargetPaths" Inputs="@(ClientAssetsInputs)" Outputs="$(IntermediateOutputPath)client.complete.txt">
-    <Message Importance="high" Text="Finding static assets in Views folder..." />
-    <ItemGroup>
-      <_ClientAssetsBuildOutput Include="@(ClientAssetsInputs)" />
-    </ItemGroup>
-
-    --><!-- This will write the full path of each found asset to the output file. --><!--
-    <WriteLinesToFile File="$(IntermediateOutputPath)client.complete.txt" Lines="@(ClientAssetsInputs)" Overwrite="true" />
-
-    <Message Importance="high" Text="Static asset list generated at $(IntermediateOutputPath)client.complete.txt" />
-  </Target>
-
-  <Target Name="DefineClientAssets" AfterTargets="ClientAssetsBuild" DependsOnTargets="ResolveStaticWebAssetsConfiguration">
-    <ItemGroup>
-      <FileWrites Include="@(_ClientAssetsBuildOutput)" />
-      <FileWrites Include="$(IntermediateOutputPath)client.complete.txt" />
-    </ItemGroup>
-
-    <DefineStaticWebAssets CandidateAssets="@(_ClientAssetsBuildOutput)" SourceId="$(PackageId)" SourceType="Computed" ContentRoot="wwwroot\" BasePath="$(StaticWebAssetBasePath)">
-      <Output TaskParameter="Assets" ItemName="StaticWebAsset" />
-    </DefineStaticWebAssets>
-  </Target>-->
-
+    <!--https://github.com/dotnet/aspnetcore/issues/59475-->
+    <!--A proper fix likely Articulate.Web assembly or similar-->
     <Target Name="PreResolveProjectStaticWebAssets" BeforeTargets="ResolveProjectStaticWebAssets">
         <Message Text="[PreResolveProjectStaticWebAssets] Content: @(Content)" Importance="high" />
         <ItemGroup>
@@ -162,10 +129,4 @@
     </Target>
 
 
-  <Target Name="DiagnoseStaticAssets" BeforeTargets="GenerateNuspec">
-    <Message Importance="high" Text="--- Diagnosing Static Web Assets for packing ---" />
-    <Message Importance="high" Text="The following items were found in the '@(StaticWebAsset)' group:" />
-    <Message Importance="high" Text="@(StaticWebAsset->'  - %(Identity) -> Mapped to: %(RelativePath)')" />
-    <Message Importance="high" Text="--------------------------------------------------" />
-  </Target>
 </Project>

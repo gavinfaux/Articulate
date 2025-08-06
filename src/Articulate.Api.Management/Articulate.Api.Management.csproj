@@ -74,15 +74,23 @@
     <Folder Include="wwwroot\" />
   </ItemGroup>
 
+  <!-- TODO: add back proper conditionals for CI/Release-->
+  <PropertyGroup>
+    <IsCiBuild Condition="'$(IsCiBuild)' == ''">false</IsCiBuild>
+    <IsCiBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</IsCiBuild>
+  </PropertyGroup>
+
   <!-- Restore and build Client files -->
   <Target Name="RestoreClient" Inputs="Client\package.json;Client\package-lock.json" Outputs="Client\node_modules\.package-lock.json">
     <Message Importance="high" Text="Restoring Client NPM packages..." />
-    <Exec Command="npm i" WorkingDirectory="Client" />
+    <Exec Command="npm install --no-fund" WorkingDirectory="Client" Condition="'$(IsCiBuild)' == 'false'"/>
+    <Exec Command="npm ci --no-fund --no-audit --prefer-offline" WorkingDirectory="Client" Condition="'$(IsCiBuild)' == 'true'"/>
   </Target>
 
   <Target Name="BuildClient" BeforeTargets="AssignTargetPaths" DependsOnTargets="RestoreClient" Inputs="@(ClientAssetsInputs)" Outputs="$(IntermediateOutputPath)client.complete.txt">
     <Message Importance="high" Text="Executing Client NPM build script..." />
-    <Exec Command="npm run build" WorkingDirectory="Client" />
+    <Exec Command="npm run build" WorkingDirectory="Client" Condition="'$(IsCiBuild)' == 'false' "/>
+    <Exec Command="npm run build:release" WorkingDirectory="Client" Condition=" '$(IsCiBuild)' == 'true' Or '$(Configuration)' == 'Release'"/>
     <ItemGroup>
       <_ClientAssetsBuildOutput Include="wwwroot\App_Plugins\**" />
     </ItemGroup>

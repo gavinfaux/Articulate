@@ -23,7 +23,7 @@ namespace Articulate.Routing
         private static readonly string _sWlwControllerName = ControllerExtensions.GetControllerName<WlwManifestController>();
         private static readonly string _sTagsControllerName = ControllerExtensions.GetControllerName<ArticulateTagsController>();
         private static readonly string _sRssControllerName = ControllerExtensions.GetControllerName<ArticulateRssController>();
-        private static readonly string _sMarkdownEditorControllerName = ControllerExtensions.GetControllerName<MarkdownEditorController>();
+        private static readonly string _sMarkdownEditorControllerName = "MarkdownEditor";
         private static readonly string _sMetaWeblogControllerName = ControllerExtensions.GetControllerName<MetaWeblogController>();
 
         private readonly Dictionary<ArticulateRouteTemplate, ArticulateRootNodeCache> _routeCache = new();
@@ -253,7 +253,7 @@ namespace Articulate.Routing
             RouteTemplate template = TemplateParser.Parse($"{rootNodePath}a-new");
             MapRoute(
                 _sMarkdownEditorControllerName,
-                nameof(MarkdownEditorController.NewPost),
+                "NewPost",
                 template,
                 httpContext,
                 articulateRootNode,

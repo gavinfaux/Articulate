@@ -2,7 +2,6 @@
 using System.Text;
 using Examine;
 using Examine.Search;
-using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.Web;
 

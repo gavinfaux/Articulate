@@ -18,8 +18,10 @@
 		<GenerateCompatibilitySuppressionFile>true</GenerateCompatibilitySuppressionFile>
 	</PropertyGroup>
 	<ItemGroup>
-		<PackageReference Include="Nerdbank.GitVersioning" Condition="!Exists('packages.config')" Version="3.7.115" PrivateAssets="all" IsImplicitlyDefined="true" />
-		<PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.556" PrivateAssets="all" IsImplicitlyDefined="true" />
+		<PackageReference Include="Nerdbank.GitVersioning" Condition="!Exists('packages.config')" Version="3.7.115"/>
+		<PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.556"/>
+		<GlobalPackageReference Include="Umbraco.Code" Version="2.3.0" />
+		<GlobalPackageReference Include="Umbraco.GitVersioning.Extensions" Version="0.2.0" />
 	</ItemGroup>
 	<PropertyGroup>
 		<GitVersionBaseDirectory>$(MSBuildThisFileDirectory)</GitVersionBaseDirectory>
@@ -41,6 +43,22 @@
 		<PackageOutputPath>$(MSBuildThisFileDirectory)../../build/Release/</PackageOutputPath>
 		<GeneratePackageOnBuild>False</GeneratePackageOnBuild>
 		<IncludeSymbols>true</IncludeSymbols>
+		<WarnOnPackingNonPackableProject>false</WarnOnPackingNonPackableProject>
+		<NeutralLanguage>en-US</NeutralLanguage>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<PublishRepositoryUrl>true</PublishRepositoryUrl>
+		<IncludeSymbols>true</IncludeSymbols>
 		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
 	</PropertyGroup>
+
+	<Target Name="_GetProjectReferenceVersionRanges" AfterTargets="_GetProjectReferenceVersions">
+		<ItemGroup>
+			<_ProjectReferencesWithVersions Condition="'%(ProjectVersion)' != ''">
+				<ProjectVersion>[%(ProjectVersion), $([MSBuild]::Add($([System.Text.RegularExpressions.Regex]::Match('%(ProjectVersion)', '^\d+').Value), 1)))</ProjectVersion>
+			</_ProjectReferencesWithVersions>
+		</ItemGroup>
+	</Target>
+
 </Project>

@@ -138,7 +138,6 @@ namespace Articulate.Api.Management.Controllers
             {
                 return Problem(title: "Unauthorized", detail: "Could not determine the current user.", statusCode: StatusCodes.Status401Unauthorized);
             }
-
             try
             {
                 ImportResponseDto dto = await blogMlImporter.Import(
@@ -152,8 +151,7 @@ namespace Articulate.Api.Management.Controllers
                     model.ExportDisqusXml,
                     model.ImportFirstImage);
 
-                var result = new ImportResponse(dto);
-
+                ImportResponse result = new ImportResponse(dto);
 
                 return Ok(result);
             }

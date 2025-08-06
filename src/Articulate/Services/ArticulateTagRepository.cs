@@ -1,7 +1,6 @@
 //TODO: #nullable enable
 using Articulate.Models;
 using NPoco;
-using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.Cache;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Models.PublishedContent;

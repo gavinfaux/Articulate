@@ -32,6 +32,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Articulate.Web\Articulate.Web.csproj">
+      <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
+      <CopyStaticWebAssetsToPublish>true</CopyStaticWebAssetsToPublish>
+    </ProjectReference>
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Remove="umbraco\**" />
     <Content Remove="umbraco\**" />
     <EmbeddedResource Remove="umbraco\**" />
