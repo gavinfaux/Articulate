@@ -1367,7 +1367,7 @@ let q = class extends W {
     }}></umb-router-slot>
         </div>
         <footer slot="footer">
-          <p slot="footer-info" class="articulate-footer-info">Articulate | Version: ${void 0}</p>
+          <p slot="footer-info" class="articulate-footer-info">Articulate | Version: ${"0.0.0-local"}</p>
         </footer>
       </umb-body-layout>
     `;
@@ -1445,4 +1445,4 @@ q = Be([
 export {
   q as default
 };
-//# sourceMappingURL=dashboard.element-BoBA12hy.js.map
+//# sourceMappingURL=dashboard.element-CyU5XSyy.js.map

@@ -3,7 +3,7 @@ const e = [
     type: "dashboard",
     alias: "Articulate.BackOffice.Dashboard",
     name: "Articulate BackOffice Dashboard",
-    js: async () => await import("./dashboard.element-BoBA12hy.js"),
+    js: async () => await import("./dashboard.element-CyU5XSyy.js"),
     weight: 10,
     meta: {
       label: "Articulate Dashboard",

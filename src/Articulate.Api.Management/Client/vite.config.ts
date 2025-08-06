@@ -10,7 +10,7 @@ const outputPath = "../wwwroot/App_Plugins/Articulate/BackOffice";
 
 const getVersion = (command: string, mode: string): string | undefined => {
   if (command !== "build" || mode !== "production") {
-    return;
+    return "0.0.0-local";
   }
   try {
     const gitRoot = execSync("git rev-parse --show-toplevel", { encoding: "utf8" }).trim();
