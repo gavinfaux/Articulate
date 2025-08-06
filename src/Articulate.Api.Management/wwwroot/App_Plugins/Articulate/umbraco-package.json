@@ -2,7 +2,7 @@
   "$schema": "../../../Articulate.Tests.Website/umbraco-package-schema.json",
   "id": "Articulate",
   "name": "Articulate",
-  "version": "6.0.0-gb325dcbd90",
+  "version": "6.0.0-g7d1e78c87c",
   "allowTelemetry": true,
   "extensions": [
     {
