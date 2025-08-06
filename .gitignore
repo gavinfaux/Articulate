@@ -486,12 +486,4 @@ $RECYCLE.BIN/
 ## Articulate specific
 ##
 /src/.vscode
-
-/src/Articulate/wwwroot/App_Plugins/Articulate/BackOffice
-/src/Articulate/wwwroot/App_Plugins/Articulate/umbraco-package.json
-!/src/Articulate/wwwroot/App_Plugins/Articulate/BackOffice/readme.txt
-
-/src/Articulate.Tests.Website/Articulate
-/src/Articulate.Tests.Website/umbraco/
-/src/Articulate.Tests.Website/Views/ArticulateThemes
-/src/Articulate.Tests.Website/wwwroot/media
+!/src/Articulate.Api.Management/Client/src/packages
