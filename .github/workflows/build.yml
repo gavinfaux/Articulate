@@ -56,9 +56,9 @@ jobs:
 
     - uses: actions/setup-node@v4
       with:
-        node-version-file: 'src/Articulate/Client/.nvmrc'
+        node-version-file: 'src/Articulate.Api.Management/Client/.nvmrc'
         cache: 'npm'
-        cache-dependency-path: 'src/Articulate/Client/package-lock.json'
+        cache-dependency-path: 'src/Articulate.Api.Management/Client/package-lock.json'
 
     - name: Nuget Restore
       run: nuget restore $env:Solution_File
@@ -70,7 +70,7 @@ jobs:
       run: msbuild $env:Solution_File /p:Configuration=${{ env.Configuration }}
 
     - name: Dotnet Pack
-      run: dotnet pack ${{ env.Code_CSProj_File }} --output ${{ env.Release_Folder }} --configuration ${{ env.Configuration }}
+      run: dotnet pack ${{ $env:Solution_File }} --output ${{ env.Release_Folder }} --configuration ${{ env.Configuration }}
 
     - uses: actions/upload-artifact@v4
       with:
