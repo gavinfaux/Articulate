@@ -70,7 +70,7 @@ jobs:
       run: msbuild $env:Solution_File /p:Configuration=${{ env.Configuration }}
 
     - name: Dotnet Pack
-      run: dotnet pack ${{ $env:Solution_File }} --output ${{ env.Release_Folder }} --configuration ${{ env.Configuration }}
+      run: dotnet pack $env:Solution_File --output ${{ env.Release_Folder }} --configuration ${{ env.Configuration }}
 
     - uses: actions/upload-artifact@v4
       with:
