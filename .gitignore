@@ -488,5 +488,13 @@ $RECYCLE.BIN/
 # Uncomment if necessary however generally it will be regenerated when needed
 #!**/[Pp]ackages/repositories.config
 # except build monaco editor package used for now by Articulate's Markdown property editor
-!src/Articulate.Api.Management/Client/src/packages
+!src/Articulate.Api.Management/Client/src/packages/
+!src/Articulate.Api.Management/Client/src/packages/**
 
+# extension build, built by npm/msbuild 
+/src/Articulate.Api.Management/wwwroot/App_Plugins/Articulate
+
+# test website junk
+/src/Articulate.Tests.Website/Articulate/Temp
+/src/Articulate.Tests.Website/umbraco
+/src/Articulate.Tests.Website/wwwroot/media
