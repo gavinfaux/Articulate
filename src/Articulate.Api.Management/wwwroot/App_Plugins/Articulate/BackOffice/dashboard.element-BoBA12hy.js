@@ -19,23 +19,23 @@ async function He(t) {
 async function qe(t) {
   try {
     const i = t.getOpenApiConfiguration()?.token;
-    if (!i)
-      throw new Error("Could not get authorization token.");
-    const r = `/umbraco/management/api/v1/item/document-type/search?${new URLSearchParams({
+    if (typeof i != "function")
+      throw new Error("Could not get authorization token function.");
+    const o = await i(), s = `/umbraco/management/api/v1/item/document-type/search?${new URLSearchParams({
       query: "Articulate",
       skip: "0",
       take: "1",
       isElement: "false"
-    }).toString()}`, s = await fetch(r, {
+    }).toString()}`, a = await fetch(s, {
       method: "GET",
       headers: {
         Accept: "application/json",
-        Authorization: `Bearer ${i}`
+        Authorization: `Bearer ${o}`
       }
     });
-    if (!s.ok)
-      throw new Error(`API request failed with status ${s.status}`);
-    return (await s.json()).items?.[0]?.id ?? void 0;
+    if (!a.ok)
+      throw new Error(`API request failed with status ${a.status}`);
+    return (await a.json()).items?.[0]?.id ?? void 0;
   } catch (e) {
     console.error("Failed to fetch Articulate document type with custom fetch", e);
     return;
@@ -203,9 +203,9 @@ let b = class extends W {
       const s = o.response.headers.get("content-disposition");
       let a = "blog-export.xml";
       if (s) {
-        const c = s.match(/filename\*="UTF-8''([^"]+)"/);
-        if (c && c.length > 1 && c[1])
-          a = c[1];
+        const u = s.match(/filename\*="UTF-8''([^"]+)"/);
+        if (u && u.length > 1 && u[1])
+          a = u[1];
         else {
           const n = s.match(/filename="?([^"]+)"?/);
           n && n.length > 1 && n[1] && (a = n[1]);
@@ -360,7 +360,7 @@ b = D([
  */
 const Ae = globalThis, G = Ae.trustedTypes, Me = G ? G.createPolicy("lit-html", { createHTML: (t) => t }) : void 0, Ve = "$lit$", N = `lit$${Math.random().toFixed(9).slice(2)}$`, Xe = "?" + N, pt = `<${Xe}>`, M = document, K = () => M.createComment(""), F = (t) => t === null || typeof t != "object" && typeof t != "function", Ce = Array.isArray, ft = (t) => Ce(t) || typeof t?.[Symbol.iterator] == "function", te = `[ 	
 \f\r]`, U = /<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g, De = /-->/g, Pe = />/g, B = RegExp(`>|${te}(?:([^\\s"'>=/]+)(${te}*=${te}*(?:[^ 	
-\f\r"'\`<>=]|("|')|))|$)`, "g"), Ie = /'/g, Oe = /"/g, Ye = /^(?:script|style|textarea|title)$/i, R = Symbol.for("lit-noChange"), u = Symbol.for("lit-nothing"), ze = /* @__PURE__ */ new WeakMap(), S = M.createTreeWalker(M, 129);
+\f\r"'\`<>=]|("|')|))|$)`, "g"), Ie = /'/g, Oe = /"/g, Ye = /^(?:script|style|textarea|title)$/i, R = Symbol.for("lit-noChange"), c = Symbol.for("lit-nothing"), ze = /* @__PURE__ */ new WeakMap(), S = M.createTreeWalker(M, 129);
 function Ge(t, e) {
   if (!Ce(t) || !t.hasOwnProperty("raw")) throw Error("invalid template strings array");
   return Me !== void 0 ? Me.createHTML(e) : e;
@@ -368,12 +368,12 @@ function Ge(t, e) {
 const gt = (t, e) => {
   const i = t.length - 1, o = [];
   let r, s = e === 2 ? "<svg>" : e === 3 ? "<math>" : "", a = U;
-  for (let c = 0; c < i; c++) {
-    const n = t[c];
+  for (let u = 0; u < i; u++) {
+    const n = t[u];
     let h, m, l = -1, y = 0;
     for (; y < n.length && (a.lastIndex = y, m = a.exec(n), m !== null); ) y = a.lastIndex, a === U ? m[1] === "!--" ? a = De : m[1] !== void 0 ? a = Pe : m[2] !== void 0 ? (Ye.test(m[2]) && (r = RegExp("</" + m[2], "g")), a = B) : m[3] !== void 0 && (a = B) : a === B ? m[0] === ">" ? (a = r ?? U, l = -1) : m[1] === void 0 ? l = -2 : (l = a.lastIndex - m[2].length, h = m[1], a = m[3] === void 0 ? B : m[3] === '"' ? Oe : Ie) : a === Oe || a === Ie ? a = B : a === De || a === Pe ? a = U : (a = B, r = void 0);
-    const C = a === B && t[c + 1].startsWith("/>") ? " " : "";
-    s += a === U ? n + pt : l >= 0 ? (o.push(h), n.slice(0, l) + Ve + n.slice(l) + N + C) : n + N + (l === -2 ? c : C);
+    const C = a === B && t[u + 1].startsWith("/>") ? " " : "";
+    s += a === U ? n + pt : l >= 0 ? (o.push(h), n.slice(0, l) + Ve + n.slice(l) + N + C) : n + N + (l === -2 ? u : C);
   }
   return [Ge(t, s + (t[i] || "<?>") + (e === 2 ? "</svg>" : e === 3 ? "</math>" : "")), o];
 };
@@ -382,12 +382,12 @@ class H {
     let r;
     this.parts = [];
     let s = 0, a = 0;
-    const c = e.length - 1, n = this.parts, [h, m] = gt(e, i);
+    const u = e.length - 1, n = this.parts, [h, m] = gt(e, i);
     if (this.el = H.createElement(h, o), S.currentNode = this.el.content, i === 2 || i === 3) {
       const l = this.el.content.firstChild;
       l.replaceWith(...l.childNodes);
     }
-    for (; (r = S.nextNode()) !== null && n.length < c; ) {
+    for (; (r = S.nextNode()) !== null && n.length < u; ) {
       if (r.nodeType === 1) {
         if (r.hasAttributes()) for (const l of r.getAttributeNames()) if (l.endsWith(Ve)) {
           const y = m[a++], C = r.getAttribute(l).split(N), V = /([.?@])?(.*)/.exec(y);
@@ -433,11 +433,11 @@ class _t {
   u(e) {
     const { el: { content: i }, parts: o } = this._$AD, r = (e?.creationScope ?? M).importNode(i, !0);
     S.currentNode = r;
-    let s = S.nextNode(), a = 0, c = 0, n = o[0];
+    let s = S.nextNode(), a = 0, u = 0, n = o[0];
     for (; n !== void 0; ) {
       if (a === n.index) {
         let h;
-        n.type === 2 ? h = new Q(s, s.nextSibling, this, e) : n.type === 1 ? h = new n.ctor(s, n.name, n.strings, this, e) : n.type === 6 && (h = new $t(s, this, e)), this._$AV.push(h), n = o[++c];
+        n.type === 2 ? h = new Q(s, s.nextSibling, this, e) : n.type === 1 ? h = new n.ctor(s, n.name, n.strings, this, e) : n.type === 6 && (h = new $t(s, this, e)), this._$AV.push(h), n = o[++u];
       }
       a !== n?.index && (s = S.nextNode(), a++);
     }
@@ -453,7 +453,7 @@ class Q {
     return this._$AM?._$AU ?? this._$Cv;
   }
   constructor(e, i, o, r) {
-    this.type = 2, this._$AH = u, this._$AN = void 0, this._$AA = e, this._$AB = i, this._$AM = o, this.options = r, this._$Cv = r?.isConnected ?? !0;
+    this.type = 2, this._$AH = c, this._$AN = void 0, this._$AA = e, this._$AB = i, this._$AM = o, this.options = r, this._$Cv = r?.isConnected ?? !0;
   }
   get parentNode() {
     let e = this._$AA.parentNode;
@@ -467,7 +467,7 @@ class Q {
     return this._$AB;
   }
   _$AI(e, i = this) {
-    e = P(this, e, i), F(e) ? e === u || e == null || e === "" ? (this._$AH !== u && this._$AR(), this._$AH = u) : e !== this._$AH && e !== R && this._(e) : e._$litType$ !== void 0 ? this.$(e) : e.nodeType !== void 0 ? this.T(e) : ft(e) ? this.k(e) : this._(e);
+    e = P(this, e, i), F(e) ? e === c || e == null || e === "" ? (this._$AH !== c && this._$AR(), this._$AH = c) : e !== this._$AH && e !== R && this._(e) : e._$litType$ !== void 0 ? this.$(e) : e.nodeType !== void 0 ? this.T(e) : ft(e) ? this.k(e) : this._(e);
   }
   O(e) {
     return this._$AA.parentNode.insertBefore(e, this._$AB);
@@ -476,7 +476,7 @@ class Q {
     this._$AH !== e && (this._$AR(), this._$AH = this.O(e));
   }
   _(e) {
-    this._$AH !== u && F(this._$AH) ? this._$AA.nextSibling.data = e : this.T(M.createTextNode(e)), this._$AH = e;
+    this._$AH !== c && F(this._$AH) ? this._$AA.nextSibling.data = e : this.T(M.createTextNode(e)), this._$AH = e;
   }
   $(e) {
     const { values: i, _$litType$: o } = e, r = typeof o == "number" ? this._$AC(e) : (o.el === void 0 && (o.el = H.createElement(Ge(o.h, o.h[0]), this.options)), o);
@@ -515,21 +515,21 @@ class ee {
     return this._$AM._$AU;
   }
   constructor(e, i, o, r, s) {
-    this.type = 1, this._$AH = u, this._$AN = void 0, this.element = e, this.name = i, this._$AM = r, this.options = s, o.length > 2 || o[0] !== "" || o[1] !== "" ? (this._$AH = Array(o.length - 1).fill(new String()), this.strings = o) : this._$AH = u;
+    this.type = 1, this._$AH = c, this._$AN = void 0, this.element = e, this.name = i, this._$AM = r, this.options = s, o.length > 2 || o[0] !== "" || o[1] !== "" ? (this._$AH = Array(o.length - 1).fill(new String()), this.strings = o) : this._$AH = c;
   }
   _$AI(e, i = this, o, r) {
     const s = this.strings;
     let a = !1;
     if (s === void 0) e = P(this, e, i, 0), a = !F(e) || e !== this._$AH && e !== R, a && (this._$AH = e);
     else {
-      const c = e;
+      const u = e;
       let n, h;
-      for (e = s[0], n = 0; n < s.length - 1; n++) h = P(this, c[o + n], i, n), h === R && (h = this._$AH[n]), a ||= !F(h) || h !== this._$AH[n], h === u ? e = u : e !== u && (e += (h ?? "") + s[n + 1]), this._$AH[n] = h;
+      for (e = s[0], n = 0; n < s.length - 1; n++) h = P(this, u[o + n], i, n), h === R && (h = this._$AH[n]), a ||= !F(h) || h !== this._$AH[n], h === c ? e = c : e !== c && (e += (h ?? "") + s[n + 1]), this._$AH[n] = h;
     }
     a && !r && this.j(e);
   }
   j(e) {
-    e === u ? this.element.removeAttribute(this.name) : this.element.setAttribute(this.name, e ?? "");
+    e === c ? this.element.removeAttribute(this.name) : this.element.setAttribute(this.name, e ?? "");
   }
 }
 class vt extends ee {
@@ -537,7 +537,7 @@ class vt extends ee {
     super(...arguments), this.type = 3;
   }
   j(e) {
-    this.element[this.name] = e === u ? void 0 : e;
+    this.element[this.name] = e === c ? void 0 : e;
   }
 }
 class bt extends ee {
@@ -545,7 +545,7 @@ class bt extends ee {
     super(...arguments), this.type = 4;
   }
   j(e) {
-    this.element.toggleAttribute(this.name, !!e && e !== u);
+    this.element.toggleAttribute(this.name, !!e && e !== c);
   }
 }
 class yt extends ee {
@@ -553,8 +553,8 @@ class yt extends ee {
     super(e, i, o, r, s), this.type = 5;
   }
   _$AI(e, i = this) {
-    if ((e = P(this, e, i, 0) ?? u) === R) return;
-    const o = this._$AH, r = e === u && o !== u || e.capture !== o.capture || e.once !== o.once || e.passive !== o.passive, s = e !== u && (o === u || r);
+    if ((e = P(this, e, i, 0) ?? c) === R) return;
+    const o = this._$AH, r = e === c && o !== c || e.capture !== o.capture || e.once !== o.once || e.passive !== o.passive, s = e !== c && (o === c || r);
     r && this.element.removeEventListener(this.name, this, o), s && this.element.addEventListener(this.name, this, e), this._$AH = e;
   }
   handleEvent(e) {
@@ -609,7 +609,7 @@ const Ct = {}, Nt = (t, e = Ct) => t._$AH = e;
  */
 const Et = xt(class extends At {
   constructor() {
-    super(...arguments), this.key = u;
+    super(...arguments), this.key = c;
   }
   render(t, e) {
     return this.key = t, e;
@@ -660,10 +660,10 @@ let g = class extends W {
           this._postCount = s.postCount, this.requestUpdate("_postCount");
           const a = await $(this, pe).call(this, e, s.temporaryFileName);
           e.get("exportDisqusXml") === "on" && a.commentCount > 0 && await $(this, fe).call(this), this._formState = "success";
-          const c = e.get("exportDisqusXml") === "on" && a.commentCount > 0 ? `${a.commentCount} comments exported.` : e.get("exportDisqusXml") === "on" ? "No comments found to export." : "";
+          const u = e.get("exportDisqusXml") === "on" && a.commentCount > 0 ? `${a.commentCount} comments exported.` : e.get("exportDisqusXml") === "on" ? "No comments found to export." : "";
           await be(
             this,
-            `BlogML imported successfully! ${a.authorCount} authors, ${this._postCount} posts imported. ${c}`,
+            `BlogML imported successfully! ${a.authorCount} authors, ${this._postCount} posts imported. ${u}`,
             "positive",
             !0
           ), this.resetState(!0);
@@ -1445,4 +1445,4 @@ q = Be([
 export {
   q as default
 };
-//# sourceMappingURL=dashboard.element-B1EbCsXV.js.map
+//# sourceMappingURL=dashboard.element-BoBA12hy.js.map

@@ -46,12 +46,12 @@ export async function ArticulateDocumentTypeKey(authContext: UmbAuthContext): Pr
   try {
     // 1. Get the authentication context and bearer token from Umbraco
     const auth = authContext.getOpenApiConfiguration();
-    const token = auth?.token;
+    const getToken = auth?.token;
 
-    if (!token) {
-      throw new Error('Could not get authorization token.');
+    if (typeof getToken !== 'function') {
+      throw new Error('Could not get authorization token function.');
     }
-
+    const token = await getToken();
     // 2. Construct the URL with query parameters using URLSearchParams for safety
     const params = new URLSearchParams({
       query: 'Articulate',
