@@ -60,7 +60,7 @@ namespace Articulate
                 }
             }
 
-            indexName = indexName.IsNullOrWhiteSpace() ? Constants.UmbracoIndexes.ExternalIndexName : indexName;
+            indexName = indexName.IsNullOrWhiteSpace() ? Umbraco.Cms.Core.Constants.UmbracoIndexes.ExternalIndexName : indexName;
 
             if (!_examineManager.TryGetIndex(indexName, out IIndex? index) || index is null)
             {

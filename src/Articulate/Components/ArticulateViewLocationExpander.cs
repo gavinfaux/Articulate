@@ -11,7 +11,7 @@ namespace Articulate.Components
      * GOAL: Move from a "copy-based" theme system to a more flexible and maintainable "inheritance-based" system.
      *
      * 1. CREATE A BASE/FALLBACK THEME:
-     *  - Establish a complete, working "base" theme in a dedicated folder (e.g., /App_Plugins/Articulate/Themes/Shared/).
+     *  - Establish a complete, working "base" theme in a dedicated folder (e.g., ~/Views/Articulate/Themes/Shared/).
      *  - This base theme should provide all structural views and partials.
      *  - Use optional @sections to define "slots" for features (e.g., @await RenderSectionAsync("Pager", required: false)). This allows child themes to easily remove features by not defining the section.
      *
@@ -87,15 +87,15 @@ namespace Articulate.Components
                 $"/Views/ArticulateThemes/{themeName}/Partials/{{0}}.cshtml",
 
                 // System themes
-                $"/wwwroot/App_Plugins/Articulate/Themes/{themeName}/{{0}}.cshtml",
-                $"/wwwroot/App_Plugins/Articulate/Themes/{themeName}/Partials/{{0}}.cshtml",
+                $"/Views/Articulate/Themes/{themeName}/{{0}}.cshtml",
+                $"/Views/Articulate/Themes/{themeName}/Partials/{{0}}.cshtml",
 
                 // Markdown Editor (does not have a theme, but routed via Articulate root node, so themeName found)
-                "/wwwroot/App_Plugins/Articulate/MarkdownEditor/{0}.cshtml"
+                "Views/Articulate/MarkdownEditor/{0}.cshtml"
 
             };
 
-            var locations = themeLocations.Concat(viewLocations);
+            IEnumerable<string> locations = themeLocations.Concat(viewLocations);
 
             return locations;
 

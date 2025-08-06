@@ -84,11 +84,11 @@ namespace Articulate.MetaWeblog
             {
                 IMedia? root = _mediaService.GetRootMedia().FirstOrDefault(x =>
                     x.Name == ArticulateConstants.Convention.Articulate && x.ContentType.Alias.InvariantEquals(
-                        Constants.Conventions.MediaTypes.Folder));
+                        Umbraco.Cms.Core.Constants.Conventions.MediaTypes.Folder));
                 return root ?? _mediaService.CreateMediaWithIdentity(
                     ArticulateConstants.Convention.Articulate,
-                    Constants.System.Root,
-                    Constants.Conventions.MediaTypes.Folder);
+                    Umbraco.Cms.Core.Constants.System.Root,
+                    Umbraco.Cms.Core.Constants.Conventions.MediaTypes.Folder);
             });
         }
 
@@ -367,19 +367,19 @@ namespace Articulate.MetaWeblog
                             {
                                 var fileName = Path.GetFileName(firstImageRelativePath);
 
-                                IMedia mediaItem = _mediaService.CreateMedia(fileName, _articulateRootMediaFolder.Value, Constants.Conventions.MediaTypes.Image);
+                                IMedia mediaItem = _mediaService.CreateMedia(fileName, _articulateRootMediaFolder.Value, Umbraco.Cms.Core.Constants.Conventions.MediaTypes.Image);
                                 mediaItem.SetValue(
                                     _mediaFileManager,
                                     _mediaUrlGenerators,
                                     _shortStringHelper,
                                     _contentTypeBaseServiceProvider,
-                                    Constants.Conventions.Media.File,
+                                    Umbraco.Cms.Core.Constants.Conventions.Media.File,
                                     fileName,
                                     fileStream);
 
                                 _mediaService.Save(mediaItem);
 
-                                var udi = Udi.Create(Constants.UdiEntityType.Media, mediaItem.Key);
+                                var udi = Udi.Create(Umbraco.Cms.Core.Constants.UdiEntityType.Media, mediaItem.Key);
 
                                 content.SetInvariantOrDefaultCultureValue(
                                     "postImage",
@@ -399,7 +399,7 @@ namespace Articulate.MetaWeblog
 
             if (!post.link.IsNullOrWhiteSpace())
             {
-                content.SetInvariantOrDefaultCultureValue(Constants.Conventions.Content.UrlName, post.link, contentType, _languageService);
+                content.SetInvariantOrDefaultCultureValue(Umbraco.Cms.Core.Constants.Conventions.Content.UrlName, post.link, contentType, _languageService);
             }
 
             if (!post.mt_excerpt.IsNullOrWhiteSpace())
@@ -485,9 +485,9 @@ namespace Articulate.MetaWeblog
             ? post.GetValue<string>("richText")
             : MarkdownHelper.ToHtml(post.GetValue<string>("markdown")),
 
-            permalink = post.GetValue<string>(Constants.Conventions.Content.UrlName).IsNullOrWhiteSpace()
+            permalink = post.GetValue<string>(Umbraco.Cms.Core.Constants.Conventions.Content.UrlName).IsNullOrWhiteSpace()
             ? post.Name?.ToUrlSegment(_shortStringHelper)
-            : post.GetValue<string>(Constants.Conventions.Content.UrlName)?.ToUrlSegment(_shortStringHelper)
+            : post.GetValue<string>(Umbraco.Cms.Core.Constants.Conventions.Content.UrlName)?.ToUrlSegment(_shortStringHelper)
         };
 
         private IPublishedContent BlogRoot()

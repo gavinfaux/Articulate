@@ -8,7 +8,6 @@
 		<WarningsAsErrors>Nullable</WarningsAsErrors>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
-		<PackageIcon>icon.png</PackageIcon>
 	</PropertyGroup>
 	<PropertyGroup>
 		<!-- TODO: Enable when 6.0 version is shipped -->
@@ -28,4 +27,20 @@
 	<ItemGroup>
 		<Content Include="$(MSBuildThisFileDirectory)icon.png" Pack="true" PackagePath="" Visible="false" />
 	</ItemGroup>
+	<PropertyGroup>
+		<Authors>Shannon Deminick</Authors>
+		<Copyright>Copyright $(Company) $([System.DateTime]::Today.ToString('yyyy'))</Copyright>
+		<Product>Articulate</Product>
+		<PackageProjectUrl>https://github.com/Shazwazza/Articulate</PackageProjectUrl>
+		<RepositoryType>git</RepositoryType>
+		<RepositoryUrl>https://github.com/Shazwazza/Articulate</RepositoryUrl>
+		<PackageLicenseFile>LICENSE</PackageLicenseFile>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<PackageIcon>icon.png</PackageIcon>
+		<PackageTags>blog umbraco umbraco-marketplace oss tags markdown richtext</PackageTags>
+		<PackageOutputPath>$(MSBuildThisFileDirectory)../../build/Release/</PackageOutputPath>
+		<GeneratePackageOnBuild>False</GeneratePackageOnBuild>
+		<IncludeSymbols>true</IncludeSymbols>
+		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
+	</PropertyGroup>
 </Project>

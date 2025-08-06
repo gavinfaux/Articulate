@@ -15,7 +15,7 @@ namespace Articulate.Components
                 .Where(c => c.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateArchive) || c.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateAuthors))
                 .Where(c => c.HasIdentity == false))
             {
-                c.ListView = Constants.DataTypes.Guids.ListViewContentGuid;
+                c.ListView = Umbraco.Cms.Core.Constants.DataTypes.Guids.ListViewContentGuid;
             }
         }
     }

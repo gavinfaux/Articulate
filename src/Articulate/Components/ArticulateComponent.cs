@@ -14,8 +14,8 @@ namespace Articulate.Components
             }
 
             // Create bundles for the markdown editor from the new subdirectories.
-            bundleManager.CreateJs("md-editor-js", "/App_Plugins/Articulate/MarkdownEditor/assets/js/**/*.js");
-            bundleManager.CreateCss("md-editor-css", "/App_Plugins/Articulate/MarkdownEditor/assets/css/**/*.css");
+            bundleManager.CreateJs("md-editor-js", "~/Views/Articulate/MarkdownEditor/assets/js/**/*.js");
+            bundleManager.CreateCss("md-editor-css", "~/Views/Articulate/MarkdownEditor/assets/css/**/*.css");
 
             return Task.CompletedTask;
         }

@@ -1,6 +1,6 @@
 #nullable enable
 using Articulate.Attributes;
-using Articulate.Controllers.Api;
+//using Articulate.Controllers.Api;
 using Articulate.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
@@ -28,38 +28,40 @@ namespace Articulate.Controllers
                 return NotFound();
             }
 
-            IReadOnlyDictionary<string, string>? managementApiUrls = apiDescriptionProvider.ManagementApiUrlMap([
-                ArticulateConstants.ManagementApi.MarkdownEditor
-            ]);
+            //IReadOnlyDictionary<string, string>? managementApiUrls = apiDescriptionProvider.ManagementApiUrlMap([
+            //    ArticulateConstants.ManagementApi.MarkdownEditor
+            //]);
 
-            var key = GetKey<MarkdownEditorApiController>(nameof(MarkdownEditorApiController.CreatePost));
+            //var key = GetKey<MarkdownEditorApiController>(nameof(MarkdownEditorApiController.CreatePost));
 
-            string? editorUrl = null;
+            //string? editorUrl = null;
 
-            if (managementApiUrls?.TryGetValue(key, out var urlFromMap) == true)
-            {
-                editorUrl = urlFromMap;
-            }
+            //if (managementApiUrls?.TryGetValue(key, out var urlFromMap) == true)
+            //{
+            //    editorUrl = urlFromMap;
+            //}
 
-            if (string.IsNullOrEmpty(editorUrl))
-            {
-                throw new InvalidOperationException(
-                    $"Could not find the Management API URL for '{key}'. " +
-                    "Check if the Articulate API routes are registered correctly at startup.");
-            }
+            //if (string.IsNullOrEmpty(editorUrl))
+            //{
+            //    throw new InvalidOperationException(
+            //        $"Could not find the Management API URL for '{key}'. " +
+            //        "Check if the Articulate API routes are registered correctly at startup.");
+            //}
 
-            var vm = new MarkdownEditorInitModel
-            {
-                ArticulateNodeId = CurrentPage.Id,
-                EditorPostUrl = editorUrl
-            };
+            //var vm = new MarkdownEditorInitModel
+            //{
+            //    ArticulateNodeId = CurrentPage.Id,
+            //    EditorPostUrl = editorUrl
+            //};
 
-            // TODO: CSP
-            Response.Headers["Permissions-Policy"] = "camera=(self)";
+            //// TODO: CSP
+            //Response.Headers["Permissions-Policy"] = "camera=(self)";
 
-            return View("MarkdownEditor", vm);
+            //return View("MarkdownEditor", vm);
 
-            static string GetKey<T>(string actionName) => $"{typeof(T).Name}.{actionName}";
+            //static string GetKey<T>(string actionName) => $"{typeof(T).Name}.{actionName}";
+            return View("MarkdownEditor");
+
         }
     }
 }

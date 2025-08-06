@@ -7,14 +7,12 @@ namespace Articulate
 {
     public class ContentUrls
     {
-        private readonly IUmbracoContextAccessor _umbracoContextAccessor;
         private readonly IPublishedUrlProvider _publishedUrlProvider;
 
         public ContentUrls(
             IUmbracoContextAccessor umbracoContextAccessor,
             IPublishedUrlProvider publishedUrlProvider)
         {
-            _umbracoContextAccessor = umbracoContextAccessor;
             _publishedUrlProvider = publishedUrlProvider;
         }
 

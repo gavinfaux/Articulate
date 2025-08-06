@@ -4,7 +4,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using Argotic.Syndication.Specialized;
-using Articulate.Models.Api;
+using Articulate.Models;
 using Microsoft.AspNetCore.Html;
 using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Core;
@@ -81,8 +81,8 @@ namespace Articulate.ImportExport
             _articulateTempFileSystem = articulateTempFileSystem;
             _articulateRootMediaFolder = new Lazy<IMedia>(() =>
             {
-                IMedia? root = _mediaService.GetRootMedia().FirstOrDefault(x => x.Name == ArticulateConstants.Convention.Articulate && x.ContentType.Alias.InvariantEquals(Constants.Conventions.MediaTypes.Folder));
-                return root ?? _mediaService.CreateMediaWithIdentity(ArticulateConstants.Convention.Articulate, Constants.System.Root, Constants.Conventions.MediaTypes.Folder);
+                IMedia? root = _mediaService.GetRootMedia().FirstOrDefault(x => x.Name == ArticulateConstants.Convention.Articulate && x.ContentType.Alias.InvariantEquals(Umbraco.Cms.Core.Constants.Conventions.MediaTypes.Folder));
+                return root ?? _mediaService.CreateMediaWithIdentity(ArticulateConstants.Convention.Articulate, Umbraco.Cms.Core.Constants.System.Root, Umbraco.Cms.Core.Constants.Conventions.MediaTypes.Folder);
             });
         }
 
@@ -95,8 +95,8 @@ namespace Articulate.ImportExport
         /// <summary>
         /// Imports the blogml file to articulate
         /// </summary>
-        /// <returns>An <see cref="ImportResponse"/> containing import statistics and the download URL for the Disqus export, if applicable.</returns>
-        public async Task<ImportResponse> Import(
+        /// <returns>An <see cref="ImportResponseDto"/> containing import statistics and the download URL for the Disqus export, if applicable.</returns>
+        public async Task<ImportResponseDto> Import(
             int userId,
             string fileName,
             Guid blogRootNode,
@@ -130,7 +130,7 @@ namespace Articulate.ImportExport
             // wrap entire operation in scope
             using (IScope scope = _scopeProvider.CreateScope())
             {
-                var returnModel = new ImportResponse();
+                var returnModel = new ImportResponseDto();
 
                 try
                 {
@@ -329,7 +329,7 @@ namespace Articulate.ImportExport
                 {
                     //Use the "slug" (post name) if post.id is not there
                     postNode = allPostNodes
-                        .Select(x => new { Node = x, UrlName = x.GetValue<string>(Constants.Conventions.Content.UrlName) })
+                        .Select(x => new { Node = x, UrlName = x.GetValue<string>(Umbraco.Cms.Core.Constants.Conventions.Content.UrlName) })
                         .Where(x => x.UrlName is not null && post.Name!=null && x.UrlName.InvariantStartsWith(post.Name.Content))
                         .Select(x => x.Node)
                         .FirstOrDefault();
@@ -406,7 +406,7 @@ namespace Articulate.ImportExport
                         slug = fileName.TrimEnd("." + ext);
                     }
 
-                    postNode.SetInvariantOrDefaultCultureValue(Constants.Conventions.Content.UrlName, slug, postType, _languageService);
+                    postNode.SetInvariantOrDefaultCultureValue(Umbraco.Cms.Core.Constants.Conventions.Content.UrlName, slug, postType, _languageService);
                 }
 
                 if (post.Authors.Count > 0)
@@ -487,13 +487,13 @@ namespace Articulate.ImportExport
                 await using (stream)
                 {
                     // create a media item
-                    IMedia media = _mediaService.CreateMedia(postNode.Name ?? $"Post {post.Id} image", _articulateRootMediaFolder.Value, Constants.Conventions.MediaTypes.Image);
+                    IMedia media = _mediaService.CreateMedia(postNode.Name ?? $"Post {post.Id} image", _articulateRootMediaFolder.Value, Umbraco.Cms.Core.Constants.Conventions.MediaTypes.Image);
                     media.SetValue(
                         _mediaFileManager,
                         _mediaUrlGenerators,
                         _shortStringHelper,
                         _contentTypeBaseServiceProvider,
-                        Constants.Conventions.Media.File,
+                        Umbraco.Cms.Core.Constants.Conventions.Media.File,
                         attachment.Url.OriginalString,
                         stream);
 
@@ -503,7 +503,7 @@ namespace Articulate.ImportExport
                     }
 
                     // Create an Udi of the media
-                    var udi = Udi.Create(Constants.UdiEntityType.Media, media.Key);
+                    var udi = Udi.Create(Umbraco.Cms.Core.Constants.UdiEntityType.Media, media.Key);
 
                     postNode.SetInvariantOrDefaultCultureValue(
                         "postImage",

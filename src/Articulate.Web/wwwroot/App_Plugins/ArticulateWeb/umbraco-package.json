@@ -1,0 +1,14 @@
+{
+  "id": "Articulate.Web",
+  "name": "Articulate.Web",
+  "version": "0.0.0",
+  "allowTelemetry": true,
+  "extensions": [
+    {
+      "name": "Articulate Web Bundle",
+      "alias": "Articulate.Web.Bundle",
+      "type": "bundle",
+      "js": "/App_Plugins/ArticulateWeb/articulate-web.js"
+    }
+  ]
+}

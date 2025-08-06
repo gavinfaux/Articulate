@@ -249,7 +249,7 @@ namespace Articulate.ImportExport
                             if (Guid.TryParse(mediaKeyStr, out Guid mediaKey))
                             {
                                 IMedia? media = _mediaService.GetById(mediaKey);
-                                if (media?.GetValue<string>(Constants.Conventions.Media.File) is { } mediaFilePath)
+                                if (media?.GetValue<string>(Umbraco.Cms.Core.Constants.Conventions.Media.File) is { } mediaFilePath)
                                 {
                                     var mime = ImageMimeType(mediaFilePath);
                                     if (!string.IsNullOrWhiteSpace(mime))
