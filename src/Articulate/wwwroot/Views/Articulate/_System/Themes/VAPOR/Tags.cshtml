@@ -1,5 +1,3 @@
-@using Articulate
-@using Articulate.Extensions
 @model TagListModel
 @{
     Layout = "Master.cshtml";
@@ -43,10 +41,10 @@
                 <a id="tag-@asArray[i].HtmlId" href="@asArray[i].TagUrl" title="View Posts with the tag @asArray[i].TagName">@asArray[i].TagName</a>
             </h2>
 
-            @asArray[i].Posts?.OrderByDescending(x => x.PublishedDate).Table(new[] { "Date", "Name" },
-            new string[] { },
+            @asArray[i].Posts?.OrderByDescending(x => x.PublishedDate).Table(["Date", "Name"],
+                [],
                 @<span>@item.PublishedDate.ToString("yyyy-MM-dd")</span>,
-            @<a href="@item.Url()" title="View Post">@item.Name</a>)
+                @<a href="@item.Url()" title="View Post">@item.Name</a>)
         }
     </div>
 

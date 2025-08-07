@@ -60,10 +60,9 @@
         @if (!Model.Author.Name.IsNullOrWhiteSpace())
         {
             <section class="author">
-                @if (Model.Author.Image is not null)
-                {
-                    var thumbnail = Model.Author.Image.GetCropUrl("blogPost");
-                    if (thumbnail is not null)
+                @{
+                    var thumbnail = Model.Author.Image?.GetCropUrl("blogPost");
+                    if (thumbnail != null)
                     {
                         <div class="authorimage" style="background: url(@thumbnail)"></div>
                     }

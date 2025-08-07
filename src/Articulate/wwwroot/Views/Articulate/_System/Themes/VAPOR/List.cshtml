@@ -21,10 +21,9 @@ else
                 </div>
             </header>
             <section class="post-excerpt">
-                @if (post.PostImage is not null)
-                {
-                    var thumbnail = post.PostImage.GetCropUrl("blogPost");
-                    if (thumbnail is not null)
+                @{
+                    var thumbnail = post.PostImage?.GetCropUrl("blogPost");
+                    if (thumbnail != null)
                     {
                         <div class="postthumb" style="background: url(@thumbnail)"></div>
                     }
