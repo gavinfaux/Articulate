@@ -9,7 +9,6 @@ import { client } from '../api/client.gen.js';
  * @param {UmbEntryPointOnInit} host The host element for the extension.
  * @param {UmbExtensionRegistry} _extensionRegistry The extension registry.
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const onInit: UmbEntryPointOnInit = (host, _extensionRegistry) => {
   host.consumeContext(UMB_AUTH_CONTEXT, (authContext) => {
     const openApiConfig = authContext?.getOpenApiConfiguration();

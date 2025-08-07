@@ -6,20 +6,13 @@ import { UmbTextStyles } from '@umbraco-cms/backoffice/style';
 import { UmbValidationContext } from '@umbraco-cms/backoffice/validation';
 import { keyed } from 'lit-html/directives/keyed.js';
 import { type UmbAuthContext, UMB_AUTH_CONTEXT } from '@umbraco-cms/backoffice/auth';
-import { BlogMl } from '../api/sdk.gen.js';
+import { BlogMlService } from '../api/sdk.gen.js';
 import type { ImportFileResponse, ImportModel, ImportResponse } from '../api/types.gen.js';
 import { ArticulateDocumentTypeKey, DocumentById, openNodePicker } from '../utils/document-node-utils.js';
 import { type IFormController, setFormError } from '../utils/form-utils.js';
 import { showUmbracoNotification } from '../utils/notification-utils.js';
-import {
-  BoxStyles,
-  ErrorBoxStyles,
-  FormStyles,
-  HostStyles,
-  NodePickerStyles,
-  renderErrorMessage,
-  renderHeaderActions,
-} from '../utils/template-utils.js';
+import { renderErrorMessage, renderHeaderActions } from '../utils/template-utils.js';
+import { BoxStyles, ErrorBoxStyles, FormStyles, HostStyles, NodePickerStyles } from '../utils/style-utils.js';
 
 /**
  * A LitElement-based component for importing blog content from a BlogML file.
@@ -313,7 +306,7 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
    * @async
    */
   #beginImport = async (importFile: File): Promise<ImportFileResponse> => {
-    const result = await BlogMl.postArticulateBlogmlImportFile({ body: { importFile } });
+    const result = await BlogMlService.postArticulateBlogmlImportFile({ body: { importFile } });
 
     if (!result.response.ok || !this.#isImportFileResponse(result.data)) {
       throw result.error || new Error('The server returned an invalid response when uploading the file.');
@@ -346,7 +339,7 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
       exportDisqusXml: formData.get('exportDisqusXml') === 'on',
       importFirstImage: formData.get('importFirstImage') === 'on',
     };
-    const result = await BlogMl.postArticulateBlogmlImport({ body: payload });
+    const result = await BlogMlService.postArticulateBlogmlImport({ body: payload });
 
     if (!result.response.ok || !this.#isImportResponse(result.data)) {
       throw result.error || new Error('The server returned an invalid response when finalizing the import.');
@@ -366,7 +359,7 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
    * @async
    */
   #exportDisqusComments = async () => {
-    const result = await BlogMl.getArticulateBlogmlExportDisqus();
+    const result = await BlogMlService.getArticulateBlogmlExportDisqus();
     if (!result.response.ok || !result.data) {
       throw result.error || new Error('Failed to export Disqus comments.');
     }

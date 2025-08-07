@@ -83,14 +83,23 @@ fetch(swaggerUrl)
       },
       plugins: [
         ...defaultPlugins,
-        '@hey-api/client-fetch',
+        {
+          name: '@hey-api/client-fetch',
+          bundle: true,
+          exportFromIndex: false,
+          // Client currently checks response for errors to handle API errors, so we disable throwOnError
+          throwOnError: false,
+        },
         {
           name: '@hey-api/typescript',
-          enums: 'typescript'
+          enums: 'typescript',
+          
         },
         {
           name: "@hey-api/sdk",
           asClass: true,
+          classNameBuilder: (name) => `${name}Service`,
+          responseStyle: 'fields',
         },
       ],
     };

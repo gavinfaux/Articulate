@@ -1,7 +1,7 @@
 import { css, customElement, html, property } from '@umbraco-cms/backoffice/external/lit';
 import { UmbLitElement } from '@umbraco-cms/backoffice/lit-element';
 import { UmbTextStyles } from '@umbraco-cms/backoffice/style';
-import { BoxStyles, HostStyles } from '../utils/template-utils.js';
+import { BoxStyles, HostStyles } from '../utils/style-utils.js';
 
 const dashboards = [
   {
@@ -20,7 +20,7 @@ const dashboards = [
     path: 'theme/options',
     name: 'Theme Options',
     icon: 'icon-color-bucket',
-    description: 'Create or customise Articulate themes',
+    description: 'Create or customize Articulate themes',
   },
 ];
 

@@ -7,7 +7,7 @@ import BlogMlExporterElement from '../components/blogml-exporter.element.js';
 import BlogMlImporterElement from '../components/blogml-importer.element.js';
 import ThemeOptionsElement from '../components/theme-options.element.js';
 import DashboardOptionsElement from '../components/dashboard-options.element.js';
-import { HostStyles } from '../utils/template-utils.js';
+import { HostStyles } from '../utils/style-utils.js';
 
 /**
  * The main dashboard element for the Articulate package.

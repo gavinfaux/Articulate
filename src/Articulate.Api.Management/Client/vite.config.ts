@@ -3,11 +3,10 @@ import fs from "fs";
 import path from "path";
 import { defineConfig, Plugin } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
-//import { outputPath } from "./config.outputPath.js";
-
 
 const outputPath = "../wwwroot/App_Plugins/Articulate/BackOffice";
 
+// Get version from nbgv, running from the solution root
 const getVersion = (command: string, mode: string): string | undefined => {
   if (command !== "build" || mode !== "production") {
     return "0.0.0-local";
@@ -23,6 +22,7 @@ const getVersion = (command: string, mode: string): string | undefined => {
   return "0.0.0-dev";
 };
 
+// Move umbraco-package.json from BackOffice folder up one level to the Articulate folder, this is required for Umbraco to find the package manifest
 const umbracoPackagePlugin = (): Plugin => {
   const umbracoPackageJson = "umbraco-package.json";
   let command: string;
@@ -52,6 +52,8 @@ const umbracoPackagePlugin = (): Plugin => {
   };
 
 }
+
+// Stamp umbraco-package.json and package.json with the version on release
 const versioningPlugin = (): Plugin => {
   const umbracoPackageJson = "umbraco-package.json";
   let command: string;

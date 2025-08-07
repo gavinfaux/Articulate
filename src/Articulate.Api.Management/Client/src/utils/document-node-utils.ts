@@ -43,6 +43,8 @@ interface DocumentTypeSearchResponse {
  * @returns {Promise<string | undefined>} A promise that resolves to the UDI string of the blog archive document type, or undefined if not found or an error occurs.
  */
 export async function ArticulateDocumentTypeKey(authContext: UmbAuthContext): Promise<string | undefined> {
+  /* TODO: Replace with Umbraco SDK API call once issue with hey-api fetch client in transpiled code at runtime is resolved. Sent data object and fetch client options both have a query field that is merged into the client options object, instead of being deserialized to a query string. This is a workaround using the browser fetch API.
+   */
   try {
     // 1. Get the authentication context and bearer token from Umbraco
     const auth = authContext.getOpenApiConfiguration();
@@ -96,7 +98,7 @@ export async function openNodePicker(
   host: UmbControllerHost,
 ): Promise<string | null> {
   try {
-    // TODO: filter: no longer works? using pickableFilter as a workaround
+    // TODO: filter parameter not being applied, using pickableFilter as a workaround
     const modalContext: UmbModalContext<UmbDocumentPickerModalData, UmbDocumentPickerModalValue> = modalManager.open<
       UmbDocumentPickerModalData,
       UmbDocumentPickerModalValue

@@ -18,7 +18,7 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
     meta?: Record<string, unknown>;
 };
 
-export class BlogMl {
+export class BlogMlService {
     /**
      * Exports blog data as a BlogML XML file.
      */
@@ -98,7 +98,7 @@ export class BlogMl {
     }
 }
 
-export class MarkdownEditor {
+export class MarkdownEditorService {
     public static postArticulateEditorsMarkdownPost<ThrowOnError extends boolean = false>(options?: Options<PostArticulateEditorsMarkdownPostData, ThrowOnError>) {
         return (options?.client ?? _heyApiClient).post<PostArticulateEditorsMarkdownPostResponses, PostArticulateEditorsMarkdownPostErrors, ThrowOnError>({
             ...formDataBodySerializer,
@@ -118,7 +118,7 @@ export class MarkdownEditor {
     }
 }
 
-export class ThemeOptions {
+export class ThemeOptionsService {
     public static postArticulateThemeCopy<ThrowOnError extends boolean = false>(options?: Options<PostArticulateThemeCopyData, ThrowOnError>) {
         return (options?.client ?? _heyApiClient).post<PostArticulateThemeCopyResponses, PostArticulateThemeCopyErrors, ThrowOnError>({
             security: [
@@ -150,7 +150,7 @@ export class ThemeOptions {
     }
 }
 
-export class ThemePicker {
+export class ThemePickerService {
     /**
      * Gets the list of all available Articulate themes, both default and user-defined.
      * This endpoint returns the names of all available themes, including both default and user-defined themes.

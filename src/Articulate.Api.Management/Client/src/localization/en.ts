@@ -1,4 +1,4 @@
-// TODO: Implement this as a proper translation file
+// TODO: Implement localization
 export default {
   articulateDashboard: {
     name: 'Articulate',

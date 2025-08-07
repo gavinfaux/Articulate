@@ -4,22 +4,16 @@ import { UmbLitElement } from '@umbraco-cms/backoffice/lit-element';
 import { UmbTextStyles } from '@umbraco-cms/backoffice/style';
 
 import { UmbValidationContext } from '@umbraco-cms/backoffice/validation';
-import { ThemeOptions } from '../api/sdk.gen.js';
+import { ThemeOptionsService } from '../api/sdk.gen.js';
 import { type IFormController, setFormError } from '../utils/form-utils.js';
 import { showUmbracoNotification } from '../utils/notification-utils.js';
-import {
-  BoxStyles,
-  ErrorBoxStyles,
-  FormStyles,
-  HostStyles,
-  renderErrorMessage,
-  renderHeaderActions,
-} from '../utils/template-utils.js';
+import { renderErrorMessage, renderHeaderActions } from '../utils/template-utils.js';
+import { BoxStyles, ErrorBoxStyles, FormStyles, HostStyles } from '../utils/style-utils.js';
 
 /**
- * A LitElement-based component for copying an existing theme.
+ * A LitElement-based component for theme options e.g. copying an existing theme.
  *
- * @element copy-theme
+ * @element theme-options
  * @extends UmbLitElement
  * @implements {IFormController}
  */
@@ -99,7 +93,7 @@ export default class ThemeOptionsElement extends UmbLitElement implements IFormC
    */
   async #loadThemes() {
     try {
-      const result = await ThemeOptions.getArticulateThemeDefault();
+      const result = await ThemeOptionsService.getArticulateThemeDefault();
       if (!result.response.ok || !result.data) {
         throw result.error || new Error('The list of themes could not be retrieved from the server.');
       }
@@ -199,7 +193,7 @@ export default class ThemeOptionsElement extends UmbLitElement implements IFormC
     this._formError = null;
 
     try {
-      const result = await ThemeOptions.postArticulateThemeCopy({
+      const result = await ThemeOptionsService.postArticulateThemeCopy({
         body: {
           themeName: this._selectedTheme!,
           newThemeName: this._themeName!,
@@ -301,7 +295,7 @@ export default class ThemeOptionsElement extends UmbLitElement implements IFormC
     return html`
       <div class="duplicate-form">
         <h3>Copy '${this._selectedTheme}' Theme</h3>
-        <p>Create a copy of this theme that you can customise.</p>
+        <p>Create a copy of this theme that you can customize.</p>
         <uui-form>
           <form
             @submit=${this.#handleSubmit}
@@ -347,9 +341,13 @@ export default class ThemeOptionsElement extends UmbLitElement implements IFormC
         ${renderHeaderActions(this.routerPath)}
         <div class="container">
           <p>
-            You can duplicate any of Articulate's built-in themes to customise them yourself. The duplicated theme will
-            be copied to the ~/Views/Articulate folder where you can edit it. Then you can select this theme from the
-            themes drop down on your Articulate root node to use it.
+            You can duplicate any of Articulate's built-in themes to use as a template for your own theme. The
+            duplicated theme will be copied to the ~/Views/Articulate folder where you can edit it. You can select this
+            theme from the themes drop down on your Articulate root node to use it.
+          </p>
+          <p>
+            You can also override any of Articulate's built-in themes by duplicating the theme with the same name.
+            Delete any files you are not changing and Articulate will use it's built-in versions.
           </p>
         </div>
         <div class="container">${this.#renderThemeGrid()} ${this.#renderDuplicateForm()}</div>
