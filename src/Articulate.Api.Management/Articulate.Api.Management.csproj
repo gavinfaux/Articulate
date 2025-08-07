@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
+<Project Sdk="Microsoft.NET.Sdk.Razor">
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
     <CompressionEnabled>false</CompressionEnabled>
@@ -60,42 +60,60 @@
     <Using Include="Articulate.Api.Management" />
   </ItemGroup>
 
+  <!-- First, define the group of files that trigger a rebuild. -->
   <ItemGroup>
     <ClientAssetsInputs Include="Client\**" Exclude="$(DefaultItemExcludes)" />
-
     <!-- Dont include the client folder as part of packaging nuget build -->
     <Content Remove="Client\**" />
-
     <!-- However make the Umbraco-package.json included for dotnet pack or nuget package and visible to the solution -->
     <None Include="Client\public\umbraco-package.json" Pack="false" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="wwwroot\" />
-  </ItemGroup>
-
-  <!-- TODO: add back proper conditionals for CI/Release-->
+  <!-- Conditional for CI build-->
   <PropertyGroup>
     <IsCiBuild Condition="'$(IsCiBuild)' == ''">false</IsCiBuild>
     <IsCiBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</IsCiBuild>
+    <IsReleaseBuild>false</IsReleaseBuild>
+    <IsReleaseBuild Condition="'$(IsCiBuild)' == 'true' Or '$(Configuration)' == 'Release'">true</IsReleaseBuild>
+    <_NpmRestoreCommand>npm install --no-fund</_NpmRestoreCommand>
+    <_NpmRestoreCommand Condition="'$(IsReleaseBuild)' == 'true'">npm ci --no-fund --no-audit --prefer-offline</_NpmRestoreCommand>
+    <_NpmBuildCommand>npm run build</_NpmBuildCommand>
+    <_NpmBuildCommand Condition="'$(IsReleaseBuild)' == 'true'">npm run build:release</_NpmBuildCommand>
   </PropertyGroup>
 
-  <!-- Restore and build Client files -->
-  <Target Name="RestoreClient" Inputs="Client\package.json;Client\package-lock.json" Outputs="Client\node_modules\.package-lock.json">
-    <Message Importance="high" Text="Restoring Client NPM packages..." />
-    <Exec Command="npm install --no-fund" WorkingDirectory="Client" Condition="'$(IsCiBuild)' == 'false'"/>
-    <Exec Command="npm ci --no-fund --no-audit --prefer-offline" WorkingDirectory="Client" Condition="'$(IsCiBuild)' == 'true'"/>
+  <!--Run restore if package timestamps greater than .clientrestore.timestamp (or missing), BuildClient runs this target-->
+  <Target Name="RestoreNpmPackages" Inputs="Client\package.json;Client\package-lock.json" Outputs="Client\node_modules\.clientrestore.timestamp">
+    <Message Text="[Articulate] Restoring NPM packages with command: $(_NpmRestoreCommand)..." Importance="high" />
+    <Exec Command="$(_NpmRestoreCommand)" WorkingDirectory="Client"/>
+    <Touch Files="Client\node_modules\.clientrestore.timestamp" AlwaysCreate="true" />
   </Target>
 
-  <Target Name="BuildClient" BeforeTargets="AssignTargetPaths" DependsOnTargets="RestoreClient" Inputs="@(ClientAssetsInputs)" Outputs="$(IntermediateOutputPath)client.complete.txt">
-    <Message Importance="high" Text="Executing Client NPM build script..." />
-    <Exec Command="npm run build" WorkingDirectory="Client" Condition="'$(IsCiBuild)' == 'false' "/>
-    <Exec Command="npm run build:release" WorkingDirectory="Client" Condition=" '$(IsCiBuild)' == 'true' Or '$(Configuration)' == 'Release'"/>
+  <!--BeforeTargets changed from AssignTargetPaths to BeforeBuild to prevent VS incremental build running continuosly in the background (fast up-to-date-check sees client build changes as a reason to build, loops)-->
+  <!--Build Client if any ClientAssetsInputs timestamp is greater than .clientbuild.timestamp (or missing)-->
+  <Target Name="BuildClient" AfterTargets="BeforeBuild" Inputs="@(ClientAssetsInputs)" Outputs="$(IntermediateOutputPath).clientbuild.timestamp">
+    <!-- Now, run the build, which depends on the restore being complete -->
+    <CallTarget Targets="RestoreNpmPackages" />
+    <Message Importance="high" Text="[Articulate] Building Client with NPM command: $(_FinalBuildCommand)" />
+    <!--Allow build to continue with warning if not CI or Relase build, we may be working on API/Client changes.-->
+    <Exec Command="$(_NpmBuildCommand)" WorkingDirectory="Client" Condition="'$(IsReleaseBuild)' == 'false'" ContinueOnError="true">
+      <Output TaskParameter="ExitCode" PropertyName="ClientBuildExitCode" />
+    </Exec>
+    <!--Fail build if client build to fails for CI or Relase build-->
+    <Exec Command="$(_NpmBuildCommand)" WorkingDirectory="Client" Condition="'$(IsReleaseBuild)' == 'true'">
+      <Output TaskParameter="ExitCode" PropertyName="ClientBuildExitCode" />
+    </Exec>
+    <Warning Condition="'$(IsReleaseBuild)' == 'false' AND '$(ClientBuildExitCode)' != '0'" Text="[Articulate] The BackOffice client-side build failed, check the Client project to resolve. The .NET build will continue." />
+    <Error Condition="'$(IsReleaseBuild)' == 'true' AND '$(ClientBuildExitCode)' != '0'" Text="[Articulate] The BackOffice client-side build FAILED, check the Client project to resolve. .NET build aborted." />
+    <Touch Files="$(IntermediateOutputPath).clientbuild.timestamp" AlwaysCreate="true" Condition="'$(ClientBuildExitCode)' == '0'" />
     <ItemGroup>
-      <_ClientAssetsBuildOutput Include="wwwroot\App_Plugins\**" />
+      <_ClientAssetsBuildOutput Include="wwwroot\App_Plugins\Articulate\**" />
     </ItemGroup>
     <WriteLinesToFile File="$(IntermediateOutputPath)client.complete.txt" Lines="@(_ClientAssetsBuildOutput)" Overwrite="true" />
   </Target>
+
+  <ItemGroup>
+    <Folder Include="wwwroot\" />
+  </ItemGroup>
 
   <ItemGroup>
     <None Include="..\..\LICENSE">
