@@ -22,31 +22,18 @@ namespace Articulate.Controllers
     /// </remarks>
     [OutputCache(PolicyName = "Articulate60")]
     [ArticulateDynamicRoute]
-    public class ArticulateTagsController : ListControllerBase
+    public class ArticulateTagsController(
+        ILogger<ArticulateTagsController> logger,
+        ICompositeViewEngine compositeViewEngine,
+        IUmbracoContextAccessor umbracoContextAccessor,
+        IPublishedUrlProvider publishedUrlProvider,
+        IPublishedValueFallback publishedValueFallback,
+        UmbracoHelper umbracoHelper,
+        ArticulateTagService articulateTagService,
+        ITagQuery tagQuery)
+        : ListControllerBase(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider,
+            publishedValueFallback)
     {
-        private readonly UmbracoHelper _umbracoHelper;
-        private readonly ArticulateTagService _articulateTagService;
-        private readonly ITagQuery _tagQuery;
-        private readonly ILogger<ArticulateTagsController> _logger;
-
-
-        public ArticulateTagsController(
-            ILogger<ArticulateTagsController> logger,
-            ICompositeViewEngine compositeViewEngine,
-            IUmbracoContextAccessor umbracoContextAccessor,
-            IPublishedUrlProvider publishedUrlProvider,
-            IPublishedValueFallback publishedValueFallback,
-            UmbracoHelper umbracoHelper,
-            ArticulateTagService articulateTagService,
-            ITagQuery tagQuery)
-            : base(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider, publishedValueFallback)
-        {
-            _umbracoHelper = umbracoHelper;
-            _articulateTagService = articulateTagService;
-            _tagQuery = tagQuery;
-            _logger = logger;
-        }
-
         /// <summary>
         /// Used to render the category listing (virtual node)
         /// </summary>
@@ -57,7 +44,7 @@ namespace Articulate.Controllers
         {
             if (CurrentPage is null)
             {
-                _logger.LogWarning("ArticulateTagsController.Categories: CurrentPage is null, returning 404");
+                logger.LogWarning("ArticulateTagsController.Categories: CurrentPage is null, returning 404");
                 return NotFound();
             }
 
@@ -78,7 +65,7 @@ namespace Articulate.Controllers
         {
             if (CurrentPage is null)
             {
-                _logger.LogWarning("ArticulateTagsController.Tags: CurrentPage is null, returning 404");
+                logger.LogWarning("ArticulateTagsController.Tags: CurrentPage is null, returning 404");
                 return NotFound();
             }
 
@@ -93,16 +80,16 @@ namespace Articulate.Controllers
         {
             if (CurrentPage is null)
             {
-                _logger.LogWarning("ArticulateTagsController.RenderTagsOrCategories: CurrentPage is null, returning 404");
+                logger.LogWarning("ArticulateTagsController.RenderTagsOrCategories: CurrentPage is null, returning 404");
                 return NotFound();
             }
 
             //create a blog model of the main page
             var rootPageModel = new MasterModel(CurrentPage, PublishedValueFallback);
 
-            IEnumerable<PostsByTagModel> contentByTags = _articulateTagService.GetContentByTags(
-                _umbracoHelper,
-                _tagQuery,
+            IEnumerable<PostsByTagModel> contentByTags = articulateTagService.GetContentByTags(
+                umbracoHelper,
+                tagQuery,
                 rootPageModel,
                 tagGroup,
                 baseUrl);
@@ -121,15 +108,15 @@ namespace Articulate.Controllers
         {
             if (CurrentPage is null)
             {
-                _logger.LogWarning("ArticulateTagsController.RenderByTagOrCategory: CurrentPage is null, returning 404");
+                logger.LogWarning("ArticulateTagsController.RenderByTagOrCategory: CurrentPage is null, returning 404");
                 return NotFound();
             }
 
             //create a master model
             var masterModel = new MasterModel(CurrentPage, PublishedValueFallback);
 
-            PostsByTagModel contentByTag = _articulateTagService.GetContentByTag(
-                _umbracoHelper,
+            PostsByTagModel contentByTag = articulateTagService.GetContentByTag(
+                umbracoHelper,
                 masterModel,
                 tag,
                 tagGroup,
@@ -143,8 +130,8 @@ namespace Articulate.Controllers
             // will replace them with '.' and do the lookup again
             if (contentByTag.PostCount == 0 && tag.Contains('-'))
             {
-                contentByTag = _articulateTagService.GetContentByTag(
-                    _umbracoHelper,
+                contentByTag = articulateTagService.GetContentByTag(
+                    umbracoHelper,
                     masterModel,
                     tag.Replace('-', '.'),
                     tagGroup,

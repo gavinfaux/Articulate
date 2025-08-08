@@ -151,7 +151,7 @@ namespace Articulate.Extensions
                     IPropertyType propertyType = contentType.CompositionPropertyTypes.FirstOrDefault(x => x.Alias == propertyAlias) ?? throw new InvalidOperationException($"No property type found by alias {propertyAlias}");
 
                     var valueToSet = propertyValueGetter(content, contentType, c);
-                    if (valueToSet is null || valueToSet is string propValAsString && string.IsNullOrWhiteSpace(propValAsString))
+                    if (valueToSet is null || (valueToSet is string propValAsString && string.IsNullOrWhiteSpace(propValAsString)))
                     {
                         continue;
                     }
@@ -162,7 +162,7 @@ namespace Articulate.Extensions
             else
             {
                 var propertyValue = propertyValueGetter(content, contentType, null);
-                if (propertyValue is null || propertyValue is string propValAsString && string.IsNullOrWhiteSpace(propValAsString))
+                if (propertyValue is null || (propertyValue is string propValAsString && string.IsNullOrWhiteSpace(propValAsString)))
                 {
                     return;
                 }

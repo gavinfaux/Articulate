@@ -16,24 +16,17 @@ namespace Articulate.Controllers
     /// <summary>
     /// Base controller providing common functionality for listing pages
     /// </summary>
-    public abstract class ListControllerBase : RenderController
+    public abstract class ListControllerBase(
+        ILogger<ListControllerBase> logger,
+        ICompositeViewEngine compositeViewEngine,
+        IUmbracoContextAccessor umbracoContextAccessor,
+        IPublishedUrlProvider publishedUrlProvider,
+        IPublishedValueFallback publishedValueFallback)
+        : RenderController(logger, compositeViewEngine, umbracoContextAccessor)
     {
-        protected ListControllerBase(
-            ILogger<ListControllerBase> logger,
-            ICompositeViewEngine compositeViewEngine,
-            IUmbracoContextAccessor umbracoContextAccessor,
-            IPublishedUrlProvider publishedUrlProvider,
-            IPublishedValueFallback publishedValueFallback)
-            : base(logger, compositeViewEngine, umbracoContextAccessor)
-        {
-            UmbracoContextAccessor = umbracoContextAccessor;
-            PublishedUrlProvider = publishedUrlProvider;
-            PublishedValueFallback = publishedValueFallback;
-        }
-
-        protected IUmbracoContextAccessor UmbracoContextAccessor { get; }
-        protected IPublishedUrlProvider PublishedUrlProvider { get; }
-        protected IPublishedValueFallback PublishedValueFallback { get; }
+        protected IUmbracoContextAccessor UmbracoContextAccessor { get; } = umbracoContextAccessor;
+        protected IPublishedUrlProvider PublishedUrlProvider { get; } = publishedUrlProvider;
+        protected IPublishedValueFallback PublishedValueFallback { get; } = publishedValueFallback;
 
         /// <summary>
         /// Gets a paged list view for a given posts by author/tags/categories model

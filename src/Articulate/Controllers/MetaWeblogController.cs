@@ -22,22 +22,13 @@ namespace Articulate.Controllers
     /// with our own multi-tenanted version.
     /// </remarks>
     [ArticulateDynamicRoute]
-    public class MetaWeblogController : RenderController
+    public class MetaWeblogController(
+        ILogger<MetaWeblogController> logger,
+        ICompositeViewEngine compositeViewEngine,
+        IUmbracoContextAccessor umbracoContextAccessor,
+        IServiceProvider serviceProvider)
+        : RenderController(logger, compositeViewEngine, umbracoContextAccessor)
     {
-        private readonly IServiceProvider _serviceProvider;
-        private readonly ILogger<MetaWeblogController> _logger;
-
-        public MetaWeblogController(
-            ILogger<MetaWeblogController> logger,
-            ICompositeViewEngine compositeViewEngine,
-            IUmbracoContextAccessor umbracoContextAccessor,
-            IServiceProvider serviceProvider)
-            : base(logger, compositeViewEngine, umbracoContextAccessor)
-        {
-            _serviceProvider = serviceProvider;
-            _logger = logger;
-        }
-
         [HttpPost]
         public async Task<ActionResult> IndexAsync(int id)
         {
@@ -48,11 +39,11 @@ namespace Articulate.Controllers
 
             // create the provider using the start node
             ArticulateMetaWeblogProvider provider = ActivatorUtilities.CreateInstance<ArticulateMetaWeblogProvider>(
-                _serviceProvider,
+                serviceProvider,
                 id);
 
             // create the service using the provider
-            MetaWeblogService service = ActivatorUtilities.CreateInstance<MetaWeblogService>(_serviceProvider, provider);
+            MetaWeblogService service = ActivatorUtilities.CreateInstance<MetaWeblogService>(serviceProvider, provider);
 
             string rawContent;
             using (var reader = new StreamReader(Request.Body))
@@ -67,15 +58,15 @@ namespace Articulate.Controllers
             }
             catch (NullReferenceException ex)
             {
-                _logger.LogError("A NullReferenceException occurred processing a metaWeblog request. Raw Content: {RawXml}", rawContent);
+                logger.LogError("A NullReferenceException occurred processing a metaWeblog request. Raw Content: {RawXml}", rawContent);
 
-                _logger.LogError(ex, "NullReferenceException details for metaWeblog call:");
+                logger.LogError(ex, "NullReferenceException details for metaWeblog call:");
 
                 return StatusCode(500, "An error occurred while processing the request.");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "An unexpected exception occurred in metaWeblog service.");
+                logger.LogError(ex, "An unexpected exception occurred in metaWeblog service.");
                 return StatusCode(500, "An error occurred while processing the request.");
             }
         }

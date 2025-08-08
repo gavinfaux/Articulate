@@ -81,8 +81,8 @@ namespace Articulate.ImportExport
             _articulateTempFileSystem = articulateTempFileSystem;
             _articulateRootMediaFolder = new Lazy<IMedia>(() =>
             {
-                IMedia? root = _mediaService.GetRootMedia().FirstOrDefault(x => x.Name == ArticulateConstants.Convention.Articulate && x.ContentType.Alias.InvariantEquals(Umbraco.Cms.Core.Constants.Conventions.MediaTypes.Folder));
-                return root ?? _mediaService.CreateMediaWithIdentity(ArticulateConstants.Convention.Articulate, Umbraco.Cms.Core.Constants.System.Root, Umbraco.Cms.Core.Constants.Conventions.MediaTypes.Folder);
+                IMedia? root = _mediaService.GetRootMedia().FirstOrDefault(x => x.Name == ArticulateConstants.Convention.Articulate && x.ContentType.Alias.InvariantEquals(Constants.Conventions.MediaTypes.Folder));
+                return root ?? _mediaService.CreateMediaWithIdentity(ArticulateConstants.Convention.Articulate, Constants.System.Root, Constants.Conventions.MediaTypes.Folder);
             });
         }
 
@@ -128,60 +128,58 @@ namespace Articulate.ImportExport
             }
 
             // wrap entire operation in scope
-            using (IScope scope = _scopeProvider.CreateScope())
+            using IScope scope = _scopeProvider.CreateScope();
+            var returnModel = new ImportResponseDto();
+
+            try
             {
-                var returnModel = new ImportResponseDto();
-
-                try
+                await using (Stream stream = _articulateTempFileSystem.OpenFile(fileName))
                 {
-                    await using (Stream stream = _articulateTempFileSystem.OpenFile(fileName))
+                    var document = new BlogMLDocument();
+                    document.Load(stream);
+
+                    stream.Position = 0;
+                    var xdoc = XDocument.Load(stream);
+
+                    IDictionary<string, string> authorIdsToName = ImportAuthors(userId, root, document.Authors);
+                    returnModel.AuthorCount = authorIdsToName.Count;
+                    IEnumerable<IContent> imported = await ImportPosts(
+                        userId,
+                        xdoc,
+                        root,
+                        document.Posts,
+                        document.Authors.ToArray(),
+                        document.Categories.ToArray(),
+                        authorIdsToName,
+                        overwrite,
+                        regexMatch,
+                        regexReplace,
+                        publishAll,
+                        importFirstImage);
+                    IContent[] enumerable = imported as IContent[] ?? imported.ToArray();
+                    returnModel.PostCount = enumerable.Length;
+
+                    if (exportDisqusXml)
                     {
-                        var document = new BlogMLDocument();
-                        document.Load(stream);
-
-                        stream.Position = 0;
-                        var xdoc = XDocument.Load(stream);
-
-                        IDictionary<string, string> authorIdsToName = ImportAuthors(userId, root, document.Authors);
-                        returnModel.AuthorCount = authorIdsToName.Count;
-                        IEnumerable<IContent> imported = await ImportPosts(
-                            userId,
-                            xdoc,
-                            root,
-                            document.Posts,
-                            document.Authors.ToArray(),
-                            document.Categories.ToArray(),
-                            authorIdsToName,
-                            overwrite,
-                            regexMatch,
-                            regexReplace,
-                            publishAll,
-                            importFirstImage);
-                        IContent[] enumerable = imported as IContent[] ?? imported.ToArray();
-                        returnModel.PostCount = enumerable.Length;
-
-                        if (exportDisqusXml)
-                        {
-                            XDocument xDoc = _disqusXmlExporter.Export(enumerable, document);
-                            const string nsWp = "http://wordpress.org/export/1.0/";
-                            returnModel.CommentCount = xDoc.Descendants(XName.Get("comment", nsWp)).Count();
-                            using var memStream = new MemoryStream();
-                            xDoc.Save(memStream);
-                            _articulateTempFileSystem.AddFile("DisqusXmlExport.xml", memStream, true);
-                        }
+                        XDocument xDoc = _disqusXmlExporter.Export(enumerable, document);
+                        const string nsWp = "http://wordpress.org/export/1.0/";
+                        returnModel.CommentCount = xDoc.Descendants(XName.Get("comment", nsWp)).Count();
+                        using var memStream = new MemoryStream();
+                        xDoc.Save(memStream);
+                        _articulateTempFileSystem.AddFile("DisqusXmlExport.xml", memStream, true);
                     }
+                }
 
-                    // commit
-                    scope.Complete();
-                    returnModel.Completed = true;
-                    return returnModel;
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Importing failed with errors");
-                    returnModel.Completed = false;
-                    return returnModel;
-                }
+                // commit
+                scope.Complete();
+                returnModel.Completed = true;
+                return returnModel;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Importing failed with errors");
+                returnModel.Completed = false;
+                return returnModel;
             }
         }
 
@@ -329,7 +327,7 @@ namespace Articulate.ImportExport
                 {
                     //Use the "slug" (post name) if post.id is not there
                     postNode = allPostNodes
-                        .Select(x => new { Node = x, UrlName = x.GetValue<string>(Umbraco.Cms.Core.Constants.Conventions.Content.UrlName) })
+                        .Select(x => new { Node = x, UrlName = x.GetValue<string>(Constants.Conventions.Content.UrlName) })
                         .Where(x => x.UrlName is not null && post.Name!=null && x.UrlName.InvariantStartsWith(post.Name.Content))
                         .Select(x => x.Node)
                         .FirstOrDefault();
@@ -397,16 +395,16 @@ namespace Articulate.ImportExport
                     //If post-name is not available we take the URL and remove the extension
                     else
                     {
-                        var slugArray = post.Url.OriginalString.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
+                        var slugArray = post.Url.OriginalString.Split(['/'], StringSplitOptions.RemoveEmptyEntries);
                         var fileNameAndQuery = slugArray[^1];
-                        var fileNameAndQueryArray = fileNameAndQuery.Split(new[] { '?' }, StringSplitOptions.RemoveEmptyEntries);
+                        var fileNameAndQueryArray = fileNameAndQuery.Split(['?'], StringSplitOptions.RemoveEmptyEntries);
                         var fileName = fileNameAndQueryArray[^1];
-                        var fileNameArray = fileName.Split(new[] { '.' }, StringSplitOptions.RemoveEmptyEntries);
+                        var fileNameArray = fileName.Split(['.'], StringSplitOptions.RemoveEmptyEntries);
                         var ext = fileNameArray[^1];
                         slug = fileName.TrimEnd("." + ext);
                     }
 
-                    postNode.SetInvariantOrDefaultCultureValue(Umbraco.Cms.Core.Constants.Conventions.Content.UrlName, slug, postType, _languageService);
+                    postNode.SetInvariantOrDefaultCultureValue(Constants.Conventions.Content.UrlName, slug, postType, _languageService);
                 }
 
                 if (post.Authors.Count > 0)
@@ -471,10 +469,8 @@ namespace Articulate.ImportExport
             {
                 try
                 {
-                    using (var client = new HttpClient())
-                    {
-                        stream = await client.GetStreamAsync(attachment.ExternalUri);
-                    }
+                    using var client = new HttpClient();
+                    stream = await client.GetStreamAsync(attachment.ExternalUri);
                 }
                 catch (Exception exception)
                 {
@@ -487,13 +483,13 @@ namespace Articulate.ImportExport
                 await using (stream)
                 {
                     // create a media item
-                    IMedia media = _mediaService.CreateMedia(postNode.Name ?? $"Post {post.Id} image", _articulateRootMediaFolder.Value, Umbraco.Cms.Core.Constants.Conventions.MediaTypes.Image);
+                    IMedia media = _mediaService.CreateMedia(postNode.Name ?? $"Post {post.Id} image", _articulateRootMediaFolder.Value, Constants.Conventions.MediaTypes.Image);
                     media.SetValue(
                         _mediaFileManager,
                         _mediaUrlGenerators,
                         _shortStringHelper,
                         _contentTypeBaseServiceProvider,
-                        Umbraco.Cms.Core.Constants.Conventions.Media.File,
+                        Constants.Conventions.Media.File,
                         attachment.Url.OriginalString,
                         stream);
 
@@ -503,7 +499,7 @@ namespace Articulate.ImportExport
                     }
 
                     // Create an Udi of the media
-                    var udi = Udi.Create(Umbraco.Cms.Core.Constants.UdiEntityType.Media, media.Key);
+                    var udi = Udi.Create(Constants.UdiEntityType.Media, media.Key);
 
                     postNode.SetInvariantOrDefaultCultureValue(
                         "postImage",

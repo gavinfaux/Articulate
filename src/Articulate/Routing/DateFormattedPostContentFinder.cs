@@ -7,12 +7,11 @@ using Umbraco.Cms.Core.Web;
 
 namespace Articulate.Routing
 {
-    public class DateFormattedPostContentFinder : ContentFinderByUrl
+    public class DateFormattedPostContentFinder(
+        ILogger<DateFormattedPostContentFinder> logger,
+        IUmbracoContextAccessor umbracoContextAccessor)
+        : ContentFinderByUrl(logger, umbracoContextAccessor)
     {
-        public DateFormattedPostContentFinder(ILogger<DateFormattedPostContentFinder> logger, IUmbracoContextAccessor umbracoContextAccessor) : base(logger, umbracoContextAccessor)
-        {
-        }
-
         public override async Task<bool> TryFindContent(IPublishedRequestBuilder contentRequest)
         {
             await Task.CompletedTask;

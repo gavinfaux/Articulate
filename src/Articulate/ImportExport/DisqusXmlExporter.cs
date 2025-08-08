@@ -10,19 +10,10 @@ using Umbraco.Cms.Core.Routing;
 namespace Articulate.ImportExport
 {
     // ReSharper disable once ClassNeverInstantiated.Global
-    public class DisqusXmlExporter
+    public class DisqusXmlExporter(
+        IPublishedUrlProvider publishedUrlProvider,
+        ILogger<DisqusXmlExporter> logger)
     {
-        private readonly IPublishedUrlProvider _publishedUrlProvider;
-        private readonly ILogger<DisqusXmlExporter> _logger;
-
-        public DisqusXmlExporter(
-            IPublishedUrlProvider publishedUrlProvider,
-            ILogger<DisqusXmlExporter> logger)
-        {
-            _publishedUrlProvider = publishedUrlProvider;
-            _logger = logger;
-        }
-
         public XDocument Export(IEnumerable<IContent> posts, BlogMLDocument document)
         {
             var nsContent = XNamespace.Get("http://purl.org/rss/1.0/modules/content/");
@@ -48,7 +39,7 @@ namespace Articulate.ImportExport
 
                 if (blogMlPost is null)
                 {
-                    _logger.LogWarning("Cannot find blog ml post XML element with post name {PostName}", post.Name);
+                    logger.LogWarning("Cannot find blog ml post XML element with post name {PostName}", post.Name);
                     continue;
                 }
 
@@ -67,7 +58,7 @@ namespace Articulate.ImportExport
                 var xItem = new XElement(
                     "item",
                     new XElement("title", post.Name),
-                    new XElement("link", _publishedUrlProvider.GetUrl(post.Id, UrlMode.Absolute)),
+                    new XElement("link", publishedUrlProvider.GetUrl(post.Id, UrlMode.Absolute)),
                     new XElement(nsContent + "encoded", new XCData(body)),
                     new XElement(nsDsq + "thread_identifier", post.Key.ToString()),
                     new XElement(nsWp + "post_date_gmt", post.GetValue<DateTime>("publishedDate").ToUniversalTime().ToIsoString()),

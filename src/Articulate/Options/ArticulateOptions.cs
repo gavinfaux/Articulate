@@ -9,15 +9,13 @@ namespace Articulate.Options
         /// <summary>
         /// Constructor sets defaults
         /// </summary>
-        public ArticulateOptions()
-        {
+        public ArticulateOptions() =>
             GenerateExcerpt = val => val.DetectIsJson()
                 ? string.Empty
                 : val.StripHtml()
                     .DecodeHtml()
                     .NewLinesToSpaces()
                     .TruncateAtWord(200, string.Empty);
-        }
 
         /// <summary>
         /// Default is true and will generate an excerpt if it is blank, will be a truncated version based on the post content

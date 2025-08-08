@@ -26,39 +26,43 @@ namespace Articulate.Routing
         public override UrlInfo? GetUrl(IPublishedContent content, UrlMode mode, string? culture, Uri current)
         {
             if (content is
-                {
-                    ContentType.Alias: ArticulateConstants.ContentType.ArticulateRichText
-                    or ArticulateConstants.ContentType.ArticulateMarkdown
-                } &&
-                content.Parent() is not null)
+                    not
+                    {
+                        ContentType.Alias: ArticulateConstants.ContentType.ArticulateRichText
+                        or ArticulateConstants.ContentType.ArticulateMarkdown
+                    } ||
+                content.Parent() is null)
             {
-                if (content.Parent()?.Parent() is not null)
+                return null;
+            }
+
+            if (content.Parent()?.Parent() is not null)
+            {
+                var useDateFormat = content.Parent()?.Parent()?.Value<bool>("useDateFormatForUrl") ?? false;
+                if (!useDateFormat)
                 {
-                    var useDateFormat = content.Parent()?.Parent()?.Value<bool>("useDateFormatForUrl") ?? false;
-                    if (!useDateFormat)
-                    {
-                        return null;
-                    }
-                }
-
-                DateTime? date = content.Value<DateTime?>("publishedDate");
-                if (date is not null)
-                {
-                    var urlFolder = string.Format("{0}/{1:d2}/{2:d2}", date.Value.Year, date.Value.Month, date.Value.Day);
-                    IPublishedContent? parent = content.Parent();
-                    if (parent is null)
-                    {
-                        return null;
-                    }
-
-                    UrlInfo? parentPath = base.GetUrl(parent, mode, culture, current);
-                    var newUrl = parentPath?.Text.EnsureEndsWith("/") + urlFolder + "/" + content.UrlSegment?.EnsureEndsWith("/");
-
-                    return UrlInfo.Url(newUrl, culture);
+                    return null;
                 }
             }
 
-            return null;
+            DateTime? date = content.Value<DateTime?>("publishedDate");
+            if (date is null)
+            {
+                return null;
+            }
+
+            var urlFolder = $"{date.Value.Year}/{date.Value.Month:d2}/{date.Value.Day:d2}";
+            IPublishedContent? parent = content.Parent();
+            if (parent is null)
+            {
+                return null;
+            }
+
+            UrlInfo? parentPath = base.GetUrl(parent, mode, culture, current);
+            var newUrl = parentPath?.Text.EnsureEndsWith("/") + urlFolder + "/" + content.UrlSegment?.EnsureEndsWith("/");
+
+            return UrlInfo.Url(newUrl, culture);
+
         }
     }
 }

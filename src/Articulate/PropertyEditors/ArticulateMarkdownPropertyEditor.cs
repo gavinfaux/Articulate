@@ -7,7 +7,5 @@ namespace Articulate.PropertyEditors
 
     [DataEditor("Articulate.MarkdownEditor", ValueType = ValueTypes.Text, ValueEditorIsReusable = true)]
     public class ArticulateMarkdownPropertyEditor(IDataValueEditorFactory dataValueEditorFactor)
-        : MarkdownPropertyEditor(dataValueEditorFactor)
-    {
-    }
+        : MarkdownPropertyEditor(dataValueEditorFactor);
 }

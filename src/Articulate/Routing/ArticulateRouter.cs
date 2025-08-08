@@ -16,17 +16,17 @@ namespace Articulate.Routing
 {
     public class ArticulateRouter
     {
-        private static readonly Lock _sLocker = new Lock();
+        private static readonly Lock _sLocker = new();
         private static readonly string _sSearchControllerName = ControllerExtensions.GetControllerName<ArticulateSearchController>();
         private static readonly string _sOpenSearchControllerName = ControllerExtensions.GetControllerName<OpenSearchController>();
         private static readonly string _sRsdControllerName = ControllerExtensions.GetControllerName<RsdController>();
         private static readonly string _sWlwControllerName = ControllerExtensions.GetControllerName<WlwManifestController>();
         private static readonly string _sTagsControllerName = ControllerExtensions.GetControllerName<ArticulateTagsController>();
         private static readonly string _sRssControllerName = ControllerExtensions.GetControllerName<ArticulateRssController>();
-        private static readonly string _sMarkdownEditorControllerName = "MarkdownEditor";
+        private const string MarkdownEditorControllerName = "MarkdownEditor";
         private static readonly string _sMetaWeblogControllerName = ControllerExtensions.GetControllerName<MetaWeblogController>();
 
-        private readonly Dictionary<ArticulateRouteTemplate, ArticulateRootNodeCache> _routeCache = new();
+        private readonly Dictionary<ArticulateRouteTemplate, ArticulateRootNodeCache> _routeCache = [];
         private readonly IControllerActionSearcher _controllerActionSearcher;
         private readonly IScopeProvider _scopeProvider;
 
@@ -46,11 +46,13 @@ namespace Articulate.Routing
             foreach (KeyValuePair<ArticulateRouteTemplate, ArticulateRootNodeCache> item in _routeCache)
             {
                 var templateMatcher = new TemplateMatcher(item.Key.RouteTemplate, routeValues);
-                if (templateMatcher.TryMatch(path, routeValues))
+                if (!templateMatcher.TryMatch(path, routeValues))
                 {
-                    articulateRootNodeCache = item.Value;
-                    return true;
+                    continue;
                 }
+
+                articulateRootNodeCache = item.Value;
+                return true;
             }
 
             articulateRootNodeCache = null;
@@ -106,7 +108,8 @@ namespace Articulate.Routing
                         foreach (IPublishedContent articulateRootNode in nodeByPathGroup)
                         {
                             MapRssRoute(httpContext, rootNodePath, articulateRootNode, domains);
-                            MapMarkdownEditorRoute(httpContext, rootNodePath, articulateRootNode, domains);
+                            // TODO : Enable when Editor refactor to Alpine.js completd
+                            // MapMarkdownEditorRoute(httpContext, rootNodePath, articulateRootNode, domains);
                             MapAuthorsRssRoute(httpContext, rootNodePath, articulateRootNode, domains);
 
                             MapSearchRoute(httpContext, rootNodePath, articulateRootNode, domains);
@@ -252,7 +255,7 @@ namespace Articulate.Routing
         {
             RouteTemplate template = TemplateParser.Parse($"{rootNodePath}a-new");
             MapRoute(
-                _sMarkdownEditorControllerName,
+                MarkdownEditorControllerName,
                 "NewPost",
                 template,
                 httpContext,

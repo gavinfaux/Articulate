@@ -31,26 +31,27 @@ namespace Articulate.Extensions
 
         public static string SafeEncodeUrlSegments(this string urlPath)
         {
-            if (urlPath.InvariantStartsWith("http://") || urlPath.InvariantStartsWith("https://"))
+            if (!urlPath.InvariantStartsWith("http://") && !urlPath.InvariantStartsWith("https://"))
             {
-                if (Uri.IsWellFormedUriString(urlPath, UriKind.Absolute))
-                {
-                    return urlPath;
-                }
+                return EncodePath(urlPath);
+            }
 
-                if (Uri.TryCreate(urlPath, UriKind.Absolute, out Uri? url))
-                {
-                    return url.GetLeftPart(UriPartial.Authority) + url.AbsolutePath + url.Query;
-                }
+            if (Uri.IsWellFormedUriString(urlPath, UriKind.Absolute))
+            {
+                return urlPath;
+            }
+
+            if (Uri.TryCreate(urlPath, UriKind.Absolute, out Uri? url))
+            {
+                return url.GetLeftPart(UriPartial.Authority) + url.AbsolutePath + url.Query;
             }
 
             return EncodePath(urlPath);
 
         }
 
-        private static string EncodePath(string urlPath)
-        {
-            return string.Join(
+        private static string EncodePath(string urlPath) =>
+            string.Join(
                 "/",
                 urlPath.Split(['/'], StringSplitOptions.RemoveEmptyEntries)
                     .Select(x => HttpUtility.UrlEncode(x).Replace("+", "%20"))
@@ -58,6 +59,5 @@ namespace Articulate.Extensions
                     //we are not supporting dots in our URLs it's just too difficult to
                     // support across the board with all the different config options
                     .Select(x => x.Replace('.', '-')));
-        }
     }
 }

@@ -1,11 +1,15 @@
 #nullable enable
+using Microsoft.AspNetCore.Hosting;
 using Smidge;
 using Umbraco.Cms.Core.Composing;
+using Umbraco.Cms.Core.Extensions;
 
 namespace Articulate.Components
 {
-    public class ArticulateComponent(IBundleManager bundleManager) : IAsyncComponent
+    /// <inheritdoc />
+    public class ArticulateComponent(IBundleManager bundleManager, IWebHostEnvironment hostingEnvironment) : IAsyncComponent
     {
+        /// <inheritdoc />
         public Task InitializeAsync(bool isRestarting, CancellationToken cancellationToken)
         {
             foreach (DefaultThemes.DefaultTheme theme in DefaultThemes.AllThemes)
@@ -13,13 +17,16 @@ namespace Articulate.Components
                 theme.CreateBundles(bundleManager);
             }
 
-            // Create bundles for the markdown editor from the new subdirectories.
-            bundleManager.CreateJs("md-editor-js", "~/Views/Articulate/MarkdownEditor/assets/js/**/*.js");
-            bundleManager.CreateCss("md-editor-css", "~/Views/Articulate/MarkdownEditor/assets/css/**/*.css");
+            var systemPath = hostingEnvironment.MapPathContentRoot(PathHelper.SystemThemeViewPath);
+
+            // Create bundles for the markdown editor.
+            _ = bundleManager.CreateJs("md-editor-js", Path.Combine(systemPath, "MarkdownEditor", "assets/css/**/*.js"));
+            _ = bundleManager.CreateCss("md-editor-css", Path.Combine(systemPath, "MarkdownEditor", "assets/css/**/*.css"));
 
             return Task.CompletedTask;
         }
 
+        /// <inheritdoc />
         public Task TerminateAsync(bool isRestarting, CancellationToken cancellationToken) => Task.CompletedTask;
     }
 }

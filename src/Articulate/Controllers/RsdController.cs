@@ -16,20 +16,13 @@ namespace Articulate.Controllers
     /// Really simple discovery controller
     /// </summary>
     [ArticulateDynamicRoute]
-    public class RsdController : RenderController
+    public class RsdController(
+        UmbracoHelper umbracoHelper,
+        ILogger<RsdController> logger,
+        ICompositeViewEngine compositeViewEngine,
+        IUmbracoContextAccessor umbracoContextAccessor)
+        : RenderController(logger, compositeViewEngine, umbracoContextAccessor)
     {
-        private readonly UmbracoHelper _umbracoHelper;
-
-        public RsdController(
-            UmbracoHelper umbracoHelper,
-            ILogger<RsdController> logger,
-            ICompositeViewEngine compositeViewEngine,
-            IUmbracoContextAccessor umbracoContextAccessor)
-           : base(logger, compositeViewEngine, umbracoContextAccessor)
-        {
-            _umbracoHelper = umbracoHelper;
-        }
-
         /// <summary>
         /// Renders the RSD for the articulate node id
         /// </summary>
@@ -38,7 +31,7 @@ namespace Articulate.Controllers
         [HttpGet]
         public ActionResult Index(int id)
         {
-            IPublishedContent? node = _umbracoHelper.Content(id);
+            IPublishedContent? node = umbracoHelper.Content(id);
             if (node is null)
             {
                 return new NotFoundResult();
@@ -65,15 +58,8 @@ namespace Articulate.Controllers
         }
     }
 
-    internal class XmlResult : ActionResult
+    internal class XmlResult(XDocument xDocument) : ActionResult
     {
-        private readonly XDocument _xDocument;
-
-        public XmlResult(XDocument xDocument)
-        {
-            _xDocument = xDocument;
-        }
-
         /// <summary>
         /// Serialises the object that was passed into the constructor to XML and writes the corresponding XML to the result stream.
         /// </summary>
@@ -81,7 +67,7 @@ namespace Articulate.Controllers
         {
             context.HttpContext.Response.Clear();
             context.HttpContext.Response.ContentType = "text/xml";
-            await context.HttpContext.Response.WriteAsync(_xDocument.ToString()).ConfigureAwait(false);
+            await context.HttpContext.Response.WriteAsync(xDocument.ToString()).ConfigureAwait(false);
         }
     }
 }

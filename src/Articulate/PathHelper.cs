@@ -10,12 +10,13 @@ namespace Articulate
     /// </summary>
     public static class PathHelper
     {
-        public const string VirtualThemePath = "~/Views/Articulate/Themes";
-        public const string UserVirtualThemePath = "~/Views/ArticulateThemes";
+        public const string SystemViewPath = "Views/Articulate/_System";
+        public const string SystemThemeViewPath = SystemViewPath + "/Themes";
+        public const string UserViewPath = "Views/Articulate";
 
         /// <summary>
         /// Returns the root virtual path for a given theme.
-        /// e.g., "~/Views/Articulate/Themes/VAPOR"
+        /// e.g., “~/Views/Articulate/Themes/VAPOR”.
         /// </summary>
         public static string GetThemePath(string themeName)
         {
@@ -26,8 +27,8 @@ namespace Articulate
 
             // check if it's a built-in theme or a user theme.
             return DefaultThemes.IsDefaultTheme(themeName)
-                ? $"{VirtualThemePath}/{themeName}"
-                : $"{UserVirtualThemePath}/{themeName}";
+                ? Path.Combine(SystemViewPath, themeName)
+                : Path.Combine(UserViewPath, themeName);
         }
 
         // This overload now just a pass-through

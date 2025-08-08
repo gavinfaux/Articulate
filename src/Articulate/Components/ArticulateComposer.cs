@@ -4,6 +4,7 @@ using Articulate.Options;
 using Articulate.Routing;
 using Articulate.Services;
 using Articulate.Syndication;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
@@ -22,7 +23,6 @@ namespace Articulate.Components
             base.Compose(builder);
 
             IServiceCollection services = builder.Services;
-            services.AddSingleton<ContentUrls>();
             services.AddSingleton<BlogMlExporter>();
             services.AddSingleton<ArticulateTempFileSystem>();
             services.AddSingleton<IRssFeedGenerator, RssFeedGenerator>();
@@ -44,7 +44,8 @@ namespace Articulate.Components
             services.Configure<RazorViewEngineOptions>(options =>
             {
                 IArticulateThemeResolver themeResolver = services.BuildServiceProvider().GetRequiredService<IArticulateThemeResolver>();
-                options.ViewLocationExpanders.Add(new ArticulateViewLocationExpander(themeResolver));
+                IWebHostEnvironment hostEnvironment = services.BuildServiceProvider().GetRequiredService<IWebHostEnvironment>();
+                options.ViewLocationExpanders.Add(new ArticulateViewLocationExpander(themeResolver, hostEnvironment));
             });
             builder.UrlProviders().InsertBefore<NewDefaultUrlProvider, DateFormattedUrlProvider>();
 

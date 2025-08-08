@@ -15,24 +15,16 @@ namespace Articulate.Controllers
     /// Renders search results
     /// </summary>
     [ArticulateDynamicRoute]
-    public class ArticulateSearchController : ListControllerBase
+    public class ArticulateSearchController(
+        ILogger<ArticulateSearchController> logger,
+        ICompositeViewEngine compositeViewEngine,
+        IUmbracoContextAccessor umbracoContextAccessor,
+        IPublishedUrlProvider publishedUrlProvider,
+        IPublishedValueFallback publishedValueFallback,
+        IArticulateSearcher articulateSearcher)
+        : ListControllerBase(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider,
+            publishedValueFallback)
     {
-        private readonly IArticulateSearcher _articulateSearcher;
-        private readonly ILogger<ArticulateSearchController> _logger;
-
-        public ArticulateSearchController(
-            ILogger<ArticulateSearchController> logger,
-            ICompositeViewEngine compositeViewEngine,
-            IUmbracoContextAccessor umbracoContextAccessor,
-            IPublishedUrlProvider publishedUrlProvider,
-            IPublishedValueFallback publishedValueFallback,
-            IArticulateSearcher articulateSearcher)
-            : base(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider, publishedValueFallback)
-        {
-            _articulateSearcher = articulateSearcher;
-            _logger = logger;
-        }
-
         /// <summary>
         /// Used to render the search result listing (virtual node)
         /// </summary>
@@ -48,7 +40,7 @@ namespace Articulate.Controllers
         {
             if (CurrentPage is null)
             {
-                _logger.LogWarning("ArticulateSearchController.Search: CurrentPage is null, returning 404");
+                logger.LogWarning("ArticulateSearchController.Search: CurrentPage is null, returning 404");
                 return NotFound();
             }
 
@@ -85,7 +77,7 @@ namespace Articulate.Controllers
                 p = 1;
             }
 
-            IEnumerable<IPublishedContent>? searchResult = _articulateSearcher.Search(term, indexName, masterModel.BlogArchiveNode.Id, masterModel.PageSize, p.Value - 1, out var totalPosts);
+            IEnumerable<IPublishedContent>? searchResult = articulateSearcher.Search(term, indexName, masterModel.BlogArchiveNode.Id, masterModel.PageSize, p.Value - 1, out var totalPosts);
 
             return GetPagedListView(masterModel, CurrentPage, searchResult ?? [], totalPosts, p);
         }

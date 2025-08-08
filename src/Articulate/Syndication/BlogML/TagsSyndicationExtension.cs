@@ -6,16 +6,11 @@ using Argotic.Extensions;
 
 namespace Articulate.Syndication.BlogML
 {
-    public class TagsSyndicationExtension : SyndicationExtension, IComparable
+    public class TagsSyndicationExtension() : SyndicationExtension("tags", Namespace, new Version("1.0")), IComparable
     {
         private const string Namespace = "https://github.com/Shazwazza/Articulate/blogml/";
 
-        private TagsSyndicationExtensionContext _extensionContext = new TagsSyndicationExtensionContext();
-
-        public TagsSyndicationExtension()
-            : base("tags", Namespace, new Version("1.0"))
-        {
-        }
+        private TagsSyndicationExtensionContext _extensionContext = new();
 
         public TagsSyndicationExtensionContext Context
         {
@@ -27,29 +22,24 @@ namespace Articulate.Syndication.BlogML
             }
         }
 
-        public int CompareTo(object obj)
-        {
-            if (obj is null)
+        public int CompareTo(object obj) =>
+            obj switch
             {
-                return 1;
-            }
-
-            if (obj is TagsSyndicationExtension syndicationExtension)
-            {
-                return
+                null => 1,
+                TagsSyndicationExtension syndicationExtension =>
                     string.Compare(Description, syndicationExtension.Description, StringComparison.OrdinalIgnoreCase) |
-                    Uri.Compare(Documentation, syndicationExtension.Documentation, UriComponents.AbsoluteUri, UriFormat.SafeUnescaped, StringComparison.OrdinalIgnoreCase) |
+                    Uri.Compare(Documentation, syndicationExtension.Documentation, UriComponents.AbsoluteUri,
+                        UriFormat.SafeUnescaped, StringComparison.OrdinalIgnoreCase) |
                     string.Compare(Name, syndicationExtension.Name, StringComparison.OrdinalIgnoreCase) |
                     Version.CompareTo(syndicationExtension.Version) |
                     string.Compare(XmlNamespace, syndicationExtension.XmlNamespace, StringComparison.Ordinal) |
                     string.Compare(XmlPrefix, syndicationExtension.XmlPrefix, StringComparison.Ordinal) |
-                    ComparisonUtility.CompareSequence(Context.Tags, syndicationExtension.Context.Tags, StringComparison.OrdinalIgnoreCase);
-            }
-
-            throw new ArgumentException(
-                string.Format(null, "obj is not of type {0}, type was found to be '{1}'.", GetType().FullName,obj.GetType().FullName),
-                nameof(obj));
-        }
+                    ComparisonUtility.CompareSequence(Context.Tags, syndicationExtension.Context.Tags,
+                        StringComparison.OrdinalIgnoreCase),
+                _ => throw new ArgumentException(
+                    string.Format(null, "obj is not of type {0}, type was found to be '{1}'.", GetType().FullName,
+                        obj.GetType().FullName), nameof(obj))
+            };
 
         /// <inheritdoc />
         public override bool Load(IXPathNavigable source)
@@ -82,23 +72,21 @@ namespace Articulate.Syndication.BlogML
 
         public override string ToString()
         {
-            using (var memoryStream = new MemoryStream())
+            using var memoryStream = new MemoryStream();
+            using (var writer = XmlWriter.Create(memoryStream, new XmlWriterSettings
+                   {
+                       ConformanceLevel = ConformanceLevel.Fragment,
+                       Indent = true,
+                       OmitXmlDeclaration = true
+                   }))
             {
-                using (var writer = XmlWriter.Create(memoryStream, new XmlWriterSettings
-                {
-                    ConformanceLevel = ConformanceLevel.Fragment,
-                    Indent = true,
-                    OmitXmlDeclaration = true
-                }))
-                {
-                    WriteTo(writer);
-                }
+                WriteTo(writer);
+            }
 
-                memoryStream.Seek(0L, SeekOrigin.Begin);
-                using (var streamReader = new StreamReader(memoryStream))
-                {
-                    return streamReader.ReadToEnd();
-                }
+            memoryStream.Seek(0L, SeekOrigin.Begin);
+            using (var streamReader = new StreamReader(memoryStream))
+            {
+                return streamReader.ReadToEnd();
             }
         }
 

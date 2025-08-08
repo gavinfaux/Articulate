@@ -10,21 +10,13 @@ using Umbraco.Cms.Core.Services;
 namespace Articulate.Components
 {
 
-    public sealed class ContentSavingHandler : INotificationHandler<ContentSavingNotification>
+    public sealed class ContentSavingHandler(
+        IContentTypeService contentTypeService,
+        IBackOfficeSecurityAccessor backOfficeSecurityAccessor,
+        IOptions<ArticulateOptions> articulateOptions)
+        : INotificationHandler<ContentSavingNotification>
     {
-        private readonly IContentTypeService _contentTypeService;
-        private readonly IBackOfficeSecurityAccessor _backOfficeSecurityAccessor;
-        private readonly ArticulateOptions _articulateOptions;
-
-        public ContentSavingHandler(
-            IContentTypeService contentTypeService,
-            IBackOfficeSecurityAccessor backOfficeSecurityAccessor,
-            IOptions<ArticulateOptions> articulateOptions)
-        {
-            _contentTypeService = contentTypeService;
-            _backOfficeSecurityAccessor = backOfficeSecurityAccessor;
-            _articulateOptions = articulateOptions.Value;
-        }
+        private readonly ArticulateOptions _articulateOptions = articulateOptions.Value;
 
         public void Handle(ContentSavingNotification notification)
         {
@@ -34,7 +26,7 @@ namespace Articulate.Components
                 return;
             }
 
-            var contentTypes = _contentTypeService.GetMany(saved.Select(x => x.ContentTypeId).ToArray()).ToDictionary(x => x.Id);
+            var contentTypes = contentTypeService.GetMany(saved.Select(x => x.ContentTypeId).ToArray()).ToDictionary(x => x.Id);
 
             foreach (IContent content in saved)
             {
@@ -51,7 +43,7 @@ namespace Articulate.Components
                         "author",
                         contentTypes[content.ContentTypeId],
                         // if the author is not already set, then set it
-                        (c, _, culture) => c.GetValue("author", culture?.Culture) is null ? _backOfficeSecurityAccessor.BackOfficeSecurity?.CurrentUser?.Name : null);
+                        (c, _, culture) => c.GetValue("author", culture?.Culture) is null ? backOfficeSecurityAccessor.BackOfficeSecurity?.CurrentUser?.Name : null);
 
                     if (!content.HasIdentity)
                     {

@@ -16,17 +16,11 @@ namespace Articulate.Routing
     /// In some cases many articulate roots might be published at one time but we only want to rebuild the routes once so we'll do it once
     /// at the end of the request.
     /// </remarks>
-    internal class RouteCacheRefresherFilter : IActionFilter
+    internal class RouteCacheRefresherFilter(
+        IPublishedContentTypeCache publishedContentTypeCache,
+        IDocumentCacheService documentCacheService)
+        : IActionFilter
     {
-
-        private readonly IPublishedContentTypeCache _publishedContentTypeCache;
-        private readonly IDocumentCacheService _documentCacheService;
-
-        public RouteCacheRefresherFilter(IPublishedContentTypeCache publishedContentTypeCache, IDocumentCacheService documentCacheService)
-        {
-            _documentCacheService = documentCacheService;
-            _publishedContentTypeCache = publishedContentTypeCache;
-        }
         public void OnActionExecuted(ActionExecutedContext context) => PerformRefresh(context.HttpContext);
 
         public void OnActionExecuting(ActionExecutingContext context)
@@ -37,19 +31,19 @@ namespace Articulate.Routing
         {
             AppCaches appCaches = context.RequestServices.GetRequiredService<AppCaches>();
 
-            if (appCaches.RequestCache.GetCacheItem<bool?>(ArticulateConstants.RefreshRoutesToken) == true)
+            if (appCaches.RequestCache.GetCacheItem<bool?>(ArticulateConstants.RefreshRoutesToken) != true)
             {
-                IUmbracoContextFactory umbracoContextFactory = context.RequestServices.GetRequiredService<IUmbracoContextFactory>();
-                ArticulateRouter articulateRouter = context.RequestServices.GetRequiredService<ArticulateRouter>();
-
-                using (UmbracoContextReference umbracoContextReference = umbracoContextFactory.EnsureUmbracoContext())
-                {
-                    IUmbracoContext umbCtx = umbracoContextReference.UmbracoContext;
-
-                    // Regenerate the generated routes
-                    articulateRouter.MapRoutes(context, umbCtx, _publishedContentTypeCache, _documentCacheService);
-                }
+                return;
             }
+
+            IUmbracoContextFactory umbracoContextFactory = context.RequestServices.GetRequiredService<IUmbracoContextFactory>();
+            ArticulateRouter articulateRouter = context.RequestServices.GetRequiredService<ArticulateRouter>();
+
+            using UmbracoContextReference umbracoContextReference = umbracoContextFactory.EnsureUmbracoContext();
+            IUmbracoContext umbCtx = umbracoContextReference.UmbracoContext;
+
+            // Regenerate the generated routes
+            articulateRouter.MapRoutes(context, umbCtx, publishedContentTypeCache, documentCacheService);
         }
     }
 }

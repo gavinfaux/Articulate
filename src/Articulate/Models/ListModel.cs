@@ -85,7 +85,7 @@ namespace Articulate.Models
                 }
                 else
                 {
-                    _resolvedList = Enumerable.Empty<PostModel>();
+                    _resolvedList = [];
                 }
 
                 return _resolvedList;

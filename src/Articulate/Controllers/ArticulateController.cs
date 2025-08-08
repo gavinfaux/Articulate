@@ -14,24 +14,16 @@ namespace Articulate.Controllers
     /// <summary>
     /// Renders the Articulate root node as the main blog post list by date
     /// </summary>
-    public class ArticulateController : ListControllerBase
+    public class ArticulateController(
+        ILogger<ArticulateController> logger,
+        ICompositeViewEngine compositeViewEngine,
+        IUmbracoContextAccessor umbracoContextAccessor,
+        IPublishedUrlProvider publishedUrlProvider,
+        IPublishedValueFallback publishedValueFallback,
+        UmbracoHelper umbracoHelper)
+        : ListControllerBase(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider,
+            publishedValueFallback)
     {
-        private readonly UmbracoHelper _umbracoHelper;
-        private readonly ILogger<ArticulateController> _logger;
-
-        public ArticulateController(
-            ILogger<ArticulateController> logger,
-            ICompositeViewEngine compositeViewEngine,
-            IUmbracoContextAccessor umbracoContextAccessor,
-            IPublishedUrlProvider publishedUrlProvider,
-            IPublishedValueFallback publishedValueFallback,
-            UmbracoHelper umbracoHelper)
-            : base(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider, publishedValueFallback)
-        {
-            _umbracoHelper = umbracoHelper;
-            _logger = logger;
-        }
-
         /// <summary>
         /// Declare new Index action with optional page number
         /// </summary>
@@ -44,7 +36,7 @@ namespace Articulate.Controllers
                 return RenderView(new ContentModel(CurrentPage), p);
             }
 
-            _logger.LogWarning("ArticulateController.Index: CurrentPage is null, returning 404");
+            logger.LogWarning("ArticulateController.Index: CurrentPage is null, returning 404");
             return NotFound();
 
         }
@@ -67,9 +59,9 @@ namespace Articulate.Controllers
 
             var master = new MasterModel(model.Content, PublishedValueFallback);
 
-            var count = _umbracoHelper.GetPostCount(listNodes.Select(x => x.Id).ToArray());
+            var count = umbracoHelper.GetPostCount(listNodes.Select(x => x.Id).ToArray());
 
-            IEnumerable<PostModel> posts = _umbracoHelper.GetRecentPosts(
+            IEnumerable<PostModel> posts = umbracoHelper.GetRecentPosts(
                 master,
                 p ?? 1,
                 master.PageSize,

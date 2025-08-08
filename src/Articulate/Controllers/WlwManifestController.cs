@@ -12,27 +12,20 @@ using Umbraco.Cms.Web.Common.Controllers;
 namespace Articulate.Controllers
 {
     [ArticulateDynamicRoute]
-    public class WlwManifestController : RenderController
+    public class WlwManifestController(
+        UmbracoHelper umbraco,
+        ILogger<WlwManifestController> logger,
+        ICompositeViewEngine compositeViewEngine,
+        IUmbracoContextAccessor umbracoContextAccessor)
+        : RenderController(logger, compositeViewEngine, umbracoContextAccessor)
     {
-        private readonly UmbracoHelper _umbraco;
-
-        public WlwManifestController(
-            UmbracoHelper umbraco,
-            ILogger<WlwManifestController> logger,
-            ICompositeViewEngine compositeViewEngine,
-            IUmbracoContextAccessor umbracoContextAccessor)
-            : base(logger, compositeViewEngine, umbracoContextAccessor)
-        {
-            _umbraco = umbraco;
-        }
-
         //http://msdn.microsoft.com/en-us/library/bb463260.aspx
         //http://msdn.microsoft.com/en-us/library/bb463263.aspx
         //http://msdn.microsoft.com/en-us/library/bb463265.aspx
         [HttpGet]
         public ActionResult Index(int id)
         {
-            IPublishedContent? node = _umbraco.Content(id);
+            IPublishedContent? node = umbraco.Content(id);
             if (node is null)
             {
                 return new NotFoundResult();

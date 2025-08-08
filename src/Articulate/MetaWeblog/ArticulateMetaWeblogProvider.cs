@@ -84,11 +84,11 @@ namespace Articulate.MetaWeblog
             {
                 IMedia? root = _mediaService.GetRootMedia().FirstOrDefault(x =>
                     x.Name == ArticulateConstants.Convention.Articulate && x.ContentType.Alias.InvariantEquals(
-                        Umbraco.Cms.Core.Constants.Conventions.MediaTypes.Folder));
+                        Constants.Conventions.MediaTypes.Folder));
                 return root ?? _mediaService.CreateMediaWithIdentity(
                     ArticulateConstants.Convention.Articulate,
-                    Umbraco.Cms.Core.Constants.System.Root,
-                    Umbraco.Cms.Core.Constants.Conventions.MediaTypes.Folder);
+                    Constants.System.Root,
+                    Constants.Conventions.MediaTypes.Folder);
             });
         }
 
@@ -99,7 +99,7 @@ namespace Articulate.MetaWeblog
             IPublishedContent node = BlogRoot();
             BlogInfo[] blogs =
             [
-                new BlogInfo
+                new()
                 {
                     blogid = node.Id.ToString(),
                     blogName = node.Name,
@@ -239,19 +239,17 @@ namespace Articulate.MetaWeblog
             var bytes = Convert.FromBase64String(mediaObject.bits);
 
             // Save File
-            using (var ms = new MemoryStream(bytes))
+            using var ms = new MemoryStream(bytes);
+            var fileUrl = "articulate/" + mediaObject.name.ToSafeFileName(_shortStringHelper);
+            _mediaFileManager.FileSystem.AddFile(fileUrl, ms);
+            var absUrl = _mediaFileManager.FileSystem.GetUrl(fileUrl);
+
+            var result = new MediaObjectInfo
             {
-                var fileUrl = "articulate/" + mediaObject.name.ToSafeFileName(_shortStringHelper);
-                _mediaFileManager.FileSystem.AddFile(fileUrl, ms);
-                var absUrl = _mediaFileManager.FileSystem.GetUrl(fileUrl);
+                url = absUrl
+            };
 
-                var result = new MediaObjectInfo
-                {
-                    url = absUrl
-                };
-
-                return result;
-            }
+            return result;
         }
 
         public async Task<bool> EditPostAsync(string postid, string username, string password, Post post, bool publish)
@@ -320,15 +318,16 @@ namespace Articulate.MetaWeblog
                 // which is what we want, if it's a custom file system it will update it to it's absolute path.
                 var contentToSave = ArticulateMetaWeblogRegexes.MediaSourceRegex().Replace(post.description, match =>
                 {
-                    if (match.Groups.Count == 2)
+                    if (match.Groups.Count != 2)
                     {
-                        var relativePath = match.Groups[1].Value;
-                        var mediaFileSystemPath = _mediaFileManager.FileSystem.GetUrl(relativePath);
-
-                        return " src=\"" + mediaFileSystemPath + "\"";
+                        return string.Empty;
                     }
 
-                    return string.Empty;
+                    var relativePath = match.Groups[1].Value;
+                    var mediaFileSystemPath = _mediaFileManager.FileSystem.GetUrl(relativePath);
+
+                    return " src=\"" + mediaFileSystemPath + "\"";
+
                 });
 
                 var imagesProcessed = 0;
@@ -337,21 +336,22 @@ namespace Articulate.MetaWeblog
                 // and the media file system path is re-updated as per above
                 contentToSave = ArticulateMetaWeblogRegexes.MediaHrefRegex().Replace(contentToSave, match =>
                 {
-                    if (match.Groups.Count == 2)
+                    if (match.Groups.Count != 2)
                     {
-                        var relativePath = match.Groups[1].Value;
-                        var mediaFileSystemPath = _mediaFileManager.FileSystem.GetUrl(relativePath);
+                        return string.Empty;
+                    }
 
-                        var href = " href=\"" +
+                    var relativePath = match.Groups[1].Value;
+                    var mediaFileSystemPath = _mediaFileManager.FileSystem.GetUrl(relativePath);
+
+                    var href = " href=\"" +
                                mediaFileSystemPath +
                                "\" class=\"a-image-" + imagesProcessed + "\" ";
 
-                        imagesProcessed++;
+                    imagesProcessed++;
 
-                        return href;
-                    }
+                    return href;
 
-                    return string.Empty;
                 });
 
                 content.SetInvariantOrDefaultCultureValue("richText", contentToSave, contentType, _languageService);
@@ -363,30 +363,28 @@ namespace Articulate.MetaWeblog
                     {
                         try
                         {
-                            using (Stream fileStream = _mediaFileManager.FileSystem.OpenFile(firstImageRelativePath))
-                            {
-                                var fileName = Path.GetFileName(firstImageRelativePath);
+                            using Stream fileStream = _mediaFileManager.FileSystem.OpenFile(firstImageRelativePath);
+                            var fileName = Path.GetFileName(firstImageRelativePath);
 
-                                IMedia mediaItem = _mediaService.CreateMedia(fileName, _articulateRootMediaFolder.Value, Umbraco.Cms.Core.Constants.Conventions.MediaTypes.Image);
-                                mediaItem.SetValue(
-                                    _mediaFileManager,
-                                    _mediaUrlGenerators,
-                                    _shortStringHelper,
-                                    _contentTypeBaseServiceProvider,
-                                    Umbraco.Cms.Core.Constants.Conventions.Media.File,
-                                    fileName,
-                                    fileStream);
+                            IMedia mediaItem = _mediaService.CreateMedia(fileName, _articulateRootMediaFolder.Value, Constants.Conventions.MediaTypes.Image);
+                            mediaItem.SetValue(
+                                _mediaFileManager,
+                                _mediaUrlGenerators,
+                                _shortStringHelper,
+                                _contentTypeBaseServiceProvider,
+                                Constants.Conventions.Media.File,
+                                fileName,
+                                fileStream);
 
-                                _mediaService.Save(mediaItem);
+                            _mediaService.Save(mediaItem);
 
-                                var udi = Udi.Create(Umbraco.Cms.Core.Constants.UdiEntityType.Media, mediaItem.Key);
+                            var udi = Udi.Create(Constants.UdiEntityType.Media, mediaItem.Key);
 
-                                content.SetInvariantOrDefaultCultureValue(
-                                    "postImage",
-                                    udi.ToString(),
-                                    contentType,
-                                    _languageService);
-                            }
+                            content.SetInvariantOrDefaultCultureValue(
+                                "postImage",
+                                udi.ToString(),
+                                contentType,
+                                _languageService);
                         }
                         catch (Exception ex)
                         {
@@ -399,7 +397,7 @@ namespace Articulate.MetaWeblog
 
             if (!post.link.IsNullOrWhiteSpace())
             {
-                content.SetInvariantOrDefaultCultureValue(Umbraco.Cms.Core.Constants.Conventions.Content.UrlName, post.link, contentType, _languageService);
+                content.SetInvariantOrDefaultCultureValue(Constants.Conventions.Content.UrlName, post.link, contentType, _languageService);
             }
 
             if (!post.mt_excerpt.IsNullOrWhiteSpace())
@@ -407,18 +405,19 @@ namespace Articulate.MetaWeblog
                 content.SetInvariantOrDefaultCultureValue("excerpt", post.mt_excerpt, contentType, _languageService);
             }
 
-            if (post.mt_allow_comments == 1)
+            switch (post.mt_allow_comments)
             {
-                content.SetInvariantOrDefaultCultureValue("enableComments", 1, contentType, _languageService);
-            }
-            else if (post.mt_allow_comments == 2)
-            {
-                content.SetInvariantOrDefaultCultureValue("enableComments", 0, contentType, _languageService);
+                case 1:
+                    content.SetInvariantOrDefaultCultureValue("enableComments", 1, contentType, _languageService);
+                    break;
+                case 2:
+                    content.SetInvariantOrDefaultCultureValue("enableComments", 0, contentType, _languageService);
+                    break;
             }
 
             content.AssignInvariantOrDefaultCultureTags("categories", post.categories, contentType, _languageService, _dataTypeService, _propertyEditors, _jsonSerializer);
             var tags = post.mt_keywords
-                .Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                .Split([','], StringSplitOptions.RemoveEmptyEntries)
                 .Select(x => x.Trim())
                 .Distinct()
                 .ToArray();
@@ -465,7 +464,7 @@ namespace Articulate.MetaWeblog
             title = post.Name
         };
 
-        private Post FromContent(IContent post) => new Post
+        private Post FromContent(IContent post) => new()
         {
             title = post.Name,
             postid = post.Id.ToString(CultureInfo.InvariantCulture),
@@ -485,9 +484,9 @@ namespace Articulate.MetaWeblog
             ? post.GetValue<string>("richText")
             : MarkdownHelper.ToHtml(post.GetValue<string>("markdown")),
 
-            permalink = post.GetValue<string>(Umbraco.Cms.Core.Constants.Conventions.Content.UrlName).IsNullOrWhiteSpace()
+            permalink = post.GetValue<string>(Constants.Conventions.Content.UrlName).IsNullOrWhiteSpace()
             ? post.Name?.ToUrlSegment(_shortStringHelper)
-            : post.GetValue<string>(Umbraco.Cms.Core.Constants.Conventions.Content.UrlName)?.ToUrlSegment(_shortStringHelper)
+            : post.GetValue<string>(Constants.Conventions.Content.UrlName)?.ToUrlSegment(_shortStringHelper)
         };
 
         private IPublishedContent BlogRoot()

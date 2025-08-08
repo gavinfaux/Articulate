@@ -13,23 +13,14 @@ using Umbraco.Cms.Web.Common.Controllers;
 namespace Articulate.Controllers
 {
     [ArticulateDynamicRoute]
-    public class OpenSearchController : RenderController
+    public class OpenSearchController(
+        IPublishedValueFallback publishedValueFallback,
+        UmbracoHelper umbraco,
+        ILogger<OpenSearchController> logger,
+        ICompositeViewEngine compositeViewEngine,
+        IUmbracoContextAccessor umbracoContextAccessor)
+        : RenderController(logger, compositeViewEngine, umbracoContextAccessor)
     {
-        private readonly IPublishedValueFallback _publishedValueFallback;
-        private readonly UmbracoHelper _umbraco;
-
-        public OpenSearchController(
-            IPublishedValueFallback publishedValueFallback,
-            UmbracoHelper umbraco,
-            ILogger<OpenSearchController> logger,
-            ICompositeViewEngine compositeViewEngine,
-            IUmbracoContextAccessor umbracoContextAccessor)
-            : base(logger, compositeViewEngine, umbracoContextAccessor)
-        {
-            _publishedValueFallback = publishedValueFallback;
-            _umbraco = umbraco;
-        }
-
         [HttpGet]
         public ActionResult Index(int id)
         {
@@ -63,13 +54,13 @@ namespace Articulate.Controllers
             //      template="http://aaron.pk/search?q={searchTerms}"/>
             //</OpenSearchDescription>
 
-            IPublishedContent? node = _umbraco.Content(id);
+            IPublishedContent? node = umbraco.Content(id);
             if (node is null)
             {
                 return new NotFoundResult();
             }
 
-            var model = new MasterModel(node, _publishedValueFallback);
+            var model = new MasterModel(node, publishedValueFallback);
 
             var searchTemplateUrl = model.ArticulateSearchUrl(includeDomain: true) + "?term={searchTerms}";
 

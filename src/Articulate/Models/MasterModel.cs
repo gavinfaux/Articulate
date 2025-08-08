@@ -6,14 +6,9 @@ namespace Articulate.Models
     /// <summary>
     /// The basic model for all articulate objects
     /// </summary>
-    public class MasterModel : PublishedContentWrapped, IMasterModel
+    public class MasterModel(IPublishedContent content, IPublishedValueFallback publishedValueFallback)
+        : PublishedContentWrapped(content, publishedValueFallback), IMasterModel
     {
-        public MasterModel(IPublishedContent content, IPublishedValueFallback publishedValueFallback)
-            : base(content, publishedValueFallback)
-        {
-            PublishedValueFallback = publishedValueFallback;
-        }
-
         /// <summary>
         /// Returns the current theme
         /// </summary>
@@ -144,6 +139,6 @@ namespace Articulate.Models
         }
 
         public string PageTags { get; protected set; }
-        protected IPublishedValueFallback PublishedValueFallback { get; }
+        protected IPublishedValueFallback PublishedValueFallback { get; } = publishedValueFallback;
     }
 }

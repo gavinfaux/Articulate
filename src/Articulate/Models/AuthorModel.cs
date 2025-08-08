@@ -4,20 +4,15 @@ using Umbraco.Cms.Core.Models.PublishedContent;
 
 namespace Articulate.Models
 {
-    public class AuthorModel : ListModel, IImageModel
+    public class AuthorModel(
+        IPublishedContent? content,
+        IEnumerable<IPublishedContent>? listItems,
+        PagerModel? pager,
+        int postCount,
+        IPublishedValueFallback publishedValueFallback)
+        : ListModel(content, pager, listItems, publishedValueFallback), IImageModel
     {
         private DateTime? _lastPostDate;
-
-        public AuthorModel(
-            IPublishedContent? content,
-            IEnumerable<IPublishedContent>? listItems,
-            PagerModel? pager,
-            int postCount,
-            IPublishedValueFallback publishedValueFallback)
-            : base(content, pager, listItems, publishedValueFallback)
-        {
-            PostCount = postCount;
-        }
 
         public string Bio => this.Value<string>("authorBio") ?? string.Empty;
 
@@ -26,7 +21,7 @@ namespace Articulate.Models
         private MediaWithCrops? _image;
         public MediaWithCrops? Image => _image ??= Unwrap().Value<MediaWithCrops>("authorImage");
 
-        public int PostCount { get; }
+        public int PostCount { get; } = postCount;
 
         //We know the list of posts passed in is already ordered descending so get the first
         [Obsolete("Please use TryGetChildrenKeys() on IDocumentNavigationQueryService or IMediaNavigationQueryService instead. Scheduled for removal in V16.", false)]

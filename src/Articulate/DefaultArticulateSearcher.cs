@@ -7,20 +7,14 @@ using Umbraco.Cms.Core.Web;
 
 namespace Articulate
 {
-    public class DefaultArticulateSearcher : IArticulateSearcher
+    public class DefaultArticulateSearcher(
+        IUmbracoContextAccessor umbracoContextAccessor,
+        IExamineManager examineManager)
+        : IArticulateSearcher
     {
-        private readonly IUmbracoContextAccessor _umbracoContextAccessor;
-        private readonly IExamineManager _examineManager;
-
-        public DefaultArticulateSearcher(IUmbracoContextAccessor umbracoContextAccessor, IExamineManager examineManager)
-        {
-            _umbracoContextAccessor = umbracoContextAccessor;
-            _examineManager = examineManager;
-        }
-
         public IEnumerable<IPublishedContent> Search(string term, string? indexName, int blogArchiveNodeId, int pageSize, int pageIndex, out long totalResults)
         {
-            var splitSearch = term.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            var splitSearch = term.Split([' '], StringSplitOptions.RemoveEmptyEntries);
 
             //The fields to search on and their 'weight' (importance)
             var fields = new Dictionary<string, int>
@@ -61,7 +55,7 @@ namespace Articulate
 
             indexName = indexName.IsNullOrWhiteSpace() ? Umbraco.Cms.Core.Constants.UmbracoIndexes.ExternalIndexName : indexName;
 
-            if (!_examineManager.TryGetIndex(indexName, out IIndex? index) || index is null)
+            if (!examineManager.TryGetIndex(indexName, out IIndex? index) || index is null)
             {
                 throw new InvalidOperationException("No index found by name " + indexName);
             }
@@ -77,7 +71,7 @@ namespace Articulate
 
             IEnumerable<PublishedSearchResult> result = searchResult
                 .Skip(pageIndex * pageSize)
-                .ToPublishedSearchResults(_umbracoContextAccessor.GetRequiredUmbracoContext().Content);
+                .ToPublishedSearchResults(umbracoContextAccessor.GetRequiredUmbracoContext().Content);
 
             totalResults = searchResult.TotalItemCount;
 

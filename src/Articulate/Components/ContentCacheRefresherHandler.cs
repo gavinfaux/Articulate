@@ -13,28 +13,14 @@ using Umbraco.Cms.Infrastructure.Scoping;
 
 namespace Articulate.Components
 {
-    public sealed class ContentCacheRefresherHandler : INotificationHandler<ContentCacheRefresherNotification>
+    public sealed class ContentCacheRefresherHandler(
+        IUmbracoContextAccessor umbracoContextAccessor,
+        AppCaches appCaches,
+        IPublishedContentTypeCache publishedContentTypeCache,
+        IDocumentCacheService documentCacheService,
+        IScopeProvider scopeProvider)
+        : INotificationHandler<ContentCacheRefresherNotification>
     {
-        private readonly IUmbracoContextAccessor _umbracoContextAccessor;
-        private readonly AppCaches _appCaches;
-        private readonly IPublishedContentTypeCache _publishedContentTypeCache;
-        private readonly IDocumentCacheService _documentCacheService;
-        private readonly IScopeProvider _scopeProvider;
-
-        public ContentCacheRefresherHandler(
-            IUmbracoContextAccessor umbracoContextAccessor,
-            AppCaches appCaches,
-            IPublishedContentTypeCache publishedContentTypeCache,
-            IDocumentCacheService documentCacheService,
-            IScopeProvider scopeProvider)
-        {
-            _umbracoContextAccessor = umbracoContextAccessor;
-            _appCaches = appCaches;
-            _publishedContentTypeCache = publishedContentTypeCache;
-            _documentCacheService = documentCacheService;
-            _scopeProvider = scopeProvider;
-        }
-
         /// <summary>
         /// When the page/content cache is refreshed, we'll check if any articulate root nodes were included in the refresh, if so we'll set a flag
         /// on the current request to rebuild the routes at the end of the request
@@ -71,7 +57,7 @@ namespace Articulate.Components
                     if (content.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.Articulate))
                     {
                         //ensure routes are rebuilt
-                        _appCaches.RequestCache.GetCacheItem(ArticulateConstants.RefreshRoutesToken, () => true);
+                        appCaches.RequestCache.GetCacheItem(ArticulateConstants.RefreshRoutesToken, () => true);
                     }
 
                     break;
@@ -84,12 +70,12 @@ namespace Articulate.Components
 
         private void RefreshById(int id)
         {
-            if (!_umbracoContextAccessor.TryGetUmbracoContext(out IUmbracoContext? umbracoContext))
+            if (!umbracoContextAccessor.TryGetUmbracoContext(out IUmbracoContext? umbracoContext))
             {
                 return;
             }
 
-            using (_scopeProvider.CreateScope(autoComplete: true))
+            using (scopeProvider.CreateScope(autoComplete: true))
             {
                 IPublishedContent? item = umbracoContext.Content.GetById(id);
 
@@ -97,7 +83,7 @@ namespace Articulate.Components
                 if (item is not null && item.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.Articulate))
                 {
                     //ensure routes are rebuilt
-                    _appCaches.RequestCache.GetCacheItem(ArticulateConstants.RefreshRoutesToken, () => true);
+                    appCaches.RequestCache.GetCacheItem(ArticulateConstants.RefreshRoutesToken, () => true);
                     return;
                 }
 
@@ -112,26 +98,20 @@ namespace Articulate.Components
                     // For now we have no choice, rebuild routes on each delete :/
                     if (item is null)
                     {
-                        _appCaches.RequestCache.GetCacheItem(ArticulateConstants.RefreshRoutesToken, () => true);
+                        appCaches.RequestCache.GetCacheItem(ArticulateConstants.RefreshRoutesToken, () => true);
                         return;
                     }
                 }
 
-                IPublishedContentType articulateContentType = _publishedContentTypeCache.Get(PublishedItemType.Content, ArticulateConstants.ContentType.Articulate);
+                IPublishedContentType articulateContentType = publishedContentTypeCache.Get(PublishedItemType.Content, ArticulateConstants.ContentType.Articulate);
 
-                IEnumerable<IPublishedContent> articulateNodes = _documentCacheService.GetByContentType(articulateContentType);
-                foreach (IPublishedContent node in articulateNodes)
+                IEnumerable<IPublishedContent> articulateNodes = documentCacheService.GetByContentType(articulateContentType);
+                if (!articulateNodes.Any(node => node.Level == item.Level && node.SortOrder > item.SortOrder))
                 {
-                    // if the item is same level with a lower sort order it can directly affect the articulate node's route
-                    if (node.Level != item.Level || node.SortOrder <= item.SortOrder)
-                    {
-                        continue;
-                    }
-
-                    //ensure routes are rebuilt
-                    _appCaches.RequestCache.GetCacheItem(ArticulateConstants.RefreshRoutesToken, () => true);
                     return;
                 }
+
+                appCaches.RequestCache.GetCacheItem(ArticulateConstants.RefreshRoutesToken, () => true);
             }
         }
     }

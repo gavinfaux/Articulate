@@ -97,17 +97,11 @@ namespace Articulate.Models
         /// </summary>
         public string SocialMetaDescription => this.Value<string>("socialDescription") ?? string.Empty;
 
-        public IHtmlContent Body
-        {
-            get
-            {
-                return new HtmlString(
-                    this.Value<IHtmlEncodedString>(
+        public IHtmlContent Body =>
+            new HtmlString(
+                this.Value<IHtmlEncodedString>(
                         this.HasProperty("richText") ? "richText" : "markdown")
-                        ?.ToHtmlString());
-
-            }
-        }
+                    ?.ToHtmlString());
 
         public string ExternalUrl => this.Value<string>("externalUrl") ?? string.Empty;
 

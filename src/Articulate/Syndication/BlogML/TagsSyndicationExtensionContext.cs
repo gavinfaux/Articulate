@@ -9,12 +9,7 @@ namespace Articulate.Syndication.BlogML
     [Serializable]
     public class TagsSyndicationExtensionContext
     {
-        private Collection<string> _extensionTags;
-
-        public TagsSyndicationExtensionContext()
-        {
-            _extensionTags = new Collection<string>();
-        }
+        private Collection<string> _extensionTags = [];
 
         public Collection<string> Tags
         {
@@ -26,29 +21,35 @@ namespace Articulate.Syndication.BlogML
             var flag = false;
             Guard.ArgumentNotNull(source, "source");
             Guard.ArgumentNotNull(manager, "manager");
-            if (source.HasChildren)
+            if (!source.HasChildren)
             {
-                XPathNavigator? xpathNavigator = source.SelectSingleNode("tags");
-                if (xpathNavigator is not null)
-                {
-                    XPathNodeIterator xpathTagIterator = source.Select("tag");
-                    if (xpathTagIterator.Count > 0)
-                    {
-                        while (xpathTagIterator.MoveNext())
-                        {
-                            if (xpathTagIterator.Current is { HasAttributes: true })
-                            {
-                                var tag = xpathTagIterator.Current.GetAttribute("ref", manager.DefaultNamespace);
-                                if (!string.IsNullOrEmpty(tag))
-                                {
-                                    Tags.Add(tag);
-                                }
-                            }
+                return flag;
+            }
 
-                            flag = true;
-                        }
+            XPathNavigator? xpathNavigator = source.SelectSingleNode("tags");
+            if (xpathNavigator is null)
+            {
+                return flag;
+            }
+
+            XPathNodeIterator xpathTagIterator = source.Select("tag");
+            if (xpathTagIterator.Count <= 0)
+            {
+                return flag;
+            }
+
+            while (xpathTagIterator.MoveNext())
+            {
+                if (xpathTagIterator.Current is { HasAttributes: true })
+                {
+                    var tag = xpathTagIterator.Current.GetAttribute("ref", manager.DefaultNamespace);
+                    if (!string.IsNullOrEmpty(tag))
+                    {
+                        Tags.Add(tag);
                     }
                 }
+
+                flag = true;
             }
 
             return flag;

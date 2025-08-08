@@ -14,24 +14,17 @@ namespace Articulate.Controllers
     /// <summary>
     /// Renders the Articulate Archive node as a blog post list by date
     /// </summary>
-    public class ArticulateArchiveController : ListControllerBase
+    public class ArticulateArchiveController(
+        ILogger<ArticulateArchiveController> logger,
+        ICompositeViewEngine compositeViewEngine,
+        IUmbracoContextAccessor umbracoContextAccessor,
+        IPublishedUrlProvider publishedUrlProvider,
+        IPublishedValueFallback publishedValueFallback,
+        UmbracoHelper umbraco)
+        : ListControllerBase(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider,
+            publishedValueFallback)
     {
-        private readonly ILogger<ArticulateArchiveController> _logger;
-
-        public ArticulateArchiveController(
-            ILogger<ArticulateArchiveController> logger,
-            ICompositeViewEngine compositeViewEngine,
-            IUmbracoContextAccessor umbracoContextAccessor,
-            IPublishedUrlProvider publishedUrlProvider,
-            IPublishedValueFallback publishedValueFallback,
-            UmbracoHelper umbraco)
-            : base(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider, publishedValueFallback)
-        {
-            Umbraco = umbraco;
-            _logger = logger;
-        }
-
-        private UmbracoHelper Umbraco { get; }
+        private UmbracoHelper Umbraco { get; } = umbraco;
 
         /// <summary>
         /// Declare new Index action with optional page number
@@ -45,7 +38,7 @@ namespace Articulate.Controllers
                 return RenderView(new ContentModel(CurrentPage), p);
             }
 
-            _logger.LogWarning("ArticulateArchiveController.Index: CurrentPage is null, returning 404");
+            logger.LogWarning("ArticulateArchiveController.Index: CurrentPage is null, returning 404");
             return NotFound();
         }
 

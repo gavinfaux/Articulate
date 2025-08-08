@@ -1,17 +1,17 @@
 #nullable enable
 using Articulate.Services;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Razor;
 
 namespace Articulate.Components
 {
-
     /*
      * TODO: Future refactor - Modernize the Articulate Theming System
      *
      * GOAL: Move from a "copy-based" theme system to a more flexible and maintainable "inheritance-based" system.
      *
      * 1. CREATE A BASE/FALLBACK THEME:
-     *  - Establish a complete, working "base" theme in a dedicated folder (e.g., ~/Views/Articulate/Themes/Shared/).
+     *  - Establish a complete, working "base" theme in a dedicated folder (e.g., ~/Views/Articulate/_System/Themes/Shared/).
      *  - This base theme should provide all structural views and partials.
      *  - Use optional @sections to define "slots" for features (e.g., @await RenderSectionAsync("Pager", required: false)). This allows child themes to easily remove features by not defining the section.
      *
@@ -27,9 +27,9 @@ namespace Articulate.Components
      * 4. REPURPOSE THE 'COPY THEME' FEATURE:
      *   - Modify the 'Copy Theme' service so it either no longer clones an entire theme, or add a 'New Theme' option that acts as a "scaffolding" tool, creating a new, empty theme folder with perhaps a readme.txt and a few example override files to get the user started.
      *
-     App_Plugins/
-       Articulate/
-       |-- _ViewImports.cshtml             <-- GLOBAL imports for ALL views (themes, frontend, backoffice, etc.)
+     Views/
+       Articulate/_System/
+       |-- _ViewImports.cshtml             <-- imports for System views (themes, frontend, backoffice, etc.)
        |-- MarkdownEditor                  <-- Markdown editor (group by feature)
        |-- |-- MarkdownEditor.cshtml
        |   |   |-- Assets/
@@ -46,7 +46,7 @@ namespace Articulate.Components
        |   |   |-- Partials/
        |   |     |-- Pager.cshtml
        |   |-- VAPOR/                      <-- Specific theme override.
-       |   |   |-- _Layout.cshtml          <-- Override the Shared/_Layout.cshtml, own layout or slot overrides, or no layout
+       |   |   |-- _Layout.cshtml          <-- Override the Shared/_Layout.cshtml, layout/slot overrides
        |   |   |-- _ViewStart.cshtml
        |   |   |-- _ViewImports.cshtml     <-- OPTIONAL: Adds VAPOR-specific @using statements or tag helpers
        |   |   |-- Post.cshtml             <-- Overrides the Shared/Post.cshtml
@@ -59,20 +59,31 @@ namespace Articulate.Components
        |   |-- Material/
        |   |   |-- _ViewStart.cshtml       <-- REQUIRED, minimal @{ Layout = "_Layout.cshtml"; }, uses theme or fallback to shared
        |   |-- ... etc ...
+       Articulate
+       |-- _ViewImports.cshtml             <-- common theme imports
+       |   |-- Material/                   <-- System theme overrides
+       |   |-- MyTheme/                    <-- user theme
+       |-- |-- _ViewImports.cshtml             <-- user additions
+       |   |-- ... etc ...
+       |-- ... etc ...
      */
 
     // This will first try to find the View in User themes, then in System themes.
     // User themes can override System themes (a Post.cshtml in User theme folder with the same name as a system theme will take precedence).
-    public class ArticulateViewLocationExpander(IArticulateThemeResolver themeResolver) : IViewLocationExpander
+
+    /// <inheritdoc />
+    public class ArticulateViewLocationExpander(IArticulateThemeResolver themeResolver, IWebHostEnvironment hostingEnvironment) : IViewLocationExpander
     {
         private const string ThemeKey = "articulate-theme";
 
+        /// <inheritdoc />
         public void PopulateValues(ViewLocationExpanderContext context)
         {
-            var themeName = themeResolver.GetCurrentThemeName();
+            var themeName = themeResolver.GetCurrentThemeName() ?? string.Empty;
             context.Values[ThemeKey] = themeName;
         }
 
+        /// <inheritdoc />
         public IEnumerable<string> ExpandViewLocations(ViewLocationExpanderContext context, IEnumerable<string> viewLocations)
         {
             if (!context.Values.TryGetValue(ThemeKey, out var themeName) || string.IsNullOrEmpty(themeName))
@@ -80,25 +91,27 @@ namespace Articulate.Components
                 return viewLocations;
             }
 
+            var userViewsPath = Path.Combine(hostingEnvironment.ContentRootPath, PathHelper.UserViewPath);
+            var systemViewsPath = Path.Combine(hostingEnvironment.ContentRootPath, PathHelper.SystemThemeViewPath);
+            const string viewPlaceHolder = "{0}.cshtml";
+            var partialPlaceHolder = Path.Combine("Partials", viewPlaceHolder);
             var themeLocations = new[]
             {
-                // User themes take priority over system themes, allows overriding system themes.
-                $"wwwroot/Views/ArticulateThemes/{themeName}/{{0}}.cshtml",
-                $"wwwroot/Views/ArticulateThemes/{themeName}/Partials/{{0}}.cshtml",
+                // User themes take priority over system themes, allows overrides.
+                Path.Combine(userViewsPath, themeName, viewPlaceHolder),
+                Path.Combine(userViewsPath, themeName, partialPlaceHolder),
 
                 // System themes
-                $"wwwroot/Views/Articulate/Themes/{themeName}/{{0}}.cshtml",
-                $"wwwroot/Views/Articulate/Themes/{themeName}/Partials/{{0}}.cshtml",
+                Path.Combine(systemViewsPath, themeName, viewPlaceHolder),
+                Path.Combine(systemViewsPath, themeName, partialPlaceHolder),
 
-                // Markdown Editor (does not have a theme, but routed via Articulate root node, so themeName found)
-                "wwwroot/Views/Articulate/MarkdownEditor/{0}.cshtml"
-
+                // MarkdownEditor has no theme, but routed via Articulate root node, so themeName found
+                Path.Combine(systemViewsPath, "MarkdownEditor", viewPlaceHolder)
             };
 
             IEnumerable<string> locations = themeLocations.Concat(viewLocations);
 
             return locations;
-
         }
     }
 }

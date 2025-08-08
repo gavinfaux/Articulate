@@ -17,65 +17,40 @@ using Umbraco.Cms.Infrastructure.Persistence;
 
 namespace Articulate.ImportExport
 {
-    public class BlogMlExporter
+    public class BlogMlExporter(
+        IContentService contentService,
+        IMediaService mediaService,
+        IContentTypeService contentTypeService,
+        IDataTypeService dataTypeService,
+        ITagService tagService,
+        MediaFileManager mediaFileManager,
+        ArticulateTempFileSystem articulateTempFileSystem,
+        IPublishedUrlProvider urlProvider,
+        ISqlContext sqlContext,
+        ILogger<BlogMlExporter> logger)
     {
-        private readonly IContentService _contentService;
-        private readonly IMediaService _mediaService;
-        private readonly IContentTypeService _contentTypeService;
-        private readonly IDataTypeService _dataTypeService;
-        private readonly ITagService _tagService;
-        private readonly IPublishedUrlProvider _urlProvider;
-        private readonly ISqlContext _sqlContext;
-        private readonly ILogger<BlogMlExporter> _logger;
-        private readonly MediaFileManager _mediaFileManager;
-        private readonly ArticulateTempFileSystem _articulateTempFileSystem;
-
-        public BlogMlExporter(
-            IContentService contentService,
-            IMediaService mediaService,
-            IContentTypeService contentTypeService,
-            IDataTypeService dataTypeService,
-            ITagService tagService,
-            MediaFileManager mediaFileManager,
-            ArticulateTempFileSystem articulateTempFileSystem,
-            IPublishedUrlProvider urlProvider,
-            ISqlContext sqlContext,
-            ILogger<BlogMlExporter> logger)
-        {
-            _mediaFileManager = mediaFileManager;
-            _articulateTempFileSystem = articulateTempFileSystem;
-            _contentService = contentService;
-            _mediaService = mediaService;
-            _contentTypeService = contentTypeService;
-            _dataTypeService = dataTypeService;
-            _tagService = tagService;
-            _urlProvider = urlProvider;
-            _sqlContext = sqlContext;
-            _logger = logger;
-        }
-
         public async Task ExportAsync(
             Guid blogRootNode,
             string exportFileName,
             bool exportImagesAsBase64 = false)
         {
             {
-                IContent root = _contentService.GetById(blogRootNode) ?? throw new InvalidOperationException("No node found with id " + blogRootNode);
+                IContent root = contentService.GetById(blogRootNode) ?? throw new InvalidOperationException("No node found with id " + blogRootNode);
 
                 if (!root.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.Articulate))
                 {
                     throw new InvalidOperationException($"The node with id {blogRootNode} is not an Articulate root node");
                 }
 
-                IContentType unused = _contentTypeService.Get(ArticulateConstants.ContentType.ArticulateRichText) ??
+                IContentType unused = contentTypeService.Get(ArticulateConstants.ContentType.ArticulateRichText) ??
                                throw new InvalidOperationException(
                                    "Articulate is not installed properly, the 'ArticulateRichText' doc type could not be found");
-                IDataType categoryDataType = await _dataTypeService.GetAsync("Articulate Categories") ??
+                IDataType categoryDataType = await dataTypeService.GetAsync("Articulate Categories") ??
                                        throw new InvalidOperationException(
                                            "No Data Type named 'Articulate Categories' found");
                 TagConfiguration? categoryConfiguration = categoryDataType.ConfigurationAs<TagConfiguration>();
                 var categoryGroup = categoryConfiguration?.Group;
-                IDataType tagDataType = await _dataTypeService.GetAsync("Articulate Tags") ??
+                IDataType tagDataType = await dataTypeService.GetAsync("Articulate Tags") ??
                                   throw new InvalidOperationException("No Data Type named 'Articulate Tags' found");
                 TagConfiguration? tagConfiguration = tagDataType.ConfigurationAs<TagConfiguration>();
                 var tagGroup = tagConfiguration?.Group;
@@ -83,21 +58,21 @@ namespace Articulate.ImportExport
 
                 var blogMlDoc = new BlogMLDocument
                 {
-                    RootUrl = new Uri(_urlProvider.GetUrl(root.Id), UriKind.RelativeOrAbsolute),
+                    RootUrl = new Uri(urlProvider.GetUrl(root.Id), UriKind.RelativeOrAbsolute),
                     GeneratedOn = DateTime.Now,
                     Title = new BlogMLTextConstruct(root.GetValue<string>("blogTitle")),
                     Subtitle = new BlogMLTextConstruct(root.GetValue<string>("blogDescription"))
                 };
 
-                IContentType authorsContentType = _contentTypeService.Get(ArticulateConstants.ContentType.ArticulateAuthors)
+                IContentType authorsContentType = contentTypeService.Get(ArticulateConstants.ContentType.ArticulateAuthors)
                     ?? throw new InvalidOperationException("Articulate is not installed properly, the 'ArticulateAuthors' doc type could not be found");
 
-                IEnumerable<IContent> authorsNodes = _contentService.GetPagedDescendants(
+                IEnumerable<IContent> authorsNodes = contentService.GetPagedDescendants(
                     root.Id,
                     0,
                     int.MaxValue,
                     out var total,
-                _sqlContext.Query<IContent>().Where(x => x.ContentTypeId == authorsContentType.Id),
+                sqlContext.Query<IContent>().Where(x => x.ContentTypeId == authorsContentType.Id),
                         Ordering.By("CreateDate", Direction.Descending));
 
                 foreach (IContent authorsNode in authorsNodes)
@@ -107,15 +82,15 @@ namespace Articulate.ImportExport
 
                 AddBlogCategories(blogMlDoc, categoryGroup);
 
-                IContentType archiveContentType = _contentTypeService.Get(ArticulateConstants.ContentType.ArticulateArchive)
+                IContentType archiveContentType = contentTypeService.Get(ArticulateConstants.ContentType.ArticulateArchive)
                     ?? throw new InvalidOperationException("Articulate is not installed properly, the 'ArticulateArchive' doc type could not be found");
 
-                IEnumerable<IContent> archiveNodes = _contentService.GetPagedDescendants(
+                IEnumerable<IContent> archiveNodes = contentService.GetPagedDescendants(
                     root.Id,
                     0,
                     int.MaxValue,
                     out total,
-                    _sqlContext.Query<IContent>().Where(x => x.ContentTypeId == archiveContentType.Id),
+                    sqlContext.Query<IContent>().Where(x => x.ContentTypeId == archiveContentType.Id),
                     Ordering.By("CreateDate", Direction.Descending));
 
                 foreach (IContent archiveNode in archiveNodes)
@@ -135,12 +110,12 @@ namespace Articulate.ImportExport
                 CharacterEncoding = Encoding.UTF8
             });
             stream.Position = 0;
-            _articulateTempFileSystem.AddFile(fileName, stream, true);
+            articulateTempFileSystem.AddFile(fileName, stream, true);
         }
 
         private void AddBlogCategories(BlogMLDocument blogMlDoc, string? tagGroup)
         {
-            IEnumerable<ITag> categories = _tagService.GetAllContentTags(tagGroup);
+            IEnumerable<ITag> categories = tagService.GetAllContentTags(tagGroup);
             foreach (ITag category in categories)
             {
                 if (category.NodeCount == 0)
@@ -163,7 +138,7 @@ namespace Articulate.ImportExport
 
         private void AddBlogAuthors(IContent authorsNode, BlogMLDocument blogMlDoc)
         {
-            foreach (IContent author in _contentService.GetPagedChildren(authorsNode.Id, 0, int.MaxValue, out _))
+            foreach (IContent author in contentService.GetPagedChildren(authorsNode.Id, 0, int.MaxValue, out _))
             {
                 var blogMlAuthor = new BlogMLAuthor
                 {
@@ -184,7 +159,7 @@ namespace Articulate.ImportExport
             IContent[] posts;
             do
             {
-                posts = _contentService.GetPagedChildren(archiveNode.Id, pageIndex, pageSize, out _, ordering: Ordering.By("createDate")).ToArray();
+                posts = contentService.GetPagedChildren(archiveNode.Id, pageIndex, pageSize, out _, ordering: Ordering.By("createDate")).ToArray();
 
                 foreach (IContent child in posts)
                 {
@@ -205,8 +180,8 @@ namespace Articulate.ImportExport
                         content = MarkdownHelper.ToHtml(child.GetValue<string>("markdown"));
                     }
 
-                    var postUrl = new Uri(_urlProvider.GetUrl(child.Id), UriKind.RelativeOrAbsolute);
-                    var postAbsoluteUrl = new Uri(_urlProvider.GetUrl(child.Id, UrlMode.Absolute), UriKind.Absolute);
+                    var postUrl = new Uri(urlProvider.GetUrl(child.Id), UriKind.RelativeOrAbsolute);
+                    var postAbsoluteUrl = new Uri(urlProvider.GetUrl(child.Id, UrlMode.Absolute), UriKind.Absolute);
                     var blogMlPost = new BlogMLPost
                     {
                         Id = child.Key.ToString(),
@@ -227,13 +202,13 @@ namespace Articulate.ImportExport
                         blogMlPost.Authors.Add(author.Id);
                     }
 
-                    IEnumerable<ITag> categories = _tagService.GetTagsForEntity(child.Id, categoryGroup);
+                    IEnumerable<ITag> categories = tagService.GetTagsForEntity(child.Id, categoryGroup);
                     foreach (ITag category in categories)
                     {
                         blogMlPost.Categories.Add(category.Id.ToString());
                     }
 
-                    var tags = _tagService.GetTagsForEntity(child.Id, tagGroup).Select(t => t.Text).ToList();
+                    var tags = tagService.GetTagsForEntity(child.Id, tagGroup).Select(t => t.Text).ToList();
                     if (tags.Count > 0)
                     {
                         blogMlPost.AddExtension(new TagsSyndicationExtension { Context = { Tags = new Collection<string>(tags) } });
@@ -248,8 +223,8 @@ namespace Articulate.ImportExport
 
                             if (Guid.TryParse(mediaKeyStr, out Guid mediaKey))
                             {
-                                IMedia? media = _mediaService.GetById(mediaKey);
-                                if (media?.GetValue<string>(Umbraco.Cms.Core.Constants.Conventions.Media.File) is { } mediaFilePath)
+                                IMedia? media = mediaService.GetById(mediaKey);
+                                if (media?.GetValue<string>(Constants.Conventions.Media.File) is { } mediaFilePath)
                                 {
                                     var mime = ImageMimeType(mediaFilePath);
                                     if (!string.IsNullOrWhiteSpace(mime))
@@ -265,7 +240,7 @@ namespace Articulate.ImportExport
 
                                         if (exportImagesAsBase64)
                                         {
-                                            using Stream mediaFileStream = _mediaFileManager.GetFile(media, out _);
+                                            using Stream mediaFileStream = mediaFileManager.GetFile(media, out _);
                                             using var memoryStream = new MemoryStream();
                                             mediaFileStream.CopyTo(memoryStream);
                                             attachment.Content = Convert.ToBase64String(memoryStream.ToArray());
@@ -282,7 +257,7 @@ namespace Articulate.ImportExport
                         }
                         catch (Exception ex)
                         {
-                            _logger.LogError(ex, "Could not add the file to the blogML post attachments for post {PostId}", child.Id);
+                            logger.LogError(ex, "Could not add the file to the blogML post attachments for post {PostId}", child.Id);
                         }
                     }
 

@@ -1,4 +1,5 @@
 #nullable enable
+using Articulate.Api.Management.Controllers;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.Mvc.Controllers;
@@ -20,9 +21,14 @@ namespace Articulate.Api.Management.Composers
         protected override bool CanHandle(
             ApiDescription apiDescription,
             ControllerActionDescriptor controllerActionDescriptor)
-            => controllerActionDescriptor.ControllerTypeInfo.Namespace?.StartsWith(
-                "Articulate.Controllers.Api",
+        {
+            Type type = typeof(BlogMlApiController);
+            var namespaceName = type.Namespace ?? "Articulate.Api.Management.Controllers";
+
+            return controllerActionDescriptor.ControllerTypeInfo.Namespace?.StartsWith(
+                namespaceName,
                 StringComparison.InvariantCultureIgnoreCase) is true;
+        }
 
         public override string Handle(ApiDescription apiDescription)
             => ArticulateOperationId(apiDescription);

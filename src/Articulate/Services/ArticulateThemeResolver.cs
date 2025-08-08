@@ -8,10 +8,9 @@ namespace Articulate.Services
     public class ArticulateThemeResolver(IUmbracoContextAccessor umbracoContextAccessor, AppCaches appCaches)
         : IArticulateThemeResolver
     {
-        public string? GetCurrentThemeName()
-        {
+        public string? GetCurrentThemeName() =>
             // cache a single request.
-            return appCaches.RequestCache.GetCacheItem(
+            appCaches.RequestCache.GetCacheItem(
                 "Articulate_CurrentRequestThemeName",
                 () =>
                 {
@@ -28,6 +27,5 @@ namespace Articulate.Services
                     var themeName = articulateRoot.Value<string>("theme");
                     return themeName ?? string.Empty;
                 });
-        }
     }
 }

@@ -7,22 +7,12 @@ using Umbraco.Cms.Core.Services;
 namespace Articulate.Components
 {
 
-    public class ContentSavedHandler : INotificationHandler<ContentSavedNotification>
+    public class ContentSavedHandler(
+        IContentTypeService contentTypeService,
+        IContentService contentService,
+        ILanguageService languageService)
+        : INotificationHandler<ContentSavedNotification>
     {
-        private readonly IContentTypeService _contentTypeService;
-        private readonly IContentService _contentService;
-        private readonly ILanguageService _languageService;
-
-        public ContentSavedHandler(
-            IContentTypeService contentTypeService,
-            IContentService contentService,
-            ILanguageService languageService)
-        {
-            _contentTypeService = contentTypeService;
-            _contentService = contentService;
-            _languageService = languageService;
-        }
-
         public void Handle(ContentSavedNotification notification)
         {
             foreach (IContent c in notification.SavedEntities)
@@ -34,22 +24,22 @@ namespace Articulate.Components
 
                 //it's a root blog node, set up the required sub nodes (archive , authors) if they don't exist
 
-                var defaultLang = Task.Run(() => _languageService.GetDefaultIsoCodeAsync()).GetAwaiter().GetResult();
-                var children = _contentService.GetPagedChildren(c.Id, 0, 10, out var total).ToList();
+                var defaultLang = Task.Run(languageService.GetDefaultIsoCodeAsync).GetAwaiter().GetResult();
+                var children = contentService.GetPagedChildren(c.Id, 0, 10, out var total).ToList();
                 if (total == 0 || children.All(x => x.ContentType.Alias != ArticulateConstants.ContentType.ArticulateArchive))
                 {
-                    IContentType? archiveContentType = _contentTypeService.Get(ArticulateConstants.ContentType.ArticulateArchive);
+                    IContentType? archiveContentType = contentTypeService.Get(ArticulateConstants.ContentType.ArticulateArchive);
                     if (archiveContentType is not null)
                     {
                         if (archiveContentType.VariesByCulture())
                         {
-                            IContent articles = _contentService.Create(string.Empty, c, ArticulateConstants.ContentType.ArticulateArchive);
+                            IContent articles = contentService.Create(string.Empty, c, ArticulateConstants.ContentType.ArticulateArchive);
                             articles.SetCultureName(ArticulateConstants.Convention.ArticlesDocument, defaultLang);
-                            _contentService.Save(articles);
+                            contentService.Save(articles);
                         }
                         else
                         {
-                            _contentService.CreateAndSave(ArticulateConstants.Convention.ArticlesDocument, c, ArticulateConstants.ContentType.ArticulateArchive);
+                            contentService.CreateAndSave(ArticulateConstants.Convention.ArticlesDocument, c, ArticulateConstants.ContentType.ArticulateArchive);
                         }
                     }
                 }
@@ -59,7 +49,7 @@ namespace Articulate.Components
                     continue;
                 }
 
-                IContentType? authorContentType = _contentTypeService.Get(ArticulateConstants.ContentType.ArticulateAuthors);
+                IContentType? authorContentType = contentTypeService.Get(ArticulateConstants.ContentType.ArticulateAuthors);
                 if (authorContentType is null)
                 {
                     continue;
@@ -67,13 +57,13 @@ namespace Articulate.Components
 
                 if (authorContentType.VariesByCulture())
                 {
-                    IContent authors = _contentService.Create(string.Empty, c, ArticulateConstants.ContentType.ArticulateAuthors);
+                    IContent authors = contentService.Create(string.Empty, c, ArticulateConstants.ContentType.ArticulateAuthors);
                     authors.SetCultureName(ArticulateConstants.Convention.AuthorsDocument, defaultLang);
-                    _contentService.Save(authors);
+                    contentService.Save(authors);
                 }
                 else
                 {
-                    _contentService.CreateAndSave(ArticulateConstants.Convention.AuthorsDocument, c, ArticulateConstants.ContentType.ArticulateAuthors);
+                    contentService.CreateAndSave(ArticulateConstants.Convention.AuthorsDocument, c, ArticulateConstants.ContentType.ArticulateAuthors);
                 }
             }
         }

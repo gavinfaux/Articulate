@@ -54,25 +54,29 @@ namespace Articulate.Extensions
             {
                 var openGraphImage = new TagBuilder("meta")
                 {
-                    TagRenderMode = TagRenderMode.SelfClosing
+                    TagRenderMode = TagRenderMode.SelfClosing, Attributes =
+                    {
+                        ["property"] = "og:image", ["content"] = PathHelper.GetDomain(html.ViewContext.HttpContext.Request) + model.CroppedPostImageUrl
+                    }
                 };
-                openGraphImage.Attributes["property"] = "og:image";
-                openGraphImage.Attributes["content"] = PathHelper.GetDomain(html.ViewContext.HttpContext.Request) + model.CroppedPostImageUrl;
 
                 builder.AppendHtml(openGraphImage);
             }
 
-            if (!model.SocialMetaDescription.IsNullOrWhiteSpace() || !model.Excerpt.IsNullOrWhiteSpace())
+            if (model.SocialMetaDescription.IsNullOrWhiteSpace() && model.Excerpt.IsNullOrWhiteSpace())
             {
-                var openGraphDesc = new TagBuilder("meta")
-                {
-                    TagRenderMode = TagRenderMode.SelfClosing
-                };
-                openGraphDesc.Attributes["property"] = "og:description";
-                openGraphDesc.Attributes["content"] = model.SocialMetaDescription.IsNullOrWhiteSpace() ? model.Excerpt : model.SocialMetaDescription;
-
-                builder.AppendHtml(openGraphDesc);
+                return;
             }
+
+            var openGraphDesc = new TagBuilder("meta")
+            {
+                TagRenderMode = TagRenderMode.SelfClosing, Attributes =
+                {
+                    ["property"] = "og:description", ["content"] = model.SocialMetaDescription.IsNullOrWhiteSpace() ? model.Excerpt : model.SocialMetaDescription
+                }
+            };
+
+            builder.AppendHtml(openGraphDesc);
         }
 
 
@@ -82,12 +86,14 @@ namespace Articulate.Extensions
                     foreach (var tag in items)
                     {
                         tagLink(tag).WriteTo(writer, HtmlEncoder.Default);
-                        if (tag != items.Last())
+                        if (tag == items.Last())
                         {
-                            writer.Write("<span>");
-                            writer.Write(delimiter);
-                            writer.Write("</span>");
+                            continue;
                         }
+
+                        writer.Write("<span>");
+                        writer.Write(delimiter);
+                        writer.Write("</span>");
                     }
 
                     return Task.CompletedTask;
