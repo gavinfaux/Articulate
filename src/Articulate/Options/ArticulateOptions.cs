@@ -26,6 +26,5 @@ namespace Articulate.Options
         /// The default generator will truncate the post content with 200 chars
         /// </summary>
         public Func<string, string> GenerateExcerpt { get; set; }
-
     }
 }

@@ -16,8 +16,6 @@ namespace Articulate.Services
         IEventMessagesFactory eventMessagesFactory)
         : RepositoryService(provider, loggerFactory, eventMessagesFactory)
     {
-        // TODO: Wrap the repo
-
         public IEnumerable<PostsByTagModel> GetContentByTags(
             UmbracoHelper helper,
             ITagQuery tagQuery,

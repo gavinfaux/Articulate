@@ -9,6 +9,7 @@ namespace Articulate.Services
         : IArticulateThemeResolver
     {
         public string? GetCurrentThemeName() =>
+
             // cache a single request.
             appCaches.RequestCache.GetCacheItem(
                 "Articulate_CurrentRequestThemeName",

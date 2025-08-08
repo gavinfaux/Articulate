@@ -38,7 +38,6 @@ namespace Articulate.Controllers
 
             logger.LogWarning("ArticulateController.Index: CurrentPage is null, returning 404");
             return NotFound();
-
         }
 
         /// <summary>
@@ -68,7 +67,6 @@ namespace Articulate.Controllers
                 PublishedValueFallback) ?? [];
 
             return GetPagedListView(master, listNodes[0], posts, count, p);
-
         }
     }
 }

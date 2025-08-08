@@ -3,6 +3,8 @@ namespace Articulate.Models
 {
     public class PostsByTagModel
     {
+        private int? _count;
+
         public PostsByTagModel(IEnumerable<PostModel> posts, string tagName, string tagUrl)
             : this(posts, tagName, tagUrl, -1)
         {
@@ -10,17 +12,11 @@ namespace Articulate.Models
 
         public PostsByTagModel(IEnumerable<PostModel> posts, string tagName, string tagUrl, int count)
         {
-            if (posts is null)
-            {
-                throw new ArgumentNullException(nameof(posts));
-            }
+            ArgumentNullException.ThrowIfNull(posts, nameof(posts));
 
-            if (tagUrl is null)
-            {
-                throw new ArgumentNullException(nameof(tagUrl));
-            }
+            ArgumentNullException.ThrowIfNull(tagUrl, nameof(tagUrl));
 
-            //resolve to array so it doesn't double lookup
+            // resolve to array so it doesn't double lookup
             Posts = posts.ToArray();
             TagName = tagName ?? throw new ArgumentNullException(nameof(tagName));
             var safeEncoded = tagUrl.SafeEncodeUrlSegments();
@@ -32,15 +28,16 @@ namespace Articulate.Models
         }
 
         public IEnumerable<PostModel>? Posts { get; }
+
         public string TagName { get; }
+
         public string TagUrl { get; }
 
         /// <summary>
-        /// Returns an string that can represent an html id for the tag
+        /// Gets an string that can represent an html id for the tag
         /// </summary>
         public string HtmlId => TagName.SafeEncodeUrlSegments();
 
-        private int? _count;
         public int PostCount
         {
             get
@@ -54,5 +51,4 @@ namespace Articulate.Models
             }
         }
     }
-
 }

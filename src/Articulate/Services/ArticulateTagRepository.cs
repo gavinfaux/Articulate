@@ -1,4 +1,3 @@
-//TODO: #nullable enable
 using Articulate.Models;
 using NPoco;
 using Umbraco.Cms.Core.Cache;
@@ -9,21 +8,15 @@ using Umbraco.Cms.Infrastructure.Persistence.Repositories.Implement;
 using Umbraco.Cms.Infrastructure.Scoping;
 using Umbraco.Cms.Web.Common;
 
+// TODO: #nullable enable
 namespace Articulate.Services
 {
-
-    internal class ArticulateTagRepository : RepositoryBase, IArticulateTagRepository
+    internal class ArticulateTagRepository(
+        IScopeAccessor scopeAccessor,
+        AppCaches appCaches,
+        IPublishedValueFallback publishedValueFallback)
+        : RepositoryBase(scopeAccessor, appCaches), IArticulateTagRepository
     {
-        private readonly IPublishedValueFallback _publishedValueFallback;
-
-        public ArticulateTagRepository(
-            IScopeAccessor scopeAccessor,
-            AppCaches appCaches,
-            IPublishedValueFallback publishedValueFallback) : base(scopeAccessor, appCaches)
-        {
-            _publishedValueFallback = publishedValueFallback;
-        }
-
         /// <summary>
         /// Returns a list of all categories belonging to this articulate root
         /// </summary>
@@ -32,8 +25,7 @@ namespace Articulate.Services
         public IEnumerable<string> GetAllCategories(
             IMasterModel masterModel)
         {
-            //TODO: We want to use the core for this but it's not available, this needs to be implemented: http://issues.umbraco.org/issue/U4-9290
-
+            // TODO: We want to use the core for this but it's not available, this needs to be implemented: http://issues.umbraco.org/issue/U4-9290
             Sql sql = GetTagQuery($"{Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.Tag}.id, {Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.Tag}.tag, {Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.Tag}.[group], Count(*) as NodeCount", masterModel)
                 .Where($"{Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.Tag}." + SqlSyntax.GetQuotedColumnName("group") + " = @tagGroup", new
                 {
@@ -54,18 +46,17 @@ namespace Articulate.Services
             string baseUrlName)
         {
             TagModel[] tags = tagQuery.GetAllContentTags(tagGroup).ToArray();
-            if (!tags.Any())
+            if (tags.Length == 0)
             {
-                return Enumerable.Empty<PostsByTagModel>();
+                return [];
             }
 
-            //TODO: We want to use the core for this but it's not available, this needs to be implemented: http://issues.umbraco.org/issue/U4-9290
-
+            // TODO: We want to use the core for this but it's not available, this needs to be implemented: http://issues.umbraco.org/issue/U4-9290
             IEnumerable<PostsByTagModel> GetResult()
             {
                 var taggedContent = new List<TagDto>();
 
-                //process in groups to not exceed the max SQL params
+                // process in groups to not exceed the max SQL params
                 foreach (IEnumerable<TagModel> tagBatch in tags.InGroupsOf(2000))
                 {
                     Sql sql = GetTagQuery($"{Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.TagRelationship}.nodeId, {Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.TagRelationship}.tagId, {Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.Tag}.tag", masterModel)
@@ -83,13 +74,13 @@ namespace Articulate.Services
                 var result = new List<PostsByTagModel>();
                 foreach (IGrouping<int, TagDto> groupedTags in taggedContent.GroupBy(x => x.TagId))
                 {
-                    //will be the same tag name for all of these tag Ids
+                    // will be the same tag name for all of these tag Ids
                     var tagName = groupedTags.First().Tag;
 
                     IEnumerable<IPublishedContent> publishedContent = helper.Content(groupedTags.Select(t => t.NodeId).Distinct()).WhereNotNull();
 
                     var model = new PostsByTagModel(
-                        publishedContent.Select(c => new PostModel(c, _publishedValueFallback)).OrderByDescending(c => c.PublishedDate),
+                        publishedContent.Select(c => new PostModel(c, publishedValueFallback)).OrderByDescending(c => c.PublishedDate),
                         tagName,
                         masterModel.RootBlogNode.Url().EnsureEndsWith('/') + baseUrlName + "/" + tagName.ToLowerInvariant());
 
@@ -124,22 +115,20 @@ namespace Articulate.Services
             long page,
             long pageSize)
         {
-            //TODO: We want to use the core for this but it's not available, this needs to be implemented: http://issues.umbraco.org/issue/U4-9290
-
+            // TODO: We want to use the core for this but it's not available, this needs to be implemented: http://issues.umbraco.org/issue/U4-9290
             PostsByTagModel GetResult()
             {
                 Sql sqlTags = GetTagQuery($"{Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.Node}.id", masterModel);
 
-                //For whatever reason, SQLCE and even SQL SERVER are not willing to lookup
-                //tags with hyphens in them, it's super strange, so we force the tag column to be - what it already is!! what tha.
-
+                // For whatever reason, SQLCE and even SQL SERVER are not willing to lookup
+                // tags with hyphens in them, it's super strange, so we force the tag column to be - what it already is!! what tha.
                 sqlTags.Where($"CAST({Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.Tag}.tag AS NVARCHAR(200)) = @tagName AND {Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.Tag}." + SqlSyntax.GetQuotedColumnName("group") + " = @tagGroup", new
                 {
                     tagName = tag,
                     tagGroup
                 });
 
-                //get the publishedDate property type id on the ArticulatePost content type
+                // get the publishedDate property type id on the ArticulatePost content type
                 var publishedDatePropertyTypeId = Database.ExecuteScalar<int>(
                     $@"SELECT {Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.PropertyType}.id FROM {Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.ContentType}
 INNER JOIN {Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.PropertyType} ON {Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.PropertyType}.contentTypeId = {Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.ContentType}.nodeId
@@ -150,14 +139,13 @@ WHERE {Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.ContentType}.alias = @co
 
                 sqlContent.Append($"WHERE ({Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.Node}.id IN (").Append(sqlTags).Append("))");
 
-                //order by the dateValue field which will be the publishedDate
+                // order by the dateValue field which will be the publishedDate
                 sqlContent.OrderBy($"({Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.PropertyData}.dateValue) DESC");
 
-                //Put on a single line! NPoco paging does weird stuff on multiline
+                // Put on a single line! NPoco paging does weird stuff on multiline
                 sqlContent = SqlContext.Sql(sqlContent.SQL.ToSingleLine(), sqlContent.Arguments);
 
-                //TODO: ARGH This still returns multiple non distinct Ids :(
-
+                // TODO: ARGH This still returns multiple non distinct Ids :(
                 Page<int> taggedContent = Database.Page<int>(page, pageSize, sqlContent);
 
                 var result = new List<PostsByTagModel>();
@@ -165,7 +153,7 @@ WHERE {Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.ContentType}.alias = @co
                 IEnumerable<IPublishedContent> publishedContent = helper.Content(taggedContent.Items).WhereNotNull();
 
                 var model = new PostsByTagModel(
-                    publishedContent.Select(c => new PostModel(c, _publishedValueFallback)),
+                    publishedContent.Select(c => new PostModel(c, publishedValueFallback)),
                     tag,
                     masterModel.RootBlogNode.Url().EnsureEndsWith('/') + baseUrlName + "/" + tag.ToLowerInvariant(),
                     Convert.ToInt32(taggedContent.TotalItems));
@@ -220,12 +208,15 @@ WHERE {Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.ContentType}.alias = @co
                 .InnerJoin(Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.PropertyData)
                 .On($"{Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.PropertyData}.versionId = {Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.DocumentVersion}.id")
                 .Where($"{Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.Node}.nodeObjectType = @nodeObjectType", new { nodeObjectType = Umbraco.Cms.Core.Constants.ObjectTypes.Document })
-                //Must be published, this will ensure there's only one version selected
+
+                // Must be published, this will ensure there's only one version selected
                 .Where($"{Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.Document}.published = 1")
                 .Where($"{Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.DocumentVersion}.published = 1")
-                //must only return rows with the publishedDate property data so we only get one row and so we can sort on `cmsPropertyData.dateValue` which will be the publishedDate
+
+                // must only return rows with the publishedDate property data so we only get one row and so we can sort on `cmsPropertyData.dateValue` which will be the publishedDate
                 .Where($"{Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.PropertyData}.propertytypeid = @propTypeId", new { propTypeId = publishedDatePropertyTypeId })
-                //only get nodes underneath the current articulate root
+
+                // only get nodes underneath the current articulate root
                 .Where($"{Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.Node}." + SqlSyntax.GetQuotedColumnName("path") + " LIKE @path", new { path = masterModel.RootBlogNode.Path + ",%" });
             return sql;
         }
@@ -251,7 +242,8 @@ WHERE {Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.ContentType}.alias = @co
                 .InnerJoin(Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.Node)
                 .On($"{Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.Node}.id = {Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.Content}.nodeId")
                 .Where($"{Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.Node}.nodeObjectType = @nodeObjectType", new { nodeObjectType = Umbraco.Cms.Core.Constants.ObjectTypes.Document })
-                //only get nodes underneath the current articulate root
+
+                // only get nodes underneath the current articulate root
                 .Where($"{Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.Node}." + SqlSyntax.GetQuotedColumnName("path") + " LIKE @path", new { path = masterModel.RootBlogNode.Path + ",%" });
             return sql;
         }
@@ -259,7 +251,9 @@ WHERE {Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.ContentType}.alias = @co
         private class TagDto
         {
             public int NodeId { get; set; }
+
             public int TagId { get; set; }
+
             public string Tag { get; set; }
         }
     }

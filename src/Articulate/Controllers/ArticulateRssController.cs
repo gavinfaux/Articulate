@@ -33,7 +33,7 @@ namespace Articulate.Controllers
         ArticulateTagService articulateTagService)
         : RenderController(logger, compositeViewEngine, umbracoContextAccessor)
     {
-        //NonAction so it is not routed since we want to use an overload below
+        // NonAction so it is not routed since we want to use an overload below
         [NonAction]
         public override IActionResult Index() => Index(0);
 
@@ -92,14 +92,12 @@ namespace Articulate.Controllers
         public IActionResult Author(int authorId, int? maxItems)
         {
             IPublishedContent? author = umbracoHelper.Content(authorId);
-            if (author is null)
-            {
-                throw new ArgumentNullException(nameof(author));
-            }
+
+            ArgumentNullException.ThrowIfNull(author, nameof(author));
 
             maxItems ??= 25;
 
-            //create a master model
+            // create a master model
             var masterModel = new MasterModel(author, publishedValueFallback);
 
             IPublishedContent[]? listNodes = masterModel.RootBlogNode.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive)?.ToArray();
@@ -110,7 +108,7 @@ namespace Articulate.Controllers
 
             IEnumerable<IPublishedContent> authorContent = umbracoHelper.GetContentByAuthor(
                 listNodes,
-                author.Name,
+                author?.Name,
                 new PagerModel(maxItems.Value, 0, 1),
                 publishedValueFallback);
 
@@ -121,10 +119,7 @@ namespace Articulate.Controllers
 
         public IActionResult Categories(string tag, int? maxItems)
         {
-            if (tag is null)
-            {
-                throw new ArgumentNullException(nameof(tag));
-            }
+            ArgumentNullException.ThrowIfNull(tag, nameof(tag));
 
             maxItems ??= 25;
 
@@ -133,10 +128,7 @@ namespace Articulate.Controllers
 
         public IActionResult Tags(string tag, int? maxItems)
         {
-            if (tag is null)
-            {
-                throw new ArgumentNullException(nameof(tag));
-            }
+            ArgumentNullException.ThrowIfNull(tag, nameof(tag));
 
             maxItems ??= 25;
 
@@ -145,7 +137,7 @@ namespace Articulate.Controllers
 
         public IActionResult RenderTagsOrCategoriesRss(string tagGroup, string baseUrl, int maxItems, string tag)
         {
-            //create a blog model of the main page
+            // create a blog model of the main page
             var rootPageModel = new MasterModel(CurrentPage, publishedValueFallback);
 
             PostsByTagModel contentByTag = articulateTagService.GetContentByTag(
@@ -157,7 +149,7 @@ namespace Articulate.Controllers
                 1,
                 maxItems);
 
-            //super hack - but this is because we are replacing '.' with '-' in StringExtensions.EncodePath method
+            // super hack - but this is because we are replacing '.' with '-' in StringExtensions.EncodePath method
             // so if we get nothing, we'll retry with replacing back
             if (contentByTag.PostCount == 0 && tag.Contains('-'))
             {

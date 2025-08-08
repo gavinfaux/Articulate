@@ -49,7 +49,7 @@ namespace Articulate.Controllers
         [NonAction]
         public override IActionResult Index() => Index(0);
 
-        private IActionResult RenderView(IContentModel model, int? p = null)
+        private IActionResult RenderView(ContentModel model, int? p = null)
         {
             var archive = new MasterModel(model.Content, PublishedValueFallback);
 
@@ -59,7 +59,7 @@ namespace Articulate.Controllers
                 return RedirectPermanent(archive.RootBlogNode.Url());
             }
 
-            //Get post count by xpath is much faster than iterating all children to get a count
+            // Get post count by xpath is much faster than iterating all children to get a count
             var count = Umbraco.GetPostCount(archive.Id);
 
             if (!int.TryParse(archive.RootBlogNode.Value<string>("pageSize"), out var pageSize))

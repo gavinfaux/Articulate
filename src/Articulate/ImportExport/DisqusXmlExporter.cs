@@ -43,8 +43,8 @@ namespace Articulate.ImportExport
                     continue;
                 }
 
-                //no comments to import
-                if (blogMlPost.Comments.Any() == false)
+                // no comments to import
+                if (blogMlPost.Comments.Count == 0)
                 {
                     continue;
                 }

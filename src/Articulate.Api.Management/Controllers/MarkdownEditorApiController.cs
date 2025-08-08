@@ -127,12 +127,6 @@ namespace Articulate.Api.Management.Controllers
             });
         }
 
-        private class ParseImageResponse
-        {
-            public string BodyText { get; init; } = string.Empty;
-            public string FirstImage { get; init; } = string.Empty;
-        }
-
         [HttpPost("post")]
         [Consumes("multipart/form-data")]
         [ProducesResponseType(typeof(CreatePostResponse), StatusCodes.Status200OK)]
@@ -171,10 +165,12 @@ namespace Articulate.Api.Management.Controllers
                 {
                  ModelState.AddModelError(nameof(model.ArticulateBlogNode), "The ArticulateNodeId field is required.");
                 }
+
                 if (string.IsNullOrWhiteSpace(model.Title))
                 {
                     ModelState.AddModelError(nameof(model.Title), "The Title field is required.");
                 }
+
                 return ValidationProblem(ModelState);
             }
 
@@ -191,7 +187,7 @@ namespace Articulate.Api.Management.Controllers
 
             IContent? archive = _contentService.GetPagedChildren(model.ArticulateBlogNode, 0, 1, out _)
                 .FirstOrDefault(x =>
-                    x.ContentType.Alias.InvariantEquals(Articulate.ArticulateConstants.ContentType.ArticulateArchive));
+                    x.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateArchive));
             if (archive is null)
             {
                 return Problem(
@@ -283,7 +279,7 @@ namespace Articulate.Api.Management.Controllers
                 content.SetInvariantOrDefaultCultureValue(Umbraco.Cms.Core.Constants.Conventions.Content.UrlName, model.Slug, contentType, _languageService);
             }
 
-            //author is required
+            // author is required
             content.SetInvariantOrDefaultCultureValue(
                 "author",
                 _backOfficeSecurityAccessor.BackOfficeSecurity?.CurrentUser?.Name ?? "Unknown",
@@ -302,12 +298,17 @@ namespace Articulate.Api.Management.Controllers
             return Ok(new CreatePostResponse { Url = published?.Url() ?? "#" });
         }
 
+        private static bool CheckPermissions(IUser user, IContent contentItem, IEnumerable<string> permissionsToCheck, IUserService userService)
+        {
+            IEnumerable<string> permissions = user.GetPermissions(contentItem.Path, userService);
+            return permissionsToCheck.All(p => permissions.Contains(p));
+        }
+
         private async Task<ParseImageResponse> ParseImages(string? body, IFormFileCollection formFiles, bool extractFirstImageAsProperty)
         {
             // TODO: Validate the ![alt] user label used for the media name/markdown replacement.
             // TODO: Generate a safe filename instead of relying on user supplied filename
             // TODO: Better file validation file sizes, mimetypes, file signatures etc, extract to use elsewhere (MetaWeblog, BlogML import), plus return validation results for UX
-
             if (body is null)
             {
                 return new ParseImageResponse();
@@ -321,22 +322,21 @@ namespace Articulate.Api.Management.Controllers
             // Value: The final URL or an empty string to remove it.
             var replacementMap = new Dictionary<string, string>();
 
-            //  STEP 1: Find all potential image tags and gather the info needed for processing. ---
-            MatchCollection matches = ArticulateMardownEditorRegexes.ImageTagPlaceholderRegex().Matches(body);
+            // STEP 1: Find all potential image tags and gather the info needed for processing. ---
+            MatchCollection matches = ArticulateMarkdownEditorRegexes.ImageTagPlaceholderRegex().Matches(body);
 
             foreach (Match match in matches)
             {
-
                 var userLabel = match.Groups[1].Value;
                 var tempUrl = match.Groups[2].Value;
 
                 IFormFile? file = formFiles.FirstOrDefault(f => f.Name == tempUrl);
 
                 // STEP 2: For each match, VALIDATE and PROCESS it asynchronously.
-
                 if (file is null)
                 {
                     _logger.LogWarning("Markdown image placeholder for {TempUrl} found, but no corresponding file was uploaded.", tempUrl);
+
                     // The file is missing. We will replace its tag with nothing.
                     replacementMap[match.Value] = string.Empty;
                     continue; // Move to the next match
@@ -379,6 +379,7 @@ namespace Articulate.Api.Management.Controllers
                     }
 
                     firstImage = Udi.Create(Umbraco.Cms.Core.Constants.UdiEntityType.Media, media.Key).ToString();
+
                     // The first image was extracted. Strip its tag from the body.
                     replacementMap[match.Value] = string.Empty;
                 }
@@ -396,25 +397,19 @@ namespace Articulate.Api.Management.Controllers
             }
 
             // STEP 3: Apply markdown replacements
-            if (replacementMap.Any())
+            if (replacementMap.Count > 0)
             {
-                bodyText = ArticulateMardownEditorRegexes.ImageTagPlaceholderRegex().Replace(body, m => replacementMap.TryGetValue(m.Value, out var replacement) ? replacement : m.Value);
+                bodyText = ArticulateMarkdownEditorRegexes.ImageTagPlaceholderRegex().Replace(body, m => replacementMap.TryGetValue(m.Value, out var replacement) ? replacement : m.Value);
             }
 
             return new ParseImageResponse { BodyText = bodyText, FirstImage = firstImage };
         }
 
-        private static bool CheckPermissions(IUser user, IContent contentItem, IEnumerable<string> permissionsToCheck, IUserService userService)
+        private class ParseImageResponse
         {
-            IEnumerable<string> permissions = user.GetPermissions(contentItem.Path, userService);
-            return permissionsToCheck.All(p => permissions.Contains(p));
-        }
-    }
+            public string BodyText { get; init; } = string.Empty;
 
-    internal static partial class ArticulateMardownEditorRegexes
-    {
-        // regex finds the image placeholder markdown tag and captures the users label and temporary URL.
-        [GeneratedRegex(@"!\[(.*?)\]\((tmp:.*?)\)", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase | RegexOptions.Compiled)]
-        public static partial Regex ImageTagPlaceholderRegex();
+            public string FirstImage { get; init; } = string.Empty;
+        }
     }
 }

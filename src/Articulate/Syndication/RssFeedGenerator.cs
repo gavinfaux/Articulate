@@ -23,9 +23,8 @@ namespace Articulate.Syndication
                 ImageUrl = GetBlogImage(rootPageModel)
             };
 
-            //TODO: attempting to add media:thumbnail...
-            //feed.AttributeExtensions.Add(new XmlQualifiedName("media", "http://www.w3.org/2000/xmlns/"), "http://search.yahoo.com/mrss/");
-
+            // TODO: attempting to add media:thumbnail...
+            // feed.AttributeExtensions.Add(new XmlQualifiedName("media", "http://www.w3.org/2000/xmlns/"), "http://search.yahoo.com/mrss/");
             return feed;
         }
 
@@ -35,8 +34,8 @@ namespace Articulate.Syndication
         {
             var posturl = post.Url(mode: UrlMode.Absolute);
 
-            //Cannot continue if the url cannot be resolved - probably has publishing issues
-            if (posturl.StartsWith("#"))
+            // Cannot continue if the url cannot be resolved - probably has publishing issues
+            if (posturl is ['#', ..])
             {
                 return null;
             }
@@ -57,25 +56,18 @@ namespace Articulate.Syndication
             {
                 PublishDate = post.PublishedDate
 
-                //don't include this as it will override the main content bits
-                //Summary = new TextSyndicationContent(post.Excerpt)
+                // don't include this as it will override the main content bits
+                // Summary = new TextSyndicationContent(post.Excerpt)
             };
 
-            //TODO: attempting to add media:thumbnail...
-            //item.ElementExtensions.Add(new SyndicationElementExtension("thumbnail", "http://search.yahoo.com/mrss/", "This is a test!"));
-
+            // TODO: attempting to add media:thumbnail...
+            // item.ElementExtensions.Add(new SyndicationElementExtension("thumbnail", "http://search.yahoo.com/mrss/", "This is a test!"));
             foreach (var c in post.Categories)
             {
                 item.Categories.Add(new SyndicationCategory(c));
             }
 
             return item;
-        }
-
-        private IEnumerable<SyndicationItem> GetFeedItems(IMasterModel model, IEnumerable<PostModel> posts)
-        {
-            var rootUrl = model.RootBlogNode.Url(mode: UrlMode.Absolute);
-            return !posts.Any() ? [] : posts.Select(post => GetFeedItem(post, rootUrl)).WhereNotNull().ToList();
         }
 
         protected virtual Uri? GetBlogImage(IMasterModel rootPageModel)
@@ -93,6 +85,12 @@ namespace Articulate.Syndication
             }
 
             return logoUri;
+        }
+
+        private List<SyndicationItem> GetFeedItems(IMasterModel model, IEnumerable<PostModel> posts)
+        {
+            var rootUrl = model.RootBlogNode.Url(mode: UrlMode.Absolute);
+            return !posts.Any() ? [] : posts.Select(post => GetFeedItem(post, rootUrl)).WhereNotNull().ToList();
         }
     }
 }

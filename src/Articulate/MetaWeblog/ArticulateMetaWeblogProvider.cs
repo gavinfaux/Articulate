@@ -137,8 +137,8 @@ namespace Articulate.MetaWeblog
 
             Tag[] tags = all.Select(x => new Tag
                 {
-                name = x.Text
-            })
+                    name = x.Text
+                })
             .ToArray();
 
             return tags;
@@ -180,7 +180,6 @@ namespace Articulate.MetaWeblog
             AddOrUpdateContent(content, contentType, post, user, publish, extractFirstImageAsProperty);
 
             return content.Id.ToString(CultureInfo.InvariantCulture);
-
         }
 
         public async Task<bool> DeletePostAsync(string key, string postid, string username, string password, bool publish)
@@ -194,7 +193,7 @@ namespace Articulate.MetaWeblog
                 return false;
             }
 
-            //first see if it's published
+            // first see if it's published
             IContent? content = _contentService.GetById(asInt.Result);
             if (content is null)
             {
@@ -216,7 +215,7 @@ namespace Articulate.MetaWeblog
                 throw new InvalidOperationException("The id could not be parsed to an integer");
             }
 
-            //first see if it's published
+            // first see if it's published
             IPublishedContent? post = _umbracoContextAccessor.GetRequiredUmbracoContext().Content.GetById(asInt.Result);
             if (post is not null)
             {
@@ -235,7 +234,6 @@ namespace Articulate.MetaWeblog
             await ValidateUser(username, password);
 
             // TODO: File validation
-
             var bytes = Convert.FromBase64String(mediaObject.bits);
 
             // Save File
@@ -287,15 +285,45 @@ namespace Articulate.MetaWeblog
 
         // Seems these are not used/supported
         public Task<int> AddCategoryAsync(string key, string username, string password, NewCategory category) => throw new NotImplementedException();
+
         public Task<Author[]> GetAuthorsAsync(string blogid, string username, string password) => throw new NotImplementedException();
+
         public Task<UserInfo> GetUserInfoAsync(string key, string username, string password) => throw new NotImplementedException();
 
         // Not supporting pages from the WordPress implementation
         public Task<string> AddPageAsync(string blogid, string username, string password, Page page, bool publish) => throw new NotImplementedException();
+
         public Task<bool> EditPageAsync(string blogid, string pageid, string username, string password, Page page, bool publish) => throw new NotImplementedException();
+
         public Task<bool> DeletePageAsync(string blogid, string username, string password, string pageid) => throw new NotImplementedException();
+
         public Task<Page> GetPageAsync(string blogid, string pageid, string username, string password) => throw new NotImplementedException();
+
         public Task<Page[]> GetPagesAsync(string blogid, string username, string password, int numPages) => throw new NotImplementedException();
+
+        /// <summary>
+        /// There are so many variants of Metaweblog API so I've just included as many properties, custom ones, etc... that i can find
+        /// </summary>
+        /// <param name="post"></param>
+        /// <returns></returns>
+        /// <remarks>
+        /// http://msdn.microsoft.com/en-us/library/bb463260.aspx
+        /// http://xmlrpc.scripting.com/metaWeblogApi.html
+        /// http://cyber.law.harvard.edu/rss/rss.html#hrelementsOfLtitemgt
+        /// http://codex.wordpress.org/XML-RPC_MetaWeblog_API
+        /// https://blogengine.codeplex.com/SourceControl/latest#BlogEngine/BlogEngine.Core/API/MetaWeblog/MetaWeblogHandler.cs
+        /// </remarks>
+        private static Post FromPost(PostModel post) => new()
+        {
+            categories = post.Categories.ToArray(),
+            description = post.Body.ToString(),
+            dateCreated = post.PublishedDate != default ? post.PublishedDate : post.UpdateDate,
+            postid = post.Id.ToString(CultureInfo.InvariantCulture),
+            wp_slug = post.Url(),
+            mt_excerpt = post.Excerpt,
+            mt_keywords = string.Join(',', post.Tags.ToArray()),
+            title = post.Name
+        };
 
         private void AddOrUpdateContent(IContent content, IContentType contentType, Post post, IUser user, bool publish, bool extractFirstImageAsProperty)
         {
@@ -327,7 +355,6 @@ namespace Articulate.MetaWeblog
                     var mediaFileSystemPath = _mediaFileManager.FileSystem.GetUrl(relativePath);
 
                     return " src=\"" + mediaFileSystemPath + "\"";
-
                 });
 
                 var imagesProcessed = 0;
@@ -351,7 +378,6 @@ namespace Articulate.MetaWeblog
                     imagesProcessed++;
 
                     return href;
-
                 });
 
                 content.SetInvariantOrDefaultCultureValue("richText", contentToSave, contentType, _languageService);
@@ -440,30 +466,6 @@ namespace Articulate.MetaWeblog
             }
         }
 
-        /// <summary>
-        /// There are so many variants of Metaweblog API so I've just included as many properties, custom ones, etc... that i can find
-        /// </summary>
-        /// <param name="post"></param>
-        /// <returns></returns>
-        /// <remarks>
-        /// http://msdn.microsoft.com/en-us/library/bb463260.aspx
-        /// http://xmlrpc.scripting.com/metaWeblogApi.html
-        /// http://cyber.law.harvard.edu/rss/rss.html#hrelementsOfLtitemgt
-        /// http://codex.wordpress.org/XML-RPC_MetaWeblog_API
-        /// https://blogengine.codeplex.com/SourceControl/latest#BlogEngine/BlogEngine.Core/API/MetaWeblog/MetaWeblogHandler.cs
-        /// </remarks>
-        private static Post FromPost(PostModel post) => new()
-        {
-            categories = post.Categories.ToArray(),
-            description = post.Body.ToString(),
-            dateCreated = post.PublishedDate != default ? post.PublishedDate : post.UpdateDate,
-            postid = post.Id.ToString(CultureInfo.InvariantCulture),
-            wp_slug = post.Url(),
-            mt_excerpt = post.Excerpt,
-            mt_keywords = string.Join(',', post.Tags.ToArray()),
-            title = post.Name
-        };
-
         private Post FromContent(IContent post) => new()
         {
             title = post.Name,
@@ -478,7 +480,7 @@ namespace Articulate.MetaWeblog
 
             categories = string.IsNullOrEmpty(post.GetValue<string>("categories")) == false
             ? post.GetValue<string>("categories")?.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
-            : Array.Empty<string>(),
+            : [],
 
             description = post.ContentType.Alias == ArticulateConstants.ContentType.ArticulateRichText
             ? post.GetValue<string>("richText")
@@ -504,7 +506,7 @@ namespace Articulate.MetaWeblog
                 throw new AuthenticationException($"Failed to validate user credentials for {username}");
             }
 
-            IUser? user =_userService.GetByUsername(username);
+            IUser? user = _userService.GetByUsername(username);
             if (user is null)
             {
                 throw new InvalidOperationException($"Failed to find user for {username}");

@@ -5,12 +5,12 @@ using Umbraco.Cms.Core.Notifications;
 
 namespace Articulate.Components
 {
-
     public sealed class DomainCacheRefresherHandler(AppCaches appCaches)
         : INotificationHandler<DomainCacheRefresherNotification>
     {
         public void Handle(DomainCacheRefresherNotification notification) =>
-            //ensure routes are rebuilt
+
+            // ensure routes are rebuilt
             appCaches.RequestCache.GetCacheItem(ArticulateConstants.RefreshRoutesToken, () => true);
     }
 }

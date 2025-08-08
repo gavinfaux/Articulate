@@ -1,9 +1,9 @@
-//TODO: #nullable enable
 using System.Xml;
 using System.Xml.XPath;
 using Argotic.Common;
 using Argotic.Extensions;
 
+// TODO: #nullable enable
 namespace Articulate.Syndication.BlogML
 {
     public class TagsSyndicationExtension() : SyndicationExtension("tags", Namespace, new Version("1.0")), IComparable
@@ -28,17 +28,22 @@ namespace Articulate.Syndication.BlogML
                 null => 1,
                 TagsSyndicationExtension syndicationExtension =>
                     string.Compare(Description, syndicationExtension.Description, StringComparison.OrdinalIgnoreCase) |
-                    Uri.Compare(Documentation, syndicationExtension.Documentation, UriComponents.AbsoluteUri,
-                        UriFormat.SafeUnescaped, StringComparison.OrdinalIgnoreCase) |
+                    Uri.Compare(
+                        Documentation,
+                        syndicationExtension.Documentation,
+                        UriComponents.AbsoluteUri,
+                        UriFormat.SafeUnescaped,
+                        StringComparison.OrdinalIgnoreCase) |
                     string.Compare(Name, syndicationExtension.Name, StringComparison.OrdinalIgnoreCase) |
                     Version.CompareTo(syndicationExtension.Version) |
                     string.Compare(XmlNamespace, syndicationExtension.XmlNamespace, StringComparison.Ordinal) |
                     string.Compare(XmlPrefix, syndicationExtension.XmlPrefix, StringComparison.Ordinal) |
-                    ComparisonUtility.CompareSequence(Context.Tags, syndicationExtension.Context.Tags,
+                    ComparisonUtility.CompareSequence(
+                        Context.Tags,
+                        syndicationExtension.Context.Tags,
                         StringComparison.OrdinalIgnoreCase),
                 _ => throw new ArgumentException(
-                    string.Format(null, "obj is not of type {0}, type was found to be '{1}'.", GetType().FullName,
-                        obj.GetType().FullName), nameof(obj))
+                    string.Format(null, "obj is not of type {0}, type was found to be '{1}'.", GetType().FullName, obj.GetType().FullName), nameof(obj))
             };
 
         /// <inheritdoc />
@@ -84,10 +89,8 @@ namespace Articulate.Syndication.BlogML
             }
 
             memoryStream.Seek(0L, SeekOrigin.Begin);
-            using (var streamReader = new StreamReader(memoryStream))
-            {
-                return streamReader.ReadToEnd();
-            }
+            using var streamReader = new StreamReader(memoryStream);
+            return streamReader.ReadToEnd();
         }
 
         public override bool Equals(object obj)

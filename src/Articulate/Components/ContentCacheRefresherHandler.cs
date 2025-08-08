@@ -10,7 +10,6 @@ using Umbraco.Cms.Core.Sync;
 using Umbraco.Cms.Core.Web;
 using Umbraco.Cms.Infrastructure.Scoping;
 
-
 namespace Articulate.Components
 {
     public sealed class ContentCacheRefresherHandler(
@@ -33,7 +32,7 @@ namespace Articulate.Components
             switch (notification.MessageType)
             {
                 case MessageType.RefreshByPayload:
-                    //This is the standard case for content cache refresher
+                    // This is the standard case for content cache refresher
                     foreach (ContentCacheRefresher.JsonPayload payload in (ContentCacheRefresher.JsonPayload[])notification.MessageObject)
                     {
                         if (payload.ChangeTypes.HasTypesAny(TreeChangeTypes.Remove | TreeChangeTypes.RefreshBranch | TreeChangeTypes.RefreshNode))
@@ -56,7 +55,7 @@ namespace Articulate.Components
 
                     if (content.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.Articulate))
                     {
-                        //ensure routes are rebuilt
+                        // ensure routes are rebuilt
                         appCaches.RequestCache.GetCacheItem(ArticulateConstants.RefreshRoutesToken, () => true);
                     }
 
@@ -82,7 +81,7 @@ namespace Articulate.Components
                 // if it's directly related to an articulate node
                 if (item is not null && item.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.Articulate))
                 {
-                    //ensure routes are rebuilt
+                    // ensure routes are rebuilt
                     appCaches.RequestCache.GetCacheItem(ArticulateConstants.RefreshRoutesToken, () => true);
                     return;
                 }

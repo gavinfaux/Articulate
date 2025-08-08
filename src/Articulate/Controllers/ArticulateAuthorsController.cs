@@ -33,14 +33,13 @@ namespace Articulate.Controllers
                 CurrentPage,
                 publishedValueFallback);
 
-            //TODO: Should we have another setting for authors?
+            // TODO: Should we have another setting for authors?
             if (root.RootBlogNode.Value<bool>("redirectArchive"))
             {
                 return RedirectPermanent(root.RootBlogNode.Url());
             }
 
-            //default
-
+            // default
             var action = ControllerContext.RouteData.Values["action"]?.ToString();
             if (!EnsurePhsyicalViewExists(action))
             {

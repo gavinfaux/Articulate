@@ -6,7 +6,7 @@ namespace Articulate.Models
     public interface IMasterModel : IPublishedContent
     {
         /// <summary>
-        /// Returns the current theme
+        /// Gets the current theme
         /// </summary>
         public string Theme { get; }
 
@@ -19,6 +19,7 @@ namespace Articulate.Models
         public string BlogTitle { get; }
 
         public string BlogDescription { get; }
+
         public string BlogLogo { get; }
 
         public string BlogBanner { get; }

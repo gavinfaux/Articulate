@@ -1,4 +1,3 @@
-//TODO: #nullable enable
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.Routing;
@@ -12,9 +11,9 @@ using Umbraco.Cms.Web.Common.Routing;
 using Umbraco.Cms.Web.Website.Routing;
 using static Umbraco.Cms.Core.Constants.Web.Routing;
 
+// TODO: #nullable enable
 namespace Articulate.Routing
 {
-
     // TODO: We're going to need to do this for all dynamic routes so no more building routes
     // This is because there is no more RouteTable that you can write too so we sort of have to
     // re-create that here.
@@ -29,9 +28,9 @@ namespace Articulate.Routing
         IDocumentCacheService documentCacheService)
         : DynamicRouteValueTransformer, IDisposable
     {
+        private readonly ReaderWriterLockSlim _lock = new();
         private bool _hasCache;
         private bool _disposedValue;
-        private readonly ReaderWriterLockSlim _lock = new();
 
         public override async ValueTask<RouteValueDictionary> TransformAsync(HttpContext httpContext, RouteValueDictionary values)
         {
@@ -58,10 +57,10 @@ namespace Articulate.Routing
 
             var newValues = new RouteValueDictionary();
 
-            (bool hasCache, bool routeSuccess) routeResult = await TryRoute(umbracoContext, umbracoRouteValues, httpContext, newValues);
-            if (routeResult.hasCache)
+            (bool HasCache, bool RouteSuccess) routeResult = await TryRoute(umbracoContext, umbracoRouteValues, httpContext, newValues);
+            if (routeResult.HasCache)
             {
-                return routeResult.routeSuccess ? newValues : [];
+                return routeResult.RouteSuccess ? newValues : [];
             }
 
             // we don't have a cache yet
@@ -70,8 +69,7 @@ namespace Articulate.Routing
                 _lock.EnterWriteLock();
                 try
                 {
-                    articulateRouteBuilder.MapRoutes(httpContext, umbracoContext, publishedContentTypeCache,
-                        documentCacheService);
+                    articulateRouteBuilder.MapRoutes(httpContext, umbracoContext, publishedContentTypeCache, documentCacheService);
                     _hasCache = true;
                 }
                 finally
@@ -82,10 +80,27 @@ namespace Articulate.Routing
 
             routeResult = await TryRoute(umbracoContext, umbracoRouteValues, httpContext, newValues);
 
-            return routeResult.routeSuccess ? newValues : [];
+            return routeResult.RouteSuccess ? newValues : [];
         }
 
-        private async Task<(bool hasCache, bool routeSuccess)> TryRoute(IUmbracoContext umbracoContext, UmbracoRouteValues umbracoRouteValues, HttpContext httpContext, RouteValueDictionary values)
+        public void Dispose() => Dispose(disposing: true);
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_disposedValue)
+            {
+                return;
+            }
+
+            if (disposing)
+            {
+                _lock?.Dispose();
+            }
+
+            _disposedValue = true;
+        }
+
+        private async Task<(bool HasCache, bool RouteSuccess)> TryRoute(IUmbracoContext umbracoContext, UmbracoRouteValues umbracoRouteValues, HttpContext httpContext, RouteValueDictionary values)
         {
             if (_lock == null)
             {
@@ -97,16 +112,13 @@ namespace Articulate.Routing
             {
                 if (_hasCache)
                 {
-                    if (!articulateRouteBuilder.TryMatch(httpContext.Request.Path, values,
-                            out ArticulateRootNodeCache dynamicRouteValues))
+                    if (!articulateRouteBuilder.TryMatch(httpContext.Request.Path, values, out ArticulateRootNodeCache dynamicRouteValues))
                     {
                         return (true, false);
                     }
 
-                    await WriteRouteValues(umbracoContext, httpContext, dynamicRouteValues, umbracoRouteValues,
-                        values);
+                    await WriteRouteValues(umbracoContext, httpContext, dynamicRouteValues, umbracoRouteValues, values);
                     return (true, true);
-
                 }
             }
             finally
@@ -119,18 +131,16 @@ namespace Articulate.Routing
 
         private async Task WriteRouteValues(IUmbracoContext umbracoContext, HttpContext httpContext, ArticulateRootNodeCache dynamicRouteValues, UmbracoRouteValues umbracoRouteValues, RouteValueDictionary values)
         {
-            // Since we are executing after Umbraco's dynamic transformer, it means Umbraco has already
-            // gone ahead and matched a domain (if any). So we will use this to match our document.
+            // Since we are executing after Umbraco's dynamic transformer, it means Umbraco has already gone ahead and matched a domain (if any). So we will use this to match our document.
             DomainAndUri assignedDomain = umbracoRouteValues?.PublishedRequest.Domain;
-            // if we have a domain
 
+            // if we have a domain
             var contentId = dynamicRouteValues.GetContentId(assignedDomain);
 
             IPublishedContent publishedContent = umbracoContext?.Content.GetById(contentId)
                                                  ?? throw new InvalidOperationException("Could not resolve content by id " + contentId);
 
-            // instantiate, prepare and process the published content request
-            // important to use CleanedUmbracoUrl - lowercase path-only version of the current url
+            // instantiate, prepare and process the published content request important to use CleanedUmbracoUrl - lowercase path-only version of the current url
             IPublishedRequestBuilder requestBuilder = await publishedRouter.CreateRequestAsync(umbracoContext.CleanedUmbracoUrl);
 
             // re-assign the domain if there was one.
@@ -157,7 +167,6 @@ namespace Articulate.Routing
             {
                 values[ActionToken] = dynamicRouteValues.ControllerActionDescriptor.ActionName;
             }
-
         }
 
         private bool ShouldCheck(
@@ -174,6 +183,7 @@ namespace Articulate.Routing
             {
                 return false;
             }
+
             // will be null for any client side requests like JS, etc...
             if (!umbracoContextAccessor.TryGetUmbracoContext(out umbracoContext))
             {
@@ -191,22 +201,5 @@ namespace Articulate.Routing
 
             return routableDocumentFilter.IsDocumentRequest(httpContext.Request.Path);
         }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (_disposedValue)
-            {
-                return;
-            }
-
-            if (disposing)
-            {
-                _lock?.Dispose();
-            }
-
-            _disposedValue = true;
-        }
-
-        public void Dispose() => Dispose(disposing: true);
     }
 }

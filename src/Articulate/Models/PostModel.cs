@@ -9,6 +9,8 @@ namespace Articulate.Models
     public sealed class PostModel : MasterModel, IImageModel
     {
         private PostAuthorModel? _author;
+        private MediaWithCrops? _postImage;
+        private string? _croppedPostImageUrl;
 
         public PostModel(IPublishedContent content, IPublishedValueFallback publishedValueFallback)
             : base(content, publishedValueFallback)
@@ -38,7 +40,7 @@ namespace Articulate.Models
                     Name = Unwrap().Value<string>("author", fallback: Fallback.ToAncestors)
                 };
 
-                //look up assocated author node if we can
+                // look up assocated author node if we can
                 IPublishedContent? authors = RootBlogNode.Children(content => content.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateAuthors))?.FirstOrDefault();
                 IPublishedContent? authorNode = authors?.Children(content => content.Name.InvariantEquals(_author.Name))?.FirstOrDefault();
 
@@ -60,17 +62,13 @@ namespace Articulate.Models
 
         public DateTime PublishedDate => Unwrap().Value<DateTime>("publishedDate");
 
-        private MediaWithCrops? _postImage;
-
         /// <summary>
-        /// Some blog post may have an associated image
+        /// Gets the blog post associated image
         /// </summary>
         public MediaWithCrops? PostImage => _postImage ??= Unwrap().Value<MediaWithCrops>("postImage");
 
-        private string? _croppedPostImageUrl;
-
         /// <summary>
-        /// Cropped version of the PostImageUrl
+        /// Gets a Cropped version of the PostImageUrl
         /// </summary>
         public string CroppedPostImageUrl
         {
@@ -93,7 +91,7 @@ namespace Articulate.Models
         }
 
         /// <summary>
-        /// Social Meta Description
+        /// Gets the Social Meta Description
         /// </summary>
         public string SocialMetaDescription => this.Value<string>("socialDescription") ?? string.Empty;
 
@@ -108,7 +106,7 @@ namespace Articulate.Models
         MediaWithCrops? IImageModel.Image => PostImage;
 
         string IImageModel.Name => Name;
+
         string IImageModel.Url => this.Url();
     }
-
 }

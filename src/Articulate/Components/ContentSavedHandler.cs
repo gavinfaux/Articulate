@@ -6,7 +6,6 @@ using Umbraco.Cms.Core.Services;
 
 namespace Articulate.Components
 {
-
     public class ContentSavedHandler(
         IContentTypeService contentTypeService,
         IContentService contentService,
@@ -22,8 +21,7 @@ namespace Articulate.Components
                     continue;
                 }
 
-                //it's a root blog node, set up the required sub nodes (archive , authors) if they don't exist
-
+                // it's a root blog node, set up the required sub nodes (archive , authors) if they don't exist
                 var defaultLang = Task.Run(languageService.GetDefaultIsoCodeAsync).GetAwaiter().GetResult();
                 var children = contentService.GetPagedChildren(c.Id, 0, 10, out var total).ToList();
                 if (total == 0 || children.All(x => x.ContentType.Alias != ArticulateConstants.ContentType.ArticulateArchive))

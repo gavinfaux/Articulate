@@ -12,7 +12,6 @@ namespace Articulate.Api.Management.Extensions
             this IApiDescriptionGroupCollectionProvider? provider,
             string[] apiGroupNames)
         {
-
             if (provider?.ApiDescriptionGroups.Items is null)
             {
                 return null;

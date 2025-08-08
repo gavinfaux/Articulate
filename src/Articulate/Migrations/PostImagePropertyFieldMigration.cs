@@ -1,5 +1,5 @@
-//#nullable enable
-//using System;
+
+/* using System;
 //using System.Collections.Generic;
 //using System.IO;
 //using System.Linq;
@@ -21,6 +21,7 @@
 //using Umbraco.Cms.Infrastructure.Migrations.Upgrade;
 //using Umbraco.Extensions;
 
+//#nullable enable
 //namespace Articulate.Migrations
 //{
 //    public class PostImageMigrationComposer : ComponentComposer<PostImageMigrationComponent>
@@ -349,4 +350,4 @@
 //            return new MigrationResult(false, null);
 //        }
 //    }
-//}
+//} */

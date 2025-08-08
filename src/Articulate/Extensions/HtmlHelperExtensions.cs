@@ -48,38 +48,6 @@ namespace Articulate.Extensions
             return builder;
         }
 
-        private static void SocialMetaTags(this IHtmlHelper html, PostModel model, IHtmlContentBuilder builder)
-        {
-            if (!model.CroppedPostImageUrl.IsNullOrWhiteSpace())
-            {
-                var openGraphImage = new TagBuilder("meta")
-                {
-                    TagRenderMode = TagRenderMode.SelfClosing, Attributes =
-                    {
-                        ["property"] = "og:image", ["content"] = PathHelper.GetDomain(html.ViewContext.HttpContext.Request) + model.CroppedPostImageUrl
-                    }
-                };
-
-                builder.AppendHtml(openGraphImage);
-            }
-
-            if (model.SocialMetaDescription.IsNullOrWhiteSpace() && model.Excerpt.IsNullOrWhiteSpace())
-            {
-                return;
-            }
-
-            var openGraphDesc = new TagBuilder("meta")
-            {
-                TagRenderMode = TagRenderMode.SelfClosing, Attributes =
-                {
-                    ["property"] = "og:description", ["content"] = model.SocialMetaDescription.IsNullOrWhiteSpace() ? model.Excerpt : model.SocialMetaDescription
-                }
-            };
-
-            builder.AppendHtml(openGraphDesc);
-        }
-
-
         public static IHtmlContent ListCategoriesOrTags(this string[] items, Func<string, HelperResult> tagLink, string delimiter)
             => new HelperResult(writer =>
                 {
@@ -112,7 +80,8 @@ namespace Articulate.Extensions
             this IEnumerable<T> collection,
             string[] headers,
             string[] cssClasses,
-            params Func<T, HelperResult>[] cellTemplates) where T : class => collection.Table(null, headers, cssClasses, cellTemplates);
+            params Func<T, HelperResult>[] cellTemplates)
+            where T : class => collection.Table(null, headers, cssClasses, cellTemplates);
 
         /// <summary>
         /// Creates an Html table based on the collection
@@ -122,7 +91,8 @@ namespace Articulate.Extensions
             object? htmlAttributes,
             string[] headers,
             string[] cssClasses,
-            params Func<T, HelperResult>[] cellTemplates) where T : class
+            params Func<T, HelperResult>[] cellTemplates)
+            where T : class
             => new HelperResult(writer =>
                 {
                     T[] items = collection.ToArray();
@@ -166,11 +136,11 @@ namespace Articulate.Extensions
                             tdContent.AddCssClass(cssClasses.Length - 1 >= 1 ? cssClasses[colIndex] : string.Empty);
 
                             T item = items[rowIndex];
-                            //if there's an item at that grid location, call its template
+
+                            // if there's an item at that grid location, call its template
                             tdContent.InnerHtml.SetHtmlContent(cellTemplates[colIndex](item));
 
-                            //cellTemplates[colIndex](item).WriteTo(writer, HtmlEncoder.Default);
-
+                            // cellTemplates[colIndex](item).WriteTo(writer, HtmlEncoder.Default);
                             trContent.InnerHtml.AppendHtml(tdContent);
                         }
 
@@ -182,5 +152,38 @@ namespace Articulate.Extensions
                     table.WriteTo(writer, HtmlEncoder.Default);
                     return Task.CompletedTask;
                 });
+
+        private static void SocialMetaTags(this IHtmlHelper html, PostModel model, HtmlContentBuilder builder)
+        {
+            if (!model.CroppedPostImageUrl.IsNullOrWhiteSpace())
+            {
+                var openGraphImage = new TagBuilder("meta")
+                {
+                    TagRenderMode = TagRenderMode.SelfClosing,
+                    Attributes =
+                    {
+                        ["property"] = "og:image", ["content"] = PathHelper.GetDomain(html.ViewContext.HttpContext.Request) + model.CroppedPostImageUrl
+                    }
+                };
+
+                builder.AppendHtml(openGraphImage);
+            }
+
+            if (model.SocialMetaDescription.IsNullOrWhiteSpace() && model.Excerpt.IsNullOrWhiteSpace())
+            {
+                return;
+            }
+
+            var openGraphDesc = new TagBuilder("meta")
+            {
+                TagRenderMode = TagRenderMode.SelfClosing,
+                Attributes =
+                {
+                    ["property"] = "og:description", ["content"] = model.SocialMetaDescription.IsNullOrWhiteSpace() ? model.Excerpt : model.SocialMetaDescription
+                }
+            };
+
+            builder.AppendHtml(openGraphDesc);
+        }
     }
 }

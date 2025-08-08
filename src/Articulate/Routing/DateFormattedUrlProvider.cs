@@ -11,7 +11,7 @@ namespace Articulate.Routing
 {
     public class DateFormattedUrlProvider : DefaultUrlProvider
     {
-        [Obsolete("Please use ILanguageService and IDictionaryItemService for localization. Will be removed in V15.",false)]
+        [Obsolete("Please use ILanguageService and IDictionaryItemService for localization. Will be removed in V15.", false)]
         public DateFormattedUrlProvider(
             IOptionsMonitor<RequestHandlerSettings> requestSettings,
             ILogger<DateFormattedUrlProvider> logger,
@@ -30,8 +30,9 @@ namespace Articulate.Routing
                     {
                         ContentType.Alias: ArticulateConstants.ContentType.ArticulateRichText
                         or ArticulateConstants.ContentType.ArticulateMarkdown
-                    } ||
-                content.Parent() is null)
+                    }
+
+                    || content.Parent() is null)
             {
                 return null;
             }
@@ -62,7 +63,6 @@ namespace Articulate.Routing
             var newUrl = parentPath?.Text.EnsureEndsWith("/") + urlFolder + "/" + content.UrlSegment?.EnsureEndsWith("/");
 
             return UrlInfo.Url(newUrl, culture);
-
         }
     }
 }

@@ -1,4 +1,3 @@
-//TODO: #nullable enable
 using System.Collections;
 using System.Text.Encodings.Web;
 using Articulate.Models;
@@ -8,14 +7,13 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Models.PublishedContent;
 
+// TODO: #nullable enable
 namespace Articulate.Extensions
 {
     public static class PublishedContentExtensions
     {
-
         public static IPublishedContent Next(this IPublishedContent content)
         {
-
             IPublishedContent parent = content?.Parent();
 
             if (parent?.Children() is null || content is null)
@@ -48,6 +46,7 @@ namespace Articulate.Extensions
             {
                 return null;
             }
+
             var found = false;
             IPublishedContent last = null;
             foreach (IPublishedContent sibling in parent.Children())
@@ -67,7 +66,7 @@ namespace Articulate.Extensions
                 }
             }
 
-            //it could have been at the end
+            // it could have been at the end
             return found ? last : null;
         }
 
@@ -109,29 +108,6 @@ namespace Articulate.Extensions
 
             return false; // < count
         }
-        // TODO: Not needed once PostImage migration complete
-        private static string GetBaseImageUrl(this IPublishedContent content, string propertyAlias)
-        {
-            if (content is null)
-            {
-                return null;
-            }
-
-            var url = content.Value<MediaWithCrops>(propertyAlias)?.Url();
-
-            if (!string.IsNullOrWhiteSpace(url))
-            {
-                return url;
-            }
-
-            url = content.GetProperty(propertyAlias)?.GetSourceValue()?.ToString();
-            if (url is null || url.IsNullOrWhiteSpace() || url.Equals("[]"))
-            {
-                url = string.Empty;
-            }
-
-            return url;
-        }
 
         public static string GetCroppedImageUrl(this IPublishedContent content, string propertyAlias, string cropAlias, ImageCropMode imageCropMode = ImageCropMode.Max)
         {
@@ -157,39 +133,15 @@ namespace Articulate.Extensions
         }
 
         /// <summary>
-        ///     Shuffles a List&lt;T&gt; in-place.
-        /// </summary>
-        private static void Shuffle<T>(this IList<T> list)
-        {
-            if (list is not null)
-            {
-                Random rng = Random.Shared;
-                for (var i = list.Count - 1; i >= 1; i--)
-                {
-                    var j = rng.Next(i + 1);
-                    (list[i], list[j]) = (list[j], list[i]);
-                }
-            }
-            else
-            {
-                throw new ArgumentNullException(nameof(list));
-            }
-        }
-
-        /// <summary>
         ///     Returns a new list containing the elements of a source sequence in random order.
         /// </summary>
         public static List<T> InRandomOrder<T>(this IEnumerable<T> source)
         {
-            if (source is null)
-            {
-                throw new ArgumentNullException(nameof(source));
-            }
+            ArgumentNullException.ThrowIfNull(source, nameof(source));
 
             var list = source.ToList();
             list.Shuffle();
             return list;
-
         }
 
         /// <summary>
@@ -289,8 +241,8 @@ namespace Articulate.Extensions
             builder.AppendHtml("<span>");
             builder.Append("By ");
 
-            //TODO: Check if the current theme has an Author.cshtml theme file otherwise don't render a link!
-            //In that case we should have a 'ThemeSupport' class that will check to see what a theme supports.
+            // TODO: Check if the current theme has an Author.cshtml theme file otherwise don't render a link!
+            // In that case we should have a 'ThemeSupport' class that will check to see what a theme supports.
             if (model.Author.BlogUrl.IsNullOrWhiteSpace())
             {
                 builder.Append(model.Author.Name);
@@ -377,10 +329,10 @@ namespace Articulate.Extensions
                  window.dataLayer = window.dataLayer || [];
                  function gtag(){dataLayer.push(arguments);}
                  gtag('js', new Date());
-               
+
                  gtag('config', 'G-VMZC8VN8PN');
                </script>
-             */ 
+             */
             if (model.RootBlogNode.Value<string>("googleAnalyticsId").IsNullOrWhiteSpace() == false
                 && model.RootBlogNode.Value<string>("googleAnalyticsName").IsNullOrWhiteSpace() == false)
             {
@@ -451,6 +403,7 @@ namespace Articulate.Extensions
             });
 
         public static IHtmlContent ListTags(this PostModel model, Func<string, HelperResult> tagLink, string delimiter = ", ") => model.Tags.ToArray().ListCategoriesOrTags(tagLink, delimiter);
+
         public static IHtmlContent ListCategories(this PostModel model, Func<string, HelperResult> tagLink, string delimiter = ", ") => model.Categories.ToArray().ListCategoriesOrTags(tagLink, delimiter);
 
         public static void SocialMetaTags(this IPublishedContent model, IHtmlContentBuilder builder)
@@ -460,7 +413,7 @@ namespace Articulate.Extensions
                 TagRenderMode = TagRenderMode.StartTag, Attributes =
                 {
                     ["name"] = "twitter:card", ["content"] = "summary"
-                } //non-closing since that's just the way it is
+                } // non-closing since that's just the way it is
             };
             builder.AppendHtml(twitterTag);
 
@@ -481,6 +434,50 @@ namespace Articulate.Extensions
                 TagRenderMode = TagRenderMode.SelfClosing, Attributes = { ["property"] = "og:url", ["content"] = model.Url(mode: UrlMode.Absolute) }
             };
             builder.AppendHtml(openGraphUrl);
+        }
+
+        /// <summary>
+        ///     Shuffles a List&lt;T&gt; in-place.
+        /// </summary>
+        private static void Shuffle<T>(this List<T> list)
+        {
+            if (list is not null)
+            {
+                Random rng = Random.Shared;
+                for (var i = list.Count - 1; i >= 1; i--)
+                {
+                    var j = rng.Next(i + 1);
+                    (list[i], list[j]) = (list[j], list[i]);
+                }
+            }
+            else
+            {
+                throw new ArgumentNullException(nameof(list));
+            }
+        }
+
+        // TODO: Not needed once PostImage migration complete
+        private static string GetBaseImageUrl(this IPublishedContent content, string propertyAlias)
+        {
+            if (content is null)
+            {
+                return null;
+            }
+
+            var url = content.Value<MediaWithCrops>(propertyAlias)?.Url();
+
+            if (!string.IsNullOrWhiteSpace(url))
+            {
+                return url;
+            }
+
+            url = content.GetProperty(propertyAlias)?.GetSourceValue()?.ToString();
+            if (url is null || url.IsNullOrWhiteSpace() || url.Equals("[]"))
+            {
+                url = string.Empty;
+            }
+
+            return url;
         }
     }
 }

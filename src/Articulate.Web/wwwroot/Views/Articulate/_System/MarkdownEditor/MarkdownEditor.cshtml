@@ -1,4 +1,4 @@
-@model Articulate.Web.Models.MarkdownEditorInitModel
+@model MarkdownEditorInitModel
 
 @{
     Layout = null;
@@ -36,10 +36,10 @@
 </head>
 <body x-data="markdownEditor" x-init="init" x-cloak
       data-articulate-node-id="@Model.ArticulateNodeId"
-      data-auth-url="@Model.AuthorizeUrl"
-      data-auth-end-url="@Model.EndSessionUrl"
-      data-token-url="@Model.TokenUrl"
-      data-current-user-url="@Model.CurrentUserUrl"
+      data-auth-url="@MarkdownEditorInitModel.AuthorizeUrl"
+      data-auth-end-url="@MarkdownEditorInitModel.EndSessionUrl"
+      data-token-url="@MarkdownEditorInitModel.TokenUrl"
+      data-current-user-url="@MarkdownEditorInitModel.CurrentUserUrl"
       data-editor-post-url="@Model.EditorPostUrl">
 
     <div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">

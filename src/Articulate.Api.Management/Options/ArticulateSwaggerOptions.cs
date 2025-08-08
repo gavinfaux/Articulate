@@ -34,13 +34,13 @@ namespace Articulate.Api.Management.Options
                     Contact = new OpenApiContact
                     {
                         Name = "https://github.com/Shazwazza/Articulate",
-                        Url = new Uri("https://github.com/Shazwazza/Articulate")
+                        Url = new Uri("https://github.com/Shazwazza/Articulate"),
                     },
                     License = new OpenApiLicense
                     {
                         Name = $"MIT License, © {year} Shannon Deminick",
-                        Url = new Uri("https://opensource.org/license/MIT")
-                    }
+                        Url = new Uri("https://opensource.org/license/MIT"),
+                    },
                 });
 
             try
@@ -62,14 +62,11 @@ namespace Articulate.Api.Management.Options
 
             options.OperationFilter<ArticulateOperationSecurityFilter>();
 
-            options.TagActionsBy(api =>
-            {
-                return api.GroupName is not null
-                    ? [api.GroupName]
-                    : api.ActionDescriptor is ControllerActionDescriptor controllerActionDescriptor
-                        ? new[] { controllerActionDescriptor.ControllerName }
-                        : throw new InvalidOperationException("Unable to determine tag for endpoint.");
-            });
+            options.TagActionsBy(api => api.GroupName is not null
+                ? [api.GroupName]
+                : api.ActionDescriptor is ControllerActionDescriptor controllerActionDescriptor
+                    ? new[] { controllerActionDescriptor.ControllerName }
+                    : throw new InvalidOperationException("Unable to determine tag for endpoint."));
 
             options.DocInclusionPredicate((_, _) => true);
         }

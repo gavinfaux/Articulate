@@ -11,7 +11,7 @@ namespace Articulate.PropertyEditors
         : MarkdownEditorValueConverter(localLinkParser, urlParser)
     {
         public override bool IsConverter(IPublishedPropertyType propertyType)
-            => "Articulate.MarkdownEditor" == propertyType.EditorUiAlias;
+            => propertyType.EditorUiAlias.Equals("Articulate.MarkdownEditor");
 
         public override object ConvertIntermediateToObject(
             IPublishedElement owner,

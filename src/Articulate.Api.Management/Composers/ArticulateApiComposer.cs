@@ -20,7 +20,6 @@ namespace Articulate.Api.Management.Composers
             builder.Services.AddSingleton<IOperationIdHandler, ArticulateOperationIdHandler>();
 
             builder.Services.ConfigureOptions<ArticulateSwaggerOptions>();
-
         }
     }
 }

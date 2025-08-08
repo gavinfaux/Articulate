@@ -44,7 +44,7 @@ namespace Articulate.Controllers
                 return NotFound();
             }
 
-            //create a master model
+            // create a master model
             var masterModel = new MasterModel(CurrentPage, PublishedValueFallback);
 
             if (masterModel.BlogArchiveNode is null)
@@ -54,7 +54,7 @@ namespace Articulate.Controllers
 
             if (term is null)
             {
-                //nothing to search, just render the view
+                // nothing to search, just render the view
                 var emptyList = new ListModel(
                     CurrentPage,
                     new PagerModel(masterModel.PageSize, 0, 0),

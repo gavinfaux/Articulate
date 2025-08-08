@@ -1,4 +1,3 @@
-#nullable enable
 using Articulate.Attributes;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -6,6 +5,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Routing.Matching;
 using Umbraco.Cms.Web.Common.Routing;
 
+#nullable enable
 namespace Articulate.Routing
 {
     /// <summary>
@@ -24,9 +24,10 @@ namespace Articulate.Routing
         public override int Order => 100;
 
         public bool AppliesToEndpoints(IReadOnlyList<Endpoint> endpoints) =>
-            // Don't apply this filter to any endpoint group that is a controller route
-            // i.e. only dynamic routes.
+
+            // Don't apply this filter to any endpoint group that is a controller route i.e. only dynamic routes.
             !endpoints.Select(endpoint => endpoint.Metadata.GetMetadata<ControllerAttribute>()).OfType<ControllerAttribute>().Any() &&
+
             // then ensure this is only applied if all endpoints are IDynamicEndpointMetadata
             endpoints.All(x => x.Metadata.GetMetadata<IDynamicEndpointMetadata>() is not null);
 
@@ -47,8 +48,8 @@ namespace Articulate.Routing
             for (var i = 0; i < candidates.Count; i++)
             {
                 // If the candidate is an Articulate dynamic controller, set valid
-                candidates.SetValidity(i,
-                    candidates[i].Endpoint?.Metadata.GetMetadata<ArticulateDynamicRouteAttribute>() is not null);
+                candidates.SetValidity(i, candidates[i].Endpoint?.Metadata.GetMetadata<ArticulateDynamicRouteAttribute>() is not null);
+
                 // else it is invalid
             }
 

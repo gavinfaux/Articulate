@@ -1,7 +1,6 @@
 #nullable enable
 using System.Xml.Linq;
 using Articulate.Attributes;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Logging;
@@ -55,19 +54,6 @@ namespace Articulate.Controllers
                         new XAttribute("blogID", node.Url(mode: UrlMode.Absolute)))));
 
             return new XmlResult(new XDocument(rsd));
-        }
-    }
-
-    internal class XmlResult(XDocument xDocument) : ActionResult
-    {
-        /// <summary>
-        /// Serialises the object that was passed into the constructor to XML and writes the corresponding XML to the result stream.
-        /// </summary>
-        public override async Task ExecuteResultAsync(ActionContext context)
-        {
-            context.HttpContext.Response.Clear();
-            context.HttpContext.Response.ContentType = "text/xml";
-            await context.HttpContext.Response.WriteAsync(xDocument.ToString()).ConfigureAwait(false);
         }
     }
 }

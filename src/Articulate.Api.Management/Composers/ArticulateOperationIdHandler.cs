@@ -15,23 +15,10 @@ namespace Articulate.Api.Management.Composers
         : OperationIdHandler(apiVersioningOptions)
     {
         // Adapted from Umbraco.Cms.Api.Common.OpenApi.OperationIdHandler
-
         private readonly IOptions<ApiVersioningOptions> _apiVersioningOptions = apiVersioningOptions;
 
-        protected override bool CanHandle(
-            ApiDescription apiDescription,
-            ControllerActionDescriptor controllerActionDescriptor)
-        {
-            Type type = typeof(BlogMlApiController);
-            var namespaceName = type.Namespace ?? "Articulate.Api.Management.Controllers";
-
-            return controllerActionDescriptor.ControllerTypeInfo.Namespace?.StartsWith(
-                namespaceName,
-                StringComparison.InvariantCultureIgnoreCase) is true;
-        }
-
         public override string Handle(ApiDescription apiDescription)
-            => ArticulateOperationId(apiDescription);
+    => ArticulateOperationId(apiDescription);
 
         public string ArticulateOperationId(ApiDescription apiDescription)
         {
@@ -80,6 +67,18 @@ namespace Articulate.Api.Management.Composers
 
             // Return the operation ID with the formatted http method verb in front, e.g. GetTrackedReferenceById
             return $"{httpMethod}{formattedOperationId.ToFirstUpper()}{version}";
+        }
+
+        protected override bool CanHandle(
+            ApiDescription apiDescription,
+            ControllerActionDescriptor controllerActionDescriptor)
+        {
+            Type type = typeof(BlogMlApiController);
+            var namespaceName = type.Namespace ?? "Articulate.Api.Management.Controllers";
+
+            return controllerActionDescriptor.ControllerTypeInfo.Namespace?.StartsWith(
+                namespaceName,
+                StringComparison.InvariantCultureIgnoreCase) is true;
         }
     }
 }

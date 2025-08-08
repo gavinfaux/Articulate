@@ -15,7 +15,6 @@ using Umbraco.Cms.Core.Routing;
 
 namespace Articulate.Components
 {
-
     public class ArticulateComposer : ComponentComposer<ArticulateComponent>
     {
         public override void Compose(IUmbracoBuilder builder)

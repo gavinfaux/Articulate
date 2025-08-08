@@ -14,8 +14,8 @@ namespace Articulate.Services
         : IArticulateThemeRepository
     {
         private const string AllThemesCacheKey = "Articulate_AllThemes";
-        private readonly Assembly _articulateAssembly = typeof(ArticulateThemeRepository).Assembly;
         private const string EmbeddedResourceRoot = "Articulate.Themes";
+        private readonly Assembly _articulateAssembly = typeof(ArticulateThemeRepository).Assembly;
 
         public async Task CopyThemeAsync(string themeName, string newThemeName)
         {
@@ -28,12 +28,12 @@ namespace Articulate.Services
                 throw new IOException($"A user theme with the name '{newThemeName}' already exists.");
             }
 
-            var resourcePathPrefix = Path.Combine(EmbeddedResourceRoot,themeName);
+            var resourcePathPrefix = Path.Combine(EmbeddedResourceRoot, themeName);
             var themeResources = _articulateAssembly.GetManifestResourceNames()
                 .Where(x => x.StartsWith(resourcePathPrefix))
                 .ToList();
 
-            if (!themeResources.Any())
+            if (themeResources.Count == 0)
             {
                 throw new DirectoryNotFoundException($"The source theme '{themeName}' could not be found as an embedded resource.");
             }
@@ -84,7 +84,6 @@ namespace Articulate.Services
         }
 
         public Task<IEnumerable<string>> GetDefaultThemesAsync() => Task.Run(() => DefaultThemes.AllThemeNames);
-
 
         public Task<IEnumerable<string>> GetUserThemesAsync() => Task.Run(() => GetThemesFromPathAsync(PathHelper.UserViewPath));
 

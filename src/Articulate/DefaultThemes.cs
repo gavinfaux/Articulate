@@ -11,7 +11,7 @@ namespace Articulate
                 [Vapor.Name] = new Vapor(),
                 [Material.Name] = new Material(),
                 [Phantom.Name] = new Phantom(),
-                [Mini.Name] = new Mini()
+                [Mini.Name] = new Mini(),
             };
 
         public static DefaultTheme[] AllThemes { get; } = _sDefaultThemes.Values.ToArray();

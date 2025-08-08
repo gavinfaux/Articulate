@@ -25,7 +25,9 @@ namespace Articulate.Controllers
         : RenderController(logger, compositeViewEngine, umbracoContextAccessor)
     {
         protected IUmbracoContextAccessor UmbracoContextAccessor { get; } = umbracoContextAccessor;
+
         protected IPublishedUrlProvider PublishedUrlProvider { get; } = publishedUrlProvider;
+
         protected IPublishedValueFallback PublishedValueFallback { get; } = publishedValueFallback;
 
         /// <summary>
@@ -33,20 +35,9 @@ namespace Articulate.Controllers
         /// </summary>
         protected IActionResult GetPagedListView(IMasterModel masterModel, IPublishedContent pageNode, IEnumerable<IPublishedContent> listItems, long totalPosts, int? p)
         {
-            if (masterModel is null)
-            {
-                throw new ArgumentNullException(nameof(masterModel));
-            }
-
-            if (pageNode is null)
-            {
-                throw new ArgumentNullException(nameof(pageNode));
-            }
-
-            if (listItems is null)
-            {
-                throw new ArgumentNullException(nameof(listItems));
-            }
+            ArgumentNullException.ThrowIfNull(masterModel, nameof(masterModel));
+            ArgumentNullException.ThrowIfNull(pageNode, nameof(pageNode));
+            ArgumentNullException.ThrowIfNull(listItems, nameof(listItems));
 
             if (!GetPagerModel(masterModel, totalPosts, p, out PagerModel? pager) || pager is null)
             {
@@ -68,14 +59,14 @@ namespace Articulate.Controllers
             var pageSize = masterModel.PageSize;
             var totalPages = totalPosts == 0 ? 1 : Convert.ToInt32(Math.Ceiling((double)totalPosts / pageSize));
 
-            //Invalid page, redirect without pages
+            // Invalid page, redirect without pages
             if (totalPages < pageNumber)
             {
                 pager = null;
                 return false;
             }
 
-            //maintain query strings
+            // maintain query strings
             var queryStrings = new StringBuilder();
             foreach (var key in Request.Query.Keys)
             {
@@ -99,14 +90,8 @@ namespace Articulate.Controllers
                 pageSize,
                 pageNumber - 1,
                 totalPages,
-                totalPages > pageNumber
-                    ? GetPagedUrl(masterModel.Url(), pageNumber + 1, queryStrings.ToString())
-                    : string.Empty,
-                pageNumber > 2
-                    ? GetPagedUrl(masterModel.Url(), pageNumber - 1, queryStrings.ToString())
-                    : pageNumber > 1
-                        ? GetPagedUrl(masterModel.Url(), null, queryStrings.ToString())
-                        : string.Empty);
+                totalPages > pageNumber ? GetPagedUrl(masterModel.Url(), pageNumber + 1, queryStrings.ToString()) : string.Empty,
+                pageNumber > 2 ? GetPagedUrl(masterModel.Url(), pageNumber - 1, queryStrings.ToString()) : pageNumber > 1 ? GetPagedUrl(masterModel.Url(), null, queryStrings.ToString()) : string.Empty);
 
             return true;
         }

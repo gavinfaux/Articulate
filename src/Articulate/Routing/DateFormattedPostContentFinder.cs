@@ -73,7 +73,6 @@ namespace Articulate.Routing
 
             contentRequest.SetPublishedContent(node);
             return true;
-
         }
     }
 }

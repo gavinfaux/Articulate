@@ -9,5 +9,4 @@ namespace Articulate.Services
 
         public Task<IEnumerable<string>?> GetAllThemesAsync();
     }
-
 }

@@ -29,8 +29,5 @@ namespace Articulate
             public const string ArticlesDocument = "Articles";
             public const string AuthorsDocument = "Authors";
         }
-
-
-
     }
 }

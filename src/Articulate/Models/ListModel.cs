@@ -12,7 +12,7 @@ namespace Articulate.Models
         private IEnumerable<PostModel>? _resolvedList;
 
         /// <summary>
-        /// Constructor accepting an explicit list of child items
+        /// Accepts an explicit list of child items
         /// </summary>
         /// <param name="content"></param>
         /// <param name="listItems"></param>
@@ -29,11 +29,7 @@ namespace Articulate.Models
             IPublishedValueFallback publishedValueFallback)
             : base(content, publishedValueFallback)
         {
-
-            if (content is null)
-            {
-                throw new ArgumentNullException(nameof(content));
-            }
+            ArgumentNullException.ThrowIfNull(content, nameof(content));
 
             Pages = pager ?? throw new ArgumentNullException(nameof(pager));
             _listItems = listItems ?? throw new ArgumentNullException(nameof(listItems));
@@ -53,12 +49,12 @@ namespace Articulate.Models
         }
 
         /// <summary>
-        /// The pager model
+        /// Gets the pager model
         /// </summary>
         public PagerModel? Pages { get; }
 
         /// <summary>
-        /// Strongly typed access to the list of blog posts
+        /// Gets a strongly typed access to the list of blog posts
         /// </summary>
         public IEnumerable<PostModel> Posts
         {
@@ -78,7 +74,8 @@ namespace Articulate.Models
                 if (_listItems is not null && Pages is not null)
                 {
                     _resolvedList = _listItems
-                    //Skip will already be done in this case, but we'll take again anyways just to be safe
+
+                        // Skip will already be done in this case, but we'll take again anyways just to be safe
                         .Take(Pages.PageSize)
                         .Select(x => new PostModel(x, PublishedValueFallback))
                         .ToArray();
@@ -93,7 +90,7 @@ namespace Articulate.Models
         }
 
         /// <summary>
-        /// The list of blog posts
+        /// Gets the list of blog posts
         /// </summary>
         [Obsolete("Please use TryGetChildrenKeys() on IDocumentNavigationQueryService or IMediaNavigationQueryService instead. Scheduled for removal in V16.", false)]
         public override IEnumerable<IPublishedContent> Children => Posts;

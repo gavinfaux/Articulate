@@ -1,9 +1,9 @@
-// TODO: #nullable enable
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.PropertyEditors;
 using Umbraco.Cms.Core.Serialization;
 using Umbraco.Cms.Core.Services;
 
+// TODO: #nullable enable
 namespace Articulate.Extensions
 {
     public static class ContentExtensions
@@ -40,10 +40,7 @@ namespace Articulate.Extensions
             IContentTypeComposition contentType,
             ILanguageService languageService)
         {
-            if (contentType is null)
-            {
-                throw new ArgumentNullException(nameof(contentType));
-            }
+            ArgumentNullException.ThrowIfNull(contentType, nameof(contentType));
 
             var variesByCulure = contentType.VariesByCulture();
 
@@ -72,10 +69,7 @@ namespace Articulate.Extensions
             IContentTypeComposition contentType,
             ILanguageService languageService)
         {
-            if (contentType is null)
-            {
-                throw new ArgumentNullException(nameof(contentType));
-            }
+            ArgumentNullException.ThrowIfNull(contentType, nameof(contentType));
 
             var variesByCulture = VariesByCulture(propertyTypeAlias, contentType);
 
@@ -104,10 +98,7 @@ namespace Articulate.Extensions
             IJsonSerializer jsonSerializer,
             bool merge = false)
         {
-            if (contentType is null)
-            {
-                throw new ArgumentNullException(nameof(contentType));
-            }
+            ArgumentNullException.ThrowIfNull(contentType, nameof(contentType));
 
             var variesByCulture = VariesByCulture(propertyTypeAlias, contentType);
 
@@ -138,10 +129,7 @@ namespace Articulate.Extensions
             IContentTypeComposition contentType,
             Func<IContentBase, IContentTypeComposition, ContentCultureInfos, object> propertyValueGetter)
         {
-            if (contentType is null)
-            {
-                throw new ArgumentNullException(nameof(contentType));
-            }
+            ArgumentNullException.ThrowIfNull(contentType, nameof(contentType));
 
             if (content.ContentType.VariesByCulture() && content.CultureInfos is not null)
             {
@@ -169,16 +157,12 @@ namespace Articulate.Extensions
 
                 content.SetValue(propertyAlias, propertyValue);
             }
-
         }
 
         private static bool VariesByCulture(string propertyTypeAlias, IContentTypeComposition contentType)
         {
             // will throw if the property type is not found
-            var variesByCulture = contentType.VariesByCulture()
-                // only look up the property type if the content type varies else there's no point
-                ? contentType.CompositionPropertyTypes.First(x => x.Alias.InvariantEquals(propertyTypeAlias)).VariesByCulture()
-                : false;
+            var variesByCulture = contentType.VariesByCulture() && contentType.CompositionPropertyTypes.First(x => x.Alias.InvariantEquals(propertyTypeAlias)).VariesByCulture();
 
             return variesByCulture;
         }

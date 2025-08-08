@@ -1,13 +1,12 @@
-//TODO: #nullable enable
 using Articulate.Models;
 using Articulate.Services;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.PublishedCache;
 using Umbraco.Cms.Web.Common;
 
+// TODO: #nullable enable
 namespace Articulate.Extensions
 {
-
     public static class UmbracoHelperExtensions
     {
         /// <summary>
@@ -49,9 +48,9 @@ namespace Articulate.Extensions
         /// A method that will return the posts sorted by published date in an efficient way
         /// </summary>
         /// <param name="helper"></param>
-        /// <param name="articulateArchiveIds"></param>
         /// <param name="pager"></param>
         /// <param name="filter"></param>
+        /// <param name="articulateArchiveIds"></param>
         /// <returns></returns>
         public static IEnumerable<IPublishedContent> GetPostsSortedByPublishedDate(
             this UmbracoHelper helper,
@@ -64,13 +63,13 @@ namespace Articulate.Extensions
                 .WhereNotNull()
                 .SelectMany(x => x.Descendants());
 
-            //apply a filter if there is one
+            // apply a filter if there is one
             if (filter is not null)
             {
                 posts = posts.Where(filter);
             }
 
-            //now do the ordering
+            // now do the ordering
             posts = posts.OrderByDescending(x => x.Value<DateTime>("publishedDate"))
                 .Skip(pager.CurrentPageIndex * pager.PageSize)
                 .Take(pager.PageSize);
@@ -200,6 +199,5 @@ namespace Articulate.Extensions
 
             return listNodes;
         }
-
     }
 }

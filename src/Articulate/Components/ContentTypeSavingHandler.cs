@@ -9,7 +9,6 @@ namespace Articulate.Components
     {
         public void Handle(ContentTypeSavingNotification notification)
         {
-
             foreach (IContentType c in notification.SavedEntities
                 .Where(c => c.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateArchive) || c.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateAuthors))
                 .Where(c => c.HasIdentity == false))

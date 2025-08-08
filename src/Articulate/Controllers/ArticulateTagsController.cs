@@ -84,7 +84,7 @@ namespace Articulate.Controllers
                 return NotFound();
             }
 
-            //create a blog model of the main page
+            // create a blog model of the main page
             var rootPageModel = new MasterModel(CurrentPage, PublishedValueFallback);
 
             IEnumerable<PostsByTagModel> contentByTags = articulateTagService.GetContentByTags(
@@ -112,7 +112,7 @@ namespace Articulate.Controllers
                 return NotFound();
             }
 
-            //create a master model
+            // create a master model
             var masterModel = new MasterModel(CurrentPage, PublishedValueFallback);
 
             PostsByTagModel contentByTag = articulateTagService.GetContentByTag(
@@ -124,8 +124,7 @@ namespace Articulate.Controllers
                 p ?? 1,
                 masterModel.PageSize);
 
-
-            //this is a special case in the event that a tag contains a '.', when this happens we change it to a '-'
+            // this is a special case in the event that a tag contains a '.', when this happens we change it to a '-'
             // when generating the URL. So if the above doesn't return any tags and the tag contains a '-', then we
             // will replace them with '.' and do the lookup again
             if (contentByTag.PostCount == 0 && tag.Contains('-'))

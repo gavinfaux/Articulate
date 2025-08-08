@@ -16,38 +16,40 @@ namespace Articulate
         {
             var splitSearch = term.Split([' '], StringSplitOptions.RemoveEmptyEntries);
 
-            //The fields to search on and their 'weight' (importance)
+            // The fields to search on and their 'weight' (importance)
             var fields = new Dictionary<string, int>
             {
-                {"markdown", 2},
-                {"richText", 2},
-                {"nodeName", 3},
-                {"tags", 1},
-                {"categories", 1},
-                {"umbracoUrlName", 3}
+                { "markdown", 2 },
+                { "richText", 2 },
+                { "nodeName", 3 },
+                { "tags", 1 },
+                { "categories", 1 },
+                { "umbracoUrlName", 3 },
             };
 
-            //The multipliers for match types
+            // The multipliers for match types
             const int exactMatch = 5;
             const int termMatch = 2;
 
             var fieldQuery = new StringBuilder();
-            //build field query
+
+            // build field query
             foreach (KeyValuePair<string, int> field in fields)
             {
-                //full exact match (which has a higher boost)
+                // full exact match (which has a higher boost)
                 fieldQuery.Append($"{field.Key}:{"\"" + term + "\""}^{field.Value * exactMatch}");
                 fieldQuery.Append(' ');
-                //NOTE: Phrase match wildcard isn't really supported unless you use the Lucene
+
+                // NOTE: Phrase match wildcard isn't really supported unless you use the Lucene
                 // API like ComplexPhraseWildcardSomethingOrOther...
-                //split match
+                // split match
                 foreach (var s in splitSearch)
                 {
-                    //match on each term, no wildcard, higher boost
+                    // match on each term, no wildcard, higher boost
                     fieldQuery.Append($"{field.Key}:{s}^{field.Value * termMatch}");
                     fieldQuery.Append(' ');
 
-                    //match on each term, with wildcard
+                    // match on each term, with wildcard
                     fieldQuery.Append($"{field.Key}:{s}*");
                     fieldQuery.Append(' ');
                 }

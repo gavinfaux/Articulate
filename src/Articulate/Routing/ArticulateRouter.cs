@@ -16,6 +16,7 @@ namespace Articulate.Routing
 {
     public class ArticulateRouter
     {
+        private const string MarkdownEditorControllerName = "MarkdownEditor";
         private static readonly Lock _sLocker = new();
         private static readonly string _sSearchControllerName = ControllerExtensions.GetControllerName<ArticulateSearchController>();
         private static readonly string _sOpenSearchControllerName = ControllerExtensions.GetControllerName<OpenSearchController>();
@@ -23,7 +24,6 @@ namespace Articulate.Routing
         private static readonly string _sWlwControllerName = ControllerExtensions.GetControllerName<WlwManifestController>();
         private static readonly string _sTagsControllerName = ControllerExtensions.GetControllerName<ArticulateTagsController>();
         private static readonly string _sRssControllerName = ControllerExtensions.GetControllerName<ArticulateRssController>();
-        private const string MarkdownEditorControllerName = "MarkdownEditor";
         private static readonly string _sMetaWeblogControllerName = ControllerExtensions.GetControllerName<MetaWeblogController>();
 
         private readonly Dictionary<ArticulateRouteTemplate, ArticulateRootNodeCache> _routeCache = [];
@@ -97,6 +97,7 @@ namespace Articulate.Routing
                     // into account the domain assigned to the route.
                     IOrderedEnumerable<IGrouping<string, IPublishedContent>> articulateNodesGroupedByUriPath = articulateNodes
                         .GroupBy(x => RouteCollectionExtensions.RoutePathFromNodeUrl(httpContext, x.Url()))
+
                         // This is required to ensure that we create routes that are more specific first
                         // before creating routes that are less specific
                         .OrderByDescending(x => x.Key.Split('/').Length);
@@ -108,6 +109,7 @@ namespace Articulate.Routing
                         foreach (IPublishedContent articulateRootNode in nodeByPathGroup)
                         {
                             MapRssRoute(httpContext, rootNodePath, articulateRootNode, domains);
+
                             // TODO : Enable when Editor refactor to Alpine.js completd
                             // MapMarkdownEditorRoute(httpContext, rootNodePath, articulateRootNode, domains);
                             MapAuthorsRssRoute(httpContext, rootNodePath, articulateRootNode, domains);
@@ -124,6 +126,13 @@ namespace Articulate.Routing
                     }
                 }
             }
+        }
+
+        private static List<Domain> DomainsForContent(IPublishedContent content, IReadOnlyList<Domain> domains)
+        {
+            var nodePaths = new HashSet<int>(content.Path.Split(',').Select(int.Parse).ToList());
+
+            return domains.Where(domain => nodePaths.Contains(domain.ContentId)).ToList();
         }
 
         /// <summary>
@@ -154,13 +163,6 @@ namespace Articulate.Routing
             dynamicRouteValues.Add(articulateRootNode.Id, DomainsForContent(articulateRootNode, domains));
         }
 
-        private static List<Domain> DomainsForContent(IPublishedContent content, IReadOnlyList<Domain> domains)
-        {
-            var nodePaths = new HashSet<int>(content.Path.Split(',').Select(int.Parse).ToList());
-
-            return domains.Where(domain => nodePaths.Contains(domain.ContentId)).ToList();
-        }
-
         private void MapOpenSearchRoute(HttpContext httpContext, string rootNodePath, IPublishedContent articulateRootNode, List<Domain> domains)
         {
             RouteTemplate template = TemplateParser.Parse($"{rootNodePath}opensearch/{{id}}");
@@ -187,7 +189,6 @@ namespace Articulate.Routing
 
         private void MapMetaWeblogRoute(HttpContext httpContext, string rootNodePath, IPublishedContent articulateRootNode, List<Domain> domains)
         {
-
             RouteTemplate template = TemplateParser.Parse($"{rootNodePath}metaweblog/{{id}}");
             MapRoute(
                 _sMetaWeblogControllerName,
@@ -196,7 +197,6 @@ namespace Articulate.Routing
                 httpContext,
                 articulateRootNode,
                 domains);
-
         }
 
         private void MapManifestRoute(HttpContext httpContext, string rootNodePath, IPublishedContent articulateRootNode, List<Domain> domains)

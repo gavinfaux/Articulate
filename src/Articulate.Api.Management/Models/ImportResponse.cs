@@ -7,7 +7,9 @@ namespace Articulate.Api.Management.Models
     /// </summary>
     public class ImportResponse
     {
-        public ImportResponse(){ }
+        public ImportResponse()
+        {
+        }
 
         public ImportResponse(ImportResponseDto dto)
         {

@@ -16,7 +16,7 @@ namespace Articulate.Extensions
                 return text ?? string.Empty;
             }
 
-            var trailLength = trailingStringIfTextCut.StartsWith("&") ? 1
+            var trailLength = trailingStringIfTextCut is ['&', ..] ? 1
                                                                       : trailingStringIfTextCut.Length;
             maxCharacters = maxCharacters - trailLength >= 0 ? maxCharacters - trailLength
                                                              : 0;
@@ -47,7 +47,6 @@ namespace Articulate.Extensions
             }
 
             return EncodePath(urlPath);
-
         }
 
         private static string EncodePath(string urlPath) =>
@@ -56,7 +55,8 @@ namespace Articulate.Extensions
                 urlPath.Split(['/'], StringSplitOptions.RemoveEmptyEntries)
                     .Select(x => HttpUtility.UrlEncode(x).Replace("+", "%20"))
                     .WhereNotNull()
-                    //we are not supporting dots in our URLs it's just too difficult to
+
+                    // we are not supporting dots in our URLs it's just too difficult to
                     // support across the board with all the different config options
                     .Select(x => x.Replace('.', '-')));
     }

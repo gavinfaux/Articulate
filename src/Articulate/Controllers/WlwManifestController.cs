@@ -19,9 +19,9 @@ namespace Articulate.Controllers
         IUmbracoContextAccessor umbracoContextAccessor)
         : RenderController(logger, compositeViewEngine, umbracoContextAccessor)
     {
-        //http://msdn.microsoft.com/en-us/library/bb463260.aspx
-        //http://msdn.microsoft.com/en-us/library/bb463263.aspx
-        //http://msdn.microsoft.com/en-us/library/bb463265.aspx
+        // http://msdn.microsoft.com/en-us/library/bb463260.aspx
+        // http://msdn.microsoft.com/en-us/library/bb463263.aspx
+        // http://msdn.microsoft.com/en-us/library/bb463265.aspx
         [HttpGet]
         public ActionResult Index(int id)
         {
@@ -46,7 +46,8 @@ namespace Articulate.Controllers
                     new XElement(ns + "supportsMultipleCategories", "Yes"),
                     new XElement(ns + "supportsNewCategoriesInline", "Yes"),
                     new XElement(ns + "supportsKeywords", "Yes"),
-                    //NOTE: This setting is undocumented for whatever reason!
+
+                    // NOTE: This setting is undocumented for whatever reason!
                     new XElement(ns + "supportsGetTags", "Yes"),
                     new XElement(ns + "supportsCommentPolicy", "Yes"),
                     new XElement(ns + "supportsSlug", "Yes"),

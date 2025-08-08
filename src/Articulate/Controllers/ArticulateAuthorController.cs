@@ -36,7 +36,7 @@ namespace Articulate.Controllers
                 return NotFound();
             }
 
-            //create a master model
+            // create a master model
             var masterModel = new MasterModel(CurrentPage, PublishedValueFallback);
 
             IPublishedContent[]? listNodes = masterModel.RootBlogNode.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive)?.ToArray();
@@ -61,7 +61,6 @@ namespace Articulate.Controllers
                 pager,
                 PublishedValueFallback);
 
-
             var author = new AuthorModel(
                 CurrentPage,
                 authorPosts ?? [],
@@ -71,6 +70,5 @@ namespace Articulate.Controllers
 
             return View("Author", author);
         }
-
     }
 }

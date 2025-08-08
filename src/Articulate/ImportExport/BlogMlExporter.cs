@@ -54,8 +54,8 @@ namespace Articulate.ImportExport
                                   throw new InvalidOperationException("No Data Type named 'Articulate Tags' found");
                 TagConfiguration? tagConfiguration = tagDataType.ConfigurationAs<TagConfiguration>();
                 var tagGroup = tagConfiguration?.Group;
-                //TODO: See: http://argotic.codeplex.com/wikipage?title=Generating%20portable%20web%20log%20content&referringTitle=Home
 
+                // TODO: See: http://argotic.codeplex.com/wikipage?title=Generating%20portable%20web%20log%20content&referringTitle=Home
                 var blogMlDoc = new BlogMLDocument
                 {
                     RootUrl = new Uri(urlProvider.GetUrl(root.Id), UriKind.RelativeOrAbsolute),
@@ -72,8 +72,8 @@ namespace Articulate.ImportExport
                     0,
                     int.MaxValue,
                     out var total,
-                sqlContext.Query<IContent>().Where(x => x.ContentTypeId == authorsContentType.Id),
-                        Ordering.By("CreateDate", Direction.Descending));
+              sqlContext.Query<IContent>().Where(x => x.ContentTypeId == authorsContentType.Id),
+                    Ordering.By("CreateDate", Direction.Descending));
 
                 foreach (IContent authorsNode in authorsNodes)
                 {
@@ -100,6 +100,24 @@ namespace Articulate.ImportExport
 
                 WriteFile(blogMlDoc, exportFileName);
             }
+        }
+
+        private static string ImageMimeType(string src)
+        {
+            var ext = Path.GetExtension(src).Trim('.').ToLowerInvariant();
+            return ext switch
+            {
+                "jpg" => "image/jpeg",
+                "svg" => "image/svg+xml",
+                "png" => "image/png",
+                "gif" => "image/gif",
+                "webp" => "image/webp",
+                "avif" => "image/avif",
+                "bmp" => "image/bmp",
+                "tiff" => "image/tiff",
+                _ when !string.IsNullOrWhiteSpace(ext) => $"image/{ext}",
+                _ => string.Empty
+            };
         }
 
         private void WriteFile(BlogMLDocument blogMlDoc, string fileName)
@@ -171,12 +189,12 @@ namespace Articulate.ImportExport
                     var content = string.Empty;
                     if (child.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateRichText))
                     {
-                        //TODO: this would also need to handle RTE extensions e.g Blocks
+                        // TODO: this would also need to handle RTE extensions e.g Blocks
                         content = child.GetValue<string>("richText");
                     }
                     else if (child.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateMarkdown))
                     {
-                        //TODO: this would also need to handle Markdown extensions if supported e.g MDX
+                        // TODO: this would also need to handle Markdown extensions if supported e.g MDX
                         content = MarkdownHelper.ToHtml(child.GetValue<string>("markdown"));
                     }
 
@@ -267,24 +285,6 @@ namespace Articulate.ImportExport
                 pageIndex++;
             }
             while (posts.Length == pageSize);
-        }
-
-        private static string ImageMimeType(string src)
-        {
-            var ext = Path.GetExtension(src).Trim('.').ToLowerInvariant();
-            return ext switch
-            {
-                "jpg" => "image/jpeg",
-                "svg" => "image/svg+xml",
-                "png" => "image/png",
-                "gif" => "image/gif",
-                "webp" => "image/webp",
-                "avif" => "image/avif",
-                "bmp" => "image/bmp",
-                "tiff" => "image/tiff",
-                _ when !string.IsNullOrWhiteSpace(ext) => $"image/{ext}",
-                _ => string.Empty
-            };
         }
     }
 }

@@ -1,6 +1,6 @@
-//TODO: #nullable enable
 using Umbraco.Cms.Core.Models.PublishedContent;
 
+// TODO: #nullable enable
 namespace Articulate.Models
 {
     /// <summary>
@@ -9,6 +9,21 @@ namespace Articulate.Models
     public class MasterModel(IPublishedContent content, IPublishedValueFallback publishedValueFallback)
         : PublishedContentWrapped(content, publishedValueFallback), IMasterModel
     {
+        private IPublishedContent _rootBlogNode;
+        private string _theme;
+        private IPublishedContent _blogListNode;
+        private IPublishedContent _blogAuthorsNode;
+        private int? _pageSize;
+        private string _blogTitle;
+        private string _blogDescription;
+        private string _blogBanner;
+        private string _blogLogo;
+        private string _disqusShortName;
+        private string _customRssFeed;
+
+        private string _pageTitle;
+        private string _pageDescription;
+
         /// <summary>
         /// Returns the current theme
         /// </summary>
@@ -29,21 +44,6 @@ namespace Articulate.Models
             protected set => _rootBlogNode = value;
         }
 
-        private IPublishedContent _rootBlogNode;
-        private string _theme;
-        private IPublishedContent _blogListNode;
-        private IPublishedContent _blogAuthorsNode;
-        private int? _pageSize;
-        private string _blogTitle;
-        private string _blogDescription;
-        private string _blogBanner;
-        private string _blogLogo;
-        private string _disqusShortName;
-        private string _customRssFeed;
-
-        private string _pageTitle;
-        private string _pageDescription;
-
         /// <summary>
         /// This will return the first archive node found under the blog root
         /// </summary>
@@ -54,8 +54,8 @@ namespace Articulate.Models
         {
             get
             {
-                    IPublishedContent list = RootBlogNode.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive)?.FirstOrDefault();
-                    _blogListNode = list ?? throw new InvalidOperationException("Could not find the ArticulateArchive document for the current rendered page");
+                IPublishedContent list = RootBlogNode.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive)?.FirstOrDefault();
+                _blogListNode = list ?? throw new InvalidOperationException("Could not find the ArticulateArchive document for the current rendered page");
 
                 return _blogListNode;
             }
@@ -139,6 +139,7 @@ namespace Articulate.Models
         }
 
         public string PageTags { get; protected set; }
+
         protected IPublishedValueFallback PublishedValueFallback { get; } = publishedValueFallback;
     }
 }

@@ -9,7 +9,6 @@ using Umbraco.Cms.Core.Services;
 
 namespace Articulate.Components
 {
-
     public sealed class ContentSavingHandler(
         IContentTypeService contentTypeService,
         IBackOfficeSecurityAccessor backOfficeSecurityAccessor,
@@ -21,7 +20,7 @@ namespace Articulate.Components
         public void Handle(ContentSavingNotification notification)
         {
             var saved = notification.SavedEntities.ToList();
-            if (!saved.Any())
+            if (saved.Count == 0)
             {
                 return;
             }
@@ -36,12 +35,14 @@ namespace Articulate.Components
                     content.SetAllPropertyCultureValues(
                         "publishedDate",
                         contentTypes[content.ContentTypeId],
+
                         // if the publishedDate is not already set, then set it
                         (c, _, culture) => c.GetValue("publishedDate", culture?.Culture) is null ? (DateTime?)DateTime.Now : null);
 
                     content.SetAllPropertyCultureValues(
                         "author",
                         contentTypes[content.ContentTypeId],
+
                         // if the author is not already set, then set it
                         (c, _, culture) => c.GetValue("author", culture?.Culture) is null ? backOfficeSecurityAccessor.BackOfficeSecurity?.CurrentUser?.Name : null);
 
@@ -60,7 +61,6 @@ namespace Articulate.Components
                     if (content.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateRichText)
                         || content.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateMarkdown))
                     {
-
                         // fill in the excerpt if it is empty
                         content.SetAllPropertyCultureValues(
                             "excerpt",
@@ -94,7 +94,7 @@ namespace Articulate.Components
                                 }
                             });
 
-                        //now fill in the social description if it is empty with the excerpt
+                        // now fill in the social description if it is empty with the excerpt
                         if (content.HasProperty("socialDescription"))
                         {
                             content.SetAllPropertyCultureValues(
@@ -231,7 +231,6 @@ namespace Articulate.Components
                             });
                     }
                 }
-
             }
         }
     }
