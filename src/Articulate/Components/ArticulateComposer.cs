@@ -4,7 +4,6 @@ using Articulate.Options;
 using Articulate.Routing;
 using Articulate.Services;
 using Articulate.Syndication;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
@@ -43,11 +42,9 @@ namespace Articulate.Components
             services.Configure<RazorViewEngineOptions>(options =>
             {
                 IArticulateThemeResolver themeResolver = services.BuildServiceProvider().GetRequiredService<IArticulateThemeResolver>();
-                IWebHostEnvironment hostEnvironment = services.BuildServiceProvider().GetRequiredService<IWebHostEnvironment>();
-                options.ViewLocationExpanders.Add(new ArticulateViewLocationExpander(themeResolver, hostEnvironment));
+                options.ViewLocationExpanders.Add(new ArticulateViewLocationExpander(themeResolver));
             });
             builder.UrlProviders().InsertBefore<NewDefaultUrlProvider, DateFormattedUrlProvider>();
-
             builder.ContentFinders().InsertBefore<ContentFinderByUrlNew, DateFormattedPostContentFinder>();
 
             services.AddOptions<ArticulateOptions>();

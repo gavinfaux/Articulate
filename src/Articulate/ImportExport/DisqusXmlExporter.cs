@@ -2,6 +2,7 @@
 using System.Text;
 using System.Xml.Linq;
 using Argotic.Syndication.Specialized;
+using Articulate.Services;
 using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Models.PublishedContent;

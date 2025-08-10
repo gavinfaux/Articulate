@@ -14,7 +14,7 @@ using Umbraco.Cms.Web.Website.Routing;
 
 namespace Articulate.Routing
 {
-    public class ArticulateRouter
+    internal class ArticulateRouter
     {
         private const string MarkdownEditorControllerName = "MarkdownEditor";
         private static readonly Lock _sLocker = new();
@@ -110,7 +110,7 @@ namespace Articulate.Routing
                         {
                             MapRssRoute(httpContext, rootNodePath, articulateRootNode, domains);
 
-                            // TODO : Enable when Editor refactor to Alpine.js completd
+                            // TODO: Enable when Editor refactor to Alpine.js completed
                             // MapMarkdownEditorRoute(httpContext, rootNodePath, articulateRootNode, domains);
                             MapAuthorsRssRoute(httpContext, rootNodePath, articulateRootNode, domains);
 

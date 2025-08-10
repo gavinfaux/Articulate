@@ -50,6 +50,10 @@
     <Watch Remove="umbraco\**\*" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Views\Articulate\" />
+  </ItemGroup>
+
   <PropertyGroup>
     <!-- Razor files are needed for the backoffice to work correctly -->
     <CopyRazorGenerateFilesToPublishDirectory>true</CopyRazorGenerateFilesToPublishDirectory>
@@ -60,4 +64,5 @@
     <RazorCompileOnBuild>false</RazorCompileOnBuild>
     <RazorCompileOnPublish>false</RazorCompileOnPublish>
   </PropertyGroup>
+
 </Project>

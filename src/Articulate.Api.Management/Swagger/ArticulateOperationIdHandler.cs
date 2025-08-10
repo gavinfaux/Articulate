@@ -1,4 +1,6 @@
 #nullable enable
+using Articulate;
+using Articulate.Api.Management.Composers;
 using Articulate.Api.Management.Controllers;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
@@ -6,12 +8,12 @@ using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.Extensions.Options;
 using Umbraco.Cms.Api.Common.OpenApi;
 
-namespace Articulate.Api.Management.Composers
+namespace Articulate.Api.Management.Swagger
 {
     /// <summary>
     /// Handles the generation of operation IDs for Articulate API endpoints in Swagger.
     /// </summary>
-    public class ArticulateOperationIdHandler(IOptions<ApiVersioningOptions> apiVersioningOptions)
+    internal class ArticulateOperationIdHandler(IOptions<ApiVersioningOptions> apiVersioningOptions)
         : OperationIdHandler(apiVersioningOptions)
     {
         // Adapted from Umbraco.Cms.Api.Common.OpenApi.OperationIdHandler

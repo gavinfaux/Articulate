@@ -2,6 +2,7 @@
 using System.Text.Encodings.Web;
 using Articulate.Models;
 using Microsoft.AspNetCore.Html;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
@@ -153,6 +154,11 @@ namespace Articulate.Extensions
                     return Task.CompletedTask;
                 });
 
+        /// <summary>
+        /// Get the full domain of the current page.
+        /// </summary>
+        private static string GetDomain(this HttpRequest request) => $"{request.Scheme}{Uri.SchemeDelimiter}{request.Host.Value}";
+
         private static void SocialMetaTags(this IHtmlHelper html, PostModel model, HtmlContentBuilder builder)
         {
             if (!model.CroppedPostImageUrl.IsNullOrWhiteSpace())
@@ -162,7 +168,7 @@ namespace Articulate.Extensions
                     TagRenderMode = TagRenderMode.SelfClosing,
                     Attributes =
                     {
-                        ["property"] = "og:image", ["content"] = PathHelper.GetDomain(html.ViewContext.HttpContext.Request) + model.CroppedPostImageUrl
+                        ["property"] = "og:image", ["content"] = html.ViewContext?.HttpContext.Request.GetDomain() + model.CroppedPostImageUrl
                     }
                 };
 

@@ -9,5 +9,5 @@ namespace Articulate.ImportExport
         IIOHelper ioHelper,
         IHostingEnvironment hostingEnvironment,
         ILogger<ArticulateTempFileSystem> logger)
-        : PhysicalFileSystem(ioHelper, hostingEnvironment, logger, "temp/articulate", Guid.NewGuid().ToString());
+        : PhysicalFileSystem(ioHelper, hostingEnvironment, logger, ArticulateConstants.Paths.ArticulateTemp, Guid.NewGuid().ToString());
 }

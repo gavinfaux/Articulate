@@ -1,7 +1,7 @@
 #nullable enable
 using Articulate.Services;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Razor;
+using static Articulate.ArticulateConstants;
 
 namespace Articulate.Components
 {
@@ -72,7 +72,7 @@ namespace Articulate.Components
     // User themes can override System themes (a Post.cshtml in User theme folder with the same name as a system theme will take precedence).
 
     /// <inheritdoc />
-    public class ArticulateViewLocationExpander(IArticulateThemeResolver themeResolver, IWebHostEnvironment hostingEnvironment) : IViewLocationExpander
+    public class ArticulateViewLocationExpander(IArticulateThemeResolver themeResolver) : IViewLocationExpander
     {
         private const string ThemeKey = "articulate-theme";
 
@@ -91,22 +91,22 @@ namespace Articulate.Components
                 return viewLocations;
             }
 
-            var userViewsPath = Path.Combine(hostingEnvironment.ContentRootPath, PathHelper.UserViewPath);
-            var systemViewsPath = Path.Combine(hostingEnvironment.ContentRootPath, PathHelper.SystemThemeViewPath);
-            const string viewPlaceHolder = "{0}.cshtml";
-            var partialPlaceHolder = Path.Combine("Partials", viewPlaceHolder);
+            var partialPlaceHolder = Path.Combine(Paths.PartialsPath, Paths.ViewPlaceHolder);
             var themeLocations = new[]
             {
                 // User themes take priority over system themes, allows overrides.
-                Path.Combine(userViewsPath, themeName, viewPlaceHolder),
-                Path.Combine(userViewsPath, themeName, partialPlaceHolder),
+                // This needs documentation.
+                // Override a pager to use infinite scrolling, just need to override the themes Pager.cshtml partial
+                // Theming & styles, need to copy base theme to new theme as Views use Master from base theme currently.
+                Path.Combine(Paths.UserVirtualPath,  themeName, Paths.ViewPlaceHolder),
+                Path.Combine(Paths.UserVirtualPath,  themeName, partialPlaceHolder),
 
                 // System themes
-                Path.Combine(systemViewsPath, themeName, viewPlaceHolder),
-                Path.Combine(systemViewsPath, themeName, partialPlaceHolder),
+                Path.Combine(Paths.SystemViewPath, Paths.ThemesPath, themeName, Paths.ViewPlaceHolder),
+                Path.Combine(Paths.SystemViewPath, Paths.ThemesPath, themeName, partialPlaceHolder),
 
                 // MarkdownEditor has no theme, but routed via Articulate root node, so themeName found
-                Path.Combine(systemViewsPath, "MarkdownEditor", viewPlaceHolder)
+                Path.Combine(Paths.SystemViewPath, Paths.MarkdownEditorPath, Paths.ViewPlaceHolder)
             };
 
             IEnumerable<string> locations = themeLocations.Concat(viewLocations);

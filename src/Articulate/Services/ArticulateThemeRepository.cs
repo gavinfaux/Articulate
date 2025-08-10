@@ -4,22 +4,24 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Core.Cache;
 using Umbraco.Cms.Core.Extensions;
+using static Articulate.ArticulateConstants;
+
 
 namespace Articulate.Services
 {
-    public class ArticulateThemeRepository(
+    internal class ArticulateThemeRepository(
         IWebHostEnvironment hostingEnvironment,
         ILogger<ArticulateThemeRepository> logger,
         AppCaches appCaches)
         : IArticulateThemeRepository
     {
         private const string AllThemesCacheKey = "Articulate_AllThemes";
-        private const string EmbeddedResourceRoot = "Articulate.Themes";
+        private const string EmbeddedResourceRoot = "Articulate.Theme/";
         private readonly Assembly _articulateAssembly = typeof(ArticulateThemeRepository).Assembly;
 
         public async Task CopyThemeAsync(string themeName, string newThemeName)
         {
-            var userThemesPath = hostingEnvironment.MapPathContentRoot(PathHelper.UserViewPath);
+            var userThemesPath = hostingEnvironment.MapPathContentRoot(Paths.UserVirtualPath);
             var destinationPhysicalPath = Path.Combine(userThemesPath, newThemeName);
 
             // User theme names must be unique
@@ -28,7 +30,7 @@ namespace Articulate.Services
                 throw new IOException($"A user theme with the name '{newThemeName}' already exists.");
             }
 
-            var resourcePathPrefix = Path.Combine(EmbeddedResourceRoot, themeName);
+            var resourcePathPrefix = string.Concat(EmbeddedResourceRoot, themeName);
             var themeResources = _articulateAssembly.GetManifestResourceNames()
                 .Where(x => x.StartsWith(resourcePathPrefix))
                 .ToList();
@@ -44,14 +46,10 @@ namespace Articulate.Services
 
                 foreach (var resourceName in themeResources)
                 {
-                    // "Articulate.Themes/VAPOR/assets/css/theme.css"
-                    // becomes "assets/css/theme.css"
                     var relativePath = resourceName[resourcePathPrefix.Length..];
 
-                    // Replace the forward slashes from the resource name with the correct directory separator for the current operating system (e.g., \ on Windows).
-                    var finalRelativePath = relativePath.Replace('/', Path.DirectorySeparatorChar);
 
-                    var destinationFilePath = Path.Combine(destinationPhysicalPath, finalRelativePath);
+                    var destinationFilePath = Path.Combine(destinationPhysicalPath, relativePath.TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
 
                     if (Path.GetDirectoryName(destinationFilePath) is { } directoryPath)
                     {
@@ -71,7 +69,7 @@ namespace Articulate.Services
                     }
 
                     await using var fileStream = new FileStream(destinationFilePath, FileMode.Create);
-                    await stream.CopyToAsync(fileStream);
+                    await stream.CopyToAsync(fileStream).ConfigureAwait(false);
                 }
 
                 appCaches.RuntimeCache.ClearByKey(AllThemesCacheKey);
@@ -85,7 +83,7 @@ namespace Articulate.Services
 
         public Task<IEnumerable<string>> GetDefaultThemesAsync() => Task.Run(() => DefaultThemes.AllThemeNames);
 
-        public Task<IEnumerable<string>> GetUserThemesAsync() => Task.Run(() => GetThemesFromPathAsync(PathHelper.UserViewPath));
+        public Task<IEnumerable<string>> GetUserThemesAsync() => Task.Run(() => GetThemesFromPathAsync(Paths.UserVirtualPath));
 
         public async Task<IEnumerable<string>?> GetAllThemesAsync() =>
             await appCaches.RuntimeCache.GetCacheItemAsync(

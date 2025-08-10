@@ -8,7 +8,7 @@ namespace Articulate.Api.Management.Composers
     /// source generators is that it will be pre-compiled at startup
     /// See: https://devblogs.microsoft.com/dotnet/regular-expression-improvements-in-dotnet-7/#source-generation for more info.
     /// </summary>
-    public static partial class ArticulateOperationIdRegexes
+    internal static partial class ArticulateOperationIdRegexes
     {
         // Lifted from Umbraco.Cms.Api.Common.OpenApi.OperationIdRegexes
 

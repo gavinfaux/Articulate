@@ -1,6 +1,6 @@
 namespace Articulate.Api.Management
 {
-    public class Constants
+    public static class Constants
     {
         public static class ManagementApi
         {

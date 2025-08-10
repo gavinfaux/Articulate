@@ -1,7 +1,7 @@
 #nullable enable
 using Markdig;
 
-namespace Articulate
+namespace Articulate.Services
 {
     public static class MarkdownHelper
     {

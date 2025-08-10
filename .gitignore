@@ -496,5 +496,6 @@ $RECYCLE.BIN/
 
 # test website junk
 /src/Articulate.Tests.Website/Articulate/Temp
-/src/Articulate.Tests.Website/umbraco
+/src/Articulate.Tests.Website/umbraco/**
 /src/Articulate.Tests.Website/wwwroot/media
+/src/Articulate.Tests.Website/Smidge

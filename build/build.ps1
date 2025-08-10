@@ -1,11 +1,12 @@
 $PSScriptFilePath = Get-Item $MyInvocation.MyCommand.Path
 $RepoRoot = $PSScriptFilePath.Directory.Parent.FullName
 $BuildFolder = Join-Path -Path $RepoRoot -ChildPath "build"
-$WebProjFolder = Join-Path -Path $RepoRoot -ChildPath "src\Articulate.Web"
 $ReleaseFolder = Join-Path -Path $BuildFolder -ChildPath "Release"
 $SolutionRoot = Join-Path -Path $RepoRoot "src"
-$CodeProjFolder = Join-Path -Path $RepoRoot -ChildPath "src\Articulate"
-$CodeCSProj = Join-Path -Path $CodeProjFolder -ChildPath "Articulate.csproj"
+#$CodeProjFolder = Join-Path -Path $RepoRoot -ChildPath "src\Articulate"
+#$CodeCSProj = Join-Path -Path $CodeProjFolder -ChildPath "Articulate.csproj"
+$CodeProjFolder = Join-Path -Path $RepoRoot -ChildPath "src\Articulate.Web"
+$CodeCSProj = Join-Path -Path $CodeProjFolder -ChildPath "Articulate.Web.csproj"
 
 if ((Get-Item $ReleaseFolder -ErrorAction SilentlyContinue) -ne $null)
 {
@@ -24,8 +25,7 @@ dotnet --version
 
 # Restore packages
 Write-Host "Restoring nuget packages..."
-#& dotnet restore $SolutionPath
-& dotnet restore $CodeCSProj
+& dotnet restore $SolutionPath
 if (-not $?) {
     throw "The dotnet restore process returned an error code."
 }
@@ -39,7 +39,6 @@ if (-not $?) {
 
 # Build solution
 Write-Host "Executing dotnet build with PackageOutputPath: $($ReleaseFolder)"
-# triggers InnerBuild but nupkg contains content/contentFiles instead of staticwebassets and build props
 & dotnet build $SolutionPath --configuration Release --no-restore
 if (-not $?) {
     throw "The dotnet build process returned an error code."
@@ -47,7 +46,6 @@ if (-not $?) {
 
 # dotnet pack
 Write-Host "Packing Articulate..."
-# nupkg is missing staticwebassets and build props
 & dotnet pack $SolutionPath --output $ReleaseFolder --configuration Release
 if (-not $?) {
     throw "The dotnet pack process returned an error code."

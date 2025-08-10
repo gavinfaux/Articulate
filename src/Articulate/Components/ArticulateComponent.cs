@@ -1,13 +1,13 @@
 #nullable enable
-using Microsoft.AspNetCore.Hosting;
+using Articulate.Services;
 using Smidge;
 using Umbraco.Cms.Core.Composing;
-using Umbraco.Cms.Core.Extensions;
+using static Articulate.ArticulateConstants;
 
 namespace Articulate.Components
 {
     /// <inheritdoc />
-    public class ArticulateComponent(IBundleManager bundleManager, IWebHostEnvironment hostingEnvironment) : IAsyncComponent
+    public class ArticulateComponent(IBundleManager bundleManager) : IAsyncComponent
     {
         /// <inheritdoc />
         public Task InitializeAsync(bool isRestarting, CancellationToken cancellationToken)
@@ -17,11 +17,10 @@ namespace Articulate.Components
                 theme.CreateBundles(bundleManager);
             }
 
-            var systemPath = hostingEnvironment.MapPathContentRoot(PathHelper.SystemThemeViewPath);
 
             // Create bundles for the markdown editor.
-            _ = bundleManager.CreateJs("md-editor-js", Path.Combine(systemPath, "MarkdownEditor", "assets/css/**/*.js"));
-            _ = bundleManager.CreateCss("md-editor-css", Path.Combine(systemPath, "MarkdownEditor", "assets/css/**/*.css"));
+            _ = bundleManager.CreateJs("md-editor-js", Path.Combine(Paths.SystemVirtualPath, Paths.MarkdownEditorPath, Paths.JsPath));
+            _ = bundleManager.CreateCss("md-editor-css", Path.Combine(Paths.SystemVirtualPath, Paths.MarkdownEditorPath, Paths.CssPath));
 
             return Task.CompletedTask;
         }

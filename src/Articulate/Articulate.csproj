@@ -7,8 +7,8 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <Title>Articulate</Title>
-    <PackageId>Articulate</PackageId>
+    <Title>Articulate Core</Title>
+    <PackageId>Articulate.Core</PackageId>
   </PropertyGroup>
 
   <!--NoWarn for missing XML comments on public API-->
@@ -30,7 +30,7 @@
   <ItemGroup>
     <PackageReference Include="DotNet.ReproducibleBuilds" Version="1.2.25">
       <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers, staticwebassets, buildtransitive, buildmultitargeting</IncludeAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers, buildtransitive</IncludeAssets>
     </PackageReference>
   </ItemGroup>
 
@@ -55,6 +55,11 @@
     <PackageReference Include="Microsoft.CodeAnalysis" Version="4.14.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="Articulate.Api.Management" />
+    <InternalsVisibleTo Include="Articulate.Web" />
+  </ItemGroup>
+
   <!--Additional implicit using directives-->
   <ItemGroup>
     <Using Include="Umbraco.Cms.Core.DependencyInjection" />
@@ -65,7 +70,7 @@
 
   <ItemGroup>
     <EmbeddedResource Include="wwwroot\Views\Articulate\_System\Themes\**">
-      <LogicalName>Articulate.Theme/$([System.String]::Copy('%(RecursiveDir)').Replace('\', '/'))%(Filename)%(Extension)</LogicalName>
+      <LogicalName>Articulate.Theme/$([System.String]::Copy('%(RecursiveDir)'))%(Filename)%(Extension)</LogicalName>
     </EmbeddedResource>
   </ItemGroup>
 
@@ -108,9 +113,7 @@
     </None>
   </ItemGroup>
 
-
     <!--https://github.com/dotnet/aspnetcore/issues/59475-->
-    <!--A proper fix likely Articulate.Web assembly or similar-->
     <Target Name="PreResolveProjectStaticWebAssets" BeforeTargets="ResolveProjectStaticWebAssets">
         <Message Text="[PreResolveProjectStaticWebAssets] Content: @(Content)" Importance="high" />
         <ItemGroup>
@@ -123,6 +126,5 @@
             <Content Include="@(StashedContent)" />
         </ItemGroup>
     </Target>
-
 
 </Project>

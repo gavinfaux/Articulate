@@ -5,7 +5,7 @@ using Umbraco.Cms.Core.Web;
 
 namespace Articulate.Services
 {
-    public class ArticulateThemeResolver(IUmbracoContextAccessor umbracoContextAccessor, AppCaches appCaches)
+    internal class ArticulateThemeResolver(IUmbracoContextAccessor umbracoContextAccessor, AppCaches appCaches)
         : IArticulateThemeResolver
     {
         public string? GetCurrentThemeName() =>

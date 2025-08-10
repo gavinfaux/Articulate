@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Security.Authentication;
 using System.Text.RegularExpressions;
 using Articulate.Models;
+using Articulate.Services;
 using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.IO;

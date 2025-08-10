@@ -1,5 +1,4 @@
 #nullable enable
-using Microsoft.AspNetCore.Http;
 
 namespace Articulate.Web.Models
 {

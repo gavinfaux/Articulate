@@ -7,8 +7,8 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <PackageId>Articulate.Web</PackageId>
-    <Title>Articulate Web</Title>
+    <PackageId>Articulate</PackageId>
+    <Title>Articulate</Title>
   </PropertyGroup>
 
   <!--NoWarn for missing XML comments on public API-->
@@ -30,7 +30,7 @@
   <ItemGroup>
     <PackageReference Include="DotNet.ReproducibleBuilds" Version="1.2.25">
       <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers, staticwebassets, buildtransitive, buildmultitargeting</IncludeAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers, buildtransitive</IncludeAssets>
     </PackageReference>
   </ItemGroup>
 
@@ -51,9 +51,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Articulate\Articulate.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\Articulate.Api.Management\Articulate.Api.Management.csproj" />
   </ItemGroup>
 
@@ -61,9 +58,8 @@
   <ItemGroup>
     <Using Include="Umbraco.Cms.Core.DependencyInjection" />
     <Using Include="Umbraco.Extensions" />
-    <Using Include="Articulate.Web" />
+    <Using Include="Articulate" />
   </ItemGroup>
-
 
   <ItemGroup>
     <Folder Include="wwwroot\" />

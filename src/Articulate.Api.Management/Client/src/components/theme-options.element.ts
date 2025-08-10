@@ -345,10 +345,6 @@ export default class ThemeOptionsElement extends UmbLitElement implements IFormC
             duplicated theme will be copied to the ~/Views/Articulate folder where you can edit it. You can select this
             theme from the themes drop down on your Articulate root node to use it.
           </p>
-          <p>
-            You can also override any of Articulate's built-in themes by duplicating the theme with the same name.
-            Delete any files you are not changing and Articulate will use it's built-in versions.
-          </p>
         </div>
         <div class="container">${this.#renderThemeGrid()} ${this.#renderDuplicateForm()}</div>
         ${this._formError ? renderErrorMessage(this._formError) : ''}
@@ -370,7 +366,7 @@ export default class ThemeOptionsElement extends UmbLitElement implements IFormC
     css`
       .theme-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
         gap: var(--uui-size-space-6);
         margin-bottom: var(--uui-size-space-6);
       }
@@ -378,7 +374,7 @@ export default class ThemeOptionsElement extends UmbLitElement implements IFormC
         cursor: pointer;
         border: 1px solid var(--uui-color-border-emphasis);
         width: 100%;
-        height: 250px;
+        height: 200px;
         aspect-ratio: 1;
         box-sizing: border-box;
         display: flex;

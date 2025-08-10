@@ -1,10 +1,12 @@
 #nullable enable
 using Smidge;
+using static Articulate.ArticulateConstants;
 
-namespace Articulate
+namespace Articulate.Services
 {
-    public static class DefaultThemes
+    internal static class DefaultThemes
     {
+
         private static readonly IReadOnlyDictionary<string, DefaultTheme> _sDefaultThemes
             = new Dictionary<string, DefaultTheme>(StringComparer.InvariantCultureIgnoreCase)
             {
@@ -14,22 +16,33 @@ namespace Articulate
                 [Mini.Name] = new Mini(),
             };
 
-        public static DefaultTheme[] AllThemes { get; } = _sDefaultThemes.Values.ToArray();
+        /// <summary>
+        /// Returns the root virtual path for a given theme.
+        /// e.g., “~/Views/Articulate/_System/Themes/VAPOR”.
+        /// </summary>
+        private static string GetThemePath(this string themeName)
+        {
+            if (string.IsNullOrEmpty(themeName))
+            {
+                throw new ArgumentException($"'{nameof(themeName)}' cannot be null or empty.", nameof(themeName));
+            }
 
-        public static IEnumerable<string> AllThemeNames => _sDefaultThemes.Keys;
+            return Path.Combine(Paths.SystemVirtualPath, Paths.ThemesPath, themeName);
+        }
 
-        public static bool IsDefaultTheme(string themeName)
-            => _sDefaultThemes.ContainsKey(themeName);
+        internal static DefaultTheme[] AllThemes { get; } = _sDefaultThemes.Values.ToArray();
+
+        internal static IEnumerable<string> AllThemeNames => _sDefaultThemes.Keys;
 
         public abstract class DefaultTheme
         {
             public abstract void CreateBundles(IBundleManager bundleManager);
 
             protected static string RequiredThemedCssFolder(string theme)
-                => Path.Combine(PathHelper.GetThemePath(theme), "assets/css/**/*.css");
+                => Path.Combine(theme.GetThemePath(), Paths.CssPath);
 
             protected static string RequiredThemedJsFolder(string theme)
-                => Path.Combine(PathHelper.GetThemePath(theme), "assets/js/**/*.js");
+                => Path.Combine(theme.GetThemePath(), Paths.JsPath);
         }
 
         private class Vapor : DefaultTheme

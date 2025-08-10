@@ -1,9 +1,9 @@
-import type { Auth } from '../core/auth';
+import type { Auth } from '../core/auth.gen';
 import type {
   Client as CoreClient,
   Config as CoreConfig,
-} from '../core/types';
-import type { Middleware } from './utils';
+} from '../core/types.gen';
+import type { Middleware } from './utils.gen';
 
 export type ResponseStyle = 'data' | 'fields';
 
@@ -79,6 +79,14 @@ export interface RequestOptions<
    */
   security?: ReadonlyArray<Auth>;
   url: Url;
+}
+
+export interface ResolvedRequestOptions<
+  TResponseStyle extends ResponseStyle = 'fields',
+  ThrowOnError extends boolean = boolean,
+  Url extends string = string,
+> extends RequestOptions<TResponseStyle, ThrowOnError, Url> {
+  serializedBody?: string;
 }
 
 export type RequestResult<
@@ -163,7 +171,7 @@ type BuildUrlFn = <
 ) => string;
 
 export type Client = CoreClient<RequestFn, Config, MethodFn, BuildUrlFn> & {
-  interceptors: Middleware<Request, Response, unknown, RequestOptions>;
+  interceptors: Middleware<Request, Response, unknown, ResolvedRequestOptions>;
 };
 
 /**

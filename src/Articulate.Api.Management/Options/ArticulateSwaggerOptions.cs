@@ -1,6 +1,6 @@
 #nullable enable
 using System.Reflection;
-using Articulate.Api.Management.Composers;
+using Articulate.Api.Management.Swagger;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;

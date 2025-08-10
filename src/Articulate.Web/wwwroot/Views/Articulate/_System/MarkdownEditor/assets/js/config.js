@@ -10,9 +10,9 @@ const config = {
 
     // Static OAuth parameters
     oauth: {
-        clientId: 'umbraco-back-office',
+        clientId: '',
         redirectUri: window.location.href.split('?')[0], // The current URL without query params
-        scope: 'umbraco-api',
+        scope: 'openid',
         responseType: 'code',
         codeChallengeMethod: 'S256',
     },
@@ -30,9 +30,9 @@ const config = {
  * @param {DOMStringMap} dataset The dataset from the document body.
  */
 function initConfig(dataset) {
-    const { authUrl, authEndUrl, tokenUrl, currentUserUrl, editorPostUrl, articulateNodeId } = dataset;
+    const { authUrl, authEndUrl, tokenUrl, currentUserUrl, editorPostUrl, articulateNodeId} = dataset;
 
-    if (!authUrl || !editorPostUrl || !currentUserUrl || !tokenUrl || !authEndUrl || !articulateNodeId) {
+  if (!authUrl || !editorPostUrl || !currentUserUrl || !tokenUrl || !authEndUrl || !articulateNodeId) {
         console.error("CRITICAL: One or more dataset values missing. The application cannot function.");
         throw new Error("Missing critical configuration from dataset.");
     }

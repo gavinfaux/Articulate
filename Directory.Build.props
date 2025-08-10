@@ -33,9 +33,10 @@
 		<Authors>Shannon Deminick</Authors>
 		<Copyright>Copyright $(Company) $([System.DateTime]::Today.ToString('yyyy'))</Copyright>
 		<Product>Articulate</Product>
+		<Description>A wonderful Blog engine built on Umbraco</Description>
 		<PackageProjectUrl>https://github.com/Shazwazza/Articulate</PackageProjectUrl>
-		<RepositoryType>git</RepositoryType>
-		<RepositoryUrl>https://github.com/Shazwazza/Articulate</RepositoryUrl>
+		<!--<RepositoryType>git</RepositoryType>-->
+		<!--<RepositoryUrl>https://github.com/Shazwazza/Articulate</RepositoryUrl>-->
 		<PackageLicenseFile>LICENSE</PackageLicenseFile>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<PackageIcon>icon.png</PackageIcon>

@@ -5,6 +5,7 @@ namespace Articulate
     {
         public const string RefreshRoutesToken = "articulate-refresh-routes";
 
+
         public static class ContentType
         {
             public const string Articulate = "Articulate";
@@ -28,6 +29,21 @@ namespace Articulate
 
             public const string ArticlesDocument = "Articles";
             public const string AuthorsDocument = "Authors";
+        }
+
+        public static class Paths
+        {
+            public const string SystemVirtualPath = "~/Views/Articulate/_System";
+            public const string SystemViewPath = "wwwroot/Views/Articulate/_System";
+            public const string UserVirtualPath = "~/Views/Articulate";
+            public const string ThemesPath = "Themes";
+            public const string MarkdownEditorPath = "MarkdownEditor";
+            public const string CssPath = "assets/css";
+            public const string JsPath = "assets/js";
+            public const string PartialsPath = "Partials";
+            public const string ViewPlaceHolder = "{0}.cshtml";
+
+            public const string ArticulateTemp = "Articulate/Temp";
         }
     }
 }

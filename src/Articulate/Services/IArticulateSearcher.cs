@@ -1,7 +1,7 @@
 #nullable enable
 using Umbraco.Cms.Core.Models.PublishedContent;
 
-namespace Articulate
+namespace Articulate.Services
 {
     public interface IArticulateSearcher
     {

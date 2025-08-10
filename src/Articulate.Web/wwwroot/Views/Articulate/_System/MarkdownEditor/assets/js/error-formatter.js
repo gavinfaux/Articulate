@@ -16,7 +16,7 @@ function cleanFieldName(fieldName) {
  * @param {string} defaultMessage A fallback message if the error object is not recognized.
  * @returns {{title: string, details: string[]}} A user-friendly error message object.
  */
-function formatApiError(error, defaultMessage = 'An unexpected error occurred.') {
+export function formatApiError(error, defaultMessage = 'An unexpected error occurred.') {
   console.warn('[formatApiError] Received error:', error);
 
   // Handle ProblemDetails from ASP.NET Core

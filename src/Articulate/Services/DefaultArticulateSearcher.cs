@@ -5,7 +5,7 @@ using Examine.Search;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.Web;
 
-namespace Articulate
+namespace Articulate.Services
 {
     public class DefaultArticulateSearcher(
         IUmbracoContextAccessor umbracoContextAccessor,

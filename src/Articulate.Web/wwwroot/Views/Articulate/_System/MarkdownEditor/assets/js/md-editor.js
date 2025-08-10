@@ -58,7 +58,7 @@ document.addEventListener('alpine:init', () => {
                     // This is a normal part of the flow, not an error state yet.
                     // The redirect will stop execution here.
                     authService.redirectToLogin();
-                    return; 
+                    return;
                 }
 
                 // 4. Fetch current user details

@@ -71,7 +71,7 @@ export default class DashboardOptionsElement extends UmbLitElement {
     css`
       .tools-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
         gap: var(--uui-size-space-4);
       }
 
@@ -87,7 +87,7 @@ export default class DashboardOptionsElement extends UmbLitElement {
       .tool-card {
         border: 1px solid var(--uui-color-border-emphasis);
         width: 100%;
-        height: 250px;
+        height: 200px;
         aspect-ratio: 1;
         box-sizing: border-box;
         display: flex;

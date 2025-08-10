@@ -7,9 +7,9 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Umbraco.Cms.Core.Models.PublishedContent;
 
-namespace Articulate.Syndication
+namespace Articulate.Controllers
 {
-    public class RssResult(SyndicationFeed feed, IMasterModel model) : ActionResult
+    internal class RssResult(SyndicationFeed feed, IMasterModel model) : ActionResult
     {
         public override async Task ExecuteResultAsync(ActionContext context)
         {

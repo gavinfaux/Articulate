@@ -1,5 +1,6 @@
 #nullable enable
 using Articulate.Api.Management.Options;
+using Articulate.Api.Management.Swagger;
 using Microsoft.Extensions.DependencyInjection;
 using Umbraco.Cms.Api.Common.OpenApi;
 using Umbraco.Cms.Core.Composing;
