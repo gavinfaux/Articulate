@@ -6,7 +6,7 @@ using Umbraco.Cms.Core.Services;
 // TODO: #nullable enable
 namespace Articulate.Extensions
 {
-    internal static class ContentExtensions
+    public static class ContentExtensions
     {
         public static IContent CreateWithInvariantOrDefaultCultureName(
             this IContentService contentService,
