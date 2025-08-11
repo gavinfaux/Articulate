@@ -1,21 +1,16 @@
+#nullable enable
 using Umbraco.Cms.Core.Cache;
 using Umbraco.Cms.Core.Events;
 using Umbraco.Cms.Core.Notifications;
-using Umbraco.Extensions;
 
 namespace Articulate.Components
 {
-
-    public sealed class DomainCacheRefresherHandler : INotificationHandler<DomainCacheRefresherNotification>
+    public sealed class DomainCacheRefresherHandler(AppCaches appCaches)
+        : INotificationHandler<DomainCacheRefresherNotification>
     {
-        private readonly AppCaches _appCaches;
+        public void Handle(DomainCacheRefresherNotification notification) =>
 
-        public DomainCacheRefresherHandler(AppCaches appCaches) => _appCaches = appCaches;
-
-        public void Handle(DomainCacheRefresherNotification notification)
-        {
-            //ensure routes are rebuilt
-            _appCaches.RequestCache.GetCacheItem(ArticulateConstants.RefreshRoutesToken, () => true);
-        }
+            // ensure routes are rebuilt
+            appCaches.RequestCache.GetCacheItem(ArticulateConstants.RefreshRoutesToken, () => true);
     }
 }
