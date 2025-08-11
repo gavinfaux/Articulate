@@ -41,11 +41,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Umbraco.Cms.Web.Website" Version="$(UmbracoCmsPackageVersion)" />
-    <PackageReference Include="Umbraco.Cms.Web.Common" Version="$(UmbracoCmsPackageVersion)" />
-    <PackageReference Include="Umbraco.Cms.Api.Common" Version="$(UmbracoCmsPackageVersion)" />
-    <PackageReference Include="Umbraco.Cms.Api.Management" Version="$(UmbracoCmsPackageVersion)" />
-
     <PackageReference Include="Microsoft.CodeAnalysis" Version="4.14.0" />
   </ItemGroup>
 

@@ -13,8 +13,6 @@ jobs:
 
     env:
       Solution_File: src\Articulate.sln
-      Code_CSProj_File: src\Articulate\Articulate.csproj
-      Web_Proj_Folder: src\Articulate.Web
       Release_Folder: build\Release
       Build_Folder: build
       Configuration: Release

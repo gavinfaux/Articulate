@@ -12,8 +12,7 @@ builder.CreateUmbracoBuilder()
 
 WebApplication app = builder.Build();
 
-await app.BootUmbracoAsync();
-
+await app.BootUmbracoAsync().ConfigureAwait(false);
 
  if (app.Environment.IsProduction())
  {
@@ -42,4 +41,4 @@ app.UseUmbraco()
         u.UseWebsiteEndpoints();
     });
 
-await app.RunAsync();
+await app.RunAsync().ConfigureAwait(false);
