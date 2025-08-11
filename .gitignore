@@ -473,9 +473,6 @@ $RECYCLE.BIN/
 # Git
 .orig
 
-# Windsurf IDE (no rules in use, but it's in the gitignore for reference)
-.windsurfrules
-
 ##
 ## Articulate specific
 ##
@@ -487,7 +484,7 @@ $RECYCLE.BIN/
 !**/[Pp]ackages/build/
 # Uncomment if necessary however generally it will be regenerated when needed
 #!**/[Pp]ackages/repositories.config
-# except build monaco editor package used for now by Articulate's Markdown property editor
+# except monaco editor package used for now by Articulate's Markdown property editor
 !src/Articulate.Api.Management/Client/src/packages/
 !src/Articulate.Api.Management/Client/src/packages/**
 
@@ -498,4 +495,3 @@ $RECYCLE.BIN/
 /src/Articulate.Tests.Website/Articulate/Temp
 /src/Articulate.Tests.Website/umbraco/**
 /src/Articulate.Tests.Website/wwwroot/media
-/src/Articulate.Tests.Website/Smidge

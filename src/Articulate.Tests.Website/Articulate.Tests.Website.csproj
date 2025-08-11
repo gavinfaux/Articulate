@@ -3,6 +3,7 @@
     <TargetFramework>net9.0</TargetFramework>
     <!-- Disable compression-->
     <CompressionEnabled>false</CompressionEnabled>
+    <IsPackable>false</IsPackable>
   </PropertyGroup>
 
   <ItemGroup>

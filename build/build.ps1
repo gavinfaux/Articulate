@@ -14,7 +14,7 @@ if ((Get-Item $ReleaseFolder -ErrorAction SilentlyContinue) -ne $null)
     Remove-Item $ReleaseFolder -Recurse
 }
 
-####### DO THE PROJECT BUILD PART #############
+####### DO THE SLN BUILD PART #############
 
 # Get the solution path
 $SolutionPath = Join-Path -Path $SolutionRoot -ChildPath "Articulate.sln"
