@@ -1,7 +1,3 @@
-using Smidge;
-using Umbraco.Cms.Core.DependencyInjection;
-using Umbraco.Extensions;
-
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 builder.CreateUmbracoBuilder()
@@ -10,15 +6,17 @@ builder.CreateUmbracoBuilder()
     .AddComposers()
     .Build();
 
-builder.Services.AddSmidge(builder.Configuration.GetSection("smidge"));
-
 WebApplication app = builder.Build();
 
-await app.BootUmbracoAsync();
+await app.BootUmbracoAsync().ConfigureAwait(false);
 
-if (app.Environment.IsProduction())
-{
+ if (app.Environment.IsProduction())
+ {
     app.UseHttpsRedirection();
+
+    // Only required when running from IDE in 'hybrid' Production mode, static assets will not load without this
+    // Do not use in development mode or published releases, Umbraco will not start with a circular reference exception
+    // builder.WebHost.UseStaticWebAssets();
 }
 
 if (app.Environment.IsDevelopment())
@@ -39,5 +37,4 @@ app.UseUmbraco()
         u.UseWebsiteEndpoints();
     });
 
-app.UseSmidge();
-await app.RunAsync();
+await app.RunAsync().ConfigureAwait(false);

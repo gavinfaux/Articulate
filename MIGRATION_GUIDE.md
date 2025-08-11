@@ -204,8 +204,7 @@ In older versions, view resolution was handled by a custom `IViewEngine` and `Pa
 
 With the move to RCL, the bundling and serving of theme assets (CSS, JS) has also been modernised.
 
-- **`ArticulateComponent.cs`**: This component runs on startup and is responsible for creating the client-side bundles for each theme. It iterates through the `DefaultThemes` and uses the `IBundleManager` (from the [Smidge](https://github.com/Shazwazza/Smidge/) package) to register the CSS and JS files for each theme.
-- **`DefaultThemes.cs`**: This static class defines the list of built-in themes. Its primary role now is to provide the asset paths for each theme to the `ArticulateComponent` so they can be bundled correctly as RCL static web assets.
+- **`DefaultThemes.cs`**: This static class defines the list of built-in themes. Its primary role now is to provide the list of built-in system themes..
 - **`PathHelper.cs`**: The role of this class has been significantly reduced. It is no longer used for resolving view paths. Instead, it now primarily serves as a helper to provide the correct virtual paths to theme *assets* (CSS/JS) for the bundling process, distinguishing between built-in themes (served from `_content/Articulate/Themes/...`) and user-created themes (served from `~/Views/ArticulateThemes/...`).
 - **`ArticulateThemeRepository.cs`**: This service remains responsible for the business logic of managing themes, such as retrieving theme lists and handling the copying of default themes to the user-editable `~/Views/ArticulateThemes` directory.
 
@@ -231,7 +230,7 @@ This section covers the low-level details of the project setup, build process, a
 The main `Articulate.csproj` file contains important logic for building the backoffice client and packaging the themes.
 
 - **Client-Side Build**: The project includes two MSBuild targets, `RestoreClient` and `BuildClient`. When the project is built, these targets automatically run `npm i` and `npm run build` in the `src/Articulate/Client` directory. This ensures that the front-end assets are always up-to-date with the latest source code before the .NET project is compiled.
-- **Theme Embedding**: As a Razor Class Library (RCL), the built-in themes located in `src/Articulate/wwwroot/Themes` are automatically included as static web assets. This makes them available to the application at runtime, where they can be bundled by Smidge or copied to the user-editable `~/Views/ArticulateThemes` directory by the `ArticulateThemeRepository`.
+- **Theme Embedding**: As a Razor Class Library (RCL), the built-in themes located in `src/Articulate/wwwroot/Themes` are automatically included as static web assets. This makes them available to the application at runtime, where they can be copied to the user-editable `~/Views/ArticulateThemes` directory by the `ArticulateThemeRepository`.
 
 ### The Test Website (`Articulate.Tests.Website`)
 
@@ -239,7 +238,6 @@ The test website is the primary environment for developing and debugging the Art
 
 - **Project Reference**: `Articulate.Tests.Website.csproj` references the main `Articulate` project using a `<ProjectReference>`. The setting `<CopyStaticWebAssetsToPublish>true</CopyStaticWebAssetsToPublish>` is crucial, as it ensures that the backoffice assets from the `Articulate` RCL are correctly copied to the test site for development and testing.
 - **`Program.cs` Configuration**:
-  - **Smidge**: The test site's `Program.cs` demonstrates the required setup for Smidge, which is a mandatory dependency for Articulate. It shows how to configure Smidge for development, with in-memory caching and file watching enabled for a better developer experience.
   - **Request Size Limits**: The file also includes important configuration for increasing the maximum request body size for both Kestrel and IIS. This is necessary to support features like BlogML import and multi-file uploads from the Markdown Editor.
   - **`UseStaticWebAssets`**: The line `builder.WebHost.UseStaticWebAssets()` is commented out but includes a note explaining its purpose: it is **only** required if you need to run the test site in a simulated `Release` or `Production` environment directly from your IDE. For normal development and debugging, it is not needed.
 
@@ -457,8 +455,7 @@ In older versions, view resolution was handled by a custom `IViewEngine` and `Pa
 
 With the move to RCL, the bundling and serving of theme assets (CSS, JS) has also been modernized.
 
-- **`ArticulateComponent.cs`**: This component runs on startup and is responsible for creating the client-side bundles for each theme. It iterates through the `DefaultThemes` and uses the `IBundleManager` (from the Smidge package) to register the CSS and JS files for each theme.
-- **`DefaultThemes.cs`**: This static class defines the list of built-in themes. Its primary role now is to provide the asset paths for each theme to the `ArticulateComponent` so they can be bundled correctly as RCL static web assets.
+- **`DefaultThemes.cs`**: This static class defines the list of built-in themes.
 - **`PathHelper.cs`**: The role of this class has been significantly reduced. It is no longer used for resolving view paths. Instead, it now primarily serves as a helper to provide the correct virtual paths to theme *assets* (CSS/JS) for the bundling process, distinguishing between built-in themes (served from `_content/Articulate/Themes/...`) and user-created themes (served from `~/Views/ArticulateThemes/...`).
 - **`ArticulateThemeRepository.cs`**: This service remains responsible for the business logic of managing themes, such as retrieving theme lists and handling the copying of default themes to the user-editable `~/Views/ArticulateThemes` directory.
 
@@ -484,7 +481,7 @@ This section covers the low-level details of the project setup, build process, a
 The main `Articulate.csproj` file contains important logic for building the backoffice client and packaging the themes.
 
 - **Client-Side Build**: The project includes two MSBuild targets, `RestoreClient` and `BuildClient`. When the project is built, these targets automatically run `npm i` and `npm run build` in the `src/Articulate/Client` directory. This ensures that the front-end assets are always up-to-date with the latest source code before the .NET project is compiled.
-- **Theme Embedding**: As a Razor Class Library (RCL), the built-in themes located in `src/Articulate/wwwroot/Themes` are automatically included as static web assets. This makes them available to the application at runtime, where they can be bundled by Smidge or copied to the user-editable `~/Views/ArticulateThemes` directory by the `ArticulateThemeRepository`.
+- **Theme Embedding**: As a Razor Class Library (RCL), the built-in themes located in `src/Articulate/wwwroot/Themes` are automatically included as static web assets. This makes them available to the application at runtime, where they can be copied to the user-editable `~/Views/ArticulateThemes` directory by the `ArticulateThemeRepository`.
 
 ### The Test Website (`Articulate.Tests.Website`)
 
@@ -492,7 +489,6 @@ The test website is the primary environment for developing and debugging the Art
 
 - **Project Reference**: `Articulate.Tests.Website.csproj` references the main `Articulate` project using a `<ProjectReference>`. The setting `<CopyStaticWebAssetsToPublish>true</CopyStaticWebAssetsToPublish>` is crucial, as it ensures that the backoffice assets from the `Articulate` RCL are correctly copied to the test site for development and testing.
 - **`Program.cs` Configuration**:
-  - **Smidge**: The test site's `Program.cs` demonstrates the required setup for Smidge, which is a mandatory dependency for Articulate. It shows how to configure Smidge for development, with in-memory caching and file watching enabled for a better developer experience.
   - **Request Size Limits**: The file also includes important configuration for increasing the maximum request body size for both Kestrel and IIS. This is necessary to support features like BlogML import and multi-file uploads from the Markdown Editor.
   - **`UseStaticWebAssets`**: The line `builder.WebHost.UseStaticWebAssets()` is commented out but includes a note explaining its purpose: it is **only** required if you need to run the test site in a simulated `Release` or `Production` environment directly from your IDE. For normal development and debugging, it is not needed.
 

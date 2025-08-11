@@ -76,17 +76,11 @@ This single file contains the HTML structure, includes all dependencies from CDN
 
 ```html
 @* --- Umbraco Setup --- *@
-@addTagHelper *, Smidge
-@inject Smidge.SmidgeHelper SmidgeHelper
 @using Microsoft.AspNetCore.Antiforgery
 @inject IAntiforgery Antiforgery
 @model global::Articulate.Models.MarkdownEditorInitModel
 @{
     Layout = null;
-    // We only need a Smidge bundle for our custom JS and CSS if desired.
-    // Most things will come from a CDN.
-    SmidgeHelper
-        .RequiresJs("~/App_Plugins/Articulate/Assets/api-client.js"); // Our generated API client
 }
 
 <!DOCTYPE html>
@@ -106,7 +100,6 @@ This single file contains the HTML structure, includes all dependencies from CDN
     <script src="https://unpkg.com/easymde/dist/easymde.min.js"></script>
 
     @* --- Our generated API client and any other custom JS --- *@
-    @await SmidgeHelper.JsHereAsync()
 
     <style>
         /* A little style to prevent flashing of content before petite-vue loads */
@@ -639,7 +632,6 @@ The main `.cshtml` file must be updated to include the critical security headers
 ```csharp
 // In MarkdownEditor.cshtml, inside the @{ ... } block
 Layout = null;
-SmidgeHelper.RequiresJs(...); // etc.
 
 // --- ADD THESE HEADERS ---
 Context.Response.Headers["Permissions-Policy"] = "camera=(self)";

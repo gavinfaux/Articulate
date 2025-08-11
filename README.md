@@ -9,63 +9,7 @@ _❤️ If you use and like Articulate please consider [becoming a GitHub Sponso
 
 ## Installation
 
-Articulate uses the [Smidge](https://github.com/Shazwazza/Smidge) library for client-side asset bundling. To enable this, you need to configure Smidge in your Umbraco application.
-
-Articulate will not boot unless you have configured the application to work with Smidge as follows.
-
-  1. Configure Smidge in appsettings.json
-
-Add a "smidge" configuration section to your appsettings.json file. Here is a default configuration:
-
-```json
-{
-  "ConnectionStrings": { ... },
-  "Umbraco": { ... },
-  "smidge": {
-    "dataFolder": "Smidge",
-    "version": "1"
-  }
-}
-```
-
-  2. Register and Use Smidge in Program.cs
-
-In your Program.cs file, you need to add two lines: one to register Smidge's services and one to add its middleware to the request pipeline.
-
-```csharp
-// Program.cs
-using Smidge;
-using Umbraco.Cms.Core.DependencyInjection;
-using Umbraco.Extensions;
-
-WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
-
-builder.CreateUmbracoBuilder()
-    .AddBackOffice()
-    .AddWebsite()
-    .AddComposers()
-    .Build();
-
-// ... other services ...
-
-// a) Add this line to register Smidge's services
-builder.Services.AddSmidge(builder.Configuration.GetSection("smidge"));
-
-// ...
-
-var app = builder.Build();
-
-await app.BootUmbracoAsync();
-
-// ...
-
-// b) Add this line to add the Smidge middleware to the pipeline
-app.UseSmidge();
-
-await app.RunAsync();
-```
-
-  3. Post installtion checks
+  ### Post installtion checks
 
 - In the backoffice head over to the Packages section `umbraco/section/packages/view/installed` and check if there are pending migrations to run.
 

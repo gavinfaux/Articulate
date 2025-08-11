@@ -49,7 +49,6 @@
 
     <PackageReference Include="Argotic.Core" Version="3001.0.0" />
     <PackageReference Include="Markdig" Version="0.41.3" />
-    <PackageReference Include="Smidge" Version="4.5.1" />
     <PackageReference Include="System.ServiceModel.Syndication" Version="9.0.8" />
     <PackageReference Include="WilderMinds.MetaWeblog" Version="5.1.3" />
     <PackageReference Include="Microsoft.CodeAnalysis" Version="4.14.0" />

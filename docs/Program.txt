@@ -1,8 +1,5 @@
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
-using Smidge;
-using Smidge.Cache;
-using Smidge.Options;
 using Umbraco.Cms.Core.DependencyInjection;
 using Umbraco.Extensions;
 
@@ -15,28 +12,6 @@ builder.CreateUmbracoBuilder()
    .Build();
 
 // TODO: move all these comments to docs/wiki
-
-/*
-* Articulate requires Smidge
-*   add the following to your appsettings.json
-*   "smidge": {
-*   "dataFolder": "Smidge",
-*   "version": "1"
-*   }
-*/
-
-// DX: dotnet watch run --environment Development
-// only works with DEBUG tag helpers: <script src="js-bundle" type="text/javascript" debug="true"></script>
-builder.Services.AddSmidge(builder.Configuration.GetSection("smidge")).Configure<SmidgeOptions>(options =>
-{
-   if (builder.Environment.IsDevelopment())
-   {
-       options.CacheOptions.UseInMemoryCache = true;
-       // You can change some of the bundle options for rendering in Debug mode:
-       options.DefaultBundleOptions.DebugOptions.SetCacheBusterType<TimestampCacheBuster>();
-       options.DefaultBundleOptions.DebugOptions.FileWatchOptions.Enabled = true;
-   }
-});
 
 // Articulate may require increasing the maximum request size in order to process large requests,
 // e.g. import BlogML files or multiple attachments in a single request (Mobile Markdown Editor and Live Writer)
@@ -138,9 +113,6 @@ if (!app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();
 }
-
-// Articulate requires Smidge
-app.UseSmidge();
 
 await app.RunAsync();
 
