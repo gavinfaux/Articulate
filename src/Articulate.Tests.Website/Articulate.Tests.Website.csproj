@@ -7,7 +7,6 @@
 
   <ItemGroup>
     <PackageReference Include="Umbraco.Cms" Version="15.4.4" />
-    <PackageReference Include="Smidge" Version="4.5.1" />
   </ItemGroup>
 
   <ItemGroup>

@@ -14,11 +14,10 @@ using Umbraco.Cms.Core.Routing;
 
 namespace Articulate.Components
 {
-    public class ArticulateComposer : ComponentComposer<ArticulateComponent>
+    public class ArticulateComposer : IComposer
     {
-        public override void Compose(IUmbracoBuilder builder)
+        public void Compose(IUmbracoBuilder builder)
         {
-            base.Compose(builder);
 
             IServiceCollection services = builder.Services;
             services.AddSingleton<BlogMlExporter>();

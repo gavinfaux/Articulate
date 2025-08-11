@@ -10,8 +10,6 @@ builder.CreateUmbracoBuilder()
     .AddComposers()
     .Build();
 
-builder.Services.AddSmidge(builder.Configuration.GetSection("smidge"));
-
 WebApplication app = builder.Build();
 
 await app.BootUmbracoAsync();
@@ -44,5 +42,4 @@ app.UseUmbraco()
         u.UseWebsiteEndpoints();
     });
 
-app.UseSmidge();
 await app.RunAsync();
