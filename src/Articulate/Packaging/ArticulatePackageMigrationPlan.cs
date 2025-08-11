@@ -1,13 +1,8 @@
-using System;
-using Umbraco.Cms.Core.Packaging;
+#nullable enable
 using Umbraco.Cms.Infrastructure.Packaging;
 
 namespace Articulate.Packaging
 {
-    public class ArticulatePackageMigrationPlan : AutomaticPackageMigrationPlan
-    {
-        public ArticulatePackageMigrationPlan() : base("Articulate")
-        {
-        }
-    }
+    public class ArticulatePackageMigrationPlan()
+        : AutomaticPackageMigrationPlan(ArticulateConstants.Convention.Articulate);
 }
