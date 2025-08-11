@@ -483,5 +483,17 @@ namespace Articulate.Extensions
 
             return url;
         }
+
+        public static IPublishedContent[] GetListNodes(IMasterModel masterModel)
+        {
+            IPublishedContent[] listNodes = masterModel.RootBlogNode.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive)?.ToArray();
+            if (listNodes?.Length == 0)
+            {
+                throw new InvalidOperationException(
+                    "An ArticulateArchive document must exist under the root Articulate document");
+            }
+
+            return listNodes;
+        }
     }
 }

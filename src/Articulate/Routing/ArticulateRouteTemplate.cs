@@ -19,6 +19,6 @@ namespace Articulate.Routing
 
         public bool Equals(ArticulateRouteTemplate other) => _template == other._template;
 
-        public override int GetHashCode() => _template?.GetHashCode() ?? 0;
+        public override int GetHashCode() => HashCode.Combine(_template);
     }
 }

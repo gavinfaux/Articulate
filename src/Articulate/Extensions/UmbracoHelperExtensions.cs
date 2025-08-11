@@ -109,7 +109,7 @@ namespace Articulate.Extensions
             int count,
             IPublishedValueFallback publishedValueFallback)
         {
-            IPublishedContent[] listNodes = GetListNodes(masterModel);
+            IPublishedContent[] listNodes = PublishedContentExtensions.GetListNodes(masterModel);
 
             var listNodeIds = listNodes.Select(x => x.Id).ToArray();
 
@@ -137,7 +137,7 @@ namespace Articulate.Extensions
             int pageSize,
             IPublishedValueFallback publishedValueFallback)
         {
-            IPublishedContent[] listNodes = GetListNodes(masterModel);
+            IPublishedContent[] listNodes = PublishedContentExtensions.GetListNodes(masterModel);
 
             var listNodeIds = listNodes.Select(x => x.Id).ToArray();
 
@@ -186,18 +186,6 @@ namespace Articulate.Extensions
 
             var rootPageModel = new ListModel(listNodes[0], pager, postWithAuthor, publishedValueFallback);
             return rootPageModel.Posts;
-        }
-
-        private static IPublishedContent[] GetListNodes(IMasterModel masterModel)
-        {
-            IPublishedContent[] listNodes = masterModel.RootBlogNode.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive)?.ToArray();
-            if (listNodes?.Length == 0)
-            {
-                throw new InvalidOperationException(
-                    "An ArticulateArchive document must exist under the root Articulate document");
-            }
-
-            return listNodes;
         }
     }
 }
