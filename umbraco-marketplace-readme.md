@@ -21,14 +21,13 @@ Supporting all the features you'd want in a blogging platform
 * Search
 * Blogml import/export (including Disqus import)
 * Customizable RSS feeds
-* Customizable urls 
+* Customizable urls
 * Author profiles
 
 ## Minimum requirements
 
-Articulate version 5+ is only compatible with Umbraco 10.1.0+
-
-Articulate version 6+ is compatible with Umbraco 15.4.3+
+* Articulate version 5+ is only compatible with Umbraco 10.1.0+
+* Articulate version 6+ is only compatible with Umbraco 15.2.3+ (15.4.2 recommended) and 16+
 
 ## [Documentation](https://github.com/Shazwazza/Articulate/wiki)
 
@@ -67,6 +66,6 @@ to re-create the Articulate package in the back office with all required depende
 
 ## Copyright & Licence
 
-&copy; 2023 by Shannon Deminick
+&copy; 2025 by Shannon Deminick
 
 This is free software and is licensed under the [The MIT License (MIT)](http://opensource.org/licenses/MIT)
