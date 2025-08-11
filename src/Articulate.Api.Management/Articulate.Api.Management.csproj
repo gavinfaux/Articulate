@@ -7,7 +7,7 @@
 
   <PropertyGroup>
     <PackageId>Articulate.Management.Api</PackageId>
-    <Title>Articulate Management Api</Title>
+    <Title>Articulate BackOffice Api</Title>
   </PropertyGroup>
 
   <!--NoWarn for missing XML comments on public API-->
@@ -71,7 +71,7 @@
     <None Include="Client\public\umbraco-package.json" Pack="false" />
   </ItemGroup>
 
-  <!-- Conditional for CI build-->
+  <!-- Conditionals for CI build-->
   <PropertyGroup>
     <IsCiBuild Condition="'$(IsCiBuild)' == ''">false</IsCiBuild>
     <IsCiBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</IsCiBuild>
@@ -88,7 +88,7 @@
     <Exec Command="$(_NpmRestoreCommand)" WorkingDirectory="Client" />
   </Target>
 
-
+  <!--This does not always detect changes in development, clean and rebuild or build client yourself.-->
   <Target Name="BuildClient" DependsOnTargets="RestoreClient" BeforeTargets="AssignTargetPaths" Inputs="@(ClientAssetsInput)" Outputs="$(IntermediateOutputPath)client.complete.txt">
     <Message Importance="high" Text="[Articulate] Building Client with NPM command: $(_FinalBuildCommand)" />
     <!--Allow build to continue with warning if not CI we may be working on API/Client changes.-->

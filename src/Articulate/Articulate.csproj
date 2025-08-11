@@ -103,6 +103,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="wwwroot\" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Include="..\..\LICENSE">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
@@ -114,6 +118,7 @@
   </ItemGroup>
 
     <!--https://github.com/dotnet/aspnetcore/issues/59475-->
+    <!-- dotnet pack CLI doesn't resolve/include static web assets, pack as content.-->
     <Target Name="PreResolveProjectStaticWebAssets" BeforeTargets="ResolveProjectStaticWebAssets">
         <Message Text="[PreResolveProjectStaticWebAssets] Content: @(Content)" Importance="high" />
         <ItemGroup>

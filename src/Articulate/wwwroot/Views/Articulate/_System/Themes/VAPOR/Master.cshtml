@@ -3,8 +3,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    @Model.GoogleAnalyticsTracking()
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
@@ -15,7 +17,6 @@
     @Model.AdvertiseWeblogApi()
     @Model.RssFeed()
     @Model.RenderOpenSearch()
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <link href="articulate-vapor-css" rel="stylesheet" fetchpriority="high">
 
@@ -29,6 +30,7 @@
     @RenderSection("Header", false)
 </head>
 <body class="@ViewBag.CssBodyClass">
+    @Model.GoogleAnalyticsNoScript()
     <a href="#main-content" class="skip-link" title="Skip to main content">Skip to main content</a>
 
     <header id="site-head" role="banner">
@@ -71,8 +73,6 @@
     </footer>
 
     <script src="articulate-vapor-js" type="text/javascript" async></script>
-
-    @Model.GoogleAnalyticsTracking()
 
 </body>
 </html>

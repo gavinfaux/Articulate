@@ -3,8 +3,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    @Model.GoogleAnalyticsTracking()
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <link rel="preconnect" href="https://themes.googleusercontent.com" crossorigin>
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
@@ -15,16 +16,18 @@
     @Model.AdvertiseWeblogApi()
     @Model.RssFeed()
     @Model.RenderOpenSearch()
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <link href="articulate-phantom-css" rel="stylesheet" fetchpriority="high">
+
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@@fortawesome/fontawesome-free@6.7.2/css/fontawesome.min.css" integrity="sha256-TBe0l9PhFaVR3DwHmA2jQbUf1y6yQ22RBgJKKkNkC50=" crossorigin="anonymous" media="print" onload="this.media='all'">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@@fortawesome/fontawesome-free@6.7.2/css/brands.min.css" integrity="sha256-lvqQzfgRxG8QBB5QMqpZGrljg5T/hNmC3vC7i3zntlI=" crossorigin="anonymous" media="print" onload="this.media='all'">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@@fortawesome/fontawesome-free@6.7.2/css/solid.min.css" integrity="sha256-ETbOOM9U8WfaXg2AkW2t+QbdpWYFRAO+HEXOth8EQbY=" crossorigin="anonymous" media="print" onload="this.media='all'">
+
     @RenderSection("Header", false)
 
 </head>
 <body class="@ViewBag.CssBodyClass">
+    @Model.GoogleAnalyticsNoScript()
 
     @await Html.PartialAsync("Sidebar", Model)
 
@@ -32,8 +35,8 @@
         @RenderBody()
     </div>
 
-
-    @Model.GoogleAnalyticsTracking()
+    @*Theme has no js to load currently*@
+    @*<script defer src="articulate-phantom-js" type="text/javascript"></script>*@
 
 </body>
 </html>
