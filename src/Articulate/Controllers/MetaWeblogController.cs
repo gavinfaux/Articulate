@@ -1,9 +1,7 @@
-using System;
-using System.IO;
+#nullable enable
 using System.Text;
-using System.Threading.Tasks;
+using Articulate.Attributes;
 using Articulate.MetaWeblog;
-using Examine;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.DependencyInjection;
@@ -24,20 +22,13 @@ namespace Articulate.Controllers
     /// with our own multi-tenanted version.
     /// </remarks>
     [ArticulateDynamicRoute]
-    public class MetaWeblogController : RenderController
+    public class MetaWeblogController(
+        ILogger<MetaWeblogController> logger,
+        ICompositeViewEngine compositeViewEngine,
+        IUmbracoContextAccessor umbracoContextAccessor,
+        IServiceProvider serviceProvider)
+        : RenderController(logger, compositeViewEngine, umbracoContextAccessor)
     {
-        private readonly IServiceProvider _serviceProvider;
-
-        public MetaWeblogController(
-            ILogger<RenderController> logger,
-            ICompositeViewEngine compositeViewEngine,
-            IUmbracoContextAccessor umbracoContextAccessor,
-            IServiceProvider serviceProvider)
-            : base(logger, compositeViewEngine, umbracoContextAccessor)
-        {
-            _serviceProvider = serviceProvider;
-        }
-
         [HttpPost]
         public async Task<ActionResult> IndexAsync(int id)
         {
@@ -47,21 +38,37 @@ namespace Articulate.Controllers
             }
 
             // create the provider using the start node
-            var provider = ActivatorUtilities.CreateInstance<ArticulateMetaWeblogProvider>(
-                _serviceProvider,
+            ArticulateMetaWeblogProvider provider = ActivatorUtilities.CreateInstance<ArticulateMetaWeblogProvider>(
+                serviceProvider,
                 id);
 
             // create the service using the provider
-            var service = ActivatorUtilities.CreateInstance<MetaWeblogService>(_serviceProvider, provider);
+            MetaWeblogService service = ActivatorUtilities.CreateInstance<MetaWeblogService>(serviceProvider, provider);
 
-            var rawContent = string.Empty;
-            using(var reader = new StreamReader(Request.Body))
+            string rawContent;
+            using (var reader = new StreamReader(Request.Body))
             {
-                rawContent = reader.ReadToEnd();
+                rawContent = await reader.ReadToEndAsync();
             }
 
-            string result = await service.InvokeAsync(rawContent);
-            return Content(result, "text/xml", Encoding.UTF8);
+            try
+            {
+                var result = await service.InvokeAsync(rawContent);
+                return Content(result, "text/xml", Encoding.UTF8);
+            }
+            catch (NullReferenceException ex)
+            {
+                logger.LogError("A NullReferenceException occurred processing a metaWeblog request. Raw Content: {RawXml}", rawContent);
+
+                logger.LogError(ex, "NullReferenceException details for metaWeblog call:");
+
+                return StatusCode(500, "An error occurred while processing the request.");
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "An unexpected exception occurred in metaWeblog service.");
+                return StatusCode(500, "An error occurred while processing the request.");
+            }
         }
     }
 }

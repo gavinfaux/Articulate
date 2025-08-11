@@ -1,17 +1,17 @@
+#nullable enable
 using Umbraco.Cms.Core.Models.PublishedContent;
 
 namespace Articulate.Models
 {
     public class TagListModel : MasterModel
     {
-        public TagListModel(            
+        public TagListModel(
             IMasterModel masterModel,
             string name,
             int pageSize,
             PostTagCollection tags,
-            IPublishedValueFallback publishedValueFallback,
-            IVariationContextAccessor variationContextAccessor)
-            : base(masterModel.RootBlogNode, publishedValueFallback, variationContextAccessor)
+            IPublishedValueFallback publishedValueFallback)
+            : base(masterModel.RootBlogNode, publishedValueFallback)
         {
             Name = name;
             Theme = masterModel.Theme;
