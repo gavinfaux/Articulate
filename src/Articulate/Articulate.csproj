@@ -48,7 +48,7 @@
     <PackageReference Include="Markdig" Version="0.41.3" />
     <PackageReference Include="System.ServiceModel.Syndication" Version="9.0.8" />
     <PackageReference Include="WilderMinds.MetaWeblog" Version="5.1.3" />
-    <PackageReference Include="Microsoft.CodeAnalysis" Version="4.14.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis" Version="4.14.0" PrivateAssets="All"/>
   </ItemGroup>
 
   <ItemGroup>
@@ -65,7 +65,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="wwwroot\Views\Articulate\_System\Themes\**">
+    <EmbeddedResource Include="..\Articulate.Web\wwwroot\Views\Articulate\_System\Themes\**">
       <LogicalName>Articulate.Theme/$([System.String]::Copy('%(RecursiveDir)'))%(Filename)%(Extension)</LogicalName>
     </EmbeddedResource>
   </ItemGroup>
@@ -99,10 +99,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="wwwroot\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <None Include="..\..\LICENSE">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
@@ -113,19 +109,8 @@
     </None>
   </ItemGroup>
 
-    <!--https://github.com/dotnet/aspnetcore/issues/59475-->
-    <!-- dotnet pack CLI doesn't resolve/include static web assets, pack as content.-->
-    <Target Name="PreResolveProjectStaticWebAssets" BeforeTargets="ResolveProjectStaticWebAssets">
-        <Message Text="[PreResolveProjectStaticWebAssets] Content: @(Content)" Importance="high" />
-        <ItemGroup>
-            <StashedContent Include="@(Content)" />
-            <Content Remove="@(Content)" />
-        </ItemGroup>
-    </Target>
-    <Target Name="PostResolveProjectStaticWebAssets" AfterTargets="ResolveProjectStaticWebAssets">
-        <ItemGroup>
-            <Content Include="@(StashedContent)" />
-        </ItemGroup>
-    </Target>
+  <ItemGroup>
+    <Folder Include="wwwroot" />
+  </ItemGroup>
 
 </Project>

@@ -18,10 +18,10 @@
 		<GenerateCompatibilitySuppressionFile>true</GenerateCompatibilitySuppressionFile>
 	</PropertyGroup>
 	<ItemGroup>
-		<PackageReference Include="Nerdbank.GitVersioning" Condition="!Exists('packages.config')" Version="3.7.115"/>
-		<PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.556"/>
-		<GlobalPackageReference Include="Umbraco.Code" Version="2.3.0" />
-		<GlobalPackageReference Include="Umbraco.GitVersioning.Extensions" Version="0.2.0" />
+		<PackageReference Include="Nerdbank.GitVersioning" Condition="!Exists('packages.config')" Version="3.7.115" PrivateAssets="All"/>
+		<PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.556" PrivateAssets="All"/>
+		<GlobalPackageReference Include="Umbraco.Code" Version="2.3.0" PrivateAssets="All"/>
+		<GlobalPackageReference Include="Umbraco.GitVersioning.Extensions" Version="0.2.0" PrivateAssets="All"/>
 	</ItemGroup>
 	<PropertyGroup>
 		<GitVersionBaseDirectory>$(MSBuildThisFileDirectory)</GitVersionBaseDirectory>
