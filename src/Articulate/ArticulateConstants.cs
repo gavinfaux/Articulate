@@ -1,12 +1,49 @@
+#nullable enable
 namespace Articulate
 {
-    public class ArticulateConstants
+    public static class ArticulateConstants
     {
         public const string RefreshRoutesToken = "articulate-refresh-routes";
-        public const string ArticulateContentTypeAlias = "articulate";
-        public const string ArticulateArchiveContentTypeAlias = "ArticulateArchive";
-        public const string ArticulateAuthorsContentTypeAlias = "ArticulateAuthors";
-        public const string ArticlesDefaultName = "Articles";
-        public const string AuthorsDefaultName = "Authors";
+
+
+        public static class ContentType
+        {
+            public const string Articulate = "Articulate";
+            public const string ArticulateArchive = "ArticulateArchive";
+            public const string ArticulateAuthors = "ArticulateAuthors";
+            public const string ArticulateAuthor = "ArticulateAuthor";
+            public const string ArticulateMarkdown = "ArticulateMarkdown";
+            public const string ArticulatePost = "ArticulatePost";
+            public const string ArticulateRichText = "ArticulateRichText";
+        }
+
+        public static class DataType
+        {
+            public const string ArticulateCategories = "ArticulateCategories";
+            public const string ArticulateTags = "ArticulateTags";
+        }
+
+        public static class Convention
+        {
+            public const string Articulate = "Articulate";
+
+            public const string ArticlesDocument = "Articles";
+            public const string AuthorsDocument = "Authors";
+        }
+
+        public static class Paths
+        {
+            public const string SystemVirtualPath = "~/Views/Articulate/_System";
+            public const string SystemViewPath = "wwwroot/Views/Articulate/_System";
+            public const string UserVirtualPath = "~/Views/Articulate";
+            public const string ThemesPath = "Themes";
+            public const string MarkdownEditorPath = "MarkdownEditor";
+            public const string CssPath = "assets/css";
+            public const string JsPath = "assets/js";
+            public const string PartialsPath = "Partials";
+            public const string ViewPlaceHolder = "{0}.cshtml";
+
+            public const string ArticulateTemp = "Articulate/Temp";
+        }
     }
 }
