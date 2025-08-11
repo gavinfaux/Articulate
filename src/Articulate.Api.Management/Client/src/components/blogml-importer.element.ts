@@ -149,7 +149,7 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
     this._formError = null;
     const udi = await openNodePicker(this._modalManagerContext!, this._archiveDoctypeUdi, this);
     if (udi) {
-      const variant = await DocumentById(udi);
+      const variant = await DocumentById(this._authContext!, udi);
       if (!variant) {
         setFormError(this, new Error(`Could not find a node with UDI: ${udi}`), 'Node Not Found');
         return;
