@@ -7,34 +7,53 @@ import {
   UMB_DOCUMENT_PICKER_MODAL,
 } from '@umbraco-cms/backoffice/document';
 import {
+  type GetDocumentByIdResponse,
   type DocumentVariantResponseModel,
-  type GetDocumentByIdData,
-  DocumentService,
+  type GetItemDocumentTypeSearchResponse,
 } from '@umbraco-cms/backoffice/external/backend-api';
 import type { UmbModalContext, UmbModalManagerContext } from '@umbraco-cms/backoffice/modal';
 
 /**
  * Fetches a document variant by its UDI.
+ * @param {UmbControllerHost} host The controller host, needed to access the auth context.
  * @param {string} udi The UDI (Unique Data Identifier) of the document to fetch.
  * @returns {Promise<DocumentVariantResponseModel | null>} A promise that resolves to the first document variant, or null if not found or an error occurs.
  */
-export async function DocumentById(udi: string): Promise<DocumentVariantResponseModel | null> {
+export async function DocumentById(
+  authContext: UmbAuthContext,
+  udi: string,
+): Promise<DocumentVariantResponseModel | null> {
   try {
-    const data: GetDocumentByIdData = { id: udi };
-    const response = await DocumentService.getDocumentById(data);
-    return response?.variants?.[0] ?? null;
+    // 1. Get the authentication context and bearer token from Umbraco
+    const auth = authContext.getOpenApiConfiguration();
+    const getToken = auth?.token;
+
+    if (typeof getToken !== 'function') {
+      throw new Error('Could not get authorization token function.');
+    }
+    const token = await getToken();
+
+    const url = `/umbraco/management/api/v1/document/${udi}`;
+    // 3. Make the fetch request with the required headers
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`API request failed with status ${response.status}`);
+    }
+
+    // 4. Parse the JSON response and return the document type ID
+    const data: GetDocumentByIdResponse = await response.json();
+    return data.variants?.[0] ?? null;
   } catch (error) {
-    console.error(error, 'Failed to fetch node');
+    console.error(`Failed to fetch ArticulateArchive node ${udi} with custom fetch`, error);
     return null;
   }
-}
-
-/**
- * The expected shape of the response from the document-type search API.
- */
-interface DocumentTypeSearchResponse {
-  total: number;
-  items: Array<{ id: string; [key: string]: unknown }>;
 }
 
 /**
@@ -77,7 +96,7 @@ export async function ArticulateDocumentTypeKey(authContext: UmbAuthContext): Pr
     }
 
     // 4. Parse the JSON response and return the document type ID
-    const data: DocumentTypeSearchResponse = await response.json();
+    const data: GetItemDocumentTypeSearchResponse = await response.json();
     return data.items?.[0]?.id ?? undefined;
   } catch (error) {
     console.error('Failed to fetch Articulate document type with custom fetch', error);
