@@ -1,54 +1,77 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
   <PropertyGroup>
     <TargetFrameworks>net9.0</TargetFrameworks>
-    <OutputType>Library</OutputType>
-    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
-    <RestorePackages>true</RestorePackages>
+    <CompressionEnabled>false</CompressionEnabled>
+    <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
+    <StaticWebAssetBasePath>/</StaticWebAssetBasePath>
   </PropertyGroup>
 
-  <!-- Nuget Package -->
   <PropertyGroup>
-    <PackageId>Articulate</PackageId>
-    <Authors>Shannon Deminick</Authors>
-    <Description>A wonderful Blog engine built on Umbraco</Description>
-    <PackageIcon>Icon-transparent.png</PackageIcon>
-    <PackageTags>blog umbraco umbraco-marketplace oss tags markdown richtext</PackageTags>
-    <PackageProjectUrl>https://github.com/Shazwazza/Articulate</PackageProjectUrl>
-    <RepositoryType>git</RepositoryType>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <Company>Shannon Deminick</Company>
-    <Copyright>Copyright © $(Company) $([System.DateTime]::Now.Year)</Copyright>
-    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <Title>Articulate Core</Title>
+    <PackageId>Articulate.Core</PackageId>
   </PropertyGroup>
-  
+
+  <!--NoWarn for missing XML comments on public API-->
+  <PropertyGroup>
+    <NoWarn>$(NoWarn);1591</NoWarn>
+  </PropertyGroup>
+
   <!--
-  Nuget - Dotnet SourceLink & Symbol Package
-  https://github.com/dotnet/sourcelink#using-source-link-in-net-projects
-  https://devblogs.microsoft.com/dotnet/producing-packages-with-source-link/
+    Nuget - Dotnet SourceLink & Symbol Package
+    https://github.com/dotnet/sourcelink#using-source-link-in-net-projects
+    https://devblogs.microsoft.com/dotnet/producing-packages-with-source-link/
 
-  Newer recommended way from Claire Novotny - Nuget PM
-  Use package Dotnet.ReproducibleBuilds
-  This sets the same properties as above URLs and a few additional build properties
-  ie less work - just include this package & be done...
-  https://github.com/dotnet/reproducible-builds  
-  -->
+    Newer recommended way from Claire Novotny - Nuget PM
+    Use package Dotnet.ReproducibleBuilds
+    This sets the same properties as above URLs, and a few additional build properties
+    ie less work - just include this package & be done...
+    https://github.com/dotnet/reproducible-builds
+    -->
   <ItemGroup>
-    <PackageReference Include="DotNet.ReproducibleBuilds" Version="1.1.1">
+    <PackageReference Include="DotNet.ReproducibleBuilds" Version="1.2.25">
       <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers, buildtransitive</IncludeAssets>
     </PackageReference>
-  </ItemGroup>  
+  </ItemGroup>
 
+  <!--Umbraco CMS version range + NuGet audit mode-->
+  <PropertyGroup>
+    <UmbracoCmsPackageVersion>[15.2.3, 16.999.999)</UmbracoCmsPackageVersion>
+    <NuGetAuditMode>direct</NuGetAuditMode>
+  </PropertyGroup>
+
+  <!--Nuget Package Dependencies-->
   <ItemGroup>
-    <None Include="build\**\*.*">
-      <Pack>True</Pack>
-      <PackagePath>buildTransitive</PackagePath>
-    </None>
+    <PackageReference Include="Umbraco.Cms.Web.Website" Version="$(UmbracoCmsPackageVersion)" />
+    <PackageReference Include="Umbraco.Cms.Web.Common" Version="$(UmbracoCmsPackageVersion)" />
+    <PackageReference Include="Umbraco.Cms.Api.Common" Version="$(UmbracoCmsPackageVersion)" />
+    <PackageReference Include="Umbraco.Cms.Api.Management" Version="$(UmbracoCmsPackageVersion)" />
+
+    <PackageReference Include="Argotic.Core" Version="3001.0.0" />
+    <PackageReference Include="Markdig" Version="0.41.3" />
+    <PackageReference Include="Smidge" Version="4.5.1" />
+    <PackageReference Include="System.ServiceModel.Syndication" Version="9.0.8" />
+    <PackageReference Include="WilderMinds.MetaWeblog" Version="5.1.3" />
+    <PackageReference Include="Microsoft.CodeAnalysis" Version="4.14.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Remove="App_Plugins\Articulate\BackOffice\assets\themes.css" />
-    <None Remove="Packaging\package.zip" />
+    <InternalsVisibleTo Include="Articulate.Api.Management" />
+    <InternalsVisibleTo Include="Articulate.Web" />
+  </ItemGroup>
+
+  <!--Additional implicit using directives-->
+  <ItemGroup>
+    <Using Include="Umbraco.Cms.Core.DependencyInjection" />
+    <Using Include="Umbraco.Extensions" />
+    <Using Include="Articulate" />
+    <Using Include="Articulate.Extensions" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="wwwroot\Views\Articulate\_System\Themes\**">
+      <LogicalName>Articulate.Theme/$([System.String]::Copy('%(RecursiveDir)'))%(Filename)%(Extension)</LogicalName>
+    </EmbeddedResource>
   </ItemGroup>
 
   <ItemGroup>
@@ -58,14 +81,18 @@
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
   </ItemGroup>
-  
+
   <ItemGroup>
     <EmbeddedResource Update="Controllers\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
-  
+
+  <ItemGroup>
+    <None Remove="Packaging\package.zip" />
+  </ItemGroup>
+
   <ItemGroup>
     <EmbeddedResource Include="Packaging\author.jpg" />
     <EmbeddedResource Include="Packaging\banner.jpg" />
@@ -76,41 +103,33 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="App_Plugins/**/*.*">
-      <Pack>true</Pack>
-      <PackagePath>App_Plugins</PackagePath>
-    </Content>
-  </ItemGroup>
-  
-  <ItemGroup>
-    <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
+    <Folder Include="wwwroot\" />
   </ItemGroup>
 
-  <!-- Nuget Package Dependencies -->
   <ItemGroup>
-    <PackageReference Include="Markdig" Version="0.31.0" />
-    <PackageReference Include="Smidge" Version="4.5.1" />
-    <PackageReference Include="Argotic.Core" Version="3000.0.3" />
-    <PackageReference Include="Umbraco.Cms.Api.Management" Version="15.4.2" />
-    <PackageReference Include="Umbraco.Cms.Web.Website" Version="15.4.2" />
-    <PackageReference Include="System.ServiceModel.Syndication" Version="6.0.0" />
-    <PackageReference Include="WilderMinds.MetaWeblog" Version="5.1.1" />
-  </ItemGroup>
-  
-  <ItemGroup>
-    <FrameworkReference Include="Microsoft.AspNetCore.App" />
-  </ItemGroup>
-
-  <!-- Uses Package Icon on disk in repo -->
-  <ItemGroup>
-    <None Include="..\..\assets\Icon-transparent.png">
+    <None Include="..\..\LICENSE">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
     </None>
     <None Include="..\..\README.md">
-      <Pack>True</Pack>
+      <Pack>true</Pack>
       <PackagePath>\</PackagePath>
     </None>
   </ItemGroup>
+
+    <!--https://github.com/dotnet/aspnetcore/issues/59475-->
+    <!-- dotnet pack CLI doesn't resolve/include static web assets, pack as content.-->
+    <Target Name="PreResolveProjectStaticWebAssets" BeforeTargets="ResolveProjectStaticWebAssets">
+        <Message Text="[PreResolveProjectStaticWebAssets] Content: @(Content)" Importance="high" />
+        <ItemGroup>
+            <StashedContent Include="@(Content)" />
+            <Content Remove="@(Content)" />
+        </ItemGroup>
+    </Target>
+    <Target Name="PostResolveProjectStaticWebAssets" AfterTargets="ResolveProjectStaticWebAssets">
+        <ItemGroup>
+            <Content Include="@(StashedContent)" />
+        </ItemGroup>
+    </Target>
 
 </Project>
