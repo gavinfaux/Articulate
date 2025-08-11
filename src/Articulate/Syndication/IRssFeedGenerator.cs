@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+#nullable enable
 using System.ServiceModel.Syndication;
 using Articulate.Models;
 
@@ -6,6 +6,6 @@ namespace Articulate.Syndication
 {
     public interface IRssFeedGenerator
     {
-        SyndicationFeed GetFeed(IMasterModel rootPageModel, IEnumerable<PostModel> posts);
+        public SyndicationFeed GetFeed(IMasterModel rootPageModel, IEnumerable<PostModel> posts);
     }
 }
