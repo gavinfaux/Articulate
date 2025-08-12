@@ -49,6 +49,10 @@
     <ProjectReference Include="..\Articulate\Articulate.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="Articulate.Web" />
+  </ItemGroup>
+
   <!--Additional implicit using directives-->
   <ItemGroup>
     <Using Include="Umbraco.Cms.Core.DependencyInjection" />
