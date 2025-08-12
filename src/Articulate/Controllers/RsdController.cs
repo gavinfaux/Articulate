@@ -15,7 +15,7 @@ namespace Articulate.Controllers
     /// Really simple discovery controller
     /// </summary>
     [ArticulateDynamicRoute]
-    public class RsdController(
+    internal class RsdController(
         UmbracoHelper umbracoHelper,
         ILogger<RsdController> logger,
         ICompositeViewEngine compositeViewEngine,
