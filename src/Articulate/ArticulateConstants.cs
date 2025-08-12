@@ -32,7 +32,7 @@ namespace Articulate
 
         public static class Paths
         {
-            public const string SystemViewPath = "wwwroot/Views/Articulate/_System";
+            public const string SystemViewPath = "wwwroot/App_Plugins/Articulate";
             public const string UserVirtualPath = "~/Views/Articulate";
             public const string ThemesPath = "Themes";
             public const string MarkdownEditorPath = "MarkdownEditor";

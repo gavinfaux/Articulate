@@ -11,7 +11,7 @@ namespace Articulate.Components
      * GOAL: Move from a "copy-based" theme system to a more flexible and maintainable "inheritance-based" system.
      *
      * 1. CREATE A BASE/FALLBACK THEME:
-     *  - Establish a complete, working "base" theme in a dedicated folder (e.g., ~/Views/Articulate/_System/Themes/Shared/).
+     *  - Establish a complete, working "base" theme in a dedicated folder (e.g., ~/App_Plugins/Articulate/Themes/Shared/).
      *  - This base theme should provide all structural views and partials.
      *  - Use optional @sections to define "slots" for features (e.g., @await RenderSectionAsync("Pager", required: false)). This allows child themes to easily remove features by not defining the section.
      *
@@ -27,8 +27,8 @@ namespace Articulate.Components
      * 4. REPURPOSE THE 'COPY THEME' FEATURE:
      *   - Modify the 'Copy Theme' service so it either no longer clones an entire theme, or add a 'New Theme' option that acts as a "scaffolding" tool, creating a new, empty theme folder with perhaps a readme.txt and a few example override files to get the user started.
      *
-     Views/
-       Articulate/_System/
+     App_Plugins/
+       Articulate/
        |-- _ViewImports.cshtml             <-- imports for System views (themes, frontend, backoffice, etc.)
        |-- MarkdownEditor                  <-- Markdown editor (group by feature)
        |-- |-- MarkdownEditor.cshtml
@@ -59,13 +59,14 @@ namespace Articulate.Components
        |   |-- Material/
        |   |   |-- _ViewStart.cshtml       <-- REQUIRED, minimal @{ Layout = "_Layout.cshtml"; }, uses theme or fallback to shared
        |   |-- ... etc ...
-       Articulate
-       |-- _ViewImports.cshtml             <-- common theme imports
-       |   |-- Material/                   <-- System theme overrides
-       |   |-- MyTheme/                    <-- user theme
-       |-- |-- _ViewImports.cshtml             <-- user additions
+     Views
+       |-- Articulate
+       |   |-- _ViewImports.cshtml             <-- common theme imports
+       |   |   |-- Material/                   <-- System theme overrides
+       |   |   |-- MyTheme/                    <-- user theme
+       |   |-- |-- _ViewImports.cshtml             <-- user additions
+       |   |   |-- ... etc ...
        |   |-- ... etc ...
-       |-- ... etc ...
      */
 
     // This will first try to find the View in User themes, then in System themes.
