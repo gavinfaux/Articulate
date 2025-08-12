@@ -71,4 +71,9 @@
     </None>
   </ItemGroup>
 
+  <ItemGroup>
+    <!--Copy Api package XML documentation for Swagger docs, transative install-->
+    <Content Include="build\Articulate.targets" Pack="true" PackagePath="build\" />
+  </ItemGroup>
+
 </Project>
