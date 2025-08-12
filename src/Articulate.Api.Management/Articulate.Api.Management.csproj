@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <PackageId>Articulate.Management.Api</PackageId>
+    <PackageId>Articulate.Api.Management</PackageId>
     <Title>Articulate BackOffice Api</Title>
   </PropertyGroup>
 
