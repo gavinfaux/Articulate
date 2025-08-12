@@ -119,4 +119,9 @@
     </None>
   </ItemGroup>
 
+  <ItemGroup>
+    <!--Copy package XML documentation for Swagger docs, direct install-->
+    <Content Include="build\Articulate.Api.Management.targets" Pack="true" PackagePath="build\" />
+  </ItemGroup>
+
 </Project>

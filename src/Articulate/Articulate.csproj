@@ -113,8 +113,4 @@
     <Folder Include="wwwroot" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Content Include="build\Articulate.Core.targets" Pack="true" PackagePath="build\" />
-  </ItemGroup>
-
 </Project>
