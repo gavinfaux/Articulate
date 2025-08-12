@@ -51,6 +51,11 @@
     <PackageReference Include="Microsoft.CodeAnalysis" Version="4.14.0" PrivateAssets="All"/>
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="Articulate.Api.Management" />
+    <InternalsVisibleTo Include="Articulate.Web" />
+  </ItemGroup>
+
   <!--Additional implicit using directives-->
   <ItemGroup>
     <Using Include="Umbraco.Cms.Core.DependencyInjection" />

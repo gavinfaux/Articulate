@@ -85,7 +85,7 @@ namespace Articulate.ImportExport
             });
         }
 
-        public int GetPostCount(string fileName)
+        internal int GetPostCount(string fileName)
         {
             BlogMLDocument doc = GetDocument(fileName);
             return doc.Posts.Count();
@@ -95,7 +95,7 @@ namespace Articulate.ImportExport
         /// Imports the blogml file to articulate
         /// </summary>
         /// <returns>An <see cref="ImportResponseDto"/> containing import statistics and the download URL for the Disqus export, if applicable.</returns>
-        public async Task<ImportResponseDto> Import(
+        internal async Task<ImportResponseDto> Import(
             int userId,
             string fileName,
             Guid blogRootNode,
