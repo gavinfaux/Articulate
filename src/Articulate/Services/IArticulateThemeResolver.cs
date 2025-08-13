@@ -1,8 +1,7 @@
 #nullable enable
-namespace Articulate.Services
+namespace Articulate.Services;
+
+internal interface IArticulateThemeResolver
 {
-    internal interface IArticulateThemeResolver
-    {
-        internal string? GetCurrentThemeName();
-    }
+    internal string? GetCurrentThemeName();
 }

@@ -1,12 +1,11 @@
 #nullable enable
-namespace Articulate.Services
+namespace Articulate.Services;
+
+public interface IArticulateThemeRepository
 {
-    public interface IArticulateThemeRepository
-    {
-        internal Task CopyThemeAsync(string themeName, string newThemeName);
+    internal Task CopyThemeAsync(string themeName, string newThemeName);
 
-        public Task<IEnumerable<string>> GetDefaultThemesAsync();
+    public Task<IEnumerable<string>> GetDefaultThemesAsync();
 
-        public Task<IEnumerable<string>?> GetAllThemesAsync();
-    }
+    public Task<IEnumerable<string>?> GetAllThemesAsync();
 }

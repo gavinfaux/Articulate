@@ -1,5 +1,4 @@
 #nullable enable
-using Articulate;
 using Articulate.Api.Management.Composers;
 using Articulate.Api.Management.Controllers;
 using Asp.Versioning;

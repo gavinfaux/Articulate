@@ -54,6 +54,7 @@
     <Using Include="Umbraco.Cms.Core.DependencyInjection" />
     <Using Include="Umbraco.Extensions" />
     <Using Include="Articulate" />
+    <Using Include="Articulate.Models" />
   </ItemGroup>
 
   <ItemGroup>

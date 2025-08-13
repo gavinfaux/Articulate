@@ -14,13 +14,30 @@ using Umbraco.Cms.Web.Common.Authorization;
 
 namespace Articulate.Api.Management.Controllers
 {
+    /// <summary>
+    /// Provides API endpoints for managing Articulate themes, including copying a theme and retrieving default themes.
+    /// </summary>
+    /// <summary>
+    /// Provides API endpoints for managing Articulate themes, including operations for copying a theme to a new name and retrieving default themes.
+    /// </summary>
     [ManagementApi(Constants.ManagementApi.ThemeOptions)]
     [ApiVersion("1.0")]
     [Authorize(Policy = AuthorizationPolicies.SectionAccessSettings)]
     [VersionedApiBackOfficeRoute("articulate/theme")]
     [MapToApi(Constants.ManagementApi.Name)]
-    public class ThemeOptionsApiController(IArticulateThemeRepository themeRepository, ILogger<ThemeOptionsApiController> logger) : ManagementApiControllerBase
+    public class ThemeOptionsApiController(
+        IArticulateThemeRepository themeRepository,
+        ILogger<ThemeOptionsApiController> logger) : ManagementApiControllerBase
     {
+        /// <summary>
+        /// Copies a theme to a new theme name.
+        /// </summary>
+        /// <param name="model">The model containing the theme name to copy and the new theme name.</param>
+        /// <returns>The new theme name.</returns>
+        /// <response code="200">The theme was successfully copied to the new theme name.</response>
+        /// <response code="404">The theme name specified in the model does not exist.</response>
+        /// <response code="409">The new theme name specified in the model already exists.</response>
+        /// <response code="500">An unexpected error occurred during the theme copy operation.</response>
         [HttpPost("copy")]
         [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
@@ -30,7 +47,7 @@ namespace Articulate.Api.Management.Controllers
         {
             try
             {
-                await themeRepository.CopyThemeAsync(model.ThemeName, model.NewThemeName);
+                await themeRepository.CopyThemeAsync(model.ThemeName, model.NewThemeName).ConfigureAwait(false);
                 return Ok(model.NewThemeName);
             }
             catch (DirectoryNotFoundException ex)
@@ -50,6 +67,17 @@ namespace Articulate.Api.Management.Controllers
             }
         }
 
+        /// <summary>
+        /// Retrieves the list of default Articulate themes.
+        /// </summary>
+        /// <remarks>
+        /// This endpoint returns the names of all default themes available in the system.
+        /// </remarks>
+        /// <returns>
+        /// A list of default theme names as strings.
+        /// </returns>
+        /// <response code="200">Returns the list of default theme names.</response>
+        /// <response code="500">An unexpected error occurred while retrieving default themes.</response>
         [HttpGet("default")]
         [ProducesResponseType(typeof(IEnumerable<string>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
@@ -57,7 +85,7 @@ namespace Articulate.Api.Management.Controllers
         {
             try
             {
-                IEnumerable<string> themes = await themeRepository.GetDefaultThemesAsync();
+                IEnumerable<string> themes = await themeRepository.GetDefaultThemesAsync().ConfigureAwait(false);
                 return Ok(themes);
             }
             catch (Exception e)

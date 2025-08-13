@@ -6,54 +6,53 @@ using Microsoft.AspNetCore.Routing.Matching;
 using Umbraco.Cms.Web.Common.Routing;
 
 #nullable enable
-namespace Articulate.Routing
+namespace Articulate.Routing;
+
+/// <summary>
+/// Used when their is ambiguous route candidates due to multiple dynamic routes being assigned.
+/// </summary>
+/// <remarks>
+/// Ambiguous dynamic routes can occur if Umbraco detects a 404 and assigns a route, but sometimes its not
+/// actually a 404 because the articulate router occurs after the Umbraco router which handles 404 eagerly.
+/// This causes 2x candidates to be resolved and the first (umbraco) is chosen.
+/// If we detect that Articulate actually performed the routing, then we use that candidate instead.
+/// TODO: Ideally - Umbraco would dynamically route the 404 in a much later state which could be done,
+/// by a dynamic router that has a much larger Order so it occurs later in the pipeline instead of eagerly.
+/// </remarks>
+internal class ArticulateDynamicRouteSelectorPolicy : MatcherPolicy, IEndpointSelectorPolicy
 {
-    /// <summary>
-    /// Used when their is ambiguous route candidates due to multiple dynamic routes being assigned.
-    /// </summary>
-    /// <remarks>
-    /// Ambiguous dynamic routes can occur if Umbraco detects a 404 and assigns a route, but sometimes its not
-    /// actually a 404 because the articulate router occurs after the Umbraco router which handles 404 eagerly.
-    /// This causes 2x candidates to be resolved and the first (umbraco) is chosen.
-    /// If we detect that Articulate actually performed the routing, then we use that candidate instead.
-    /// TODO: Ideally - Umbraco would dynamically route the 404 in a much later state which could be done,
-    /// by a dynamic router that has a much larger Order so it occurs later in the pipeline instead of eagerly.
-    /// </remarks>
-    internal class ArticulateDynamicRouteSelectorPolicy : MatcherPolicy, IEndpointSelectorPolicy
+    public override int Order => 100;
+
+    public bool AppliesToEndpoints(IReadOnlyList<Endpoint> endpoints) =>
+
+        // Don't apply this filter to any endpoint group that is a controller route i.e. only dynamic routes.
+        !endpoints.Select(endpoint => endpoint.Metadata.GetMetadata<ControllerAttribute>()).OfType<ControllerAttribute>().Any() &&
+
+        // then ensure this is only applied if all endpoints are IDynamicEndpointMetadata
+        endpoints.All(x => x.Metadata.GetMetadata<IDynamicEndpointMetadata>() is not null);
+
+    public Task ApplyAsync(HttpContext httpContext, CandidateSet candidates)
     {
-        public override int Order => 100;
+        UmbracoRouteValues? umbracoRouteValues = httpContext.Features.Get<UmbracoRouteValues>();
 
-        public bool AppliesToEndpoints(IReadOnlyList<Endpoint> endpoints) =>
-
-            // Don't apply this filter to any endpoint group that is a controller route i.e. only dynamic routes.
-            !endpoints.Select(endpoint => endpoint.Metadata.GetMetadata<ControllerAttribute>()).OfType<ControllerAttribute>().Any() &&
-
-            // then ensure this is only applied if all endpoints are IDynamicEndpointMetadata
-            endpoints.All(x => x.Metadata.GetMetadata<IDynamicEndpointMetadata>() is not null);
-
-        public Task ApplyAsync(HttpContext httpContext, CandidateSet candidates)
+        // If the request has not been dynamically routed by articulate to an
+        // Articulate controller
+        if (umbracoRouteValues is null
+            || !umbracoRouteValues.ControllerActionDescriptor.EndpointMetadata.Any(x =>
+                x is ArticulateDynamicRouteAttribute))
         {
-            UmbracoRouteValues? umbracoRouteValues = httpContext.Features.Get<UmbracoRouteValues>();
-
-            // If the request has not been dynamically routed by articulate to an
-            // Articulate controller
-            if (umbracoRouteValues is null
-                || !umbracoRouteValues.ControllerActionDescriptor.EndpointMetadata.Any(x =>
-                    x is ArticulateDynamicRouteAttribute))
-            {
-                return Task.CompletedTask;
-            }
-
-            // the request has been dynamically routed by articulate to an Articulate controller.
-            for (var i = 0; i < candidates.Count; i++)
-            {
-                // If the candidate is an Articulate dynamic controller, set valid
-                candidates.SetValidity(i, candidates[i].Endpoint?.Metadata.GetMetadata<ArticulateDynamicRouteAttribute>() is not null);
-
-                // else it is invalid
-            }
-
             return Task.CompletedTask;
         }
+
+        // the request has been dynamically routed by articulate to an Articulate controller.
+        for (var i = 0; i < candidates.Count; i++)
+        {
+            // If the candidate is an Articulate dynamic controller, set valid
+            candidates.SetValidity(i, candidates[i].Endpoint?.Metadata.GetMetadata<ArticulateDynamicRouteAttribute>() is not null);
+
+            // else it is invalid
+        }
+
+        return Task.CompletedTask;
     }
 }

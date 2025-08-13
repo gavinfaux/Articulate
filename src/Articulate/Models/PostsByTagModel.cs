@@ -1,54 +1,53 @@
 #nullable enable
-namespace Articulate.Models
+namespace Articulate.Models;
+
+public class PostsByTagModel
 {
-    public class PostsByTagModel
+    private int? _count;
+
+    public PostsByTagModel(IEnumerable<PostModel> posts, string tagName, string tagUrl)
+        : this(posts, tagName, tagUrl, -1)
     {
-        private int? _count;
+    }
 
-        public PostsByTagModel(IEnumerable<PostModel> posts, string tagName, string tagUrl)
-            : this(posts, tagName, tagUrl, -1)
+    public PostsByTagModel(IEnumerable<PostModel> posts, string tagName, string tagUrl, int count)
+    {
+        ArgumentNullException.ThrowIfNull(posts, nameof(posts));
+
+        ArgumentNullException.ThrowIfNull(tagUrl, nameof(tagUrl));
+
+        // resolve to array so it doesn't double lookup
+        Posts = posts.ToArray();
+        TagName = tagName ?? throw new ArgumentNullException(nameof(tagName));
+        var safeEncoded = tagUrl.SafeEncodeUrlSegments();
+        TagUrl = safeEncoded.Contains("//") ? safeEncoded : safeEncoded.EnsureStartsWith('/');
+        if (count > -1)
         {
+            _count = count;
         }
+    }
 
-        public PostsByTagModel(IEnumerable<PostModel> posts, string tagName, string tagUrl, int count)
+    public IEnumerable<PostModel>? Posts { get; }
+
+    public string TagName { get; }
+
+    public string TagUrl { get; }
+
+    /// <summary>
+    /// Gets an string that can represent an html id for the tag
+    /// </summary>
+    public string HtmlId => TagName.SafeEncodeUrlSegments();
+
+    public int PostCount
+    {
+        get
         {
-            ArgumentNullException.ThrowIfNull(posts, nameof(posts));
-
-            ArgumentNullException.ThrowIfNull(tagUrl, nameof(tagUrl));
-
-            // resolve to array so it doesn't double lookup
-            Posts = posts.ToArray();
-            TagName = tagName ?? throw new ArgumentNullException(nameof(tagName));
-            var safeEncoded = tagUrl.SafeEncodeUrlSegments();
-            TagUrl = safeEncoded.Contains("//") ? safeEncoded : safeEncoded.EnsureStartsWith('/');
-            if (count > -1)
+            if (_count.HasValue == false)
             {
-                _count = count;
+                _count = (Posts ?? []).Count();
             }
-        }
 
-        public IEnumerable<PostModel>? Posts { get; }
-
-        public string TagName { get; }
-
-        public string TagUrl { get; }
-
-        /// <summary>
-        /// Gets an string that can represent an html id for the tag
-        /// </summary>
-        public string HtmlId => TagName.SafeEncodeUrlSegments();
-
-        public int PostCount
-        {
-            get
-            {
-                if (_count.HasValue == false)
-                {
-                    _count = (Posts ?? []).Count();
-                }
-
-                return _count.Value;
-            }
+            return _count.Value;
         }
     }
 }

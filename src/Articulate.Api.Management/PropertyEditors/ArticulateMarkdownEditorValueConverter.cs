@@ -6,7 +6,7 @@ using Umbraco.Cms.Core.PropertyEditors.ValueConverters;
 using Umbraco.Cms.Core.Strings;
 using Umbraco.Cms.Core.Templates;
 
-namespace Articulate.PropertyEditors
+namespace Articulate.Api.Management.PropertyEditors
 {
     // Full clone of src/Umbraco.Web.UI.Client/src/packages/markdown-editor
     // Prevent conflicts if both Markdown Editors on content type

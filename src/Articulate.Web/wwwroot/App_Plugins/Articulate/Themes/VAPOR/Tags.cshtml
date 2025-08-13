@@ -1,12 +1,12 @@
 @model TagListModel
 @{
     Layout = "Master.cshtml";
-    var asArray = Model.Tags.ToArray();
+    var asArray = Model?.Tags.ToArray() ?? [];
 }
 
 
 <article>
-    <h1>@Model.Name</h1>
+    <h1>@Model?.Name</h1>
     @{
         var isTagsAction = ViewContext.RouteData.Values["action"]
         ?.ToString()
@@ -16,17 +16,20 @@
     @if (isTagsAction)
     {
         <div class="tag-cloud-large">
-            @Model.Tags.TagCloud(@<a href="#tag-@item.HtmlId" title="View Posts with the tag @item.TagName">@item.TagName</a>, 5, 50)
+            @Model?.Tags.TagCloud(@<a href="#tag-@item.HtmlId" title="View Posts with the tag @item.TagName">@item.TagName</a>, 5, 50)
         </div>
     }
     else
     {
         <ul class="tag-list">
-            @for (var i = 0; i < asArray.Length; i++)
+            @if (asArray is not null)
             {
-                <li>
-                    <a href="#tag-@asArray[i].HtmlId" title="View Posts with the tag @asArray[i].TagName">@asArray[i].TagName</a> - (@asArray[i].PostCount)
-                </li>
+                foreach (var t in asArray)
+                {
+                    <li>
+                        <a href="#tag-@t.HtmlId" title="View Posts with the tag @t.TagName">@t.TagName</a> - (@t.PostCount)
+                    </li>
+                }
             }
         </ul>
     }
@@ -34,17 +37,21 @@
     <hr />
 
     <div class="tag-list">
-        @for (var i = 0; i < asArray.Length; i++)
+        @if (asArray is not null)
         {
-            <h2>
-                <a href="@asArray[i].ArticulateTagRssUrl()" title="RSS feed for the tag @asArray[i].TagName"><i class="fa-solid fa-rss"></i><span class="hidden">RSS</span></a>
-                <a id="tag-@asArray[i].HtmlId" href="@asArray[i].TagUrl" title="View Posts with the tag @asArray[i].TagName">@asArray[i].TagName</a>
-            </h2>
+            for (var i = 0; i < asArray.Length; i++)
+            {
+                <h2>
+                    <a href="@asArray[i].ArticulateTagRssUrl()" title="RSS feed for the tag @asArray[i].TagName"><i class="fa-solid fa-rss"></i><span class="hidden">RSS</span></a>
+                    <a id="tag-@asArray[i].HtmlId" href="@asArray[i].TagUrl" title="View Posts with the tag @asArray[i].TagName">@asArray[i].TagName</a>
+                </h2>
 
-            @asArray[i].Posts?.OrderByDescending(x => x.PublishedDate).Table(["Date", "Name"],
-                [],
-                @<span>@item.PublishedDate.ToString("yyyy-MM-dd")</span>,
-                @<a href="@item.Url()" title="View Post">@item.Name</a>)
+                @asArray[i].Posts?.OrderByDescending(x => x.PublishedDate).Table(
+                    ["Date", "Name"],
+                    [],
+                    @<span>@((item as PostModel)?.PublishedDate.ToString("yyyy-MM-dd"))</span>,
+                    @<a href="@((item as PostModel)?.Url())" title="View Post">@((item as PostModel)?.Name)</a>)
+            }
         }
     </div>
 

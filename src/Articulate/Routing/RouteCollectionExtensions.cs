@@ -1,32 +1,31 @@
 #nullable enable
 using Microsoft.AspNetCore.Http;
 
-namespace Articulate.Routing
+namespace Articulate.Routing;
+
+public static class RouteCollectionExtensions
 {
-    public static class RouteCollectionExtensions
+    /// <summary>
+    /// Returns a route path from a given node's URL since a node's Url might contain a domain which we can't use in our routing.
+    /// </summary>
+    /// <param name="httpContext"></param>
+    /// <param name="routePath"></param>
+    /// <returns></returns>
+    internal static string RoutePathFromNodeUrl(HttpContext httpContext, string routePath)
     {
-        /// <summary>
-        /// Returns a route path from a given node's URL since a node's Url might contain a domain which we can't use in our routing.
-        /// </summary>
-        /// <param name="httpContext"></param>
-        /// <param name="routePath"></param>
-        /// <returns></returns>
-        internal static string RoutePathFromNodeUrl(HttpContext httpContext, string routePath)
+        var virtualPath = $"{httpContext.Request.Scheme}://{httpContext.Request.Host}{httpContext.Request.PathBase}";
+
+        var rootRoutePath = (Uri.TryCreate(routePath, UriKind.Absolute, out Uri? result)
+            ? result.PathAndQuery
+            : routePath).EnsureEndsWith('/');
+
+        if (rootRoutePath == virtualPath)
         {
-            var virtualPath = $"{httpContext.Request.Scheme}://{httpContext.Request.Host}{httpContext.Request.PathBase}";
-
-            var rootRoutePath = (Uri.TryCreate(routePath, UriKind.Absolute, out Uri? result)
-                ? result.PathAndQuery
-                : routePath).EnsureEndsWith('/');
-
-            if (rootRoutePath == virtualPath)
-            {
-                return string.Empty;
-            }
-
-            return rootRoutePath.StartsWith(virtualPath)
-                ? rootRoutePath[virtualPath.Length..]
-                : rootRoutePath.TrimStart('/');
+            return string.Empty;
         }
+
+        return rootRoutePath.StartsWith(virtualPath)
+            ? rootRoutePath[virtualPath.Length..]
+            : rootRoutePath.TrimStart('/');
     }
 }

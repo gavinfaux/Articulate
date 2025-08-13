@@ -1,7 +1,7 @@
 #nullable enable
 using Umbraco.Cms.Core.PropertyEditors;
 
-namespace Articulate.PropertyEditors
+namespace Articulate.Api.Management.PropertyEditors
 {
 
     // Maps to alias: \Client\src\editors\theme-picker.element.ts

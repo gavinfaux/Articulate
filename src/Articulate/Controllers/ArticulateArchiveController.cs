@@ -1,5 +1,4 @@
 #nullable enable
-using Articulate.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Logging;
@@ -9,71 +8,70 @@ using Umbraco.Cms.Core.Routing;
 using Umbraco.Cms.Core.Web;
 using Umbraco.Cms.Web.Common;
 
-namespace Articulate.Controllers
+namespace Articulate.Controllers;
+
+/// <summary>
+/// Renders the Articulate Archive node as a blog post list by date
+/// </summary>
+public class ArticulateArchiveController(
+    ILogger<ArticulateArchiveController> logger,
+    ICompositeViewEngine compositeViewEngine,
+    IUmbracoContextAccessor umbracoContextAccessor,
+    IPublishedUrlProvider publishedUrlProvider,
+    IPublishedValueFallback publishedValueFallback,
+    UmbracoHelper umbraco)
+    : ListControllerBase(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider,
+        publishedValueFallback)
 {
+    private UmbracoHelper Umbraco { get; } = umbraco;
+
     /// <summary>
-    /// Renders the Articulate Archive node as a blog post list by date
+    /// Declare new Index action with optional page number
     /// </summary>
-    public class ArticulateArchiveController(
-        ILogger<ArticulateArchiveController> logger,
-        ICompositeViewEngine compositeViewEngine,
-        IUmbracoContextAccessor umbracoContextAccessor,
-        IPublishedUrlProvider publishedUrlProvider,
-        IPublishedValueFallback publishedValueFallback,
-        UmbracoHelper umbraco)
-        : ListControllerBase(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider,
-            publishedValueFallback)
+    /// <param name="p"></param>
+    /// <returns></returns>
+    public IActionResult Index(int? p)
     {
-        private UmbracoHelper Umbraco { get; } = umbraco;
-
-        /// <summary>
-        /// Declare new Index action with optional page number
-        /// </summary>
-        /// <param name="p"></param>
-        /// <returns></returns>
-        public IActionResult Index(int? p)
+        if (CurrentPage is not null)
         {
-            if (CurrentPage is not null)
-            {
-                return RenderView(new ContentModel(CurrentPage), p);
-            }
-
-            logger.LogWarning("ArticulateArchiveController.Index: CurrentPage is null, returning 404");
-            return NotFound();
+            return RenderView(new ContentModel(CurrentPage), p);
         }
 
-        /// <summary>
-        /// Override and declare a NonAction so that we get routed to the Index action with the optional page route
-        /// </summary>
-        /// <returns></returns>
-        [NonAction]
-        public override IActionResult Index() => Index(0);
+        logger.LogWarning("ArticulateArchiveController.Index: CurrentPage is null, returning 404");
+        return NotFound();
+    }
 
-        private IActionResult RenderView(ContentModel model, int? p = null)
+    /// <summary>
+    /// Override and declare a NonAction so that we get routed to the Index action with the optional page route
+    /// </summary>
+    /// <returns></returns>
+    [NonAction]
+    public override IActionResult Index() => Index(0);
+
+    private IActionResult RenderView(ContentModel model, int? p = null)
+    {
+        var archive = new MasterModel(model.Content, PublishedValueFallback);
+
+        // redirect to root node when "redirectArchive" is configured
+        if (archive.RootBlogNode.Value<bool>("redirectArchive"))
         {
-            var archive = new MasterModel(model.Content, PublishedValueFallback);
-
-            // redirect to root node when "redirectArchive" is configured
-            if (archive.RootBlogNode.Value<bool>("redirectArchive"))
-            {
-                return RedirectPermanent(archive.RootBlogNode.Url());
-            }
-
-            // Get post count by xpath is much faster than iterating all children to get a count
-            var count = Umbraco.GetPostCount(archive.Id);
-
-            if (!int.TryParse(archive.RootBlogNode.Value<string>("pageSize"), out var pageSize))
-            {
-                pageSize = 10;
-            }
-
-            IEnumerable<PostModel> posts = Umbraco.GetRecentPostsByArchive(
-                archive,
-                p ?? 1,
-                pageSize,
-                PublishedValueFallback) ?? [];
-
-            return GetPagedListView(archive, archive, posts, count, null);
+            return RedirectPermanent(archive.RootBlogNode.Url());
         }
+
+        // Get post count by xpath is much faster than iterating all children to get a count
+        var count = Umbraco.GetPostCount(archive.Id);
+
+        if (!int.TryParse(archive.RootBlogNode.Value<string>("pageSize"), out var pageSize))
+        {
+            pageSize = 10;
+        }
+
+        IEnumerable<PostModel> posts = Umbraco.GetRecentPostsByArchive(
+            archive,
+            p ?? 1,
+            pageSize,
+            PublishedValueFallback) ?? [];
+
+        return GetPagedListView(archive, archive, posts, count, null);
     }
 }
