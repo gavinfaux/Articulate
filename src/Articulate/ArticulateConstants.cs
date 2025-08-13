@@ -20,6 +20,8 @@ namespace Articulate
         {
             public const string ArticulateCategories = "ArticulateCategories";
             public const string ArticulateTags = "ArticulateTags";
+            internal const string AriculateThemePicker = "ArticulateThemePicker.UI";
+            internal const string ArticulateMarkdownEditor = "Articulate.MarkdownEditor";
         }
 
         public static class Convention

@@ -1,20 +1,20 @@
-import type { UmbInputMarkdownElement } from '../../components/input-markdown-editor/index.js';
+import type { ArticulateInputMarkdownElement } from '../../components/input-markdown-editor/index.js';
 import { html, customElement, property, state } from '@umbraco-cms/backoffice/external/lit';
 import { UmbLitElement } from '@umbraco-cms/backoffice/lit-element';
 import type {
 	UmbPropertyEditorConfigCollection,
 	UmbPropertyEditorUiElement,
 } from '@umbraco-cms/backoffice/property-editor';
+import { UmbChangeEvent } from '@umbraco-cms/backoffice/event';
 import type { UUIModalSidebarSize } from '@umbraco-cms/backoffice/external/uui';
 
 import '../../components/input-markdown-editor/index.js';
-import { UmbChangeEvent } from '@umbraco-cms/backoffice/event';
 
 /**
  * @element articulate-property-editor-ui-markdown-editor
  */
 @customElement('articulate-property-editor-ui-markdown-editor')
-export class UmbPropertyEditorUIArticulateMarkdownEditorElement extends UmbLitElement implements UmbPropertyEditorUiElement {
+export class ArticulatePropertyEditorUIMarkdownEditorElement extends UmbLitElement implements UmbPropertyEditorUiElement {
 	@property()
 	value?: string;
 
@@ -40,7 +40,7 @@ export class UmbPropertyEditorUIArticulateMarkdownEditorElement extends UmbLitEl
 		this._overlaySize = config.getValueByAlias('overlaySize') ?? 'small';
 	}
 
-	#onChange(event: Event & { target: UmbInputMarkdownElement }) {
+	#onChange(event: Event & { target: ArticulateInputMarkdownElement }) {
 		this.value = event.target.value as string;
 		this.dispatchEvent(new UmbChangeEvent());
 	}
@@ -52,15 +52,15 @@ export class UmbPropertyEditorUIArticulateMarkdownEditorElement extends UmbLitEl
 				.overlaySize=${this._overlaySize}
 				?preview=${this._preview}
 				@change=${this.#onChange}
-				?readonly=${this.readonly}></umb-input-markdown>
+				?readonly=${this.readonly}></articulate-input-markdown>
 		`;
 	}
 }
 
-export { UmbPropertyEditorUIArticulateMarkdownEditorElement as element };
+export { ArticulatePropertyEditorUIMarkdownEditorElement as element };
 
 declare global {
 	interface HTMLElementTagNameMap {
-		'articulate-property-editor-ui-markdown-editor': UmbPropertyEditorUIArticulateMarkdownEditorElement;
+		'articulate-property-editor-ui-markdown-editor': ArticulatePropertyEditorUIMarkdownEditorElement;
 	}
 }

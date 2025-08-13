@@ -6,6 +6,7 @@
 export const manifests: Array<UmbExtensionManifest> = [
   {
     type: 'propertyEditorUi',
+    // matches to [DataEditor("ArticulateThemePicker.UI")]
     alias: 'ArticulateThemePicker.UI',
     name: 'Articulate Theme Picker UI',
     elementName: 'theme-picker-element',

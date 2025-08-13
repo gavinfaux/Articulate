@@ -159,6 +159,8 @@ namespace Articulate.Api.Management.Controllers
                     statusCode: StatusCodes.Status400BadRequest);
             }
 
+            /* Duplicates implicit validation from [ApiController] */
+            /*
             if (model.ArticulateBlogNode == 0 || string.IsNullOrWhiteSpace(model.Title))
             {
                 if (model.ArticulateBlogNode == 0)
@@ -173,6 +175,7 @@ namespace Articulate.Api.Management.Controllers
 
                 return ValidationProblem(ModelState);
             }
+            */
 
             IContent? articulateNode = _contentService.GetById(model.ArticulateBlogNode);
             if (articulateNode is null)
@@ -309,6 +312,7 @@ namespace Articulate.Api.Management.Controllers
             // TODO: Validate the ![alt] user label used for the media name/markdown replacement.
             // TODO: Generate a safe filename instead of relying on user supplied filename
             // TODO: Better file validation file sizes, mimetypes, file signatures etc, extract to use elsewhere (MetaWeblog, BlogML import), plus return validation results for UX
+            // TODO: UX Validation results (invalid or missing files etc), extract to reuse elsewhere.
             if (body is null)
             {
                 return new ParseImageResponse();
