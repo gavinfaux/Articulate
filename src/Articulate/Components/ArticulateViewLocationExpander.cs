@@ -8,10 +8,12 @@ namespace Articulate.Components
     /*
      * TODO: Future refactor - Modernize the Articulate Theming System
      *
+     * **NOTE**: View Location Expander requests Views and Partials, not Master Pages, layouts etc
+     *
      * GOAL: Move from a "copy-based" theme system to a more flexible and maintainable "inheritance-based" system.
      *
      * 1. CREATE A BASE/FALLBACK THEME:
-     *  - Establish a complete, working "base" theme in a dedicated folder (e.g., ~/App_Plugins/Articulate/Themes/Shared/).
+     *  - Establish a complete, working "base" theme in a dedicated folder (e.g., ~/App_Plugins/Articulate/Themes/Shared/) .
      *  - This base theme should provide all structural views and partials.
      *  - Use optional @sections to define "slots" for features (e.g., @await RenderSectionAsync("Pager", required: false)). This allows child themes to easily remove features by not defining the section.
      *
@@ -73,7 +75,7 @@ namespace Articulate.Components
     // User themes can override System themes (a Post.cshtml in User theme folder with the same name as a system theme will take precedence).
 
     /// <inheritdoc />
-    public class ArticulateViewLocationExpander(IArticulateThemeResolver themeResolver) : IViewLocationExpander
+    internal class ArticulateViewLocationExpander(IArticulateThemeResolver themeResolver) : IViewLocationExpander
     {
         private const string ThemeKey = "articulate-theme";
 
@@ -98,7 +100,7 @@ namespace Articulate.Components
                 // User themes take priority over system themes, allows overrides.
                 // This needs documentation.
                 // Override a pager to use infinite scrolling, just need to override the themes Pager.cshtml partial
-                // Theming & styles, need to copy base theme to new theme as Views use Master from base theme currently.
+                // Theming & styles, need to copy base theme to new theme as Views use Master from base theme.
                 Path.Combine(Paths.UserVirtualPath,  themeName, Paths.ViewPlaceHolder),
                 Path.Combine(Paths.UserVirtualPath,  themeName, partialPlaceHolder),
 
@@ -106,7 +108,7 @@ namespace Articulate.Components
                 Path.Combine(Paths.SystemViewPath, Paths.ThemesPath, themeName, Paths.ViewPlaceHolder),
                 Path.Combine(Paths.SystemViewPath, Paths.ThemesPath, themeName, partialPlaceHolder),
 
-                // MarkdownEditor has no theme, but routed via Articulate root node, so themeName found
+                // MarkdownEditor has no theme, but routed via Articulate root node, so themeName found.
                 Path.Combine(Paths.SystemViewPath, Paths.MarkdownEditorPath, Paths.ViewPlaceHolder)
             };
 

@@ -11,7 +11,7 @@ namespace Articulate.Syndication
     internal class RssFeedGenerator(ILogger<RssFeedGenerator> logger, IHostingEnvironment hostingEnvironment)
         : IRssFeedGenerator
     {
-        public SyndicationFeed GetFeed(IMasterModel rootPageModel, IEnumerable<PostModel> posts)
+        SyndicationFeed IRssFeedGenerator.GetFeed(IMasterModel rootPageModel, IEnumerable<PostModel> posts)
         {
             var feed = new SyndicationFeed(
               rootPageModel.BlogTitle,

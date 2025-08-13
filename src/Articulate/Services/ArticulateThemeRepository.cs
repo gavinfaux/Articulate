@@ -19,7 +19,7 @@ namespace Articulate.Services
         private const string EmbeddedResourceRoot = "Articulate.Theme/";
         private readonly Assembly _articulateAssembly = typeof(ArticulateThemeRepository).Assembly;
 
-        public async Task CopyThemeAsync(string themeName, string newThemeName)
+        async Task IArticulateThemeRepository.CopyThemeAsync(string themeName, string newThemeName)
         {
             var userThemesPath = hostingEnvironment.MapPathContentRoot(Paths.UserVirtualPath);
             var destinationPhysicalPath = Path.Combine(userThemesPath, newThemeName);
