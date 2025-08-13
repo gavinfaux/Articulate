@@ -24,7 +24,7 @@ import type { UUIModalSidebarSize } from '@umbraco-cms/backoffice/external/uui';
 import { UmbFormControlMixin } from '@umbraco-cms/backoffice/validation';
 import { sanitizeHTML } from '@umbraco-cms/backoffice/utils';
 
-interface UmbMarkdownEditorAction extends monaco.editor.IActionDescriptor {
+interface ArticulateMarkdownEditorAction extends monaco.editor.IActionDescriptor {
     id: string;
     label: string;
     keybindings?: number[];
@@ -36,8 +36,8 @@ interface UmbMarkdownEditorAction extends monaco.editor.IActionDescriptor {
  * @element umb-input-markdown
  * @fires change - when the value of the input changes
  */
-@customElement('umb-input-markdown')
-export class UmbInputMarkdownElement extends UmbFormControlMixin<string, typeof UmbLitElement, undefined>(
+@customElement('articulate-input-markdown')
+export class ArticulateInputMarkdownElement extends UmbFormControlMixin<string, typeof UmbLitElement, undefined>(
     UmbLitElement,
 ) {
     protected override getFormElement() {
@@ -74,7 +74,7 @@ export class UmbInputMarkdownElement extends UmbFormControlMixin<string, typeof 
     private _codeEditor?: UmbCodeEditorElement;
 
     @state()
-    private _actionExtensions: Array<UmbMarkdownEditorAction> = [];
+    private _actionExtensions: Array<ArticulateMarkdownEditorAction> = [];
 
     #mediaUrlRepository = new UmbMediaUrlRepository(this);
 
@@ -88,15 +88,19 @@ export class UmbInputMarkdownElement extends UmbFormControlMixin<string, typeof 
             this.#editor?.monacoEditor?.updateOptions({ readOnly: this.#readonly });
 
             // TODO: make all action into extensions
-            this.observe(umbExtensionsRegistry.byType('monacoMarkdownEditorAction'), (manifests) => {
+            this.observe(umbExtensionsRegistry.byType('articulateMonacoMarkdownEditorAction'), (manifests) => {
                 manifests.forEach(async (manifest) => {
                     const api = await createExtensionApi(this, manifest, [this]);
-                    const action: UmbMarkdownEditorAction = {
-                        id: manifest.alias ?? api.getUnique(),
-                        label: this.localize.string(manifest.meta?.label ?? api.getLabel()),
-                        icon: manifest.meta?.icon,
-                        keybindings: api.getKeybindings(),
-                        run: async () => await api.execute({ editor: this.#editor, overlaySize: this.overlaySize }),
+
+                    if (api) {
+                        (api as any).manifest = manifest;
+                    }
+                    const action: ArticulateMarkdownEditorAction = {
+                        id: manifest.alias ?? (api as any).getUnique(),
+                        label: this.localize.string((manifest as any).meta?.label ?? (api as any).getLabel()),
+                        icon: (manifest as any).meta?.icon,
+                        keybindings: (api as any).getKeybindings(),
+                        run: async () => await (api as any).execute({ editor: this.#editor, overlaySize: this.overlaySize }),
                     };
                     this.#editor?.monacoEditor?.addAction(action);
                     this._actionExtensions.push(action);
@@ -676,10 +680,10 @@ export class UmbInputMarkdownElement extends UmbFormControlMixin<string, typeof 
         `,
     ];
 }
-export default UmbInputMarkdownElement;
+export default ArticulateInputMarkdownElement;
 
 declare global {
     interface HTMLElementTagNameMap {
-        'umb-input-markdown': UmbInputMarkdownElement;
+        'articulate-input-markdown': ArticulateInputMarkdownElement;
     }
 }
