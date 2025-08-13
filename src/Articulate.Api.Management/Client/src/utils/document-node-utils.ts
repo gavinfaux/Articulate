@@ -13,6 +13,8 @@ import {
 } from '@umbraco-cms/backoffice/external/backend-api';
 import type { UmbModalContext, UmbModalManagerContext } from '@umbraco-cms/backoffice/modal';
 
+// If we want to call Umbraco API methods, we need to use need to use a compatible client, hey-api legacy/client or browser fetch API
+// TODO:  consider "@hey-api/openapi-ts": "before 0.73.0" + `legacy/fetch` client or browser fetch API
 /**
  * Fetches a document variant by its UDI.
  * @param {UmbControllerHost} host The controller host, needed to access the auth context.
