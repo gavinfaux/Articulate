@@ -56,6 +56,10 @@ public abstract class ListControllerBase(
         var pageNumber = p is > 0 ? p.Value : 1;
 
         var pageSize = masterModel.PageSize;
+        if (pageSize <=0)
+        {
+            pageSize = 10;
+        }
         var totalPages = totalPosts == 0 ? 1 : Convert.ToInt32(Math.Ceiling((double)totalPosts / pageSize));
 
         // Invalid page, redirect without pages
