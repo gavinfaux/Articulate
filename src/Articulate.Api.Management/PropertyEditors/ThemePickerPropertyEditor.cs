@@ -6,7 +6,7 @@ namespace Articulate.Api.Management.PropertyEditors
 
     // Maps to alias: \Client\src\editors\theme-picker.element.ts
     // ArticulateThemePicker.UI | Umbraco.Plain.String
-    [DataEditor(ArticulateConstants.DataType.AriculateThemePicker, ValueType = ValueTypes.String, ValueEditorIsReusable = true)]
+    [DataEditor(ArticulateConstants.DataType.AriculateThemePickerUi, ValueType = ValueTypes.String, ValueEditorIsReusable = true)]
     public class ThemePickerPropertyEditor(IDataValueEditorFactory dataValueEditorFactory)
         : DataEditor(dataValueEditorFactory)
     {
