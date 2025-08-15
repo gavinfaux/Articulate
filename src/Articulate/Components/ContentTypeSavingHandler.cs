@@ -10,8 +10,11 @@ public class ContentTypeSavingHandler : INotificationHandler<ContentTypeSavingNo
     public void Handle(ContentTypeSavingNotification notification)
     {
         foreach (IContentType c in notification.SavedEntities
-                     .Where(c => c.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateArchive) || c.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateAuthors))
-                     .Where(c => c.HasIdentity == false))
+            .Where(c =>
+            c.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateArchive) ||
+            c.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateAuthors) ||
+            c.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateImageCollection))
+            .Where(c => c.HasIdentity == false))
         {
             c.ListView = Umbraco.Cms.Core.Constants.DataTypes.Guids.ListViewContentGuid;
         }
