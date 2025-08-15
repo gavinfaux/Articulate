@@ -53,7 +53,7 @@ namespace Articulate.Web.Controllers
             var vm = new MarkdownEditorInitModel
             {
                 ArticulateNodeId = CurrentPage.Id,
-                EditorPostUrl = editorUrl,
+                EditorPostUrl = editorUrl
             };
 
             // TODO: CSP

@@ -36,7 +36,7 @@
 
                 <div class="mdl-card mdl-cell mdl-cell--8-col">
                     @{
-                        await PostInfo(post, false);
+                        await PostInfoAsync(post, false);
                     }
                 </div>
 
@@ -46,7 +46,7 @@
             {
                 <div class="mdl-card mdl-cell mdl-cell--12-col">
                     @{
-                        await PostInfo(post);
+                        await PostInfoAsync(post);
                     }
                 </div>
             }
@@ -60,7 +60,7 @@
 
 @functions {
 
-    private async Task PostInfo(PostModel post, bool withExcerpt = true)
+    private async Task PostInfoAsync(PostModel post, bool withExcerpt = true)
     {
         @await Html.PartialAsync("PostImageHeader", post)
 
