@@ -17,8 +17,8 @@ WebApplication app = builder.Build();
 
 await app.BootUmbracoAsync().ConfigureAwait(false);
 
- if (app.Environment.IsProduction())
- {
+if (app.Environment.IsProduction())
+{
     app.UseHttpsRedirection();
 }
 

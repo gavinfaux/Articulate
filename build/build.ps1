@@ -38,7 +38,7 @@ if (-not $?) {
 }
 
 # Build solution
-Write-Host "Executing dotnet build with PackageOutputPath: $($ReleaseFolder)"
+Write-Host "Executing dotnet build"
 & dotnet build $SolutionPath --configuration Release --no-restore
 if (-not $?) {
     throw "The dotnet build process returned an error code."
