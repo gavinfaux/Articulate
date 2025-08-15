@@ -23,7 +23,6 @@ public static class ArticulateConstants
         public const string ArticulateTags = "ArticulateTags";
         public const string ArticulateThemePicker = "ArticulateThemePicker";
         public const string ArticulateMarkdownEditor = "Articulate.MarkdownEditor";
-        public const string ArticulateMarkdownEditorUi = "Articulate.PropertyEditorUi.MarkdownEditor";
     }
     public static class Convention
     {
