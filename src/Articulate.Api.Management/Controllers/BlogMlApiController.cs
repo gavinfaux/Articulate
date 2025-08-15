@@ -2,7 +2,6 @@
 using Articulate.Api.Management.Attributes;
 using Articulate.Api.Management.Models;
 using Articulate.ImportExport;
-using Articulate.Models;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -59,9 +58,10 @@ namespace Articulate.Api.Management.Controllers
             try
             {
                 var fileName = Path.GetRandomFileName();
-                await using (var stream = new MemoryStream())
+                var stream = new MemoryStream();
+                await using (stream.ConfigureAwait(false))
                 {
-                    await importFile.CopyToAsync(stream);
+                    await importFile.CopyToAsync(stream).ConfigureAwait(false);
                     articulateTempFileSystem.AddFile(fileName, stream);
                 }
 
@@ -91,7 +91,8 @@ namespace Articulate.Api.Management.Controllers
             const string exportFileName = "BlogMlExport.xml";
             try
             {
-                await blogMlExporter.ExportAsync(model.ArticulateBlogNode, exportFileName, model.ExportImagesAsBase64);
+                await blogMlExporter.ExportAsync(model.ArticulateBlogNode, exportFileName, model.ExportImagesAsBase64)
+                    .ConfigureAwait(false);
                 var downloadFileName = $"articulate-export-{DateTime.UtcNow:yyyyMMddHHmmss}.xml";
 
                 Stream fileStream = articulateTempFileSystem.OpenFile(exportFileName);
@@ -141,7 +142,7 @@ namespace Articulate.Api.Management.Controllers
 
             try
             {
-                ImportResponseDto dto = await blogMlImporter.Import(
+                ImportResponseDto dto = await blogMlImporter.ImportAsync(
                     currentUser.Id,
                     model.TempFile,
                     model.ArticulateBlogNode,
@@ -150,7 +151,7 @@ namespace Articulate.Api.Management.Controllers
                     model.RegexReplace,
                     model.Publish,
                     model.ExportDisqusXml,
-                    model.ImportFirstImage);
+                    model.ImportFirstImage).ConfigureAwait(false);
 
                 var result = new ImportResponse(dto);
 

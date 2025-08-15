@@ -3,7 +3,6 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using Articulate.Api.Management.Attributes;
 using Articulate.Api.Management.Models;
-using Articulate.Extensions;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -123,16 +122,27 @@ namespace Articulate.Api.Management.Controllers
                 IMedia? root = _mediaService.GetRootMedia().FirstOrDefault(x =>
                     x.Name == "Articulate" &&
                     x.ContentType.Alias.InvariantEquals(Umbraco.Cms.Core.Constants.Conventions.MediaTypes.Folder));
-                return root ?? _mediaService.CreateMediaWithIdentity("Articulate", Umbraco.Cms.Core.Constants.System.Root, Umbraco.Cms.Core.Constants.Conventions.MediaTypes.Folder);
+                return root ?? _mediaService.CreateMediaWithIdentity(
+                    "Articulate",
+                    Umbraco.Cms.Core.Constants.System.Root,
+                    Umbraco.Cms.Core.Constants.Conventions.MediaTypes.Folder);
             });
         }
 
+        /// <summary>
+        /// Creates a new post under the specified Articulate node.
+        /// </summary>
+        /// <param name="jsonModel">The JSON model containing the post data: Title, Body, Slug, Excerpt, Tags, Categories, ArticulateBlogNode, and whether the first image should be extracted as a dedicated property.</param>
+        /// <param name="files">Any uploaded images as part of the multipart/form-data request.</param>
+        /// <returns>A <see cref="CreatePostResponse"/> containing the URL of the newly created post.</returns>
         [HttpPost("post")]
         [Consumes("multipart/form-data")]
         [ProducesResponseType(typeof(CreatePostResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status422UnprocessableEntity)]
+
+        // TODO: Review along with ParseImages
         public async Task<ActionResult<CreatePostResponse>> CreatePost(
             [FromForm(Name = "json")] string jsonModel,
             IFormFileCollection files)
@@ -211,7 +221,8 @@ namespace Articulate.Api.Management.Controllers
                 return Forbid();
             }
 
-            ParseImageResponse parsedImageResponse = await ParseImages(model.Body, files, extractFirstImageAsProperty);
+            ParseImageResponse parsedImageResponse =
+                await ParseImages(model.Body, files, extractFirstImageAsProperty).ConfigureAwait(false);
 
             model.Body = parsedImageResponse.BodyText;
 
@@ -253,7 +264,8 @@ namespace Articulate.Api.Management.Controllers
 
             if (model.Tags.IsNullOrWhiteSpace() == false)
             {
-                IEnumerable<string> tags = model.Tags.Split([','], StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim());
+                IEnumerable<string> tags = model.Tags.Split([','], StringSplitOptions.RemoveEmptyEntries)
+                    .Select(x => x.Trim());
                 content.AssignInvariantOrDefaultCultureTags(
                     "tags",
                     tags,
@@ -266,7 +278,8 @@ namespace Articulate.Api.Management.Controllers
 
             if (model.Categories.IsNullOrWhiteSpace() == false)
             {
-                IEnumerable<string> cats = model.Categories.Split([','], StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim());
+                IEnumerable<string> cats = model.Categories.Split([','], StringSplitOptions.RemoveEmptyEntries)
+                    .Select(x => x.Trim());
                 content.AssignInvariantOrDefaultCultureTags(
                     "categories",
                     cats,
@@ -307,6 +320,7 @@ namespace Articulate.Api.Management.Controllers
             return permissionsToCheck.All(p => permissions.Contains(p));
         }
 
+        // TODO: Review
         private async Task<ParseImageResponse> ParseImages(string? body, IFormFileCollection formFiles, bool extractFirstImageAsProperty)
         {
             // TODO: Validate the ![alt] user label used for the media name/markdown replacement.
@@ -318,7 +332,15 @@ namespace Articulate.Api.Management.Controllers
                 return new ParseImageResponse();
             }
 
-            var reservedNames = new HashSet<string> { "con", "prn", "aux", "nul", "com1", "lpt1" };
+            var reservedNames = new HashSet<string>
+            {
+                "con",
+                "prn",
+                "aux",
+                "nul",
+                "com1",
+                "lpt1"
+            };
             var firstImage = string.Empty;
             var bodyText = body; // Start with the original body text
 
@@ -339,7 +361,9 @@ namespace Articulate.Api.Management.Controllers
                 // STEP 2: For each match, VALIDATE and PROCESS it asynchronously.
                 if (file is null)
                 {
-                    _logger.LogWarning("Markdown image placeholder for {TempUrl} found, but no corresponding file was uploaded.", tempUrl);
+                    _logger.LogWarning(
+                        "Markdown image placeholder for {TempUrl} found, but no corresponding file was uploaded.",
+                        tempUrl);
 
                     // The file is missing. We will replace its tag with nothing.
                     replacementMap[match.Value] = string.Empty;
@@ -356,7 +380,8 @@ namespace Articulate.Api.Management.Controllers
 
                 var filename = Path.GetFileName(file.FileName);
                 var cleanFileName = string.Join('_', filename.Split(Path.GetInvalidFileNameChars()));
-                if (cleanFileName.IsNullOrWhiteSpace() || cleanFileName.Length > 100 || reservedNames.Contains(cleanFileName.ToLowerInvariant()))
+                if (cleanFileName.IsNullOrWhiteSpace() || cleanFileName.Length > 100 ||
+                    reservedNames.Contains(cleanFileName.ToLowerInvariant()))
                 {
                     // Invalid filename. Strip from markdown.
                     replacementMap[match.Value] = string.Empty;
@@ -368,12 +393,19 @@ namespace Articulate.Api.Management.Controllers
                 int? imageIndex = int.TryParse(tempUrl.Split([':'], 3).ElementAtOrDefault(1), out var idx) ? idx : null;
 
                 using var stream = new MemoryStream();
-                await file.CopyToAsync(stream);
+                await file.CopyToAsync(stream).ConfigureAwait(false);
 
                 if (extractFirstImageAsProperty && imageIndex == 0)
                 {
                     IMedia mediaItem = _mediaService.CreateMedia(altText, _articulateRootMediaFolder.Value, Umbraco.Cms.Core.Constants.Conventions.MediaTypes.Image);
-                    mediaItem.SetValue(_mediaFileManager, _mediaUrlGenerators, _shortStringHelper, _contentTypeBaseServiceProvider, Umbraco.Cms.Core.Constants.Conventions.Media.File, cleanFileName, stream);
+                    mediaItem.SetValue(
+                        _mediaFileManager,
+                        _mediaUrlGenerators,
+                        _shortStringHelper,
+                        _contentTypeBaseServiceProvider,
+                        Umbraco.Cms.Core.Constants.Conventions.Media.File,
+                        cleanFileName,
+                        stream);
                     _mediaService.Save(mediaItem);
                     IPublishedContent? media = _umbracoHelper.Media(mediaItem.Key);
 
@@ -403,7 +435,9 @@ namespace Articulate.Api.Management.Controllers
             // STEP 3: Apply markdown replacements
             if (replacementMap.Count > 0)
             {
-                bodyText = ArticulateMarkdownEditorRegexes.ImageTagPlaceholderRegex().Replace(body, m => replacementMap.TryGetValue(m.Value, out var replacement) ? replacement : m.Value);
+                bodyText = ArticulateMarkdownEditorRegexes.ImageTagPlaceholderRegex().Replace(
+                    body,
+                    m => replacementMap.TryGetValue(m.Value, out var replacement) ? replacement : m.Value);
             }
 
             return new ParseImageResponse { BodyText = bodyText, FirstImage = firstImage };

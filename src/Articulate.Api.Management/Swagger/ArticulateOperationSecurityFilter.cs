@@ -1,5 +1,4 @@
 #nullable enable
-using Articulate;
 using Umbraco.Cms.Api.Management.OpenApi;
 
 namespace Articulate.Api.Management.Swagger

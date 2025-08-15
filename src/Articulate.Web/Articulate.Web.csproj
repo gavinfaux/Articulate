@@ -11,6 +11,10 @@
     <Title>Articulate</Title>
   </PropertyGroup>
 
+  <ItemGroup>
+    <SupportedPlatform Include="browser" />
+  </ItemGroup>
+
   <!--NoWarn for missing XML comments on public API-->
   <PropertyGroup>
     <NoWarn>$(NoWarn);1591</NoWarn>
@@ -54,6 +58,7 @@
     <Using Include="Umbraco.Cms.Core.DependencyInjection" />
     <Using Include="Umbraco.Extensions" />
     <Using Include="Articulate" />
+    <Using Include="Articulate.Models" />
   </ItemGroup>
 
   <ItemGroup>

@@ -7,8 +7,10 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <Title>Articulate Core</Title>
+    <Title>Articulate Core Api</Title>
     <PackageId>Articulate.Core</PackageId>
+    <Title>Articulate Core</Title>
+    <Description>A wonderful Blog engine built on Umbraco</Description>
   </PropertyGroup>
 
   <!--NoWarn for missing XML comments on public API-->
@@ -61,7 +63,7 @@
     <Using Include="Umbraco.Cms.Core.DependencyInjection" />
     <Using Include="Umbraco.Extensions" />
     <Using Include="Articulate" />
-    <Using Include="Articulate.Extensions" />
+    <Using Include="Articulate.Models" />
   </ItemGroup>
 
   <ItemGroup>

@@ -5,6 +5,7 @@ namespace Articulate.Api.Management.Models
 {
     /// <summary>
     /// Represents the data required to copy an existing theme to a new theme name.
+    /// The new theme name must not contain any invalid file name characters.
     /// </summary>
     public class ThemeCopyModel : IValidatableObject
     {
