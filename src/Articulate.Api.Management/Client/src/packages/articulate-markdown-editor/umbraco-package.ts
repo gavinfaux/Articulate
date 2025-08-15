@@ -1,4 +1,4 @@
-export const name = 'Articulate.Core.MarkdownEditor';
+export const name = 'Articulate.MarkdownEditor';
 
 // Full clone of Umbraco.Web.UI.Client/src/packages/markdown-editor
 // Prevent any conflicts with the markdown editor in the backoffice

@@ -1,12 +1,11 @@
 #nullable enable
-using Articulate.Services;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.PropertyEditors;
 using Umbraco.Cms.Core.PropertyEditors.ValueConverters;
 using Umbraco.Cms.Core.Strings;
 using Umbraco.Cms.Core.Templates;
 
-namespace Articulate.PropertyEditors
+namespace Articulate.Api.Management.PropertyEditors
 {
     // Full clone of src/Umbraco.Web.UI.Client/src/packages/markdown-editor
     // Prevent conflicts if both Markdown Editors on content type
@@ -18,7 +17,7 @@ namespace Articulate.PropertyEditors
         public override bool IsConverter(IPublishedPropertyType propertyType)
 
             // Maps to alias: \Client\src\packages\articulate-markdown-editor\property-editors\markdown-editor\Articulate.MarkdownEditor.ts
-            => propertyType.EditorAlias.Equals(ArticulateConstants.DataType.ArticulateMarkdownEditor);
+            => propertyType.EditorUiAlias.Equals(ArticulateConstants.DataType.ArticulateMarkdownEditor) || propertyType.EditorAlias.Equals(ArticulateConstants.DataType.ArticulateMarkdownEditor);
 
         public override object ConvertIntermediateToObject(
             IPublishedElement owner,

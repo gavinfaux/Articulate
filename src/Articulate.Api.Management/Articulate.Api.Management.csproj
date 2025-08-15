@@ -5,9 +5,13 @@
     <StaticWebAssetBasePath>/</StaticWebAssetBasePath>
   </PropertyGroup>
 
+  <ItemGroup>
+    <SupportedPlatform Include="browser" />
+  </ItemGroup>
+
   <PropertyGroup>
     <PackageId>Articulate.Api.Management</PackageId>
-    <Title>Articulate BackOffice Api</Title>
+    <Title>Articulate Management Api</Title>
   </PropertyGroup>
 
   <!--NoWarn for missing XML comments on public API-->
@@ -58,6 +62,7 @@
     <Using Include="Umbraco.Cms.Core.DependencyInjection" />
     <Using Include="Umbraco.Extensions" />
     <Using Include="Articulate" />
+    <Using Include="Articulate.Models" />
   </ItemGroup>
 
   <ItemGroup>
