@@ -14,7 +14,6 @@ namespace Articulate
             public const string ArticulateMarkdown = "ArticulateMarkdown";
             public const string ArticulatePost = "ArticulatePost";
             public const string ArticulateRichText = "ArticulateRichText";
-            public const string ArticulateImageCollection = "ArticulateImageCollection";
         }
 
         public static class DataType
