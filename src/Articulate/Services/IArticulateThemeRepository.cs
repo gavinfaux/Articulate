@@ -3,7 +3,7 @@ namespace Articulate.Services;
 
 public interface IArticulateThemeRepository
 {
-    internal Task CopyThemeAsync(string themeName, string newThemeName);
+    public Task CopyThemeAsync(string themeName, string newThemeName);
 
     public Task<IEnumerable<string>> GetDefaultThemesAsync();
 

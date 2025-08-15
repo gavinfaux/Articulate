@@ -20,8 +20,7 @@ public static class ArticulateConstants
     {
         public const string ArticulateCategories = "ArticulateCategories";
         public const string ArticulateTags = "ArticulateTags";
-        public const string AriculateThemePicker = "ArticulateThemePicker";
-        public const string AriculateThemePickerUi = "ArticulateThemePicker.UI";
+        public const string ArticulateThemePicker = "ArticulateThemePicker";
         public const string ArticulateMarkdownEditor = "Articulate.MarkdownEditor";
         public const string ArticulateMarkdownEditorUi = "Articulate.PropertyEditorUi.MarkdownEditor";
     }

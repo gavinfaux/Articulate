@@ -84,7 +84,7 @@ public class BlogMlImporter
         });
     }
 
-    internal int GetPostCount(string fileName)
+    public int GetPostCount(string fileName)
     {
         BlogMLDocument doc = GetDocument(fileName);
         return doc.Posts.Count();
@@ -94,7 +94,7 @@ public class BlogMlImporter
     /// Imports the blogml file to articulate
     /// </summary>
     /// <returns>An <see cref="ImportResponseDto"/> containing import statistics and the download URL for the Disqus export, if applicable.</returns>
-    internal async Task<ImportResponseDto> ImportAsync(
+    public async Task<ImportResponseDto> ImportAsync(
         int userId,
         string fileName,
         Guid blogRootNode,

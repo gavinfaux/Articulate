@@ -18,7 +18,7 @@ namespace Articulate.Api.Management.PropertyEditors
         public override bool IsConverter(IPublishedPropertyType propertyType)
 
             // Maps to alias: \Client\src\packages\articulate-markdown-editor\property-editors\markdown-editor\Articulate.MarkdownEditor.ts
-            => propertyType.EditorUiAlias.Equals(ArticulateConstants.DataType.AriculateThemePickerUi);
+            => propertyType.EditorUiAlias.Equals(ArticulateConstants.DataType.ArticulateMarkdownEditorUi);
 
         public override object ConvertIntermediateToObject(
             IPublishedElement owner,

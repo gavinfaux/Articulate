@@ -6,7 +6,7 @@ using Microsoft.Extensions.Options;
 
 namespace Articulate.Services;
 
-internal class BackOfficeAuthService(IOptionsMonitor<CookieAuthenticationOptions> options)
+public class BackOfficeAuthService(IOptionsMonitor<CookieAuthenticationOptions> options)
 {
     public bool IsBackOfficeLoggedIn(HttpContext context, string authenticationType)
     {

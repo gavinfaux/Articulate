@@ -99,6 +99,9 @@ export class BlogMlService {
 }
 
 export class MarkdownEditorService {
+    /**
+     * Creates a new post under the specified Articulate node.
+     */
     public static postArticulateEditorsMarkdownPost<ThrowOnError extends boolean = false>(options?: Options<PostArticulateEditorsMarkdownPostData, ThrowOnError>) {
         return (options?.client ?? _heyApiClient).post<PostArticulateEditorsMarkdownPostResponses, PostArticulateEditorsMarkdownPostErrors, ThrowOnError>({
             ...formDataBodySerializer,
@@ -119,6 +122,9 @@ export class MarkdownEditorService {
 }
 
 export class ThemeOptionsService {
+    /**
+     * Copies a theme to a new theme name.
+     */
     public static postArticulateThemeCopy<ThrowOnError extends boolean = false>(options?: Options<PostArticulateThemeCopyData, ThrowOnError>) {
         return (options?.client ?? _heyApiClient).post<PostArticulateThemeCopyResponses, PostArticulateThemeCopyErrors, ThrowOnError>({
             security: [
@@ -136,6 +142,10 @@ export class ThemeOptionsService {
         });
     }
     
+    /**
+     * Retrieves the list of default Articulate themes.
+     * This endpoint returns the names of all default themes available in the system.
+     */
     public static getArticulateThemeDefault<ThrowOnError extends boolean = false>(options?: Options<GetArticulateThemeDefaultData, ThrowOnError>) {
         return (options?.client ?? _heyApiClient).get<GetArticulateThemeDefaultResponses, GetArticulateThemeDefaultErrors, ThrowOnError>({
             security: [
