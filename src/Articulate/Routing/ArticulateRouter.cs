@@ -149,11 +149,11 @@ namespace Articulate.Routing
             var art = new ArticulateRouteTemplate(routeTemplate);
             if (!_routeCache.TryGetValue(art, out ArticulateRootNodeCache? dynamicRouteValues))
             {
-                ControllerActionDescriptor? controllerActionDescriptor = _controllerActionSearcher.Find<IRenderController>(httpContext, controllerName, actionName);
-                if (controllerActionDescriptor is null)
-                {
-                    throw new InvalidOperationException("No controller found with name " + controllerName);
-                }
+                ControllerActionDescriptor? controllerActionDescriptor =
+                    _controllerActionSearcher.Find<IRenderController>(
+                        httpContext,
+                        controllerName,
+                        actionName) ?? throw new InvalidOperationException("No controller found with name " + controllerName);
 
                 dynamicRouteValues = new ArticulateRootNodeCache(controllerActionDescriptor);
 
