@@ -4,28 +4,29 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 
-namespace Articulate.Services;
-
-public class BackOfficeAuthService(IOptionsMonitor<CookieAuthenticationOptions> options)
+namespace Articulate.Services
 {
-    public bool IsBackOfficeLoggedIn(HttpContext context, string authenticationType)
+    internal class BackOfficeAuthService(IOptionsMonitor<CookieAuthenticationOptions> options)
     {
-        CookieAuthenticationOptions cookieOptions = options.Get(authenticationType);
+        public bool IsBackOfficeLoggedIn(HttpContext context, string authenticationType)
         {
-            var cookieName = cookieOptions.Cookie.Name;
-            if (string.IsNullOrEmpty(cookieName))
+            CookieAuthenticationOptions cookieOptions = options.Get(authenticationType);
             {
-                return false;
-            }
+                var cookieName = cookieOptions.Cookie.Name;
+                if (string.IsNullOrEmpty(cookieName))
+                {
+                    return false;
+                }
 
-            var cookie = context.Request.Cookies[cookieName];
-            if (string.IsNullOrEmpty(cookie))
-            {
-                return false;
-            }
+                var cookie = context.Request.Cookies[cookieName];
+                if (string.IsNullOrEmpty(cookie))
+                {
+                    return false;
+                }
 
-            AuthenticationTicket? unprotected = cookieOptions.TicketDataFormat.Unprotect(cookie);
-            return unprotected is not null && unprotected.AuthenticationScheme == authenticationType;
+                AuthenticationTicket? unprotected = cookieOptions.TicketDataFormat.Unprotect(cookie);
+                return unprotected is not null && unprotected.AuthenticationScheme == authenticationType;
+            }
         }
     }
 }

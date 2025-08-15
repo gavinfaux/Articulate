@@ -26,7 +26,6 @@ namespace Articulate.Api.Management.Models
         [Required]
         public Guid ArticulateBlogNode { get; set; }
 
-
         /// <summary>
         /// Gets or sets a value indicating whether to overwrite existing posts during import.
         /// </summary>
@@ -81,7 +80,6 @@ namespace Articulate.Api.Management.Models
         [Required(AllowEmptyStrings = false)]
         public required string TempFile { get; set; }
 
-
         /// <summary>
         /// Gets or sets a value indicating whether to export Disqus XML after import.
         /// </summary>
@@ -90,7 +88,6 @@ namespace Articulate.Api.Management.Models
         /// If set to <see langword="false"/>, Disqus XML will not be exported after import.
         /// </remarks>
         public bool ExportDisqusXml { get; set; }
-
 
         /// <summary>
         /// Gets or sets a value indicating whether to import the first image found in each post.

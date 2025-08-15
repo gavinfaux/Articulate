@@ -6,61 +6,62 @@ using Umbraco.Cms.Core.Scoping;
 using Umbraco.Cms.Core.Services;
 using Umbraco.Cms.Web.Common;
 
-namespace Articulate.Services;
-
-public class ArticulateTagService(
-    IArticulateTagRepository repository,
-    ICoreScopeProvider provider,
-    ILoggerFactory loggerFactory,
-    IEventMessagesFactory eventMessagesFactory)
-    : RepositoryService(provider, loggerFactory, eventMessagesFactory)
+namespace Articulate.Services
 {
-    public IEnumerable<PostsByTagModel> GetContentByTags(
-        UmbracoHelper helper,
-        ITagQuery tagQuery,
-        IMasterModel masterModel,
-        string tagGroup,
-        string baseUrlName)
+    public class ArticulateTagService(
+        IArticulateTagRepository repository,
+        ICoreScopeProvider provider,
+        ILoggerFactory loggerFactory,
+        IEventMessagesFactory eventMessagesFactory)
+        : RepositoryService(provider, loggerFactory, eventMessagesFactory)
     {
-        using (ScopeProvider.CreateCoreScope(autoComplete: true))
+        public IEnumerable<PostsByTagModel> GetContentByTags(
+            UmbracoHelper helper,
+            ITagQuery tagQuery,
+            IMasterModel masterModel,
+            string tagGroup,
+            string baseUrlName)
         {
-            return repository.GetContentByTags(
-                helper,
-                tagQuery,
-                masterModel,
-                tagGroup,
-                baseUrlName);
+            using (ScopeProvider.CreateCoreScope(autoComplete: true))
+            {
+                return repository.GetContentByTags(
+                    helper,
+                    tagQuery,
+                    masterModel,
+                    tagGroup,
+                    baseUrlName);
+            }
         }
-    }
 
-    public PostsByTagModel GetContentByTag(
-        UmbracoHelper helper,
-        IMasterModel masterModel,
-        string tag,
-        string tagGroup,
-        string baseUrlName,
-        long page,
-        long pageSize)
-    {
-        using (ScopeProvider.CreateCoreScope(autoComplete: true))
+        public PostsByTagModel GetContentByTag(
+            UmbracoHelper helper,
+            IMasterModel masterModel,
+            string tag,
+            string tagGroup,
+            string baseUrlName,
+            long page,
+            long pageSize)
         {
-            return repository.GetContentByTag(
-                helper,
-                masterModel,
-                tag,
-                tagGroup,
-                baseUrlName,
-                page,
-                pageSize);
+            using (ScopeProvider.CreateCoreScope(autoComplete: true))
+            {
+                return repository.GetContentByTag(
+                    helper,
+                    masterModel,
+                    tag,
+                    tagGroup,
+                    baseUrlName,
+                    page,
+                    pageSize);
+            }
         }
-    }
 
-    public IEnumerable<string> GetAllCategories(
-        IMasterModel masterModel)
-    {
-        using (ScopeProvider.CreateCoreScope(autoComplete: true))
+        public IEnumerable<string> GetAllCategories(
+            IMasterModel masterModel)
         {
-            return repository.GetAllCategories(masterModel);
+            using (ScopeProvider.CreateCoreScope(autoComplete: true))
+            {
+                return repository.GetAllCategories(masterModel);
+            }
         }
     }
 }

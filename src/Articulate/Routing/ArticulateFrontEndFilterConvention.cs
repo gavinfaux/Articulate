@@ -2,18 +2,19 @@
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Umbraco.Cms.Core.PublishedCache;
 
-namespace Articulate.Routing;
-
-internal class ArticulateFrontEndFilterConvention(
-    IPublishedContentTypeCache publishedContentTypeCache,
-    IDocumentCacheService documentCacheService)
-    : IApplicationModelConvention
+namespace Articulate.Routing
 {
-    public void Apply(ApplicationModel application)
+    internal class ArticulateFrontEndFilterConvention(
+        IPublishedContentTypeCache publishedContentTypeCache,
+        IDocumentCacheService documentCacheService)
+        : IApplicationModelConvention
     {
-        foreach (ControllerModel controller in application.Controllers)
+        public void Apply(ApplicationModel application)
         {
-            controller.Filters.Add(new RouteCacheRefresherFilter(publishedContentTypeCache, documentCacheService));
+            foreach (ControllerModel controller in application.Controllers)
+            {
+                controller.Filters.Add(new RouteCacheRefresherFilter(publishedContentTypeCache, documentCacheService));
+            }
         }
     }
 }

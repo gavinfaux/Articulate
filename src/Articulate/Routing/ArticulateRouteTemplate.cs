@@ -2,22 +2,23 @@ using System.Numerics;
 using Microsoft.AspNetCore.Routing.Template;
 
 // TODO: #nullable enable
-namespace Articulate.Routing;
-
-internal readonly struct ArticulateRouteTemplate(RouteTemplate routeTemplate) : IEquatable<ArticulateRouteTemplate>,
-    IEqualityOperators<ArticulateRouteTemplate, ArticulateRouteTemplate, bool>
+namespace Articulate.Routing
 {
-    private readonly string _template = routeTemplate.TemplateText ?? string.Empty;
+    internal readonly struct ArticulateRouteTemplate(RouteTemplate routeTemplate) : IEquatable<ArticulateRouteTemplate>,
+        IEqualityOperators<ArticulateRouteTemplate, ArticulateRouteTemplate, bool>
+    {
+        private readonly string _template = routeTemplate.TemplateText ?? string.Empty;
 
-    public RouteTemplate RouteTemplate { get; } = routeTemplate;
+        public RouteTemplate RouteTemplate { get; } = routeTemplate;
 
-    public static bool operator ==(ArticulateRouteTemplate left, ArticulateRouteTemplate right) => left.Equals(right);
+        public static bool operator ==(ArticulateRouteTemplate left, ArticulateRouteTemplate right) => left.Equals(right);
 
-    public static bool operator !=(ArticulateRouteTemplate left, ArticulateRouteTemplate right) => !(left == right);
+        public static bool operator !=(ArticulateRouteTemplate left, ArticulateRouteTemplate right) => !(left == right);
 
-    public override bool Equals(object obj) => obj is ArticulateRouteTemplate template && Equals(template);
+        public override bool Equals(object obj) => obj is ArticulateRouteTemplate template && Equals(template);
 
-    public bool Equals(ArticulateRouteTemplate other) => _template == other._template;
+        public bool Equals(ArticulateRouteTemplate other) => _template == other._template;
 
-    public override int GetHashCode() => HashCode.Combine(_template);
+        public override int GetHashCode() => HashCode.Combine(_template);
+    }
 }

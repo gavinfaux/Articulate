@@ -4,19 +4,20 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Options;
 using Umbraco.Cms.Web.Common.ApplicationBuilder;
 
-namespace Articulate.Components;
-
-public class ArticulatePipelineStartupFilter : IConfigureOptions<UmbracoPipelineOptions>
+namespace Articulate.Components
 {
-    public void Configure(UmbracoPipelineOptions options)
-        => options.AddFilter(new UmbracoPipelineFilter(nameof(ArticulatePipelineStartupFilter))
-        {
-            Endpoints = app => app.UseEndpoints(endpoints =>
+    public class ArticulatePipelineStartupFilter : IConfigureOptions<UmbracoPipelineOptions>
+    {
+        public void Configure(UmbracoPipelineOptions options)
+            => options.AddFilter(new UmbracoPipelineFilter(nameof(ArticulatePipelineStartupFilter))
             {
-                endpoints.MapDynamicControllerRoute<ArticulateRouteValueTransformer>(
-                    "/{any}/{**slug}",
-                    null!,
-                    1000); // Ensure it runs AFTER Umbraco so that we can check if things are already matched.
-            })
-        });
+                Endpoints = app => app.UseEndpoints(endpoints =>
+                {
+                    endpoints.MapDynamicControllerRoute<ArticulateRouteValueTransformer>(
+                        "/{any}/{**slug}",
+                        null!,
+                        1000); // Ensure it runs AFTER Umbraco so that we can check if things are already matched.
+                })
+            });
+    }
 }

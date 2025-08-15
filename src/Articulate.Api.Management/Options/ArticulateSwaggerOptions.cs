@@ -34,13 +34,13 @@ namespace Articulate.Api.Management.Options
                     Contact = new OpenApiContact
                     {
                         Name = "https://github.com/Shazwazza/Articulate",
-                        Url = new Uri("https://github.com/Shazwazza/Articulate"),
+                        Url = new Uri("https://github.com/Shazwazza/Articulate")
                     },
                     License = new OpenApiLicense
                     {
                         Name = $"MIT License, © {year} Shannon Deminick",
-                        Url = new Uri("https://opensource.org/license/MIT"),
-                    },
+                        Url = new Uri("https://opensource.org/license/MIT")
+                    }
                 });
 
             try

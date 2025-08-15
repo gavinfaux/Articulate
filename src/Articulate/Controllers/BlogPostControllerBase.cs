@@ -6,24 +6,25 @@ using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.Web;
 using Umbraco.Cms.Web.Common.Controllers;
 
-namespace Articulate.Controllers;
-
-public abstract class BlogPostControllerBase(
-    ILogger<BlogPostControllerBase> logger,
-    ICompositeViewEngine compositeViewEngine,
-    IUmbracoContextAccessor umbracoContextAccessor,
-    IPublishedValueFallback publishedValueFallback)
-    : RenderController(logger, compositeViewEngine, umbracoContextAccessor)
+namespace Articulate.Controllers
 {
-    public override IActionResult Index()
+    public abstract class BlogPostControllerBase(
+        ILogger<BlogPostControllerBase> logger,
+        ICompositeViewEngine compositeViewEngine,
+        IUmbracoContextAccessor umbracoContextAccessor,
+        IPublishedValueFallback publishedValueFallback)
+        : RenderController(logger, compositeViewEngine, umbracoContextAccessor)
     {
-        if (CurrentPage is null)
+        public override IActionResult Index()
         {
-            logger.LogWarning("BlogPostControllerBase.Index: CurrentPage is null, returning 404");
-            return NotFound();
-        }
+            if (CurrentPage is null)
+            {
+                logger.LogWarning("BlogPostControllerBase.Index: CurrentPage is null, returning 404");
+                return NotFound();
+            }
 
-        var post = new PostModel(CurrentPage, publishedValueFallback);
-        return View("Post", post);
+            var post = new PostModel(CurrentPage, publishedValueFallback);
+            return View("Post", post);
+        }
     }
 }

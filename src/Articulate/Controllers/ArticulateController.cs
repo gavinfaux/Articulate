@@ -8,63 +8,64 @@ using Umbraco.Cms.Core.Routing;
 using Umbraco.Cms.Core.Web;
 using Umbraco.Cms.Web.Common;
 
-namespace Articulate.Controllers;
-
-/// <summary>
-/// Renders the Articulate root node as the main blog post list by date
-/// </summary>
-public class ArticulateController(
-    ILogger<ArticulateController> logger,
-    ICompositeViewEngine compositeViewEngine,
-    IUmbracoContextAccessor umbracoContextAccessor,
-    IPublishedUrlProvider publishedUrlProvider,
-    IPublishedValueFallback publishedValueFallback,
-    UmbracoHelper umbracoHelper)
-    : ListControllerBase(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider,
-        publishedValueFallback)
+namespace Articulate.Controllers
 {
     /// <summary>
-    /// Declare new Index action with optional page number
+    /// Renders the Articulate root node as the main blog post list by date
     /// </summary>
-    /// <param name="p"></param>
-    /// <returns></returns>
-    public IActionResult Index(int? p)
+    public class ArticulateController(
+        ILogger<ArticulateController> logger,
+        ICompositeViewEngine compositeViewEngine,
+        IUmbracoContextAccessor umbracoContextAccessor,
+        IPublishedUrlProvider publishedUrlProvider,
+        IPublishedValueFallback publishedValueFallback,
+        UmbracoHelper umbracoHelper)
+        : ListControllerBase(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider,
+            publishedValueFallback)
     {
-        if (CurrentPage is not null)
+        /// <summary>
+        /// Declare new Index action with optional page number
+        /// </summary>
+        /// <param name="p"></param>
+        /// <returns></returns>
+        public IActionResult Index(int? p)
         {
-            return RenderView(new ContentModel(CurrentPage), p);
+            if (CurrentPage is not null)
+            {
+                return RenderView(new ContentModel(CurrentPage), p);
+            }
+
+            logger.LogWarning("ArticulateController.Index: CurrentPage is null, returning 404");
+            return NotFound();
         }
 
-        logger.LogWarning("ArticulateController.Index: CurrentPage is null, returning 404");
-        return NotFound();
-    }
+        /// <summary>
+        /// Override and declare a NonAction so that we get routed to the Index action with the optional page route
+        /// </summary>
+        /// <returns></returns>
+        [NonAction]
+        public override IActionResult Index() => Index(0);
 
-    /// <summary>
-    /// Override and declare a NonAction so that we get routed to the Index action with the optional page route
-    /// </summary>
-    /// <returns></returns>
-    [NonAction]
-    public override IActionResult Index() => Index(0);
-
-    private IActionResult RenderView(ContentModel model, int? p = null)
-    {
-        IPublishedContent[]? listNodes = model.Content.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive)?.ToArray();
-
-        if (listNodes is null || listNodes.Length == 0)
+        private IActionResult RenderView(ContentModel model, int? p = null)
         {
-            throw new InvalidOperationException("An ArticulateArchive document must exist under the root Articulate document");
+            IPublishedContent[]? listNodes = model.Content.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive)?.ToArray();
+
+            if (listNodes is null || listNodes.Length == 0)
+            {
+                throw new InvalidOperationException("An ArticulateArchive document must exist under the root Articulate document");
+            }
+
+            var master = new MasterModel(model.Content, PublishedValueFallback);
+
+            var count = umbracoHelper.GetPostCount(listNodes.Select(x => x.Id).ToArray());
+
+            IEnumerable<PostModel> posts = umbracoHelper.GetRecentPosts(
+                master,
+                p ?? 1,
+                master.PageSize,
+                PublishedValueFallback) ?? [];
+
+            return GetPagedListView(master, listNodes[0], posts, count, p);
         }
-
-        var master = new MasterModel(model.Content, PublishedValueFallback);
-
-        var count = umbracoHelper.GetPostCount(listNodes.Select(x => x.Id).ToArray());
-
-        IEnumerable<PostModel> posts = umbracoHelper.GetRecentPosts(
-            master,
-            p ?? 1,
-            master.PageSize,
-            PublishedValueFallback) ?? [];
-
-        return GetPagedListView(master, listNodes[0], posts, count, p);
     }
 }

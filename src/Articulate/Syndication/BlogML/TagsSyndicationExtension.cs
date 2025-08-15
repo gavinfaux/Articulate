@@ -4,104 +4,105 @@ using Argotic.Common;
 using Argotic.Extensions;
 
 // TODO: #nullable enable
-namespace Articulate.Syndication.BlogML;
-
-public class TagsSyndicationExtension() : SyndicationExtension("tags", Namespace, new Version("1.0")), IComparable
+namespace Articulate.Syndication.BlogML
 {
-    private const string Namespace = "https://github.com/Shazwazza/Articulate/blogml/";
-
-    private TagsSyndicationExtensionContext _extensionContext = new();
-
-    public TagsSyndicationExtensionContext Context
+    public class TagsSyndicationExtension() : SyndicationExtension("tags", Namespace, new Version("1.0")), IComparable
     {
-        get => _extensionContext;
-        set
-        {
-            Guard.ArgumentNotNull(value, "value");
-            _extensionContext = value;
-        }
-    }
+        private const string Namespace = "https://github.com/Shazwazza/Articulate/blogml/";
 
-    public int CompareTo(object obj) =>
-        obj switch
-        {
-            null => 1,
-            TagsSyndicationExtension syndicationExtension =>
-                string.Compare(Description, syndicationExtension.Description, StringComparison.OrdinalIgnoreCase) |
-                Uri.Compare(
-                    Documentation,
-                    syndicationExtension.Documentation,
-                    UriComponents.AbsoluteUri,
-                    UriFormat.SafeUnescaped,
-                    StringComparison.OrdinalIgnoreCase) |
-                string.Compare(Name, syndicationExtension.Name, StringComparison.OrdinalIgnoreCase) |
-                Version.CompareTo(syndicationExtension.Version) |
-                string.Compare(XmlNamespace, syndicationExtension.XmlNamespace, StringComparison.Ordinal) |
-                string.Compare(XmlPrefix, syndicationExtension.XmlPrefix, StringComparison.Ordinal) |
-                ComparisonUtility.CompareSequence(
-                    Context.Tags,
-                    syndicationExtension.Context.Tags,
-                    StringComparison.OrdinalIgnoreCase),
-            _ => throw new ArgumentException(
-                string.Format(null, "obj is not of type {0}, type was found to be '{1}'.", GetType().FullName, obj.GetType().FullName), nameof(obj))
-        };
+        private TagsSyndicationExtensionContext _extensionContext = new();
 
-    /// <inheritdoc />
-    public override bool Load(IXPathNavigable source)
-    {
-        Guard.ArgumentNotNull(source, "source");
-        XPathNavigator navigator = source.CreateNavigator();
-        if (navigator is null)
+        public TagsSyndicationExtensionContext Context
         {
-            return false;
+            get => _extensionContext;
+            set
+            {
+                Guard.ArgumentNotNull(value, "value");
+                _extensionContext = value;
+            }
         }
 
-        var flag = Context.Load(navigator, CreateNamespaceManager(navigator));
-        OnExtensionLoaded(new SyndicationExtensionLoadedEventArgs(source, this));
-        return flag;
-    }
+        public int CompareTo(object obj) =>
+            obj switch
+            {
+                null => 1,
+                TagsSyndicationExtension syndicationExtension =>
+                    string.Compare(Description, syndicationExtension.Description, StringComparison.OrdinalIgnoreCase) |
+                    Uri.Compare(
+                        Documentation,
+                        syndicationExtension.Documentation,
+                        UriComponents.AbsoluteUri,
+                        UriFormat.SafeUnescaped,
+                        StringComparison.OrdinalIgnoreCase) |
+                    string.Compare(Name, syndicationExtension.Name, StringComparison.OrdinalIgnoreCase) |
+                    Version.CompareTo(syndicationExtension.Version) |
+                    string.Compare(XmlNamespace, syndicationExtension.XmlNamespace, StringComparison.Ordinal) |
+                    string.Compare(XmlPrefix, syndicationExtension.XmlPrefix, StringComparison.Ordinal) |
+                    ComparisonUtility.CompareSequence(
+                        Context.Tags,
+                        syndicationExtension.Context.Tags,
+                        StringComparison.OrdinalIgnoreCase),
+                _ => throw new ArgumentException(
+                    string.Format(null, "obj is not of type {0}, type was found to be '{1}'.", GetType().FullName, obj.GetType().FullName), nameof(obj))
+            };
 
-    /// <inheritdoc />
-    public override bool Load(XmlReader reader)
-    {
-        Guard.ArgumentNotNull(reader, "reader");
-        return Load(new XPathDocument(reader).CreateNavigator());
-    }
-
-    /// <inheritdoc />
-    public override void WriteTo(XmlWriter writer)
-    {
-        Guard.ArgumentNotNull(writer, "writer");
-        Context.WriteTo(writer, XmlNamespace);
-    }
-
-    public override string ToString()
-    {
-        using var memoryStream = new MemoryStream();
-        using (var writer = XmlWriter.Create(memoryStream, new XmlWriterSettings
+        /// <inheritdoc />
+        public override bool Load(IXPathNavigable source)
         {
-            ConformanceLevel = ConformanceLevel.Fragment,
-            Indent = true,
-            OmitXmlDeclaration = true
-        }))
-        {
-            WriteTo(writer);
+            Guard.ArgumentNotNull(source, "source");
+            XPathNavigator navigator = source.CreateNavigator();
+            if (navigator is null)
+            {
+                return false;
+            }
+
+            var flag = Context.Load(navigator, CreateNamespaceManager(navigator));
+            OnExtensionLoaded(new SyndicationExtensionLoadedEventArgs(source, this));
+            return flag;
         }
 
-        memoryStream.Seek(0L, SeekOrigin.Begin);
-        using var streamReader = new StreamReader(memoryStream);
-        return streamReader.ReadToEnd();
-    }
-
-    public override bool Equals(object obj)
-    {
-        if (obj is not TagsSyndicationExtension)
+        /// <inheritdoc />
+        public override bool Load(XmlReader reader)
         {
-            return false;
+            Guard.ArgumentNotNull(reader, "reader");
+            return Load(new XPathDocument(reader).CreateNavigator());
         }
 
-        return CompareTo(obj) == 0;
-    }
+        /// <inheritdoc />
+        public override void WriteTo(XmlWriter writer)
+        {
+            Guard.ArgumentNotNull(writer, "writer");
+            Context.WriteTo(writer, XmlNamespace);
+        }
 
-    public override int GetHashCode() => ToString().ToCharArray().GetHashCode();
+        public override string ToString()
+        {
+            using var memoryStream = new MemoryStream();
+            using (var writer = XmlWriter.Create(memoryStream, new XmlWriterSettings
+            {
+                ConformanceLevel = ConformanceLevel.Fragment,
+                Indent = true,
+                OmitXmlDeclaration = true
+            }))
+            {
+                WriteTo(writer);
+            }
+
+            memoryStream.Seek(0L, SeekOrigin.Begin);
+            using var streamReader = new StreamReader(memoryStream);
+            return streamReader.ReadToEnd();
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj is not TagsSyndicationExtension)
+            {
+                return false;
+            }
+
+            return CompareTo(obj) == 0;
+        }
+
+        public override int GetHashCode() => ToString().ToCharArray().GetHashCode();
+    }
 }

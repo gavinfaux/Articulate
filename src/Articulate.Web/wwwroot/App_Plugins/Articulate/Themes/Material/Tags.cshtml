@@ -62,9 +62,9 @@
                 @asArray[i].Posts?.OrderByDescending(x => x.PublishedDate).Table(new { @class = "mdl-data-table mdl-js-data-table full-box-width" },
                     ["Date", "Name", ""],
                     ["mdl-data-table__cell--non-numeric date", "mdl-data-table__cell--non-numeric", "mdl-data-table__cell--non-numeric"],
-                    @<span>@((item as PostModel)?.PublishedDate.ToString("yyyy-MM-dd"))</span>,
-                    @<a href="@((item as PostModel)?.Url())">@((item as PostModel)?.Name)</a>,
-                    @<a href="@((item as PostModel)?.Url())#disqus_thread" data-disqus-identifier="@((item as PostModel)?.Key)"></a>)
+                    @<span>@item?.PublishedDate.ToString("yyyy-MM-dd")</span>,
+                    @<a href="@item?.Url()">@item?.Name</a>,
+                    @<a href="@item?.Url()#disqus_thread" data-disqus-identifier="@item?.Key"></a>)
             </div>
             <div class="mdl-card__menu">
                 <a href="@asArray[i].ArticulateTagRssUrl()" title="RSS Feed" class="mdl-button mdl-button--icon mdl-js-button mdl-js-ripple-effect mdl-color--primary mdl-color-text--grey-50">

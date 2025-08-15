@@ -1,4 +1,5 @@
-namespace Articulate.Attributes;
-
-[AttributeUsage(AttributeTargets.Class)]
-public sealed class ArticulateDynamicRouteAttribute : Attribute;
+namespace Articulate.Attributes
+{
+    [AttributeUsage(AttributeTargets.Class)]
+    internal sealed class ArticulateDynamicRouteAttribute : Attribute;
+}

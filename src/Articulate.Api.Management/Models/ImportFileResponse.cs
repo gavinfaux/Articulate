@@ -22,7 +22,6 @@ namespace Articulate.Api.Management.Models
         [Required(AllowEmptyStrings = false)]
         public required string TemporaryFileName { get; set; }
 
-
         /// <summary>
         /// Gets or sets the number of posts detected in the BlogML file.
         /// </summary>

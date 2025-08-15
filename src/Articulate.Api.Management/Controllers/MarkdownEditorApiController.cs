@@ -254,7 +254,7 @@ namespace Articulate.Api.Management.Controllers
 
             if (!string.IsNullOrEmpty(parsedImageResponse.FirstImage))
             {
-                content.SetInvariantOrDefaultCultureValue("postImage", parsedImageResponse.FirstImage, contentType,_languageService);
+                content.SetInvariantOrDefaultCultureValue("postImage", parsedImageResponse.FirstImage, contentType, _languageService);
             }
 
             if (model.Excerpt.IsNullOrWhiteSpace() == false)
@@ -320,6 +320,7 @@ namespace Articulate.Api.Management.Controllers
             return permissionsToCheck.All(p => permissions.Contains(p));
         }
 
+        // TODO: Review
         private async Task<ParseImageResponse> ParseImages(string? body, IFormFileCollection formFiles, bool extractFirstImageAsProperty)
         {
             // TODO: Validate the ![alt] user label used for the media name/markdown replacement.

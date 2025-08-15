@@ -16,10 +16,10 @@ namespace Articulate.Api.Management.Composers
         [GeneratedRegex(".*?\\/v[1-9]+/", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase | RegexOptions.Compiled)]
         public static partial Regex VersionPrefixRegex();
 
-        [GeneratedRegex("\\{(.*?)\\:?\\}", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase | RegexOptions.Compiled)]
+        [GeneratedRegex(@"\{(.*?)\:?\}", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase | RegexOptions.Compiled)]
         public static partial Regex TemplatePlaceholdersRegex();
 
-        [GeneratedRegex("[\\/\\-](\\w{1})", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase | RegexOptions.Compiled)]
+        [GeneratedRegex(@"[\/\-](\w{1})", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase | RegexOptions.Compiled)]
         public static partial Regex ToCamelCaseRegex();
     }
 }
