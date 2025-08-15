@@ -1,7 +1,6 @@
 #nullable enable
 using System.ServiceModel.Syndication;
 using Articulate.Attributes;
-using Articulate.Models;
 using Articulate.Services;
 using Articulate.Syndication;
 using Microsoft.AspNetCore.Mvc;

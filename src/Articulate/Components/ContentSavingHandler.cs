@@ -1,6 +1,5 @@
 #nullable enable
 using Articulate.Options;
-using Articulate.Services;
 using Microsoft.Extensions.Options;
 using Umbraco.Cms.Core.Events;
 using Umbraco.Cms.Core.Models;
@@ -18,6 +17,7 @@ namespace Articulate.Components
     {
         private readonly ArticulateOptions _articulateOptions = articulateOptions.Value;
 
+        // TODO: Review
         public void Handle(ContentSavingNotification notification)
         {
             var saved = notification.SavedEntities.ToList();

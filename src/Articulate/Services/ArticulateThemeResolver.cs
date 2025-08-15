@@ -26,7 +26,7 @@ namespace Articulate.Services
                             .Articulate);
 
                     var themeName = articulateRoot.Value<string>("theme");
-                    return themeName ?? string.Empty;
+                    return themeName?.StripHtml().StripNewLines().StripWhitespace() ?? string.Empty;
                 });
     }
 }

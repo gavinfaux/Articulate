@@ -4,7 +4,6 @@ using System.Text;
 using System.Text.Json;
 using Argotic.Common;
 using Argotic.Syndication.Specialized;
-using Articulate.Services;
 using Articulate.Syndication.BlogML;
 using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Core;
@@ -44,15 +43,15 @@ namespace Articulate.ImportExport
                 }
 
                 IContentType unused = contentTypeService.Get(ArticulateConstants.ContentType.ArticulateRichText) ??
-                               throw new InvalidOperationException(
-                                   "Articulate is not installed properly, the 'ArticulateRichText' doc type could not be found");
-                IDataType categoryDataType = await dataTypeService.GetAsync("Articulate Categories") ??
-                                       throw new InvalidOperationException(
-                                           "No Data Type named 'Articulate Categories' found");
+                                      throw new InvalidOperationException(
+                                          "Articulate is not installed properly, the 'ArticulateRichText' doc type could not be found");
+                IDataType categoryDataType = await dataTypeService.GetAsync("Articulate Categories").ConfigureAwait(false) ??
+                                             throw new InvalidOperationException(
+                                                 "No Data Type named 'Articulate Categories' found");
                 TagConfiguration? categoryConfiguration = categoryDataType.ConfigurationAs<TagConfiguration>();
                 var categoryGroup = categoryConfiguration?.Group;
-                IDataType tagDataType = await dataTypeService.GetAsync("Articulate Tags") ??
-                                  throw new InvalidOperationException("No Data Type named 'Articulate Tags' found");
+                IDataType tagDataType = await dataTypeService.GetAsync("Articulate Tags").ConfigureAwait(false) ??
+                                        throw new InvalidOperationException("No Data Type named 'Articulate Tags' found");
                 TagConfiguration? tagConfiguration = tagDataType.ConfigurationAs<TagConfiguration>();
                 var tagGroup = tagConfiguration?.Group;
 
@@ -66,14 +65,14 @@ namespace Articulate.ImportExport
                 };
 
                 IContentType authorsContentType = contentTypeService.Get(ArticulateConstants.ContentType.ArticulateAuthors)
-                    ?? throw new InvalidOperationException("Articulate is not installed properly, the 'ArticulateAuthors' doc type could not be found");
+                                                  ?? throw new InvalidOperationException("Articulate is not installed properly, the 'ArticulateAuthors' doc type could not be found");
 
                 IEnumerable<IContent> authorsNodes = contentService.GetPagedDescendants(
                     root.Id,
                     0,
                     int.MaxValue,
                     out var total,
-              sqlContext.Query<IContent>().Where(x => x.ContentTypeId == authorsContentType.Id),
+                    sqlContext.Query<IContent>().Where(x => x.ContentTypeId == authorsContentType.Id),
                     Ordering.By("CreateDate", Direction.Descending));
 
                 foreach (IContent authorsNode in authorsNodes)
@@ -84,7 +83,7 @@ namespace Articulate.ImportExport
                 AddBlogCategories(blogMlDoc, categoryGroup);
 
                 IContentType archiveContentType = contentTypeService.Get(ArticulateConstants.ContentType.ArticulateArchive)
-                    ?? throw new InvalidOperationException("Articulate is not installed properly, the 'ArticulateArchive' doc type could not be found");
+                                                  ?? throw new InvalidOperationException("Articulate is not installed properly, the 'ArticulateArchive' doc type could not be found");
 
                 IEnumerable<IContent> archiveNodes = contentService.GetPagedDescendants(
                     root.Id,
@@ -171,6 +170,7 @@ namespace Articulate.ImportExport
             }
         }
 
+        // TODO: Review
         private void AddBlogPosts(IContent archiveNode, BlogMLDocument blogMlDoc, string? categoryGroup, string? tagGroup, bool exportImagesAsBase64)
         {
             const int pageSize = 1000;

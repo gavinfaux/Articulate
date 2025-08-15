@@ -1,6 +1,5 @@
 #nullable enable
 using System.Text;
-using Articulate.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Logging;
@@ -57,6 +56,11 @@ namespace Articulate.Controllers
             var pageNumber = p is > 0 ? p.Value : 1;
 
             var pageSize = masterModel.PageSize;
+            if (pageSize <= 0)
+            {
+                pageSize = 10;
+            }
+
             var totalPages = totalPosts == 0 ? 1 : Convert.ToInt32(Math.Ceiling((double)totalPosts / pageSize));
 
             // Invalid page, redirect without pages

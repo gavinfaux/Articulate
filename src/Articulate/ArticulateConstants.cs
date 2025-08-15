@@ -3,7 +3,7 @@ namespace Articulate
 {
     public static class ArticulateConstants
     {
-        public const string RefreshRoutesToken = "articulate-refresh-routes";
+        internal const string RefreshRoutesToken = "articulate-refresh-routes";
 
         public static class ContentType
         {
@@ -20,7 +20,7 @@ namespace Articulate
         {
             public const string ArticulateCategories = "ArticulateCategories";
             public const string ArticulateTags = "ArticulateTags";
-            public const string AriculateThemePicker = "ArticulateThemePicker.UI";
+            public const string ArticulateThemePicker = "ArticulateThemePicker";
             public const string ArticulateMarkdownEditor = "Articulate.MarkdownEditor";
         }
 
@@ -32,16 +32,16 @@ namespace Articulate
             public const string AuthorsDocument = "Authors";
         }
 
-        public static class Paths
+        internal static class Paths
         {
-            public const string SystemViewPath = "wwwroot/App_Plugins/Articulate";
-            public const string UserVirtualPath = "~/Views/Articulate";
-            public const string ThemesPath = "Themes";
-            public const string MarkdownEditorPath = "MarkdownEditor";
-            public const string PartialsPath = "Partials";
-            public const string ViewPlaceHolder = "{0}.cshtml";
+            internal const string SystemViewPath = "wwwroot/App_Plugins/Articulate";
+            internal const string UserVirtualPath = "~/Views/Articulate";
+            internal const string ThemesPath = "Themes";
+            internal const string MarkdownEditorPath = "MarkdownEditor";
+            internal const string PartialsPath = "Partials";
+            internal const string ViewPlaceHolder = "{0}.cshtml";
 
-            public const string ArticulateTemp = "Articulate/Temp";
+            internal const string ArticulateTemp = "Articulate/Temp";
         }
 
         public static class DefaultThemes

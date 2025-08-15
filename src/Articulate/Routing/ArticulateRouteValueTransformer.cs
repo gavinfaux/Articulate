@@ -17,7 +17,7 @@ namespace Articulate.Routing
     // TODO: We're going to need to do this for all dynamic routes so no more building routes
     // This is because there is no more RouteTable that you can write too so we sort of have to
     // re-create that here.
-    internal class ArticulateRouteValueTransformer(
+    internal sealed class ArticulateRouteValueTransformer(
         IRuntimeState runtime,
         IUmbracoContextAccessor umbracoContextAccessor,
         IPublishedRouter publishedRouter,
@@ -45,7 +45,7 @@ namespace Articulate.Routing
             {
                 // This can occur in Umbraco Cloud since some plugin that is used there prevents the UmbracoRouteValues from
                 // being set the normal way. In this case, we'll need to force route it.
-                RouteValueDictionary routeValues = await umbracoRouteValueTransformer.TransformAsync(httpContext, values);
+                RouteValueDictionary routeValues = await umbracoRouteValueTransformer.TransformAsync(httpContext, values).ConfigureAwait(false);
 
                 umbracoRouteValues = httpContext.Features.Get<UmbracoRouteValues>();
                 if (umbracoRouteValues is null)
@@ -57,7 +57,7 @@ namespace Articulate.Routing
 
             var newValues = new RouteValueDictionary();
 
-            (bool HasCache, bool RouteSuccess) routeResult = await TryRoute(umbracoContext, umbracoRouteValues, httpContext, newValues);
+            (bool HasCache, bool RouteSuccess) routeResult = await TryRouteAsync(umbracoContext, umbracoRouteValues, httpContext, newValues).ConfigureAwait(false);
             if (routeResult.HasCache)
             {
                 return routeResult.RouteSuccess ? newValues : [];
@@ -78,14 +78,14 @@ namespace Articulate.Routing
                 }
             }
 
-            routeResult = await TryRoute(umbracoContext, umbracoRouteValues, httpContext, newValues);
+            routeResult = await TryRouteAsync(umbracoContext, umbracoRouteValues, httpContext, newValues).ConfigureAwait(false);
 
             return routeResult.RouteSuccess ? newValues : [];
         }
 
         public void Dispose() => Dispose(disposing: true);
 
-        protected virtual void Dispose(bool disposing)
+        private void Dispose(bool disposing)
         {
             if (_disposedValue)
             {
@@ -100,7 +100,7 @@ namespace Articulate.Routing
             _disposedValue = true;
         }
 
-        private async Task<(bool HasCache, bool RouteSuccess)> TryRoute(IUmbracoContext umbracoContext, UmbracoRouteValues umbracoRouteValues, HttpContext httpContext, RouteValueDictionary values)
+        private async Task<(bool HasCache, bool RouteSuccess)> TryRouteAsync(IUmbracoContext umbracoContext, UmbracoRouteValues umbracoRouteValues, HttpContext httpContext, RouteValueDictionary values)
         {
             if (_lock == null)
             {
@@ -117,7 +117,7 @@ namespace Articulate.Routing
                         return (true, false);
                     }
 
-                    await WriteRouteValues(umbracoContext, httpContext, dynamicRouteValues, umbracoRouteValues, values);
+                    await WriteRouteValuesAsync(umbracoContext, httpContext, dynamicRouteValues, umbracoRouteValues, values).ConfigureAwait(false);
                     return (true, true);
                 }
             }
@@ -129,7 +129,7 @@ namespace Articulate.Routing
             return (false, false);
         }
 
-        private async Task WriteRouteValues(IUmbracoContext umbracoContext, HttpContext httpContext, ArticulateRootNodeCache dynamicRouteValues, UmbracoRouteValues umbracoRouteValues, RouteValueDictionary values)
+        private async Task WriteRouteValuesAsync(IUmbracoContext umbracoContext, HttpContext httpContext, ArticulateRootNodeCache dynamicRouteValues, UmbracoRouteValues umbracoRouteValues, RouteValueDictionary values)
         {
             // Since we are executing after Umbraco's dynamic transformer, it means Umbraco has already gone ahead and matched a domain (if any). So we will use this to match our document.
             DomainAndUri assignedDomain = umbracoRouteValues?.PublishedRequest.Domain;
@@ -141,7 +141,7 @@ namespace Articulate.Routing
                                                  ?? throw new InvalidOperationException("Could not resolve content by id " + contentId);
 
             // instantiate, prepare and process the published content request important to use CleanedUmbracoUrl - lowercase path-only version of the current url
-            IPublishedRequestBuilder requestBuilder = await publishedRouter.CreateRequestAsync(umbracoContext.CleanedUmbracoUrl);
+            IPublishedRequestBuilder requestBuilder = await publishedRouter.CreateRequestAsync(umbracoContext.CleanedUmbracoUrl).ConfigureAwait(false);
 
             // re-assign the domain if there was one.
             if (assignedDomain != null)

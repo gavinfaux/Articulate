@@ -6,7 +6,6 @@ using Umbraco.Cms.Core.Cache;
 using Umbraco.Cms.Core.Extensions;
 using static Articulate.ArticulateConstants;
 
-
 namespace Articulate.Services
 {
     internal class ArticulateThemeRepository(
@@ -19,7 +18,7 @@ namespace Articulate.Services
         private const string EmbeddedResourceRoot = "Articulate.Theme/";
         private readonly Assembly _articulateAssembly = typeof(ArticulateThemeRepository).Assembly;
 
-        public async Task CopyThemeAsync(string themeName, string newThemeName)
+        async Task IArticulateThemeRepository.CopyThemeAsync(string themeName, string newThemeName)
         {
             var userThemesPath = hostingEnvironment.MapPathContentRoot(Paths.UserVirtualPath);
             var destinationPhysicalPath = Path.Combine(userThemesPath, newThemeName);
@@ -47,7 +46,6 @@ namespace Articulate.Services
                 foreach (var resourceName in themeResources)
                 {
                     var relativePath = resourceName[resourcePathPrefix.Length..];
-
 
                     var destinationFilePath = Path.Combine(destinationPhysicalPath, relativePath.TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
 
@@ -83,7 +81,7 @@ namespace Articulate.Services
 
         public Task<IEnumerable<string>> GetDefaultThemesAsync() => Task.Run(() => DefaultThemes.AllThemeNames);
 
-        public Task<IEnumerable<string>> GetUserThemesAsync() => Task.Run(() => GetThemesFromPathAsync(Paths.UserVirtualPath));
+        private Task<IEnumerable<string>> GetUserThemesAsync() => Task.Run(() => GetThemesFromPathAsync(Paths.UserVirtualPath));
 
         public async Task<IEnumerable<string>?> GetAllThemesAsync() =>
             await appCaches.RuntimeCache.GetCacheItemAsync(
@@ -93,7 +91,7 @@ namespace Articulate.Services
                     Task<IEnumerable<string>> defaultThemesTask = GetDefaultThemesAsync();
                     Task<IEnumerable<string>> userThemesTask = GetUserThemesAsync();
 
-                    IEnumerable<string>[] results = await Task.WhenAll(defaultThemesTask, userThemesTask);
+                    IEnumerable<string>[] results = await Task.WhenAll(defaultThemesTask, userThemesTask).ConfigureAwait(false);
                     return results[0].Union(results[1]).OrderBy(name => name);
                 },
                 TimeSpan.FromSeconds(30)).ConfigureAwait(false);

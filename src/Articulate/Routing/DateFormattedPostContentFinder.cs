@@ -14,7 +14,7 @@ namespace Articulate.Routing
     {
         public override async Task<bool> TryFindContent(IPublishedRequestBuilder contentRequest)
         {
-            await Task.CompletedTask;
+            await Task.CompletedTask.ConfigureAwait(false);
 
             // This simple logic should do the trick: basically if I find an url with more than 4 segments (the 3 date parts and the slug)
             // I leave the last segment (the slug), remove the 3 date parts, and keep all the rest.

@@ -79,11 +79,11 @@ namespace Articulate.Syndication.BlogML
         {
             using var memoryStream = new MemoryStream();
             using (var writer = XmlWriter.Create(memoryStream, new XmlWriterSettings
-                   {
-                       ConformanceLevel = ConformanceLevel.Fragment,
-                       Indent = true,
-                       OmitXmlDeclaration = true
-                   }))
+            {
+                ConformanceLevel = ConformanceLevel.Fragment,
+                Indent = true,
+                OmitXmlDeclaration = true
+            }))
             {
                 WriteTo(writer);
             }

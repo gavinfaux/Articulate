@@ -2,8 +2,6 @@
 using System.Globalization;
 using System.Security.Authentication;
 using System.Text.RegularExpressions;
-using Articulate.Models;
-using Articulate.Services;
 using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.IO;
@@ -95,7 +93,7 @@ namespace Articulate.MetaWeblog
 
         public async Task<BlogInfo[]> GetUsersBlogsAsync(string key, string username, string password)
         {
-            await ValidateUser(username, password);
+            await ValidateUserAsync(username, password).ConfigureAwait(false);
 
             IPublishedContent node = BlogRoot();
             BlogInfo[] blogs =
@@ -113,10 +111,10 @@ namespace Articulate.MetaWeblog
 
         public async Task<CategoryInfo[]> GetCategoriesAsync(string blogid, string username, string password)
         {
-            await ValidateUser(username, password);
+            await ValidateUserAsync(username, password).ConfigureAwait(false);
 
             // TODO: These would be across all Articulate Blog root nodes :S
-            IEnumerable<ITag> all = await _tagService.GetAllAsync(ArticulateConstants.DataType.ArticulateCategories);
+            IEnumerable<ITag> all = await _tagService.GetAllAsync(ArticulateConstants.DataType.ArticulateCategories).ConfigureAwait(false);
 
             CategoryInfo[] tags = all.Select(x => new CategoryInfo
             {
@@ -131,37 +129,37 @@ namespace Articulate.MetaWeblog
 
         public async Task<Tag[]> GetTagsAsync(string blogid, string username, string password)
         {
-            await ValidateUser(username, password);
+            await ValidateUserAsync(username, password).ConfigureAwait(false);
 
             // TODO: These would be across all Articulate Blog root nodes :S
-            IEnumerable<ITag> all = await _tagService.GetAllAsync(ArticulateConstants.DataType.ArticulateTags);
+            IEnumerable<ITag> all = await _tagService.GetAllAsync(ArticulateConstants.DataType.ArticulateTags).ConfigureAwait(false);
 
             Tag[] tags = all.Select(x => new Tag
-                {
-                    name = x.Text
-                })
-            .ToArray();
+            {
+                name = x.Text
+            })
+                .ToArray();
 
             return tags;
         }
 
         public async Task<Post[]> GetRecentPostsAsync(string blogid, string username, string password, int numberOfPosts)
         {
-            await ValidateUser(username, password);
+            await ValidateUserAsync(username, password).ConfigureAwait(false);
 
             IPublishedContent node = BlogRoot().ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive)?.FirstOrDefault() ?? throw new InvalidOperationException("No Articulate Archive node found");
 
             Post[] recent = _contentService
-                    .GetPagedChildren(node.Id, 0, numberOfPosts, out var totalPosts, ordering: Ordering.By("updateDate", direction: Direction.Descending))
-                    .Select(FromContent)
-                    .ToArray();
+                .GetPagedChildren(node.Id, 0, numberOfPosts, out var totalPosts, ordering: Ordering.By("updateDate", direction: Direction.Descending))
+                .Select(FromContent)
+                .ToArray();
 
             return recent;
         }
 
         public async Task<string> AddPostAsync(string blogid, string username, string password, Post post, bool publish)
         {
-            IUser user = await ValidateUser(username, password);
+            IUser user = await ValidateUserAsync(username, password).ConfigureAwait(false);
 
             IPublishedContent root = BlogRoot();
 
@@ -185,7 +183,7 @@ namespace Articulate.MetaWeblog
 
         public async Task<bool> DeletePostAsync(string key, string postid, string username, string password, bool publish)
         {
-            IUser user = await ValidateUser(username, password);
+            IUser user = await ValidateUserAsync(username, password).ConfigureAwait(false);
             var userId = user.Id;
 
             Attempt<int> asInt = postid.TryConvertTo<int>();
@@ -208,7 +206,7 @@ namespace Articulate.MetaWeblog
 
         public async Task<Post> GetPostAsync(string postid, string username, string password)
         {
-            await ValidateUser(username, password);
+            await ValidateUserAsync(username, password).ConfigureAwait(false);
 
             Attempt<int> asInt = postid.TryConvertTo<int>();
             if (!asInt)
@@ -232,7 +230,7 @@ namespace Articulate.MetaWeblog
 
         public async Task<MediaObjectInfo> NewMediaObjectAsync(string blogid, string username, string password, MediaObject mediaObject)
         {
-            await ValidateUser(username, password);
+            await ValidateUserAsync(username, password).ConfigureAwait(false);
 
             // TODO: File validation
             var bytes = Convert.FromBase64String(mediaObject.bits);
@@ -253,7 +251,7 @@ namespace Articulate.MetaWeblog
 
         public async Task<bool> EditPostAsync(string postid, string username, string password, Post post, bool publish)
         {
-            IUser user = await ValidateUser(username, password);
+            IUser user = await ValidateUserAsync(username, password).ConfigureAwait(false);
 
             Attempt<int> asInt = postid.TryConvertTo<int>();
             if (!asInt)
@@ -261,12 +259,7 @@ namespace Articulate.MetaWeblog
                 throw new InvalidOperationException("The id could not be parsed to an integer");
             }
 
-            IContent? umbracoContent = _contentService.GetById(asInt.Result);
-
-            if (umbracoContent is null)
-            {
-                throw new InvalidOperationException($"The content with id {asInt.Result} could not be found");
-            }
+            IContent umbracoContent = _contentService.GetById(asInt.Result) ?? throw new InvalidOperationException($"The content with id {asInt.Result} could not be found");
 
             IContentType contentType = _contentTypeService.Get(ArticulateConstants.ContentType.ArticulateRichText) ?? throw new InvalidOperationException("No content type found with alias 'ArticulateRichText'");
 
@@ -326,6 +319,7 @@ namespace Articulate.MetaWeblog
             title = post.Name
         };
 
+        // TODO: Review
         private void AddOrUpdateContent(IContent content, IContentType contentType, Post post, IUser user, bool publish, bool extractFirstImageAsProperty)
         {
             content.SetInvariantOrDefaultCultureName(post.title, contentType, _languageService);
@@ -384,7 +378,7 @@ namespace Articulate.MetaWeblog
                 content.SetInvariantOrDefaultCultureValue("richText", contentToSave, contentType, _languageService);
                 if (extractFirstImageAsProperty
                     && content.HasProperty("postImage")
-                        && !firstImageRelativePath.IsNullOrWhiteSpace())
+                    && !firstImageRelativePath.IsNullOrWhiteSpace())
                 {
                     if (!string.IsNullOrWhiteSpace(firstImageRelativePath) && _mediaFileManager.FileSystem.FileExists(firstImageRelativePath))
                     {
@@ -476,20 +470,20 @@ namespace Articulate.MetaWeblog
             link = string.Empty,
 
             mt_keywords = string.IsNullOrWhiteSpace(post.GetValue<string>("tags")) == false
-            ? string.Join(',', post.GetValue<string>("tags")?.Split([','], StringSplitOptions.RemoveEmptyEntries) ?? [])
-            : string.Empty,
+                ? string.Join(',', post.GetValue<string>("tags")?.Split([','], StringSplitOptions.RemoveEmptyEntries) ?? [])
+                : string.Empty,
 
             categories = string.IsNullOrEmpty(post.GetValue<string>("categories")) == false
-            ? post.GetValue<string>("categories")?.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
-            : [],
+                ? post.GetValue<string>("categories")?.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                : [],
 
             description = post.ContentType.Alias == ArticulateConstants.ContentType.ArticulateRichText
-            ? post.GetValue<string>("richText")
-            : MarkdownHelper.ToHtml(post.GetValue<string>("markdown")),
+                ? post.GetValue<string>("richText")
+                : MarkdownHelper.ToHtml(post.GetValue<string>("markdown")),
 
             permalink = post.GetValue<string>(Constants.Conventions.Content.UrlName).IsNullOrWhiteSpace()
-            ? post.Name?.ToUrlSegment(_shortStringHelper)
-            : post.GetValue<string>(Constants.Conventions.Content.UrlName)?.ToUrlSegment(_shortStringHelper)
+                ? post.Name?.ToUrlSegment(_shortStringHelper)
+                : post.GetValue<string>(Constants.Conventions.Content.UrlName)?.ToUrlSegment(_shortStringHelper)
         };
 
         private IPublishedContent BlogRoot()
@@ -499,19 +493,15 @@ namespace Articulate.MetaWeblog
             return node;
         }
 
-        private async Task<IUser> ValidateUser(string username, string password)
+        private async Task<IUser> ValidateUserAsync(string username, string password)
         {
-            if (await _backOfficeUserManager.ValidateCredentialsAsync(username, password) == false)
+            if (await _backOfficeUserManager.ValidateCredentialsAsync(username, password).ConfigureAwait(false) == false)
             {
                 // Throw some error if not valid credentials - so we exit out early of stuff
                 throw new AuthenticationException($"Failed to validate user credentials for {username}");
             }
 
-            IUser? user = _userService.GetByUsername(username);
-            if (user is null)
-            {
-                throw new InvalidOperationException($"Failed to find user for {username}");
-            }
+            IUser user = _userService.GetByUsername(username) ?? throw new InvalidOperationException($"Failed to find user for {username}");
 
             return user;
         }

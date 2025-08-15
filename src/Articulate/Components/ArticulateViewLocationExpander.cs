@@ -8,7 +8,7 @@ namespace Articulate.Components
     // This will first try to find the View in User themes, then in System themes.
 
     /// <inheritdoc />
-    public class ArticulateViewLocationExpander(IArticulateThemeResolver themeResolver) : IViewLocationExpander
+    internal class ArticulateViewLocationExpander(IArticulateThemeResolver themeResolver) : IViewLocationExpander
     {
         private const string ThemeKey = "articulate-theme";
 

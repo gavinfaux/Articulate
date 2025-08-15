@@ -4,7 +4,6 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using Argotic.Syndication.Specialized;
-using Articulate.Models;
 using Microsoft.AspNetCore.Html;
 using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Core;
@@ -95,7 +94,7 @@ namespace Articulate.ImportExport
         /// Imports the blogml file to articulate
         /// </summary>
         /// <returns>An <see cref="ImportResponseDto"/> containing import statistics and the download URL for the Disqus export, if applicable.</returns>
-        internal async Task<ImportResponseDto> Import(
+        internal async Task<ImportResponseDto> ImportAsync(
             int userId,
             string fileName,
             Guid blogRootNode,
@@ -118,7 +117,7 @@ namespace Articulate.ImportExport
             }
 
             IContent root = _contentService.GetById(blogRootNode)
-                       ?? throw new InvalidOperationException("No node found with id " + blogRootNode);
+                            ?? throw new InvalidOperationException("No node found with id " + blogRootNode);
 
             if (!root.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.Articulate))
             {
@@ -141,7 +140,7 @@ namespace Articulate.ImportExport
 
                     Dictionary<string, string> authorIdsToName = ImportAuthors(userId, root, document.Authors);
                     returnModel.AuthorCount = authorIdsToName.Count;
-                    IEnumerable<IContent> imported = await ImportPosts(
+                    IEnumerable<IContent> imported = await ImportPostsAsync(
                         userId,
                         xdoc,
                         root,
@@ -153,7 +152,7 @@ namespace Articulate.ImportExport
                         regexMatch,
                         regexReplace,
                         publishAll,
-                        importFirstImage);
+                        importFirstImage).ConfigureAwait(false);
                     IContent[] enumerable = imported as IContent[] ?? imported.ToArray();
                     returnModel.PostCount = enumerable.Length;
 
@@ -194,15 +193,16 @@ namespace Articulate.ImportExport
             return document;
         }
 
-        private Dictionary<string, string> ImportAuthors(int userId, IContent rootNode, IEnumerable<BlogMLAuthor> authors)
+        // TODO: Review
+        private Dictionary<string, string> ImportAuthors(int userId, IContent rootNode, IEnumerable<BlogMLAuthor>? authors)
         {
             var result = new Dictionary<string, string>();
 
             IContentType authorType = _contentTypeService.Get(ArticulateConstants.ContentType.ArticulateAuthor)
-                ?? throw new InvalidOperationException("Articulate is not installed properly, the 'ArticulateAuthor' doc type could not be found");
+                                      ?? throw new InvalidOperationException("Articulate is not installed properly, the 'ArticulateAuthor' doc type could not be found");
 
             IContentType authorsType = _contentTypeService.Get(ArticulateConstants.ContentType.ArticulateAuthors)
-                ?? throw new InvalidOperationException("Articulate is not installed properly, the 'ArticulateAuthors' doc type could not be found");
+                                       ?? throw new InvalidOperationException("Articulate is not installed properly, the 'ArticulateAuthors' doc type could not be found");
 
             // get the authors container node for this articulate root
             IEnumerable<IContent> allAuthorsNodes = _contentService.GetPagedOfType(
@@ -230,56 +230,70 @@ namespace Articulate.ImportExport
                 out var totalAuthorNodes,
                 _sqlContext.Query<IContent>().Where(x => x.ParentId == authorsNode.Id && x.Trashed == false));
 
-            foreach (BlogMLAuthor author in authors)
+            if (authors is not null)
             {
-                // first check if a user exists by email
-                IUser? found = _userService.GetByEmail(author.EmailAddress);
-                if (found is not null)
+                foreach (BlogMLAuthor author in authors)
                 {
-                    // check if an author node exists for this user
-                    IContent? authorNode = allAuthorNodes?.FirstOrDefault(x => x.Name.InvariantEquals(found.Name));
-
-                    // nope not found so create a node for this user name
-                    if (authorNode is null)
+                    // first check if a user exists by email
+                    IUser? found = _userService.GetByEmail(author.EmailAddress);
+                    IEnumerable<IContent>? authorNodes = allAuthorNodes as IContent[] ?? allAuthorNodes.ToArray();
+                    if (found is not null)
                     {
-                        // create an author with the same name as the user - we'll need to wire up that
-                        // name to posts later on
-                        authorNode = _contentService.CreateWithInvariantOrDefaultCultureName(found.Name, authorsNode, authorType, _languageService);
+                        // check if an author node exists for this user
+                        IContent? authorNode = authorNodes.FirstOrDefault(x => x.Name.InvariantEquals(found.Name));
 
-                        _contentService.Save(authorNode, userId: userId);
-                        _contentService.Publish(authorNode, ["*"], userId: userId);
+                        // nope not found so create a node for this user name
+                        if (authorNode is null)
+                        {
+                            // create an author with the same name as the user - we'll need to wire up that
+                            // name to posts later on
+                            authorNode = _contentService.CreateWithInvariantOrDefaultCultureName(
+                                found.Name,
+                                authorsNode,
+                                authorType,
+                                _languageService);
+
+                            _contentService.Save(authorNode, userId: userId);
+                            _contentService.Publish(authorNode, ["*"], userId: userId);
+                        }
+
+                        result.Add(author.Id, authorNode.Name!);
                     }
-
-                    result.Add(author.Id, authorNode.Name!);
-                }
-                else
-                {
-                    // no user existsw with this email, so check if a node exists with the current author's title
-                    IContent? authorNode = allAuthorNodes?.FirstOrDefault(x => x.Name.InvariantEquals(author.Title.Content));
-
-                    // nope, not found so create one
-                    if (authorNode is null)
+                    else
                     {
-                        // create a new author node with this title
-                        authorNode = _contentService.CreateWithInvariantOrDefaultCultureName(author.Title.Content, authorsNode, authorType, _languageService);
+                        // no user existsw with this email, so check if a node exists with the current author's title
+                        IContent? authorNode =
+                            authorNodes.FirstOrDefault(x => x.Name.InvariantEquals(author.Title.Content));
 
-                        _contentService.Save(authorNode, userId: userId);
-                        _contentService.Publish(authorNode, ["*"], userId: userId);
+                        // nope, not found so create one
+                        if (authorNode is null)
+                        {
+                            // create a new author node with this title
+                            authorNode = _contentService.CreateWithInvariantOrDefaultCultureName(
+                                author.Title.Content,
+                                authorsNode,
+                                authorType,
+                                _languageService);
+
+                            _contentService.Save(authorNode, userId: userId);
+                            _contentService.Publish(authorNode, ["*"], userId: userId);
+                        }
+
+                        result.Add(author.Id, authorNode.Name!);
                     }
-
-                    result.Add(author.Id, authorNode.Name!);
                 }
             }
 
             return result;
         }
 
-        private async Task<IEnumerable<IContent>> ImportPosts(int userId, XDocument xdoc, IContent rootNode, IEnumerable<BlogMLPost> posts, BlogMLAuthor[] authors, BlogMLCategory[] categories, Dictionary<string, string> authorIdsToName, bool overwrite, string? regexMatch, string? regexReplace, bool publishAll, bool importFirstImage = false)
+        // TODO: Review
+        private async Task<IEnumerable<IContent>> ImportPostsAsync(int userId, XDocument xdoc, IContent rootNode, IEnumerable<BlogMLPost> posts, BlogMLAuthor[] authors, BlogMLCategory[] categories, Dictionary<string, string> authorIdsToName, bool overwrite, string? regexMatch, string? regexReplace, bool publishAll, bool importFirstImage = false)
         {
             var result = new List<IContent>();
 
             IContentType postType = _contentTypeService.Get(ArticulateConstants.ContentType.ArticulateRichText)
-                ?? throw new InvalidOperationException("Articulate is not installed properly, the 'ArticulateRichText' doc type could not be found");
+                                    ?? throw new InvalidOperationException("Articulate is not installed properly, the 'ArticulateRichText' doc type could not be found");
 
             IContentType archiveDocType = _contentTypeService.Get(ArticulateConstants.ContentType.ArticulateArchive) ?? throw new InvalidOperationException("Articulate is not installed properly, the 'ArticulateArchive' doc type could not be found");
 
@@ -315,14 +329,15 @@ namespace Articulate.ImportExport
                 IContent? postNode;
 
                 // Use post.id if it's there
+                IEnumerable<IContent> postNodes = allPostNodes as IContent[] ?? allPostNodes.ToArray();
                 if (!string.IsNullOrWhiteSpace(post.Id))
                 {
-                    postNode = allPostNodes.FirstOrDefault(x => x.GetValue<string>("importId") == post.Id);
+                    postNode = postNodes.FirstOrDefault(x => x.GetValue<string>("importId") == post.Id);
                 }
                 else
                 {
                     // Use the "slug" (post name) if post.id is not there
-                    postNode = allPostNodes
+                    postNode = postNodes
                         .Select(x => new { Node = x, UrlName = x.GetValue<string>(Constants.Conventions.Content.UrlName) })
                         .Where(x => x.UrlName is not null && post.Name != null && x.UrlName.InvariantStartsWith(post.Name.Content))
                         .Select(x => x.Node)
@@ -417,7 +432,7 @@ namespace Articulate.ImportExport
                 ImportCategories(postNode, post, categories, postType);
                 if (importFirstImage)
                 {
-                    await ImportFirstImageAsync(postNode, postType, post);
+                    await ImportFirstImageAsync(postNode, postType, post).ConfigureAwait(false);
                 }
 
                 if (publishAll)
@@ -459,7 +474,7 @@ namespace Articulate.ImportExport
                 try
                 {
                     using var client = new HttpClient();
-                    stream = await client.GetStreamAsync(attachment.ExternalUri);
+                    stream = await client.GetStreamAsync(attachment.ExternalUri).ConfigureAwait(false);
                 }
                 catch (Exception exception)
                 {
@@ -547,8 +562,8 @@ namespace Articulate.ImportExport
                 .SingleOrDefault(x => x.Attribute("id")?.Value.ToString() == post.Id);
 
             xmlPost ??= xdoc.Descendants(XName.Get("post", xdoc.Root.Name.NamespaceName))
-                                .SingleOrDefault(x => x.Descendants(XName.Get("post-name", xdoc.Root.Name.NamespaceName))
-                                .SingleOrDefault(s => s.Value == post.Name.Content) is not null);
+                .SingleOrDefault(x => x.Descendants(XName.Get("post-name", xdoc.Root.Name.NamespaceName))
+                    .SingleOrDefault(s => s.Value == post.Name.Content) is not null);
 
             if (xmlPost is null)
             {

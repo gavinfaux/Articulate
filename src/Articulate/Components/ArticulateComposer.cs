@@ -18,7 +18,6 @@ namespace Articulate.Components
     {
         public void Compose(IUmbracoBuilder builder)
         {
-
             IServiceCollection services = builder.Services;
             services.AddSingleton<BlogMlExporter>();
             services.AddSingleton<ArticulateTempFileSystem>();

@@ -1,6 +1,5 @@
 #nullable enable
 using Articulate.Attributes;
-using Articulate.Models;
 using Articulate.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewEngines;

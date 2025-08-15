@@ -1,7 +1,6 @@
 #nullable enable
 using System.Xml.Linq;
 using Articulate.Attributes;
-using Articulate.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Logging;

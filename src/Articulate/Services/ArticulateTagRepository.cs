@@ -1,4 +1,3 @@
-using Articulate.Models;
 using NPoco;
 using Umbraco.Cms.Core.Cache;
 using Umbraco.Cms.Core.Models;
@@ -22,7 +21,7 @@ namespace Articulate.Services
         /// </summary>
         /// <param name="masterModel"></param>
         /// <returns></returns>
-        public IEnumerable<string> GetAllCategories(
+        IEnumerable<string> IArticulateTagRepository.GetAllCategories(
             IMasterModel masterModel)
         {
             // TODO: We want to use the core for this but it's not available, this needs to be implemented: http://issues.umbraco.org/issue/U4-9290
@@ -38,7 +37,7 @@ namespace Articulate.Services
             return results;
         }
 
-        public IEnumerable<PostsByTagModel> GetContentByTags(
+        IEnumerable<PostsByTagModel> IArticulateTagRepository.GetContentByTags(
             UmbracoHelper helper,
             ITagQuery tagQuery,
             IMasterModel masterModel,
@@ -106,7 +105,7 @@ namespace Articulate.Services
 
         }
 
-        public PostsByTagModel GetContentByTag(
+        PostsByTagModel IArticulateTagRepository.GetContentByTag(
             UmbracoHelper helper,
             IMasterModel masterModel,
             string tag,

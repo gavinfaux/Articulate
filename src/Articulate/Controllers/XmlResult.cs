@@ -10,11 +10,11 @@ namespace Articulate.Controllers
         /// <summary>
         /// Serialises the object that was passed into the constructor to XML and writes the corresponding XML to the result stream.
         /// </summary>
-        public override async Task ExecuteResultAsync(ActionContext context)
+        public override Task ExecuteResultAsync(ActionContext context)
         {
             context.HttpContext.Response.Clear();
             context.HttpContext.Response.ContentType = "text/xml";
-            await context.HttpContext.Response.WriteAsync(xDocument.ToString()).ConfigureAwait(false);
+            return context.HttpContext.Response.WriteAsync(xDocument.ToString());
         }
     }
 }

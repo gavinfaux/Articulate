@@ -2,7 +2,6 @@
 using System.ServiceModel.Syndication;
 using System.Text;
 using System.Xml;
-using Articulate.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Umbraco.Cms.Core.Models.PublishedContent;
@@ -23,14 +22,14 @@ namespace Articulate.Controllers
             // Write the Processing Instruction node.
             var xsltHeader =
                 $"type=\"text/xsl\" href=\"{model.RootBlogNode.Url(mode: UrlMode.Absolute).EnsureEndsWith('/') + "rss/xslt"}\"";
-            await xmlWriter.WriteProcessingInstructionAsync("xml-stylesheet", xsltHeader);
+            await xmlWriter.WriteProcessingInstructionAsync("xml-stylesheet", xsltHeader).ConfigureAwait(false);
 
             Rss20FeedFormatter formatter = feed.GetRss20Formatter();
             formatter.WriteTo(xmlWriter);
 
-            await xmlWriter.FlushAsync();
+            await xmlWriter.FlushAsync().ConfigureAwait(false);
 
-            await context.HttpContext.Response.WriteAsync(txtWriter.ToString());
+            await context.HttpContext.Response.WriteAsync(txtWriter.ToString()).ConfigureAwait(false);
         }
 
         private sealed class Utf8StringWriter : StringWriter

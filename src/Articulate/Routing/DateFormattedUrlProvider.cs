@@ -32,7 +32,7 @@ namespace Articulate.Routing
                         or ArticulateConstants.ContentType.ArticulateMarkdown
                     }
 
-                    || content.Parent() is null)
+                || content.Parent() is null)
             {
                 return null;
             }

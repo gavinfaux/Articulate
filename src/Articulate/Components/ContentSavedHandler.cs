@@ -12,6 +12,7 @@ namespace Articulate.Components
         ILanguageService languageService)
         : INotificationHandler<ContentSavedNotification>
     {
+        // TODO: Review
         public void Handle(ContentSavedNotification notification)
         {
             foreach (IContent c in notification.SavedEntities)

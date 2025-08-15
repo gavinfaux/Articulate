@@ -5,12 +5,7 @@ namespace Articulate.Models
     {
         private int? _count;
 
-        public PostsByTagModel(IEnumerable<PostModel> posts, string tagName, string tagUrl)
-            : this(posts, tagName, tagUrl, -1)
-        {
-        }
-
-        public PostsByTagModel(IEnumerable<PostModel> posts, string tagName, string tagUrl, int count)
+        public PostsByTagModel(IEnumerable<PostModel> posts, string tagName, string tagUrl, int count = -1)
         {
             ArgumentNullException.ThrowIfNull(posts, nameof(posts));
 

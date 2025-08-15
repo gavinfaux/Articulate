@@ -1,23 +1,22 @@
 #nullable enable
 using System.Globalization;
 using System.ServiceModel.Syndication;
-using Articulate.Models;
 using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Core.Hosting;
 using Umbraco.Cms.Core.Models.PublishedContent;
 
 namespace Articulate.Syndication
 {
-    internal class RssFeedGenerator(ILogger<RssFeedGenerator> logger, IHostingEnvironment hostingEnvironment)
+    internal sealed class RssFeedGenerator(ILogger<RssFeedGenerator> logger, IHostingEnvironment hostingEnvironment)
         : IRssFeedGenerator
     {
-        public SyndicationFeed GetFeed(IMasterModel rootPageModel, IEnumerable<PostModel> posts)
+        SyndicationFeed IRssFeedGenerator.GetFeed(IMasterModel rootPageModel, IEnumerable<PostModel> posts)
         {
             var feed = new SyndicationFeed(
-              rootPageModel.BlogTitle,
-              rootPageModel.BlogDescription,
-              new Uri(rootPageModel.RootBlogNode.Url(mode: UrlMode.Absolute)),
-              GetFeedItems(rootPageModel, posts))
+                rootPageModel.BlogTitle,
+                rootPageModel.BlogDescription,
+                new Uri(rootPageModel.RootBlogNode.Url(mode: UrlMode.Absolute)),
+                GetFeedItems(rootPageModel, posts))
             {
                 Generator = "Articulate, blogging built on Umbraco",
                 ImageUrl = GetBlogImage(rootPageModel)
@@ -28,9 +27,9 @@ namespace Articulate.Syndication
             return feed;
         }
 
-        protected virtual string GetPostContent(PostModel model) => model.Body.ToHtmlString();
+        private static string GetPostContent(PostModel model) => model.Body.ToHtmlString();
 
-        protected virtual SyndicationItem? GetFeedItem(PostModel post, string rootUrl)
+        private SyndicationItem? GetFeedItem(PostModel post, string rootUrl)
         {
             var posturl = post.Url(mode: UrlMode.Absolute);
 
@@ -70,7 +69,7 @@ namespace Articulate.Syndication
             return item;
         }
 
-        protected virtual Uri? GetBlogImage(IMasterModel rootPageModel)
+        private Uri? GetBlogImage(IMasterModel rootPageModel)
         {
             Uri? logoUri = null;
             try
@@ -90,7 +89,8 @@ namespace Articulate.Syndication
         private List<SyndicationItem> GetFeedItems(IMasterModel model, IEnumerable<PostModel> posts)
         {
             var rootUrl = model.RootBlogNode.Url(mode: UrlMode.Absolute);
-            return !posts.Any() ? [] : posts.Select(post => GetFeedItem(post, rootUrl)).WhereNotNull().ToList();
+            IEnumerable<PostModel> postModels = posts as PostModel[] ?? posts.ToArray();
+            return !postModels.Any() ? [] : postModels.Select(post => GetFeedItem(post, rootUrl)).WhereNotNull().ToList();
         }
     }
 }

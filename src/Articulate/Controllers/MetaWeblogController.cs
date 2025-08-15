@@ -48,12 +48,12 @@ namespace Articulate.Controllers
             string rawContent;
             using (var reader = new StreamReader(Request.Body))
             {
-                rawContent = await reader.ReadToEndAsync();
+                rawContent = await reader.ReadToEndAsync().ConfigureAwait(false);
             }
 
             try
             {
-                var result = await service.InvokeAsync(rawContent);
+                var result = await service.InvokeAsync(rawContent).ConfigureAwait(false);
                 return Content(result, "text/xml", Encoding.UTF8);
             }
             catch (NullReferenceException ex)
