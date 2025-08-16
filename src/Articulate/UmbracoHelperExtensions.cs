@@ -95,6 +95,14 @@ namespace Articulate
             return new PostTagCollection(contentByTags);
         }
 
+        [Obsolete("Use GetRecentPosts(this UmbracoHelper helper, IMasterModel masterModel, int count, IPublishedValueFallback publishedValueFallback)")]
+        public static IEnumerable<PostModel> GetRecentPosts(
+            this UmbracoHelper helper,
+            IMasterModel masterModel,
+            int count,
+            IPublishedValueFallback publishedValueFallback,
+            IVariationContextAccessor variationContextAccessor) => GetRecentPosts(helper, masterModel, count, publishedValueFallback);
+
         /// <summary>
         /// Returns a list of the most recent posts
         /// </summary>
@@ -120,6 +128,16 @@ namespace Articulate
             var rootPageModel = new ListModel(listNodes[0], pager, listItems, publishedValueFallback);
             return rootPageModel.Posts;
         }
+
+        [Obsolete("Use GetRecentPosts(this UmbracoHelper helper, IMasterModel masterModel, int page, int pageSize, IPublishedValueFallback publishedValueFallback)")]
+
+        public static IEnumerable<PostModel> GetRecentPosts(
+            this UmbracoHelper helper,
+            IMasterModel masterModel,
+            int page,
+            int pageSize,
+            IPublishedValueFallback publishedValueFallback,
+            IVariationContextAccessor variationContextAccessor) => GetRecentPosts(helper, masterModel, page, pageSize, publishedValueFallback);
 
         /// <summary>
         /// Returns a list of the most recent posts
@@ -148,6 +166,15 @@ namespace Articulate
             var rootPageModel = new ListModel(listNodes[0], pager, listItems, publishedValueFallback);
             return rootPageModel.Posts;
         }
+
+        [Obsolete("Use GetRecentPostsByArchive(this UmbracoHelper helper, IMasterModel masterModel, int page, int pageSize, IPublishedValueFallback publishedValueFallback)")]
+        public static IEnumerable<PostModel> GetRecentPostsByArchive(
+            this UmbracoHelper helper,
+            IMasterModel masterModel,
+            int page,
+            int pageSize,
+            IPublishedValueFallback publishedValueFallback,
+            IVariationContextAccessor variationContextAccessor) => GetRecentPostsByArchive(helper, masterModel, page, pageSize, publishedValueFallback);
 
         /// <summary>
         /// Returns a list of the most recent posts by archive

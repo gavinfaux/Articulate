@@ -6,6 +6,16 @@ namespace Articulate
     public static class UrlHelperExtensions
     {
         /// <summary>
+        /// Returns the url of a themed asset
+        /// </summary>
+        /// <param name="url"></param>
+        /// <param name="model"></param>
+        /// <param name="relativeAssetPath"></param>
+        /// <returns></returns>
+        [Obsolete]
+        public static string ThemedAsset(this IUrlHelper url, IMasterModel model, string relativeAssetPath) => url.Content($"{ArticulateConstants.Paths.UserVirtualPath.EnsureEndsWith('/')}/{model.Theme.EnsureEndsWith('/')}") + "assets/" + relativeAssetPath;
+
+        /// <summary>
         /// Returns the main rss feed url for this blog
         /// </summary>
         /// <param name="url"></param>

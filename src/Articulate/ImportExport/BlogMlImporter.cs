@@ -230,7 +230,11 @@ namespace Articulate.ImportExport
                 out var totalAuthorNodes,
                 _sqlContext.Query<IContent>().Where(x => x.ParentId == authorsNode.Id && x.Trashed == false));
 
-            if (authors is not null)
+            if (authors is null)
+            {
+                return result;
+            }
+
             {
                 foreach (BlogMLAuthor author in authors)
                 {

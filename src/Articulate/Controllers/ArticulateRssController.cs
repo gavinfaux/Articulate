@@ -107,7 +107,7 @@ namespace Articulate.Controllers
 
             IEnumerable<IPublishedContent> authorContent = umbracoHelper.GetContentByAuthor(
                 listNodes,
-                author?.Name,
+                author.Name,
                 new PagerModel(maxItems.Value, 0, 1),
                 publishedValueFallback);
 

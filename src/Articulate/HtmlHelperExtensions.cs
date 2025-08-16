@@ -1,6 +1,5 @@
 #nullable enable
 using Microsoft.AspNetCore.Html;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -24,99 +23,32 @@ namespace Articulate
         public static IHtmlContent SocialMetaTags(this IHtmlHelper html, IMasterModel model)
         {
             var builder = new HtmlContentBuilder();
-            SocialMetaTags(model, builder);
+            model.SocialMetaTags(builder);
 
             if (model is PostModel postModel)
             {
-                SocialMetaTags(html, postModel, builder);
+                PublishedContentExtensions.PostSocialMetaTags(postModel, html.ViewContext.HttpContext.Request, builder);
             }
 
             return builder;
         }
 
-        /// <summary>
-        /// Adds blog post social meta tags
-        /// </summary>
-        /// <param name="html"></param>
-        /// <param name="model"></param>
-        /// <returns></returns>
-        /// <remarks>
-        /// Would be nice to add the Standard Template but need to get more author info in there
-        /// </remarks>
+        [Obsolete("Use PublishedContentExtensions.SocialMetaTags(this PostModel model, httpRequest request)")]
         public static IHtmlContent SocialMetaTags(this IHtmlHelper html, PostModel model)
         {
             var builder = new HtmlContentBuilder();
-
-            SocialMetaTags(model, builder);
-            SocialMetaTags(html, model, builder);
-
+            PublishedContentExtensions.PostSocialMetaTags(model, html.ViewContext.HttpContext.Request, builder);
             return builder;
         }
 
-        /*
-                private static void SocialMetaTags(IHtmlHelper html, PostModel model, IHtmlContentBuilder builder)
-                {
-                    if (!model.CroppedPostImageUrl.IsNullOrWhiteSpace())
-                    {
-                        var openGraphImage = new TagBuilder("meta")
-                        {
-                            TagRenderMode = TagRenderMode.SelfClosing
-                        };
-                        openGraphImage.Attributes["property"] = "og:image";
-                        openGraphImage.Attributes["content"] = GetDomain(html.ViewContext.HttpContext.Request) + model.CroppedPostImageUrl;
+        [Obsolete("Use PublishedContentExtensions.SocialMetaTags(this PostModel model, httpRequest request, IHtmlContentBuilder builder)")]
+        private static void SocialMetaTags(IHtmlHelper html, PostModel model, IHtmlContentBuilder builder) => PublishedContentExtensions.PostSocialMetaTags(model, html.ViewContext.HttpContext.Request, builder);
 
-                        builder.AppendHtml(openGraphImage);
-                    }
+        [Obsolete("Use PublishedContentExtensions.SocialMetaTags(this IPublishedContent model, IHtmlContentBuilder builder)")]
 
-                    if (!model.SocialMetaDescription.IsNullOrWhiteSpace() || !model.Excerpt.IsNullOrWhiteSpace())
-                    {
-                        var openGraphDesc = new TagBuilder("meta")
-                        {
-                            TagRenderMode = TagRenderMode.SelfClosing
-                        };
-                        openGraphDesc.Attributes["property"] = "og:description";
-                        openGraphDesc.Attributes["content"] = model.SocialMetaDescription.IsNullOrWhiteSpace() ? model.Excerpt : model.SocialMetaDescription;
+        private static void SocialMetaTags(IPublishedContent model, IHtmlContentBuilder builder) => model.SocialMetaTags(builder);
 
-                        builder.AppendHtml(openGraphDesc);
-                    }
-                }
-        */
-
-        private static void SocialMetaTags(IPublishedContent model, HtmlContentBuilder builder)
-        {
-            var twitterTag = new TagBuilder("meta")
-            {
-                TagRenderMode = TagRenderMode.StartTag,
-                Attributes =
-                {
-                    ["name"] = "twitter:card", ["content"] = "summary"
-                } //non-closing since that's just the way it is
-            };
-            builder.AppendHtml(twitterTag);
-
-            var openGraphTitle = new TagBuilder("meta")
-            {
-                TagRenderMode = TagRenderMode.SelfClosing,
-                Attributes = { ["property"] = "og:title", ["content"] = model.Name }
-            };
-            builder.AppendHtml(openGraphTitle);
-
-            var openGraphType = new TagBuilder("meta")
-            {
-                TagRenderMode = TagRenderMode.SelfClosing,
-                Attributes = { ["property"] = "og:type", ["content"] = "article" }
-            };
-            builder.AppendHtml(openGraphType);
-
-            var openGraphUrl = new TagBuilder("meta")
-            {
-                TagRenderMode = TagRenderMode.SelfClosing,
-                Attributes = { ["property"] = "og:url", ["content"] = model.Url(mode: UrlMode.Absolute) }
-            };
-            builder.AppendHtml(openGraphUrl);
-        }
-
-        [Obsolete("Use Articulate.Models.PublishedContentExtensions.RenderOpenSearch(this IMasterModel model)")]
+        [Obsolete("Use PublishedContentExtensions.RenderOpenSearch(this IMasterModel model)")]
         public static IHtmlContent? RenderOpenSearch(this IHtmlHelper html, IMasterModel model) => model.RenderOpenSearch();
 
         [Obsolete("Use Articulate.Models.PublishedContentExtensions.RssFeed(this IMasterModel model)")]
@@ -144,7 +76,7 @@ namespace Articulate
         /// <param name="viewData"></param>
         /// <returns></returns>
         [Obsolete("Use Html.PartialAsync(partialName, viewModel, viewData)")]
-        public static Task<IHtmlContent>? ThemedPartialAsync(this IHtmlHelper html, IMasterModel model, string partialName, object viewModel, ViewDataDictionary? viewData = null) => viewData is null ? html.PartialAsync(partialName, model) : html.PartialAsync(partialName, model, viewData);
+        public static Task<IHtmlContent>? ThemedPartialAsync(this IHtmlHelper html, IMasterModel model, string partialName, object viewModel, ViewDataDictionary? viewData = null) => viewData is null ? html.PartialAsync(partialName, model) : html.PartialAsync(partialName, viewModel, viewData);
 
         /// <summary>
         /// Renders a partial view in the current theme based on the current IMasterModel
@@ -202,43 +134,5 @@ namespace Articulate
             string[] headers,
             string[] cssClasses,
             params Func<T, HelperResult>[] cellTemplates) where T : class => collection.Table(htmlAttributes ?? new Dictionary<string, object>(), headers, cssClasses, cellTemplates);
-
-        /// <summary>
-        /// Get the full domain of the current page.
-        /// </summary>
-        private static string GetDomain(this HttpRequest request) => $"{request.Scheme}{Uri.SchemeDelimiter}{request.Host.Value}";
-
-        private static void SocialMetaTags(this IHtmlHelper html, PostModel model, HtmlContentBuilder builder)
-        {
-            if (!model.CroppedPostImageUrl.IsNullOrWhiteSpace())
-            {
-                var openGraphImage = new TagBuilder("meta")
-                {
-                    TagRenderMode = TagRenderMode.SelfClosing,
-                    Attributes =
-                    {
-                        ["property"] = "og:image", ["content"] = html.ViewContext?.HttpContext.Request.GetDomain() + model.CroppedPostImageUrl
-                    }
-                };
-
-                builder.AppendHtml(openGraphImage);
-            }
-
-            if (model.SocialMetaDescription.IsNullOrWhiteSpace() && model.Excerpt.IsNullOrWhiteSpace())
-            {
-                return;
-            }
-
-            var openGraphDesc = new TagBuilder("meta")
-            {
-                TagRenderMode = TagRenderMode.SelfClosing,
-                Attributes =
-                {
-                    ["property"] = "og:description", ["content"] = model.SocialMetaDescription.IsNullOrWhiteSpace() ? model.Excerpt : model.SocialMetaDescription
-                }
-            };
-
-            builder.AppendHtml(openGraphDesc);
-        }
     }
 }
