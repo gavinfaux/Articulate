@@ -450,6 +450,12 @@ namespace Articulate.Models
             builder.AppendHtml(openGraphUrl);
         }
 
+        public static void PostSocialMetaTags(PostModel model, HttpRequest request)
+        {
+            var builder = new HtmlContentBuilder();
+            PostSocialMetaTags(model, request, builder);
+        }
+
         public static void PostSocialMetaTags(PostModel model, HttpRequest request, IHtmlContentBuilder builder)
         {
             if (!model.CroppedPostImageUrl.IsNullOrWhiteSpace())

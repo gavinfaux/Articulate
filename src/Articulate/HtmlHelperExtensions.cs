@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
-using Umbraco.Cms.Core.Models.PublishedContent;
 using PublishedContentExtensions = Articulate.Models.PublishedContentExtensions;
 
 namespace Articulate
@@ -33,7 +32,7 @@ namespace Articulate
             return builder;
         }
 
-        [Obsolete("Use PublishedContentExtensions.SocialMetaTags(this PostModel model, httpRequest request)")]
+        [Obsolete("Use PublishedContentExtensions.PostSocialMetaTags(this PostModel model, httpRequest request)")]
         public static IHtmlContent SocialMetaTags(this IHtmlHelper html, PostModel model)
         {
             var builder = new HtmlContentBuilder();
