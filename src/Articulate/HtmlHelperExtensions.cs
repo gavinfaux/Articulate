@@ -41,13 +41,6 @@ namespace Articulate
             return builder;
         }
 
-        [Obsolete("Use PublishedContentExtensions.SocialMetaTags(this PostModel model, httpRequest request, IHtmlContentBuilder builder)")]
-        private static void SocialMetaTags(IHtmlHelper html, PostModel model, IHtmlContentBuilder builder) => PublishedContentExtensions.PostSocialMetaTags(model, html.ViewContext.HttpContext.Request, builder);
-
-        [Obsolete("Use PublishedContentExtensions.SocialMetaTags(this IPublishedContent model, IHtmlContentBuilder builder)")]
-
-        private static void SocialMetaTags(IPublishedContent model, IHtmlContentBuilder builder) => model.SocialMetaTags(builder);
-
         [Obsolete("Use PublishedContentExtensions.RenderOpenSearch(this IMasterModel model)")]
         public static IHtmlContent? RenderOpenSearch(this IHtmlHelper html, IMasterModel model) => model.RenderOpenSearch();
 
