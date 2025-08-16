@@ -5,13 +5,24 @@ namespace Articulate.Models
 {
     public class TagListModel : MasterModel
     {
+        [Obsolete("Use TagListModel(IPublishedContent content, string name, int pageSize, PostTagCollection tags, IPublishedValueFallback publishedValueFallback)")]
         public TagListModel(
             IMasterModel masterModel,
             string name,
             int pageSize,
             PostTagCollection tags,
-            IPublishedValueFallback publishedValueFallback)
-            : base(masterModel.RootBlogNode, publishedValueFallback)
+            IPublishedValueFallback publishedValueFallback,
+            IVariationContextAccessor variationContextAccessor)
+            : this(masterModel, name, pageSize, tags, publishedValueFallback)
+        { }
+
+        public TagListModel(
+        IMasterModel masterModel,
+        string name,
+        int pageSize,
+        PostTagCollection tags,
+        IPublishedValueFallback publishedValueFallback)
+        : base(masterModel.RootBlogNode, publishedValueFallback)
         {
             Name = name;
             Theme = masterModel.Theme;

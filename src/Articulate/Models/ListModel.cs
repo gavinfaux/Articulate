@@ -1,4 +1,5 @@
 #nullable enable
+using Umbraco.Cms.Core.Media;
 using Umbraco.Cms.Core.Models.PublishedContent;
 
 namespace Articulate.Models
@@ -43,10 +44,29 @@ namespace Articulate.Models
             }
         }
 
+        [Obsolete("Use ListModel(IPublishedContent? content, PagerModel? pager, IEnumerable<IPublishedContent>? listItems, IPublishedValueFallback publishedValueFallback)")]
+        public ListModel(
+            IPublishedContent? content,
+            PagerModel? pager,
+            IEnumerable<IPublishedContent>? listItems,
+            IPublishedValueFallback publishedValueFallback,
+            IVariationContextAccessor variationContextAccessor)
+            : this(content, pager, listItems, publishedValueFallback)
+        { }
+
+
         public ListModel(IPublishedContent content, IPublishedValueFallback publishedValueFallback)
             : base(content, publishedValueFallback)
         {
         }
+
+        [Obsolete("Use ListModel(IPublishedContent content, IPublishedValueFallback publishedValueFallback)")]
+        public ListModel(IPublishedContent content, IPublishedValueFallback publishedValueFallback, IVariationContextAccessor variationContextAccessor) : this(content, publishedValueFallback)
+        {
+        }
+
+        [Obsolete]
+        public IImageUrlGenerator? ImageUrlGenerator => null;
 
         /// <summary>
         /// Gets the pager model

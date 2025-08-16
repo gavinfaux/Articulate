@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Html;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
@@ -449,6 +450,45 @@ namespace Articulate.Models
             builder.AppendHtml(openGraphUrl);
         }
 
+        public static void PostSocialMetaTags(PostModel model, HttpRequest request)
+        {
+            var builder = new HtmlContentBuilder();
+            PostSocialMetaTags(model, request, builder);
+        }
+
+        public static void PostSocialMetaTags(PostModel model, HttpRequest request, IHtmlContentBuilder builder)
+        {
+            if (!model.CroppedPostImageUrl.IsNullOrWhiteSpace())
+            {
+                var openGraphImage = new TagBuilder("meta")
+                {
+                    TagRenderMode = TagRenderMode.SelfClosing,
+                    Attributes =
+                    {
+                        ["property"] = "og:image", ["content"] = GetDomain(request) + model.CroppedPostImageUrl
+                    }
+                };
+
+                builder.AppendHtml(openGraphImage);
+            }
+
+            if (model.SocialMetaDescription.IsNullOrWhiteSpace() && model.Excerpt.IsNullOrWhiteSpace())
+            {
+                return;
+            }
+
+            var openGraphDesc = new TagBuilder("meta")
+            {
+                TagRenderMode = TagRenderMode.SelfClosing,
+                Attributes =
+                {
+                    ["property"] = "og:description", ["content"] = model.SocialMetaDescription.IsNullOrWhiteSpace() ? model.Excerpt : model.SocialMetaDescription
+                }
+            };
+
+            builder.AppendHtml(openGraphDesc);
+        }
+
         /// <summary>
         ///     Shuffles a List&lt;T&gt; in-place.
         /// </summary>
@@ -601,5 +641,10 @@ namespace Articulate.Models
                 table.WriteTo(writer, HtmlEncoder.Default);
                 return Task.CompletedTask;
             });
+
+        /// <summary>
+        /// Get the full domain of the current page.
+        /// </summary>
+        private static string GetDomain(this HttpRequest request) => $"{request.Scheme}{Uri.SchemeDelimiter}{request.Host.Value}";
     }
 }

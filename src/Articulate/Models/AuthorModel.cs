@@ -15,6 +15,18 @@ namespace Articulate.Models
         private DateTime? _lastPostDate;
         private MediaWithCrops? _image;
 
+        [Obsolete("Use AuthorModel(IEnumerable<IPublishedContent>? listItems,PagerModel? pager, int postCount,  IPublishedValueFallback publishedValueFallback)")]
+        public AuthorModel(
+            IPublishedContent? content,
+            IEnumerable<IPublishedContent>? listItems,
+            PagerModel? pager,
+            int postCount,
+            IPublishedValueFallback publishedValueFallback,
+            IVariationContextAccessor variationContextAccessor)
+            : this(content, listItems, pager, postCount, publishedValueFallback)
+        {
+        }
+
         public string Bio => this.Value<string>("authorBio") ?? string.Empty;
 
         public string AuthorUrl => this.Value<string>("authorUrl") ?? string.Empty;

@@ -12,6 +12,11 @@ namespace Articulate.Models
         private MediaWithCrops? _postImage;
         private string? _croppedPostImageUrl;
 
+        [Obsolete("Use PostModel(IPublishedContent content, IPublishedValueFallback publishedValueFallback)")]
+        public PostModel(IPublishedContent content, IPublishedValueFallback publishedValueFallback, IVariationContextAccessor variationContextAccessor)
+            : this(content, publishedValueFallback)
+        { }
+
         public PostModel(IPublishedContent content, IPublishedValueFallback publishedValueFallback)
             : base(content, publishedValueFallback)
         {

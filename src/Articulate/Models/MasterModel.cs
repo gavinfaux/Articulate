@@ -3,11 +3,11 @@ using Umbraco.Cms.Core.Models.PublishedContent;
 // TODO: #nullable enable
 namespace Articulate.Models
 {
+
     /// <summary>
     /// The basic model for all articulate objects
     /// </summary>
-    public class MasterModel(IPublishedContent content, IPublishedValueFallback publishedValueFallback)
-        : PublishedContentWrapped(content, publishedValueFallback), IMasterModel
+    public class MasterModel : PublishedContentWrapped, IMasterModel
     {
         private IPublishedContent _rootBlogNode;
         private string _theme;
@@ -23,6 +23,17 @@ namespace Articulate.Models
 
         private string _pageTitle;
         private string _pageDescription;
+
+        /// <summary>
+        /// The basic model for all articulate objects
+        /// </summary>
+        public MasterModel(IPublishedContent content, IPublishedValueFallback publishedValueFallback) : base(content, publishedValueFallback) => PublishedValueFallback = publishedValueFallback;
+
+        [Obsolete("Use MasterModel(IPublishedContent content, IPublishedValueFallback publishedValueFallback)")]
+        protected MasterModel(IPublishedContent content, IPublishedValueFallback publishedValueFallback, IVariationContextAccessor variationContextAccessor)
+            : this(content, publishedValueFallback)
+        {
+        }
 
         /// <summary>
         /// Returns the current theme
@@ -140,6 +151,9 @@ namespace Articulate.Models
 
         public string PageTags { get; protected set; }
 
-        protected IPublishedValueFallback PublishedValueFallback { get; } = publishedValueFallback;
+        protected IPublishedValueFallback PublishedValueFallback { get; }
+
+        [Obsolete]
+        public IVariationContextAccessor VariationContextAccessor => null;
     }
 }
