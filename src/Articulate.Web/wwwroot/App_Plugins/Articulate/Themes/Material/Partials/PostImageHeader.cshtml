@@ -4,7 +4,7 @@
 
     if (Model.Image is not null)
     {
-        var bgUrl = Model.Image.GetCropUrl("wide");
+        var bgUrl = Model.Image.GetArticulateCropUrl( "wide");
         if (bgUrl is not null)
         {
             postBg = "url('" + bgUrl + "')";

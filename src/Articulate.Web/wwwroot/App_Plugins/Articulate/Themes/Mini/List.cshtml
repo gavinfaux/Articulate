@@ -36,7 +36,7 @@
                                 <div>
                                     <h2>@post.Name</h2>
                                     @{
-                                        var thumbnail = post.PostImage?.GetCropUrl("thumbnail");
+                                        var thumbnail = post.PostImage?.GetArticulateCropUrl("thumbnail");
                                         if (thumbnail != null)
                                         {
                                             <img class="thumb" src="@thumbnail" alt="@post.Name" />

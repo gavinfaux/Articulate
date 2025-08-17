@@ -34,7 +34,7 @@
                     <div class="postContent">
                         @if (Model.Image is not null)
                         {
-                            var imgUrl = Model.Image.GetCropUrl("wide");
+                            var imgUrl = Model.Image.GetArticulateCropUrl("wide");
                             <img class="postImage" alt="@Model.Name" src="@imgUrl" />
                         }
                         <p>

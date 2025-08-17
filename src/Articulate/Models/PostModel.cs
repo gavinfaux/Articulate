@@ -89,7 +89,7 @@ namespace Articulate.Models
                     return string.Empty;
                 }
 
-                var wideCropUrl = PostImage.GetCropUrl("wide");
+                var wideCropUrl = PostImage.GetArticulateCropUrl("wide");
                 _croppedPostImageUrl = (wideCropUrl ?? string.Empty) + (wideCropUrl is not null && wideCropUrl.Contains('?') ? "&" : "?");
                 return _croppedPostImageUrl;
             }

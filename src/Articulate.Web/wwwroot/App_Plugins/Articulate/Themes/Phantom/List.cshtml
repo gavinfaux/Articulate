@@ -27,7 +27,7 @@
                 </header>
                 <section class="post-excerpt">
                     @{
-                        var thumbnail = post.PostImage?.GetCropUrl("thumbnail");
+                        var thumbnail = post.PostImage?.GetArticulateCropUrl("thumbnail");
                         if (thumbnail != null)
                         {
                             <img class="thumb" src="@thumbnail" alt="@post.Name" />

@@ -6,7 +6,7 @@
         {
             <li>
                 @{
-                    var thumbnail = post.PostImage?.GetCropUrl("blogPost");
+                    var thumbnail = post.PostImage?.GetArticulateCropUrl("blogPost");
                     if (thumbnail != null)
                     {
                         <div class="postthumb" style="background: url(@thumbnail)"></div>

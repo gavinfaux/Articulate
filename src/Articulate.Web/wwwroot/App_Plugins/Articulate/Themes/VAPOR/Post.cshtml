@@ -61,7 +61,7 @@
         {
             <section class="author">
                 @{
-                    var thumbnail = Model.Author.Image?.GetCropUrl("blogPost");
+                    var thumbnail = Model.Author.Image?.GetArticulateCropUrl("blogPost");
                     if (thumbnail != null)
                     {
                         <div class="authorimage" style="background: url(@thumbnail)"></div>

@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Text.Encodings.Web;
+using Lucene.Net.Util;
 using Microsoft.AspNetCore.Html;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Razor;
@@ -7,14 +8,16 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Models.PublishedContent;
+using Umbraco.Extensions;
+using static Umbraco.Cms.Core.Constants.Conventions;
 
 // TODO: #nullable enable
 namespace Articulate.Models
 {
     public static class PublishedContentExtensions
     {
-        [Obsolete("Use content.GetCroppedImageUrl(string propertyAlias, string cropAlias, ImageCropMode imageCropMode)")]
-        public static string GetArticulateCropUrl(this IPublishedContent content, string propertyAlias, VariationContext variationContext) => content.GetCroppedImageUrl(propertyAlias, "wide");
+        [Obsolete("Use PublishedContentExtensions.GetCropUrl(string propertyAlias, string cropAlias, ImageCropMode imageCropMode)")]
+        public static string GetArticulateCropUrl(this IPublishedContent content, string propertyAlias, VariationContext variationContext) => content.GetArticulateCropUrl(propertyAlias, "wide");
 
         public static IPublishedContent Next(this IPublishedContent content)
         {
@@ -113,24 +116,29 @@ namespace Articulate.Models
             return false; // < count
         }
 
-        public static string GetCroppedImageUrl(this IPublishedContent content, string propertyAlias, string cropAlias, ImageCropMode imageCropMode = ImageCropMode.Max)
+        public static string GetArticulateCropUrl(this IPublishedContent content, string propertyAlias = "umbracoFile", string cropAlias = "", ImageCropMode imageCropMode = ImageCropMode.Max)
         {
-            if (content is null || string.IsNullOrWhiteSpace(cropAlias) || string.IsNullOrWhiteSpace(propertyAlias))
+            ArgumentNullException.ThrowIfNull(content, nameof(content));
+
+            var cropUrl = string.Empty;
+
+            if (content.ContentType.ItemType == PublishedItemType.Media)
             {
-                return null;
+                cropUrl = string.IsNullOrEmpty(cropAlias) ? content.GetCropUrl(imageCropMode: imageCropMode) : content.GetCropUrl(cropAlias: cropAlias, imageCropMode: imageCropMode);
             }
-
-            var cropUrl = content.Value<MediaWithCrops>(propertyAlias)?.GetCropUrl(cropAlias);
-            if (!string.IsNullOrWhiteSpace(cropUrl))
+            else if (content.ContentType.ItemType == PublishedItemType.Content)
             {
-                return cropUrl;
-            }
+                var property = content.HasProperty(propertyAlias) && content.HasValue(propertyAlias);
+                MediaWithCrops value = property ? content.Value<MediaWithCrops>(propertyAlias) : null;
 
-            var baseUrl = content.GetBaseImageUrl(propertyAlias);
-
-            if (!string.IsNullOrWhiteSpace(baseUrl))
-            {
-                cropUrl = baseUrl.GetCropUrl(imageCropMode: imageCropMode);
+                if (value != null)
+                {
+                    cropUrl = string.IsNullOrEmpty(cropAlias) ? value.GetCropUrl() : value.GetCropUrl(cropAlias: cropAlias, imageCropMode: imageCropMode);
+                }
+                else
+                {
+                    cropUrl = string.IsNullOrEmpty(cropAlias) ? content.GetCropUrl(propertyAlias: propertyAlias, imageCropMode: imageCropMode) : content.GetCropUrl(propertyAlias: propertyAlias, cropAlias: cropAlias, imageCropMode: imageCropMode);
+                }
             }
 
             return cropUrl;
@@ -139,7 +147,7 @@ namespace Articulate.Models
         /// <summary>
         ///     Returns a new list containing the elements of a source sequence in random order.
         /// </summary>
-        private static List<T> InRandomOrder<T>(this IEnumerable<T> source)
+        public static List<T> InRandomOrder<T>(this IEnumerable<T> source)
         {
             ArgumentNullException.ThrowIfNull(source, nameof(source));
 
@@ -509,30 +517,6 @@ namespace Articulate.Models
             }
         }
 
-        // TODO: Not needed once PostImage migration complete
-        private static string GetBaseImageUrl(this IPublishedContent content, string propertyAlias)
-        {
-            if (content is null)
-            {
-                return null;
-            }
-
-            var url = content.Value<MediaWithCrops>(propertyAlias)?.Url();
-
-            if (!string.IsNullOrWhiteSpace(url))
-            {
-                return url;
-            }
-
-            url = content.GetProperty(propertyAlias)?.GetSourceValue()?.ToString();
-            if (url is null || url.IsNullOrWhiteSpace() || url.Equals("[]"))
-            {
-                url = string.Empty;
-            }
-
-            return url;
-        }
-
         public static IPublishedContent[] GetListNodes(IMasterModel masterModel)
         {
             IPublishedContent[] listNodes = masterModel.RootBlogNode.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive)?.ToArray();
@@ -568,14 +552,16 @@ namespace Articulate.Models
             this IEnumerable<T> collection,
             string[] headers,
             string[] cssClasses,
-            params Func<T, HelperResult>[] cellTemplates) where T : class => Table(collection, new Dictionary<string, object>(), headers, cssClasses, cellTemplates);
+            params Func<T, HelperResult>[] cellTemplates)
+            where T : class => Table(collection, new Dictionary<string, object>(), headers, cssClasses, cellTemplates);
 
         public static IHtmlContent Table<T>(
             this IEnumerable<T> collection,
             object htmlAttributes,
             string[] headers,
             string[] cssClasses,
-            params Func<T, HelperResult>[] cellTemplates) where T : class
+            params Func<T, HelperResult>[] cellTemplates)
+            where T : class
             => new HelperResult(writer =>
             {
                 T[] items = collection.ToArray();
@@ -624,10 +610,10 @@ namespace Articulate.Models
                         T item = items[rowIndex];
                         if (item != null)
                         {
-                            //if there's an item at that grid location, call its template
+                            // if there's an item at that grid location, call its template
                             tdContent.InnerHtml.SetHtmlContent(cellTemplates[colIndex](item));
 
-                            //cellTemplates[colIndex](item).WriteTo(writer, HtmlEncoder.Default);
+                            // cellTemplates[colIndex](item).WriteTo(writer, HtmlEncoder.Default);
                         }
 
                         trContent.InnerHtml.AppendHtml(tdContent);
