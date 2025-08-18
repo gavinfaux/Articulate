@@ -16,7 +16,7 @@
     <section class="post-content">
         @if (Model.Image is not null)
         {
-            var imgUrl = Model.Image.GetArticulateCropUrl("wide");
+            var imgUrl = Model.Image.GetCropUrl("wide");
             <img class="postImage" alt="@Model.Name" src="@imgUrl" />
         }
         <p>@Model.Bio</p>

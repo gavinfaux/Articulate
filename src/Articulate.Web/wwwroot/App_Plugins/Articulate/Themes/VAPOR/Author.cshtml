@@ -17,7 +17,7 @@
 
         @if (Model.Image is not null)
         {
-            var img = Model.Image.GetArticulateCropUrl("wide");
+            var img = Model.Image.GetCropUrl("wide");
             <img class="postImage" src="@img" fetchpriority="high" width="625" height="320" alt="@Model.Name post image" />
         }
         <p>@Model.Bio</p>

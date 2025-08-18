@@ -1,3 +1,4 @@
+using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Models.PublishedContent;
 
 // TODO: #nullable enable
@@ -101,13 +102,13 @@ namespace Articulate.Models
 
         public string BlogLogo
         {
-            get => _blogLogo ??= RootBlogNode.GetArticulateCropUrl("blogLogo", "square");
+            get => _blogLogo ??= RootBlogNode.Value<MediaWithCrops>("blogLogo")?.GetCropUrl("square") ?? string.Empty;
             protected set => _blogLogo = value;
         }
 
         public string BlogBanner
         {
-            get => _blogBanner ??= RootBlogNode.GetArticulateCropUrl("blogBanner", "wide");
+            get => _blogBanner ??= RootBlogNode.Value<MediaWithCrops>("blogBanner")?.GetCropUrl("wide") ?? string.Empty;
             protected set => _blogBanner = value;
         }
 

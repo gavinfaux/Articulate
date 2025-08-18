@@ -8,7 +8,7 @@ using Umbraco.Cms.Infrastructure.Migrations.Upgrade;
 
 namespace Articulate.Migrations.Upgrade.V_6_0_0
 {
-    public class MigrateImageCropperPathsToJsonComponent(
+    public class MigrateImageCropperToJsonComponent(
         ICoreScopeProvider scopeProvider,
         IMigrationPlanExecutor migrationPlanExecutor,
         IKeyValueService keyValueService,
@@ -22,15 +22,16 @@ namespace Articulate.Migrations.Upgrade.V_6_0_0
                 return;
             }
 
-            var migrationPlan = new MigrationPlan("MigrateImageCropperPathsToJson");
+            var migrationPlan = new MigrationPlan("MigrateImageCropperToJson");
 
-            migrationPlan.From(string.Empty).To<MigrateImageCropperPathsToJson>("Umbraco.ImageCropper");
+            migrationPlan.From(string.Empty).To<MigrateImageCropperToJson>("Umbraco.ImageCropper:Json");
 
             var upgrader = new Upgrader(migrationPlan);
             upgrader.Execute(migrationPlanExecutor, scopeProvider, keyValueService);
         }
 
         public void Terminate() { }
+
         public Task InitializeAsync(bool isRestarting, CancellationToken cancellationToken) => Task.Run(Initialize, cancellationToken);
 
         public Task TerminateAsync(bool isRestarting, CancellationToken cancellationToken) => Task.Run(Terminate, cancellationToken);

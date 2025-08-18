@@ -12,12 +12,12 @@ using IScopeProvider = Umbraco.Cms.Infrastructure.Scoping.IScopeProvider;
 
 namespace Articulate.Migrations.Upgrade.V_6_0_0
 {
-    public class MigrateImageCropperPathsToJson(
+    public class MigrateImageCropperToJson(
         IMigrationContext context,
         IScopeProvider scopeProvider,
         IContentService contentService,
         IDataTypeService dataTypeService,
-        ILogger<MigrateImageCropperPathsToJson> logger)
+        ILogger<MigrateImageCropperToJson> logger)
         : MigrationBase(context)
     {
         protected override void Migrate()
@@ -63,7 +63,8 @@ namespace Articulate.Migrations.Upgrade.V_6_0_0
                 INNER JOIN umbracoContentVersion AS T2 ON T0.versionId = T2.id
                 WHERE T1.dataTypeId IN (@dataTypeIds)
                 AND T2.[current] = 1
-                AND T0.textValue IS NOT NULL AND T0.textValue != ''
+                AND T0.textValue IS NOT NULL
+                AND substring(T0.textValue, 1, 1) != '{'
                 """,
                 new { dataTypeIds = imageCropperDataTypeIds });
 

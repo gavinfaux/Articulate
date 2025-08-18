@@ -22,7 +22,7 @@ else
             </header>
             <section class="post-excerpt">
                 @{
-                    var thumbnail = post.PostImage?.GetArticulateCropUrl("blogPost");
+                    var thumbnail = post.PostImage?.GetCropUrl("blogPost");
                     if (thumbnail != null)
                     {
                         <div class="postthumb" style="background: url(@thumbnail)"></div>

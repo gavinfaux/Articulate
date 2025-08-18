@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Text.Encodings.Web;
-using Lucene.Net.Util;
 using Microsoft.AspNetCore.Html;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Razor;
@@ -8,16 +7,34 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Models.PublishedContent;
-using Umbraco.Extensions;
-using static Umbraco.Cms.Core.Constants.Conventions;
 
 // TODO: #nullable enable
 namespace Articulate.Models
 {
     public static class PublishedContentExtensions
     {
-        [Obsolete("Use PublishedContentExtensions.GetCropUrl(string propertyAlias, string cropAlias, ImageCropMode imageCropMode)")]
-        public static string GetArticulateCropUrl(this IPublishedContent content, string propertyAlias, VariationContext variationContext) => content.GetArticulateCropUrl(propertyAlias, "wide");
+        [Obsolete("Prefer an extension method from Umbraco.Extensions.FriendlyImageCropperTemplateExtensions.GetCropUrl()")]
+        public static string GetArticulateCropUrl(this IPublishedContent content, string propertyAlias, VariationContext variationContext)
+        {
+            ArgumentNullException.ThrowIfNull(content, nameof(content));
+            ArgumentNullException.ThrowIfNull(propertyAlias, nameof(propertyAlias));
+
+            var cropUrl = string.Empty;
+
+            if (content.ContentType.ItemType == PublishedItemType.Content)
+            {
+                var property = content.HasProperty(propertyAlias) && content.HasValue(propertyAlias);
+                MediaWithCrops value = property ? content.Value<MediaWithCrops>(propertyAlias) : null;
+                cropUrl = value != null ? value.GetCropUrl() : content.GetCropUrl(propertyAlias: propertyAlias);
+            }
+
+            if (string.IsNullOrEmpty(cropUrl))
+            {
+                cropUrl = content.GetCropUrl();
+            }
+
+            return cropUrl;
+        }
 
         public static IPublishedContent Next(this IPublishedContent content)
         {
@@ -114,34 +131,6 @@ namespace Articulate.Models
             }
 
             return false; // < count
-        }
-
-        public static string GetArticulateCropUrl(this IPublishedContent content, string propertyAlias = "umbracoFile", string cropAlias = "", ImageCropMode imageCropMode = ImageCropMode.Max)
-        {
-            ArgumentNullException.ThrowIfNull(content, nameof(content));
-
-            var cropUrl = string.Empty;
-
-            if (content.ContentType.ItemType == PublishedItemType.Media)
-            {
-                cropUrl = string.IsNullOrEmpty(cropAlias) ? content.GetCropUrl(imageCropMode: imageCropMode) : content.GetCropUrl(cropAlias: cropAlias, imageCropMode: imageCropMode);
-            }
-            else if (content.ContentType.ItemType == PublishedItemType.Content)
-            {
-                var property = content.HasProperty(propertyAlias) && content.HasValue(propertyAlias);
-                MediaWithCrops value = property ? content.Value<MediaWithCrops>(propertyAlias) : null;
-
-                if (value != null)
-                {
-                    cropUrl = string.IsNullOrEmpty(cropAlias) ? value.GetCropUrl() : value.GetCropUrl(cropAlias: cropAlias, imageCropMode: imageCropMode);
-                }
-                else
-                {
-                    cropUrl = string.IsNullOrEmpty(cropAlias) ? content.GetCropUrl(propertyAlias: propertyAlias, imageCropMode: imageCropMode) : content.GetCropUrl(propertyAlias: propertyAlias, cropAlias: cropAlias, imageCropMode: imageCropMode);
-                }
-            }
-
-            return cropUrl;
         }
 
         /// <summary>
