@@ -15,7 +15,7 @@ namespace Articulate.Migrations.Upgrade.V_6_0_0
     public class MigrateImageCropperToJson(
         IMigrationContext context,
         IScopeProvider scopeProvider,
-        IContentService contentService,
+        IMediaService mediaService,
         IDataTypeService dataTypeService,
         ILogger<MigrateImageCropperToJson> logger)
         : MigrationBase(context)
@@ -29,18 +29,18 @@ namespace Articulate.Migrations.Upgrade.V_6_0_0
                 return;
             }
 
-            List<int> contentIdsToUpdate = GetContentIdsToUpdate(imageCropperDataTypeIds);
-            if (contentIdsToUpdate.Count == 0)
+            List<int> nodeIdsToUpdate = GetNodeIdsToUpdate(imageCropperDataTypeIds);
+            if (nodeIdsToUpdate.Count == 0)
             {
-                logger.LogInformation("No content found with non-JSON Image Cropper data. Migration complete.");
+                logger.LogInformation("No media found with non-JSON Image Cropper data. Migration complete.");
                 return;
             }
 
-            logger.LogInformation("Found {count} content items that require Image Cropper data updates.", contentIdsToUpdate.Count);
+            logger.LogInformation("Found {count} media items that require Image Cropper data updates.", nodeIdsToUpdate.Count);
 
             logger.LogInformation("Migration starting for Umbraco.ImageCropper string src to to JSON.");
 
-            ProcessContentInBatches(contentIdsToUpdate, imageCropperDataTypeIds);
+            ProcessInBatches(nodeIdsToUpdate, imageCropperDataTypeIds);
 
             logger.LogInformation("Migration succeeded.");
         }
@@ -51,7 +51,7 @@ namespace Articulate.Migrations.Upgrade.V_6_0_0
             .Select(dt => dt.Id)
             .ToList();
 
-        private List<int> GetContentIdsToUpdate(List<int> imageCropperDataTypeIds)
+        private List<int> GetNodeIdsToUpdate(List<int> imageCropperDataTypeIds)
         {
             using IScope scope = scopeProvider.CreateScope(autoComplete: true);
 
@@ -77,33 +77,31 @@ namespace Articulate.Migrations.Upgrade.V_6_0_0
                 .ToList() ?? [];
         }
 
-        private void ProcessContentInBatches(List<int> contentIdsToUpdate, List<int> imageCropperDataTypeIds)
+        private void ProcessInBatches(List<int> nodeIdsToUpdate, List<int> imageCropperDataTypeIds)
         {
             const int batchSize = 200;
-            var contentToSave = new List<IContent>();
+            var mediaToSave = new List<IMedia>();
 
-            for (var i = 0; i < contentIdsToUpdate.Count; i += batchSize)
+            for (var i = 0; i < nodeIdsToUpdate.Count; i += batchSize)
             {
-                IEnumerable<int> batchIds = contentIdsToUpdate.Skip(i).Take(batchSize);
-                IEnumerable<IContent> contentBatch = contentService.GetByIds(batchIds);
-
-                contentToSave.AddRange(from content in contentBatch let wasModified = TryUpdateContentProperties(content, imageCropperDataTypeIds) where wasModified select content);
+                var batchIds = nodeIdsToUpdate.Skip(i).Take(batchSize).ToArray();
+                IMedia[] mediaBatch = mediaService.GetByIds(batchIds).ToArray();
+                mediaToSave.AddRange(from media in mediaBatch let wasModified = TryUpdateMediaProperties(media, imageCropperDataTypeIds) where wasModified select media);
             }
 
-            if (contentToSave.Count <= 0)
+            if (mediaToSave.Count <= 0)
             {
                 return;
             }
 
-            logger.LogInformation("Saving {count} content items with updated Image Cropper data...", contentToSave.Count);
-            _ = contentService.Save(contentToSave);
-            contentToSave.Where(c => c.Published).ToList().ForEach(c => contentService.Publish(c, ["*"]));
+            _ = mediaService.Save(mediaToSave);
+            logger.LogInformation("Saving {count} media items with updated Image Cropper data...", mediaToSave.Count);
         }
 
-        private bool TryUpdateContentProperties(IContent content, List<int> imageCropperDataTypeIds)
+        private bool TryUpdateMediaProperties(IMedia media, List<int> imageCropperDataTypeIds)
         {
-            var contentModified = false;
-            IEnumerable<IProperty> cropperProperties = content.Properties
+            var mediaModified = false;
+            IEnumerable<IProperty> cropperProperties = media.Properties
                 .Where(p => imageCropperDataTypeIds.Contains(p.PropertyType.DataTypeId));
 
             foreach (IProperty property in cropperProperties)
@@ -119,16 +117,16 @@ namespace Articulate.Migrations.Upgrade.V_6_0_0
                     {
                         var newValue = new { src = textValue };
                         property.SetValue(JsonConvert.SerializeObject(newValue), pValue.Culture, pValue.Segment);
-                        contentModified = true;
+                        mediaModified = true;
                     }
                     catch (Exception ex)
                     {
-                        logger.LogError(ex, "Error converting value for Content ID {ContentId}, Property Alias {PropertyAlias}", content.Id, property.Alias);
+                        logger.LogError(ex, "Error converting value for media ID {mediaId}, Property Alias {PropertyAlias}", media.Id, property.Alias);
                     }
                 }
             }
 
-            return contentModified;
+            return mediaModified;
         }
 
         private class PropertyDataDto
