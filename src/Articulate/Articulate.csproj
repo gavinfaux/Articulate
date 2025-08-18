@@ -67,7 +67,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="..\Articulate.Web\wwwroot\Views\Articulate\_System\Themes\**">
+    <EmbeddedResource Include="..\Articulate.Web\wwwroot\App_Plugins\Articulate\Themes\**">
       <LogicalName>Articulate.Theme/$([System.String]::Copy('%(RecursiveDir)'))%(Filename)%(Extension)</LogicalName>
     </EmbeddedResource>
   </ItemGroup>
