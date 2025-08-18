@@ -116,12 +116,12 @@ export class ArticulateInputMarkdownElement extends UmbFormControlMixin<string, 
 
     #loadActions() {
         //Note: UI Buttons have the keybindings hardcoded in its title. If you change the keybindings here, please update the render as well.
-        this.#editor?.monacoEditor?.addAction({
-            label: 'Add Heading H1',
-            id: 'h1',
-            keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.Digit1],
-            run: () => this._insertAtCurrentLine('# '),
-        });
+        // this.#editor?.monacoEditor?.addAction({
+        //     label: 'Add Heading H1',
+        //     id: 'h1',
+        //     keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.Digit1],
+        //     run: () => this._insertAtCurrentLine('# '),
+        // });
         this.#editor?.monacoEditor?.addAction({
             label: 'Add Heading H2',
             id: 'h2',
@@ -469,9 +469,9 @@ export class ArticulateInputMarkdownElement extends UmbFormControlMixin<string, 
                             compact
                             look="default"
                             label="Heading"
-                            title="Heading, &lt;Ctrl+Shift+1&gt;"
-                            @click=${() => this.#editor?.monacoEditor?.getAction('h1')?.run()}>
-                            <umb-icon name="icon-heading-1"></umb-icon>
+                            title="Heading, &lt;Ctrl+Shift+2&gt;"
+                            @click=${() => this.#editor?.monacoEditor?.getAction('h2')?.run()}>
+                            <umb-icon name="icon-heading-2"></umb-icon>
                         </uui-button>
                         <uui-button
                             compact
