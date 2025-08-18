@@ -1,7 +1,7 @@
 #nullable enable
 using System.Text.RegularExpressions;
 
-namespace Articulate.Api.Management.Composers
+namespace Articulate.Api.Management.Swagger
 {
     /// <summary>
     /// This is the regexes used to generate the operation IDs, the benefit of this being partial with GeneratedRegex
