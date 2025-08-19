@@ -1,6 +1,6 @@
 #nullable enable
+using System.Text.Json;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using NPoco;
 using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.Models;
@@ -116,7 +116,7 @@ namespace Articulate.Migrations.Upgrade.V_6_0_0
                     try
                     {
                         var newValue = new { src = textValue };
-                        property.SetValue(JsonConvert.SerializeObject(newValue), pValue.Culture, pValue.Segment);
+                        property.SetValue(JsonSerializer.Serialize(newValue), pValue.Culture, pValue.Segment);
                         mediaModified = true;
                     }
                     catch (Exception ex)

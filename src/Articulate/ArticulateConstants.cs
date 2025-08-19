@@ -22,6 +22,16 @@ namespace Articulate
             public const string ArticulateTags = "ArticulateTags";
             public const string ArticulateThemePicker = "ArticulateThemePicker";
             public const string ArticulateMarkdownEditor = "Articulate.MarkdownEditor";
+
+            internal static readonly Guid ArticulateMarkdownEditorKey = new("31D931C7-CE89-40A1-934E-664BE25A1E8C");
+            internal static readonly Guid ArticulateRichTextKey = new("DBCB0707-021D-4CD4-BA8B-5CC891516C28");
+            internal static readonly Guid ArticulateThemePickerKey = new("8B57D00E-5593-45D3-AFFE-24203B239BD3");
+        }
+
+        public static class Migration
+        {
+            public const string AutomaticPackageMigrationPlan = "Articulate";
+            public const string ArticulatePackageMigrationPlan = "Articulate.Core";
         }
 
         public static class Convention
