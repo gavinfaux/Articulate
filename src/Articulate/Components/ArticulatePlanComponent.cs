@@ -24,7 +24,7 @@ namespace Articulate.Components
                 return;
             }
 
-            var migrationPlan = new ArticulatePlan(version);
+            var migrationPlan = new ArticulatePlan();
 
             var upgrader = new Upgrader(migrationPlan);
             upgrader.Execute(migrationPlanExecutor, scopeProvider, keyValueService);
