@@ -541,14 +541,16 @@ namespace Articulate.Models
             this IEnumerable<T> collection,
             string[] headers,
             string[] cssClasses,
-            params Func<T, HelperResult>[] cellTemplates) where T : class => Table(collection, new Dictionary<string, object>(), headers, cssClasses, cellTemplates);
+            params Func<T, HelperResult>[] cellTemplates)
+            where T : class => Table(collection, new Dictionary<string, object>(), headers, cssClasses, cellTemplates);
 
         public static IHtmlContent Table<T>(
             this IEnumerable<T> collection,
             object htmlAttributes,
             string[] headers,
             string[] cssClasses,
-            params Func<T, HelperResult>[] cellTemplates) where T : class
+            params Func<T, HelperResult>[] cellTemplates)
+            where T : class
             => new HelperResult(writer =>
             {
                 T[] items = collection.ToArray();
@@ -597,10 +599,10 @@ namespace Articulate.Models
                         T item = items[rowIndex];
                         if (item != null)
                         {
-                            //if there's an item at that grid location, call its template
+                            // if there's an item at that grid location, call its template
                             tdContent.InnerHtml.SetHtmlContent(cellTemplates[colIndex](item));
 
-                            //cellTemplates[colIndex](item).WriteTo(writer, HtmlEncoder.Default);
+                            // cellTemplates[colIndex](item).WriteTo(writer, HtmlEncoder.Default);
                         }
 
                         trContent.InnerHtml.AppendHtml(tdContent);
