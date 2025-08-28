@@ -52,8 +52,10 @@ namespace Articulate.Api.Management.Options
                 {
                     options.IncludeXmlComments(typeof(ArticulateSwaggerOptions).Assembly);
                 }
-
-                logger.LogWarning("Articulate XML comments not available for Swagger UI");
+                else
+                {
+                    logger.LogWarning("Articulate XML comments not available for Swagger UI");
+                }
             }
             catch (Exception e)
             {
