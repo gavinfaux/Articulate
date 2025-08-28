@@ -136,7 +136,7 @@ namespace Articulate.Models
         /// <summary>
         ///     Returns a new list containing the elements of a source sequence in random order.
         /// </summary>
-        private static List<T> InRandomOrder<T>(this IEnumerable<T> source)
+        public static List<T> InRandomOrder<T>(this IEnumerable<T> source)
         {
             ArgumentNullException.ThrowIfNull(source, nameof(source));
 
