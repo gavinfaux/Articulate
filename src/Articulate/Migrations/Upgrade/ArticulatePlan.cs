@@ -20,8 +20,14 @@ public sealed class ArticulatePlan : MigrationPlan
         : base(ArticulateConstants.Migration.ArticulatePackageMigrationPlan)
         => DefinePlan(umbracoVersion);
 
+    public override string InitialState => string.Empty;
+
+    public override bool IgnoreCurrentState => true;
+
     private void DefinePlan(IUmbracoVersion umbracoVersion)
     {
+        From(InitialState);
+
         if (umbracoVersion.SemanticVersion.Major >= 16)
         {
             To<Articulate.Migrations.Upgrade.V_6_0_0.MigrateV16DataTypeConfiguration>("{5B6B5B4C-F79A-4CC7-9D77-5F0326BD94FE}");
