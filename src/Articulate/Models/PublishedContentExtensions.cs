@@ -13,8 +13,28 @@ namespace Articulate.Models
 {
     public static class PublishedContentExtensions
     {
-        [Obsolete("Use content.GetCroppedImageUrl(string propertyAlias, string cropAlias, ImageCropMode imageCropMode)")]
-        public static string GetArticulateCropUrl(this IPublishedContent content, string propertyAlias, VariationContext variationContext) => content.GetCroppedImageUrl(propertyAlias, "wide");
+        [Obsolete("Prefer an extension method from Umbraco.Extensions.FriendlyImageCropperTemplateExtensions.GetCropUrl()")]
+        public static string GetArticulateCropUrl(this IPublishedContent content, string propertyAlias, VariationContext variationContext)
+        {
+            ArgumentNullException.ThrowIfNull(content, nameof(content));
+            ArgumentNullException.ThrowIfNull(propertyAlias, nameof(propertyAlias));
+
+            var cropUrl = string.Empty;
+
+            if (content.ContentType.ItemType == PublishedItemType.Content)
+            {
+                var property = content.HasProperty(propertyAlias) && content.HasValue(propertyAlias);
+                MediaWithCrops value = property ? content.Value<MediaWithCrops>(propertyAlias) : null;
+                cropUrl = value != null ? value.GetCropUrl() : content.GetCropUrl(propertyAlias: propertyAlias);
+            }
+
+            if (string.IsNullOrEmpty(cropUrl))
+            {
+                cropUrl = content.GetCropUrl();
+            }
+
+            return cropUrl;
+        }
 
         public static IPublishedContent Next(this IPublishedContent content)
         {
@@ -111,29 +131,6 @@ namespace Articulate.Models
             }
 
             return false; // < count
-        }
-
-        public static string GetCroppedImageUrl(this IPublishedContent content, string propertyAlias, string cropAlias, ImageCropMode imageCropMode = ImageCropMode.Max)
-        {
-            if (content is null || string.IsNullOrWhiteSpace(cropAlias) || string.IsNullOrWhiteSpace(propertyAlias))
-            {
-                return null;
-            }
-
-            var cropUrl = content.Value<MediaWithCrops>(propertyAlias)?.GetCropUrl(cropAlias);
-            if (!string.IsNullOrWhiteSpace(cropUrl))
-            {
-                return cropUrl;
-            }
-
-            var baseUrl = content.GetBaseImageUrl(propertyAlias);
-
-            if (!string.IsNullOrWhiteSpace(baseUrl))
-            {
-                cropUrl = baseUrl.GetCropUrl(imageCropMode: imageCropMode);
-            }
-
-            return cropUrl;
         }
 
         /// <summary>
@@ -507,30 +504,6 @@ namespace Articulate.Models
             {
                 throw new ArgumentNullException(nameof(list));
             }
-        }
-
-        // TODO: Not needed once PostImage migration complete
-        private static string GetBaseImageUrl(this IPublishedContent content, string propertyAlias)
-        {
-            if (content is null)
-            {
-                return null;
-            }
-
-            var url = content.Value<MediaWithCrops>(propertyAlias)?.Url();
-
-            if (!string.IsNullOrWhiteSpace(url))
-            {
-                return url;
-            }
-
-            url = content.GetProperty(propertyAlias)?.GetSourceValue()?.ToString();
-            if (url is null || url.IsNullOrWhiteSpace() || url.Equals("[]"))
-            {
-                url = string.Empty;
-            }
-
-            return url;
         }
 
         public static IPublishedContent[] GetListNodes(IMasterModel masterModel)
