@@ -9,7 +9,7 @@ _❤️ If you use and like Articulate please consider [becoming a GitHub Sponso
 
 ## Installation
 
-  ### Post installtion checks
+### Post installtion checks
 
 - In the backoffice head over to the Packages section `umbraco/section/packages/view/installed` and check if there are pending migrations to run.
 
