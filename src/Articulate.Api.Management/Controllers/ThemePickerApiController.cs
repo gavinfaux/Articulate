@@ -10,6 +10,7 @@ using Umbraco.Cms.Api.Common.Attributes;
 using Umbraco.Cms.Api.Management.Controllers;
 using Umbraco.Cms.Api.Management.Routing;
 using Umbraco.Cms.Web.Common.Authorization;
+using Umbraco.Cms.Web.Common.Routing;
 
 namespace Articulate.Api.Management.Controllers
 {
@@ -22,7 +23,7 @@ namespace Articulate.Api.Management.Controllers
     [ManagementApi(Constants.ManagementApi.ThemePicker)]
     [ApiVersion("1.0")]
     [Authorize(Policy = AuthorizationPolicies.BackOfficeAccess)]
-    [VersionedApiBackOfficeRoute("articulate/editors/theme-picker")]
+    [ManagementApiRoute("editors/theme-picker")]
     [MapToApi(Constants.ManagementApi.Name)]
     public class ThemePickerApiController(
         IArticulateThemeRepository themeRepository,

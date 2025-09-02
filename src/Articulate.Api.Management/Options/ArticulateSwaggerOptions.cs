@@ -1,7 +1,6 @@
 #nullable enable
 using System.Reflection;
 using Articulate.Api.Management.Swagger;
-using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -63,14 +62,6 @@ namespace Articulate.Api.Management.Options
             }
 
             options.OperationFilter<ArticulateOperationSecurityFilter>();
-
-            options.TagActionsBy(api => api.GroupName is not null
-                ? [api.GroupName]
-                : api.ActionDescriptor is ControllerActionDescriptor controllerActionDescriptor
-                    ? new[] { controllerActionDescriptor.ControllerName }
-                    : throw new InvalidOperationException("Unable to determine tag for endpoint."));
-
-            options.DocInclusionPredicate((_, _) => true);
         }
     }
 }

@@ -93,7 +93,7 @@ export default class ThemeOptionsElement extends UmbLitElement implements IFormC
    */
   async #loadThemes() {
     try {
-      const result = await ThemeOptionsService.getArticulateThemeDefault();
+      const result = await ThemeOptionsService.getThemeDefault();
       if (!result.response.ok || !result.data) {
         throw result.error || new Error('The list of themes could not be retrieved from the server.');
       }
@@ -193,7 +193,7 @@ export default class ThemeOptionsElement extends UmbLitElement implements IFormC
     this._formError = null;
 
     try {
-      const result = await ThemeOptionsService.postArticulateThemeCopy({
+      const result = await ThemeOptionsService.postThemeCopy({
         body: {
           themeName: this._selectedTheme!,
           newThemeName: this._themeName!,

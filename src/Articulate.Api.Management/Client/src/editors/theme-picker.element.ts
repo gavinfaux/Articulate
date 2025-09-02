@@ -77,7 +77,7 @@ export default class ThemePickerElement extends UmbElementMixin(UmbLitElement) i
   private async _fetchThemes() {
     this._error = null;
 
-    const result = await ThemePickerService.getArticulateEditorsThemePickerThemes();
+    const result = await ThemePickerService.getEditorsThemePickerThemes();
 
     if (!result.response.ok || !result.data) {
       this._error = formatApiError(result.error, 'Failed to load themes from the server.');

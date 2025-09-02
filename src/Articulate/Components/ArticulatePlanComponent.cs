@@ -1,7 +1,6 @@
 using Articulate.Migrations.Upgrade;
 using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.Composing;
-using Umbraco.Cms.Core.Configuration;
 using Umbraco.Cms.Core.Migrations;
 using Umbraco.Cms.Core.Scoping;
 using Umbraco.Cms.Core.Services;
@@ -13,8 +12,7 @@ namespace Articulate.Components
         ICoreScopeProvider scopeProvider,
         IMigrationPlanExecutor migrationPlanExecutor,
         IKeyValueService keyValueService,
-        IRuntimeState runtimeState,
-        IUmbracoVersion version)
+        IRuntimeState runtimeState)
         : IAsyncComponent
     {
         private void Initialize()

@@ -59,7 +59,7 @@ namespace Articulate.Api.Management.Controllers
     [Authorize(AuthorizationPolicies.ContentPermissionByResource)]
     [Authorize(AuthorizationPolicies.MediaPermissionByResource)]
     [MapToApi(Constants.ManagementApi.Name)]
-    [VersionedApiBackOfficeRoute("articulate/editors/markdown")]
+    [ManagementApiRoute("editors/markdown")]
     public class MarkdownEditorApiController : ManagementApiControllerBase
     {
         private readonly IBackOfficeSecurityAccessor _backOfficeSecurityAccessor;

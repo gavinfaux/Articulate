@@ -19,7 +19,6 @@ namespace Articulate.Api.Management.Composers
         public void Compose(IUmbracoBuilder builder)
         {
             builder.Services.AddSingleton<IOperationIdHandler, ArticulateOperationIdHandler>();
-
             builder.Services.ConfigureOptions<ArticulateSwaggerOptions>();
         }
     }
