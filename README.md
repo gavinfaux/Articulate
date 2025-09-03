@@ -9,13 +9,13 @@ _❤️ If you use and like Articulate please consider [becoming a GitHub Sponso
 
 ## Installation
 
-  ### Post installtion checks
+### Post installtion checks
 
 - In the backoffice head over to the Packages section `umbraco/section/packages/view/installed` and check if there are pending migrations to run.
 
 - **Umbraco 13+** To resolve an issue with the _example_ media not displaying correctly on frontend, in the data types section `umbraco/section/settings/workspace/data-type-root/edit/` select the `Articulate Image Picker` data type and hit save. This issue does not effect other media added to Articulate. See [this issue](https://github.com/Shazwazza/Articulate/issues/460) for more information.
 
-_Need help?_ Head over to [Articulate on GitHub](https://github.com/Shazwazza/Articulate/issues) for extra tips, known issues and fixes.
+_Need help?_ Head over to [Articulate on GitHub](https://github.com/Shazwazza/Articulate) for extra tips, known issues and fixes.
 
 ## Features
 
@@ -43,10 +43,6 @@ Supporting all the features you'd want in a blogging platform
 
 Docs on installation, creating posts, customising/creating themes, etc...
 
-## [Discussions](https://our.umbraco.org/projects/starter-kits/articulate/discussions)
-
-Please post to this Umbraco discussions forum to discuss Articulate, it's features and functionality. Do not post issues here, post them [here](https://github.com/Shazwazza/Articulate/issues) on GitHub
-
 ## [Issues](https://github.com/Shandem/Articulate/issues)
 
 If you have any issues, please post them here on GitHub
@@ -54,6 +50,11 @@ If you have any issues, please post them here on GitHub
 ## [Releases](https://github.com/Shazwazza/Articulate/releases)
 
 See here for the list of releases and their release notes
+
+## [Community Discussions](https://forum.umbraco.com/)
+
+- Please use the Umbraco forums to ask questions and discuss Articulate, it's features and functionality.
+- Do not post issues here, post them [here](https://github.com/Shazwazza/Articulate/issues) on GitHub
 
 ## Contributing
 
@@ -71,8 +72,6 @@ Now you're all set! Any source changes you wish to make just do that in Visual S
 
 If you need to make changes to the underlying Umbraco schema (doc types, data types, etc...) or the installed package's content/media, then you will need
 to re-create the Articulate package in the back office with all required dependencies and then re-save the package.zip file and commit it to the repository.
-
-### Updating to latest committed changes
 
 ## Copyright & Licence
 
