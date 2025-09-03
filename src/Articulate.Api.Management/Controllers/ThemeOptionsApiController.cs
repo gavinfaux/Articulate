@@ -23,7 +23,7 @@ namespace Articulate.Api.Management.Controllers
     [ManagementApi(Constants.ManagementApi.ThemeOptions)]
     [ApiVersion("1.0")]
     [Authorize(Policy = AuthorizationPolicies.SectionAccessSettings)]
-    [VersionedApiBackOfficeRoute("articulate/theme")]
+    [ManagementApiRoute("theme")]
     [MapToApi(Constants.ManagementApi.Name)]
     public class ThemeOptionsApiController(
         IArticulateThemeRepository themeRepository,
