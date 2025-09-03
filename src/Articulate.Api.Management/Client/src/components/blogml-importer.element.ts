@@ -306,7 +306,7 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
    * @async
    */
   #beginImport = async (importFile: File): Promise<ImportFileResponse> => {
-    const result = await BlogMlService.postArticulateBlogmlImportFile({ body: { importFile } });
+    const result = await BlogMlService.postBlogmlImportFile({ body: { importFile } });
 
     if (!result.response.ok || !this.#isImportFileResponse(result.data)) {
       throw result.error || new Error('The server returned an invalid response when uploading the file.');
@@ -339,7 +339,7 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
       exportDisqusXml: formData.get('exportDisqusXml') === 'on',
       importFirstImage: formData.get('importFirstImage') === 'on',
     };
-    const result = await BlogMlService.postArticulateBlogmlImport({ body: payload });
+    const result = await BlogMlService.postBlogmlImport({ body: payload });
 
     if (!result.response.ok || !this.#isImportResponse(result.data)) {
       throw result.error || new Error('The server returned an invalid response when finalizing the import.');
@@ -359,7 +359,7 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
    * @async
    */
   #exportDisqusComments = async () => {
-    const result = await BlogMlService.getArticulateBlogmlExportDisqus();
+    const result = await BlogMlService.getBlogmlExportDisqus();
     if (!result.response.ok || !result.data) {
       throw result.error || new Error('Failed to export Disqus comments.');
     }

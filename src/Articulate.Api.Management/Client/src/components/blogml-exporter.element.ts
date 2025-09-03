@@ -229,7 +229,7 @@ export default class BlogMlExporterElement extends UmbLitElement implements IFor
       articulateBlogNode: this._articulateBlogNode!,
       exportImagesAsBase64: embedImages,
     };
-    const result = await BlogMlService.postArticulateBlogmlExport({ body: payload });
+    const result = await BlogMlService.postBlogmlExport({ body: payload });
     if (!result.response.ok || !result.data) {
       throw result.error || new Error('The server returned an invalid response during export.');
     }

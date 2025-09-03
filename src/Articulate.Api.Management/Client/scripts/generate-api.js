@@ -85,7 +85,7 @@ fetch(swaggerUrl)
         ...defaultPlugins,
         {
           name: '@hey-api/client-fetch',
-          bundle: true,
+          bundle: false,
           exportFromIndex: false,
           // Client currently checks response for errors to handle API errors, so we disable throwOnError
           throwOnError: false,
