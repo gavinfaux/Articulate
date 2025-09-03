@@ -4,103 +4,50 @@
 
 Articulate 6.0.0 represents a major version upgrade that introduces significant architectural improvements and modernizes the entire codebase. This release transitions from the legacy AngularJS backoffice to a modern Lit and TypeScript architecture, while also upgrading to the latest .NET and Umbraco versions.
 
-**Previous Version:** Articulate 5.1.2  
+**Previous Version:** Articulate 5.1.1  
 **New Version:** Articulate 6.0.0  
 **Release Type:** Major Version (Breaking Changes Included)
 
-## 🚀 Major Architectural Changes
+## 🚀 Major Updates & New Features
 
-### Framework Modernization
+### Architectural Overhaul
 
-- **.NET Upgrade**: Migrated from .NET 6.0/7.0/8.0 to .NET 9.0
-- **Project Structure**: Converted from `Microsoft.NET.Sdk` to `Microsoft.NET.Sdk.Razor` (Razor Class Library)
-- **Build System**: Introduced modern Vite-based client-side build system
+- **Framework Modernization**: Upgraded to .NET 9.0 and converted projects to `Microsoft.NET.Sdk.Razor` (Razor Class Library).
+- **Backoffice Rewrite**: The backoffice has been completely rewritten from AngularJS to a modern stack using Lit, TypeScript, and Vite for a faster, type-safe, and more maintainable experience.
+- **API Enhancements**: Introduced new RESTful API controllers with comprehensive, auto-generated OpenAPI/Swagger documentation and strongly-typed TypeScript client generation.
+- **Enhanced Development Workflow**: Integrated modern tooling including Vite, ESLint, and Prettier to improve code quality and developer experience.
+- **Modernized Theming**: The theme and view resolution system has been updated to use modern ASP.NET Core MVC patterns, via an `IViewLocationExpander` that resolves first to custom user themes in the `Views\Articulate` folder, then falls back to the built-in themes.
 
-### Front-end Architecture Overhaul
+### Package Restructuring
 
-- **Technology Stack Migration**: Complete rewrite from AngularJS 1.2 to Lit Web Components and TypeScript
-- **Markdown Editor**: Migrated mobile-optimized Markdown Editor from AngularJS to Alpine.JS (CSP-compliant)
-- **Build Tools**: Integrated Vite, ESLint, Prettier, and modern development workflow
-- **API Integration**: Implemented OpenAPI/Swagger with strongly-typed TypeScript client generation
+To improve modularity and maintainability, the single Articulate package from v5 has been partitioned into three distinct NuGet packages:
 
-### Back-end Improvements
-
-- **Umbraco Compatibility**: Updated to support Umbraco 15.2.3+ and 16+
-- **Static Asset Management**: Moved client-side assets to `wwwroot` directory for better static web asset handling
-- **API Architecture**: New RESTful API controllers with comprehensive Swagger documentation
-- **Theme Resolution**: Modernized theme and view resolution system using ASP.NET Core MVC patterns
-
-## ✨ New Features
-
-### Enhanced Development Experience
-
-- **Type Safety**: Full TypeScript integration with strongly-typed API clients
-- **Modern Development Tools**: Vite for fast development builds, hot reloading, and optimized production builds
-- **Code Quality**: Integrated ESLint, Prettier, and comprehensive linting rules
-- **API Documentation**: Auto-generated OpenAPI/Swagger documentation for all endpoints
-
-### Backoffice Improvements
-
-- **Modern UI Components**: Lit-based web components with Umbraco UI Library integration
-- **Enhanced Property Editors**: Redesigned theme picker and markdown editor with improved UX
-- **Better Error Handling**: Comprehensive error handling and user feedback systems
-- **Responsive Design**: Improved mobile experience across all backoffice interfaces
-
-### API Enhancements
-
-- **RESTful Endpoints**: New API controllers for themes, BlogML operations, and markdown editing
-- **OpenAPI Integration**: Complete API documentation and client SDK generation
-- **Strongly-typed Clients**: Auto-generated TypeScript clients for seamless front-end integration
+- **`Articulate`**: The main package that includes theme files (`.cshtml` templates and assets). Installing this package will automatically pull in the other required dependencies.
+- **`Articulate.Core`**: Contains the core business logic, models, controllers, and public APIs.
+- **`Articulate.Api.Management`**: Provides the backoffice extension and the supporting management API.
+- Installing or updating to the latest `Articulate` package will  install all necessary dependencies.
 
 ## ⚠️ Breaking Changes
 
-### Compatibility Requirements
+### System Requirements
 
-- **Umbraco Version**: Minimum version increased from 10.1.0 to 15.2.3
-- **.NET Version**: Now requires .NET 9.0 (previously supported .NET 6.0/7.0/8.0)
-- **Node.js**: New requirement for Node.js ≥22 and npm ≥10.9.2 for client-side development
+- **Umbraco Version**: Requires Umbraco 15.2.3+ (previously 10.1.0).
+- **.NET Version**: Requires .NET 9.0 (previously .NET 6.0/7.0/8.0).
+- **Node.js**: A new requirement for client-side development is Node.js ≥22 and npm ≥10.9.2.
 
-### Package Structure
+### Package & API Changes
 
-- **Package Name**: Changed from `Articulate` to `Articulate.Core` (NuGet package ID)
-- **Asset Locations**: Client-side assets moved from `App_Plugins` to `wwwroot/App_Plugins/Articulate/Backoffice`
-- **Build Process**: Completely new build pipeline requiring npm/Node.js for client-side compilation
-
-### API Changes
-
-- **Endpoint URLs**: All backoffice API endpoints have been restructured
-- **Authentication**: Updated authentication patterns for Umbraco 15+ compatibility
-- **Data Contracts**: Modified request/response models for improved type safety
-
-### Development Workflow
-
-- **Project References**: New requirement for `<CopyStaticWebAssetsToPublish>true</CopyStaticWebAssetsToPublish>` in test websites
-- **Build Commands**: New npm scripts required for client-side development (`npm run dev`, `npm run build`)
-- **Package Manifest**: Replaced `package.manifest` with modern `umbraco-package.json`
-
-## 📦 Dependencies & Compatibility
-
-### Runtime Dependencies
-
-- **Umbraco.Cms.Web.Website**: [15.2.3, 16.999.999)
-- **Argotic.Core**: 3001.0.0
-- **Markdig**: 0.41.3
-- **.NET**: 9.0
-
-### Development Dependencies
-
-- **Node.js**: ≥22.0.0
-- **npm**: ≥10.9.2
-- **TypeScript**: ~5.9.2
-- **Lit**: Latest stable
-- **Vite**: ^7.1.2
-- **ESLint**: ^9.33.0
-
-### Client-side Dependencies
-
-- **@umbraco-cms/backoffice**: ^15.4.4
-- **monaco-editor**: ^0.52.2 (for enhanced markdown editing)
-- **@hey-api/openapi-ts**: ^0.80.14 (for API client generation)
+- **Project names vs NuGet Package IDs**
+  - The package structure has changed. The main `Articulate` project still contains the front end models, controllers, core logic and public API, but is now packaged as `Articulate.Core`.
+  - The backoffice extension and related management API is now in `Articulate.Api.Management`
+  - Views (themes) and related assets are now in the `Articulate.Web` project and are packaged as `Articulate`.
+  - Installing/updating to the v6 `Articulate` package will bring in the API and Web package dependencies.
+- **Asset Locations**
+  - Client-side assets have moved from `App_Plugins\Articulate` to `wwwroot\App_Plugins\Articulate` to align with modern .NET static asset handling.
+  - Views are now compiled into the `Articulate.Web` project and are no longer in `App_Plugins\Articulate\Themes` folder when package installed. Custom themes and overrides are still supported in installations via the `Views\Articulate` folder (changed from `Views\ArticulateThemes`).
+- **API Endpoints**: All backoffice API endpoints have been restructured. Custom integrations will need to be updated.
+- **Build Process**: The client-side build process is now managed by npm/Vite. See the Client development setup for new commands.
+- **Public API**: The public API has been updated to use modern Umbraco/.NET patterns and conventions, some methods or signatures will have changed, been marked as obsolete (replaced with alternative method calls) or removed. For example ILocalizationService has changed to ILanguageService, IVariationContextAccessor has been removed.
 
 ## 🔄 Migration Guide
 
@@ -113,24 +60,14 @@ Articulate 6.0.0 represents a major version upgrade that introduces significant 
 5. **Data Migration**: Re-run Articulate package migrations if needed
 6. **Theme Updates**: Verify and update custom themes for compatibility
 
-### For Developers
-
-1. **Environment Setup**: Install Node.js ≥22 and npm ≥10.9.2
-2. **Project Structure**: Familiarize with new Client/ directory structure
-3. **Build Process**: Learn new npm-based development workflow
-4. **API Integration**: Update any custom API integrations to use new endpoints
-5. **Property Editors**: Review and update custom property editor implementations
-
-## 🛠️ Installation & Setup
-
-### Post-Installation Steps
-
-1. **Package Verification**: Check Umbraco backoffice for pending migrations
-2. **Umbraco 13+ Fix**: For Umbraco 13+, update the "Articulate Image Picker" data type
-3. **Theme Setup**: Verify default themes are properly installed
-4. **Permissions**: Ensure proper user permissions for Articulate sections
+- NOTE: Built in themes still use the older MasterPage based system rather than the newer MVC Layout system, these may be updated in a future release.
+- You can use the backoffice Theme copy feature to copy a built in theme to the user themes folder and then customize the Master page and related Views/Partials/Assets; this is the recommended approach for customizing themes.
+- If you want to override a built in themes layout or assets (CSS/JS etc) you will need to clone the complete theme and customize the Master page and related Views/Partials/Assets.
+- If you just want to override specific Views or Partials in a built-in theme, for example amend the VAPOUR List view render or use an infinite pager you just need to place your custom version in the user themes folder with the same theme name, e.g. `Views\Articulate\VAPOR\List.cshtml` or `Views\Articulate\VAPOR\Partials\Pager.cshtml`. You can either use the Theme clone feature for this and then delete any file you don't need to change, or manually get the file(s) from the GitHub repository and place it in the user themes folder.
 
 ### Development Setup
+
+The backoffice extension is now a modern web application built with `@umbraco-cms/backoffice`, Web components (Lit + Umbraco UUI) and TypeScript. This is now located in the `Articulate.Api.Management` projects `Client` folder. Building/packaging the solution will run the Vite build process and copy the output files to the `wwwroot/App_Plugins/Articulate/BackOffice` folder where the .NET build will package as static web assets.
 
 ```bash
 # Install dependencies
@@ -150,7 +87,7 @@ npm run build
 
 ### Current Limitations
 
-- **Umbraco 13+ Image Display**: Known issue with example media display (resolved by saving data type)
+- **Umbraco 13+ Image Display**: Known issue with **example** media display (resolved by saving the `Articulate Image Picker` data type in the backoffice)
 - **Migration Complexity**: Major version upgrade requires careful planning
 - **Custom Themes**: May require updates for full compatibility
 - **Third-party Integrations**: Custom API consumers need updates
@@ -158,15 +95,14 @@ npm run build
 ### Recommended Actions
 
 - Test thoroughly in development environment before production deployment
-- Review custom themes and property editors for compatibility
+- Review custom themes and extensions for compatibility
 - Update any custom API integrations
 - Plan for extended testing period due to architectural changes
 
 ## 📚 Additional Resources
 
-- **[Migration Guide](MIGRATION_GUIDE.md)**: Comprehensive developer migration guide
 - **GitHub Issues**: Report issues at <https://github.com/Shazwazza/Articulate/issues>
-- **Umbraco Forums**: Community discussions at <https://our.umbraco.org/projects/starter-kits/articulate/discussions>
+- **Umbraco Forums**: Community discussions at <https://forum.umbraco.com/>
 - **Documentation**: <https://github.com/Shazwazza/Articulate/wiki>
 
 ## 🙏 Acknowledgments
@@ -175,7 +111,7 @@ This major version represents a significant investment in modernizing Articulate
 
 ---
 
-**Release Date:** January 2025  
+**Release Date:** September 2025  
 **Compatibility:** Umbraco 15.2.3+ and 16+  
 **License:** MIT  
 **Repository:** <https://github.com/Shazwazza/Articulate>
