@@ -2,16 +2,16 @@
 using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Core.Services;
 using Umbraco.Cms.Infrastructure.Migrations;
-using IScopeProvider = Umbraco.Cms.Infrastructure.Scoping.IScopeProvider;
+using Umbraco.Cms.Infrastructure.Scoping;
 
 namespace Articulate.Migrations.Upgrade.V_6_0_0
 {
     /// <inheritdoc />
-    public class MigrateV16DataTypeConfiguration(
+    public class MigrateArticulateRichText(
         IMigrationContext context,
         IScopeProvider scopeProvider,
         IDataTypeService dataTypeService,
-        ILogger<MigrateV16DataTypeConfiguration> logger)
+        ILogger<MigrateArticulateRichText> logger)
         : MigrateDataTypeConfigurationBase(context, scopeProvider, dataTypeService, logger)
     {
         protected override void Migrate()

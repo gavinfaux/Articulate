@@ -27,6 +27,6 @@ public sealed class ArticulatePlan : MigrationPlan
 
     private void DefinePlan()
     {
-        To<Articulate.Migrations.Upgrade.V_6_0_0.MigrateV16DataTypeConfiguration>("{5B6B5B4C-F79A-4CC7-9D77-5F0326BD94FE}");
+        To<Articulate.Migrations.Upgrade.V_6_0_0.MigrateArticulateRichText>("{5B6B5B4C-F79A-4CC7-9D77-5F0326BD94FE}");
     }
 }
