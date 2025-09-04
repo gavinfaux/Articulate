@@ -5,8 +5,7 @@ using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Services;
 using Umbraco.Cms.Infrastructure.Migrations;
-using IScope = Umbraco.Cms.Infrastructure.Scoping.IScope;
-using IScopeProvider = Umbraco.Cms.Infrastructure.Scoping.IScopeProvider;
+using Umbraco.Cms.Infrastructure.Scoping;
 
 namespace Articulate.Migrations.Upgrade
 {
