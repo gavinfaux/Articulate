@@ -7,10 +7,10 @@ using Umbraco.Cms.Core.Models.PublishedContent;
 
 namespace Articulate.Syndication
 {
-    internal sealed class RssFeedGenerator(ILogger<RssFeedGenerator> logger, IHostingEnvironment hostingEnvironment)
+    public class RssFeedGenerator(ILogger<RssFeedGenerator> logger, IHostingEnvironment hostingEnvironment)
         : IRssFeedGenerator
     {
-        SyndicationFeed IRssFeedGenerator.GetFeed(IMasterModel rootPageModel, IEnumerable<PostModel> posts)
+        public SyndicationFeed GetFeed(IMasterModel rootPageModel, IEnumerable<PostModel> posts)
         {
             var feed = new SyndicationFeed(
                 rootPageModel.BlogTitle,
@@ -27,9 +27,9 @@ namespace Articulate.Syndication
             return feed;
         }
 
-        private static string GetPostContent(PostModel model) => model.Body.ToHtmlString();
+        protected virtual string GetPostContent(PostModel model) => model.Body.ToHtmlString();
 
-        private SyndicationItem? GetFeedItem(PostModel post, string rootUrl)
+        protected virtual SyndicationItem? GetFeedItem(PostModel post, string rootUrl)
         {
             var posturl = post.Url(mode: UrlMode.Absolute);
 
@@ -69,7 +69,7 @@ namespace Articulate.Syndication
             return item;
         }
 
-        private Uri? GetBlogImage(IMasterModel rootPageModel)
+        protected virtual Uri? GetBlogImage(IMasterModel rootPageModel)
         {
             Uri? logoUri = null;
             try
