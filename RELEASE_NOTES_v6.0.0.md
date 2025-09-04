@@ -87,7 +87,6 @@ npm run build
 
 ### Current Limitations
 
-- **Umbraco 13+ Image Display**: Known issue with **example** media display (resolved by saving the `Articulate Image Picker` data type in the backoffice)
 - **Migration Complexity**: Major version upgrade requires careful planning
 - **Custom Themes**: May require updates for full compatibility
 - **Third-party Integrations**: Custom API consumers need updates
