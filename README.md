@@ -13,7 +13,7 @@ _❤️ If you use and like Articulate please consider [becoming a GitHub Sponso
 
 - In the backoffice head over to the Packages section `umbraco/section/packages/view/installed` and check if there are pending migrations to run.
 
-- **Umbraco 13+** To resolve an issue with the _example_ media not displaying correctly on frontend, in the data types section `umbraco/section/settings/workspace/data-type-root/edit/` select the `Articulate Image Picker` data type and hit save. This issue does not effect other media added to Articulate. See [this issue](https://github.com/Shazwazza/Articulate/issues/460) for more information.
+- **Umbraco 13 only** To resolve an issue with the _example_ media not displaying correctly on frontend, in the data types section `umbraco/section/settings/workspace/data-type-root/edit/` select the `Articulate Image Picker` data type and hit save. This issue does not effect other media added to Articulate. See [this issue](https://github.com/Shazwazza/Articulate/issues/460) for more information.
 
 _Need help?_ Head over to [Articulate on GitHub](https://github.com/Shazwazza/Articulate) for extra tips, known issues and fixes.
 
