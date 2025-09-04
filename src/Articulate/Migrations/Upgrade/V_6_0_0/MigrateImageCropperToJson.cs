@@ -118,6 +118,10 @@ namespace Articulate.Migrations.Upgrade.V_6_0_0
                     try
                     {
                         var cropValue = new ImageCropperValue(textValue);
+                        //cropValue.Crops.Add(new ImageCrop("blogPost", 200, 200));
+                        //cropValue.Crops.Add(new ImageCrop("square", 480, 480));
+                        //cropValue.Crops.Add(new ImageCrop("thumbnail", 50, 50));
+                        //cropValue.Crops.Add(new ImageCrop("wide", 1024, 512));
                         var json = JsonSerializer.Serialize(cropValue, jsonSerializerOptions);
                         property.SetValue(json, pValue.Culture, pValue.Segment);
                         mediaModified = true;
@@ -150,9 +154,20 @@ namespace Articulate.Migrations.Upgrade.V_6_0_0
         {
             public ImageFocalPoint FocalPoint { get; } = new();
 
-            public List<object> Crops { get; } = [];
+            public List<ImageCrop> Crops { get; } = [];
 
             public string Src { get; } = src;
+        }
+
+        public class ImageCrop(string alias, int width, int height)
+        {
+            public string Alias { get; set; } = alias;
+
+            public int Width { get; set; } = width;
+
+            public int Height { get; set; } = height;
+
+            public object? Coordinates { get; } = null;
         }
     }
 }
