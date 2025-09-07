@@ -43,10 +43,12 @@ namespace Articulate
         internal static class Paths
         {
             internal const string SystemViewPath = "wwwroot/App_Plugins/Articulate";
+            internal const string LegacyUserVirtualPath = "~/Views/ArticulateThemes";
             internal const string UserVirtualPath = "~/Views/Articulate";
             internal const string ThemesPath = "Themes";
             internal const string MarkdownEditorPath = "MarkdownEditor";
             internal const string PartialsPath = "Partials";
+            internal const string ViewsPath = "Views";
             internal const string ViewPlaceHolder = "{0}.cshtml";
 
             internal const string ArticulateTemp = "Articulate/Temp";

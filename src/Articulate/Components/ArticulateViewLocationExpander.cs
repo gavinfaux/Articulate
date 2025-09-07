@@ -95,6 +95,7 @@ namespace Articulate.Components
             }
 
             var partialPlaceHolder = Path.Combine(Paths.PartialsPath, Paths.ViewPlaceHolder);
+            var viewsPlaceHolder = Path.Combine(Paths.ViewsPath, Paths.ViewPlaceHolder);
             var themeLocations = new[]
             {
                 // User themes take priority over system themes, allows overrides.
@@ -102,7 +103,11 @@ namespace Articulate.Components
                 // Override a pager to use infinite scrolling, just need to override the themes Pager.cshtml partial
                 // Theming & styles, need to copy base theme to new theme as Views use Master from base theme.
                 Path.Combine(Paths.UserVirtualPath,  themeName, Paths.ViewPlaceHolder),
+                Path.Combine(Paths.UserVirtualPath,  themeName, viewsPlaceHolder),
                 Path.Combine(Paths.UserVirtualPath,  themeName, partialPlaceHolder),
+                Path.Combine(Paths.LegacyUserVirtualPath,  themeName, Paths.ViewPlaceHolder),
+                Path.Combine(Paths.LegacyUserVirtualPath,  themeName, viewsPlaceHolder),
+                Path.Combine(Paths.LegacyUserVirtualPath,  themeName, partialPlaceHolder),
 
                 // System themes
                 Path.Combine(Paths.SystemViewPath, Paths.ThemesPath, themeName, Paths.ViewPlaceHolder),
