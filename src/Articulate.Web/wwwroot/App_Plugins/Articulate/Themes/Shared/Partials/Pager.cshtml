@@ -1,0 +1,22 @@
+@model PagerModel
+
+@if (Model is null)
+{
+    return;
+}
+<nav class="pager" aria-label="Pagination">
+    <ul>
+        <li>
+            @if (Model.HasPrevious && !string.IsNullOrEmpty(Model.PreviousUrl))
+            {
+                <a rel="prev" href="@Model.PreviousUrl">Newer posts</a>
+            }
+        </li>
+        <li>
+            @if (Model.HasNext && !string.IsNullOrEmpty(Model.NextUrl))
+            {
+                <a rel="next" href="@Model.NextUrl">Older posts</a>
+            }
+        </li>
+    </ul>
+</nav>

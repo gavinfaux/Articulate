@@ -113,6 +113,11 @@ namespace Articulate.Components
                 Path.Combine(Paths.SystemViewPath, Paths.ThemesPath, themeName, Paths.ViewPlaceHolder),
                 Path.Combine(Paths.SystemViewPath, Paths.ThemesPath, themeName, partialPlaceHolder),
 
+                // Shared base theme fallback (system)
+                // Allows themes to inherit from a common base without copying all files.
+                Path.Combine(Paths.SystemViewPath, Paths.ThemesPath, "Shared", Paths.ViewPlaceHolder),
+                Path.Combine(Paths.SystemViewPath, Paths.ThemesPath, "Shared", partialPlaceHolder),
+
                 // MarkdownEditor has no theme, but routed via Articulate root node, so themeName found.
                 Path.Combine(Paths.SystemViewPath, Paths.MarkdownEditorPath, Paths.ViewPlaceHolder)
             };

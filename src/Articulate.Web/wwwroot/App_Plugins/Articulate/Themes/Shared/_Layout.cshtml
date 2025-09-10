@@ -1,0 +1,45 @@
+@model IMasterModel
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    @Model.GoogleAnalyticsTracking()
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@Model.PageTitle</title>
+    @Model.MetaTags()
+    @Html.SocialMetaTags(Model)
+    @Model.AdvertiseWeblogApi()
+    @Model.RssFeed()
+    @Model.RenderOpenSearch()
+
+    <link href="~/App_Plugins/Articulate/Themes/Shared/assets/css/base.css" rel="stylesheet" asp-append-version="true" />
+
+    @RenderSection("Header", required: false)
+</head>
+<body class="articulate">
+    @Model.GoogleAnalyticsNoScript()
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <header class="site-header" role="banner">
+        @if (!Model.BlogLogo.IsNullOrWhiteSpace())
+        {
+            <a class="site-logo" href="@Model.ArticulateRootUrl()" title="Blog Home">
+                <img src="@Model.BlogLogo" alt="@Model.BlogTitle logo" />
+            </a>
+        }
+        <h1 class="site-title"><a href="@Model.ArticulateRootUrl()">@Model.BlogTitle</a></h1>
+        <p class="site-description">@Model.BlogDescription</p>
+        @await Html.PartialAsync("Menu", Model)
+        @await Html.PartialAsync("HeaderDescription", Model)
+    </header>
+
+    <main id="main-content" role="main" tabindex="-1">
+        @RenderBody()
+    </main>
+
+    <footer class="site-footer">
+        @await Html.PartialAsync("FooterDescription", Model)
+        <p class="copyright">&copy; @DateTime.Now:yyyy @Model.BlogTitle</p>
+    </footer>
+</body>
+</html>

@@ -32,5 +32,15 @@
     "inputFiles": [
       "wwwroot/App_Plugins/Articulate/Themes/VAPOR/assets/js/a11y.js"
     ]
+  },
+  {
+    "outputFileName": "wwwroot/App_Plugins/Articulate/Themes/Aurora/assets/css/bundle.css",
+    "inputFiles": [
+      "wwwroot/App_Plugins/Articulate/Themes/Aurora/assets/css/reset.css",
+      "wwwroot/App_Plugins/Articulate/Themes/Aurora/assets/css/tokens.css",
+      "wwwroot/App_Plugins/Articulate/Themes/Aurora/assets/css/base.css",
+      "wwwroot/App_Plugins/Articulate/Themes/Aurora/assets/css/components.css",
+      "wwwroot/App_Plugins/Articulate/Themes/Aurora/assets/css/utilities.css"
+    ]
   }
 ]

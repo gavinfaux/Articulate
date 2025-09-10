@@ -1,0 +1,23 @@
+@model PostModel
+
+<article class="post">
+    <header>
+        <h1 class="post-title">@Model.Name</h1>
+        <p class="post-meta">
+            <time datetime="@Model.PublishedDate.ToString("yyyy-MM-dd")">@Model.PublishedDate:dddd, MMMM dd, yyyy</time>
+        </p>
+        @await Html.PartialAsync("PostTags", Model)
+    </header>
+
+    @if (Model.PostImage is not null)
+    {
+        var wide = Model.CroppedPostImageUrl + "r=2"; // sample crop usage
+        <figure class="post-image">
+            <img src="@wide" alt="" />
+        </figure>
+    }
+
+    <section class="post-body">
+        @Model.Body
+    </section>
+</article>

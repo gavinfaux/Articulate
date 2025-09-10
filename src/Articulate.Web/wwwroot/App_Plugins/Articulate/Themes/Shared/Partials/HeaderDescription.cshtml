@@ -1,0 +1,5 @@
+@model IMasterModel
+@if (!string.IsNullOrWhiteSpace(Model.BlogBanner))
+{
+    <div class="site-banner" style="background-image:url('@Model.BlogBanner')"></div>
+}

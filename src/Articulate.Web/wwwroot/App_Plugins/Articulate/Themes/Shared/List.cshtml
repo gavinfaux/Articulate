@@ -1,0 +1,28 @@
+@model ListModel
+
+@if (!Model.Children().Any())
+{
+    <article>No blog posts found.</article>
+}
+else
+{
+    <section class="post-list">
+        @foreach (var post in Model.Posts)
+        {
+            <article class="post-preview">
+                <header>
+                    <h2 class="post-title"><a href="@post.Url()">@post.Name</a></h2>
+                    <p class="post-meta">
+                        <time datetime="@post.PublishedDate.ToString("yyyy-MM-dd")">@post.PublishedDate:dddd, MMMM dd, yyyy</time>
+                    </p>
+                </header>
+                <div class="post-excerpt">
+                    <p>@post.Excerpt&hellip;</p>
+                    <p class="readmore"><a href="@post.Url()">Read more</a></p>
+                </div>
+            </article>
+        }
+    </section>
+
+    @await Html.PartialAsync("Pager", Model.Pages)
+}

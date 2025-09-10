@@ -1,0 +1,14 @@
+@model PostModel
+@if (Model.Tags.Any() || Model.Categories.Any())
+{
+    <div class="post-taxonomy">
+        @if (Model.Categories.Any())
+        {
+            <p class="post-categories"><strong>Categories:</strong> @string.Join(", ", Model.Categories)</p>
+        }
+        @if (Model.Tags.Any())
+        {
+            <p class="post-tags"><strong>Tags:</strong> @string.Join(", ", Model.Tags)</p>
+        }
+    </div>
+}

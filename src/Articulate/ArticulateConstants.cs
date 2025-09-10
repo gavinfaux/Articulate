@@ -60,8 +60,9 @@ namespace Articulate
             private const string Material = "Material";
             private const string Phantom = "Phantom";
             private const string Mini = "Mini";
+            private const string Aurora = "Aurora";
 
-            public static readonly IEnumerable<string> AllThemeNames = [Vapor, Material, Phantom, Mini];
+            public static readonly IEnumerable<string> AllThemeNames = [Aurora, Vapor, Material, Phantom, Mini];
         }
     }
 }

@@ -1,0 +1,24 @@
+@model TagListModel
+
+<section class="tags">
+    <header>
+        <h1>@Model.Name</h1>
+        <p class="post-meta">@Model.Tags.TotalTags tag groups</p>
+    </header>
+
+    @if (Model.Tags is null || !Model.Tags.Any())
+    {
+        <p>No tags found.</p>
+    }
+    else
+    {
+        <ul class="tag-list">
+            @foreach (var tag in Model.Tags)
+            {
+                <li>
+                    <a href="@tag.Url">@tag.TagName</a> <span>(@tag.PostCount)</span>
+                </li>
+            }
+        </ul>
+    }
+</section>

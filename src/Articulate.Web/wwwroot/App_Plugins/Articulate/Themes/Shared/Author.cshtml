@@ -1,0 +1,39 @@
+@model AuthorModel
+
+<section class="author">
+    <header>
+        <h1>@Model.Name</h1>
+        @if (Model.Image is not null)
+        {
+            <img class="author-avatar" src="@Model.Image.GetCropUrl("square")" alt="@Model.Name" />
+        }
+        @if (!string.IsNullOrWhiteSpace(Model.Bio))
+        {
+            <p class="author-bio">@Model.Bio</p>
+        }
+    </header>
+
+    <section class="author-posts">
+        <h2>Posts</h2>
+        @if (!Model.Children().Any())
+        {
+            <p>No posts found.</p>
+        }
+        else
+        {
+            <ul>
+                @foreach (var post in Model.Children())
+                {
+                    <li>
+                        <a href="@post.Url()">@post.Name</a>
+                        <time datetime="@post.Value<DateTime>("publishedDate").ToString("yyyy-MM-dd")">@post.Value<DateTime>("publishedDate"):yyyy-MM-dd</time>
+                    </li>
+                }
+            </ul>
+            @if (Model.Pages is not null)
+            {
+                @await Html.PartialAsync("Pager", Model.Pages)
+            }
+        }
+    </section>
+</section>

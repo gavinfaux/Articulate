@@ -1,0 +1,7 @@
+.post-list{display:grid;gap:var(--space-8)}
+.post-preview{padding:var(--space-6);border:1px solid rgba(255,255,255,.08);border-radius:var(--radius);background:var(--surface)}
+.post-title{margin:0}
+.post-title a{color:var(--text);text-decoration:none}
+.post-meta{color:var(--muted);font-size:.9rem}
+.readmore a{color:var(--brand)}
+.pager ul{list-style:none;display:flex;justify-content:space-between;padding:0;margin:var(--space-8) 0}
