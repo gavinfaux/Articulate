@@ -21,3 +21,8 @@
         @Model.Body
     </section>
 </article>
+
+@if (Model.EnableComments)
+{
+    @await Html.PartialAsync("Comments", Model)
+}

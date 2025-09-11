@@ -42,6 +42,10 @@ namespace Articulate.Components
                 IArticulateThemeResolver themeResolver = services.BuildServiceProvider().GetRequiredService<IArticulateThemeResolver>();
                 options.ViewLocationExpanders.Add(new ArticulateViewLocationExpander(themeResolver));
             });
+
+            // TODO(theme-contract): Read theme metadata files (Shared/assets/base.json and {Theme}/assets/theme.json)
+            // to validate contractVersion compatibility and optionally surface a backoffice notification or log warning
+            // when a site is using a theme that targets an incompatible contract version.
             builder.UrlProviders().InsertBefore<NewDefaultUrlProvider, DateFormattedUrlProvider>();
             builder.ContentFinders().InsertBefore<ContentFinderByUrlNew, DateFormattedPostContentFinder>();
 

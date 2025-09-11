@@ -1,0 +1,16 @@
+@model PostModel
+@*
+  Neutral comments placeholder.
+  Replace or override in your theme to wire up a provider (e.g., Disqus, Giscus, Facebook).
+  Suggested approach: create a `Partials/Comments.cshtml` in your theme folder and implement your provider.
+*@
+
+@if (!Model.EnableComments)
+{
+    return;
+}
+
+<section id="comments" class="comments" role="region" aria-label="Comments">
+    <h2 class="comments__title">Comments</h2>
+    <p class="comments__placeholder">Comments are enabled for this post. Add your provider integration by overriding <code>Partials/Comments.cshtml</code> in your theme.</p>
+</section>

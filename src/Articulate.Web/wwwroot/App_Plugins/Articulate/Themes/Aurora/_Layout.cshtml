@@ -1,4 +1,11 @@
 @model IMasterModel
+@*
+  Optional Sections (usage examples):
+  - In a view, define:
+      @section Sidebar { <aside>Theme-specific sidebar</aside> }
+      @section Scripts { <script>/* page extras */</script> }
+  - These are rendered below in <main> and before </body>.
+*@
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -46,13 +53,15 @@
 
     <main id="main-content" class="container" role="main" tabindex="-1">
         @RenderBody()
+        @RenderSection("Sidebar", required: false)
     </main>
 
     <footer class="site-footer">
         <div class="container">
             @await Html.PartialAsync("FooterDescription", Model)
-            <p class="copyright">&copy; @DateTime.Now:yyyy @Model.BlogTitle</p>
+            <p class="copyright">&copy; @DateTime.Now.ToString("yyyy") @Model.BlogTitle</p>
         </div>
     </footer>
+    @RenderSection("Scripts", required: false)
 </body>
 </html>
