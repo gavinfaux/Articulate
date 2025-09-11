@@ -1,0 +1,22 @@
+@model PostModel
+@*
+  Post byline with author (if available), published date, and categories.
+  Override in your theme for custom formatting.
+*@
+<div class="post-byline">
+    <span class="post-byline__author">
+        @if (!string.IsNullOrWhiteSpace(Model.Author?.BlogUrl))
+        {
+            <text>By <a href="@Model.Author.BlogUrl">@Model.Author.Name</a></text>
+        }
+        else
+        {
+            <text>By @Model.Author.Name</text>
+        }
+    </span>
+    <span class="post-byline__date"> on <time datetime="@Model.PublishedDate.ToString("yyyy-MM-dd")">@Model.PublishedDate:dddd, MMMM dd, yyyy</time></span>
+    @if (Model.Categories?.Any() == true)
+    {
+        <span class="post-byline__categories"> in @string.Join(", ", Model.Categories)</span>
+    }
+</div>

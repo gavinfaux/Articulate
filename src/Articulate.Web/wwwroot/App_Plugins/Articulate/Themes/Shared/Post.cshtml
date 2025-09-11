@@ -8,6 +8,7 @@
         </p>
         @await Html.PartialAsync("PostTags", Model)
     </header>
+    @await Html.PartialAsync("PostByline", Model)
 
     @if (Model.PostImage is not null)
     {
