@@ -1,3 +1,9 @@
+@inject Articulate.Services.IArticulateThemeResolver ThemeResolver
 @{
-    Layout = "_Layout.cshtml";
+    // Use DI to resolve the current theme at the start of each view.
+    // This avoids relying on the view model for layout selection and works for any Shared fallback view.
+    var theme = ThemeResolver.GetCurrentThemeName();
+    Layout = string.IsNullOrWhiteSpace(theme)
+        ? "_Layout.cshtml" // Fallback to Shared layout
+        : $"~/App_Plugins/Articulate/Themes/{theme}/_Layout.cshtml";
 }

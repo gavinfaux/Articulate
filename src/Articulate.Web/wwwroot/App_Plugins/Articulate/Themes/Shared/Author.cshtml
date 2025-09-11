@@ -5,7 +5,7 @@
         <h1>@Model.Name</h1>
         @if (Model.Image is not null)
         {
-            <img class="author-avatar" src="@Model.Image.GetCropUrl("square")" alt="@Model.Name" />
+            <img class="author-avatar" src='@Model.Image.GetCropUrl("square")' alt='@Model.Name' />
         }
         @if (!string.IsNullOrWhiteSpace(Model.Bio))
         {
@@ -24,9 +24,10 @@
             <ul>
                 @foreach (var post in Model.Children())
                 {
+                    var publishedDate = post.Value<DateTime>("publishedDate");
                     <li>
                         <a href="@post.Url()">@post.Name</a>
-                        <time datetime="@post.Value<DateTime>("publishedDate").ToString("yyyy-MM-dd")">@post.Value<DateTime>("publishedDate"):yyyy-MM-dd</time>
+                        <time datetime='@publishedDate.ToString("yyyy-MM-dd")'>@publishedDate.ToString("yyyy-MM-dd")</time>
                     </li>
                 }
             </ul>

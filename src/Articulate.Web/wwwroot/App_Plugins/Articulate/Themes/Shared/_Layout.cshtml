@@ -1,4 +1,21 @@
 @model IMasterModel
+@*
+  THEME CONTRACT (Shared Base)
+  - Naming: Use BEM-like class names for structure that themes can safely target.
+    Example blocks/elements/modifiers:
+      .site-header
+      .site-header__brand
+      .post-list
+      .post-preview
+      .post-preview--featured (modifier)
+      .post-preview__title (element)
+  - Optional sections (slots):
+      @RenderSection("Header", required: false)
+      @RenderSection("Sidebar", required: false)
+      @RenderSection("Scripts", required: false)
+    Child themes may define any of these sections if they need to inject content.
+  - Assets: Shared provides minimal base CSS (reset/utility kept light). Child themes import/override.
+*@
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -31,15 +48,20 @@
         <p class="site-description">@Model.BlogDescription</p>
         @await Html.PartialAsync("Menu", Model)
         @await Html.PartialAsync("HeaderDescription", Model)
+
+        @RenderSection("Header", required: false)
     </header>
 
     <main id="main-content" role="main" tabindex="-1">
         @RenderBody()
+        @RenderSection("Sidebar", required: false)
     </main>
 
     <footer class="site-footer">
         @await Html.PartialAsync("FooterDescription", Model)
-        <p class="copyright">&copy; @DateTime.Now:yyyy @Model.BlogTitle</p>
+        <p class="copyright">&copy; @DateTime.Now.ToString("yyyy") @Model.BlogTitle</p>
     </footer>
+
+    @RenderSection("Scripts", required: false)
 </body>
 </html>

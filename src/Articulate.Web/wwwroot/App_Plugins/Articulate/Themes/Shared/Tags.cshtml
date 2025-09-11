@@ -3,7 +3,7 @@
 <section class="tags">
     <header>
         <h1>@Model.Name</h1>
-        <p class="post-meta">@Model.Tags.TotalTags tag groups</p>
+        <p class="post-meta">@((Model.Tags?.Count()) ?? 0) tag groups</p>
     </header>
 
     @if (Model.Tags is null || !Model.Tags.Any())
@@ -16,7 +16,7 @@
             @foreach (var tag in Model.Tags)
             {
                 <li>
-                    <a href="@tag.Url">@tag.TagName</a> <span>(@tag.PostCount)</span>
+                    <a href="@tag.TagUrl">@tag.TagName</a> <span>(@tag.PostCount)</span>
                 </li>
             }
         </ul>

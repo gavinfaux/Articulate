@@ -1,0 +1,11 @@
+{
+  "name": "Shared",
+  "version": "1.0.0",
+  "contractVersion": 1,
+  "description": "Base theme providing shared structure, partials, and minimal CSS. Child themes inherit and override selectively.",
+  "sections": ["Header", "Sidebar", "Scripts"],
+  "features": {
+    "hasCommentsPlaceholder": false,
+    "hasSearchBox": true
+  }
+}

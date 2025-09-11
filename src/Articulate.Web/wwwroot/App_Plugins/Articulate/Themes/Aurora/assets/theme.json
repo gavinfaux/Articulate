@@ -1,0 +1,11 @@
+{
+  "name": "Aurora",
+  "version": "0.1.0",
+  "extends": "Shared",
+  "contractVersion": 1,
+  "description": "Modern default theme built on the Shared base, providing a clean, accessible design with dark mode.",
+  "overrides": {
+    "layout": true,
+    "css": ["reset.css", "tokens.css", "base.css", "components.css", "utilities.css"]
+  }
+}
