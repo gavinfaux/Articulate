@@ -6,6 +6,9 @@
         <p class="post-meta">@((Model.Tags?.Count()) ?? 0) tag groups</p>
     </header>
 
+    @* Tag cloud example using Shared partial and built-in TagCloud helper *@
+    @await Html.PartialAsync("TagCloud", Model.Tags)
+
     @if (Model.Tags is null || !Model.Tags.Any())
     {
         <p>No tags found.</p>

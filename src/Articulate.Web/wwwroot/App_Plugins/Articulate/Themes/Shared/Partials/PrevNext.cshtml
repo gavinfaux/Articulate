@@ -1,0 +1,41 @@
+@model PostModel
+@using Umbraco.Cms.Core.Models.PublishedContent
+@using Umbraco.Extensions
+@*
+  Previous/Next post navigation.
+  Uses sibling navigation helpers on IPublishedContent.
+  Override in your theme for custom formatting.
+*@
+@{
+    var current = Model.Unwrap();
+    IPublishedContent? prev = current.Previous();
+    IPublishedContent? next = current.Next();
+
+    if (prev is null && next is null)
+    {
+        return;
+    }
+}
+
+<nav class="prev-next" aria-label="Post pagination">
+    <div class="prev-next__item prev-next__item--prev">
+        @if (prev is not null)
+        {
+            <a class="prev-next__link prev-next__link--prev" href="@prev.Url()">
+                <span aria-hidden="true">← Previous</span>
+                <span class="sr-only">Previous: </span>
+                <strong>@prev.Name</strong>
+            </a>
+        }
+    </div>
+    <div class="prev-next__item prev-next__item--next">
+        @if (next is not null)
+        {
+            <a class="prev-next__link prev-next__link--next" href="@next.Url()">
+                <span class="sr-only">Next: </span>
+                <strong>@next.Name</strong>
+                <span aria-hidden="true">Next →</span>
+            </a>
+        }
+    </div>
+</nav>

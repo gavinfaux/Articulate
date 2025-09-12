@@ -23,6 +23,12 @@
     </section>
 </article>
 
+@* Author summary card *@
+@await Html.PartialAsync("AuthorCard", Model)
+
+@* Prev/Next navigation between posts *@
+@await Html.PartialAsync("PrevNext", Model)
+
 @if (Model.EnableComments)
 {
     @await Html.PartialAsync("Comments", Model)

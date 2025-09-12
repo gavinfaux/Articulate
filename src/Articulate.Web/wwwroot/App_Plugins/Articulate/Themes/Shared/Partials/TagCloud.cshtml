@@ -1,0 +1,13 @@
+@model PostTagCollection
+@*
+  Tag cloud rendering using the built-in PostTagCollection.TagCloud helper.
+  Override in your theme for custom markup.
+*@
+@if (Model is null || !Model.Any())
+{
+    <!-- No tags -->
+}
+else
+{
+    @Model.TagCloud(maxWeight: 5, maxResults: 50)
+}

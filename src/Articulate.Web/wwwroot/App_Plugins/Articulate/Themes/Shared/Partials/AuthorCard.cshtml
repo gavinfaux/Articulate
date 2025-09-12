@@ -1,0 +1,37 @@
+@model PostModel
+@*
+  Compact author card showing avatar, name, bio snippet, and link to author page when available.
+  Override in your theme to restyle or expand.
+*@
+@if (Model?.Author is null)
+{
+    return;
+}
+
+<section class="author-card" aria-labelledby="author-card-title">
+    <h2 id="author-card-title" class="sr-only">About the author</h2>
+    <div class="author-card__media">
+        @if (Model.Author.Image is not null)
+        {
+            <img class="author-card__avatar" src='@Model.Author.Image.GetCropUrl("square")' alt='@Model.Author.Name' />
+        }
+    </div>
+    <div class="author-card__body">
+        <p class="author-card__name">
+            @if (!string.IsNullOrWhiteSpace(Model.Author.BlogUrl))
+            {
+                <a href="@Model.Author.BlogUrl">@Model.Author.Name</a>
+            }
+            else
+            {
+                @Model.Author.Name
+            }
+        </p>
+        @if (!string.IsNullOrWhiteSpace(Model.Author.Bio))
+        {
+            var bio = Model.Author.Bio;
+            var shortBio = bio.Length > 200 ? bio.Substring(0, 200) + "…" : bio;
+            <p class="author-card__bio">@shortBio</p>
+        }
+    </div>
+</section>
