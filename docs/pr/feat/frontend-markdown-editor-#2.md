@@ -1,4 +1,4 @@
-# **PRD: Modernization of Mobile Articulate Markdown Editor **
+# **PRD: Modernization of Mobile Articulate Markdown Editor**
 
 * **Document Owner:** You
 * **Date:** June 30, 2025
@@ -685,10 +685,10 @@ The plan should provide better visual feedback than a simple `alert()`. We will 
 The original theme was `material.pink-blue.min.css`. The primary accent color was `rgb(233, 30, 99)` (pink) and the primary interaction color was `rgb(68, 138, 255)` (blue).
 
 * **PRD Note:** While Pico.css has its own aesthetic, we can override its CSS variables to hint at the original theme if desired. This is an **optional enhancement**.
-* 
+*
   * **Update `MarkdownEditor.cshtml` `<style>` block:**
 
-        ```html
+      ```html
         <style>
             /* Optional: Override Pico.css variables to match legacy theme */
             :root {
@@ -696,4 +696,4 @@ The original theme was `material.pink-blue.min.css`. The primary accent color wa
                 --pico-form-element-invalid-border-color: var(--pico-primary);
             }
         </style>
-        ```
+      ```
