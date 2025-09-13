@@ -20,7 +20,7 @@ namespace Articulate.Services
 
         async Task IArticulateThemeRepository.CopyThemeAsync(string themeName, string newThemeName)
         {
-            var userThemesPath = hostingEnvironment.MapPathContentRoot(Paths.UserVirtualPath);
+            var userThemesPath = hostingEnvironment.MapPathContentRoot(Paths.UserViewVirtualRoot);
             var destinationPhysicalPath = Path.Combine(userThemesPath, newThemeName);
 
             // User theme names must be unique
@@ -36,7 +36,8 @@ namespace Articulate.Services
 
             if (themeResources.Count == 0)
             {
-                throw new DirectoryNotFoundException($"The source theme '{themeName}' could not be found as an embedded resource.");
+                throw new DirectoryNotFoundException(
+                    $"The source theme '{themeName}' could not be found as an embedded resource.");
             }
 
             try
@@ -55,7 +56,8 @@ namespace Articulate.Services
                     }
                     else
                     {
-                        logger.LogError("Could not determine a valid directory path from '{destinationFilePath}' for '{ResourceName}'. Skipping file creation.", destinationFilePath, resourceName);
+                        logger.LogError(
+                            "Could not determine a valid directory path from '{destinationFilePath}' for '{ResourceName}'. Skipping file creation.", destinationFilePath, resourceName);
                         continue;
                     }
 
@@ -79,10 +81,6 @@ namespace Articulate.Services
             }
         }
 
-        public Task<IEnumerable<string>> GetDefaultThemesAsync() => Task.Run(() => DefaultThemes.AllThemeNames);
-
-        private Task<IEnumerable<string>> GetUserThemesAsync() => Task.Run(() => GetThemesFromPathAsync(Paths.UserVirtualPath));
-
         public async Task<IEnumerable<string>?> GetAllThemesAsync() =>
             await appCaches.RuntimeCache.GetCacheItemAsync(
                 AllThemesCacheKey,
@@ -91,20 +89,23 @@ namespace Articulate.Services
                     Task<IEnumerable<string>> defaultThemesTask = GetDefaultThemesAsync();
                     Task<IEnumerable<string>> userThemesTask = GetUserThemesAsync();
 
-                    IEnumerable<string>[] results = await Task.WhenAll(defaultThemesTask, userThemesTask).ConfigureAwait(false);
+                    IEnumerable<string>[] results =
+                        await Task.WhenAll(defaultThemesTask, userThemesTask).ConfigureAwait(false);
                     return results[0].Union(results[1]).OrderBy(name => name);
                 },
                 TimeSpan.FromSeconds(30)).ConfigureAwait(false);
 
+        public Task<IEnumerable<string>> GetDefaultThemesAsync() => Task.Run(() => DefaultThemes.AllThemeNames);
+
         private Task<IEnumerable<string>> GetThemesFromPathAsync(string virtualPath)
         {
             var physicalPath = hostingEnvironment.MapPathContentRoot(virtualPath);
-            return Task.Run(() =>
-            {
-                return Directory.Exists(physicalPath)
-                    ? new DirectoryInfo(physicalPath).GetDirectories().Select(d => d.Name)
-                    : [];
-            });
+            return Task.Run(() => Directory.Exists(physicalPath)
+                ? new DirectoryInfo(physicalPath).GetDirectories().Select(d => d.Name)
+                : []);
         }
+
+        private Task<IEnumerable<string>> GetUserThemesAsync() =>
+            Task.Run(() => GetThemesFromPathAsync(Paths.UserViewVirtualRoot));
     }
 }

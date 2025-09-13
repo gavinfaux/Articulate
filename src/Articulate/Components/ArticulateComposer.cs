@@ -33,14 +33,17 @@ namespace Articulate.Components
             services.AddSingleton<ArticulateRouter>();
             services.AddSingleton<RouteCacheRefresherFilter>();
             services.AddSingleton<ArticulateFrontEndFilterConvention>();
-            services.TryAddEnumerable(ServiceDescriptor.Singleton<MatcherPolicy, ArticulateDynamicRouteSelectorPolicy>());
+            services.TryAddEnumerable(
+                ServiceDescriptor.Singleton<MatcherPolicy, ArticulateDynamicRouteSelectorPolicy>());
             services.AddSingleton<IArticulateThemeRepository, ArticulateThemeRepository>();
-            services.AddScoped<IArticulateThemeResolver, ArticulateThemeResolver>();
+            services.AddTransient<IArticulateThemeResolver, ArticulateThemeResolver>();
             services.AddScoped<BackOfficeAuthService>();
+
+            // Register DI-driven view location provider and configure Razor view engine without BuildServiceProvider
+            services.AddSingleton<IArticulateViewLocationProvider, DefaultArticulateViewLocationProvider>();
             services.Configure<RazorViewEngineOptions>(options =>
             {
-                IArticulateThemeResolver themeResolver = services.BuildServiceProvider().GetRequiredService<IArticulateThemeResolver>();
-                options.ViewLocationExpanders.Add(new ArticulateViewLocationExpander(themeResolver));
+                options.ViewLocationExpanders.Add(new ArticulateViewLocationExpander());
             });
 
             // TODO(theme-contract): Read theme metadata files (Shared/assets/base.json and {Theme}/assets/theme.json)

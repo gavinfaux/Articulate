@@ -55,6 +55,7 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="Articulate.Web" />
+    <InternalsVisibleTo Include="Articulate.UnitTests" />
   </ItemGroup>
 
   <!--Additional implicit using directives-->

@@ -10,7 +10,7 @@ namespace Articulate.Api.Management.PropertyEditors
     // Full clone of src/Umbraco.Web.UI.Client/src/packages/markdown-editor
     // Prevent conflicts if both Markdown Editors on content type
     // TODO: Remove this when the Markdig package is merged into Umbraco
-    //See: https://github.com/umbraco/Umbraco-CMS/pull/19500
+    // See: https://github.com/umbraco/Umbraco-CMS/pull/19500
     public class ArticulateMarkdownEditorValueConverter(HtmlLocalLinkParser localLinkParser, HtmlUrlParser urlParser)
         : MarkdownEditorValueConverter(localLinkParser, urlParser)
     {

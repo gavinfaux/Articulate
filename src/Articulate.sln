@@ -32,6 +32,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Articulate.Api.Management",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Articulate.Web", "Articulate.Web\Articulate.Web.csproj", "{151A74D4-597F-42B4-BFDC-11635E44144C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Articulate.UnitTests", "Articulate.UnitTests\Articulate.UnitTests.csproj", "{98E21D0A-53BB-4CDA-B1D6-3B6768A91531}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -54,6 +56,10 @@ Global
 		{151A74D4-597F-42B4-BFDC-11635E44144C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{151A74D4-597F-42B4-BFDC-11635E44144C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{151A74D4-597F-42B4-BFDC-11635E44144C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{98E21D0A-53BB-4CDA-B1D6-3B6768A91531}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{98E21D0A-53BB-4CDA-B1D6-3B6768A91531}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{98E21D0A-53BB-4CDA-B1D6-3B6768A91531}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{98E21D0A-53BB-4CDA-B1D6-3B6768A91531}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

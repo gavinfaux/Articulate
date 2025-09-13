@@ -8,8 +8,8 @@
 *@
 @{
     var current = Model.Unwrap();
-    IPublishedContent? prev = current.Previous();
-    IPublishedContent? next = current.Next();
+    var prev = current.Previous();
+    var next = current.Next();
 
     if (prev is null && next is null)
     {

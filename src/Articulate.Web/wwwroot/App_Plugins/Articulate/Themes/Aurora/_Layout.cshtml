@@ -19,15 +19,8 @@
     @Model.RssFeed()
     @Model.RenderOpenSearch()
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-    <link href="~/App_Plugins/Articulate/Themes/Shared/assets/css/base.css" rel="stylesheet" asp-append-version="true" />
-    <link href="~/App_Plugins/Articulate/Themes/Aurora/assets/css/reset.css" rel="stylesheet" asp-append-version="true" />
-    <link href="~/App_Plugins/Articulate/Themes/Aurora/assets/css/tokens.css" rel="stylesheet" asp-append-version="true" />
-    <link href="~/App_Plugins/Articulate/Themes/Aurora/assets/css/base.css" rel="stylesheet" asp-append-version="true" />
-    <link href="~/App_Plugins/Articulate/Themes/Aurora/assets/css/components.css" rel="stylesheet" asp-append-version="true" />
-    <link href="~/App_Plugins/Articulate/Themes/Aurora/assets/css/utilities.css" rel="stylesheet" asp-append-version="true" />
+    @* Theme-first assets: Head *@
+    @await Html.PartialAsync("HeadAssets")
 
     @RenderSection("Header", required: false)
 </head>
@@ -62,6 +55,9 @@
             <p class="copyright">&copy; @DateTime.Now.ToString("yyyy") @Model.BlogTitle</p>
         </div>
     </footer>
+    @* Theme-first assets: Foot *@
+    @await Html.PartialAsync("FootAssets")
+
     @RenderSection("Scripts", required: false)
 </body>
 </html>

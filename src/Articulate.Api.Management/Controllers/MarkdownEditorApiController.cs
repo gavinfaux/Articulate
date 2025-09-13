@@ -11,7 +11,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Umbraco.Cms.Api.Common.Attributes;
 using Umbraco.Cms.Api.Management.Controllers;
-using Umbraco.Cms.Api.Management.Routing;
 using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.Actions;
 using Umbraco.Cms.Core.Configuration.Models;
@@ -52,7 +51,7 @@ namespace Articulate.Api.Management.Controllers
        */
 
     /// <summary>
-    /// Controller for handling the a-new markdown editor endpoint for creating blog posts
+    ///     Controller for handling the a-new markdown editor endpoint for creating blog posts.
     /// </summary>
     [ManagementApi(Constants.ManagementApi.MarkdownEditor)]
     [ApiVersion("1.0")]
@@ -62,24 +61,24 @@ namespace Articulate.Api.Management.Controllers
     [ManagementApiRoute("editors/markdown")]
     public class MarkdownEditorApiController : ManagementApiControllerBase
     {
-        private readonly IBackOfficeSecurityAccessor _backOfficeSecurityAccessor;
-        private readonly UmbracoHelper _umbracoHelper;
-        private readonly MediaFileManager _mediaFileManager;
-        private readonly PropertyEditorCollection _propertyEditors;
-        private readonly IJsonSerializer _jsonSerializer;
-        private readonly GlobalSettings _globalSettings;
-        private readonly IHostingEnvironment _hostingEnvironment;
-        private readonly IMediaService _mediaService;
-        private readonly MediaUrlGeneratorCollection _mediaUrlGenerators;
-        private readonly IContentTypeBaseServiceProvider _contentTypeBaseServiceProvider;
-        private readonly IShortStringHelper _shortStringHelper;
         private readonly Lazy<IMedia> _articulateRootMediaFolder;
-        private readonly ILanguageService _languageService;
+        private readonly IBackOfficeSecurityAccessor _backOfficeSecurityAccessor;
         private readonly IContentService _contentService;
+        private readonly IContentTypeBaseServiceProvider _contentTypeBaseServiceProvider;
         private readonly IContentTypeService _contentTypeService;
         private readonly IDataTypeService _dataTypeService;
-        private readonly IUserService _userService;
+        private readonly GlobalSettings _globalSettings;
+        private readonly IHostingEnvironment _hostingEnvironment;
+        private readonly IJsonSerializer _jsonSerializer;
+        private readonly ILanguageService _languageService;
         private readonly ILogger<MarkdownEditorApiController> _logger;
+        private readonly MediaFileManager _mediaFileManager;
+        private readonly IMediaService _mediaService;
+        private readonly MediaUrlGeneratorCollection _mediaUrlGenerators;
+        private readonly PropertyEditorCollection _propertyEditors;
+        private readonly IShortStringHelper _shortStringHelper;
+        private readonly UmbracoHelper _umbracoHelper;
+        private readonly IUserService _userService;
 
         public MarkdownEditorApiController(
             IBackOfficeSecurityAccessor backOfficeSecurityAccessor,
@@ -129,12 +128,21 @@ namespace Articulate.Api.Management.Controllers
             });
         }
 
+        private static bool CheckPermissions(IUser user, IContent contentItem, IEnumerable<string> permissionsToCheck, IUserService userService)
+        {
+            IEnumerable<string> permissions = user.GetPermissions(contentItem.Path, userService);
+            return permissionsToCheck.All(p => permissions.Contains(p));
+        }
+
         /// <summary>
-        /// Creates a new post under the specified Articulate node.
+        ///     Creates a new post under the specified Articulate node.
         /// </summary>
-        /// <param name="jsonModel">The JSON model containing the post data: Title, Body, Slug, Excerpt, Tags, Categories, ArticulateBlogNode, and whether the first image should be extracted as a dedicated property.</param>
+        /// <param name="jsonModel">
+        ///     The JSON model containing the post data: Title, Body, Slug, Excerpt, Tags, Categories,
+        ///     ArticulateBlogNode, and whether the first image should be extracted as a dedicated property.
+        /// </param>
         /// <param name="files">Any uploaded images as part of the multipart/form-data request.</param>
-        /// <returns>A <see cref="CreatePostResponse"/> containing the URL of the newly created post.</returns>
+        /// <returns>A <see cref="CreatePostResponse" /> containing the URL of the newly created post.</returns>
         [HttpPost("post")]
         [Consumes("multipart/form-data")]
         [ProducesResponseType(typeof(CreatePostResponse), StatusCodes.Status200OK)]
@@ -257,12 +265,12 @@ namespace Articulate.Api.Management.Controllers
                 content.SetInvariantOrDefaultCultureValue("postImage", parsedImageResponse.FirstImage, contentType, _languageService);
             }
 
-            if (model.Excerpt.IsNullOrWhiteSpace() == false)
+            if (!model.Excerpt.IsNullOrWhiteSpace())
             {
                 content.SetInvariantOrDefaultCultureValue("excerpt", model.Excerpt, contentType, _languageService);
             }
 
-            if (model.Tags.IsNullOrWhiteSpace() == false)
+            if (!model.Tags.IsNullOrWhiteSpace())
             {
                 IEnumerable<string> tags = model.Tags.Split([','], StringSplitOptions.RemoveEmptyEntries)
                     .Select(x => x.Trim());
@@ -276,7 +284,7 @@ namespace Articulate.Api.Management.Controllers
                     _jsonSerializer);
             }
 
-            if (model.Categories.IsNullOrWhiteSpace() == false)
+            if (!model.Categories.IsNullOrWhiteSpace())
             {
                 IEnumerable<string> cats = model.Categories.Split([','], StringSplitOptions.RemoveEmptyEntries)
                     .Select(x => x.Trim());
@@ -290,7 +298,7 @@ namespace Articulate.Api.Management.Controllers
                     _jsonSerializer);
             }
 
-            if (model.Slug.IsNullOrWhiteSpace() == false)
+            if (!model.Slug.IsNullOrWhiteSpace())
             {
                 content.SetInvariantOrDefaultCultureValue(Umbraco.Cms.Core.Constants.Conventions.Content.UrlName, model.Slug, contentType, _languageService);
             }
@@ -304,7 +312,7 @@ namespace Articulate.Api.Management.Controllers
 
             OperationResult status =
                 _contentService.Save(content, _backOfficeSecurityAccessor.BackOfficeSecurity?.CurrentUser?.Id);
-            if (status.Success == false)
+            if (!status.Success)
             {
                 ModelState.AddModelError("SaveOperation", "Content failed to save. Please check logs for details.");
                 return ValidationProblem(ModelState);
@@ -312,12 +320,6 @@ namespace Articulate.Api.Management.Controllers
 
             IPublishedContent? published = _umbracoHelper.Content(content.Id);
             return Ok(new CreatePostResponse { Url = published?.Url() ?? "#" });
-        }
-
-        private static bool CheckPermissions(IUser user, IContent contentItem, IEnumerable<string> permissionsToCheck, IUserService userService)
-        {
-            IEnumerable<string> permissions = user.GetPermissions(contentItem.Path, userService);
-            return permissionsToCheck.All(p => permissions.Contains(p));
         }
 
         // TODO: Review
@@ -339,7 +341,7 @@ namespace Articulate.Api.Management.Controllers
                 "aux",
                 "nul",
                 "com1",
-                "lpt1"
+                "lpt1",
             };
             var firstImage = string.Empty;
             var bodyText = body; // Start with the original body text

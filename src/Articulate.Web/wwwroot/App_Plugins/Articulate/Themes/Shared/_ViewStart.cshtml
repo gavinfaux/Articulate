@@ -1,9 +1,22 @@
-@inject Articulate.Services.IArticulateThemeResolver ThemeResolver
+@using Articulate.Services
+@using Microsoft.Extensions.DependencyInjection
+@using Umbraco.Cms.Core
+@using Microsoft.AspNetCore.Mvc.ViewEngines
+@inject ICompositeViewEngine ViewEngine
+
 @{
-    // Use DI to resolve the current theme at the start of each view.
-    // This avoids relying on the view model for layout selection and works for any Shared fallback view.
-    var theme = ThemeResolver.GetCurrentThemeName();
-    Layout = string.IsNullOrWhiteSpace(theme)
-        ? "_Layout.cshtml" // Fallback to Shared layout
-        : $"~/App_Plugins/Articulate/Themes/{theme}/_Layout.cshtml";
+    // Default to Shared layout to preserve fallback behavior
+    Layout = "_Layout.cshtml";
+
+    // If the active theme has its own layout, prefer it
+    var themeName = Context?.Items?["ThemeName"] as string;
+    if (!string.IsNullOrWhiteSpace(themeName))
+    {
+        var themeLayoutPath = $"~/App_Plugins/Articulate/Themes/{themeName}/_Layout.cshtml";
+        var canUseThemeLayout = ViewEngine.GetView(executingFilePath: null, viewPath: themeLayoutPath, isMainPage: false).Success;
+        if (canUseThemeLayout)
+        {
+            Layout = themeLayoutPath;
+        }
+    }
 }

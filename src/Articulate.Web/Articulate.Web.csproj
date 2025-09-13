@@ -4,6 +4,7 @@
     <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
     <StaticWebAssetBasePath>/</StaticWebAssetBasePath>
     <CompressionEnabled>false</CompressionEnabled>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <PropertyGroup>
