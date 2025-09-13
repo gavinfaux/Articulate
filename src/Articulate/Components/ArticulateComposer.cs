@@ -52,7 +52,8 @@ namespace Articulate.Components
             builder.UrlProviders().InsertBefore<NewDefaultUrlProvider, DateFormattedUrlProvider>();
             builder.ContentFinders().InsertBefore<ContentFinderByUrlNew, DateFormattedPostContentFinder>();
 
-            services.AddOptions<ArticulateOptions>();
+            services.AddOptions<ArticulateOptions>()
+                .BindConfiguration("Articulate");
 
             builder.AddNotificationHandler<ContentSavingNotification, ContentSavingHandler>();
             builder.AddNotificationHandler<ContentSavedNotification, ContentSavedHandler>();

@@ -1,0 +1,145 @@
+@model PostModel
+@using Articulate.Options
+@using Microsoft.Extensions.Options
+@inject IOptions<ArticulateOptions> ArticulateOpts
+@*
+  Comments provider switch partial (Shared)
+  Usage:
+    - Set ViewData["CommentsProvider"] = "disqus" | "giscus" | "utterances" | "hyvor" | "isso";
+    - Or override this partial in your theme and hardcode your provider + config.
+
+  IMPORTANT:
+    - Replace placeholder values (shortnames, repo IDs, website IDs) with your own in a theme override.
+    - Consider moving secrets/config to appsettings or environment variables, not in views.
+*@
+
+@if (Model is not { EnableComments: true })
+{
+    return;
+}
+
+@{
+    var configured = ArticulateOpts?.Value.DefaultCommentsProvider;
+    var provider = (ViewData["CommentsProvider"] as string
+        ?? configured
+        ?? "placeholder").ToLowerInvariant();
+}
+
+<section id="comments" class="comments" role="region" aria-label="Comments">
+    <h2 class="comments__title">Comments</h2>
+
+    @switch (provider)
+    {
+        case "disqus":
+            if (!string.IsNullOrWhiteSpace(ArticulateOpts?.Value.Disqus.Shortname))
+            {
+                <div id="disqus_thread"></div>
+                <script>
+                    var disqus_config = function () {
+                        this.page.url = window.location.href;
+                        this.page.identifier = '@Model.Id';
+                    };
+                    (function () {
+                        var d = document, s = d.createElement('script');
+                        var shortname = '@(ArticulateOpts?.Value.Disqus.Shortname!)';
+                        s.src = 'https://' + shortname + '.disqus.com/embed.js';
+                        s.setAttribute('data-timestamp', +new Date());
+                        (d.head || d.body).appendChild(s);
+                    })();
+                </script>
+                <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+            }
+            else
+            {
+                <p class="comments__placeholder">Disqus is selected but not configured. Set <code>Articulate:Disqus:Shortname</code> in appsettings or override this partial.</p>
+            }
+            break;
+
+        case "giscus":
+            if (!string.IsNullOrWhiteSpace(ArticulateOpts?.Value.Giscus.Repo) && !string.IsNullOrWhiteSpace(ArticulateOpts.Value.Giscus.RepoId))
+            {
+                var g = ArticulateOpts.Value.Giscus;
+                <script src="https://giscus.app/client.js"
+                        data-repo="@g.Repo"
+                        data-repo-id="@g.RepoId"
+                        data-category="@g.Category"
+                        data-category-id="@g.CategoryId"
+                        data-mapping="@g.Mapping"
+                        data-strict="0"
+                        data-reactions-enabled="@(g.ReactionsEnabled ? "1" : "0")"
+                        data-emit-metadata="@(g.EmitMetadata ? "1" : "0")"
+                        data-input-position="@g.InputPosition"
+                        data-theme="@g.Theme"
+                        data-lang="@g.Lang"
+                        crossorigin="anonymous"
+                        async>
+                </script>
+            }
+            else
+            {
+                <p class="comments__placeholder">Giscus is selected but not configured. Set values under <code>Articulate:Giscus</code> in appsettings or override this partial.</p>
+            }
+            break;
+
+        case "utterances":
+            if (!string.IsNullOrWhiteSpace(ArticulateOpts?.Value.Utterances.Repo))
+            {
+                var u = ArticulateOpts.Value.Utterances;
+                <script src="https://utteranc.es/client.js"
+                        repo="@u.Repo"
+                        issue-term="@u.IssueTerm"
+                        label="@u.Label"
+                        theme="@u.Theme"
+                        crossorigin="anonymous"
+                        async>
+                </script>
+            }
+            else
+            {
+                <p class="comments__placeholder">Utterances is selected but not configured. Set <code>Articulate:Utterances:Repo</code> in appsettings or override this partial.</p>
+            }
+            break;
+
+        case "hyvor":
+            if (ArticulateOpts?.Value.Hyvor.Website is { } siteId and > 0)
+            {
+                var host = ArticulateOpts.Value.Hyvor.Host ?? "https://talk.hyvor.com";
+                <div id="hyvor-talk-view" data-website-id="@siteId"></div>
+                <script async type="text/javascript" src="@host/web-api/embed.js"></script>
+                <script>
+                    window.HYVOR_TALK_WEBSITE = parseInt(document.getElementById('hyvor-talk-view').dataset.websiteId, 10);
+                    window.HYVOR_TALK_CONFIG = {
+                        url: window.location.href,
+                        id: '@Model.Id'
+                    };
+                </script>
+            }
+            else
+            {
+                <p class="comments__placeholder">Hyvor Talk is selected but not configured. Set <code>Articulate:Hyvor:Website</code> in appsettings or override this partial.</p>
+            }
+            break;
+
+        case "isso":
+            if (!string.IsNullOrWhiteSpace(ArticulateOpts?.Value.Isso.Host))
+            {
+                var host = ArticulateOpts.Value.Isso.Host!.TrimEnd('/');
+                <section id="isso-thread"></section>
+                <script src="@host/js/embed.min.js" data-isso="@host" async></script>
+            }
+            else
+            {
+                <p class="comments__placeholder">Isso is selected but not configured. Set <code>Articulate:Isso:Host</code> in appsettings or override this partial.</p>
+            }
+            break;
+
+        default:
+            <p class="comments__placeholder">
+                Comments are enabled for this post. Set <code>ViewData[\"CommentsProvider\"]</code>
+                to one of <code>disqus</code>, <code>giscus</code>, <code>utterances</code>,
+                <code>hyvor</code>, or <code>isso</code>, or override <code>Partials/CommentsProvider.cshtml</code>
+                in your theme to wire up a provider.
+            </p>
+            break;
+    }
+</section>
