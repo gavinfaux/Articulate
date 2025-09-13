@@ -118,10 +118,11 @@ namespace Articulate.Migrations.Upgrade.V_6_0_0
                     try
                     {
                         var cropValue = new ImageCropperValue(textValue);
-                        //cropValue.Crops.Add(new ImageCrop("blogPost", 200, 200));
-                        //cropValue.Crops.Add(new ImageCrop("square", 480, 480));
-                        //cropValue.Crops.Add(new ImageCrop("thumbnail", 50, 50));
-                        //cropValue.Crops.Add(new ImageCrop("wide", 1024, 512));
+
+                        // cropValue.Crops.Add(new ImageCrop("blogPost", 200, 200));
+                        // cropValue.Crops.Add(new ImageCrop("square", 480, 480));
+                        // cropValue.Crops.Add(new ImageCrop("thumbnail", 50, 50));
+                        // cropValue.Crops.Add(new ImageCrop("wide", 1024, 512));
                         var json = JsonSerializer.Serialize(cropValue, jsonSerializerOptions);
                         property.SetValue(json, pValue.Culture, pValue.Segment);
                         mediaModified = true;

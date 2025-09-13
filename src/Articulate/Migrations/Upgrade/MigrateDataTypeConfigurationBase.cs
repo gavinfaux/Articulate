@@ -17,7 +17,6 @@ namespace Articulate.Migrations.Upgrade
         ILogger<MigrateDataTypeConfigurationBase> logger)
         : MigrationBase(context)
     {
-
         private static Dictionary<string, object> TryParseConfiguration(string json)
         {
             try
