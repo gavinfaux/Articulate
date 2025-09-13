@@ -4,7 +4,6 @@ using Umbraco.Cms.Core.Models.PublishedContent;
 // TODO: #nullable enable
 namespace Articulate.Models
 {
-
     /// <summary>
     /// The basic model for all articulate objects
     /// </summary>
@@ -154,7 +153,7 @@ namespace Articulate.Models
 
         protected IPublishedValueFallback PublishedValueFallback { get; }
 
-        [Obsolete]
+        [Obsolete("No longer used or supported")]
         public IVariationContextAccessor VariationContextAccessor => null;
     }
 }

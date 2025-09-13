@@ -12,7 +12,7 @@ namespace Articulate
         /// <param name="model"></param>
         /// <param name="relativeAssetPath"></param>
         /// <returns></returns>
-        [Obsolete]
+        [Obsolete("No longer used or supported")]
         public static string ThemedAsset(this IUrlHelper url, IMasterModel model, string relativeAssetPath) => url.Content($"{ArticulateConstants.Paths.UserVirtualPath.EnsureEndsWith('/')}/{model.Theme.EnsureEndsWith('/')}") + "assets/" + relativeAssetPath;
 
         /// <summary>

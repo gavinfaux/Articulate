@@ -54,7 +54,6 @@ namespace Articulate.Models
             : this(content, pager, listItems, publishedValueFallback)
         { }
 
-
         public ListModel(IPublishedContent content, IPublishedValueFallback publishedValueFallback)
             : base(content, publishedValueFallback)
         {
@@ -65,7 +64,7 @@ namespace Articulate.Models
         {
         }
 
-        [Obsolete]
+        [Obsolete("No longer used or supported")]
         public IImageUrlGenerator? ImageUrlGenerator => null;
 
         /// <summary>
