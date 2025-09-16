@@ -1,11 +1,11 @@
 /* Shared base CSS - minimal, accessible defaults */
 :root {
   --font-sans: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica Neue, Arial, "Apple Color Emoji", "Segoe UI Emoji";
-  --text: #111;
-  --bg: #fff;
-  --muted: #666;
-  --link: #0a66c2;
-  --border: #e5e7eb;
+  --text: var(--pico-color);
+  --bg: var(--pico-background-color);
+  --muted: var(--pico-muted-color);
+  --link: var(--pico-primary);
+  --border: var(--pico-muted-border-color);
   --space-1: 0.25rem;
   --space-2: 0.5rem;
   --space-3: 0.75rem;
@@ -25,9 +25,29 @@ body { margin: 0; color: var(--text); background: var(--bg); line-height: 1.6; }
 .site-nav ul { list-style: none; padding: 0; display: flex; gap: var(--space-4); }
 .site-nav a { color: var(--link); text-decoration: none; }
 .site-nav a:hover { text-decoration: underline; }
+/* Underline on all key interactions and when representing the current page */
+.site-nav a:is(:hover, :focus-visible, :active, [aria-current], [aria-current="page"]) { text-decoration: underline; }
 main { padding: var(--space-8) var(--space-4); }
 .post-list { display: grid; gap: var(--space-6); }
 .post-preview .post-title { margin: 0; font-size: 1.25rem; }
 .post-meta { color: var(--muted); font-size: 0.9rem; }
-.pager ul { list-style: none; padding: 0; display: flex; justify-content: space-between; }
+.pager ul { list-style: none; padding: 0; display: flex; justify-content: space-between; gap: var(--space-4); }
 .post-image img { width: 100%; height: auto; display: block; }
+
+/* Author card layout: 2-column at md+, single column on small screens */
+@media (min-width: 768px) {
+  .author-card.grid {
+    grid-template-columns: auto 1fr;
+    gap: var(--space-4);
+    align-items: start;
+  }
+}
+
+/* Share section spacing */
+.share { margin-top: var(--space-8); }
+.share__links { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: var(--space-3); }
+
+/* Prev/Next navigation spacing */
+.prev-next { margin-top: var(--space-8); }
+.prev-next__link { text-decoration: none; }
+.prev-next__link:hover { text-decoration: underline; }

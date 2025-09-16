@@ -1,0 +1,131 @@
+@model Articulate.Models.IMasterModel
+@*
+  Structured Data (Schema.org) JSON-LD
+  - Emits WebSite (+ SearchAction), and context-specific node:
+    - BlogPosting on post pages
+    - Blog on list/home
+  - Uses absolute canonical URLs and ISO 8601 dates
+  - Placed in HeadAssets to ensure presence in <head>
+*@
+@{
+    if (Model is null)
+    {
+        return;
+    }
+
+    var request = Context?.Request;
+    var baseUrl = request is null ? string.Empty : $"{request.Scheme}://{request.Host}";
+    string Abs(string url)
+    {
+        if (string.IsNullOrWhiteSpace(url)) return string.Empty;
+        if (url.StartsWith("http://") || url.StartsWith("https://")) return url;
+        return string.Concat(baseUrl, url);
+    }
+
+    var graph = new List<object>();
+
+    // Publisher
+    var publisher = new Dictionary<string, object?>
+    {
+        ["@type"] = "Organization",
+        ["name"] = Model.BlogTitle
+    };
+    var logoUrl = Abs(Model.BlogLogo);
+    if (!string.IsNullOrWhiteSpace(logoUrl))
+    {
+        publisher["logo"] = new Dictionary<string, object?>
+        {
+            ["@type"] = "ImageObject",
+            ["url"] = logoUrl
+        };
+    }
+
+    // WebSite with SearchAction (if available)
+    var siteUrl = Abs(Model.RootBlogNode.Url());
+    var webSite = new Dictionary<string, object?>
+    {
+        ["@type"] = "WebSite",
+        ["name"] = Model.BlogTitle,
+        ["url"] = siteUrl
+    };
+
+    try
+    {
+        // Method used in SearchBox.cshtml
+        var searchUrl = Model.ArticulateSearchUrl();
+        if (!string.IsNullOrWhiteSpace(searchUrl))
+        {
+            webSite["potentialAction"] = new[]
+            {
+                new Dictionary<string, object?>
+                {
+                    ["@type"] = "SearchAction",
+                    ["target"] = $"{Abs(searchUrl)}?term={{search_term_string}}",
+                    ["query-input"] = "required name=search_term_string"
+                }
+            };
+        }
+    }
+    catch { /* ignore if helper not available for some model types */ }
+
+    graph.Add(webSite);
+
+    // Context-specific node
+    if (Model is Articulate.Models.PostModel pm)
+    {
+        var canonical = Abs(pm.Url());
+        string? img = null;
+        try
+        {
+            var crop = pm.PostImage?.GetCropUrl("wide");
+            if (!string.IsNullOrWhiteSpace(crop)) img = Abs(crop);
+        }
+        catch { }
+
+        var blogPosting = new Dictionary<string, object?>
+        {
+            ["@type"] = "BlogPosting",
+            ["mainEntityOfPage"] = new Dictionary<string, object?> { ["@type"] = "WebPage", ["@id"] = canonical },
+            ["headline"] = pm.Name,
+            ["description"] = pm.PageDescription,
+            ["author"] = new Dictionary<string, object?> { ["@type"] = "Person", ["name"] = pm.Author?.Name },
+            ["datePublished"] = pm.PublishedDate.ToString("o"),
+            ["dateModified"] = pm.PublishedDate.ToString("o"),
+            ["publisher"] = publisher,
+            ["url"] = canonical
+        };
+        if (!string.IsNullOrWhiteSpace(img))
+        {
+            blogPosting["image"] = new[] { img };
+        }
+        graph.Add(blogPosting);
+    }
+    else
+    {
+        var blog = new Dictionary<string, object?>
+        {
+            ["@type"] = "Blog",
+            ["name"] = Model.BlogTitle,
+            ["description"] = Model.BlogDescription,
+            ["url"] = siteUrl,
+            ["publisher"] = publisher
+        };
+        graph.Add(blog);
+    }
+
+    var schema = new Dictionary<string, object?>
+    {
+        ["@context"] = "https://schema.org",
+        ["@graph"] = graph
+    };
+
+    var json = System.Text.Json.JsonSerializer.Serialize(
+        schema,
+        new System.Text.Json.JsonSerializerOptions
+        {
+            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+            WriteIndented = false,
+            DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+        });
+}
+<script type="application/ld+json">@Html.Raw(json)</script>

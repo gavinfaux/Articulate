@@ -4,18 +4,18 @@
 {
     return;
 }
-<nav class="pager" aria-label="Pagination">
+<nav class="pager container" aria-label="Pagination">
     <ul>
         <li>
             @if (Model.HasPrevious && !string.IsNullOrEmpty(Model.PreviousUrl))
             {
-                <a rel="prev" href="@Model.PreviousUrl">Newer posts</a>
+                <a rel="prev" href="@Model.PreviousUrl" role="button" class="secondary">Newer posts</a>
             }
         </li>
         <li>
             @if (Model.HasNext && !string.IsNullOrEmpty(Model.NextUrl))
             {
-                <a rel="next" href="@Model.NextUrl">Older posts</a>
+                <a rel="next" href="@Model.NextUrl" role="button" class="secondary">Older posts</a>
             }
         </li>
     </ul>

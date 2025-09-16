@@ -1,3 +1,6 @@
 @* Shared fallback assets. Theme can override by adding its own Partials/HeadAssets.cshtml *@
 @* Include base head assets; add more links here if Shared needs to extend in future. *@
 @await Html.PartialAsync("BaseHeadAssets")
+
+@* Structured data (Schema.org JSON-LD) *@
+@await Html.PartialAsync("StructuredData", Model)

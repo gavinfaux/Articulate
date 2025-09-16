@@ -1,0 +1,69 @@
+@model Articulate.Models.PostModel
+@*
+  Share partial — progressive enhancement
+  - Uses Web Share API when available and in a user gesture
+  - Always renders fallback share links (X, Facebook, LinkedIn, Reddit, Email)
+  - Accessibility: clear labels, keyboard operable, external links are noopener/noreferrer
+  - Theming: minimal Pico classes, keep BEM contract with .share
+*@
+@{
+    if (Model is null)
+    {
+        return;
+    }
+
+    // Build absolute canonical URL
+    var request = Context?.Request;
+    var baseUrl = request is null ? string.Empty : $"{request.Scheme}://{request.Host}";
+    var relative = Model.Url();
+    var canonical = string.IsNullOrWhiteSpace(baseUrl) ? relative : string.Concat(baseUrl, relative);
+
+    string pageTitle = string.IsNullOrWhiteSpace(Model.PageTitle) ? Model.Name : Model.PageTitle;
+
+    // Encode values for query strings
+    string encUrl = Uri.EscapeDataString(canonical ?? string.Empty);
+    string encTitle = Uri.EscapeDataString(pageTitle ?? string.Empty);
+
+    // Fallback share links
+    var xUrl = $"https://twitter.com/intent/tweet?url={encUrl}&text={encTitle}"; // X/Twitter
+    var fbUrl = $"https://www.facebook.com/sharer/sharer.php?u={encUrl}";
+    var liUrl = $"https://www.linkedin.com/shareArticle?mini=true&url={encUrl}&title={encTitle}";
+    var rdUrl = $"https://www.reddit.com/submit?url={encUrl}&title={encTitle}";
+    var emUrl = $"mailto:?subject={encTitle}&body={encUrl}";
+}
+
+<section class="share container" aria-labelledby="share-title">
+  <h2 id="share-title" class="sr-only">Share this post</h2>
+
+  <div class="share__actions">
+    <button type="button" class="contrast" id="web-share-button">
+      Share
+    </button>
+  </div>
+
+  <ul class="share__links" aria-label="Share via">
+    <li><a class="secondary" href="@xUrl" target="_blank" rel="noopener noreferrer">X</a></li>
+    <li><a class="secondary" href="@fbUrl" target="_blank" rel="noopener noreferrer">Facebook</a></li>
+    <li><a class="secondary" href="@liUrl" target="_blank" rel="noopener noreferrer">LinkedIn</a></li>
+    <li><a class="secondary" href="@rdUrl" target="_blank" rel="noopener noreferrer">Reddit</a></li>
+    <li><a class="secondary" href="@emUrl">Email</a></li>
+  </ul>
+</section>
+
+<script>
+  (function () {
+    var btn = document.getElementById('web-share-button');
+    if (!btn || !navigator.share) return;
+
+    btn.addEventListener('click', function () {
+      try {
+        navigator.share({
+          title: '@(pageTitle?.Replace("'", "\\'") ?? "")',
+          url: '@canonical'
+        });
+      } catch (e) {
+        // no-op; user may cancel or API may not be available
+      }
+    });
+  })();
+</script>

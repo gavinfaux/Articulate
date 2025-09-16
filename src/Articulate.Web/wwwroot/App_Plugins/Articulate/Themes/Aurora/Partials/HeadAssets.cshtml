@@ -3,11 +3,17 @@
    Remove the BaseHeadAssets include to fully replace Shared styling. *@
 @await Html.PartialAsync("BaseHeadAssets")
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+@*
+  TODO: Re-enable Aurora CSS layer after Shared base theme work is complete.
+  The following Aurora-specific assets are temporarily disabled to ensure Aurora
+  falls back to Shared for styling during development of the base theme.
 
-<link href="~/App_Plugins/Articulate/Themes/Aurora/assets/css/reset.css" rel="stylesheet" asp-append-version="true" />
-<link href="~/App_Plugins/Articulate/Themes/Aurora/assets/css/tokens.css" rel="stylesheet" asp-append-version="true" />
-<link href="~/App_Plugins/Articulate/Themes/Aurora/assets/css/base.css" rel="stylesheet" asp-append-version="true" />
-<link href="~/App_Plugins/Articulate/Themes/Aurora/assets/css/components.css" rel="stylesheet" asp-append-version="true" />
-<link href="~/App_Plugins/Articulate/Themes/Aurora/assets/css/utilities.css" rel="stylesheet" asp-append-version="true" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <link href="~/App_Plugins/Articulate/Themes/Aurora/assets/css/reset.css" rel="stylesheet" asp-append-version="true" />
+  <link href="~/App_Plugins/Articulate/Themes/Aurora/assets/css/tokens.css" rel="stylesheet" asp-append-version="true" />
+  <link href="~/App_Plugins/Articulate/Themes/Aurora/assets/css/base.css" rel="stylesheet" asp-append-version="true" />
+  <link href="~/App_Plugins/Articulate/Themes/Aurora/assets/css/components.css" rel="stylesheet" asp-append-version="true" />
+  <link href="~/App_Plugins/Articulate/Themes/Aurora/assets/css/utilities.css" rel="stylesheet" asp-append-version="true" />
+*@

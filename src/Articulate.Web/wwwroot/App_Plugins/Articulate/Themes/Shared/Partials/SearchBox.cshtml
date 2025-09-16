@@ -1,6 +1,6 @@
 @model IMasterModel
 
-<div class="search search--compact articulate-search">
+<div class="search search--compact articulate-search container">
     <form method="get" action="@Model.ArticulateSearchUrl()" role="search">
         <label for="articulate-search-term" class="sr-only">Search</label>
         <input type="search"
@@ -8,7 +8,7 @@
                name="term"
                placeholder="Search..."
                aria-label="Search articles" />
-        <button type="submit" aria-label="Submit search">
+        <button type="submit" aria-label="Submit search" class="secondary">
             <span aria-hidden="true">🔍</span>
             <span class="sr-only">Search</span>
         </button>

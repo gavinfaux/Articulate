@@ -1,8 +1,22 @@
 @model IMasterModel
-<nav class="site-nav" aria-label="Primary">
+@{
+    var currentPath = (Context?.Request?.Path.ToString() ?? string.Empty).TrimEnd('/');
+    string Trim(string? url) => (url ?? string.Empty).TrimEnd('/');
+    var homeUrl = Trim(Model.ArticulateRootUrl());
+    var archiveUrl = Trim(Model.BlogArchiveNode.Url());
+    var authorsUrl = Trim(Model.BlogAuthorsNode.Url());
+    bool IsCurrent(string url) => !string.IsNullOrWhiteSpace(url) && string.Equals(currentPath, url, StringComparison.OrdinalIgnoreCase);
+}
+<nav class="site-nav container" aria-label="Primary">
     <ul>
-        <li><a href="@Model.ArticulateRootUrl()">Home</a></li>
-        <li><a href="@Model.BlogArchiveNode.Url()">Archive</a></li>
-        <li><a href="@Model.BlogAuthorsNode.Url()">Authors</a></li>
+        <li>
+            <a href="@homeUrl" @(IsCurrent(homeUrl) ? "aria-current=\"page\"" : null)>Home</a>
+        </li>
+        <li>
+            <a href="@archiveUrl" @(IsCurrent(archiveUrl) ? "aria-current=\"page\"" : null)>Archive</a>
+        </li>
+        <li>
+            <a href="@authorsUrl" @(IsCurrent(authorsUrl) ? "aria-current=\"page\"" : null)>Authors</a>
+        </li>
     </ul>
 </nav>

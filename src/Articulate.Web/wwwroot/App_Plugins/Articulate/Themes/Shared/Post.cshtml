@@ -18,9 +18,12 @@
         </figure>
     }
 
-    <section class="post-body">
+    <section class="post-body prose">
         @Model.Body
     </section>
+
+    @* Share actions (progressive enhancement) *@
+    @await Html.PartialAsync("Share", Model)
 </article>
 
 @* Author summary card *@
