@@ -57,9 +57,7 @@ jobs:
       uses: pnpm/action-setup@v4
       with:
         version: 10
-        run_install: |
-          - recursive: false
-            args: [--strict-peer-dependencies]
+        run_install: false
 
     - name: Setup NodeJS
       uses: actions/setup-node@v5
