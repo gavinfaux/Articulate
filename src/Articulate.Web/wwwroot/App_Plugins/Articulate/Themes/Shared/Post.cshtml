@@ -4,7 +4,9 @@
     <header>
         <h1 class="post-title">@Model.Name</h1>
         <p class="post-meta">
-            <time datetime="@Model.PublishedDate.ToString("yyyy-MM-dd")">@Model.PublishedDate:dddd, MMMM dd, yyyy</time>
+            <time datetime="@Model.PublishedDate.ToString("o")">
+                @Model.PublishedDate.ToLocalTime().ToString("f", System.Globalization.CultureInfo.CurrentUICulture)
+            </time>
         </p>
         @await Html.PartialAsync("PostTags", Model)
     </header>
@@ -12,9 +14,26 @@
 
     @if (Model.PostImage is not null)
     {
-        var wide = Model.CroppedPostImageUrl + "r=2"; // sample crop usage
         <figure class="post-image">
-            <img src="@wide" alt="" />
+            @{
+                Umbraco.Cms.Core.Models.MediaWithCrops? postMedia = null;
+                try { postMedia = Model.PostImage as Umbraco.Cms.Core.Models.MediaWithCrops; } catch { }
+            }
+            @if (postMedia is not null)
+            {
+                @await Html.PartialAsync("ResponsiveImage", postMedia, new Microsoft.AspNetCore.Mvc.ViewFeatures.ViewDataDictionary(ViewData)
+                {
+                    { "alt", Model.Name },
+                    { "crop", "wide" },
+                    { "sizes", "(min-width: 1024px) 1024px, 100vw" },
+                    { "widths", "480,768,1024" }
+                })
+            }
+            else
+            {
+                var wide = Model.CroppedPostImageUrl;
+                <img src="@wide" alt="" />
+            }
         </figure>
     }
 

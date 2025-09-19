@@ -8,12 +8,6 @@
 
 /* 1) Token surface (grayscale, spacing, fonts) */
 :root {
-  /* Grayscale base (light-first) */
-  --bg: #ffffff;
-  --text: #111111;
-  --muted: #666666;
-  --border: #e6e6e6;
-
   /* Spacing scale */
   --space-1: 0.25rem;
   --space-2: 0.5rem;
@@ -27,13 +21,12 @@
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
 }
 
-/* Map to Pico tokens where helpful (keep Pico primary/secondary defaults) */
+/* Map our neutral tokens to Pico variables so they adapt with light/dark */
 :root {
-  --pico-background-color: var(--bg);
-  --pico-color: var(--text);
-  --pico-muted-color: var(--muted);
-  --pico-muted-border-color: var(--border);
-  /* Keep link/brand colors from Pico unless overridden by a theme */
+  --bg: var(--pico-background-color);
+  --text: var(--pico-color);
+  --muted: var(--pico-muted-color);
+  --border: var(--pico-muted-border-color);
 }
 
 /* Base font family override (optional, aligns with Pico default system stacks) */

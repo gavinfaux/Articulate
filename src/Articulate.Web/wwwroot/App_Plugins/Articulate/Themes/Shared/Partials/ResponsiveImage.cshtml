@@ -1,0 +1,72 @@
+@{
+#nullable enable
+}
+
+@model Umbraco.Cms.Core.Models.MediaWithCrops
+
+
+@functions {
+    private string? GetUrl(int w, string alias = "")
+    {
+        try
+        {
+            return string.IsNullOrWhiteSpace(alias)
+                ? Model.GetCropUrl(width: w)
+                : Model.GetCropUrl(width: w, cropAlias: alias);
+        }
+        catch
+        {
+            return Model.GetCropUrl();
+        }
+    }
+
+    private static string AppendQueryParam(string url, string key, string value)
+    {
+        if (string.IsNullOrWhiteSpace(url)) return url;
+        var sep = url.Contains("?") ? "&" : "?";
+        return string.Concat(url, sep, key, "=", value);
+    }
+}
+@using System.Linq
+@{
+
+    if (Model is null)
+    {
+        return;
+    }
+
+    // Inputs via ViewData
+    var alt = (ViewData["alt"] as string) ?? string.Empty;
+    var crop = (ViewData["crop"] as string) ?? string.Empty; // e.g. "wide" or empty for original
+    var sizes = (ViewData["sizes"] as string) ?? "100vw";
+    var widthsCsv = (ViewData["widths"] as string) ?? "400,800,1200,1600";
+
+    int[] widths = widthsCsv
+        .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        .Select(w => int.TryParse(w, out var n) ? n : 0)
+        .Where(n => n > 0)
+        .Distinct()
+        .OrderBy(n => n)
+        .ToArray();
+
+
+    var src = widths.Length > 0 ? GetUrl(widths[0], crop) : Model.GetCropUrl();
+    var srcset = widths.Length > 0
+        ? string.Join(", ", widths.Select(w => GetUrl(w, crop) + " " + w + "w"))
+        : null;
+
+    // Format-specific srcsets (AVIF, WebP) using ImageSharp format param
+    string? srcsetAvif = srcset is null ? null : string.Join(", ", widths.Select(w => AppendQueryParam(GetUrl(w, crop)!, "format", "avif") + " " + w + "w"));
+    string? srcsetWebp = srcset is null ? null : string.Join(", ", widths.Select(w => AppendQueryParam(GetUrl(w, crop)!, "format", "webp") + " " + w + "w"));
+}
+<picture>
+  @if (!string.IsNullOrWhiteSpace(srcsetAvif))
+  {
+    <source type="image/avif" srcset="@srcsetAvif" sizes="@sizes" />
+  }
+  @if (!string.IsNullOrWhiteSpace(srcsetWebp))
+  {
+    <source type="image/webp" srcset="@srcsetWebp" sizes="@sizes" />
+  }
+  <img src="@src" srcset="@srcset" sizes="@sizes" alt="@alt" loading="lazy" decoding="async" />
+</picture>

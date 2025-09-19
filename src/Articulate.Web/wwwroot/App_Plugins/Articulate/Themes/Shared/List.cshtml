@@ -12,9 +12,7 @@ else
             <article class="post-preview">
                 <header>
                     <h2 class="post-title"><a href="@post.Url()">@post.Name</a></h2>
-                    <p class="post-meta">
-                        <time datetime="@post.PublishedDate.ToString("yyyy-MM-dd")">@post.PublishedDate:dddd, MMMM dd, yyyy</time>
-                    </p>
+                    @await Html.PartialAsync("PostByline", post)
                 </header>
                 <div class="post-excerpt">
                     <p>@post.Excerpt&hellip;</p>

@@ -1,17 +1,15 @@
 @model IImageModel
 @{
-    var postBg = "none";
-
     if (Model.Image is not null)
     {
-        var bgUrl = Model.Image.GetCropUrl("wide");
-        if (bgUrl is not null)
-        {
-            postBg = "url('" + bgUrl + "')";
-        }
-
-        <div class="mdl-card__media mdl-color-text--grey-50"
-             style="background-image: @(postBg);">
+        <div class="mdl-card__media mdl-color-text--grey-50">
+            @await Html.PartialAsync("ResponsiveImage", Model.Image, new Microsoft.AspNetCore.Mvc.ViewFeatures.ViewDataDictionary(ViewData)
+            {
+                { "alt", Model.Name },
+                { "crop", "wide" },
+                { "sizes", "(min-width: 1024px) 1024px, 100vw" },
+                { "widths", "480,768,1024,1440" }
+            })
             <h3>
                 <a href="@Model.Url">@Model.Name</a>
             </h3>

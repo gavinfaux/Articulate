@@ -1,0 +1,90 @@
+@model Articulate.Models.IMasterModel
+@*
+  Theme toggle (Auto / Light / Dark)
+  - Applies [data-theme] on <html>
+  - Persists choice in localStorage ('articulate-theme')
+  - Auto uses prefers-color-scheme and listens for changes
+  - Minimal Pico: use .container by inclusion context; .secondary button style
+*@
+<section class="theme-toggle" aria-label="Theme">
+  <div role="group" aria-label="Theme mode">
+    <button type="button" id="theme-auto" class="secondary icon-btn" aria-pressed="false" title="System">
+      <svg class="icon" aria-hidden="true"><use href="#icon-desktop"></use></svg>
+      <span class="sr-only">System</span>
+    </button>
+    <button type="button" id="theme-light" class="secondary icon-btn" aria-pressed="false" title="Light">
+      <svg class="icon" aria-hidden="true"><use href="#icon-sun"></use></svg>
+      <span class="sr-only">Light</span>
+    </button>
+    <button type="button" id="theme-dark" class="secondary icon-btn" aria-pressed="false" title="Dark">
+      <svg class="icon" aria-hidden="true"><use href="#icon-moon"></use></svg>
+      <span class="sr-only">Dark</span>
+    </button>
+  </div>
+</section>
+
+<script>
+(function () {
+  var STORAGE_KEY = 'articulate-theme';
+  var mql = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)');
+  var html = document.documentElement;
+  var buttons = {
+    auto: document.getElementById('theme-auto'),
+    light: document.getElementById('theme-light'),
+    dark: document.getElementById('theme-dark')
+  };
+  var current = localStorage.getItem(STORAGE_KEY) || 'auto';
+
+  function syncPressed(mode) {
+    Object.keys(buttons).forEach(function (k) {
+      var pressed = (k === mode);
+      buttons[k].setAttribute('aria-pressed', pressed ? 'true' : 'false');
+      // Highlight the active one
+      buttons[k].classList.toggle('contrast', pressed);
+    });
+  }
+
+  function applyTheme(mode) {
+    if (mode === 'light') {
+      html.setAttribute('data-theme', 'light');
+    } else if (mode === 'dark') {
+      html.setAttribute('data-theme', 'dark');
+    } else {
+      // auto: follow OS preference
+      if (mql && mql.matches) {
+        html.setAttribute('data-theme', 'dark');
+      } else {
+        html.setAttribute('data-theme', 'light');
+      }
+      mode = 'auto';
+    }
+    syncPressed(mode);
+  }
+
+  function onSystemChange() {
+    if (current === 'auto') {
+      applyTheme('auto');
+    }
+  }
+
+  if (mql) {
+    if (typeof mql.addEventListener === 'function') {
+      mql.addEventListener('change', onSystemChange);
+    } else {
+      mql.onchange = onSystemChange;
+    }
+  }
+
+  function setMode(mode) {
+    current = mode;
+    localStorage.setItem(STORAGE_KEY, current);
+    applyTheme(current);
+  }
+
+  buttons.auto.addEventListener('click', function () { setMode('auto'); });
+  buttons.light.addEventListener('click', function () { setMode('light'); });
+  buttons.dark.addEventListener('click', function () { setMode('dark'); });
+
+  applyTheme(current);
+})();
+</script>

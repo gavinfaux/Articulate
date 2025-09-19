@@ -1,3 +1,4 @@
+@using Umbraco.Cms.Core.Models
 @model IMasterModel
 @*
   THEME CONTRACT (Shared Base)
@@ -37,18 +38,47 @@
 <body class="articulate">
     @Model.GoogleAnalyticsNoScript()
     <a href="#main-content" class="skip-link">Skip to main content</a>
+    @* Inline SVG sprite (icons) *@
+    @await Html.PartialAsync("Icons")
 
     <header class="site-header" role="banner">
-        @if (!Model.BlogLogo.IsNullOrWhiteSpace())
-        {
-            <a class="site-logo" href="@Model.ArticulateRootUrl()" title="Blog Home">
-                <img src="@Model.BlogLogo" alt="@Model.BlogTitle logo" />
-            </a>
-        }
-        <h1 class="site-title"><a href="@Model.ArticulateRootUrl()">@Model.BlogTitle</a></h1>
-        <p class="site-description">@Model.BlogDescription</p>
-        @await Html.PartialAsync("Menu", Model)
-        @await Html.PartialAsync("HeaderDescription", Model)
+        <div class="site-header__bar container">
+            <div class="site-brand">
+                @{
+                    MediaWithCrops? headerMedia = null;
+                    try { headerMedia = Model.RootBlogNode.Value<Umbraco.Cms.Core.Models.MediaWithCrops>("blogLogo"); }
+                    catch { /* ignore */ }
+                }
+                <a class="site-logo" href="@Model.ArticulateRootUrl()" title="Blog Home">
+                    @if (headerMedia is not null)
+                    {
+                        <span class="site-brand__logo">
+                            @await Html.PartialAsync("ResponsiveImage", headerMedia, new ViewDataDictionary(ViewData)
+                            {
+                                { "alt", Model.BlogTitle + " logo" },
+                                { "crop", "thumbnail" },
+                                { "sizes", "50px" },
+                                { "widths", "50,100" }
+                            })
+                        </span>
+                    }
+                    else if (!Model.BlogLogo.IsNullOrWhiteSpace())
+                    {
+                        <img class="site-brand__logo" src="@Model.BlogLogo" alt="@Model.BlogTitle logo" />
+                    }
+                </a>
+                <div class="site-brand__text">
+                    <h1 class="site-title"><a href="@Model.ArticulateRootUrl()">@Model.BlogTitle</a></h1>
+                    <p class="site-description">@Model.BlogDescription</p>
+                    @await Html.PartialAsync("HeaderDescription", Model)
+                </div>
+            </div>
+            <div class="site-actions">
+                @await Html.PartialAsync("Menu", Model)
+                @await Html.PartialAsync("ThemeToggle", Model)
+                @await Html.PartialAsync("SearchToggle", Model)
+            </div>
+        </div>
 
         @RenderSection("Header", required: false)
     </header>

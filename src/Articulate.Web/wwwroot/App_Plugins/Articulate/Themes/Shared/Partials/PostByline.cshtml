@@ -7,6 +7,10 @@
     var author = Model.Author;
 }
 <div class="post-byline">
+    @if (author?.Image is not null)
+    {
+        <img class="post-byline__avatar" src='@author.Image.GetCropUrl("thumbnail")' alt='@author.Name' />
+    }
     <span class="post-byline__author">
         @if (!string.IsNullOrWhiteSpace(author?.BlogUrl))
         {
@@ -17,7 +21,11 @@
             <text>By @author?.Name</text>
         }
     </span>
-    <span class="post-byline__date"> on <time datetime="@Model.PublishedDate.ToString("yyyy-MM-dd")">@Model.PublishedDate:dddd, MMMM dd, yyyy</time></span>
+    <span class="post-byline__date">
+        on <time datetime="@Model.PublishedDate.ToString("o")">
+            @Model.PublishedDate.ToLocalTime().ToString("f", System.Globalization.CultureInfo.CurrentUICulture)
+        </time>
+    </span>
     @if (Model.Categories?.Any() == true)
     {
         <span class="post-byline__categories"> in @string.Join(", ", Model.Categories)</span>
