@@ -95,8 +95,8 @@ const versioningPlugin = (): Plugin => {
 
       // update package version for local NuGet package feed/tests
       console.log(`Updating package.json version to ${version}`);
-      const npmCommand = `npm version ${version} --allow-same-version --no-git-tag-version`;
-      execSync(npmCommand, { encoding: "utf8" });
+      const pnpmCommand = `pnpm version ${version} --allow-same-version --no-git-tag-version`;
+      execSync(pnpmCommand, { encoding: "utf8" });
     },
   };
 };
@@ -118,3 +118,4 @@ export default defineConfig({
   },
   plugins: [tsconfigPaths(), versioningPlugin(), umbracoPackagePlugin()],
 });
+

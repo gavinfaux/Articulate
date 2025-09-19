@@ -6,7 +6,7 @@ Articulate 6.0.0 represents a major version upgrade that introduces significant 
 
 **Previous Version:** Articulate 5.1.1  
 **New Version:** Articulate 6.0.0  
-**Release Type:** Major Version (Breaking Changes Included)
+**Release Type:** Major Version
 
 ## 🚀 Major Updates & New Features
 
@@ -33,10 +33,11 @@ To improve modularity and maintainability, the single Articulate package from v5
 
 - **Umbraco Version**: Requires Umbraco 15.2.3+ (previously 10.1.0).
 - **.NET Version**: Requires .NET 9.0 (previously .NET 6.0/7.0/8.0).
-- **Node.js**: A new requirement for client-side development is Node.js ≥22 and npm ≥10.9.2.
+- **Node.js**: A new requirement for client-side development is Node.js ≥22 and pnpm ≥10.17.0.
 
 ### Package & API Changes
 
+- **Default Themes** - The default built-in themes still use MasterPage layouts and have been updated work with modern browsers, there are no breaking changes to the built-in themes. The built-in themes are now packaged as `Articulate.Web` and are located in the `Themes` folder. 
 - **Project names vs NuGet Package IDs**
   - The package structure has changed. The main `Articulate` project still contains the front end models, controllers, core logic and public API, but is now packaged as `Articulate.Core`.
   - The backoffice extension and related management API is now in `Articulate.Api.Management`
@@ -46,41 +47,39 @@ To improve modularity and maintainability, the single Articulate package from v5
   - Client-side assets have moved from `App_Plugins\Articulate` to `wwwroot\App_Plugins\Articulate` to align with modern .NET static asset handling.
   - Views are now compiled into the `Articulate.Web` project and are no longer in `App_Plugins\Articulate\Themes` folder when package installed. Custom themes and overrides are still supported in installations via the `Views\Articulate` folder (changed from `Views\ArticulateThemes`).
 - **API Endpoints**: All backoffice API endpoints have been restructured. Custom integrations will need to be updated.
-- **Build Process**: The client-side build process is now managed by npm/Vite. See the Client development setup for new commands.
-- **Public API**: The public API has been updated to use modern Umbraco/.NET patterns and conventions, some methods or signatures will have changed, been marked as obsolete (replaced with alternative method calls) or removed. For example ILocalizationService has changed to ILanguageService, IVariationContextAccessor has been removed.
+- **Build Process**: The client-side build process is now managed by pnpm/Vite. See the Client development setup for new commands.
+- **Public API**: The public API has been updated to use modern Umbraco/.NET patterns and conventions, some methods or signatures will have changed, been marked as obsolete (replaced with alternative method calls) or removed. For example ILocalizationService has changed to ILanguageService, IVariationContextAccessor has been removed. If you have custom themes or integrations, you will need to update your code to use the new APIs.
 
 ## 🔄 Migration Guide
 
 ### For Existing Articulate 5.x Users
 
-1. **Backup**: Create full backup of your Umbraco installation and Articulate content
-2. **Umbraco Upgrade**: Upgrade to Umbraco 15.2.3+ or 16+ first
-3. **Package Installation**: Install Articulate 6.0.0 via NuGet or Umbraco package
-4. **Post-Installation**: Follow the new post-installation checks in the README
-5. **Data Migration**: Re-run Articulate package migrations if needed
-6. **Theme Updates**: Verify and update custom themes for compatibility
+1. **Export/Import** - In the back office export BlogML from Articulate 5 instance and then import the BlogML file into Articulate 6.x instance. This will migrate all blog posts and managed media; assets stored in the `media\articulate` folder are **not** migrated.
 
-- NOTE: Built in themes still use the older MasterPage based system rather than the newer MVC Layout system, these may be updated in a future release.
-- You can use the backoffice Theme copy feature to copy a built in theme to the user themes folder and then customize the Master page and related Views/Partials/Assets; this is the recommended approach for customizing themes.
-- If you want to override a built in themes layout or assets (CSS/JS etc) you will need to clone the complete theme and customize the Master page and related Views/Partials/Assets.
-- If you just want to override specific Views or Partials in a built-in theme, for example amend the VAPOUR List view render or use an infinite pager you just need to place your custom version in the user themes folder with the same theme name, e.g. `Views\Articulate\VAPOR\List.cshtml` or `Views\Articulate\VAPOR\Partials\Pager.cshtml`. You can either use the Theme clone feature for this and then delete any file you don't need to change, or manually get the file(s) from the GitHub repository and place it in the user themes folder.
+2. **Upgrade**
+  - **Backup**: Create full backup of your Umbraco installation and Articulate content
+  - **Umbraco Upgrade**: Upgrade to Umbraco 15.2.3+ or 16+ first
+  - **Package Installation**: Install Articulate 6.0.0 via NuGet or Umbraco package
+  - **Post-Installation**: Follow the new post-installation checks in the README
+  - **Data Migration**: Re-run Articulate package migrations if needed
+  - **Theme Updates**: Verify and update custom themes and extension points for compatibility
 
 ### Development Setup
 
 The backoffice extension is now a modern web application built with `@umbraco-cms/backoffice`, Web components (Lit + Umbraco UUI) and TypeScript. This is now located in the `Articulate.Api.Management` projects `Client` folder. Building/packaging the solution will run the Vite build process and copy the output files to the `wwwroot/App_Plugins/Articulate/BackOffice` folder where the .NET build will package as static web assets.
 
-```bash
+```powershell
 # Install dependencies
-npm install
+pnpm install
 
 # Start development server
-npm run dev
+pnpm run dev
 
 # Generate API client (after starting Umbraco)
-npm run generate:api
+pnpm run generate:api
 
 # Build for production
-npm run build
+pnpm run build
 ```
 
 ## 🐛 Known Issues & Limitations
@@ -114,3 +113,8 @@ This major version represents a significant investment in modernizing Articulate
 **Compatibility:** Umbraco 15.2.3+ and 16+  
 **License:** MIT  
 **Repository:** <https://github.com/Shazwazza/Articulate>
+
+
+
+
+

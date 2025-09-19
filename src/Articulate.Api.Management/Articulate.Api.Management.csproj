@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
+<Project Sdk="Microsoft.NET.Sdk.Razor">
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
     <CompressionEnabled>false</CompressionEnabled>
@@ -80,26 +80,26 @@
     <IsCiBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</IsCiBuild>
     <IsReleaseBuild>false</IsReleaseBuild>
     <IsReleaseBuild Condition="'$(IsCiBuild)' == 'true' Or '$(Configuration)' == 'Release'">true</IsReleaseBuild>
-    <_NpmRestoreCommand>npm install --no-fund</_NpmRestoreCommand>
-    <_NpmRestoreCommand Condition="'$(IsCiBuild)' == 'true'">npm ci --no-fund --no-audit --prefer-offline</_NpmRestoreCommand>
-    <_NpmBuildCommand>npm run build</_NpmBuildCommand>
-    <_NpmBuildCommand Condition="'$(IsCiBuild)' == 'true'">npm run build:release</_NpmBuildCommand>
+    <_PnpmRestoreCommand>pnpm install</_PnpmRestoreCommand>
+    <_PnpmRestoreCommand Condition="'$(IsCiBuild)' == 'true'">pnpm install --frozen-lockfile --prefer-offline</_PnpmRestoreCommand>
+    <_PnpmBuildCommand>pnpm run build</_PnpmBuildCommand>
+    <_PnpmBuildCommand Condition="'$(IsCiBuild)' == 'true'">pnpm run build:release</_PnpmBuildCommand>
   </PropertyGroup>
 
-  <Target Name="RestoreClient" Inputs="Client\package.json;Client\package-lock.json" Outputs="Client\node_modules\.package-lock.json">
-    <Message Text="[Articulate] Restoring NPM packages with command: $(_NpmRestoreCommand)..." Importance="high" />
-    <Exec Command="$(_NpmRestoreCommand)" WorkingDirectory="Client" />
+  <Target Name="RestoreClient" Inputs="Client\package.json;Client\pnpm-lock.yaml" Outputs="Client\node_modules\.modules.yaml">
+    <Message Text="[Articulate] Restoring pnpm packages with command: $(_PnpmRestoreCommand)..." Importance="high" />
+    <Exec Command="$(_PnpmRestoreCommand)" WorkingDirectory="Client" />
   </Target>
 
   <!--This does not always detect changes in development, clean and rebuild or build client yourself.-->
   <Target Name="BuildClient" DependsOnTargets="RestoreClient" BeforeTargets="AssignTargetPaths" Inputs="@(ClientAssetsInput)" Outputs="$(IntermediateOutputPath)client.complete.txt">
-    <Message Importance="high" Text="[Articulate] Building Client with NPM command: $(_FinalBuildCommand)" />
+    <Message Importance="high" Text="[Articulate] Building Client with pnpm command: $(_PnpmBuildCommand)" />
     <!--Allow build to continue with warning if not CI we may be working on API/Client changes.-->
-    <Exec Command="$(_NpmBuildCommand)" WorkingDirectory="Client" Condition="'$(IsReleaseBuild)' == 'false'" ContinueOnError="true">
+    <Exec Command="$(_PnpmBuildCommand)" WorkingDirectory="Client" Condition="'$(IsReleaseBuild)' == 'false'" ContinueOnError="true">
       <Output TaskParameter="ExitCode" PropertyName="ClientBuildExitCode" />
     </Exec>
     <!--Fail build if client build to fails for CI or Relase build-->
-    <Exec Command="$(_NpmBuildCommand)" WorkingDirectory="Client" Condition="'$(IsReleaseBuild)' == 'true'">
+    <Exec Command="$(_PnpmBuildCommand)" WorkingDirectory="Client" Condition="'$(IsReleaseBuild)' == 'true'">
       <Output TaskParameter="ExitCode" PropertyName="ClientBuildExitCode" />
     </Exec>
     <Warning Condition="'$(IsReleaseBuild)' == 'false' AND '$(ClientBuildExitCode)' != '0'" Text="[Articulate] The BackOffice client-side build failed, check the Client project to resolve. The .NET build will continue." />
@@ -131,3 +131,6 @@
   </ItemGroup>
 
 </Project>
+
+
+

@@ -90,7 +90,7 @@ By maintaining a local copy, we can avoid potential breaking changes from upstre
 
 ## 7. Development Workflow and Build Process
 
-This section details how the front-end assets are developed, built, and integrated with Umbraco. The entire process is managed through npm scripts and a set of custom Node.js scripts.
+This section details how the front-end assets are developed, built, and integrated with Umbraco. The entire process is managed through pnpm scripts and a set of custom Node.js scripts.
 
 ### `package.json` & [Vite](https://vitejs.dev/)
 
@@ -115,9 +115,9 @@ This file, located in `src/Articulate/Client/public`, is the modern manifest for
 
 ### Putting It All Together: The End-to-End Flow
 
-1. **Development**: A developer runs `npm run dev` to start the Vite development server. They can then make changes to the Lit components in `src/Articulate/Client/src` with hot-reloading.
-2. **API Changes**: If a C# API endpoint is modified, the developer runs `npm run generate:api` to update the TypeScript client.
-3. **Building for Production**: When development is complete, `npm run build` is executed. This command runs a sequence of tasks: it compiles the TypeScript, builds the assets with Vite, and then runs the `post-build.js` script.
+1. **Development**: A developer runs `pnpm run dev` to start the Vite development server. They can then make changes to the Lit components in `src/Articulate/Client/src` with hot-reloading.
+2. **API Changes**: If a C# API endpoint is modified, the developer runs `pnpm run generate:api` to update the TypeScript client.
+3. **Building for Production**: When development is complete, `pnpm run build` is executed. This command runs a sequence of tasks: it compiles the TypeScript, builds the assets with Vite, and then runs the `post-build.js` script.
 4. **Integration with Umbraco**: The `post-build.js` script places the final assets in the `wwwroot` directory. When the Umbraco backoffice loads, it reads the `umbraco-package.json` file and includes the specified JavaScript bundle, making the new backoffice extensions available to the user.
 
 ## 8. Anatomy of a Backoffice Component
@@ -229,7 +229,7 @@ This section covers the low-level details of the project setup, build process, a
 
 The main `Articulate.csproj` file contains important logic for building the backoffice client and packaging the themes.
 
-- **Client-Side Build**: The project includes two MSBuild targets, `RestoreClient` and `BuildClient`. When the project is built, these targets automatically run `npm i` and `npm run build` in the `src/Articulate/Client` directory. This ensures that the front-end assets are always up-to-date with the latest source code before the .NET project is compiled.
+- **Client-Side Build**: The project includes two MSBuild targets, `RestoreClient` and `BuildClient`. When the project is built, these targets automatically run `pnpm install` and `pnpm run build` in the `src/Articulate/Client` directory. This ensures that the front-end assets are always up-to-date with the latest source code before the .NET project is compiled.
 - **Theme Embedding**: As a Razor Class Library (RCL), the built-in themes located in `src/Articulate/wwwroot/Themes` are automatically included as static web assets. This makes them available to the application at runtime, where they can be copied to the user-editable `~/Views/ArticulateThemes` directory by the `ArticulateThemeRepository`.
 
 ### The Test Website (`Articulate.Tests.Website`)
@@ -246,3 +246,4 @@ The test website is the primary environment for developing and debugging the Art
 **IMPORTANT**: To create a valid NuGet package for distribution, you **must** use the **`Pack`** command from within Visual Studio (right-click the `Articulate` project and select `Pack`).
 
 Using the standard `dotnet pack` command from the command line will **not** produce a usable package. It fails to correctly include the static web assets from the `wwwroot` folder and the necessary `.build` props files that allow the package to be correctly installed in a target Umbraco website. This is a known limitation in how .NET handles packaging for complex Razor Class Libraries with front-end assets.
+

@@ -61,7 +61,7 @@ This is the core of the new plan. The entire frontend will be self-contained in 
 Before writing the frontend, the developer will generate the typed API client.
 
 1. Run the Umbraco application locally.
-2. Install the `openapi-ts` tool globally or via `npx`: `npm install -g @hey-api/openapi-ts`
+2. Install the `openapi-ts` tool globally or via `npx`: `pnpm add -g @hey-api/openapi-ts`
 3. Run the command, pointing to the local Swagger URL:
 
     ```bash
@@ -697,3 +697,4 @@ The original theme was `material.pink-blue.min.css`. The primary accent color wa
             }
         </style>
       ```
+

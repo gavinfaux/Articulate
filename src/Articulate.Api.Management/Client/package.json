@@ -6,8 +6,9 @@
   "description": "Articulate BackOffice extension",
   "engines": {
     "node": ">=22",
-    "npm": ">=10.9.2"
+    "pnpm": ">=10.17.0"
   },
+  "packageManager": "pnpm@10.17.0",
   "keywords": [
     "blog",
     "umbraco",
@@ -23,8 +24,8 @@
     "build:release": "tsc && vite build --mode production",
     "preview": "vite preview",
     "watch": "vite build --watch",
-    "lint:errors": "npm run lint -- --quiet",
-    "lint:fix": "npm run lint -- --fix",
+    "lint:errors": "pnpm run lint -- --quiet",
+    "lint:fix": "pnpm run lint -- --fix",
     "lint": "eslint src",
     "check": "tsc --noEmit",
     "generate:api": "cross-env NODE_TLS_REJECT_UNAUTHORIZED=0 node ./scripts/generate-api.js https://localhost:44366/umbraco/swagger/articulate/swagger.json ./src/api --excludeTags 'Markdown Editor'"

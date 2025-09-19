@@ -130,12 +130,13 @@ In v6, all back-office API controllers and related logic have been moved into a 
 
 **Reasoning:** The front-end has been modernized from legacy AngularJS to a Lit and TypeScript stack, which requires a modern client-side build pipeline.
 
-**Impact:** The development workflow is fundamentally different. Developers working on the source code or building from source will need to install Node.js and use npm scripts. Projects hosting Articulate for testing will also require a configuration change.
+**Impact:** The development workflow is fundamentally different. Developers working on the source code or building from source will need to install Node.js and use pnpm scripts. Projects hosting Articulate for testing will also require a configuration change.
 
 ### Key Development & Build Changes
 
 | Area | Change | Status & Notes |
 | --- | --- | --- |
-| **Build Tools** | Node.js/npm Requirement | **New Requirement**. A Node.js-based build process (using Vite) is now required to build the back-office client-side assets. You must have Node.js and npm installed. |
-| **Build Commands** | `npm run build` | **New Requirement**. To produce the final client-side assets, you must run `npm install` followed by `npm run build` from the `src/Articulate/` directory. |
+| **Build Tools** | Node.js/pnpm Requirement | **New Requirement**. A Node.js-based build process (using Vite) is now required to build the back-office client-side assets. You must have Node.js and pnpm installed. |
+| **Build Commands** | `pnpm run build` | **New Requirement**. To produce the final client-side assets, you must run `pnpm install` followed by `pnpm run build` from the `src/Articulate/` directory. |
 | **Host Project Setup** | `<CopyStaticWebAssetsToPublish>` | **New Requirement**. Any web project that references the `Articulate` project (e.g., a test site) must include `<CopyStaticWebAssetsToPublish>true</CopyStaticWebAssetsToPublish>` in its `.csproj` file to ensure the back-office assets are correctly copied on build. |
+
