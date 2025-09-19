@@ -19,7 +19,7 @@ jobs:
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         fetch-depth: 0
     - uses: dotnet/nbgv@master
@@ -48,20 +48,23 @@ jobs:
     - name: Add MSBuild to PATH
       uses: microsoft/setup-msbuild@v2
 
-    - uses: nuget/setup-nuget@v2.0.1
+    - name: Setup .NET
+      uses: nuget/setup-nuget@v2.0.1
       with:
         nuget-version: 'latest'
 
-    - uses: actions/setup-node@v4
+      name: Setup pnpm
+      uses: pnpm/action-setup@v4
+      with:
+        version: 10
+        run_install: false
+
+      name: Setup NodeJS
+      uses: actions/setup-node@v5
       with:
         node-version-file: 'src/Articulate.Api.Management/Client/.nvmrc'
         cache: 'pnpm'
         cache-dependency-path: 'src/Articulate.Api.Management/Client/pnpm-lock.yaml'
-    - name: Setup pnpm
-      uses: pnpm/action-setup@v4
-      with:
-        version: 10.17.0
-        run_install: false
 
     - name: Nuget Restore
       run: nuget restore $env:Solution_File
