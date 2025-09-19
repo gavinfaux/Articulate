@@ -58,9 +58,8 @@ jobs:
       with:
         version: 10
         run_install:
-          - recursive: true
+          - recursive: false
             args: [--strict-peer-dependencies]
-          - args: [--global, typescript]
 
     - name: Setup NodeJS
       uses: actions/setup-node@v5
