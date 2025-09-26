@@ -151,9 +151,9 @@ namespace Articulate.Models
 
         public string PageTags { get; protected set; }
 
-        protected IPublishedValueFallback PublishedValueFallback { get; }
-
         [Obsolete("No longer used or supported")]
         public IVariationContextAccessor VariationContextAccessor => null;
+
+        protected IPublishedValueFallback PublishedValueFallback { get; }
     }
 }

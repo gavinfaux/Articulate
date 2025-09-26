@@ -486,26 +486,6 @@ namespace Articulate.Models
             builder.AppendHtml(openGraphDesc);
         }
 
-        /// <summary>
-        ///     Shuffles a List&lt;T&gt; in-place.
-        /// </summary>
-        private static void Shuffle<T>(this List<T> list)
-        {
-            if (list is not null)
-            {
-                Random rng = Random.Shared;
-                for (var i = list.Count - 1; i >= 1; i--)
-                {
-                    var j = rng.Next(i + 1);
-                    (list[i], list[j]) = (list[j], list[i]);
-                }
-            }
-            else
-            {
-                throw new ArgumentNullException(nameof(list));
-            }
-        }
-
         public static IPublishedContent[] GetListNodes(IMasterModel masterModel)
         {
             IPublishedContent[] listNodes = masterModel.RootBlogNode.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive)?.ToArray();
@@ -621,5 +601,25 @@ namespace Articulate.Models
         /// Get the full domain of the current page.
         /// </summary>
         private static string GetDomain(this HttpRequest request) => $"{request.Scheme}{Uri.SchemeDelimiter}{request.Host.Value}";
-    }
+
+        /// <summary>
+        ///     Shuffles a List&lt;T&gt; in-place.
+        /// </summary>
+        private static void Shuffle<T>(this List<T> list)
+        {
+            if (list is not null)
+            {
+                Random rng = Random.Shared;
+                for (var i = list.Count - 1; i >= 1; i--)
+                {
+                    var j = rng.Next(i + 1);
+                    (list[i], list[j]) = (list[j], list[i]);
+                }
+            }
+            else
+            {
+                throw new ArgumentNullException(nameof(list));
+            }
+        }
+     }
 }

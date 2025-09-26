@@ -29,15 +29,35 @@ function base64urlencode(buffer) {
 
 // Token and session management
 function getAccessToken() {
-    return localStorage.getItem(config.storageKeys.accessToken);
+    const key = config.storageKeys.accessToken;
+    const sessionToken = sessionStorage.getItem(key);
+    if (sessionToken) {
+        return sessionToken;
+    }
+
+    // Migrate any legacy tokens that might still exist in localStorage.
+    const legacyToken = localStorage.getItem(key);
+    if (legacyToken) {
+        sessionStorage.setItem(key, legacyToken);
+        localStorage.removeItem(key);
+        return legacyToken;
+    }
+
+    return null;
 }
 
 function setAccessToken(token) {
-    localStorage.setItem(config.storageKeys.accessToken, token);
+    const key = config.storageKeys.accessToken;
+    if (token) {
+        sessionStorage.setItem(key, token);
+        localStorage.removeItem(key);
+    }
 }
 
 function clearAccessToken() {
-    localStorage.removeItem(config.storageKeys.accessToken);
+    const key = config.storageKeys.accessToken;
+    sessionStorage.removeItem(key);
+    localStorage.removeItem(key);
 }
 
 // Main authentication functions
@@ -103,17 +123,45 @@ async function handleLoginCallback() {
 
     const tokenData = await tokenResponse.json();
     setAccessToken(tokenData.access_token);
+
+    const sessionEstablished = await ensureBackOfficeSession();
+    if (!sessionEstablished) {
+        throw new Error('Back-office session could not be established.');
+    }
 }
 
-function logout() {
-    clearAccessToken();
-    // For a full sign-out,redirect to the end session endpoint.
-    window.location.href = config.authEndUrl;
+async function ensureBackOfficeSession() {
+    // Rely on bearer tokens for Management API access; no cookie bootstrap required.
+    // Keeping this function to maintain call sites and future extensibility.
+    const token = getAccessToken();
+    return Boolean(token);
+}
+
+async function logout() {
+    const token = getAccessToken();
+
+    try {
+        if (token) {
+            await fetch(config.authEndUrl, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+        }
+    } catch (error) {
+        console.warn('[authService] Failed to sign out from Umbraco.', error);
+    } finally {
+        clearAccessToken();
+        // Reload current path to reinitialize the app into the login step.
+        window.location.href = window.location.pathname;
+    }
 }
 
 export const authService = {
     redirectToLogin,
     handleLoginCallback,
     getAccessToken,
+    ensureBackOfficeSession,
     logout
 };

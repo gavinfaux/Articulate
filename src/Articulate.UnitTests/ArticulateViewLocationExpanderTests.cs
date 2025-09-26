@@ -70,13 +70,6 @@ namespace Articulate.UnitTests
             locationProvider.Verify(p => p.GetLocations(It.IsAny<string>()), Times.Never);
         }
 
-        private static ViewLocationExpanderContext MakeContext(ServiceProvider sp)
-        {
-            var http = new DefaultHttpContext { RequestServices = sp };
-            var actionContext = new ActionContext(http, new RouteData(), new ActionDescriptor());
-            return new ViewLocationExpanderContext(actionContext, "Index", "Home", null, null, true);
-        }
-
         [Test]
         public void PopulateValues_Sets_Theme_And_HttpContext_Item()
         {
@@ -95,6 +88,13 @@ namespace Articulate.UnitTests
             ctx.ActionContext.HttpContext.Items.Should()
                 .ContainKey("ThemeName").WhoseValue.Should().Be("Aurora");
             themeResolver.Verify(r => r.GetCurrentThemeName(), Times.Once);
+        }
+
+        private static ViewLocationExpanderContext MakeContext(ServiceProvider sp)
+        {
+            var http = new DefaultHttpContext { RequestServices = sp };
+            var actionContext = new ActionContext(http, new RouteData(), new ActionDescriptor());
+            return new ViewLocationExpanderContext(actionContext, "Index", "Home", null, null, true);
         }
     }
 }

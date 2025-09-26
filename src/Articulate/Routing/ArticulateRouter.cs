@@ -111,7 +111,7 @@ namespace Articulate.Routing
                             MapRssRoute(httpContext, rootNodePath, articulateRootNode, domains);
 
                             // TODO: Enable when Editor refactor to Alpine.js completed
-                            // MapMarkdownEditorRoute(httpContext, rootNodePath, articulateRootNode, domains);
+                            MapMarkdownEditorRoute(httpContext, rootNodePath, articulateRootNode, domains);
                             MapAuthorsRssRoute(httpContext, rootNodePath, articulateRootNode, domains);
 
                             MapSearchRoute(httpContext, rootNodePath, articulateRootNode, domains);

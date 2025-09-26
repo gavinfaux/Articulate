@@ -38,9 +38,13 @@ namespace Articulate.Options
         /// Shared CommentsProvider can render a working embed without theme overrides.
         /// </summary>
         public DisqusOptions Disqus { get; set; } = new();
+
         public GiscusOptions Giscus { get; set; } = new();
+
         public UtterancesOptions Utterances { get; set; } = new();
+
         public HyvorOptions Hyvor { get; set; } = new();
+
         public IssoOptions Isso { get; set; } = new();
     }
 
@@ -52,28 +56,41 @@ namespace Articulate.Options
     public class GiscusOptions
     {
         public string? Repo { get; set; }
+
         public string? RepoId { get; set; }
+
         public string? Category { get; set; }
+
         public string? CategoryId { get; set; }
+
         public string? Mapping { get; set; } = "pathname";
+
         public string? Theme { get; set; } = "light";
+
         public string? Lang { get; set; } = "en";
+
         public bool ReactionsEnabled { get; set; } = true;
+
         public bool EmitMetadata { get; set; } = false;
+
         public string? InputPosition { get; set; } = "bottom";
     }
 
     public class UtterancesOptions
     {
         public string? Repo { get; set; }
+
         public string? IssueTerm { get; set; } = "pathname";
+
         public string? Label { get; set; } = "comment";
+
         public string? Theme { get; set; } = "github-light";
     }
 
     public class HyvorOptions
     {
         public int? Website { get; set; }
+
         public string? Host { get; set; } // optional self-host
     }
 

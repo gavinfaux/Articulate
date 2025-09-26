@@ -29,6 +29,87 @@ namespace Articulate.ImportExport
         ISqlContext sqlContext,
         ILogger<BlogMlExporter> logger)
     {
+        public async Task ExportAsync(
+    Guid blogRootNode,
+    string exportFileName,
+    bool exportImagesAsBase64 = false)
+        {
+            {
+                IContent root = contentService.GetById(blogRootNode) ??
+                                throw new InvalidOperationException("No node found with id " + blogRootNode);
+
+                if (!root.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.Articulate))
+                {
+                    throw new InvalidOperationException(
+                        $"The node with id {blogRootNode} is not an Articulate root node");
+                }
+
+                IContentType unused = contentTypeService.Get(ArticulateConstants.ContentType.ArticulateRichText) ??
+                                      throw new InvalidOperationException(
+                                          "Articulate is not installed properly, the 'ArticulateRichText' doc type could not be found");
+                IDataType categoryDataType =
+                    await dataTypeService.GetAsync("Articulate Categories").ConfigureAwait(false) ??
+                    throw new InvalidOperationException(
+                        "No Data Type named 'Articulate Categories' found");
+                TagConfiguration? categoryConfiguration = categoryDataType.ConfigurationAs<TagConfiguration>();
+                var categoryGroup = categoryConfiguration?.Group;
+                IDataType tagDataType = await dataTypeService.GetAsync("Articulate Tags").ConfigureAwait(false) ??
+                                        throw new InvalidOperationException(
+                                            "No Data Type named 'Articulate Tags' found");
+                TagConfiguration? tagConfiguration = tagDataType.ConfigurationAs<TagConfiguration>();
+                var tagGroup = tagConfiguration?.Group;
+
+                // TODO: See: http://argotic.codeplex.com/wikipage?title=Generating%20portable%20web%20log%20content&referringTitle=Home
+                var blogMlDoc = new BlogMLDocument
+                {
+                    RootUrl = new Uri(urlProvider.GetUrl(root.Id), UriKind.RelativeOrAbsolute),
+                    GeneratedOn = DateTime.Now,
+                    Title = new BlogMLTextConstruct(root.GetValue<string>("blogTitle")),
+                    Subtitle = new BlogMLTextConstruct(root.GetValue<string>("blogDescription")),
+                };
+
+                IContentType authorsContentType =
+                    contentTypeService.Get(ArticulateConstants.ContentType.ArticulateAuthors)
+                    ?? throw new InvalidOperationException(
+                        "Articulate is not installed properly, the 'ArticulateAuthors' doc type could not be found");
+
+                IEnumerable<IContent> authorsNodes = contentService.GetPagedDescendants(
+                    root.Id,
+                    0,
+                    int.MaxValue,
+                    out var total,
+                    sqlContext.Query<IContent>().Where(x => x.ContentTypeId == authorsContentType.Id),
+                    Ordering.By("CreateDate", Direction.Descending));
+
+                foreach (IContent authorsNode in authorsNodes)
+                {
+                    AddBlogAuthors(authorsNode, blogMlDoc);
+                }
+
+                AddBlogCategories(blogMlDoc, categoryGroup);
+
+                IContentType archiveContentType =
+                    contentTypeService.Get(ArticulateConstants.ContentType.ArticulateArchive)
+                    ?? throw new InvalidOperationException(
+                        "Articulate is not installed properly, the 'ArticulateArchive' doc type could not be found");
+
+                IEnumerable<IContent> archiveNodes = contentService.GetPagedDescendants(
+                    root.Id,
+                    0,
+                    int.MaxValue,
+                    out total,
+                    sqlContext.Query<IContent>().Where(x => x.ContentTypeId == archiveContentType.Id),
+                    Ordering.By("CreateDate", Direction.Descending));
+
+                foreach (IContent archiveNode in archiveNodes)
+                {
+                    AddBlogPosts(archiveNode, blogMlDoc, categoryGroup, tagGroup, exportImagesAsBase64);
+                }
+
+                WriteFile(blogMlDoc, exportFileName);
+            }
+        }
+
         private void AddBlogAuthors(IContent authorsNode, BlogMLDocument blogMlDoc)
         {
             foreach (IContent author in contentService.GetPagedChildren(authorsNode.Id, 0, int.MaxValue, out _))
@@ -192,87 +273,6 @@ namespace Articulate.ImportExport
                 pageIndex++;
             }
             while (posts.Length == pageSize);
-        }
-
-        public async Task ExportAsync(
-            Guid blogRootNode,
-            string exportFileName,
-            bool exportImagesAsBase64 = false)
-        {
-            {
-                IContent root = contentService.GetById(blogRootNode) ??
-                                throw new InvalidOperationException("No node found with id " + blogRootNode);
-
-                if (!root.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.Articulate))
-                {
-                    throw new InvalidOperationException(
-                        $"The node with id {blogRootNode} is not an Articulate root node");
-                }
-
-                IContentType unused = contentTypeService.Get(ArticulateConstants.ContentType.ArticulateRichText) ??
-                                      throw new InvalidOperationException(
-                                          "Articulate is not installed properly, the 'ArticulateRichText' doc type could not be found");
-                IDataType categoryDataType =
-                    await dataTypeService.GetAsync("Articulate Categories").ConfigureAwait(false) ??
-                    throw new InvalidOperationException(
-                        "No Data Type named 'Articulate Categories' found");
-                TagConfiguration? categoryConfiguration = categoryDataType.ConfigurationAs<TagConfiguration>();
-                var categoryGroup = categoryConfiguration?.Group;
-                IDataType tagDataType = await dataTypeService.GetAsync("Articulate Tags").ConfigureAwait(false) ??
-                                        throw new InvalidOperationException(
-                                            "No Data Type named 'Articulate Tags' found");
-                TagConfiguration? tagConfiguration = tagDataType.ConfigurationAs<TagConfiguration>();
-                var tagGroup = tagConfiguration?.Group;
-
-                // TODO: See: http://argotic.codeplex.com/wikipage?title=Generating%20portable%20web%20log%20content&referringTitle=Home
-                var blogMlDoc = new BlogMLDocument
-                {
-                    RootUrl = new Uri(urlProvider.GetUrl(root.Id), UriKind.RelativeOrAbsolute),
-                    GeneratedOn = DateTime.Now,
-                    Title = new BlogMLTextConstruct(root.GetValue<string>("blogTitle")),
-                    Subtitle = new BlogMLTextConstruct(root.GetValue<string>("blogDescription")),
-                };
-
-                IContentType authorsContentType =
-                    contentTypeService.Get(ArticulateConstants.ContentType.ArticulateAuthors)
-                    ?? throw new InvalidOperationException(
-                        "Articulate is not installed properly, the 'ArticulateAuthors' doc type could not be found");
-
-                IEnumerable<IContent> authorsNodes = contentService.GetPagedDescendants(
-                    root.Id,
-                    0,
-                    int.MaxValue,
-                    out var total,
-                    sqlContext.Query<IContent>().Where(x => x.ContentTypeId == authorsContentType.Id),
-                    Ordering.By("CreateDate", Direction.Descending));
-
-                foreach (IContent authorsNode in authorsNodes)
-                {
-                    AddBlogAuthors(authorsNode, blogMlDoc);
-                }
-
-                AddBlogCategories(blogMlDoc, categoryGroup);
-
-                IContentType archiveContentType =
-                    contentTypeService.Get(ArticulateConstants.ContentType.ArticulateArchive)
-                    ?? throw new InvalidOperationException(
-                        "Articulate is not installed properly, the 'ArticulateArchive' doc type could not be found");
-
-                IEnumerable<IContent> archiveNodes = contentService.GetPagedDescendants(
-                    root.Id,
-                    0,
-                    int.MaxValue,
-                    out total,
-                    sqlContext.Query<IContent>().Where(x => x.ContentTypeId == archiveContentType.Id),
-                    Ordering.By("CreateDate", Direction.Descending));
-
-                foreach (IContent archiveNode in archiveNodes)
-                {
-                    AddBlogPosts(archiveNode, blogMlDoc, categoryGroup, tagGroup, exportImagesAsBase64);
-                }
-
-                WriteFile(blogMlDoc, exportFileName);
-            }
         }
 
         private static string ImageMimeType(string src)

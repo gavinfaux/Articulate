@@ -6,7 +6,8 @@ const config = {
     tokenUrl: '',
     currentUserUrl: '',
     editorPostUrl: '',
-    articulateNodeId: null,
+    articulateBlogNode: null,
+    isBackOfficeLoggedIn: false,
 
     // Static OAuth parameters
     oauth: {
@@ -30,11 +31,17 @@ const config = {
  * @param {DOMStringMap} dataset The dataset from the document body.
  */
 function initConfig(dataset) {
-    const { authUrl, authEndUrl, tokenUrl, currentUserUrl, editorPostUrl, articulateNodeId} = dataset;
+    const { authUrl, authEndUrl, tokenUrl, currentUserUrl, editorPostUrl, articulateBlogNode, oauthClientId, backofficeLoggedIn } = dataset;
 
-  if (!authUrl || !editorPostUrl || !currentUserUrl || !tokenUrl || !authEndUrl || !articulateNodeId) {
+    if (!authUrl || !editorPostUrl || !currentUserUrl || !tokenUrl || !authEndUrl || !articulateBlogNode || typeof backofficeLoggedIn === "undefined") {
         console.error("CRITICAL: One or more dataset values missing. The application cannot function.");
         throw new Error("Missing critical configuration from dataset.");
+    }
+
+    const trimmedClientId = typeof oauthClientId === "string" ? oauthClientId.trim() : "";
+    if (!trimmedClientId) {
+        console.error("CRITICAL: OAuth client configuration missing.");
+        throw new Error("Missing OAuth client configuration.");
     }
 
     config.authUrl = authUrl;
@@ -42,7 +49,11 @@ function initConfig(dataset) {
     config.tokenUrl = tokenUrl;
     config.currentUserUrl = currentUserUrl;
     config.editorPostUrl = editorPostUrl;
-    config.articulateNodeId = articulateNodeId;
+    const normalizedBackoffice = typeof backofficeLoggedIn === "string" ? backofficeLoggedIn.trim().toLowerCase() : "";
+    config.isBackOfficeLoggedIn = normalizedBackoffice === "true" || normalizedBackoffice === "1";
+    config.articulateBlogNode = articulateBlogNode;
+    config.oauth.clientId = trimmedClientId;
 }
 
 export { config, initConfig };
+

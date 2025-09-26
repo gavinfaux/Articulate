@@ -17,38 +17,6 @@ namespace Articulate.Migrations.Upgrade
         ILogger<MigrateDataTypeConfigurationBase> logger)
         : MigrationBase(context)
     {
-        private static Dictionary<string, object> TryParseConfiguration(string json)
-        {
-            try
-            {
-                if (string.IsNullOrWhiteSpace(json))
-                {
-                    return [];
-                }
-
-                Dictionary<string, object>? dict = JsonSerializer.Deserialize<Dictionary<string, object>>(json);
-                return dict ?? [];
-            }
-            catch
-            {
-                return [];
-            }
-        }
-
-        private static bool EqualsConfig(object? a, object? b)
-        {
-            try
-            {
-                var sa = JsonSerializer.Serialize(a ?? new Dictionary<string, object?>());
-                var sb = JsonSerializer.Serialize(b ?? new Dictionary<string, object?>());
-                return string.Equals(sa, sb, StringComparison.Ordinal);
-            }
-            catch
-            {
-                return Equals(a, b);
-            }
-        }
-
         protected async Task<int> UpdateDataTypeAsync(Guid id, string editorUiAlias, string configurationJson)
         {
             try
@@ -97,6 +65,38 @@ namespace Articulate.Migrations.Upgrade
             }
 
             return 0;
+        }
+
+        private static Dictionary<string, object> TryParseConfiguration(string json)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(json))
+                {
+                    return [];
+                }
+
+                Dictionary<string, object>? dict = JsonSerializer.Deserialize<Dictionary<string, object>>(json);
+                return dict ?? [];
+            }
+            catch
+            {
+                return [];
+            }
+        }
+
+        private static bool EqualsConfig(object? a, object? b)
+        {
+            try
+            {
+                var sa = JsonSerializer.Serialize(a ?? new Dictionary<string, object?>());
+                var sb = JsonSerializer.Serialize(b ?? new Dictionary<string, object?>());
+                return string.Equals(sa, sb, StringComparison.Ordinal);
+            }
+            catch
+            {
+                return Equals(a, b);
+            }
         }
     }
 }

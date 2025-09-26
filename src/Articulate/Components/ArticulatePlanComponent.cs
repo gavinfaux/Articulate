@@ -15,6 +15,10 @@ namespace Articulate.Components
         IRuntimeState runtimeState)
         : IAsyncComponent
     {
+        public Task InitializeAsync(bool isRestarting, CancellationToken cancellationToken) => Task.Run(Initialize, cancellationToken);
+
+        public Task TerminateAsync(bool isRestarting, CancellationToken cancellationToken) => Task.Run(Terminate, cancellationToken);
+
         private void Initialize()
         {
             if (runtimeState.Level < RuntimeLevel.Run)
@@ -28,10 +32,8 @@ namespace Articulate.Components
             upgrader.Execute(migrationPlanExecutor, scopeProvider, keyValueService);
         }
 
-        private static void Terminate() { }
-
-        public Task InitializeAsync(bool isRestarting, CancellationToken cancellationToken) => Task.Run(Initialize, cancellationToken);
-
-        public Task TerminateAsync(bool isRestarting, CancellationToken cancellationToken) => Task.Run(Terminate, cancellationToken);
+        private static void Terminate()
+        {
+        }
     }
 }

@@ -137,6 +137,17 @@ namespace Articulate.Migrations.Upgrade.V_6_0_0
             return mediaModified;
         }
 
+        public class ImageCrop(string alias, int width, int height)
+        {
+            public string Alias { get; set; } = alias;
+
+            public int Width { get; set; } = width;
+
+            public int Height { get; set; } = height;
+
+            public object? Coordinates { get; } = null;
+        }
+
         private class PropertyDataDto
         {
             public int NodeId { get; set; }
@@ -158,17 +169,6 @@ namespace Articulate.Migrations.Upgrade.V_6_0_0
             public List<ImageCrop> Crops { get; } = [];
 
             public string Src { get; } = src;
-        }
-
-        public class ImageCrop(string alias, int width, int height)
-        {
-            public string Alias { get; set; } = alias;
-
-            public int Width { get; set; } = width;
-
-            public int Height { get; set; } = height;
-
-            public object? Coordinates { get; } = null;
         }
     }
 }

@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using Articulate.Api.Management.Attributes;
 using Articulate.Api.Management.Models;
+using Articulate.Services;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -20,7 +21,6 @@ using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Models.Membership;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.PropertyEditors;
-using Umbraco.Cms.Core.Security;
 using Umbraco.Cms.Core.Serialization;
 using Umbraco.Cms.Core.Services;
 using Umbraco.Cms.Core.Strings;
@@ -55,14 +55,12 @@ namespace Articulate.Api.Management.Controllers
     /// </summary>
     [ManagementApi(Constants.ManagementApi.MarkdownEditor)]
     [ApiVersion("1.0")]
-    [Authorize(AuthorizationPolicies.ContentPermissionByResource)]
-    [Authorize(AuthorizationPolicies.MediaPermissionByResource)]
+    [Authorize(AuthorizationPolicies.BackOfficeAccess)]
     [MapToApi(Constants.ManagementApi.Name)]
     [ManagementApiRoute("editors/markdown")]
     public class MarkdownEditorApiController : ManagementApiControllerBase
     {
         private readonly Lazy<IMedia> _articulateRootMediaFolder;
-        private readonly IBackOfficeSecurityAccessor _backOfficeSecurityAccessor;
         private readonly IContentService _contentService;
         private readonly IContentTypeBaseServiceProvider _contentTypeBaseServiceProvider;
         private readonly IContentTypeService _contentTypeService;
@@ -78,10 +76,10 @@ namespace Articulate.Api.Management.Controllers
         private readonly PropertyEditorCollection _propertyEditors;
         private readonly IShortStringHelper _shortStringHelper;
         private readonly UmbracoHelper _umbracoHelper;
-        private readonly IUserService _userService;
+        private readonly BackOfficeAuthService _backOfficeAuthService;
 
         public MarkdownEditorApiController(
-            IBackOfficeSecurityAccessor backOfficeSecurityAccessor,
+            BackOfficeAuthService backOfficeAuthService,
             UmbracoHelper umbracoHelper,
             MediaFileManager mediaFileManager,
             PropertyEditorCollection propertyEditors,
@@ -96,10 +94,9 @@ namespace Articulate.Api.Management.Controllers
             IContentService contentService,
             IContentTypeService contentTypeService,
             IDataTypeService dataTypeService,
-            IUserService userService,
             ILogger<MarkdownEditorApiController> logger)
         {
-            _backOfficeSecurityAccessor = backOfficeSecurityAccessor;
+            _backOfficeAuthService = backOfficeAuthService;
             _umbracoHelper = umbracoHelper;
             _mediaFileManager = mediaFileManager;
             _propertyEditors = propertyEditors;
@@ -114,7 +111,6 @@ namespace Articulate.Api.Management.Controllers
             _contentService = contentService;
             _contentTypeService = contentTypeService;
             _dataTypeService = dataTypeService;
-            _userService = userService;
             _logger = logger;
             _articulateRootMediaFolder = new Lazy<IMedia>(() =>
             {
@@ -126,12 +122,6 @@ namespace Articulate.Api.Management.Controllers
                     Umbraco.Cms.Core.Constants.System.Root,
                     Umbraco.Cms.Core.Constants.Conventions.MediaTypes.Folder);
             });
-        }
-
-        private static bool CheckPermissions(IUser user, IContent contentItem, IEnumerable<string> permissionsToCheck, IUserService userService)
-        {
-            IEnumerable<string> permissions = user.GetPermissions(contentItem.Path, userService);
-            return permissionsToCheck.All(p => permissions.Contains(p));
         }
 
         /// <summary>
@@ -163,7 +153,8 @@ namespace Articulate.Api.Management.Controllers
             MarkdownEditorModel? model;
             try
             {
-                model = JsonSerializer.Deserialize<MarkdownEditorModel>(jsonModel);
+                var jsonOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+                model = JsonSerializer.Deserialize<MarkdownEditorModel>(jsonModel, jsonOptions);
                 if (model is null)
                 {
                     return Problem("The provided JSON model is invalid.", statusCode: StatusCodes.Status400BadRequest);
@@ -183,7 +174,7 @@ namespace Articulate.Api.Management.Controllers
             {
                 if (model.ArticulateBlogNode == 0)
                 {
-                 ModelState.AddModelError(nameof(model.ArticulateBlogNode), "The ArticulateNodeId field is required.");
+                 ModelState.AddModelError(nameof(model.ArticulateBlogNode), "The ArticulateBlogNode field is required.");
                 }
 
                 if (string.IsNullOrWhiteSpace(model.Title))
@@ -216,7 +207,7 @@ namespace Articulate.Api.Management.Controllers
                     statusCode: StatusCodes.Status404NotFound);
             }
 
-            IUser? currentUser = _backOfficeSecurityAccessor.BackOfficeSecurity?.CurrentUser;
+            IUser? currentUser = _backOfficeAuthService.GetCurrentUser();
             if (currentUser is null)
             {
                 // This shouldn't happen due to the [Authorize] attribute, but it's a good safeguard.
@@ -224,7 +215,7 @@ namespace Articulate.Api.Management.Controllers
             }
 
             var requiredPermissions = new[] { ActionNew.ActionLetter, ActionPublish.ActionLetter };
-            if (!CheckPermissions(currentUser, archive, requiredPermissions, _userService))
+            if (!_backOfficeAuthService.HasPermissions(currentUser, archive, requiredPermissions))
             {
                 return Forbid();
             }
@@ -303,15 +294,18 @@ namespace Articulate.Api.Management.Controllers
                 content.SetInvariantOrDefaultCultureValue(Umbraco.Cms.Core.Constants.Conventions.Content.UrlName, model.Slug, contentType, _languageService);
             }
 
+            string authorName = currentUser.Name ?? "Unknown";
+            int authorId = currentUser.Id;
+
             // author is required
             content.SetInvariantOrDefaultCultureValue(
                 "author",
-                _backOfficeSecurityAccessor.BackOfficeSecurity?.CurrentUser?.Name ?? "Unknown",
+                authorName,
                 contentType,
                 _languageService);
 
             OperationResult status =
-                _contentService.Save(content, _backOfficeSecurityAccessor.BackOfficeSecurity?.CurrentUser?.Id);
+                _contentService.Save(content, authorId);
             if (!status.Success)
             {
                 ModelState.AddModelError("SaveOperation", "Content failed to save. Please check logs for details.");

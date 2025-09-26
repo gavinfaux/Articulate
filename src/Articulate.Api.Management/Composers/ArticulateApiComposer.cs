@@ -1,6 +1,8 @@
 #nullable enable
 using Articulate.Api.Management.Options;
+using Articulate.Api.Management.Services;
 using Articulate.Api.Management.Swagger;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Umbraco.Cms.Api.Common.OpenApi;
 using Umbraco.Cms.Core.Composing;
@@ -20,6 +22,9 @@ namespace Articulate.Api.Management.Composers
         {
             builder.Services.AddSingleton<IOperationIdHandler, ArticulateOperationIdHandler>();
             builder.Services.ConfigureOptions<ArticulateSwaggerOptions>();
+            builder.Services.Configure<ArticulateOpenIdClientOptions>(
+                builder.Config.GetSection(ArticulateOpenIdClientOptions.SectionName));
+            builder.Services.AddHostedService<ArticulateApplicationManager>();
         }
     }
 }

@@ -14,7 +14,8 @@ namespace Articulate.Models
             IPublishedValueFallback publishedValueFallback,
             IVariationContextAccessor variationContextAccessor)
             : this(masterModel, name, pageSize, tags, publishedValueFallback)
-        { }
+        {
+        }
 
         public TagListModel(
         IMasterModel masterModel,

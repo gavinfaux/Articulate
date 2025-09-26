@@ -52,7 +52,8 @@ namespace Articulate.Models
             IPublishedValueFallback publishedValueFallback,
             IVariationContextAccessor variationContextAccessor)
             : this(content, pager, listItems, publishedValueFallback)
-        { }
+        {
+        }
 
         public ListModel(IPublishedContent content, IPublishedValueFallback publishedValueFallback)
             : base(content, publishedValueFallback)
