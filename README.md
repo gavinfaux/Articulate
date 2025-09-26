@@ -68,6 +68,24 @@ See here for the list of releases and their release notes
 
 Now you're all set! Any source changes you wish to make just do that in Visual Studio, build the solution when you need to and the changes will be reflected in the website.
 
+### Developer Experience (hot reload)
+
+For a fast local loop when editing Razor, HTML, CSS, and JS:
+
+- Backend + Razor hot reload (same origin):
+  - `dotnet watch run --project src/Articulate.Tests.Website`
+  - In Development, the test website is configured to:
+    - Use Razor runtime compilation for .cshtml
+    - Auto-reload the browser for static assets and views
+
+- Backoffice client HMR (Vite):
+  - From `src/Articulate.Api.Management/Client`
+    - `pnpm install`
+    - `pnpm run dev`
+  - Use alongside the test website for HMR of the backoffice extension.
+
+See docs/development-dx.md for details and tips.
+
 ### Changing Umbraco Articulate schema/data elements
 
 If you need to make changes to the underlying Umbraco schema (doc types, data types, etc...) or the installed package's content/media, then you will need

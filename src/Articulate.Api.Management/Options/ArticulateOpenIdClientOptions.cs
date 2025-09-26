@@ -60,9 +60,8 @@ namespace Articulate.Api.Management.Options
             OpenIddictConstants.Permissions.ResponseTypes.Code,
             OpenIddictConstants.Permissions.Endpoints.EndSession,
             OpenIddictConstants.Permissions.Prefixes.Scope + OpenIddictConstants.Scopes.OpenId,
-            OpenIddictConstants.Permissions.Prefixes.Scope + OpenIddictConstants.Scopes.OfflineAccess,
             OpenIddictConstants.Permissions.Scopes.Email,
-            OpenIddictConstants.Permissions.Scopes.Profile
+            OpenIddictConstants.Permissions.Scopes.Profile,
         };
 
         /// <summary>

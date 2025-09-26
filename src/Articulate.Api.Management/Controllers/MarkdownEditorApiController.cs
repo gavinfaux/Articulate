@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Org.BouncyCastle.Asn1.Ocsp;
 using Umbraco.Cms.Api.Common.Attributes;
 using Umbraco.Cms.Api.Management.Controllers;
 using Umbraco.Cms.Core;
@@ -131,7 +132,6 @@ namespace Articulate.Api.Management.Controllers
         ///     The JSON model containing the post data: Title, Body, Slug, Excerpt, Tags, Categories,
         ///     ArticulateBlogNode, and whether the first image should be extracted as a dedicated property.
         /// </param>
-        /// <param name="files">Any uploaded images as part of the multipart/form-data request.</param>
         /// <returns>A <see cref="CreatePostResponse" /> containing the URL of the newly created post.</returns>
         [HttpPost("post")]
         [Consumes("multipart/form-data")]
@@ -142,8 +142,7 @@ namespace Articulate.Api.Management.Controllers
 
         // TODO: Review along with ParseImages
         public async Task<ActionResult<CreatePostResponse>> CreatePost(
-            [FromForm(Name = "json")] string jsonModel,
-            IFormFileCollection files)
+            [FromForm(Name = "json")] string jsonModel)
         {
             if (string.IsNullOrWhiteSpace(jsonModel))
             {
@@ -221,7 +220,7 @@ namespace Articulate.Api.Management.Controllers
             }
 
             ParseImageResponse parsedImageResponse =
-                await ParseImages(model.Body, files, extractFirstImageAsProperty).ConfigureAwait(false);
+                await ParseImages(model.Body, Request.Form.Files, extractFirstImageAsProperty).ConfigureAwait(false);
 
             model.Body = parsedImageResponse.BodyText;
 
@@ -348,6 +347,7 @@ namespace Articulate.Api.Management.Controllers
             // Key: The original markdown tag, e.g., "![alt](tmp:0:image.png)"
             // Value: The final URL or an empty string to remove it.
             var replacementMap = new Dictionary<string, string>();
+            var firstImageCaptured = false;
 
             // STEP 1: Find all potential image tags and gather the info needed for processing. ---
             MatchCollection matches = ArticulateMarkdownEditorRegexes.ImageTagPlaceholderRegex().Matches(body);
@@ -391,12 +391,14 @@ namespace Articulate.Api.Management.Controllers
 
                 // validation passed, save the file
                 var altText = !string.IsNullOrWhiteSpace(userLabel) ? userLabel : cleanFileName;
-                int? imageIndex = int.TryParse(tempUrl.Split([':'], 3).ElementAtOrDefault(1), out var idx) ? idx : null;
 
                 using var stream = new MemoryStream();
                 await file.CopyToAsync(stream).ConfigureAwait(false);
+                stream.Position = 0;
 
-                if (extractFirstImageAsProperty && imageIndex == 0)
+                var shouldExtractFirstImage = extractFirstImageAsProperty && !firstImageCaptured;
+
+                if (shouldExtractFirstImage)
                 {
                     IMedia mediaItem = _mediaService.CreateMedia(altText, _articulateRootMediaFolder.Value, Umbraco.Cms.Core.Constants.Conventions.MediaTypes.Image);
                     mediaItem.SetValue(
@@ -416,21 +418,22 @@ namespace Articulate.Api.Management.Controllers
                     }
 
                     firstImage = Udi.Create(Umbraco.Cms.Core.Constants.UdiEntityType.Media, media.Key).ToString();
+                    firstImageCaptured = true;
 
                     // The first image was extracted. Strip its tag from the body.
                     replacementMap[match.Value] = string.Empty;
+                    continue;
                 }
-                else
-                {
-                    var rndId = Guid.NewGuid().ToString("N");
-                    var fileUrl = $"articulate/{rndId}/{cleanFileName}";
-                    _mediaFileManager.FileSystem.AddFile(fileUrl, stream);
-                    var mediaRootPath = _hostingEnvironment.ToAbsolute(_globalSettings.UmbracoMediaPath);
-                    var mediaFilePath = $"{mediaRootPath.TrimEnd('/')}/{fileUrl}";
 
-                    // Replace its tag with the final URL.
-                    replacementMap[match.Value] = $"![{altText}]({mediaFilePath})";
-                }
+                stream.Position = 0;
+                var rndId = Guid.NewGuid().ToString("N");
+                var fileUrl = $"articulate/{rndId}/{cleanFileName}";
+                _mediaFileManager.FileSystem.AddFile(fileUrl, stream);
+                var mediaRootPath = _hostingEnvironment.ToAbsolute(_globalSettings.UmbracoMediaPath);
+                var mediaFilePath = $"{mediaRootPath.TrimEnd('/')}/{fileUrl}";
+
+                // Replace its tag with the final URL.
+                replacementMap[match.Value] = $"![{altText}]({mediaFilePath})";
             }
 
             // STEP 3: Apply markdown replacements
@@ -452,3 +455,8 @@ namespace Articulate.Api.Management.Controllers
         }
     }
 }
+
+
+
+
+

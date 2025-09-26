@@ -62,7 +62,7 @@ namespace Articulate.Web.Controllers
 
             if (currentUser is not null)
             {
-                string[] requiredPermissions = { ActionNew.ActionLetter, ActionPublish.ActionLetter };
+                string[] requiredPermissions = [ActionNew.ActionLetter, ActionPublish.ActionLetter];
                 hasRequiredPermissions = backOfficeAuthService.HasPermissions(currentUser, archive, requiredPermissions);
             }
 

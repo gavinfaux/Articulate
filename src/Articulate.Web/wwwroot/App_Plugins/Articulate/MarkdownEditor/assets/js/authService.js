@@ -138,23 +138,38 @@ async function ensureBackOfficeSession() {
 }
 
 async function logout() {
-    const token = getAccessToken();
+    let redirectUrl = '/';
 
     try {
-        if (token) {
-            await fetch(config.authEndUrl, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`
+        const response = await fetch(config.authEndUrl, {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
+
+        if (response.ok) {
+            const responseText = await response.text();
+
+            if (responseText) {
+                try {
+                    const payload = JSON.parse(responseText);
+                    if (payload && typeof payload.signOutRedirectUrl === 'string' && payload.signOutRedirectUrl.trim() !== '') {
+                        redirectUrl = payload.signOutRedirectUrl;
+                    }
+                } catch (parseError) {
+                    console.warn('[authService] Unexpected sign-out response payload.', parseError);
                 }
-            });
+            }
+        } else {
+            console.warn('[authService] Sign-out request returned non-success status:', response.status);
         }
     } catch (error) {
         console.warn('[authService] Failed to sign out from Umbraco.', error);
     } finally {
         clearAccessToken();
-        // Reload current path to reinitialize the app into the login step.
-        window.location.href = window.location.pathname;
+        window.location.href = redirectUrl;
     }
 }
 

@@ -9,6 +9,9 @@
   <ItemGroup>
     <PackageReference Include="SixLabors.ImageSharp" Version="3.1.11" />
     <PackageReference Include="Umbraco.Cms" Version="15.4.4" />
+    <!-- Dev DX: Razor runtime compilation + live reload in Development -->
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="9.0.0" PrivateAssets="All" Condition=" '$(Configuration)' == 'Debug' Or '$(ASPNETCORE_ENVIRONMENT)' == 'Development' " />
+    <PackageReference Include="Westwind.AspNetCore.LiveReload" Version="0.5.2" PrivateAssets="All" Condition=" '$(Configuration)' == 'Debug' Or '$(ASPNETCORE_ENVIRONMENT)' == 'Development' " />
   </ItemGroup>
 
   <ItemGroup>
