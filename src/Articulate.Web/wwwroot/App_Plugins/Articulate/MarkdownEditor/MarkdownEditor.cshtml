@@ -21,7 +21,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Articulate - Create New Post</title>
+    <title>Articulate: Create New Post</title>
     <link rel="preconnect" href="https://code.getmdl.io">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -78,34 +78,36 @@
             </div>
         </header>
 
-        <main class="mdl-layout__content">
+        <main class="mdl-layout__content md-editor__main">
             <div class="page-content">
                 <!-- Login View -->
                 <template x-if="isLoginStep">
-                    <div class="mdl-card mdl-shadow--2dp fill-height" x-ref="loginView">
-                        <div class="mdl-card__supporting-text">
+                    <div class="mdl-card mdl-shadow--2dp fill-height md-editor__card md-editor__card--compact" x-ref="loginView">
+                        <div class="mdl-card__supporting-text md-editor__login">
+                            <img src="https://static.umbraco.com/images/logos/u-bolt.svg" alt="Umbraco" class="md-editor__login-logo" loading="lazy">
+                            <h2 class="md-editor__login-heading">Welcome</h2>
                             <p class="mdl-typography--body-1" x-text="loginNotice"></p>
-                            <div class="btn-raised-right">
-                                <button type="button"
-                                        class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent"
-                                        @@click="startLogin"
-                                        :disabled="isLoading">
-                                    Continue to login
-                                </button>
-                            </div>
+                            <button type="button"
+                                    class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent md-editor__login-button"
+                                    @@click="startLogin"
+                                    :disabled="isLoading">
+                                <i class="material-icons" aria-hidden="true">lock</i>
+                                <span>Sign in with Umbraco</span>
+                            </button>
                         </div>
                     </div>
                 </template>
 
                 <!-- Editor View -->
                 <template x-if="isEditorStep">
-                    <div x-ref="editorView" class="mdl-card mdl-shadow--2dp fill-height">
+                    <div x-ref="editorView" class="mdl-card mdl-shadow--2dp fill-height md-editor__card">
                         <div class="mdl-card__supporting-text">
-                            <div class="mdl-textfield mdl-js-textfield fixed" :class="titleErrorClass">
+                            <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label md-editor__title"
+                                 :class="titleCssClass">
                                 <input class="mdl-textfield__input" type="text" id="title" :value="postTitle" @@input="updatePostTitle" required>
-                                <label class="mdl-textfield__label" for="title">Title...</label>
+                                <label class="mdl-textfield__label" for="title">Title</label>
                             </div>
-                            <div class="mdl-textfield mdl-js-textfield md-input">
+                            <div class="md-editor__body">
                                 <textarea x-ref="editor" id="editor" class="mdl-textfield__input" placeholder="## Start writing your post here..."></textarea>
                             </div>
                         </div>
@@ -114,33 +116,33 @@
 
                 <!-- Optional View -->
                 <template x-if="isOptionalStep">
-                    <div x-ref="optionalView" class="mdl-card mdl-shadow--2dp fill-height">
+                    <div x-ref="optionalView" class="mdl-card mdl-shadow--2dp fill-height md-editor__card">
                         <div class="mdl-card__supporting-text">
-                            <div class="mdl-textfield mdl-js-textfield">
-                                <label class="mdl-textfield__label" for="tags">Tags...</label>
+                            <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label md-editor__field" :class="fieldCssClass('tags')">
                                 <input class="mdl-textfield__input" type="text" id="tags" :value="postTags" @@input="updatePostField">
+                                <label class="mdl-textfield__label" for="tags">Tags</label>
                             </div>
 
-                            <div class="mdl-textfield mdl-js-textfield">
-                                <label class="mdl-textfield__label" for="categories">Categories...</label>
+                            <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label md-editor__field" :class="fieldCssClass('categories')">
                                 <input class="mdl-textfield__input" type="text" id="categories" :value="postCategories" @@input="updatePostField">
+                                <label class="mdl-textfield__label" for="categories">Categories</label>
                             </div>
 
-                            <div class="mdl-textfield mdl-js-textfield">
-                                <label class="mdl-textfield__label" for="excerpt">Excerpt...</label>
+                            <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label md-editor__field" :class="fieldCssClass('excerpt')">
                                 <textarea class="mdl-textfield__input" id="excerpt" rows="3" :value="postExcerpt" @@input="updatePostField"></textarea>
+                                <label class="mdl-textfield__label" for="excerpt">Excerpt</label>
                             </div>
 
-                            <div class="mdl-textfield mdl-js-textfield">
-                                <label class="mdl-textfield__label" for="slug">Slug...</label>
+                            <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label md-editor__field" :class="fieldCssClass('slug')">
                                 <input class="mdl-textfield__input" type="text" id="slug" :value="postSlug" @@input="updatePostField">
+                                <label class="mdl-textfield__label" for="slug">Slug</label>
                             </div>
                         </div>
                     </div>
                 </template>
                 <!-- Success View -->
                 <template x-if="isSuccessStep">
-                    <div x-ref="successView" class="mdl-card mdl-shadow--2dp fill-height">
+                    <div x-ref="successView" class="mdl-card mdl-shadow--2dp fill-height md-editor__card">
                         <div class="mdl-card__supporting-text">
                             <div class="mdl-progress mdl-js-progress mdl-progress__indeterminate" x-show="isLoading"></div>
                             <div x-show="isNotLoading">
@@ -162,25 +164,24 @@
                     </div>
                 </template>
             </div>
+            <footer class="md-editor__footer">
+                <div class="md-editor__footer-left">
+                    <button x-show="isEditorStep" @@click="triggerImageUpload" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--colored material-icons" title="Upload Image">photo</button>
+                    <button x-show="isEditorStep" @@click="triggerCamera" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--colored material-icons" title="Use Camera">photo_camera</button>
+                </div>
+                <div class="md-editor__footer-right">
+                    <button x-show="isOptionalStep" @@click="goToEditorStep" style="transform: rotate(180deg);" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--accent material-icons" title="Previous">forward</button>
+                    <button x-show="canShowNextButton" :disabled="disableNextButton" @@click="goToOptionalStep" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--accent material-icons" title="Next">forward</button>
+                    <button x-show="canShowPublishButton" :disabled="disablePublishButton" @@click="handlePublish" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--accent material-icons" title="Publish">done</button>
+                </div>
+            </footer>
         </main>
-    </div>
-
-    <div class="btn-fab-right">
-        <button x-show="isOptionalStep" @@click="goToEditorStep" style="transform: rotate(180deg);" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--accent material-icons" title="Previous">forward</button>
-        <button x-show="canShowNextButton" :disabled="disableNextButton" @@click="goToOptionalStep" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--accent material-icons" title="Next">forward</button>
-        <button x-show="canShowPublishButton" :disabled="disablePublishButton" @@click="handlePublish" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--accent material-icons" title="Publish">done</button>
     </div>
 
     <!-- Hidden file inputs -->
     <div class="hidden-insert-file">
         <input x-ref="imageUpload" type="file" accept="image/jpeg,image/png,image/gif" @@change="handleImageUpload">
         <input x-ref="cameraUpload" type="file" accept="image/jpeg,image/png,image/gif" capture="user" @@change="handleImageUpload">
-    </div>
-
-    <!-- Floating Action Buttons -->
-    <div class="btn-fab-left">
-        <button x-show="isEditorStep" @@click="triggerImageUpload" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--colored material-icons" title="Upload Image">photo</button>
-        <button x-show="isEditorStep" @@click="triggerCamera" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--colored material-icons" title="Use Camera">photo_camera</button>
     </div>
 
     <!-- Enhanced Global Error Message -->
@@ -221,6 +222,14 @@
             <button type="button" class="mdl-button" @@click="confirmCriticalError" x-text="dialog.buttonText"></button>
         </div>
     </dialog>
+
+    @*<div class="articulate-diagnostics">
+        <h4>Back-office diagnostics</h4>
+        <p>Name: @(Model.BackOfficeUserName ?? "<unknown>")</p>
+        <p>User Id: @(Model.BackOfficeUserId?.ToString() ?? "<unknown>")</p>
+        <p>Is Logged In: @Model.IsBackOfficeLoggedIn</p>
+        <p>Has Required Permissions: @Model.HasRequiredPermissions</p>
+    </div>*@
 
 </body>
 </html>

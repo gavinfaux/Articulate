@@ -16,5 +16,11 @@ namespace Articulate.Web.Models
         public string? BackOfficeClientId { get; set; }
 
         public bool IsBackOfficeLoggedIn { get; set; }
+
+        public string? BackOfficeUserName { get; set; }
+
+        public int? BackOfficeUserId { get; set; }
+
+        public bool HasRequiredPermissions { get; set; }
     }
 }

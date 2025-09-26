@@ -58,22 +58,10 @@ body {
 }
 
 /* Floating action button containers used by the view */
-.btn-fab-right {
-    position: fixed;
-    right: 16px;
-    bottom: 16px;
-    display: flex;
-    gap: 12px;
-    z-index: 1000;
-}
-
+.btn-fab-right,
 .btn-fab-left {
-    position: fixed;
-    left: 16px;
-    bottom: 16px;
     display: flex;
     gap: 12px;
-    z-index: 1000;
 }
 
 /* Original styles from md-editor.css */
@@ -82,12 +70,14 @@ body {
 }
 
 .md-input {
-    height: calc(100% - 56px);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
 }
 
 .md-input .mdl-textfield__input {
-    height: 100%;
-    max-height: 100%;
+    flex: 1;
+    max-height: none;
 }
 
 .fixed {
@@ -121,28 +111,150 @@ body {
     width: 100%;
 }
 
-div.container {
-  position: fixed;
-  left: 15px;
-  top: 70px;
-  right: 15px;
-  bottom: 25px;
-  padding: 10px;
-  overflow: auto;
-}
-
 textarea {
   font-family: inherit;
   width: 100%;
-  height: 100%;
 }
 
-/* Smartphones (portrait and landscape) ----------- */
-@media only screen and (min-device-width : 320px) and (max-device-width : 480px) {
-  div.container {
-    left: 5px;
-    top: 60px;
-    right: 5px;
-    bottom: 5px;
-  }
+/* Layout adjustments */
+.mdl-layout {
+    min-height: 100vh;
+}
+
+.mdl-layout__content {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.md-editor__main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.md-editor__main .page-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    padding: 16px;
+    box-sizing: border-box;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.page-content {
+    flex: 1;
+}
+
+.md-editor__card {
+    flex: 1;
+    max-width: 900px;
+    width: 100%;
+    margin: 0 auto;
+    display: flex;
+}
+
+.md-editor__card .mdl-card__supporting-text {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    padding: 24px;
+}
+
+.md-editor__card--compact .mdl-card__supporting-text {
+    gap: 16px;
+}
+
+.md-editor__title {
+    width: 100%;
+}
+
+.md-editor__title .mdl-textfield__input {
+    font-size: 2.25rem;
+    font-weight: 600;
+    line-height: 1.2;
+    padding-bottom: 16px;
+    border-bottom: 2px solid rgba(0, 0, 0, 0.12);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.md-editor__title .mdl-textfield__input:focus {
+    border-bottom-color: #3f51b5;
+    box-shadow: 0 1px 0 0 rgba(63, 81, 181, 0.5);
+}
+
+.md-editor__title.is-invalid .mdl-textfield__input {
+    border-bottom-color: #d50000;
+}
+
+.md-editor__title .mdl-textfield__label {
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+.md-editor__body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.md-editor__body textarea {
+    flex: 1;
+    min-height: 260px;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 4px;
+    padding: 16px;
+    line-height: 1.6;
+    font-size: 1rem;
+    resize: vertical;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.08);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.md-editor__body textarea:focus {
+    outline: none;
+    border-color: #3f51b5;
+    box-shadow: 0 0 0 2px rgba(63, 81, 181, 0.12);
+}
+
+.md-editor__footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 16px;
+    background: #ffffff;
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.05);
+    margin-top: auto;
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+}
+
+.md-editor__footer-left,
+.md-editor__footer-right {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 600px) {
+    .md-editor__card {
+        margin: 0;
+    }
+
+    .md-editor__footer {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .md-editor__footer-left,
+    .md-editor__footer-right {
+        justify-content: center;
+    }
 }

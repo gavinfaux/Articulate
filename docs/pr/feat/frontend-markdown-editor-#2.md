@@ -112,7 +112,7 @@ This single file contains the HTML structure, includes all dependencies from CDN
     @* All frontend logic is scoped to this single element *@
     <main class="container" v-scope="app({
             csrfToken: '@Antiforgery.GetAndStoreTokens(Context).RequestToken',
-            articulateNodeId: @Model.ArticulateNodeId
+            articulateBlogNode: @Model.ArticulateBlogNode
         })" v-cloak>
 
         <header>
@@ -225,7 +225,7 @@ This single file contains the HTML structure, includes all dependencies from CDN
 
                     try {
                         const request = {
-                            parentNodeId: initialData.articulateNodeId,
+                            parentNodeId: initialData.articulateBlogNode,
                             title: this.post.title,
                             body: this.post.body,
                             // ... map other post properties

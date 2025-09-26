@@ -42,6 +42,14 @@ namespace Articulate.Services
 
         public IUser? GetCurrentUser() => _backOfficeSecurityAccessor.BackOfficeSecurity?.CurrentUser;
 
+        public bool HasCurrentUser() => GetCurrentUser() is not null;
+
+        public bool CurrentUserHasPermissions(IContent contentItem, IEnumerable<string> permissionsToCheck)
+        {
+            IUser? currentUser = GetCurrentUser();
+            return currentUser is not null && HasPermissions(currentUser, contentItem, permissionsToCheck);
+        }
+
         public bool HasPermissions(IUser user, IContent contentItem, IEnumerable<string> permissionsToCheck)
         {
             IEnumerable<string> permissions = user.GetPermissions(contentItem.Path, _userService);

@@ -298,7 +298,8 @@ export type PostBlogmlImportFileResponse = PostBlogmlImportFileResponses[keyof P
 export type PostEditorsMarkdownPostData = {
     body?: {
         /**
-         * The JSON model containing the post data: Title, Body, Slug, Excerpt, Tags, Categories, ArticulateBlogNode, and whether the first image should be extracted as a dedicated property.
+         * The JSON model containing the post data: Title, Body, Slug, Excerpt, Tags, Categories,
+         * ArticulateBlogNode, and whether the first image should be extracted as a dedicated property.
          */
         json?: string;
         /**

@@ -304,16 +304,21 @@ namespace Articulate.Api.Management.Controllers
                 contentType,
                 _languageService);
 
-            OperationResult status =
-                _contentService.Save(content, authorId);
-            if (!status.Success)
+            OperationResult saveStatus = _contentService.Save(content, authorId);
+            if (!saveStatus.Success)
             {
                 ModelState.AddModelError("SaveOperation", "Content failed to save. Please check logs for details.");
                 return ValidationProblem(ModelState);
             }
+            PublishResult publishStatus = _contentService.Publish(content, ["*"], authorId);
+            if (!publishStatus.Success)
+            {
+                ModelState.AddModelError("SaveOperation", "Content failed to publish. Please check logs for details.");
+                return ValidationProblem(ModelState);
+            }
 
-            IPublishedContent? published = _umbracoHelper.Content(content.Id);
-            return Ok(new CreatePostResponse { Url = published?.Url() ?? "#" });
+            IPublishedContent? published = _umbracoHelper.Content(publishStatus.Content.Id);
+            return Ok(new CreatePostResponse { Url = published?.Url() ?? string.Empty });
         }
 
         // TODO: Review

@@ -4,6 +4,7 @@ using System.Linq;
 using Articulate.Api.Management.Controllers;
 using Articulate.Api.Management.Extensions;
 using Articulate.Api.Management.Options;
+using Articulate.Services;
 using Articulate.Attributes;
 using Articulate.Web.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -11,7 +12,9 @@ using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Umbraco.Cms.Core.Actions;
 using Umbraco.Cms.Core.Models;
+using Umbraco.Cms.Core.Models.Membership;
 using Umbraco.Cms.Core.Services;
 using Umbraco.Cms.Core.Web;
 using Umbraco.Cms.Web.Common.Controllers;
@@ -25,7 +28,8 @@ namespace Articulate.Web.Controllers
         IUmbracoContextAccessor umbracoContextAccessor,
         IApiDescriptionGroupCollectionProvider apiDescriptionProvider,
         IContentService contentService,
-        IOptions<ArticulateOpenIdClientOptions> artClientOptions)
+        IOptions<ArticulateOpenIdClientOptions> artClientOptions,
+        BackOfficeAuthService backOfficeAuthService)
         : RenderController(logger, compositeViewEngine, umbracoContextAccessor)
     {
         [HttpGet]
@@ -50,6 +54,16 @@ namespace Articulate.Web.Controllers
             if (archive is null)
             {
                 return NotFound();
+            }
+
+            IUser? currentUser = backOfficeAuthService.GetCurrentUser();
+            bool isBackOfficeLoggedIn = currentUser is not null;
+            bool hasRequiredPermissions = false;
+
+            if (currentUser is not null)
+            {
+                string[] requiredPermissions = { ActionNew.ActionLetter, ActionPublish.ActionLetter };
+                hasRequiredPermissions = backOfficeAuthService.HasPermissions(currentUser, archive, requiredPermissions);
             }
 
             IReadOnlyDictionary<string, string>? managementApiUrls = apiDescriptionProvider.ManagementApiUrlMap([
@@ -84,7 +98,10 @@ namespace Articulate.Web.Controllers
                 ArticulateBlogNode = CurrentPage.Id,
                 EditorPostUrl = editorUrl,
                 BackOfficeClientId = clientId,
-                IsBackOfficeLoggedIn = false
+                IsBackOfficeLoggedIn = isBackOfficeLoggedIn,
+                BackOfficeUserName = currentUser?.Name,
+                BackOfficeUserId = currentUser?.Id,
+                HasRequiredPermissions = hasRequiredPermissions
             };
 
             return RenderView(vm);

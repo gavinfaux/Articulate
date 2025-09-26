@@ -80,6 +80,25 @@ document.addEventListener('alpine:init', () => {
             return this.post.title.trim().length ? '' : 'is-invalid';
         },
 
+        get titleCssClass() {
+            const classes = [];
+            if ((this.post.title ?? '').trim().length > 0) {
+                classes.push('is-dirty');
+            }
+
+            const errorClass = this.titleErrorClass;
+            if (errorClass) {
+                classes.push(errorClass);
+            }
+
+            return classes.join(' ');
+        },
+
+        fieldCssClass(field) {
+            const value = (this.post[field] ?? '').trim();
+            return value.length > 0 ? 'is-dirty' : '';
+        },
+
         get isEditorStep() {
             return this.currentStep === 'editor';
         },
