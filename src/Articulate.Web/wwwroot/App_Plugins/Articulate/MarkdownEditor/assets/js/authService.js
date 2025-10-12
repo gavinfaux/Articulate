@@ -27,6 +27,47 @@ function base64urlencode(buffer) {
         .replace(/=+$/, '');
 }
 
+function base64UrlDecode(value) {
+    if (typeof value !== 'string') {
+        return null;
+    }
+
+    let normalized = value.replace(/-/g, '+').replace(/_/g, '/');
+    while (normalized.length % 4 !== 0) {
+        normalized += '=';
+    }
+
+    try {
+        return window.atob(normalized);
+    } catch (error) {
+        console.warn('[authService] Failed to decode JWT payload', error);
+        return null;
+    }
+}
+
+function parseJwtPayload(token) {
+    if (typeof token !== 'string') {
+        return null;
+    }
+
+    const parts = token.split('.');
+    if (parts.length < 2) {
+        return null;
+    }
+
+    const decoded = base64UrlDecode(parts[1]);
+    if (!decoded) {
+        return null;
+    }
+
+    try {
+        return JSON.parse(decoded);
+    } catch (error) {
+        console.warn('[authService] Failed to parse JWT payload', error);
+        return null;
+    }
+}
+
 // Token and session management
 function getAccessToken() {
     const key = config.storageKeys.accessToken;
@@ -124,17 +165,31 @@ async function handleLoginCallback() {
     const tokenData = await tokenResponse.json();
     setAccessToken(tokenData.access_token);
 
-    const sessionEstablished = await ensureBackOfficeSession();
-    if (!sessionEstablished) {
-        throw new Error('Back-office session could not be established.');
+    if (!hasValidAccessToken()) {
+        throw new Error('Access token is invalid or expired.');
     }
 }
 
-async function ensureBackOfficeSession() {
-    // Rely on bearer tokens for Management API access; no cookie bootstrap required.
-    // Keeping this function to maintain call sites and future extensibility.
+function hasValidAccessToken() {
     const token = getAccessToken();
-    return Boolean(token);
+    if (!token) {
+        return false;
+    }
+
+    const payload = parseJwtPayload(token);
+    if (payload && Object.prototype.hasOwnProperty.call(payload, 'exp')) {
+        const exp = Number(payload.exp);
+        if (!Number.isNaN(exp)) {
+            const now = Math.floor(Date.now() / 1000);
+            if (exp <= now) {
+                clearAccessToken();
+                console.info('[authService] Detected expired access token; clearing cached value.');
+                return false;
+            }
+        }
+    }
+
+    return true;
 }
 
 async function logout() {
@@ -177,6 +232,6 @@ export const authService = {
     redirectToLogin,
     handleLoginCallback,
     getAccessToken,
-    ensureBackOfficeSession,
+    hasValidAccessToken,
     logout
 };

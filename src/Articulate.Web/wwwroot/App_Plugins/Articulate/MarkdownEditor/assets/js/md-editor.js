@@ -200,7 +200,14 @@ document.addEventListener("alpine:init", () => {
       if (step && step !== this.currentStep) {
         console.debug("[MarkdownEditor] transitioning to step:", step);
       }
+
+      const previousStep = this.currentStep;
       this.currentStep = step;
+
+      console.debug("[MarkdownEditor] step change", {
+        previousStep,
+        nextStep: step,
+      });
 
       switch (step) {
         case "editor":
@@ -219,6 +226,12 @@ document.addEventListener("alpine:init", () => {
           this.caption = "Create New Post";
           break;
       }
+
+      if (step === "editor") {
+        this.scheduleEditorInitialization();
+      } else if (previousStep === "editor") {
+        this.destroyEditor();
+      }
     },
 
     redirectToLogin() {
@@ -231,13 +244,66 @@ document.addEventListener("alpine:init", () => {
       this.redirectToLogin();
     },
 
+    destroyEditor() {
+      if (!this.editorInstance) {
+        return;
+      }
+
+      console.debug("[MarkdownEditor] destroying TinyMDE instance");
+      const textarea = this.editorInstance.textarea;
+      const editorRoot = this.editorInstance.e;
+
+      try {
+        if (typeof this.editorInstance.destroy === "function") {
+          this.editorInstance.destroy();
+        }
+      } catch (error) {
+        console.warn("[MarkdownEditor] Failed to destroy TinyMDE instance", error);
+      }
+
+      if (editorRoot?.parentNode) {
+        editorRoot.parentNode.removeChild(editorRoot);
+      }
+
+      if (textarea) {
+        textarea.style.removeProperty("display");
+      }
+
+      this.editorInstance = null;
+    },
+
+    scheduleEditorInitialization(retries = 5) {
+      console.debug("[MarkdownEditor] scheduling TinyMDE initialisation");
+      this.$nextTick(() => {
+        requestAnimationFrame(() => {
+          console.debug("[MarkdownEditor] requestAnimationFrame -> initializeEditor");
+          if (this.isEditorStep && (!this.$refs.editor || !document.body.contains(this.$refs.editor)) && retries > 0) {
+            console.debug(
+              "[MarkdownEditor] textarea not yet available; retrying TinyMDE init",
+              { retries }
+            );
+            setTimeout(() => this.scheduleEditorInitialization(retries - 1), 50);
+            return;
+          }
+
+          this.initializeEditor();
+        });
+      });
+    },
+
     initializeEditor() {
+      console.debug("[MarkdownEditor] initializeEditor invoked", {
+        isEditorStep: this.isEditorStep,
+        hasEditorInstance: Boolean(this.editorInstance),
+      });
       if (!this.isEditorStep) {
+        console.debug("[MarkdownEditor] initializeEditor aborted: not editor step");
         return;
       }
 
       const textarea = this.$refs.editor;
-      if (!textarea) {
+      if (!textarea || !document.body.contains(textarea)) {
+        console.debug("[MarkdownEditor] initializeEditor aborted: textarea ref out of DOM");
         return;
       }
 
@@ -256,9 +322,11 @@ document.addEventListener("alpine:init", () => {
         ) {
           this.editorInstance.setContent(this.post.body ?? "");
         }
+        console.debug("[MarkdownEditor] TinyMDE already initialised for textarea, sync content");
         return;
       }
 
+      console.debug("[MarkdownEditor] creating new TinyMDE instance");
       this.editorInstance = new tinyMde.Editor({
         textarea,
         content: this.post.body ?? "",
@@ -316,10 +384,10 @@ document.addEventListener("alpine:init", () => {
           return;
         }
 
-        const sessionEstablished = await authService.ensureBackOfficeSession();
+        const sessionEstablished = authService.hasValidAccessToken();
         if (!sessionEstablished) {
           console.info(
-            "[MarkdownEditor] bearer token present but session cookie missing; showing login view"
+            "[MarkdownEditor] access token missing or expired; showing login view"
           );
           this.isLoading = false;
           this.errorDetails = null;
@@ -404,6 +472,7 @@ document.addEventListener("alpine:init", () => {
         // On success, display url
         if (result.url) {
           this.successUrl = result.url;
+          this.scheduleEditorInitialization();
           this.setStep("success");
           console.info(
             "[MarkdownEditor] publish complete; success url:",
@@ -446,7 +515,6 @@ document.addEventListener("alpine:init", () => {
 
     goToEditorStep() {
       this.setStep("editor");
-      this.$nextTick(() => this.initializeEditor());
     },
 
     resetForNewPost() {
@@ -464,7 +532,6 @@ document.addEventListener("alpine:init", () => {
       this.successUrl = null;
       this.errorDetails = null;
       this.setStep("editor");
-      this.$nextTick(() => this.initializeEditor());
     },
 
     updatePostTitle(event) {
@@ -502,7 +569,26 @@ document.addEventListener("alpine:init", () => {
         return;
       }
 
+      const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10MB
+      const allowedTypes = ["image/jpeg", "image/png", "image/gif"];
+
       files.forEach((file) => {
+        if (!file) return;
+        const typeOk = allowedTypes.includes(file.type);
+        const sizeOk = typeof file.size === "number" && file.size <= MAX_UPLOAD_BYTES;
+        if (!typeOk || !sizeOk) {
+          const reasons = [];
+          if (!typeOk) reasons.push("unsupported file type");
+          if (!sizeOk) reasons.push("file too large (max 10MB)");
+          this.errorDetails = {
+            title: "Image upload not allowed",
+            details: [
+              `${(file.name || "file").trim()}: ${reasons.join(", ")}. Allowed: JPEG, PNG, GIF.`,
+            ],
+          };
+          return; // skip this file
+        }
+
         const uploadToken = this.createUploadToken();
         this.fileMap.set(uploadToken, file);
 

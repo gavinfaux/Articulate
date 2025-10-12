@@ -1,19 +1,18 @@
-/* Original + New App-specific styles */
 [x-cloak] {
     display: none !important;
 }
 
-* {
-    outline:1px solid blueviolet !important;
-}
-
 :root {
     --container-max: 900px;
-    --gutter: 24px;
+    --gutter: 8px;
 }
 
 @media (max-width: 520px) {
-    :root { --gutter: 16px; }
+    :root { --gutter: 4px; }
+}
+
+main {
+    background-color: #fff;
 }
 
 .md-editor__container {
@@ -26,8 +25,7 @@
 }
 
 .md-editor__body.mdl-textfield .mdl-textfield__label[for="editor"] {
-    top: 20px;
-    left: 2px;
+    top: 14px;
 }
 
 .sr-only {
@@ -89,108 +87,50 @@ body.is-login-step .page-content {
     overflow: visible;
 }
 
-/* New styles for Alpine UI */
-.editor-container {
-    max-width: 900px;
-    margin: 2rem auto;
-    padding: 2rem;
-    background: white;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    border-radius: 8px;
-}
-
-.step-container.active {
-    display: block;
-}
-
-.fab-container {
-    position: fixed;
-    bottom: 2rem;
-    right: 2rem;
-    z-index: 1000;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
-
-.error-message {
-    color: #d50000; /* Red */
-    background-color: #ffcdd2; /* Light Red */
-    padding: 1rem;
-    border-radius: 4px;
-    margin-bottom: 1rem;
-}
-
-.success-message {
-    text-align: center;
-    padding: 2rem;
-}
-
-.success-message .material-icons {
-    font-size: 4rem;
-    color: #4caf50; /* Green */
-}
-
-.navigation-buttons {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 2rem;
-}
-
-/* Floating action button containers used by the view */
-.btn-fab-right,
-.btn-fab-left {
-    display: flex;
-    gap: 12px;
-}
-
 /* Original styles from md-editor.css */
 .fill-height {
     height: 100%;
-}
-
-.md-input {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-}
-
-.md-input .mdl-textfield__input {
-    flex: 1;
-    max-height: none;
-}
-
-.fixed {
-    flex-shrink: 0;
 }
 
 .hidden-insert-file {
     display: none;
 }
 
-.app-error {
+.articulate-error-box {
     position: fixed;
-    bottom: 50px;
+    top: 24px;
     left: 50%;
     transform: translateX(-50%);
-    z-index: 201;
-    text-align: center;
+    max-width: 480px;
+    width: calc(100vw - 32px);
+    background-color: #fde7e9;
+    color: #5c1a1c;
+    border: 1px solid rgba(220, 53, 69, 0.35);
+    border-radius: 12px;
+    padding: 16px 20px;
+    box-shadow: 0 12px 32px rgba(220, 53, 69, 0.15);
+    z-index: 30;
 }
 
-.app-error .mdl-textfield__error {
-    font-weight: bold;
+.articulate-error-box strong {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 8px;
 }
 
-.container .mdl-card {
-  width: 100%;
-  box-sizing: border-box;
+.articulate-error-list {
+    margin: 0;
+    padding-left: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
 
-.container .mdl-card .mdl-textfield,
 .md-editor__card .mdl-textfield {
     display: block;
     width: 100%;
     max-width: none;
+    padding-bottom: 4px;
 }
 
 
@@ -213,6 +153,41 @@ textarea {
     flex-direction: column;
     min-height: 0;
     overflow: hidden;
+}
+
+.mdl-dialog {
+    width: min(480px, calc(100vw - 32px));
+    border: none;
+    border-radius: 12px;
+    padding: 0;
+    overflow: hidden;
+    box-shadow: 0 24px 56px rgba(63, 81, 181, 0.25);
+}
+
+.mdl-dialog__title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+    padding: 20px 24px 0;
+    color: #2f3a8c;
+}
+
+.mdl-dialog__content {
+    padding: 12px 24px 20px;
+    color: #404660;
+}
+
+.mdl-dialog__actions {
+    padding: 16px 24px 20px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    background: rgba(63, 81, 181, 0.05);
+}
+
+.mdl-dialog__actions .mdl-button {
+    text-transform: none;
+    font-weight: 600;
 }
 
 .md-editor__main {
@@ -285,7 +260,6 @@ textarea {
 
 body.is-login-step .md-editor__card.md-editor__card--compact {
     max-width: 440px;
-    box-shadow: 0 10px 40px rgba(39, 51, 115, 0.12);
 }
 
 body.is-login-step .md-editor__card.md-editor__card--compact .mdl-card__supporting-text {
@@ -373,8 +347,7 @@ body.is-login-step .md-editor__card.md-editor__card--compact .mdl-card__supporti
     flex: 1;
     display: flex;
     flex-direction: column;
-    padding-bottom: 24px !important;
-    margin-bottom: 8px !important;
+    padding-bottom: 0 !important;
 }
 
 @media (max-width: 768px) {
@@ -408,8 +381,7 @@ body.is-login-step .md-editor__card.md-editor__card--compact .mdl-card__supporti
     display: flex;
     flex-direction: column;
     gap: 24px;
-    padding-bottom: 24px;
-    margin-bottom: 8px;
+    padding-bottom: 0;
     min-height: 0;
 }
 
@@ -429,6 +401,32 @@ body.is-login-step .md-editor__card.md-editor__card--compact .mdl-card__supporti
     flex-direction: column;
     min-height: 0;
     width: auto;
+    padding: 0;
+}
+
+.md-editor__card--success {
+    display: flex;
+    flex-direction: column;
+}
+
+.md-editor__success-body {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 32px 32px 0;
+}
+
+.md-editor__success-content {
+    max-width: 420px;
+}
+
+.md-editor__success-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 16px;
 }
 
 .md-editor__card--compact .mdl-card__supporting-text {
@@ -453,8 +451,8 @@ body.is-login-step .md-editor__card.md-editor__card--compact .mdl-card__supporti
 }
 
 .md-editor__title--editor.mdl-textfield {
-    padding-top: 8px;
-    padding-bottom: 8px;
+    padding-top: 4px;
+    padding-bottom: 4px;
 }
 
 .md-editor__title .mdl-textfield__input:focus {
@@ -528,8 +526,9 @@ body.is-login-step .md-editor__card.md-editor__card--compact .mdl-card__supporti
     min-height: 0;
     overflow: auto;
     overscroll-behavior: contain;
-    border: 1px solid #c0c0c0;
-    scrollbar-gutter: stable both-edges;
+    border-bottom: 1px solid #c0c0c0;
+    scrollbar-gutter: stable;
+    padding: 0 !important;
 }
 
 .md-editor__body .tiny-mde .tiny-mde__editable,
@@ -599,7 +598,6 @@ body.is-login-step .md-editor__card.md-editor__card--compact .mdl-card__supporti
     }
 
     .md-editor__footer-inner {
-        justify-content: space-around;
         gap: 12px;
     }
 }

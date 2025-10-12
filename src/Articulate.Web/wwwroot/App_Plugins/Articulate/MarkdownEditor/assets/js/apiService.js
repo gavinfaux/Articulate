@@ -1,37 +1,6 @@
 import { config } from './config.js';
 import { authService } from './authService.js';
 
-async function buildApiError(response, fallbackMessage) {
-    const error = new Error(fallbackMessage || response.statusText || `Request failed with status ${response.status}`);
-    error.status = response.status;
-    error.isAuthError = response.status === 401;
-    error.isForbidden = response.status === 403;
-    error.isNetworkError = response.status === 0;
-
-    try {
-        const clone = response.clone();
-        const contentType = clone.headers.get('content-type') || '';
-        if (contentType.includes('application/json')) {
-            error.problemDetails = await clone.json();
-        } else {
-            const text = await clone.text();
-            if (text && text.trim().length) {
-                error.rawBody = text;
-            }
-        }
-    } catch (parseError) {
-        console.warn('[apiService] Failed to parse error response payload', parseError);
-    }
-
-    if (error.problemDetails?.title) {
-        error.message = error.problemDetails.title;
-    } else if (error.rawBody && !fallbackMessage) {
-        error.message = error.rawBody;
-    }
-
-    return error;
-}
-
 /**
  * Creates a new blog post by sending data to the backend API.
  * @param {object} postData The post data (title, body, etc.).
@@ -74,7 +43,8 @@ async function createPost(postData, fileMap) {
     });
 
     if (!response.ok) {
-        throw await buildApiError(response, 'Failed to publish blog post.');
+        // Defer parsing/normalisation to error-formatter
+        throw response;
     }
 
     return response.json();
@@ -97,7 +67,8 @@ async function getCurrentUser() {
     });
 
     if (!response.ok) {
-        throw await buildApiError(response, 'Failed to fetch user data.');
+        // Defer parsing/normalisation to error-formatter
+        throw response;
     }
 
     return response.json();
