@@ -4,6 +4,7 @@ using Westwind.AspNetCore.LiveReload;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
+#if DEBUG
 // Development hotload DX: Razor runtime compilation + Live Reload
 if (builder.Environment.IsDevelopment())
 {
@@ -28,8 +29,6 @@ if (builder.Environment.IsDevelopment())
             }
         });
 
-#if DEBUG
-
     // Live reload for static assets (css/js) and cshtml changes without proxying
     builder.Services.AddLiveReload(opt =>
     {
@@ -39,8 +38,8 @@ if (builder.Environment.IsDevelopment())
         opt.ClientFileExtensions = ".cshtml,.css,.js,.png,.jpg,.jpeg,.gif,.svg,.webp,.json";
     });
 
-#endif
 }
+#endif
 
 builder.CreateUmbracoBuilder()
     .AddBackOffice()
@@ -53,7 +52,7 @@ if (builder.Environment.IsProduction())
 {
     // Only required when running from IDE in 'hybrid' Production mode, static assets will not load without this
     // Do not use in development mode or published releases, Umbraco will not start with a circular reference exception
-    // builder.WebHost.UseStaticWebAssets();
+    //builder.WebHost.UseStaticWebAssets();
 }
 
 WebApplication app = builder.Build();
