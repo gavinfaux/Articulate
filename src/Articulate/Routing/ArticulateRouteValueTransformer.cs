@@ -163,7 +163,7 @@ namespace Articulate.Routing
             umbracoContext.PublishedRequest = publishedRequest;
 
             values[ControllerToken] = dynamicRouteValues.ControllerActionDescriptor.ControllerName;
-            if (string.IsNullOrWhiteSpace(dynamicRouteValues.ControllerActionDescriptor.ActionName) == false)
+            if (!string.IsNullOrWhiteSpace(dynamicRouteValues.ControllerActionDescriptor.ActionName))
             {
                 values[ActionToken] = dynamicRouteValues.ControllerActionDescriptor.ActionName;
             }

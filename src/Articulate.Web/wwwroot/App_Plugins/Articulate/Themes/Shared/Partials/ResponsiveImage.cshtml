@@ -36,12 +36,12 @@
     }
 
     // Inputs via ViewData
-    var alt = (ViewData["alt"] as string) ?? string.Empty;
-    var crop = (ViewData["crop"] as string) ?? string.Empty; // e.g. "wide" or empty for original
-    var sizes = (ViewData["sizes"] as string) ?? "100vw";
-    var widthsCsv = (ViewData["widths"] as string) ?? "400,800,1200,1600";
+    var alt = ViewData["alt"] as string ?? string.Empty;
+    var crop = ViewData["crop"] as string ?? string.Empty; // e.g. "wide" or empty for original
+    var sizes = ViewData["sizes"] as string ?? "100vw";
+    var widthsCsv = ViewData["widths"] as string ?? "400,800,1200,1600";
 
-    int[] widths = widthsCsv
+    var widths = widthsCsv
         .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
         .Select(w => int.TryParse(w, out var n) ? n : 0)
         .Where(n => n > 0)
@@ -56,8 +56,8 @@
         : null;
 
     // Format-specific srcsets (AVIF, WebP) using ImageSharp format param
-    string? srcsetAvif = srcset is null ? null : string.Join(", ", widths.Select(w => AppendQueryParam(GetUrl(w, crop)!, "format", "avif") + " " + w + "w"));
-    string? srcsetWebp = srcset is null ? null : string.Join(", ", widths.Select(w => AppendQueryParam(GetUrl(w, crop)!, "format", "webp") + " " + w + "w"));
+    var srcsetAvif = srcset is null ? null : string.Join(", ", widths.Select(w => AppendQueryParam(GetUrl(w, crop)!, "format", "avif") + " " + w + "w"));
+    var srcsetWebp = srcset is null ? null : string.Join(", ", widths.Select(w => AppendQueryParam(GetUrl(w, crop)!, "format", "webp") + " " + w + "w"));
 }
 <picture>
   @if (!string.IsNullOrWhiteSpace(srcsetAvif))

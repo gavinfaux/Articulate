@@ -13,11 +13,11 @@ namespace Articulate.Components
         public IEnumerable<string> ExpandViewLocations(ViewLocationExpanderContext context, IEnumerable<string> viewLocations)
         {
             string? themeName = null;
-            context.Values?.TryGetValue(ThemeKey, out themeName);
+            context.Values.TryGetValue(ThemeKey, out themeName);
             if (string.IsNullOrEmpty(themeName))
             {
                 // Fallback: try HttpContext.Items when Values is unavailable (e.g., in unit tests)
-                if (context.ActionContext?.HttpContext?.Items?["ThemeName"] is string fromItems &&
+                if (context.ActionContext.HttpContext.Items["ThemeName"] is string fromItems &&
                     !string.IsNullOrWhiteSpace(fromItems))
                 {
                     themeName = fromItems;
@@ -48,7 +48,7 @@ namespace Articulate.Components
 
         public void PopulateValues(ViewLocationExpanderContext context)
         {
-            HttpContext? httpContext = context.ActionContext?.HttpContext;
+            HttpContext? httpContext = context.ActionContext.HttpContext;
             if (httpContext == null)
             {
                 return;
@@ -59,12 +59,8 @@ namespace Articulate.Components
             var themeName = themeResolver?.GetCurrentThemeName() ?? string.Empty;
 
             // Values may be null in unit testing scenarios when constructed directly.
-            if (context.Values is not null)
-            {
-                context.Values[ThemeKey] = themeName;
-            }
+            context.Values[ThemeKey] = themeName;
 
-            httpContext.Items ??= new Dictionary<object, object?>();
             httpContext.Items["ThemeName"] = themeName;
         }
     }

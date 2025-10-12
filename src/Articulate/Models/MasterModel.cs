@@ -127,7 +127,7 @@ namespace Articulate.Models
         {
             get
             {
-                if (_pageSize.HasValue == false)
+                if (!_pageSize.HasValue)
                 {
                     _pageSize = Unwrap().Value("pageSize", fallback: Fallback.To(Fallback.Ancestors, Fallback.DefaultValue), defaultValue: 10);
                 }

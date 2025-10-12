@@ -203,7 +203,7 @@ namespace Articulate.MetaWeblog
 
             CategoryInfo[] tags = all.Select(x => new CategoryInfo
             {
-                title = x.Text, categoryid = x.Id.ToString(),
+                title = x.Text, categoryid = x.Id.ToString()
 
                 // TODO HTML & RSS URL ? (Wasnt used before)
             }).ToArray();
@@ -476,7 +476,7 @@ namespace Articulate.MetaWeblog
                 : MarkdownHelper.ToHtml(post.GetValue<string>("markdown")),
             permalink = post.GetValue<string>(Constants.Conventions.Content.UrlName).IsNullOrWhiteSpace()
                 ? post.Name?.ToUrlSegment(_shortStringHelper)
-                : post.GetValue<string>(Constants.Conventions.Content.UrlName)?.ToUrlSegment(_shortStringHelper),
+                : post.GetValue<string>(Constants.Conventions.Content.UrlName)?.ToUrlSegment(_shortStringHelper)
         };
 
         /// <summary>
@@ -501,7 +501,7 @@ namespace Articulate.MetaWeblog
             wp_slug = post.Url(),
             mt_excerpt = post.Excerpt,
             mt_keywords = string.Join(',', post.Tags.ToArray()),
-            title = post.Name,
+            title = post.Name
         };
 
         private async Task<IUser> ValidateUserAsync(string username, string password)

@@ -11,12 +11,12 @@ namespace Articulate.Services
             var partialPlaceHolder = PathHelper.JoinVirtual(Paths.PartialsPath, Paths.ViewPlaceHolder);
             var viewsPlaceHolder = PathHelper.JoinVirtual(Paths.ViewsPath, Paths.ViewPlaceHolder);
 
-            var userRoot = Paths.UserViewVirtualRoot; // prefer new clarified names
-            var legacyUserRoot = Paths.LegacyUserViewVirtualRoot;
-            var systemVirtualRoot = Paths.SystemViewVirtualRoot;
-            var systemContentRoot = Paths.SystemViewContentRoot;
-            var themes = Paths.ThemesPath;
-            var markdownEditor = Paths.MarkdownEditorPath;
+            const string userRoot = Paths.UserViewVirtualRoot; // prefer new clarified names
+            const string legacyUserRoot = Paths.LegacyUserViewVirtualRoot;
+            const string systemVirtualRoot = Paths.SystemViewVirtualRoot;
+            const string systemContentRoot = Paths.SystemViewContentRoot;
+            const string themes = Paths.ThemesPath;
+            const string markdownEditor = Paths.MarkdownEditorPath;
 
             IEnumerable<string> locations =
             [

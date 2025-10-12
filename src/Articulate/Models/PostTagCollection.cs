@@ -15,7 +15,7 @@ namespace Articulate.Models
         /// <returns></returns>
         public int GetTagWeight(PostsByTagModel postsByTag, decimal maxWeight)
         {
-            if (_maxCount.HasValue == false)
+            if (!_maxCount.HasValue)
             {
                 _maxCount = this.Max(x => x.PostCount);
             }

@@ -363,7 +363,7 @@ namespace Articulate.ImportExport
 
                 postNode.SetInvariantOrDefaultCultureValue("publishedDate", post.CreatedOn, postType, _languageService);
 
-                if (post.Excerpt is not null && post.Excerpt.Content.IsNullOrWhiteSpace() == false)
+                if (post.Excerpt is not null && !post.Excerpt.Content.IsNullOrWhiteSpace())
                 {
                     var excerpt = post.Excerpt.Content;
 

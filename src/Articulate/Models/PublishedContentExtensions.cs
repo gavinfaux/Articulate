@@ -326,7 +326,7 @@ namespace Articulate.Models
         public static IHtmlContent GoogleAnalyticsTracking(this IMasterModel model)
         {
             var tag = model.RootBlogNode.Value<string>("googleAnalyticsId") ?? string.Empty;
-            if (tag.IsNullOrWhiteSpace() == false)
+            if (!tag.IsNullOrWhiteSpace())
             {
                 return new HtmlString(
                     $$"""
@@ -346,7 +346,7 @@ namespace Articulate.Models
         public static IHtmlContent GoogleAnalyticsNoScript(this IMasterModel model)
         {
             var tag = model.RootBlogNode.Value<string>("googleAnalyticsId") ?? string.Empty;
-            if (tag.IsNullOrWhiteSpace() == false)
+            if (!tag.IsNullOrWhiteSpace())
             {
                 return new HtmlString(
                     $"""

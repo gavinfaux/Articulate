@@ -37,7 +37,7 @@ namespace Articulate.Models
         {
             get
             {
-                if (_count.HasValue == false)
+                if (!_count.HasValue)
                 {
                     _count = (Posts ?? []).Count();
                 }

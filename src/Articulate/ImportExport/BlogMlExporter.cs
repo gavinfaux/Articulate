@@ -65,7 +65,7 @@ namespace Articulate.ImportExport
                     RootUrl = new Uri(urlProvider.GetUrl(root.Id), UriKind.RelativeOrAbsolute),
                     GeneratedOn = DateTime.Now,
                     Title = new BlogMLTextConstruct(root.GetValue<string>("blogTitle")),
-                    Subtitle = new BlogMLTextConstruct(root.GetValue<string>("blogDescription")),
+                    Subtitle = new BlogMLTextConstruct(root.GetValue<string>("blogDescription"))
                 };
 
                 IContentType authorsContentType =
@@ -120,7 +120,7 @@ namespace Articulate.ImportExport
                     CreatedOn = author.CreateDate,
                     LastModifiedOn = author.UpdateDate,
                     ApprovalStatus = BlogMLApprovalStatus.Approved,
-                    Title = new BlogMLTextConstruct(author.Name),
+                    Title = new BlogMLTextConstruct(author.Name)
                 };
                 blogMlDoc.Authors.Add(blogMlAuthor);
             }
@@ -143,7 +143,7 @@ namespace Articulate.ImportExport
                     LastModifiedOn = category.UpdateDate,
                     ApprovalStatus = BlogMLApprovalStatus.Approved,
                     ParentId = "0",
-                    Title = new BlogMLTextConstruct(category.Text),
+                    Title = new BlogMLTextConstruct(category.Text)
                 };
                 blogMlDoc.Categories.Add(blogMlCategory);
             }
@@ -192,7 +192,7 @@ namespace Articulate.ImportExport
                         LastModifiedOn = child.UpdateDate,
                         Content = new BlogMLTextConstruct(content, BlogMLContentType.Html),
                         Excerpt = new BlogMLTextConstruct(child.GetValue<string>("excerpt")),
-                        Url = postUrl,
+                        Url = postUrl
                     };
 
                     BlogMLAuthor? author = blogMlDoc.Authors?.FirstOrDefault(x =>
@@ -213,7 +213,7 @@ namespace Articulate.ImportExport
                     {
                         blogMlPost.AddExtension(new TagsSyndicationExtension
                         {
-                            Context = { Tags = new Collection<string>(tags), },
+                            Context = { Tags = new Collection<string>(tags) }
                         });
                     }
 
@@ -241,7 +241,7 @@ namespace Articulate.ImportExport
                                             Url = imageUrl,
                                             ExternalUri = imageUrl,
                                             IsEmbedded = exportImagesAsBase64,
-                                            MimeType = mime,
+                                            MimeType = mime
                                         };
 
                                         if (exportImagesAsBase64)
@@ -289,7 +289,7 @@ namespace Articulate.ImportExport
                 "bmp" => "image/bmp",
                 "tiff" => "image/tiff",
                 _ when !string.IsNullOrWhiteSpace(ext) => $"image/{ext}",
-                _ => string.Empty,
+                _ => string.Empty
             };
         }
 

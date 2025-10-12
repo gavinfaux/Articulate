@@ -18,11 +18,11 @@
     var relative = Model.Url();
     var canonical = string.IsNullOrWhiteSpace(baseUrl) ? relative : string.Concat(baseUrl, relative);
 
-    string pageTitle = string.IsNullOrWhiteSpace(Model.PageTitle) ? Model.Name : Model.PageTitle;
+    var pageTitle = string.IsNullOrWhiteSpace(Model.PageTitle) ? Model.Name : Model.PageTitle;
 
     // Encode values for query strings
-    string encUrl = Uri.EscapeDataString(canonical ?? string.Empty);
-    string encTitle = Uri.EscapeDataString(pageTitle ?? string.Empty);
+    var encUrl = Uri.EscapeDataString(canonical);
+    var encTitle = Uri.EscapeDataString(pageTitle);
 
     // Fallback share links
     var xUrl = $"https://twitter.com/intent/tweet?url={encUrl}&text={encTitle}"; // X/Twitter
