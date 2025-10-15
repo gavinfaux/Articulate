@@ -22,5 +22,6 @@ namespace Articulate.Web.Models
         public int? BackOfficeUserId { get; set; }
 
         public bool HasRequiredPermissions { get; set; }
+
     }
 }

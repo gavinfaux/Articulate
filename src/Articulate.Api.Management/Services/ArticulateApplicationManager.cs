@@ -112,7 +112,7 @@ namespace Articulate.Api.Management.Services
             {
                 if (Uri.TryCreate(candidate, UriKind.Absolute, out Uri? uri))
                 {
-                    target.Add(uri);
+                    target.Add(EnsureTrailingSlash(uri));
                     added = true;
                 }
                 else
@@ -133,7 +133,7 @@ namespace Articulate.Api.Management.Services
             {
                 if (Uri.TryCreate(candidate, UriKind.Absolute, out Uri? uri))
                 {
-                    target.Add(uri);
+                    target.Add(EnsureTrailingSlash(uri));
                 }
                 else
                 {
@@ -143,6 +143,23 @@ namespace Articulate.Api.Management.Services
                         clientId);
                 }
             }
+        }
+
+        private static Uri EnsureTrailingSlash(Uri uri)
+        {
+            string path = uri.AbsolutePath;
+
+            if (string.IsNullOrEmpty(path) || path.EndsWith('/'))
+            {
+                return uri;
+            }
+
+            var builder = new UriBuilder(uri)
+            {
+                Path = path + "/"
+            };
+
+            return builder.Uri;
         }
     }
 }

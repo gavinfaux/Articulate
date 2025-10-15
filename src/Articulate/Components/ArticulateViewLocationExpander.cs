@@ -12,12 +12,16 @@ namespace Articulate.Components
 
         public IEnumerable<string> ExpandViewLocations(ViewLocationExpanderContext context, IEnumerable<string> viewLocations)
         {
+            IDictionary<string, string?>? values = context.Values;
             string? themeName = null;
-            context.Values.TryGetValue(ThemeKey, out themeName);
+
+            values?.TryGetValue(ThemeKey, out themeName);
+
             if (string.IsNullOrEmpty(themeName))
             {
                 // Fallback: try HttpContext.Items when Values is unavailable (e.g., in unit tests)
-                if (context.ActionContext.HttpContext.Items["ThemeName"] is string fromItems &&
+                HttpContext? httpContextForItems = context.ActionContext?.HttpContext;
+                if (httpContextForItems?.Items["ThemeName"] is string fromItems &&
                     !string.IsNullOrWhiteSpace(fromItems))
                 {
                     themeName = fromItems;
@@ -48,20 +52,31 @@ namespace Articulate.Components
 
         public void PopulateValues(ViewLocationExpanderContext context)
         {
-            HttpContext? httpContext = context.ActionContext.HttpContext;
-            if (httpContext == null)
+            HttpContext? httpContext = context.ActionContext?.HttpContext;
+            if (httpContext is null)
             {
                 return;
             }
 
             IArticulateThemeResolver? themeResolver =
                 httpContext.RequestServices.GetService<IArticulateThemeResolver>();
-            var themeName = themeResolver?.GetCurrentThemeName() ?? string.Empty;
+            string themeName = themeResolver?.GetCurrentThemeName() ?? string.Empty;
 
             // Values may be null in unit testing scenarios when constructed directly.
-            context.Values[ThemeKey] = themeName;
+            IDictionary<string, string?>? values = context.Values;
+            if (values is not null)
+            {
+                values[ThemeKey] = themeName;
+            }
 
-            httpContext.Items["ThemeName"] = themeName;
+            if (string.IsNullOrWhiteSpace(themeName))
+            {
+                httpContext.Items.Remove("ThemeName");
+            }
+            else
+            {
+                httpContext.Items["ThemeName"] = themeName;
+            }
         }
     }
 }

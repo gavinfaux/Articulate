@@ -14,10 +14,10 @@ async function generateCodeChallenge(codeVerifier) {
     return base64urlencode(digest);
 }
 
-function generateRandomString(length) {
-    const array = new Uint32Array(length / 2);
+function generateRandomString(byteLength) {
+    const array = new Uint8Array(byteLength);
     window.crypto.getRandomValues(array);
-    return Array.from(array, dec => ('0' + dec.toString(16)).slice(-2)).join('');
+    return Array.from(array, dec => dec.toString(16).padStart(2, '0')).join('');
 }
 
 function base64urlencode(buffer) {
@@ -104,10 +104,16 @@ function clearAccessToken() {
 // Main authentication functions
 async function redirectToLogin() {
     const state = generateRandomString(32);
-    const codeVerifier = generateRandomString(128);
+    const codeVerifier = generateRandomString(64);
 
     sessionStorage.setItem(config.storageKeys.oauthState, state);
     sessionStorage.setItem(config.storageKeys.codeVerifier, codeVerifier);
+
+    console.debug('[authService] preparing authorization request', {
+        clientId: config.oauth.clientId,
+        state,
+        codeVerifierLength: codeVerifier.length
+    });
 
     const codeChallenge = await generateCodeChallenge(codeVerifier);
 
@@ -136,6 +142,13 @@ async function handleLoginCallback() {
     sessionStorage.removeItem(config.storageKeys.oauthState);
     sessionStorage.removeItem(config.storageKeys.codeVerifier);
 
+    console.debug('[authService] handling login callback', {
+        hasCode: Boolean(code),
+        hasState: Boolean(state),
+        storedStatePresent: Boolean(storedState),
+        hasCodeVerifier: Boolean(codeVerifier)
+    });
+
     if (!code || !state || state !== storedState) {
         throw new Error('Invalid state or code from authentication server.');
     }
@@ -163,7 +176,17 @@ async function handleLoginCallback() {
     }
 
     const tokenData = await tokenResponse.json();
+    console.debug('[authService] token endpoint response payload', {
+        hasAccessToken: Boolean(tokenData?.access_token),
+        expiresIn: tokenData?.expires_in,
+        tokenType: tokenData?.token_type,
+        scope: tokenData?.scope
+    });
+
     setAccessToken(tokenData.access_token);
+
+    const decodedToken = parseJwtPayload(tokenData.access_token);
+    console.debug('[authService] decoded access token payload after exchange', decodedToken);
 
     if (!hasValidAccessToken()) {
         throw new Error('Access token is invalid or expired.');
@@ -172,16 +195,33 @@ async function handleLoginCallback() {
 
 function hasValidAccessToken() {
     const token = getAccessToken();
+    console.debug('[authService] validating cached access token', {
+        tokenPresent: Boolean(token)
+    });
     if (!token) {
         return false;
     }
 
     const payload = parseJwtPayload(token);
-    if (payload && Object.prototype.hasOwnProperty.call(payload, 'exp')) {
+    console.debug('[authService] decoded cached access token payload', payload);
+    if (!payload) {
+        console.debug('[authService] token appears opaque; skipping client-side claim validation');
+        return true;
+    }
+
+    if (Object.prototype.hasOwnProperty.call(payload, 'exp')) {
         const exp = Number(payload.exp);
         if (!Number.isNaN(exp)) {
             const now = Math.floor(Date.now() / 1000);
-            if (exp <= now) {
+            const skewAllowance = 60; // seconds
+            const remainingLifetime = exp - now;
+            console.debug('[authService] token expiry evaluation', {
+                exp,
+                now,
+                skewAllowance,
+                remainingLifetime
+            });
+            if (exp <= now + skewAllowance) {
                 clearAccessToken();
                 console.info('[authService] Detected expired access token; clearing cached value.');
                 return false;

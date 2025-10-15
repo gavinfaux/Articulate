@@ -4,6 +4,38 @@ import { config, initConfig } from "./config.js";
 import { formatApiError } from "./error-formatter.js";
 import { uiService } from "./uiService.js";
 
+const DRAFT_STORAGE_KEY = "articulate:markdown-editor:draft";
+
+function loadDraftPayload() {
+  try {
+    const raw = sessionStorage.getItem(DRAFT_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (error) {
+    console.warn("[MarkdownEditor] Failed to parse draft payload", error);
+    return null;
+  }
+}
+
+function storeDraftPayload(payload) {
+  try {
+    sessionStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(payload));
+  } catch (error) {
+    console.warn("[MarkdownEditor] Unable to store draft payload", error);
+  }
+}
+
+function createEmptyPost(existingNodeId) {
+  return {
+    articulateBlogNode: existingNodeId ?? null,
+    title: "",
+    body: "",
+    excerpt: "",
+    tags: "",
+    categories: "",
+    slug: "",
+  };
+}
+
 document.addEventListener("alpine:init", () => {
   const alpine = window.Alpine;
   if (!alpine) {
@@ -27,14 +59,17 @@ document.addEventListener("alpine:init", () => {
       slug: "",
     },
     fileMap: new Map(),
+    successUrl: null,
+    currentUser: null,
     dialog: {
       title: "",
       message: "",
       buttonText: "OK",
       onConfirm: () => {},
     },
-    currentUser: null,
-    successUrl: null,
+    pendingRetry: null,
+    draftSaveHandle: null,
+    draftHandled: false,
     caption: "Create New Post",
     currentStep: "loading",
     editorInstance: null,
@@ -163,7 +198,13 @@ document.addEventListener("alpine:init", () => {
     },
 
     get loginBodyClass() {
-      return this.isLoginContext ? "is-login-step" : "";
+      return {
+        "debug-layout": config.debugLayout,
+        "is-login-step": this.isLoginContext,
+        "is-editor-step": this.isEditorStep,
+        "is-optional-step": this.isOptionalStep,
+        "is-success-step": this.isSuccessStep,
+      };
     },
 
     get showHeader() {
@@ -196,18 +237,39 @@ document.addEventListener("alpine:init", () => {
       return !this.canPublish;
     },
 
-    setStep(step) {
-      if (step && step !== this.currentStep) {
-        console.debug("[MarkdownEditor] transitioning to step:", step);
+    focusRef(refName) {
+      const reference = this.$refs?.[refName];
+      const element = Array.isArray(reference) ? reference[0] : reference;
+      if (element && typeof element.focus === "function") {
+        element.focus();
       }
+    },
 
+    saveDraftDebounced() {
+      window.clearTimeout(this.draftSaveHandle);
+      this.draftSaveHandle = window.setTimeout(() => this.saveDraft(), 400);
+    },
+
+    saveDraft() {
+      try {
+        const payload = {
+          post: this.post,
+          timestamp: Date.now(),
+        };
+        storeDraftPayload(payload);
+        console.debug("[MarkdownEditor] Draft saved to session storage");
+      } catch (error) {
+        console.warn("[MarkdownEditor] Failed to persist draft", error);
+      }
+    },
+
+    clearDraft() {
+      sessionStorage.removeItem(DRAFT_STORAGE_KEY);
+    },
+
+    setStep(step) {
       const previousStep = this.currentStep;
       this.currentStep = step;
-
-      console.debug("[MarkdownEditor] step change", {
-        previousStep,
-        nextStep: step,
-      });
 
       switch (step) {
         case "editor":
@@ -228,10 +290,119 @@ document.addEventListener("alpine:init", () => {
       }
 
       if (step === "editor") {
-        this.scheduleEditorInitialization();
+        this.checkDraftBeforeEditor();
+        this.$nextTick(() => {
+          this.initializeEditor();
+          this.focusRef("titleInput");
+        });
       } else if (previousStep === "editor") {
         this.destroyEditor();
       }
+
+      if (step === "optional") {
+        this.$nextTick(() => this.focusRef("tagsInput"));
+      } else if (step === "success") {
+        this.$nextTick(() => this.focusRef("viewPostButton"));
+      }
+    },
+
+    scheduleRetry(operation) {
+      this.pendingRetry = operation;
+      uiService.showDialog(
+        this.$refs.criticalErrorDialog,
+        this.dialog,
+        "Connection issue",
+        "We lost contact with Umbraco. We'll retry automatically in a moment, or you can retry now.",
+        () => {
+          this.confirmRetry();
+        },
+        "Retry now"
+      );
+
+      setTimeout(() => {
+        if (this.pendingRetry) {
+          this.confirmRetry();
+        }
+      }, 5000);
+    },
+
+    confirmRetry() {
+      const operation = this.pendingRetry;
+      this.pendingRetry = null;
+      this.$refs.criticalErrorDialog?.close();
+      this.resetDialogState();
+      if (typeof operation === "function") {
+        operation();
+      }
+    },
+
+    checkDraftBeforeEditor() {
+      if (this.draftHandled) {
+        return;
+      }
+
+      const payload = loadDraftPayload();
+      if (!payload?.post) {
+        this.draftHandled = true;
+        return;
+      }
+
+      const hasDraftContent = this.hasMeaningfulDraft(payload.post);
+      if (!hasDraftContent) {
+        this.clearDraft();
+        this.draftHandled = true;
+        return;
+      }
+
+      this.draftHandled = true;
+      const timestamp = payload.timestamp
+        ? new Date(payload.timestamp).toLocaleString()
+        : null;
+      const message = timestamp
+        ? `A saved draft from ${timestamp} was found. Resume editing?`
+        : "A saved draft was found. Resume editing?";
+
+      const resume = window.confirm(message);
+      if (resume) {
+        this.applyDraft(payload.post);
+        return;
+      }
+
+      this.clearDraft();
+      this.resetLocalPost();
+    },
+
+    hasMeaningfulDraft(draftPost) {
+      if (!draftPost) {
+        return false;
+      }
+
+      const fields = [
+        draftPost.title,
+        draftPost.body,
+        draftPost.excerpt,
+        draftPost.tags,
+        draftPost.categories,
+        draftPost.slug,
+      ];
+
+      return fields.some((value) => typeof value === "string" && value.trim().length);
+    },
+
+    applyDraft(draftPost) {
+      const nodeId = this.post.articulateBlogNode;
+      this.post = {
+        ...createEmptyPost(nodeId),
+        ...draftPost,
+        articulateBlogNode: nodeId ?? draftPost.articulateBlogNode ?? nodeId,
+      };
+      console.info("[MarkdownEditor] Draft restored to editor");
+    },
+
+    resetLocalPost() {
+      const nodeId = this.post.articulateBlogNode;
+      this.post = createEmptyPost(nodeId);
+      this.fileMap.clear();
     },
 
     redirectToLogin() {
@@ -249,20 +420,12 @@ document.addEventListener("alpine:init", () => {
         return;
       }
 
-      console.debug("[MarkdownEditor] destroying TinyMDE instance");
       const textarea = this.editorInstance.textarea;
-      const editorRoot = this.editorInstance.e;
 
       try {
-        if (typeof this.editorInstance.destroy === "function") {
-          this.editorInstance.destroy();
-        }
+        this.editorInstance.destroy?.();
       } catch (error) {
         console.warn("[MarkdownEditor] Failed to destroy TinyMDE instance", error);
-      }
-
-      if (editorRoot?.parentNode) {
-        editorRoot.parentNode.removeChild(editorRoot);
       }
 
       if (textarea) {
@@ -272,38 +435,13 @@ document.addEventListener("alpine:init", () => {
       this.editorInstance = null;
     },
 
-    scheduleEditorInitialization(retries = 5) {
-      console.debug("[MarkdownEditor] scheduling TinyMDE initialisation");
-      this.$nextTick(() => {
-        requestAnimationFrame(() => {
-          console.debug("[MarkdownEditor] requestAnimationFrame -> initializeEditor");
-          if (this.isEditorStep && (!this.$refs.editor || !document.body.contains(this.$refs.editor)) && retries > 0) {
-            console.debug(
-              "[MarkdownEditor] textarea not yet available; retrying TinyMDE init",
-              { retries }
-            );
-            setTimeout(() => this.scheduleEditorInitialization(retries - 1), 50);
-            return;
-          }
-
-          this.initializeEditor();
-        });
-      });
-    },
-
     initializeEditor() {
-      console.debug("[MarkdownEditor] initializeEditor invoked", {
-        isEditorStep: this.isEditorStep,
-        hasEditorInstance: Boolean(this.editorInstance),
-      });
       if (!this.isEditorStep) {
-        console.debug("[MarkdownEditor] initializeEditor aborted: not editor step");
         return;
       }
 
       const textarea = this.$refs.editor;
-      if (!textarea || !document.body.contains(textarea)) {
-        console.debug("[MarkdownEditor] initializeEditor aborted: textarea ref out of DOM");
+      if (!textarea) {
         return;
       }
 
@@ -322,11 +460,9 @@ document.addEventListener("alpine:init", () => {
         ) {
           this.editorInstance.setContent(this.post.body ?? "");
         }
-        console.debug("[MarkdownEditor] TinyMDE already initialised for textarea, sync content");
         return;
       }
 
-      console.debug("[MarkdownEditor] creating new TinyMDE instance");
       this.editorInstance = new tinyMde.Editor({
         textarea,
         content: this.post.body ?? "",
@@ -462,6 +598,7 @@ document.addEventListener("alpine:init", () => {
       this.errorDetails = null;
 
       try {
+        this.saveDraft();
         console.debug("[MarkdownEditor] handlePublish: preparing API call", {
           uploadTokens: Array.from(this.fileMap.keys()),
           fileCount: this.fileMap.size,
@@ -472,13 +609,12 @@ document.addEventListener("alpine:init", () => {
         // On success, display url
         if (result.url) {
           this.successUrl = result.url;
-          this.scheduleEditorInitialization();
           this.setStep("success");
           console.info(
             "[MarkdownEditor] publish complete; success url:",
             result.url
           );
-          //window.location.href = result.url;
+          this.clearDraft();
         } else {
           throw new Error("Received an empty or invalid URL from the server.");
         }
@@ -493,13 +629,19 @@ document.addEventListener("alpine:init", () => {
           formattedError.isNetworkError ||
           formattedError.isForbidden
         ) {
-          uiService.showDialog(
-            this.$refs.criticalErrorDialog,
-            this.dialog,
-            formattedError.title,
-            formattedError.details.join(" "),
-            formattedError.isAuthError ? () => this.redirectToLogin() : null
-          );
+          if (formattedError.isAuthError) {
+            uiService.showDialog(
+              this.$refs.criticalErrorDialog,
+              this.dialog,
+              formattedError.title,
+              formattedError.details.join(" "),
+              () => {
+                this.redirectToLogin();
+              }
+            );
+          } else {
+            this.scheduleRetry(() => this.handlePublish());
+          }
         }
       } finally {
         this.isLoading = false;
@@ -531,11 +673,12 @@ document.addEventListener("alpine:init", () => {
       this.fileMap.clear();
       this.successUrl = null;
       this.errorDetails = null;
-      this.setStep("editor");
+      this.focusRef("editor");
     },
 
     updatePostTitle(event) {
       this.post.title = event?.target?.value ?? "";
+      this.saveDraftDebounced();
     },
 
     updatePostField(event) {
@@ -558,6 +701,7 @@ document.addEventListener("alpine:init", () => {
         default:
           break;
       }
+      this.saveDraftDebounced();
     },
 
     handleImageUpload(event) {
@@ -685,6 +829,7 @@ document.addEventListener("alpine:init", () => {
         this.errorDetails = null;
       }
       this.setStep("login");
+      this.$nextTick(() => this.focusRef("loginButton"));
     },
   }));
 });

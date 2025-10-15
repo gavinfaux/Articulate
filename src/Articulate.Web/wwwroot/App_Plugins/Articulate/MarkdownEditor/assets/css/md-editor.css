@@ -2,13 +2,25 @@
     display: none !important;
 }
 
+@font-face {
+    font-family: 'Lato';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('/umbraco/backoffice/assets/fonts/lato/LatoLatin-Regular.woff2') format('woff2');
+}
+
 :root {
     --container-max: 900px;
     --gutter: 8px;
+    --md-editor-header-height: 64px;
 }
 
 @media (max-width: 520px) {
-    :root { --gutter: 4px; }
+    :root {
+        --gutter: 4px;
+        --md-editor-header-height: 56px;
+    }
 }
 
 main {
@@ -22,6 +34,48 @@ main {
     padding-left: var(--gutter);
     padding-right: var(--gutter);
     box-sizing: border-box;
+}
+
+.mdl-card.md-editor__card {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+}
+
+.mdl-layout__content.md-editor__main {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: calc(100vh - var(--md-editor-header-height));
+    overflow: hidden;
+}
+
+body.is-login-step .md-editor__main {
+    min-height: 100vh;
+}
+
+.md-editor__container {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.md-editor__card {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    margin: 0;
+}
+
+.md-editor__card .mdl-card__supporting-text {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    padding: 24px;
+    overflow-y: auto;
 }
 
 .md-editor__body.mdl-textfield .mdl-textfield__label[for="editor"] {
@@ -47,9 +101,26 @@ body {
     overflow: hidden;
 }
 
+body.debug-layout *,
+body.debug-layout *::before,
+body.debug-layout *::after {
+    outline: 1px dashed rgba(63, 81, 181, 0.45);
+    outline-offset: -1px;
+}
+
 body.is-login-step {
     background-color: #f5f7fb;
     overflow: auto;
+    font-family: 'Lato', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+body.is-login-step .mdl-layout {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
 }
 
 body.is-login-step .mdl-layout__header {
@@ -70,6 +141,11 @@ body.is-login-step .mdl-layout__header-row {
 
 body.is-login-step .mdl-layout__content {
     padding-top: 0 !important;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
 }
 
 body.is-login-step .md-editor__footer {
@@ -78,13 +154,30 @@ body.is-login-step .md-editor__footer {
 
 body.is-login-step .md-editor__main {
     justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    width: 100%;
 }
 
 body.is-login-step .page-content {
+    display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 48px 16px;
-    overflow: visible;
+    padding: 24px 16px;
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 100vh;
+}
+
+body.is-login-step .md-editor__container {
+    max-width: 100%;
+    padding-left: 0;
+    padding-right: 0;
+}
+
+body.is-login-step .md-editor__card {
+    margin: 0 auto;
 }
 
 /* Original styles from md-editor.css */
@@ -191,7 +284,7 @@ textarea {
 }
 
 .md-editor__main {
-    flex: 1;
+    flex: 1 1 auto;
     display: flex;
     flex-direction: column;
     min-height: 0;
@@ -229,25 +322,79 @@ textarea {
     transform: translateY(-1px);
 }
 
+
+
 .md-editor__login {
+  display: grid;
+  grid-template-columns: 100%;
+  grid-template-rows: auto 1fr;
+  gap: 16px;
+  padding: 32px 24px 32px;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  height: 100%;
+  min-height: 100vh;
+  font-family: inherit;
+}
+
+.md-editor__login-brand {
+  width: auto;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  align-self: start;
+  justify-self: start;
+}
+
+.md-editor__login-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  width: 100%;
+  max-width: 360px;
+  margin: 0 auto;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.md-editor__login-logo {
+    display: block;
+    width: clamp(140px, 20vw, 200px);
+    max-width: 100%;
+    height: auto;
+    max-height: 55px;
+    object-fit: contain;
+}
+
+.md-editor__login-content-card {
+    width: 100%;
+    max-width: 420px;
+    margin: 40px auto 0;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 24px;
-    padding: 56px 48px 40px;
-    max-width: 396px;
-    margin: 0 auto;
-    width: 100%;
+    justify-content: center;
+    align-self: center;
+    justify-self: center;
+}
+
+.md-editor__login-content-card .mdl-card__supporting-text {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
 }
 
 .md-editor__login-greeting {
     margin: 0;
-    padding-top: 16px;
-    font-size: 3rem;
-    line-height: 1.12;
-    font-weight: 700;
-    color: #2f3a8c;
-    letter-spacing: -0.015em;
+    padding: 0;
+    font-family: 'Lato', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 4rem;
+    line-height: 1.05;
+    font-weight: 900;
+    color: #283a97;
+    letter-spacing: -0.01em;
     text-align: center;
 }
 
@@ -260,21 +407,36 @@ textarea {
 
 body.is-login-step .md-editor__card.md-editor__card--compact {
     max-width: 440px;
+    width: 100%;
+    flex: 1 1 auto;
+    align-self: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
+    min-height: 0;
 }
 
 body.is-login-step .md-editor__card.md-editor__card--compact .mdl-card__supporting-text {
     min-height: 0;
     padding: 0;
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    justify-content: flex-start;
+    align-items: stretch;
+    width: 100%;
+    flex: 1 1 auto;
 }
 
 .mdl-button.md-editor__login-button,
 .mdl-button--accent.md-editor__login-button,
 .mdl-button--raised.md-editor__login-button,
 .mdl-button--accent.mdl-button--raised.md-editor__login-button {
-    --button-background: #3544b1;
-    --button-background-hover: #2d3a9b;
+    --button-background: #283a97;
+    --button-background-hover: #1f2f7a;
     --button-text-color: #ffffff;
-    --button-border-color: #1b264f;
+    --button-border-color: #1b2a6a;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -308,7 +470,7 @@ body.is-login-step .md-editor__card.md-editor__card--compact .mdl-card__supporti
     background-color: var(--button-background-hover) !important;
     color: var(--button-text-color) !important;
     outline: none;
-    box-shadow: 0 8px 18px rgba(47, 58, 140, 0.22);
+    box-shadow: 0 8px 18px rgba(40, 58, 151, 0.24);
 }
 
 .mdl-button.md-editor__login-button:active,
@@ -344,9 +506,10 @@ body.is-login-step .md-editor__card.md-editor__card--compact .mdl-card__supporti
 
 .md-editor__main .page-content,
 .page-content {
-    flex: 1;
+    flex: 1 1 auto;
     display: flex;
     flex-direction: column;
+    min-height: 0;
     padding-bottom: 0 !important;
 }
 
@@ -366,6 +529,10 @@ body.is-login-step .md-editor__card.md-editor__card--compact .mdl-card__supporti
         align-items: center;
     }
 
+    .md-editor__login-brand {
+        padding-bottom: 16px;
+    }
+
     .md-editor__login-greeting {
         font-size: 2.25rem;
         text-align: center;
@@ -377,7 +544,7 @@ body.is-login-step .md-editor__card.md-editor__card--compact .mdl-card__supporti
 }
 
 .page-content {
-    flex: 1;
+    flex: 1 1 auto;
     display: flex;
     flex-direction: column;
     gap: 24px;
@@ -389,7 +556,7 @@ body.is-login-step .md-editor__card.md-editor__card--compact .mdl-card__supporti
     flex: 1 1 auto;
     max-width: 900px;
     width: 100%;
-    margin: 0 auto;
+    margin: 0;
     display: flex;
     flex-direction: column;
     min-height: 0;
@@ -402,6 +569,7 @@ body.is-login-step .md-editor__card.md-editor__card--compact .mdl-card__supporti
     min-height: 0;
     width: auto;
     padding: 0;
+    overflow: auto;
 }
 
 .md-editor__card--success {
@@ -558,10 +726,12 @@ body.is-login-step .md-editor__card.md-editor__card--compact .mdl-card__supporti
     box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.05);
     z-index: 10;
     width: 100%;
+    margin-top: auto;
 }
 
 .md-editor__footer-inner {
     display: flex;
+    flex-direction: row;
     justify-content: space-between;
     align-items: center;
     gap: 16px;
@@ -584,6 +754,15 @@ body.is-login-step .md-editor__card.md-editor__card--compact .mdl-card__supporti
     gap: 12px;
     flex-wrap: nowrap;
     flex: 0 0 auto;
+}
+
+.md-editor__footer-left {
+    justify-content: flex-start;
+}
+
+.md-editor__footer-right {
+    justify-content: flex-end;
+    margin-left: auto;
 }
 
 @media (max-width: 1024px) {

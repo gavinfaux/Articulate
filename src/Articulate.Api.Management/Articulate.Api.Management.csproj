@@ -84,6 +84,7 @@
     <_PnpmRestoreCommand Condition="'$(IsCiBuild)' == 'true'">pnpm install --frozen-lockfile --prefer-offline</_PnpmRestoreCommand>
     <_PnpmBuildCommand>pnpm run build</_PnpmBuildCommand>
     <_PnpmBuildCommand Condition="'$(IsCiBuild)' == 'true'">pnpm run build:release</_PnpmBuildCommand>
+    <EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
   </PropertyGroup>
 
   <Target Name="RestoreClient" Inputs="Client\package.json;Client\pnpm-lock.yaml" Outputs="Client\node_modules\.modules.yaml">

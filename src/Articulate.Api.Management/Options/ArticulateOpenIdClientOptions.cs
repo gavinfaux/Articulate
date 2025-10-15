@@ -54,14 +54,13 @@ namespace Articulate.Api.Management.Options
         /// </summary>
         public List<string> Permissions { get; set; } = new()
         {
-            OpenIddictConstants.Permissions.Endpoints.Authorization,
-            OpenIddictConstants.Permissions.Endpoints.Token,
-            OpenIddictConstants.Permissions.GrantTypes.AuthorizationCode,
-            OpenIddictConstants.Permissions.ResponseTypes.Code,
-            OpenIddictConstants.Permissions.Endpoints.EndSession,
-            OpenIddictConstants.Permissions.Prefixes.Scope + OpenIddictConstants.Scopes.OpenId,
-            OpenIddictConstants.Permissions.Scopes.Email,
-            OpenIddictConstants.Permissions.Scopes.Profile,
+
+              OpenIddictConstants.Permissions.Endpoints.Authorization,
+                OpenIddictConstants.Permissions.Endpoints.Token,
+                OpenIddictConstants.Permissions.Endpoints.EndSession,
+                OpenIddictConstants.Permissions.Endpoints.Revocation,
+                OpenIddictConstants.Permissions.GrantTypes.AuthorizationCode,
+                OpenIddictConstants.Permissions.ResponseTypes.Code,
         };
 
         /// <summary>

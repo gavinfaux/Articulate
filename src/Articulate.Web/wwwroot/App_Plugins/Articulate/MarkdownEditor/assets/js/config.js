@@ -1,3 +1,27 @@
+function ensureTrailingSlash(value) {
+    if (typeof value !== "string" || value.length === 0) {
+        return value;
+    }
+
+    try {
+        const parsed = new URL(value, window.location.origin);
+        if (!parsed.pathname.endsWith("/")) {
+            parsed.pathname = `${parsed.pathname}/`;
+        }
+        return parsed.toString();
+    } catch (error) {
+        const hashIndex = value.indexOf("#");
+        const base = hashIndex === -1 ? value : value.slice(0, hashIndex);
+        const hash = hashIndex === -1 ? "" : value.slice(hashIndex);
+
+        if (base.endsWith("/")) {
+            return `${base}${hash}`;
+        }
+
+        return `${base}/${hash}`;
+    }
+}
+
 // Holds all configuration, initialized dynamically from the main view.
 const config = {
     // Dynamic URLs from the view's dataset
@@ -8,11 +32,12 @@ const config = {
     editorPostUrl: '',
     articulateBlogNode: null,
     isBackOfficeLoggedIn: false,
+    debugLayout: false,
 
     // Static OAuth parameters
     oauth: {
         clientId: '',
-        redirectUri: window.location.href.split('?')[0], // The current URL without query params
+        redirectUri: ensureTrailingSlash(window.location.href.split('?')[0]), // The current URL without query params
         scope: 'openid',
         responseType: 'code',
         codeChallengeMethod: 'S256',
@@ -31,7 +56,7 @@ const config = {
  * @param {DOMStringMap} dataset The dataset from the document body.
  */
 function initConfig(dataset) {
-    const { authUrl, authEndUrl, tokenUrl, currentUserUrl, editorPostUrl, articulateBlogNode, oauthClientId, backofficeLoggedIn } = dataset;
+    const { authUrl, authEndUrl, tokenUrl, currentUserUrl, editorPostUrl, articulateBlogNode, oauthClientId, backofficeLoggedIn, debugLayout } = dataset;
 
     if (!authUrl || !editorPostUrl || !currentUserUrl || !tokenUrl || !authEndUrl || !articulateBlogNode || typeof backofficeLoggedIn === "undefined") {
         console.error("CRITICAL: One or more dataset values missing. The application cannot function.");
@@ -52,7 +77,14 @@ function initConfig(dataset) {
     const normalizedBackoffice = typeof backofficeLoggedIn === "string" ? backofficeLoggedIn.trim().toLowerCase() : "";
     config.isBackOfficeLoggedIn = normalizedBackoffice === "true" || normalizedBackoffice === "1";
     config.articulateBlogNode = articulateBlogNode;
+
+    if (typeof debugLayout === "string") {
+        const normalized = debugLayout.trim().toLowerCase();
+        config.debugLayout = normalized === "true" || normalized === "1";
+    }
+
     config.oauth.clientId = trimmedClientId;
+    config.oauth.redirectUri = ensureTrailingSlash(config.oauth.redirectUri);
 }
 
 export { config, initConfig };

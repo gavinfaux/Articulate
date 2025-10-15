@@ -13,7 +13,7 @@ if (builder.Environment.IsDevelopment())
         .AddControllersWithViews()
         .AddRazorRuntimeCompilation(options =>
         {
-            var env = builder.Environment;
+            IWebHostEnvironment env = builder.Environment;
             // Watch the Articulate.Web plugin views and assets directly from source during development
             var pluginRoot = Path.GetFullPath(Path.Combine(env.ContentRootPath, "..", "Articulate.Web", "wwwroot"));
             if (Directory.Exists(pluginRoot))

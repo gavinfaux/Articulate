@@ -36,6 +36,7 @@
   <PropertyGroup>
     <UmbracoCmsPackageVersion>[15.2.3, 16.999.999)</UmbracoCmsPackageVersion>
     <NuGetAuditMode>direct</NuGetAuditMode>
+    <EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
   </PropertyGroup>
   <!--Nuget Package Dependencies-->
   <ItemGroup>

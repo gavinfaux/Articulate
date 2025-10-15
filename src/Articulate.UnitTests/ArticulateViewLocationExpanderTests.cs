@@ -67,6 +67,7 @@ namespace Articulate.UnitTests
             IEnumerable<string> result = expander.ExpandViewLocations(ctx, defaults);
 
             result.Should().Equal(defaults);
+            ctx.ActionContext.HttpContext.Items.Should().NotContainKey("ThemeName");
             locationProvider.Verify(p => p.GetLocations(It.IsAny<string>()), Times.Never);
         }
 
@@ -88,6 +89,25 @@ namespace Articulate.UnitTests
             ctx.ActionContext.HttpContext.Items.Should()
                 .ContainKey("ThemeName").WhoseValue.Should().Be("Aurora");
             themeResolver.Verify(r => r.GetCurrentThemeName(), Times.Once);
+        }
+
+        [Test]
+        public void PopulateValues_With_NoTheme_Removes_HttpContext_Item()
+        {
+            var themeResolver = new Mock<IArticulateThemeResolver>();
+            themeResolver.Setup(r => r.GetCurrentThemeName()).Returns((string?)null);
+
+            var services = new ServiceCollection();
+            services.AddSingleton(themeResolver.Object);
+            using ServiceProvider sp = services.BuildServiceProvider();
+
+            ViewLocationExpanderContext ctx = MakeContext(sp);
+            ctx.ActionContext.HttpContext.Items["ThemeName"] = "PreviousTheme";
+            var expander = new ArticulateViewLocationExpander();
+
+            expander.PopulateValues(ctx);
+
+            ctx.ActionContext.HttpContext.Items.Should().NotContainKey("ThemeName");
         }
 
         private static ViewLocationExpanderContext MakeContext(ServiceProvider sp)

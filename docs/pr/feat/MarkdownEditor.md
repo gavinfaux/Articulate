@@ -110,3 +110,7 @@ While we have a working template, there are a number of areas that require furth
 * Lint and and diff your proposed code changes to ensure quality and reduce risk of large scale changes and lost features.
 * If you are unsure of ANY aspect of the implementation, pause and ask for feedback.
 * If you repeatedly have issues or errors with the implementation, pause and ask for feedback.
+
+### Enhancements (backlog)
+
+* Evaluate introducing keyboard shortcuts for key actions (login, step navigation, publish) and document them in-app. Future iterations should ensure shortcuts have non-keyboard equivalents and remain discoverable for assistive tech users.
