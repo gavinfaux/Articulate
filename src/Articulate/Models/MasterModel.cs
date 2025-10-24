@@ -1,42 +1,15 @@
-using System;
-using System.Linq;
+using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Models.PublishedContent;
-using Umbraco.Extensions;
 
+// TODO: #nullable enable
 namespace Articulate.Models
 {
+
     /// <summary>
     /// The basic model for all articulate objects
     /// </summary>
     public class MasterModel : PublishedContentWrapped, IMasterModel
     {
-        public MasterModel(IPublishedContent content, IPublishedValueFallback publishedValueFallback, IVariationContextAccessor variationContextAccessor)
-            : base(content, publishedValueFallback)
-        {
-            PublishedValueFallback = publishedValueFallback;
-            VariationContextAccessor = variationContextAccessor;
-        }
-        
-        /// <summary>
-        /// Returns the current theme
-        /// </summary>
-        public string Theme
-        {
-            get => _theme ??= base.Unwrap().Value<string>("theme", fallback: Fallback.ToAncestors);
-            protected set => _theme = value;
-        }
-
-        public IPublishedContent RootBlogNode
-        {
-            get
-            {
-                var root = base.Unwrap().AncestorOrSelf("Articulate");
-                _rootBlogNode = root ?? throw new InvalidOperationException("Could not find the Articulate root document for the current rendered page");
-                return _rootBlogNode;
-            }
-            protected set => _rootBlogNode = value;
-        }
-
         private IPublishedContent _rootBlogNode;
         private string _theme;
         private IPublishedContent _blogListNode;
@@ -53,6 +26,37 @@ namespace Articulate.Models
         private string _pageDescription;
 
         /// <summary>
+        /// The basic model for all articulate objects
+        /// </summary>
+        public MasterModel(IPublishedContent content, IPublishedValueFallback publishedValueFallback) : base(content, publishedValueFallback) => PublishedValueFallback = publishedValueFallback;
+
+        [Obsolete("Use MasterModel(IPublishedContent content, IPublishedValueFallback publishedValueFallback)")]
+        protected MasterModel(IPublishedContent content, IPublishedValueFallback publishedValueFallback, IVariationContextAccessor variationContextAccessor)
+            : this(content, publishedValueFallback)
+        {
+        }
+
+        /// <summary>
+        /// Returns the current theme
+        /// </summary>
+        public string Theme
+        {
+            get => _theme ??= Unwrap().Value<string>("theme", fallback: Fallback.ToAncestors);
+            protected set => _theme = value;
+        }
+
+        public IPublishedContent RootBlogNode
+        {
+            get
+            {
+                IPublishedContent root = Unwrap().AncestorOrSelf(ArticulateConstants.ContentType.Articulate);
+                _rootBlogNode = root ?? throw new InvalidOperationException("Could not find the Articulate root document for the current rendered page");
+                return _rootBlogNode;
+            }
+            protected set => _rootBlogNode = value;
+        }
+
+        /// <summary>
         /// This will return the first archive node found under the blog root
         /// </summary>
         /// <remarks>
@@ -62,8 +66,9 @@ namespace Articulate.Models
         {
             get
             {
-                var list = RootBlogNode.ChildrenOfType(ArticulateConstants.ArticulateArchiveContentTypeAlias).FirstOrDefault();
+                IPublishedContent list = RootBlogNode.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive)?.FirstOrDefault();
                 _blogListNode = list ?? throw new InvalidOperationException("Could not find the ArticulateArchive document for the current rendered page");
+
                 return _blogListNode;
             }
             protected set => _blogListNode = value;
@@ -76,7 +81,7 @@ namespace Articulate.Models
         {
             get
             {
-                var authors = RootBlogNode.ChildrenOfType(ArticulateConstants.ArticulateAuthorsContentTypeAlias).FirstOrDefault();
+                IPublishedContent authors = RootBlogNode.ChildrenOfType(ArticulateConstants.ContentType.ArticulateAuthors)?.FirstOrDefault();
                 _blogAuthorsNode = authors ?? throw new InvalidOperationException("Could not find the ArticulateAuthors document for the current rendered page");
                 return _blogAuthorsNode;
             }
@@ -85,37 +90,37 @@ namespace Articulate.Models
 
         public string DisqusShortName
         {
-            get => _disqusShortName ?? (_disqusShortName = base.Unwrap().Value<string>("disqusShortname", fallback: Fallback.ToAncestors));
+            get => _disqusShortName ??= Unwrap().Value<string>("disqusShortname", fallback: Fallback.ToAncestors);
             protected set => _disqusShortName = value;
         }
 
         public string CustomRssFeed
         {
-            get => _customRssFeed ?? (_customRssFeed = RootBlogNode.Value<string>("customRssFeedUrl"));
+            get => _customRssFeed ??= RootBlogNode.Value<string>("customRssFeedUrl");
             protected set => _customRssFeed = value;
-        }        
+        }
 
         public string BlogLogo
         {
-            get => _blogLogo ?? (_blogLogo = RootBlogNode.GetArticulateCropUrl("blogLogo", VariationContextAccessor?.VariationContext));
+            get => _blogLogo ??= RootBlogNode.Value<MediaWithCrops>("blogLogo")?.GetCropUrl("square") ?? string.Empty;
             protected set => _blogLogo = value;
         }
 
         public string BlogBanner
         {
-            get => _blogBanner ?? (_blogBanner = RootBlogNode.GetArticulateCropUrl("blogBanner", VariationContextAccessor?.VariationContext));
+            get => _blogBanner ??= RootBlogNode.Value<MediaWithCrops>("blogBanner")?.GetCropUrl("wide") ?? string.Empty;
             protected set => _blogBanner = value;
         }
 
         public string BlogTitle
         {
-            get => _blogTitle ?? (_blogTitle = base.Unwrap().Value<string>("blogTitle", fallback: Fallback.ToAncestors));
+            get => _blogTitle ??= Unwrap().Value<string>("blogTitle", fallback: Fallback.ToAncestors);
             protected set => _blogTitle = value;
         }
 
         public string BlogDescription
         {
-            get => _blogDescription ?? (_blogDescription = base.Unwrap().Value<string>("blogDescription", fallback: Fallback.ToAncestors));
+            get => _blogDescription ??= Unwrap().Value<string>("blogDescription", fallback: Fallback.ToAncestors);
             protected set => _blogDescription = value;
         }
 
@@ -125,7 +130,7 @@ namespace Articulate.Models
             {
                 if (_pageSize.HasValue == false)
                 {
-                    _pageSize = base.Unwrap().Value<int>("pageSize", fallback: Fallback.To(Fallback.Ancestors, Fallback.DefaultValue), defaultValue: 10);
+                    _pageSize = Unwrap().Value("pageSize", fallback: Fallback.To(Fallback.Ancestors, Fallback.DefaultValue), defaultValue: 10);
                 }
 
                 return _pageSize.Value;
@@ -135,18 +140,21 @@ namespace Articulate.Models
 
         public string PageTitle
         {
-            get => _pageTitle ?? (_pageTitle = Name + " - " + BlogTitle);
+            get => _pageTitle ??= Name + " - " + BlogTitle;
             protected set => _pageTitle = value;
         }
 
         public string PageDescription
         {
-            get => _pageDescription ?? (_pageDescription = BlogDescription);
+            get => _pageDescription ??= BlogDescription;
             protected set => _pageDescription = value;
         }
 
         public string PageTags { get; protected set; }
-        public IPublishedValueFallback PublishedValueFallback { get; }
-        public IVariationContextAccessor VariationContextAccessor { get; }
+
+        protected IPublishedValueFallback PublishedValueFallback { get; }
+
+        [Obsolete]
+        public IVariationContextAccessor VariationContextAccessor => null;
     }
 }

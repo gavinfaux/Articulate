@@ -10,44 +10,66 @@ jobs:
   build:
 
     runs-on: windows-latest
-    
+
     env:
       Solution_File: src\Articulate.sln
-      Code_CSProj_File: src\Articulate\Articulate.csproj
-      Web_Proj_Folder: src\Articulate.Web
       Release_Folder: build\Release
       Build_Folder: build
       Configuration: Release
-      
+
     steps:
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
-        fetch-depth: 0    
+        fetch-depth: 0
     - uses: dotnet/nbgv@master
       with:
         setAllVars: true
-    - run: echo "NBGV_SemVer2 $NBGV_SemVer2"
+
+    - name: Log Build Context
+      run: |
+          echo "Articulate Build Context"
+          echo "Version: ${{ env.NBGV_SemVer2 }}"
+          echo "Commit: ${{ env.NBGV_GitCommitIdShort }}"
+          echo "Date: ${{ env.NBGV_GitCommitDate }}"
+
+    - name: Validate Git Tag
+      continue-on-error: true
+      run: |
+        git describe --tags --exact-match *>$null
+
+        if ($?) {
+            echo "Git tag found."
+        }
+        else {
+            echo "Git tag missing, release build may not be traceable."
+        }
 
     - name: Add MSBuild to PATH
-      uses: microsoft/setup-msbuild@v1.0.2
-    
-    - uses: nuget/setup-nuget@v1
+      uses: microsoft/setup-msbuild@v2
+
+    - uses: nuget/setup-nuget@v2.0.1
       with:
         nuget-version: 'latest'
 
+    - uses: actions/setup-node@v4
+      with:
+        node-version-file: 'src/Articulate.Api.Management/Client/.nvmrc'
+        cache: 'npm'
+        cache-dependency-path: 'src/Articulate.Api.Management/Client/package-lock.json'
+
     - name: Nuget Restore
       run: nuget restore $env:Solution_File
-    
+
     - name: MSBuild Clean
       run: msbuild $env:Solution_File /p:Configuration=${{ env.Configuration }} /t:Clean
-    
+
     - name: MSBuild Build
       run: msbuild $env:Solution_File /p:Configuration=${{ env.Configuration }}
 
     - name: Dotnet Pack
-      run: dotnet pack ${{ env.Code_CSProj_File }} --output ${{ env.Release_Folder }} --configuration ${{ env.Configuration }}
-      
+      run: dotnet pack $env:Solution_File --output ${{ env.Release_Folder }} --configuration ${{ env.Configuration }}
+
     - uses: actions/upload-artifact@v4
       with:
         name: Articulate.${{ env.NBGV_SemVer2 }}

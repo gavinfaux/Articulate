@@ -1,12 +1,8 @@
-using System.Linq;
-using Articulate.Models;
 using Microsoft.AspNetCore.Mvc;
-using Umbraco.Extensions;
-using Umbraco.Cms.Core.Models.PublishedContent;
-using Articulate.Routing;
 
 namespace Articulate
 {
+    [Obsolete("Use Articulate.Models.PublishedContentExtensions")]
     public static class UrlHelperExtensions
     {
         /// <summary>
@@ -16,10 +12,8 @@ namespace Articulate
         /// <param name="model"></param>
         /// <param name="relativeAssetPath"></param>
         /// <returns></returns>
-        public static string ThemedAsset(this IUrlHelper url, IMasterModel model, string relativeAssetPath)
-        {
-            return url.Content(PathHelper.GetThemePath(model)).EnsureEndsWith('/') + "assets/" + relativeAssetPath;
-        }
+        [Obsolete]
+        public static string ThemedAsset(this IUrlHelper url, IMasterModel model, string relativeAssetPath) => url.Content($"{ArticulateConstants.Paths.UserVirtualPath.EnsureEndsWith('/')}/{model.Theme.EnsureEndsWith('/')}") + "assets/" + relativeAssetPath;
 
         /// <summary>
         /// Returns the main rss feed url for this blog
@@ -27,19 +21,11 @@ namespace Articulate
         /// <param name="url"></param>
         /// <param name="model"></param>
         /// <returns></returns>
-        public static string ArticulateRssUrl(this IUrlHelper url, IMasterModel model)
-        {
-            return model.CustomRssFeed.IsNullOrWhiteSpace()
-                ? model.RootBlogNode.Url(mode: UrlMode.Absolute).EnsureEndsWith('/') + "rss"
-                : model.CustomRssFeed;
-        }
+        [Obsolete("Use Articulate.Models.PublishedContentExtensions.ArticulateRssUr(this IMasterModel model)")]
+        public static string ArticulateRssUrl(this IUrlHelper url, IMasterModel model) => model.ArticulateRssUrl();
 
-        public static string ArticulateCreateBlogEntryUrl(this IUrlHelper url, IMasterModel model)
-        {
-            return model.RootBlogNode == null
-                ? null
-                : model.RootBlogNode.Url().EnsureEndsWith('/') + "a-new/";
-        }
+        [Obsolete("Use Articulate.Models.PublishedContentExtensions.ArticulateCreateBlogEntryUrl(this IMasterModel model)")]
+        public static string ArticulateCreateBlogEntryUrl(this IUrlHelper url, IMasterModel model) => model.ArticulateCreateBlogEntryUrl();
 
         /// <summary>
         /// Returns an RSS feed URL specific to this tag
@@ -47,10 +33,9 @@ namespace Articulate
         /// <param name="url"></param>
         /// <param name="model"></param>
         /// <returns></returns>
+        [Obsolete("Use Articulate.Models.PublishedContentExtensions.ArticulateTagRssUrl(this IMasterModel model)")]
         public static string ArticulateTagRssUrl(this IUrlHelper url, PostsByTagModel model)
-        {
-            return model.TagUrl.EnsureEndsWith('/') + "rss";
-        }
+            => model.ArticulateTagRssUrl();
 
         /// <summary>
         /// Returns an RSS feed URL specific to this author
@@ -58,12 +43,9 @@ namespace Articulate
         /// <param name="url"></param>
         /// <param name="model"></param>
         /// <returns></returns>
+        [Obsolete("Use Articulate.Models.PublishedContentExtensions.ArticulateAuthorRssUrl(this IMasterModel model)")]
         public static string ArticulateAuthorRssUrl(this IUrlHelper url, AuthorModel model)
-        {
-            return model.RootBlogNode == null
-                ? null
-                : model.RootBlogNode.Url().EnsureEndsWith('/') + "author/" + model.Id + "/rss";
-        }
+            => model.ArticulateAuthorRssUrl();
 
         /// <summary>
         /// Get the search url without the 'term' query string
@@ -72,42 +54,26 @@ namespace Articulate
         /// <param name="model"></param>
         /// <param name="includeDomain"></param>
         /// <returns></returns>
-        public static string ArticulateSearchUrl(this IUrlHelper url, IMasterModel model, bool includeDomain = false)
-        {
-            return model.RootBlogNode == null
-                ? null
-                : (includeDomain
-                      ? model.RootBlogNode.Url(mode: UrlMode.Absolute).EnsureEndsWith('/')
-                      : model.RootBlogNode.Url().EnsureEndsWith('/')) +
-                  model.RootBlogNode.Value<string>("searchUrlName");
-        }
+        [Obsolete("Use Articulate.Models.PublishedContentExtensions.ArticulateSearchUrl(this IMasterModel model)")]
+        public static string ArticulateSearchUrl(this IUrlHelper url, IMasterModel model, bool includeDomain = false) => model.ArticulateSearchUrl(includeDomain);
 
         /// <summary>
         /// The Home Blog Url
         /// </summary>
-        public static string ArticulateRootUrl(this IUrlHelper url, IMasterModel model)
-        {
-            return model.RootBlogNode?.Url();
-        }
+        [Obsolete("Use Articulate.Models.PublishedContentExtensions.ArticulateRootUrl(this IMasterModel model)")]
+        public static string ArticulateRootUrl(this IUrlHelper url, IMasterModel model) => model.ArticulateRootUrl();
 
         /// <summary>
         /// Returns the default categories list URL for blog posts
         /// </summary>
-        public static string ArticulateCategoriesUrl(this IUrlHelper url, IMasterModel model)
-        {
-            return model.RootBlogNode == null
-                ? null
-                : model.RootBlogNode.Url().EnsureEndsWith('/') +
-                  model.RootBlogNode.Value<string>("categoriesUrlName");
-        }
+        [Obsolete("Use Articulate.Models.PublishedContentExtensions.ArticulateCategoriesUrl(this IMasterModel model)")]
+        public static string ArticulateCategoriesUrl(this IUrlHelper url, IMasterModel model) => model.ArticulateCategoriesUrl();
 
         /// <summary>
         /// Returns the authors list URL
         /// </summary>
-        public static string ArticulateAuthorsUrl(this IUrlHelper url, IMasterModel model)
-        {
-            return model.RootBlogNode?.ChildrenOfType(ArticulateConstants.ArticulateAuthorsContentTypeAlias).FirstOrDefault()?.Url();
-        }
+        [Obsolete("Use Articulate.Models.PublishedContentExtensions.ArticulateAuthorsUrl(this IMasterModel model)")]
+        public static string ArticulateAuthorsUrl(this IUrlHelper url, IMasterModel model) => model.ArticulateAuthorsUrl();
 
         /// <summary>
         /// Returns the URL for the tag list
@@ -115,29 +81,8 @@ namespace Articulate
         /// <param name="url"></param>
         /// <param name="model"></param>
         /// <returns></returns>
-        public static string ArticulateTagsUrl(this IUrlHelper url, IMasterModel model)
-        {
-            return model.RootBlogNode == null
-                ? null
-                : model.RootBlogNode.Url().EnsureEndsWith('/') +
-                  model.RootBlogNode.Value<string>("tagsUrlName");
-        }
-
-        /// <summary>
-        /// Returns the url for a single tag
-        /// </summary>
-        /// <param name="url"></param>
-        /// <param name="model"></param>
-        /// <param name="tag"></param>
-        /// <returns></returns>
-        public static string ArticulateTagUrl(this IUrlHelper url, IMasterModel model, string tag)
-        {
-            return model.RootBlogNode == null
-                ? null
-                : model.RootBlogNode.Url().EnsureEndsWith('/') +
-                  model.RootBlogNode.Value<string>("tagsUrlName").EnsureEndsWith('/') +
-                  tag.SafeEncodeUrlSegments();
-        }
+        [Obsolete("Use Articulate.Models.PublishedContentExtensions.ArticulateTagsUrl(this IMasterModel model)")]
+        public static string ArticulateTagsUrl(this IUrlHelper url, IMasterModel model) => model.ArticulateTagsUrl();
 
         /// <summary>
         /// Returns the url for a single category
@@ -146,13 +91,7 @@ namespace Articulate
         /// <param name="model"></param>
         /// <param name="category"></param>
         /// <returns></returns>
-        public static string ArticulateCategoryUrl(this IUrlHelper url, IMasterModel model, string category)
-        {
-            return model.RootBlogNode == null
-                ? null
-                : model.RootBlogNode.Url().EnsureEndsWith('/') +
-                  model.RootBlogNode.Value<string>("categoriesUrlName").EnsureEndsWith('/') +
-                  category.SafeEncodeUrlSegments();
-        }
+        [Obsolete("Use Articulate.Models.PublishedContentExtensions.ArticulateCategoryUrl(this IMasterModel model)")]
+        public static string ArticulateCategoryUrl(this IUrlHelper url, IMasterModel model, string category) => model.ArticulateCategoryUrl(category);
     }
 }

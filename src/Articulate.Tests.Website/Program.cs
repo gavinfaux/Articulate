@@ -1,24 +1,44 @@
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
+WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
-namespace Articulate.Tests.Website
+builder.CreateUmbracoBuilder()
+    .AddBackOffice()
+    .AddWebsite()
+    .AddDeliveryApi()
+    .AddComposers()
+    .Build();
+
+if (builder.Environment.IsProduction())
 {
-    public class Program
-    {
-        public static void Main(string[] args)
-            => CreateHostBuilder(args)
-                .Build()
-                .Run();
-
-        public static IHostBuilder CreateHostBuilder(string[] args) =>
-            Host.CreateDefaultBuilder(args)
-                .ConfigureUmbracoDefaults()
-                .ConfigureWebHostDefaults(webBuilder =>
-                {
-                    webBuilder.UseStaticWebAssets();
-                    webBuilder.UseStartup<Startup>();
-                });
-    }
+    // Only required when running from IDE in 'hybrid' Production mode, static assets will not load without this
+    // Do not use in development mode or published releases, Umbraco will not start with a circular reference exception
+    // builder.WebHost.UseStaticWebAssets();
 }
+
+WebApplication app = builder.Build();
+
+await app.BootUmbracoAsync().ConfigureAwait(false);
+
+if (app.Environment.IsProduction())
+{
+    app.UseHttpsRedirection();
+}
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseDeveloperExceptionPage();
+}
+
+app.UseUmbraco()
+    .WithMiddleware(u =>
+    {
+        u.UseBackOffice();
+        u.UseWebsite();
+    })
+    .WithEndpoints(u =>
+    {
+        u.UseUmbracoPreviewEndpoints();
+        u.UseBackOfficeEndpoints();
+        u.UseWebsiteEndpoints();
+    });
+
+await app.RunAsync().ConfigureAwait(false);

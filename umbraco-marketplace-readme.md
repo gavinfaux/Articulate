@@ -21,12 +21,13 @@ Supporting all the features you'd want in a blogging platform
 * Search
 * Blogml import/export (including Disqus import)
 * Customizable RSS feeds
-* Customizable urls 
+* Customizable urls
 * Author profiles
 
 ## Minimum requirements
 
-Articulate version 5+ is only compatible with Umbraco 10.1.0+
+* Articulate version 5+ is only compatible with Umbraco 10.1.0+
+* Articulate version 6+ is only compatible with Umbraco 15.2.3+ (15.4.2 recommended) and 16+
 
 ## [Documentation](https://github.com/Shazwazza/Articulate/wiki)
 
@@ -48,7 +49,7 @@ See here for the list of releases and their release notes
 
 1. Clone/fork the repository
 1. Open the /src/Articulate.sln file
-1. Build the solution (will also performa Nuget restore)
+1. Build the solution (will also perform a Nuget restore)
 1. Ensure that Articulate.Web is set as the startup project
 1. Start the Articulate.Web project
 1. This will run the Umbraco installer, install as per normal
@@ -65,6 +66,6 @@ to re-create the Articulate package in the back office with all required depende
 
 ## Copyright & Licence
 
-&copy; 2023 by Shannon Deminick
+&copy; 2025 by Shannon Deminick
 
 This is free software and is licensed under the [The MIT License (MIT)](http://opensource.org/licenses/MIT)

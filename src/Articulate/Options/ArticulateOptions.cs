@@ -1,6 +1,4 @@
-﻿using System;
-using Umbraco.Extensions;
-
+#nullable enable
 namespace Articulate.Options
 {
     /// <summary>
@@ -11,15 +9,13 @@ namespace Articulate.Options
         /// <summary>
         /// Constructor sets defaults
         /// </summary>
-        public ArticulateOptions()
-        {
-            GenerateExcerpt = (val => val == null
+        public ArticulateOptions() =>
+            GenerateExcerpt = val => val.DetectIsJson()
                 ? string.Empty
-                : string.Join("", val.StripHtml()
+                : val.StripHtml()
                     .DecodeHtml()
                     .NewLinesToSpaces()
-                    .TruncateAtWord(200, "")));
-        }
+                    .TruncateAtWord(200, string.Empty);
 
         /// <summary>
         /// Default is true and will generate an excerpt if it is blank, will be a truncated version based on the post content
@@ -30,6 +26,5 @@ namespace Articulate.Options
         /// The default generator will truncate the post content with 200 chars
         /// </summary>
         public Func<string, string> GenerateExcerpt { get; set; }
-        
     }
 }

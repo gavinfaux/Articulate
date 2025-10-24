@@ -1,0 +1,26 @@
+@model PagerModel
+
+@if (Model.HasNext || Model.HasPrevious)
+{
+    <nav class="demo-nav mdl-color-text--grey-50 mdl-cell mdl-cell--12-col">
+        @if (Model.HasPrevious)
+        {
+            <a href="@Model.PreviousUrl" class="demo-nav__button">
+                <span class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon">
+                    <i class="material-icons">arrow_back</i>
+                </span>
+                Newer
+            </a>
+        }
+        <div class="section-spacer"></div>
+        @if (Model.HasNext)
+        {
+            <a href="@Model.NextUrl" class="demo-nav__button">
+                Older
+                <span class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon">
+                    <i class="material-icons">arrow_forward</i>
+                </span>
+            </a>
+        }
+    </nav>
+}

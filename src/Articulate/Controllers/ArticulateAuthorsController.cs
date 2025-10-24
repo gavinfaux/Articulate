@@ -1,4 +1,4 @@
-using Articulate.Models;
+#nullable enable
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Logging;
@@ -7,48 +7,43 @@ using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.Web;
 using Umbraco.Cms.Web.Common.ActionsResults;
 using Umbraco.Cms.Web.Common.Controllers;
-using Umbraco.Extensions;
 
 namespace Articulate.Controllers
 {
     /// <summary>
     /// This is used to redirect the Authors node to the root so no 404s occur
     /// </summary>
-    public class ArticulateAuthorsController : RenderController
+    public class ArticulateAuthorsController(
+        ILogger<ArticulateAuthorsController> logger,
+        ICompositeViewEngine compositeViewEngine,
+        IUmbracoContextAccessor umbracoContextAccessor,
+        IPublishedValueFallback publishedValueFallback)
+        : RenderController(logger, compositeViewEngine, umbracoContextAccessor)
     {
-        private readonly IPublishedValueFallback _publishedValueFallback;
-        private readonly IVariationContextAccessor _variationContextAccessor;
-
-        public ArticulateAuthorsController(
-            ILogger<RenderController> logger,
-            ICompositeViewEngine compositeViewEngine,
-            IUmbracoContextAccessor umbracoContextAccessor,
-            IPublishedValueFallback publishedValueFallback,
-            IVariationContextAccessor variationContextAccessor)
-            : base(logger, compositeViewEngine, umbracoContextAccessor)
-        {
-            _publishedValueFallback = publishedValueFallback;
-            _variationContextAccessor = variationContextAccessor;
-        }
-
         public override IActionResult Index()
         {
+            if (CurrentPage is null)
+            {
+                logger.LogWarning("ArticulateAuthorsController.Index: CurrentPage is null, returning 404");
+                return NotFound();
+            }
+
             var root = new MasterModel(
                 CurrentPage,
-                _publishedValueFallback,
-                _variationContextAccessor);
+                publishedValueFallback);
 
-            //TODO: Should we have another setting for authors?
+            // TODO: Should we have another setting for authors?
             if (root.RootBlogNode.Value<bool>("redirectArchive"))
             {
                 return RedirectPermanent(root.RootBlogNode.Url());
             }
 
-            //default
-
-            var action = ControllerContext.RouteData.Values["action"].ToString();
+            // default
+            var action = ControllerContext.RouteData.Values["action"]?.ToString();
             if (!EnsurePhsyicalViewExists(action))
+            {
                 return new PublishedContentNotFoundResult(UmbracoContext);
+            }
 
             return View(action, new ContentModel(CurrentPage));
         }

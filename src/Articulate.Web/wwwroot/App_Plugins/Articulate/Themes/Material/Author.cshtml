@@ -1,0 +1,71 @@
+@model AuthorModel
+@{
+    Layout = "Master.cshtml";
+    ViewBag.CssWrapperClass = "demo-blog--blogpost";
+}
+
+@section Header
+{
+    @Model.AuthorRssFeed()
+}
+
+<div class="demo-back">
+    <a class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon" href="@Model.RootBlogNode.Url()" title="go back" role="button">
+        <i class="material-icons" role="presentation">arrow_back</i>
+    </a>
+</div>
+<div class="demo-blog__posts mdl-grid">
+    <div class="mdl-card mdl-shadow--4dp mdl-cell mdl-cell--12-col">
+
+        @await Html.PartialAsync("PostImageHeader", Model)
+
+        <div class="mdl-color-text--grey-700 mdl-card__supporting-text meta">
+
+            <div class="section-spacer"></div>
+
+            <div class="meta__favorites">
+                <a class="mdl-color-text--grey-700" href="@Model.ArticulateAuthorRssUrl()"></a>
+                <a class="mdl-color-text--grey-700" href="@Model.ArticulateAuthorRssUrl()"><i class="material-icons" role="presentation">rss_feed</i></a>
+                <span class="visuallyhidden">comments</span>
+            </div>
+        </div>
+        <div class="mdl-color-text--grey-700 mdl-card__supporting-text">
+            <p>@Model.Bio</p>
+            @if (!Model.AuthorUrl.IsNullOrWhiteSpace())
+            {
+                <p>
+                    Website: <a href="@Model.AuthorUrl">@Model.AuthorUrl</a>
+                </p>
+            }
+        </div>
+
+
+    </div>
+
+    @{
+        var next = Model.Next();
+        var prev = Model.Previous();
+
+    }
+    <nav class="demo-nav mdl-color-text--grey-50 mdl-cell mdl-cell--12-col">
+        @if (next is not null)
+        {
+            <a href="@next.Url()" class="demo-nav__button">
+                <span class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon mdl-color--white mdl-color-text--grey-900" role="presentation">
+                    <i class="material-icons">arrow_back</i>
+                </span>
+                Newer
+            </a>
+        }
+        <div class="section-spacer"></div>
+        @if (prev is not null)
+        {
+            <a href="@prev.Url()" class="demo-nav__button">
+                Older
+                <span class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon mdl-color--white mdl-color-text--grey-900" role="presentation">
+                    <i class="material-icons">arrow_forward</i>
+                </span>
+            </a>
+        }
+    </nav>
+</div>

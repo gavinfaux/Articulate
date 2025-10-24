@@ -1,66 +1,63 @@
-using System;
-using System.Linq;
+#nullable enable
 using System.Web;
-using Umbraco.Extensions;
 
 namespace Articulate
 {
     public static class StringExtensions
     {
-        public static string NewLinesToSpaces(this string input)
-        {
-            return input.Replace("\r", " ").Replace("\n", " ").Replace("  ", "");
-        }
+        public static string NewLinesToSpaces(this string input) => input.Replace("\r", " ").Replace("\n", " ").Replace("  ", string.Empty);
 
-        public static string DecodeHtml(this string text)
-        {
-            return HttpUtility.HtmlDecode(text);
-        }
+        public static string DecodeHtml(this string text) => HttpUtility.HtmlDecode(text);
 
-        public static string TruncateAtWord(this string text, int maxCharacters, string trailingStringIfTextCut = "&hellip;")
+        public static string TruncateAtWord(this string? text, int maxCharacters, string trailingStringIfTextCut = "&hellip;")
         {
-            if (text == null || (text = text.Trim()).Length <= maxCharacters)
-                return text;
+            if (text is null || (text = text.Trim()).Length <= maxCharacters)
+            {
+                return text ?? string.Empty;
+            }
 
-            int trailLength = trailingStringIfTextCut.StartsWith("&") ? 1
-                                                                      : trailingStringIfTextCut.Length;
+            var trailLength = trailingStringIfTextCut is ['&', ..] ? 1
+                : trailingStringIfTextCut.Length;
             maxCharacters = maxCharacters - trailLength >= 0 ? maxCharacters - trailLength
-                                                             : 0;
-            int pos = text.LastIndexOf(" ", maxCharacters, StringComparison.Ordinal);
+                : 0;
+            var pos = text.LastIndexOf(" ", maxCharacters, StringComparison.Ordinal);
             if (pos >= 0)
-                return text.Substring(0, pos) + trailingStringIfTextCut;
+            {
+                return text[..pos] + trailingStringIfTextCut;
+            }
 
             return string.Empty;
         }
 
         public static string SafeEncodeUrlSegments(this string urlPath)
         {
-            if (urlPath.InvariantStartsWith("http://") || urlPath.InvariantStartsWith("https://"))
+            if (!urlPath.InvariantStartsWith("http://") && !urlPath.InvariantStartsWith("https://"))
             {
-                if (Uri.IsWellFormedUriString(urlPath, UriKind.Absolute))
-                {
-                    return urlPath;
-                }
+                return EncodePath(urlPath);
+            }
 
-                if (Uri.TryCreate(urlPath, UriKind.Absolute, out var url))
-                {
-                    return url.GetLeftPart(UriPartial.Authority) + url.AbsolutePath + url.Query;
-                }
+            if (Uri.IsWellFormedUriString(urlPath, UriKind.Absolute))
+            {
+                return urlPath;
+            }
+
+            if (Uri.TryCreate(urlPath, UriKind.Absolute, out Uri? url))
+            {
+                return url.GetLeftPart(UriPartial.Authority) + url.AbsolutePath + url.Query;
             }
 
             return EncodePath(urlPath);
-
         }
 
-        private static string EncodePath(string urlPath)
-        {
-            return string.Join("/",
-                urlPath.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries)
+        private static string EncodePath(string urlPath) =>
+            string.Join(
+                "/",
+                urlPath.Split(['/'], StringSplitOptions.RemoveEmptyEntries)
                     .Select(x => HttpUtility.UrlEncode(x).Replace("+", "%20"))
                     .WhereNotNull()
-                //we are not supporting dots in our URLs it's just too difficult to
-                // support across the board with all the different config options
+
+                    // we are not supporting dots in our URLs it's just too difficult to
+                    // support across the board with all the different config options
                     .Select(x => x.Replace('.', '-')));
-        }
     }
 }

@@ -1,0 +1,34 @@
+@model PostModel
+
+@if (Model.Tags.Any() || Model.Categories.Any())
+{
+    <div class="post-meta tags">
+
+        @if (Model.Categories.Any())
+        {
+            <div>
+                Categories
+
+                @foreach (var category in Model.Categories)
+                {
+                    <a href="@Model.ArticulateCategoryUrl(category)">@category</a>
+                    if (category != Model.Categories.Last())
+                    {
+                        <span>, </span>
+                    }
+                }
+            </div>
+        }
+
+        @if (Model.Tags.Any())
+        {
+            <div>
+                Posted in
+
+                @Model.ListTags(
+                @<a href="@Model.ArticulateTagUrl(item)">@item</a>)
+
+            </div>
+        }
+    </div>
+}

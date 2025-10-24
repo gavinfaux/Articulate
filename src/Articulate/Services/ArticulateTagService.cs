@@ -1,30 +1,20 @@
-using System.Collections.Generic;
-using Articulate.Models;
+#nullable enable
 using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Core.Events;
 using Umbraco.Cms.Core.PublishedCache;
+using Umbraco.Cms.Core.Scoping;
 using Umbraco.Cms.Core.Services;
-using Umbraco.Cms.Infrastructure.Scoping;
 using Umbraco.Cms.Web.Common;
 
 namespace Articulate.Services
 {
-    public class ArticulateTagService : RepositoryService
+    public class ArticulateTagService(
+        IArticulateTagRepository repository,
+        ICoreScopeProvider provider,
+        ILoggerFactory loggerFactory,
+        IEventMessagesFactory eventMessagesFactory)
+        : RepositoryService(provider, loggerFactory, eventMessagesFactory)
     {
-        private readonly IArticulateTagRepository _repository;
-
-        public ArticulateTagService(
-            IArticulateTagRepository repository,
-            IScopeProvider provider,
-            ILoggerFactory loggerFactory,
-            IEventMessagesFactory eventMessagesFactory)
-            : base(provider, loggerFactory, eventMessagesFactory)
-        {
-            _repository = repository;
-        }
-
-        // TODO: Wrap the repo
-
         public IEnumerable<PostsByTagModel> GetContentByTags(
             UmbracoHelper helper,
             ITagQuery tagQuery,
@@ -34,7 +24,7 @@ namespace Articulate.Services
         {
             using (ScopeProvider.CreateCoreScope(autoComplete: true))
             {
-                return _repository.GetContentByTags(
+                return repository.GetContentByTags(
                     helper,
                     tagQuery,
                     masterModel,
@@ -54,7 +44,7 @@ namespace Articulate.Services
         {
             using (ScopeProvider.CreateCoreScope(autoComplete: true))
             {
-                return _repository.GetContentByTag(
+                return repository.GetContentByTag(
                     helper,
                     masterModel,
                     tag,
@@ -70,7 +60,7 @@ namespace Articulate.Services
         {
             using (ScopeProvider.CreateCoreScope(autoComplete: true))
             {
-                return _repository.GetAllCategories(masterModel);
+                return repository.GetAllCategories(masterModel);
             }
         }
     }
