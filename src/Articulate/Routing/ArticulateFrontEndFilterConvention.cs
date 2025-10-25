@@ -1,4 +1,5 @@
 #nullable enable
+using Articulate.Filters;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Umbraco.Cms.Core.PublishedCache;
 
@@ -14,6 +15,7 @@ namespace Articulate.Routing
             foreach (ControllerModel controller in application.Controllers)
             {
                 controller.Filters.Add(new RouteCacheRefresherFilter(publishedContentTypeCache, documentCacheService));
+                controller.Filters.Add(new ContentVariantRequestFilter());
             }
         }
     }

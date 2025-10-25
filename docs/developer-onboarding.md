@@ -1,4 +1,4 @@
-# Articulate Migration & Onboarding Guide
+# Developer Onboarding Guide
 
 ## Who is this guide for?
 
@@ -63,14 +63,14 @@ The new architecture leverages OpenAPI (formerly Swagger) to generate a strongly
 
 ## 5. Key Files and Locations
 
-Here is a list of key files and directories in the new architecture:
+Here is a list of key files and directories in the current architecture:
 
-- **Client-Side Source Code**: `src/Articulate/Client/src`
+- **Client-Side Source Code**: `src/Articulate.Api.Management/Client/src`
   - This directory contains all the TypeScript source files for the Lit-based web components.
-- **Generated API Client**: `src/Articulate/Client/src/api/client`
-  - The OpenAPI-generated TypeScript client is located here. It is generated from the back-end API definition.
-- **Compiled Backoffice Assets**: `src/Articulate/wwwroot/App_Plugins/Articulate/Backoffice`
-  - The compiled and bundled JavaScript files that are served to the browser are located here. These are the files that Umbraco loads.
+- **Generated API Client**: `src/Articulate.Api.Management/Client/src/api`
+  - The OpenAPI-generated TypeScript client is emitted here. Regenerate it with the `generate:api` script when the C# API changes.
+- **Compiled Backoffice Assets**: `src/Articulate.Api.Management/wwwroot/App_Plugins/Articulate/BackOffice`
+  - `pnpm run build` writes the production bundles to this folder. Umbraco ships these files via static-web-asset packaging.
 - **API Controllers**: `src/Articulate.Api.Management/Controllers`
   - The C# controllers that define the backoffice API endpoints.
 - **API Models**: `src/Articulate.Api.Management/Models`
@@ -79,14 +79,14 @@ Here is a list of key files and directories in the new architecture:
   - `src/Articulate.Api.Management/Composers/ArticulateApiComposer.cs`
   - `src/Articulate.Api.Management/Options/ArticulateSwaggerOptions.cs`
   - These files are responsible for configuring the Swagger/OpenAPI generation.
-- **Markdown Editor Package**: `src/Articulate/Client/src/packages/markdown-editor`
+- **Markdown Editor Package**: `src/Articulate.Api.Management/Client/src/packages/markdown-editor`
   - Contains the source code for the Markdown Editor, which is a clone of the `Umbraco.Web.UI.Client` markdown-editor package.
 
 ## 6. Markdown Editor
 
 The Markdown Editor used in Articulate's backoffice is a direct clone of the `markdown-editor` package found in `Umbraco.Web.UI.Client`. This was done to ensure that Articulate has a stable, feature-rich markdown editing experience that is consistent with the Umbraco backoffice.
 
-By maintaining a local copy, we can avoid potential breaking changes from upstream updates and have the flexibility to apply customisations if needed in the future. The source code for this component is located in `src/Articulate/Client/src/packages/markdown-editor`.
+By maintaining a local copy, we can avoid potential breaking changes from upstream updates and have the flexibility to apply customisations if needed in the future. The source code for this component is located in `src/Articulate.Api.Management/Client/src/packages/markdown-editor`.
 
 ## 7. Development Workflow and Build Process
 
@@ -94,7 +94,7 @@ This section details how the front-end assets are developed, built, and integrat
 
 ### `package.json` & [Vite](https://vitejs.dev/)
 
-Located in `src/Articulate/Client`, `package.json` is the heart of the front-end project. It defines:
+Located in `src/Articulate.Api.Management/Client`, `package.json` is the heart of the front-end project. It defines:
 
 - **Dependencies**: Third-party libraries like Lit, TypeScript, and the Vite build tool are managed here.
 - **Scripts**: The `scripts` section contains commands for common tasks:
@@ -103,22 +103,25 @@ Located in `src/Articulate/Client`, `package.json` is the heart of the front-end
   - `generate:api`: Runs a custom script to generate the TypeScript API client.
   - `lint`: Lints the codebase to ensure code quality.
 
-### Custom Build Scripts (`src/Articulate/Client/scripts`)
+The .NET project automatically runs `pnpm run ci:install` the first time you build if `node_modules/.modules.yaml` is missing. Set `/p:SkipClientInstall=true` when you want to suppress that bootstrap step (e.g., in bespoke CI jobs).
+
+### Custom Build Scripts (`src/Articulate.Api.Management/Client/scripts`)
 
 - **`generate-api.js`**: This script uses `@hey-api/openapi-ts` to connect to a running instance of the Articulate site, fetch the OpenAPI/Swagger JSON definition, and generate a fully typed TypeScript client. This ensures the front-end is always in sync with the back-end API.
-- **`post-build.js`**: After Vite creates the production build in the `dist` folder, this script copies the final JavaScript bundles and assets to the correct location within `src/Articulate/wwwroot/App_Plugins/Articulate/Backoffice`, making them available to Umbraco.
+- **`post-build.js`**: After Vite creates the production build, this script moves the compiled bundles into `src/Articulate.Api.Management/wwwroot/App_Plugins/Articulate/BackOffice`, making them available to the Razor Class Library.
 - **`set-version.js`**: This utility synchronises the version number across `package.json` and `umbraco-package.json`, ensuring consistency for releases.
 
 ### `umbraco-package.json`
 
-This file, located in `src/Articulate/Client/public`, is the modern manifest for Umbraco extensions. It tells Umbraco how to load the backoffice assets. In this case, it registers a single JavaScript bundle (`articulate.js`) which contains all the necessary code for the property editors and dashboards.
+This file, located in `src/Articulate.Api.Management/Client/public`, is the modern manifest for Umbraco extensions. It tells Umbraco how to load the backoffice assets. In this case, it registers a single JavaScript bundle (`articulate.js`) which contains all the necessary code for the property editors and dashboards.
 
 ### Putting It All Together: The End-to-End Flow
 
-1. **Development**: A developer runs `pnpm run dev` to start the Vite development server. They can then make changes to the Lit components in `src/Articulate/Client/src` with hot-reloading.
-2. **API Changes**: If a C# API endpoint is modified, the developer runs `pnpm run generate:api` to update the TypeScript client.
-3. **Building for Production**: When development is complete, `pnpm run build` is executed. This command runs a sequence of tasks: it compiles the TypeScript, builds the assets with Vite, and then runs the `post-build.js` script.
-4. **Integration with Umbraco**: The `post-build.js` script places the final assets in the `wwwroot` directory. When the Umbraco backoffice loads, it reads the `umbraco-package.json` file and includes the specified JavaScript bundle, making the new backoffice extensions available to the user.
+1. **Development**: Run `pnpm run dev` from `src/Articulate.Api.Management/Client` to start the Vite development server. Changes under `Client/src` hot-reload into the Umbraco backoffice.
+2. **API Changes**: If a C# API endpoint is modified, run `pnpm run generate:api` in the same folder to regenerate the typed client.
+3. **Building for Production**: Execute `pnpm run build` (locally or as part of the release pipeline). The command compiles TypeScript, bundles with Vite, and invokes `post-build.js`.
+4. **Integration with Umbraco**: `post-build.js` moves the bundles into `src/Articulate.Api.Management/wwwroot/App_Plugins/Articulate/BackOffice` alongside the `umbraco-package.json` manifest so the Razor Class Library can expose them as static web assets.
+5. **Full Release Build**: Use `pwsh build/build.ps1` to reproduce the CI flow—restore, clean, build, and pack the solution in Release mode. GitHub Actions (`.github/workflows/build.yml`) runs the same sequence on Windows with Node/pnpm setup to produce signed artefacts.
 
 ## 8. Anatomy of a Backoffice Component
 
@@ -154,7 +157,7 @@ This section explores the different parts of the client-side application and how
 
 The `articulate-dashboard` component is the main entry point for the Articulate section in the backoffice. Its primary responsibility is to set up the routing for the different management views (e.g., BlogML import/export, theme options). It uses the `umb-router-slot` component from Umbraco to dynamically render the correct view based on the URL.
 
-### Reusable Components (`src/Articulate/Client/src/components`)
+### Reusable Components (`src/Articulate.Api.Management/Client/src/components`)
 
 This directory contains the individual views that are managed by the main dashboard router. These are standalone components that handle specific tasks:
 
@@ -162,7 +165,7 @@ This directory contains the individual views that are managed by the main dashbo
 - **`theme-options.element.ts`**: Provides UI for managing theme settings.
 - **`dashboard-options.element.ts`**: The default view for the dashboard, providing links to the other sections.
 
-### Utilities (`src/Articulate/Client/src/utils`)
+### Utilities (`src/Articulate.Api.Management/Client/src/utils`)
 
 This directory contains helper functions that are used across multiple components:
 
@@ -188,6 +191,24 @@ These are standard Umbraco API controllers that handle requests from the backoff
 - **`ThemeOptionsApiController.cs`**: Exposes endpoints for managing theme settings, such as copying a default theme to create a user-editable version.
 - **`BlogMlApiController.cs`**: Handles the logic for importing and exporting BlogML files.
 - **`MarkdownEditorApiController.cs`**: Provides server-side functionality for the Markdown editor, such as handling image uploads.
+
+#### Markdown Editor Authentication (OpenIddict)
+
+- The mobile Markdown editor authenticates against the management API using OpenIddict client credentials. On successful sign-in it exchanges the authorization code for tokens, stores them in session storage, and uses the generated SDK to perform post operations.
+- The end-to-end “happy path” (authorize → compose → upload images → publish) is implemented and tested in the demo site. Ensure `Articulate:ManagementApi:OpenIddict` settings are present so the editor can obtain a client ID/secret.
+- The authentication flow spans both C# and client-side components:
+  - **`ArticulateApplicationManager.cs`** wires up OpenIddict server registrations, token lifetimes, allowed flows (authorization code + PKCE), and the OAuth callback endpoints that the Markdown editor consumes.
+  - **`BackOfficeAuthService.cs`** executes the server-side exchange for backoffice users, mapping Umbraco identities into JWT claims and enforcing the scopes the markdown editor relies on (posts, uploads, profile).
+  - **`authService.js`** (inside `src/Articulate.Web/wwwroot/App_Plugins/Articulate/MarkdownEditor/src/js/`) owns the client portion: launching the login window, completing the callback, persisting tokens in `sessionStorage`, and exposing helpers for logout, token refresh, and user profile fetches.
+- Best practices already implemented:
+  - Authorization code flow with PKCE and short-lived access tokens, refresh token rotation handled by OpenIddict.
+  - Session-scoped storage (no long-term persistence) and explicit logout handling that revokes the refresh token and clears cached data.
+  - Callback hardening via state/nonce checks in `authService.js` to mitigate replay attacks.
+- Remaining improvements to track:
+  - Harden logout to call the OpenIddict end-session endpoint when available and fall back gracefully if the backoffice session has already expired.
+  - Add structured logging/telemetry around token failures in `BackOfficeAuthService` so operators can diagnose client credential issues quickly.
+  - Expand the Alpine component error handling to surface expired/invalid token states and offer a one-click re-auth experience.
+- Upcoming hardening tasks: improve token refresh handling, report API/auth errors in the UI, and validate failure cases (expired tokens, revoked clients, offline usage) during QA.
 
 ### API Models (`src/Articulate.Api.Management/Models`)
 
@@ -227,10 +248,10 @@ This section covers the low-level details of the project setup, build process, a
 
 ### The Articulate Project (`Articulate.csproj`)
 
-The main `Articulate.csproj` file contains important logic for building the backoffice client and packaging the themes.
+The main `Articulate.csproj` file contains important logic for packaging themes and exposing static assets.
 
-- **Client-Side Build**: The project includes two MSBuild targets, `RestoreClient` and `BuildClient`. When the project is built, these targets automatically run `pnpm install` and `pnpm run build` in the `src/Articulate/Client` directory. This ensures that the front-end assets are always up-to-date with the latest source code before the .NET project is compiled.
-- **Theme Embedding**: As a Razor Class Library (RCL), the built-in themes located in `src/Articulate/wwwroot/Themes` are automatically included as static web assets. This makes them available to the application at runtime, where they can be copied to the user-editable `~/Views/ArticulateThemes` directory by the `ArticulateThemeRepository`.
+- **Client Assets**: The project consumes the bundles produced by `pnpm run build` in `src/Articulate.Api.Management/Client`. Make sure those assets exist under `src/Articulate.Api.Management/wwwroot/App_Plugins/Articulate/BackOffice` before invoking `dotnet pack`; `build/build.ps1` and the CI workflow handle this sequencing.
+- **Theme Embedding**: Built-in themes live in `src/Articulate.Web/wwwroot/App_Plugins/Articulate/Themes`. The project embeds them as resources so they ship as static web assets and can be copied into `~/Views/ArticulateThemes` via `ArticulateThemeRepository`.
 
 ### The Test Website (`Articulate.Tests.Website`)
 
@@ -241,9 +262,70 @@ The test website is the primary environment for developing and debugging the Art
   - **Request Size Limits**: The file also includes important configuration for increasing the maximum request body size for both Kestrel and IIS. This is necessary to support features like BlogML import and multi-file uploads from the Markdown Editor.
   - **`UseStaticWebAssets`**: The line `builder.WebHost.UseStaticWebAssets()` is commented out but includes a note explaining its purpose: it is **only** required if you need to run the test site in a simulated `Release` or `Production` environment directly from your IDE. For normal development and debugging, it is not needed.
 
+### AI/LLM Content Negotiation & Caching
+
+Articulate supports serving text-friendly representations for AI agents via the `Accept` header.
+
+- Controllers
+  - Single posts negotiate in `BlogPostControllerBase` (markdown/plain/html) and set `X-Content-Variant` + `Cache-Control`.
+  - Lists negotiate in `ListControllerBase` for archive/tags/categories/search.
+- Request filter
+  - `ContentVariantRequestFilter` normalizes a request header `X-Content-Variant` (md|txt|html) from `Accept` so server output caching varies on a stable key.
+- OutputCache policies
+  - Registered in `ArticulateComposer` (`Articulate60/120/300`) and configured to vary by `X-Content-Variant` (and `Accept` as fallback).
+- Response headers
+  - Posts: `Cache-Control: public, max-age=0, s-maxage=120`, `Vary: X-Content-Variant`, `X-Content-Variant: md|txt|html`.
+  - Lists: `Cache-Control: public, max-age=0, s-maxage=60`, same `Vary`/variant.
+- HTML discoverability
+  - The shared layout emits `<link rel="alternate" type="text/markdown|text/plain" ...>` for posts.
+
+CDN strategy (recommended): normalize at the edge and key on `X-Content-Variant`. See `docs/ai-content-negotiation.md` for Cloudflare/CloudFront/Fastly examples.
+
+### Dynamic routes overview
+
+The router maps dynamic endpoints under your Articulate root (“mount path”), based on settings:
+
+- Search: `/{searchUrlName}`
+- Tags/Categories:
+  - Index: `/{tagsUrlName}` / `/{categoriesUrlName}`
+  - Filtered list: `/{tagsUrlName}/{tag}` / `/{categoriesUrlName}/{tag}`
+  - RSS: `/{tagsUrlName}/{tag}/rss` / `/{categoriesUrlName}/{tag}/rss`
+- RSS: `/rss`, `/rss/xslt`, `/author/{authorId}/rss`
+- OpenSearch: `/opensearch/{id}`
+- RSD: `/rsd/{id}`
+- Live Writer Manifest: `/wlwmanifest/{id}`
+- MetaWeblog: `/metaweblog/{id}`
+
+### Front-end Markdown editor (`/a-new`)
+
+Important: the legacy front-end Markdown editor route `/a-new` is still mapped, but the controller in `src/Articulate/Controllers/MarkdownEditorController.cs` now returns a **302 temporary redirect** to the blog home (`master.RootBlogNode.Url(mode: UrlMode.Absolute)`). This keeps existing links working and preserves the correct hostname in multi-tenant installs, while steering authors toward the backoffice editor supplied by `Articulate.Api.Management`.
+
+#### Switching back to the full front-end editor
+
+For beta builds we intentionally issue the 302. When it is time to ship the new front-end Markdown editor experience (beta2/GA), swap the controller back to the rendering implementation that lives in the web project:
+
+1. Remove (or rename) the redirect shim at `src/Articulate/Controllers/MarkdownEditorController.cs`.
+2. Ensure `src/Articulate.Web/Controllers/MarkdownEditorController.cs` stays in place; Umbraco will now resolve this controller for `/a-new/`.
+3. That controller constructs the `MarkdownEditorInitModel`, loads routing/config values from the management API, and renders `src/Articulate.Web/wwwroot/App_Plugins/Articulate/MarkdownEditor/MarkdownEditor.cshtml`, which is the new SPA.
+
+If you prefer to keep a single controller, replace the `Redirect(target)` call in the core shim with the view rendering logic from the web controller (see commit history before the beta redirect, e.g. `git show HEAD^:src/Articulate/Controllers/MarkdownEditorController.cs`).
+
 ### Packaging for Release
 
-**IMPORTANT**: To create a valid NuGet package for distribution, you **must** use the **`Pack`** command from within Visual Studio (right-click the `Articulate` project and select `Pack`).
+**IMPORTANT**: To create a valid NuGet package for distribution today, you **must** use the **`Pack`** command from within Visual Studio (right-click the `Articulate` project and select `Pack`).
 
-Using the standard `dotnet pack` command from the command line will **not** produce a usable package. It fails to correctly include the static web assets from the `wwwroot` folder and the necessary `.build` props files that allow the package to be correctly installed in a target Umbraco website. This is a known limitation in how .NET handles packaging for complex Razor Class Libraries with front-end assets.
+- Visual Studio’s pack restores/builds the solution and emits static-web-asset entries in the nupkg (`_content/Articulate/...`), so a clean Umbraco CMS site can reference the package without extra work.
+- `dotnet pack` from the CLI currently degrades to shipping the same assets under `content/` / `contentFiles/any/any`. Those files are still present but the host site would need custom MSBuild/Publish steps (or manual copying) to surface them at runtime because they are no longer wired into the static-web-asset pipeline.
 
+If the package is consumed by a stock Umbraco CMS project, only the Visual Studio build behaves correctly out of the box. The CLI-produced package would require the consuming app to copy the content files into `wwwroot/App_Plugins/Articulate` or add startup/build logic that mirrors what static-web-assets normally provide (`UseStaticWebAssets` alone is not sufficient). To bridge the gap, the package now ships a temporary MSBuild hook (`build/Articulate.targets`) that copies the App_Plugins payload during consumer builds whenever the nupkg exposes it via `content/` or `contentFiles/`. It honours `ArticulateEmitContentTargets` (default `true`) if you need to opt out and `ArticulateTargetAppPlugins` when you need a different destination. Remove these targets once the dedicated static-assets RCL lands.
+
+#### Roadmap: Fixing the pack gap
+
+To eliminate the Visual Studio requirement, plan an MVP that separates the static assets into their own Razor Class Library and, if needed, a content-files fallback:
+
+1. **Create `Articulate.StaticAssets`** (RCL targeting `net9.0;net10.0`). Move the views, themes, Markdown editor assets, and the backoffice bundle (`wwwroot/App_Plugins/Articulate/**`) into this project. It should have no runtime code—just Razor + static files.
+2. **Reference from `Articulate`**. Keep `Articulate` focused on runtime services/controllers. The RCL exposes static-web-assets automatically, so `dotnet pack` on the solution emits a NuGet with the assets without extra MSBuild hacks.
+3. **Update MSBuild**. Point existing `EmbeddedResource` and packaging metadata to the new project, and ensure `Articulate.Api.Management` still copies the backoffice output into the RCL before packing.
+4. **Fallback strategy**. If a specific SDK still drops assets, add conditional `<Content Include="wwwroot\**\*" Pack="true" PackagePath="contentFiles/any/any" />` entries or `.targets` files in `build/` so consumers get the files via contentFiles/build even when static-web-asset packaging regresses.
+
+Implementing step 1–3 should restore command-line parity; step 4 remains a safety net for future SDK regressions.

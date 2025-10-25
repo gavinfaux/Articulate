@@ -66,12 +66,23 @@ namespace Articulate.Components
 
             services.AddOutputCache(options =>
             {
+                // Vary by a normalized variant header to avoid cache-key fragmentation on raw Accept
                 options.AddPolicy("Articulate120", policyBuilder =>
-                    policyBuilder.Expire(TimeSpan.FromSeconds(120)));
+                    policyBuilder
+                        .Expire(TimeSpan.FromSeconds(120))
+                        .SetVaryByHeader("X-Content-Variant")
+                        // Fallback for environments not yet normalizing at the edge
+                        .SetVaryByHeader("Accept"));
                 options.AddPolicy("Articulate300", policyBuilder =>
-                    policyBuilder.Expire(TimeSpan.FromSeconds(300)));
+                    policyBuilder
+                        .Expire(TimeSpan.FromSeconds(300))
+                        .SetVaryByHeader("X-Content-Variant")
+                        .SetVaryByHeader("Accept"));
                 options.AddPolicy("Articulate60", policyBuilder =>
-                    policyBuilder.Expire(TimeSpan.FromSeconds(60)));
+                    policyBuilder
+                        .Expire(TimeSpan.FromSeconds(60))
+                        .SetVaryByHeader("X-Content-Variant")
+                        .SetVaryByHeader("Accept"));
             });
         }
     }

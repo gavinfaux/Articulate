@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk.Razor">
   <PropertyGroup>
-    <TargetFrameworks>net9.0</TargetFrameworks>
+    <TargetFrameworks>net9.0;net10.0</TargetFrameworks>
     <CompressionEnabled>false</CompressionEnabled>
     <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
     <StaticWebAssetBasePath>/</StaticWebAssetBasePath>
@@ -32,9 +32,16 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers, buildtransitive</IncludeAssets>
     </PackageReference>
   </ItemGroup>
-  <!--Umbraco CMS version range + NuGet audit mode-->
-  <PropertyGroup>
-    <UmbracoCmsPackageVersion>[15.2.3, 16.999.999)</UmbracoCmsPackageVersion>
+  <!--Umbraco CMS version range per target + NuGet audit mode-->
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net9.0'">
+    <!-- Support Umbraco 15.x–16.x on .NET 9 -->
+    <UmbracoCmsPackageVersion>[15.4.4,17.0.0)</UmbracoCmsPackageVersion>
+    <NuGetAuditMode>direct</NuGetAuditMode>
+    <EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0'">
+    <!-- Support Umbraco 17.x (including pre-release) on .NET 10 -->
+    <UmbracoCmsPackageVersion>[17.0.0-beta,18.0.0)</UmbracoCmsPackageVersion>
     <NuGetAuditMode>direct</NuGetAuditMode>
     <EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
   </PropertyGroup>
@@ -64,6 +71,9 @@
     <EmbeddedResource Include="..\Articulate.Web\wwwroot\App_Plugins\Articulate\Themes\**">
       <LogicalName>Articulate.Theme/$([System.String]::Copy('%(RecursiveDir)'))%(Filename)%(Extension)</LogicalName>
     </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Remove="Properties\launchSettings.json" />
   </ItemGroup>
   <ItemGroup>
     <Compile Update="Controllers\Resources.Designer.cs">
@@ -98,6 +108,7 @@
       <Pack>true</Pack>
       <PackagePath>\</PackagePath>
     </None>
+    <None Include="Properties\launchSettings.json" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="wwwroot" />

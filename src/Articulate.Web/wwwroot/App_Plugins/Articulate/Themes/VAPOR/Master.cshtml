@@ -18,8 +18,13 @@
     @Model.RssFeed()
     @Model.RenderOpenSearch()
 
-
-    <link href="~/App_Plugins/Articulate/Themes/VAPOR/assets/css/bundle.min.css" rel="stylesheet" fetchpriority="high" asp-append-version="true">
+    <environment include="Development">
+        <link href="~/App_Plugins/Articulate/Themes/VAPOR/src/css/normalize.css" rel="stylesheet" fetchpriority="high" asp-append-version="true">
+        <link href="~/App_Plugins/Articulate/Themes/VAPOR/src/css/screen.css" rel="stylesheet" asp-append-version="true">
+    </environment>
+    <environment exclude="Development">
+        <link href="~/App_Plugins/Articulate/Themes/VAPOR/dist/css/vapor.css" rel="stylesheet" fetchpriority="high" asp-append-version="true">
+    </environment>
 
     <!-- Google Fonts -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?subset=latin,cyrillic-ext,latin-ext,cyrillic&family=Open+Sans+Condensed:300|Open+Sans:400,600,400italic,600italic|Merriweather:400,300,300italic,400italic,700,700italic|Roboto+Slab:400,300&display=swap">
@@ -73,7 +78,12 @@
         </div>
     </footer>
 
-    <script defer src="~/App_Plugins/Articulate/Themes/VAPOR/assets/js/a11y.min.js" type="text/javascript" asp-append-version="true"></script>
+    <environment include="Development">
+        <script defer src="~/App_Plugins/Articulate/Themes/VAPOR/src/js/a11y.js" type="text/javascript"></script>
+    </environment>
+    <environment exclude="Development">
+        <script defer src="~/App_Plugins/Articulate/Themes/VAPOR/dist/js/vapor.js" type="text/javascript" asp-append-version="true"></script>
+    </environment>
 
 </body>
 </html>

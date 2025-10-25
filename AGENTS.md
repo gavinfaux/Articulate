@@ -1,43 +1,50 @@
-# AGENTS.md - Development Guide for Articulate
+# Repository Guidelines
 
-## Build/Test Commands
-
+This guide supports automation agents and human contributors working in the Articulate codebase.
 
 ## Project Structure & Module Organization
+- `src/Articulate/` – core Umbraco blog engine (C#).
+- `src/Articulate.Web/` – Razor Class Library (RCL); themes live under `wwwroot/App_Plugins/Articulate/Themes/*`.
+- `src/Articulate.Api.Management/` – management API; backoffice client in `Client/` (Vite + TypeScript).
+- `src/Articulate.UnitTests/` – xUnit test suites.
+- `src/Articulate.Tests.Website/` – demo site for local validation.
+- Projects target `net9.0;net10.0` (Umbraco 15/16 on net9, Umbraco 17 on net10). Use `-f net9.0` / `-f net10.0` with `dotnet` commands when testing specific TFMs. Package ranges: net9.0 → `[15.4.4,17.0.0)`, net10.0 → `[17.0.0-beta,18.0.0)`.
 
-- `src/Articulate/` hosts the core Umbraco blog engine; solution entry is `src/Articulate.sln`.
-- `src/Articulate.Web/` delivers Razor views, layouts, and packaged themes under `wwwroot/App_Plugins/Articulate/Themes/`.
-- `src/Articulate.Api.Management/` provides the management API; the `Client/` subfolder contains the Lit + TypeScript backoffice extension.
-- `src/Articulate.UnitTests/` stores automated xUnit suites, while `src/Articulate.Tests.WebSite/` is the demo site for manual validation.
+## Build, Test, and Development Commands
+- Build all TFMs: `dotnet build src/Articulate.sln --configuration Release`
+- Build single TFM: `dotnet build src/Articulate.sln -f net9.0 -c Release` (or `-f net10.0`)
+- Test (all): `dotnet test src/Articulate.UnitTests/Articulate.UnitTests.csproj`
+- Test single TFM: `dotnet test src/Articulate.UnitTests/Articulate.UnitTests.csproj -f net9.0` (or `-f net10.0`)
+- Run demo (Umbraco 15/16): `dotnet run -f net9.0 --project src/Articulate.Tests.Website/Articulate.Tests.Website.csproj`
+- Run demo (Umbraco 17): `dotnet run -f net10.0 --project src/Articulate.Tests.Website/Articulate.Tests.Website.csproj`
+- Backoffice client: `cd src/Articulate.Api.Management/Client && pnpm install && pnpm run dev`
+- Build client assets (Vite): `pnpm run build` (outputs to `src/Articulate.Api.Management/wwwroot/...` and theme/MarkdownEditor `dist/`)
+- Lint/check client: `pnpm run lint` / `pnpm run check`
+- Clean: `dotnet clean src/Articulate.sln --configuration Release`
+- Pack: `dotnet pack src/Articulate.sln --output build/Release --configuration Release`
+- Release pipeline: `pwsh build/build.ps1` (restores → cleans → builds → packs all TFMs)
 
-## Build, Test & Development Commands
-
-- **Build**: `dotnet build src/Articulate.sln --configuration Release`
-- **Clean**: `dotnet clean src/Articulate.sln --configuration Release`
-- **Pack**: `dotnet pack src/Articulate.sln --output build/Release --configuration Release`
-- **Test (single)**: `dotnet test src/Articulate.UnitTests/Articulate.UnitTests.csproj --filter "FullyQualifiedName~TestName"`
-- **Test (all)**: `dotnet test src/Articulate.UnitTests/Articulate.UnitTests.csproj`
-- From `src/Articulate.Api.Management/Client`, use `pnpm install && pnpm approve-builds` to restore dependencies, `pnpm run build` or `pnpm run build:release` for assets, `pnpm run dev` for HMR, `pnpm run lint` for ESLint/Prettier, and `pnpm run check` for TypeScript validation.
 ## Coding Style & Naming Conventions
-
-- **.NET 9.0** target framework with C# latest version
-- **Nullable warnings** enabled, treat as errors
-- **Implicit usings** enabled
-- **4-space indentation**, UTF-8 encoding, CRLF line endings
-- **Instance fields**: camelCase with `_` prefix (e.g., `_fieldName`)
-- **Public members**: PascalCase for classes, methods, properties
-- **Interfaces**: PascalCase with `I` prefix
-- **Expression-bodied members** preferred where appropriate
-- **StyleCop analyzers** enforced for code quality
-- **TypeScript/Client**: ES2020 target, 2-space indentation, single quotes, Prettier formatting
+- C#: .NET 9/10, C# latest, nullable warnings as errors, implicit usings, 4‑space indent.
+  - Private fields: `_camelCase`; public members: `PascalCase`; prefer expression-bodied members.
+  - StyleCop analyzers enforced.
+- TypeScript: ES2020 target, 2‑space indent, single quotes, Prettier formatting; ESLint for linting.
 
 ## Testing Guidelines
-
-- Author xUnit tests with descriptive names like `MethodUnderTest_ShouldExpectedBehavior` and FluentAssertions for readability.
-- Cover new features with unit tests and sanity-check UI changes via the demo website.
-- Run `pnpm run lint` and `dotnet test` before packaging to surface analyzer warnings early.
+- Framework: xUnit with descriptive names like `MethodUnderTest_ShouldExpectedBehavior`.
+- Run: `dotnet test` (optionally `-f net9.0` or `-f net10.0`).
+- Aim for unit coverage of new logic; sanity‑check UI via the demo site.
 
 ## Commit & Pull Request Guidelines
-- Keep commit messages short, imperative, and scoped (e.g., `Switch client tooling to pnpm`).
-- Reference related issues in the body, explain behaviour changes, and call out migrations or breaking impacts.
-- Pull requests should document test evidence (`dotnet test`, `pnpm run lint`/`pnpm run build`) and include UI screenshots when modifying themes or the backoffice extension.
+- Commits: short, imperative (e.g., `Fix markdown auth refresh`). Reference issues in body.
+- PRs: describe behavior changes, link issues, attach test evidence (`dotnet test`, `pnpm run lint/build`), and screenshots for theme/backoffice UI changes. Call out migrations/breaking impacts.
+
+## Security & Configuration Tips
+- Toolchains: `.nvmrc` → Node 22 (`nvm use`), pnpm 10.17+, `global.json` pins .NET 9.0.100 with roll‑forward.
+- Frontend bundles: Vite emits theme assets to `Themes/*/dist/` and Markdown editor to `MarkdownEditor/dist/`. In Production, Razor uses environment tag helpers with `asp-append-version`. Run `pnpm run build` before packaging/deploying.
+
+## Notes for Automation/Agents
+- Follow existing structure; avoid unrelated changes. Prefer surgical patches and add tests near modified code. Keep build/test commands green across both TFMs.
+- When running scripted tasks, respect multi-targeting: validate both `net9.0` and `net10.0` builds/tests where feasible.
+- Theme and Markdown editor source assets now live under `Themes/*/src/**` and `MarkdownEditor/src/**`; regenerating bundles requires `pnpm run build` before packaging or Release builds.
+- The legacy `/a-new/` front-end route currently issues a 302 redirect via `src/Articulate/Controllers/MarkdownEditorController.cs`. Remove that shim if you need to restore the SPA controller in `Articulate.Web`.

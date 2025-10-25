@@ -1,12 +1,12 @@
-# Articulate 6.0.0 Release Notes
+# Articulate 6.0.0-beta Release Notes
 
 ## Overview
 
-Articulate 6.0.0 represents a major version upgrade that introduces significant architectural improvements and modernizes the entire codebase. This release transitions from the legacy AngularJS backoffice to a modern Lit and TypeScript architecture, while also upgrading to the latest .NET and Umbraco versions.
+Articulate 6.0.0-beta represents a major version upgrade that introduces significant architectural improvements and modernizes the entire codebase. This prerelease transitions from the legacy AngularJS backoffice to a modern Lit and TypeScript architecture, while also upgrading to the latest .NET and Umbraco versions. Feedback from this beta will shape the general-availability release.
 
 **Previous Version:** Articulate 5.1.1  
-**New Version:** Articulate 6.0.0  
-**Release Type:** Major Version
+**New Version:** Articulate 6.0.0-beta  
+**Release Type:** Prerelease (Beta)
 
 ## 🚀 Major Updates & New Features
 
@@ -59,7 +59,7 @@ To improve modularity and maintainability, the single Articulate package from v5
 2. **Upgrade**
   - **Backup**: Create full backup of your Umbraco installation and Articulate content
   - **Umbraco Upgrade**: Upgrade to Umbraco 15.2.3+ or 16+ first
-  - **Package Installation**: Install Articulate 6.0.0 via NuGet or Umbraco package
+  - **Package Installation**: Install Articulate 6.0.0-beta via NuGet or Umbraco package
   - **Post-Installation**: Follow the new post-installation checks in the README
   - **Data Migration**: Re-run Articulate package migrations if needed
   - **Theme Updates**: Verify and update custom themes and extension points for compatibility

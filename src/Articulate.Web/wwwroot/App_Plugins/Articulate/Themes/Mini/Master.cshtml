@@ -18,7 +18,13 @@
     @Model.RssFeed()
     @Model.RenderOpenSearch()
 
-    <link href="~/App_Plugins/Articulate/Themes/Mini/assets/css/bundle.min.css" rel="stylesheet" fetchpriority="high" asp-append-version="true">
+    <environment include="Development">
+        <link href="~/App_Plugins/Articulate/Themes/Mini/src/css/base.css" rel="stylesheet" fetchpriority="high" asp-append-version="true">
+        <link href="~/App_Plugins/Articulate/Themes/Mini/src/css/style.css" rel="stylesheet" asp-append-version="true">
+    </environment>
+    <environment exclude="Development">
+        <link href="~/App_Plugins/Articulate/Themes/Mini/dist/css/mini.css" rel="stylesheet" fetchpriority="high" asp-append-version="true">
+    </environment>
 
     <link href="https://fonts.googleapis.com/css?family=Raleway:200&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Open+Sans:300&display=swap" rel="stylesheet">

@@ -22,7 +22,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Articulate: Create New Post</title>
-    <link href="~/App_Plugins/Articulate/MarkdownEditor/assets/css/md-editor.css" rel="stylesheet" fetchpriority="high">
+    <environment include="Development">
+        <link href="~/App_Plugins/Articulate/MarkdownEditor/src/css/md-editor.css" rel="stylesheet" fetchpriority="high">
+    </environment>
+    <environment exclude="Development">
+        <link href="~/App_Plugins/Articulate/MarkdownEditor/dist/css/md-editor.css" rel="stylesheet" fetchpriority="high" asp-append-version="true">
+    </environment>
     <link rel="preload" href="~/App_Plugins/Articulate/MarkdownEditor/vendor/mdl/material.pink-blue.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link rel="stylesheet" href="~/App_Plugins/Articulate/MarkdownEditor/vendor/mdl/material.pink-blue.min.css"></noscript>
     <link rel="stylesheet" href="~/App_Plugins/Articulate/MarkdownEditor/vendor/fonts/material-icons/material-icons.css" media="print" onload="this.media='all'">
@@ -203,7 +208,12 @@
     <script defer src="~/App_Plugins/Articulate/MarkdownEditor/vendor/tiny-mde/tiny-mde.min.js"></script>
 
     <!-- Load entry module only; it imports dependencies -->
-    <script defer src="~/App_Plugins/Articulate/MarkdownEditor/assets/js/md-editor.js?d=1" type="module"></script>
+    <environment include="Development">
+        <script defer src="~/App_Plugins/Articulate/MarkdownEditor/src/js/md-editor.js" type="module"></script>
+    </environment>
+    <environment exclude="Development">
+        <script defer src="~/App_Plugins/Articulate/MarkdownEditor/dist/js/md-editor.js" type="module" asp-append-version="true"></script>
+    </environment>
 
     <script defer src="~/App_Plugins/Articulate/MarkdownEditor/vendor/alpine/alpine-csp.min.js"></script>
 

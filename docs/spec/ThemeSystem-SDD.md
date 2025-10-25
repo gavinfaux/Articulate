@@ -8,26 +8,26 @@
 ## 1. Goals & Non‑Goals
 
 - Goals
-  - Replace copy-based themes with a Shared base that child themes inherit.
-  - Deliver a modern default theme (Aurora) that overrides only what it needs.
+  - Replace copy-based themes with a Shared base that child themes inherit. *(Deferred; current builds continue using the legacy master-based themes.)*
+- Deliver a modern default theme (Aurora) that overrides only what it needs. *(Deferred; theme ships in a later release.)*
   - Provide a clear Theme Contract (HTML structure, CSS naming, optional sections, metadata).
   - Add Shared fallback to view resolution; centralize layout selection via DI.
   - Keep legacy themes working (back-compat) without making them the default.
 
 - Non-Goals
   - Full backoffice theme authoring UI (future).
-  - A new asset pipeline (we keep bundleconfig.json for now).
+- A bespoke asset pipeline beyond the shared Vite build (static bundles ride on the Vite plugin).
   - Hard requirements for JS frameworks.
 
 ## 2. Scope
 
 - In Scope
-  - Shared base theme under `App_Plugins/Articulate/Themes/Shared/` with layout, partials, and minimal CSS.
-  - Aurora theme under `App_Plugins/Articulate/Themes/Aurora/` with modern CSS, using Shared fallback for views.
+- Shared base theme under `App_Plugins/Articulate/Themes/Shared/` with layout, partials, and minimal CSS. *(Deferred.)* When it lands it will follow the modern ASP.NET Core pattern (`Shared/_ViewStart.cshtml`, `_Layout.cshtml`, Razor views/partials, opt-in sections such as Header/Sidebar/Scripts) so the package can light up every major Articulate feature without legacy baggage.
+- Aurora theme (deferred) under `App_Plugins/Articulate/Themes/Aurora/` with modern CSS, using Shared fallback for views. Aurora will build on the Shared scaffolding to showcase the full blogging experience—comments, search, tag clouds, author bios, etc.—while allowing themes to opt in/out of the shared sections.
   - View resolution fallback to Shared for Views/Partials.
   - Centralized layout selection via `IArticulateThemeResolver` in Shared `_ViewStart.cshtml`.
   - Theme-first asset partials: `HeadAssets.cshtml` and `FootAssets.cshtml` with Shared base partials `BaseHeadAssets.cshtml` and `BaseFootAssets.cshtml`.
-  - Theme metadata files: `base.json` (Shared), `theme.json` (Aurora).
+  - Theme metadata files (planned): `base.json` (Shared), `theme.json` (Aurora).
   - Documentation: README in Shared; this SDD.
 
 - Out of Scope
@@ -45,13 +45,14 @@
     - Active layout: `~/App_Plugins/Articulate/Themes/{theme}/_Layout.cshtml`
     - Fallback: `Shared/_Layout.cshtml`
 
-- Theme Contract
+- Theme Contract *(future work)*
+  - Razor structure centers on `Shared/_ViewStart.cshtml` and `_Layout.cshtml`, wiring opt-in sections (Header, Sidebar, Scripts) and shared partials so the front-end can surface search, tag cloud, comments, Markdown editor entry points, and other flagship features without bespoke duplication.
   - HTML structure uses BEM-like classes (e.g., `.post-preview__title`, `.post-preview--featured`).
   - Optional sections (slots) exposed by Shared (and Aurora): `Header`, `Sidebar`, `Scripts`.
-  - Assets model (implemented):
-    - Shared provides minimal base CSS/JS via `BaseHeadAssets.cshtml` and `BaseFootAssets.cshtml`.
-    - Layouts call `HeadAssets` and `FootAssets` (theme-first then Shared fallback).
-    - Themes can either extend Shared (include base partials) or fully replace (omit base partials). Aurora extends by default.
+- Assets model (current state & future work):
+    - Legacy themes continue to include CSS/JS directly from their layouts (`Master.cshtml`).
+    - Bundled assets produced by Vite land in each theme’s `dist/` folder and are linked with ASP.NET Core environment tag helpers.
+    - Planned: Shared provides minimal base CSS/JS via `BaseHeadAssets.cshtml` and `BaseFootAssets.cshtml`, with optional extension by derived themes.
   - Metadata files:
     - Shared: `assets/base.json` with `contractVersion`, `name`, `version`, `sections`.
     - Theme: `assets/theme.json` with `extends`, `contractVersion`, `overrides`.
@@ -126,9 +127,11 @@ Registrations in `ArticulateComposer`:
   - `services.AddOptions<ArticulateOptions>().BindConfiguration("Articulate");` (binds default comments provider and provider-specific settings from configuration)
 - Misc routing/pipeline configuration kept as-is; no `BuildServiceProvider` used.
 
+> **Note:** The Aurora theme remains deferred. The scenarios below focus on shipped themes unless marked otherwise.
+
 ## 4. User Scenarios & Acceptance Criteria
 
-- Select Aurora as theme
+- (Deferred) Select Aurora as theme
   - Given an Articulate root, when selecting `Aurora` in theme picker, then views render with Aurora layout and styling while falling back to Shared views/partials.
 
 - Shared fallback for unspecified views
@@ -142,28 +145,21 @@ Registrations in `ArticulateComposer`:
   - Potential providers (future adapters): Disqus, giscus, utterances, Hyvor Talk, Isso.
 
 - Metadata present
-  - Given Shared and Aurora themes, when inspecting `base.json` and `theme.json`, then metadata exists with `contractVersion`.
+  - Given Shared and any derived theme, when inspecting `base.json` and `theme.json`, then metadata exists with `contractVersion`.
 
 ## 5. Implementation Status (2025-09-13)
 
-- Shared base theme: DONE
-  - Layout, `_ViewStart`, `_ViewImports`, Views: `List`, `Post`, `Author`, `Tags`
-  - Partials: `Menu`, `HeaderDescription`, `FooterDescription`, `PostTags`, `Pager`, `SearchBox`, `Comments`, `PostByline`
-  - CSS: `assets/css/base.css`
+- Shared base theme: DEFERRED
+  - Implementation postponed; existing master-based themes remain authoritative.
 
-- Aurora theme: DONE (initial)
-  - Layout, `_ViewStart`, CSS stack (reset, tokens, base, components, utilities)
-  - Optional sections: `Sidebar`, `Scripts` exposed
+- Aurora theme: DEFERRED
+  - Layout, asset stack, and optional sections will return post-release when the theme ships.
 
-- Asset inclusion model: DONE
-  - Shared layout now delegates to `HeadAssets`/`FootAssets` partials (theme-first, Shared fallback).
-  - New base partials in Shared: `Partials/BaseHeadAssets.cshtml`, `Partials/BaseFootAssets.cshtml`.
-  - Shared fallbacks: `Partials/HeadAssets.cshtml` includes `BaseHeadAssets`; `Partials/FootAssets.cshtml` includes `BaseFootAssets`.
-  - Aurora overrides:
-    - `Aurora/Partials/HeadAssets.cshtml` includes `BaseHeadAssets` then Aurora CSS (extend-by-default).
-    - `Aurora/Partials/FootAssets.cshtml` includes `BaseFootAssets` by default (removable to replace).
+- Asset inclusion model: IN PROGRESS
+  - Master-based themes (Material, Mini, Phantom, VAPOR) continue to include their own assets via `Master.cshtml`.
+  - The Vite pipeline now emits bundled/minified assets into each theme’s `dist/` folder; layouts reference them with environment tag helpers.
   - Comments provider: `Shared/Post.cshtml` renders `CommentsProvider` by default under `Model.EnableComments`; themes can set `ViewData["CommentsProvider"]` or override the partial.
-  - Config-driven comments: `ArticulateOptions` now includes `DefaultCommentsProvider` and provider-specific settings (Disqus/Giscus/Utterances/Hyvor/Isso) bound via `services.AddOptions<ArticulateOptions>().BindConfiguration("Articulate")`. Shared `CommentsProvider` reads these to render real embeds when configured. Aurora ships a Giscus example override.
+  - Config-driven comments: `ArticulateOptions` now includes `DefaultCommentsProvider` and provider-specific settings (Disqus/Giscus/Utterances/Hyvor/Isso) bound via `services.AddOptions<ArticulateOptions>().BindConfiguration("Articulate")`. Shared `CommentsProvider` reads these to render real embeds when configured.
 
 - View resolution fallback to Shared: DONE
 - Centralized layout via DI: DONE
@@ -212,8 +208,8 @@ Registrations in `ArticulateComposer`:
 
 ## 8. Rollout & Migration
 
-- Legacy themes remain available; Aurora added as default candidate.
-- Theme picker exposes Aurora; doc migration notes.
+- Legacy themes remain available; Aurora will be added as a default candidate in a later release.
+- Theme picker exposure for Aurora deferred; documentation will be updated alongside the theme launch.
 - No content schema changes required.
 
 ## 9. Open Questions / Clarifications
@@ -226,8 +222,7 @@ Registrations in `ArticulateComposer`:
 ## 10. Work Items & Tracking
 
 - Completed
-  - Shared base theme scaffold
-  - Aurora initial theme
+  - Master-based theme polish (Material, Mini, Phantom, VAPOR)
   - View location expander fallback
   - DI-based layout selection
   - Comments placeholder
@@ -236,8 +231,8 @@ Registrations in `ArticulateComposer`:
   - PrevNext partial (Shared) and integration
   - TagCloud partial (Shared) and integration
   - AuthorCard partial (Shared) and integration
-  - base.json/theme.json scaffolds
-  - Shared README
+  - base.json/theme.json scaffolds *(reserved for future shared/Aurora work)*
+  - Theme documentation refresh (legacy themes + Markdown editor)
 
 - Planned
   - Path handling improvements in ViewLocationExpander and ArticulateConstants.Paths [P1]
@@ -254,6 +249,22 @@ Registrations in `ArticulateComposer`:
   - Clarify `ArticulateConstants.Paths` names to distinguish virtual vs content-root-relative paths, and document each.
   - Add tests that assert produced view locations use forward slashes and include expected theme/Shared fallbacks.
 
+### 10.2 Comment Providers (Plan)
+
+- The shared `CommentsProvider` partial now resolves the configured provider (Disqus, Giscus, Utterances, Hyvor, Isso) through `ArticulateOptions`. Happy-path embeds render correctly in manual testing.
+- Outstanding work: broaden automated coverage, add graceful fallbacks when provider settings are missing/invalid, and surface configuration issues via logging/backoffice notifications.
+
+### 10.3 Theme Source Layout & Markdown Editor Assets (Proposal)
+
+- Theme source layout:
+  - Introduce a `Themes/<theme>/src/` folder (e.g., SCSS, TypeScript, template fragments) as the authored source, with the existing `assets/` acting as legacy inputs and `dist/` as the final build output. Vite would consume everything under `src/` and emit compiled bundles to `dist/`, keeping authored assets clearly separate from generated files.
+  - Provide a convention-based bundler: discover each theme under `App_Plugins/Articulate/Themes`, inspect `src/` or `assets/` for CSS/JS entry points, and auto-generate bundles rather than hardcoding them. Allow a per-theme config file (e.g., `bundle.json`) for overrides.
+  - Continue bundling/minifying any vendored files that live in the repo (e.g., `vendor/*.js`) so local copies receive the same cache-busting and versioning as theme code. CDN-hosted assets remain external.
+  - Migration path for master-based themes: move existing CSS into `src/` (or import them there) and treat `assets/` as read-only legacy content until the new structure is fully adopted.
+- Markdown editor assets:
+  - Bring the Markdown editor under the same pipeline by creating `MarkdownEditor/src/` for authored scripts/styles (Alpine component, auth utilities) while retaining `MarkdownEditor/vendor/` for third-party libraries. Vite can emit modern bundles to `MarkdownEditor/dist/`, ensuring consistent minification, cache busting, and environment-specific includes in the Razor view.
+  - Track follow-up work: update Razor to load `dist/` assets via environment tag helpers, ensure the OpenIddict auth flow (login/logout callbacks, token refresh) remains intact in the new bundle, and validate image upload + post creation using the regenerated output.
+
 ## 11. Appendix (Key Files)
 
 - `src/Articulate/Components/ArticulateViewLocationExpander.cs`
@@ -261,55 +272,66 @@ Registrations in `ArticulateComposer`:
 - `src/Articulate/Services/IArticulateThemeResolver.cs`, `ArticulateThemeResolver.cs`
 - `src/Articulate.Web/wwwroot/App_Plugins/Articulate/Themes/Shared/`
 - `src/Articulate.Web/wwwroot/App_Plugins/Articulate/Themes/Aurora/`
-- `src/Articulate.Web/bundleconfig.json`
+- `src/Articulate.Api.Management/Client/vite.config.ts` (static asset bundling plugin)
 
 ## 12. Theme Author Guide (KISS)
 
 Use this section to build or customize a theme with minimal friction.
 
-1. File structure (Aurora example)
+1. File structure (Material example)
 
-- Base directory: `src/Articulate.Web/wwwroot/App_Plugins/Articulate/Themes/Aurora/`
-- Recommended layout: `Aurora/_Layout.cshtml` (adds `<body class="aurora">` and your chrome)
-- Optional view overrides: put view files under `Aurora/Views/` (e.g., `Views/List.cshtml`). Missing views fall back to `Themes/Shared`.
-- Assets: place under `Aurora/assets/` (e.g., `assets/css/*.css`, `assets/js/*.js`)
-- Partials (assets): `Aurora/Partials/HeadAssets.cshtml`, `Aurora/Partials/FootAssets.cshtml`
+- Base directory: `src/Articulate.Web/wwwroot/App_Plugins/Articulate/Themes/Material/`
+- Recommended layout: `Material/Master.cshtml` (wraps the theme chrome)
+- Optional view overrides: put view files under `Material/` (e.g., `List.cshtml`, `Partials/Menu.cshtml`). Missing views fall back to `Themes/Shared`.
+- Editable theme assets: place under `Material/src/` (e.g., `src/css/*.css`, `src/js/*.js`)
+- Bundled output: Vite writes optimised files to `Material/dist/` (`css/`, `js/`) during `pnpm run build` and the directories stay git-ignored.
+- Partials (assets): theme-specific head/foot markup lives directly in the layout (older themes) or in optional partials.
 
 1. Asset loading: extend vs replace
 
 - Shared provides base assets via:
-  - `Shared/Partials/BaseHeadAssets.cshtml` (includes vendor Pico and base CSS)
-  - `Shared/Partials/BaseFootAssets.cshtml` (e.g., `assets/js/base.js`)
+- `Shared/Partials/BaseHeadAssets.cshtml` (includes vendor Pico and base CSS)
+- `Shared/Partials/BaseFootAssets.cshtml` (e.g., `src/js/base.js`)
 - Layouts include `HeadAssets` and `FootAssets` using theme-first resolution. In your theme:
   - Extend Shared (default): include base partials first, then theme assets
 
     ```cshtml
-    @* Aurora/Partials/HeadAssets.cshtml *@
-    @await Html.PartialAsync("BaseHeadAssets")
-    <link href="~/App_Plugins/Articulate/Themes/Aurora/assets/css/reset.css" rel="stylesheet" asp-append-version="true" />
-    <link href="~/App_Plugins/Articulate/Themes/Aurora/assets/css/tokens.css" rel="stylesheet" asp-append-version="true" />
-    <link href="~/App_Plugins/Articulate/Themes/Aurora/assets/css/base.css" rel="stylesheet" asp-append-version="true" />
-    <link href="~/App_Plugins/Articulate/Themes/Aurora/assets/css/components.css" rel="stylesheet" asp-append-version="true" />
-    <link href="~/App_Plugins/Articulate/Themes/Aurora/assets/css/utilities.css" rel="stylesheet" asp-append-version="true" />
+    @* Example HeadAssets partial *@
+    <environment include="Development">
+        <link href="~/App_Plugins/Articulate/Themes/Material/src/css/styles.css" rel="stylesheet" asp-append-version="true" />
+        <link href="~/App_Plugins/Articulate/Themes/Material/src/css/styles_custom.css" rel="stylesheet" asp-append-version="true" />
+    </environment>
+    <environment exclude="Development">
+        <link href="~/App_Plugins/Articulate/Themes/Material/dist/css/material.css" rel="stylesheet" asp-append-version="true" />
+    </environment>
     ```
 
     ```cshtml
-    @* Aurora/Partials/FootAssets.cshtml *@
-    @await Html.PartialAsync("BaseFootAssets")
-    @* <script src="~/App_Plugins/Articulate/Themes/Aurora/assets/js/app.js" asp-append-version="true"></script> *@
+    @* Example FootAssets partial *@
+    @* <script src="~/App_Plugins/Articulate/Themes/Material/dist/js/material.js" asp-append-version="true"></script> *@
     ```
 
   - Replace Shared: omit base partials in your HeadAssets/FootAssets
 
 1. Layout guidance
 
-- Put global chrome in `Aurora/_Layout.cshtml` and keep Shared views generic.
+- Put global chrome in your theme layout (e.g., `Material/Master.cshtml`) and keep Shared views generic.
 - Expose optional sections where needed: `@RenderSection("Header", false)`, `@RenderSection("Sidebar", false)`, `@RenderSection("Scripts", false)`.
 
 1. Referencing assets
 
-- Always use virtual paths with `~` and `asp-append-version="true"` for cache busting:
-  - `~/App_Plugins/Articulate/Themes/Aurora/assets/css/base.css`
+- Use ASP.NET Core environment tag helpers so Development serves the editable source files while Production serves the bundled output from `dist/`, e.g.:
+
+  ```cshtml
+  <environment include="Development">
+      <script src="~/App_Plugins/Articulate/Themes/VAPOR/src/js/a11y.js"></script>
+  </environment>
+  <environment exclude="Development">
+      <script src="~/App_Plugins/Articulate/Themes/VAPOR/dist/js/vapor.js" asp-append-version="true"></script>
+  </environment>
+  ```
+
+- Always use virtual paths with `~` and `asp-append-version="true"` on bundled files for cache busting.
 - Avoid `Path.Combine` for virtual paths; keep forward slashes.
 
 1. Metadata (optional for now)
@@ -353,7 +375,7 @@ Use this section to build or customize a theme with minimal friction.
 - Variables to set in Shared `articulate-base.css` so themes can override easily:
 
 ```css
-/* Themes/Shared/assets/css/articulate-base.css */
+/* Themes/Shared/src/css/articulate-base.css */
 :root {
   /* Sans-serif system stack */
   --pico-font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica Neue, Arial, sans-serif;
@@ -451,7 +473,7 @@ Notes:
    - No JS behavior relies on it; not used for accessibility semantics.
    - An equivalent Pico pattern covers the use case, or the selector is redundant.
 2. Process
-   - Mark as deprecated in code comments (near the rule in `assets/css/base.css`) and list in this SDD.
+   - Mark as deprecated in code comments (near the rule in `src/css/base.css`) and list in this SDD.
    - Provide migration guidance and an example replacement (e.g., adopt Pico class X or element Y).
    - Announce deprecation in `BREAKING_CHANGES.md` with a one-release grace period.
    - Remove after the grace period and update the SDD.
@@ -497,7 +519,7 @@ Notes:
 - Recommended styles (theme-friendly, adjustable via tokens): headings scale, readable line-height, styled blockquotes, code/pre, tables and lists.
 - Usage: wrap the rendered body inside `Shared/Post.cshtml` with `<div class="prose">` (theme can override or extend).
 
-Example starter (in `Themes/Shared/assets/css/articulate-base.css`):
+Example starter (in `Themes/Shared/src/css/articulate-base.css`):
 
 ```css
 .prose { line-height: 1.7; color: var(--pico-color); }
@@ -519,7 +541,7 @@ Example starter (in `Themes/Shared/assets/css/articulate-base.css`):
 - Shared defaults are neutral (black/white/gray) for broad compatibility; themes add accents.
 - Start with light mode only; add dark later as an override (low risk, variable-only change).
 
-Example tokens (in `Themes/Shared/assets/css/articulate-base.css`):
+Example tokens (in `Themes/Shared/src/css/articulate-base.css`):
 
 ```css
 :root {
@@ -785,24 +807,24 @@ References
   - No mandatory build step for theme authors; we ship a pinned, prebuilt vendor CSS locally.
 
 - Distribution strategy
-  - Vendor file (pinned, local): `Themes/Shared/assets/vendor/pico.min.css` (prefer local over CDN for stability/CSP).
-  - Base overrides: `Themes/Shared/assets/css/articulate-base.css` to set CSS variables (colors, radius, spacing, typography) and minimal tokens.
+  - Vendor file (pinned, local): `Themes/Shared/src/css/pico.min.css` (prefer local over CDN for stability/CSP).
+  - Base overrides: `Themes/Shared/src/css/articulate-base.css` to set CSS variables (colors, radius, spacing, typography) and minimal tokens.
   - Document an optional CDN link for quick trials, but default to local vendor file.
-  - Note: We use `Themes/Shared/assets/css/pico.min.css` (under `css/`) in this implementation.
+  - Note: We use `Themes/Shared/src/css/pico.min.css` (under `css/`) in this implementation.
 
 - Asset inclusion (order)
   1. `pico.min.css` (vendor)
   2. `articulate-base.css` (variables/tokens)
-  3. Shared base CSS (existing `assets/css/base.css`, if retained) or migrate essentials into `articulate-base.css`
+  3. Shared base CSS (existing `src/css/base.css`, if retained) or migrate essentials into `articulate-base.css`
   4. Theme CSS (Aurora and others) — loaded after Shared to allow overrides
 
 - Implementation notes
   - Update `Shared/Partials/BaseHeadAssets.cshtml` to include the vendor and base overrides in the order above.
   - Theme-first resolution remains: themes can extend (include base partials) or replace.
   - Include order (Option A) for CSS in Shared base:
-    1. `Themes/Shared/assets/css/pico.min.css`
-    2. `Themes/Shared/assets/css/articulate-base.css` (tokens, `.prose`, motion, responsive helpers)
-    3. `Themes/Shared/assets/css/base.css` (temporary Shared components layer; later `shared-components.css`)
+    1. `Themes/Shared/src/css/pico.min.css`
+    2. `Themes/Shared/src/css/articulate-base.css` (tokens, `.prose`, motion, responsive helpers)
+    3. `Themes/Shared/src/css/base.css` (temporary Shared components layer; later `shared-components.css`)
   - Token mapping (progressively refactor `base.css` to use Pico variables):
     - `--border` → `--pico-muted-border-color`
     - `--muted` → `--pico-muted-color`
@@ -840,8 +862,8 @@ References
   - Third‑party widgets: class-based Pico is opt-in, minimizing unintended styling.
 
 - Tasks
-  - [P1] Add vendor: `Themes/Shared/assets/css/pico.min.css` — completed
-  - [P1] Add variables file: `Themes/Shared/assets/css/articulate-base.css` — completed
+  - [P1] Add vendor: `Themes/Shared/src/css/pico.min.css` — completed
+  - [P1] Add variables file: `Themes/Shared/src/css/articulate-base.css` — completed
   - [P1] Update `Shared/Partials/BaseHeadAssets.cshtml` to include vendor + base overrides — completed
   - [P1] Apply minimal Pico classes to Shared partials: `Menu`, `Pager`, `AuthorCard`, `SearchBox` — completed
   - [P1] Create `Shared/Partials/Share.cshtml` implementing Web Share API with fallback social links; integrate into `Shared/Post.cshtml` — completed
@@ -852,7 +874,7 @@ References
   - [P1] Set light grayscale tokens in `articulate-base.css` (no dark yet) — completed
   - [P1] Add minimal transitions and `prefers-reduced-motion` handling in `articulate-base.css` — completed
   - [P1] Temporarily disable Aurora overrides to rely on Shared during base work (comment/rename `Aurora/Partials/HeadAssets.cshtml` and `FootAssets.cshtml`, avoid view overrides) — completed
-  - [P1] Refactor `Themes/Shared/assets/css/base.css` to use Pico variables per token mapping and remove redundant rules over time — completed
+  - [P1] Refactor `Themes/Shared/src/css/base.css` to use Pico variables per token mapping and remove redundant rules over time — completed
   - [P1] Add a skip-link in `Shared/_Layout.cshtml` targeting the main region (e.g., `#main`); ensure it is visible on focus — completed
   - [P1] Ensure semantic landmarks in Shared layout (`header`, `nav`, `main`, `aside`, `footer`) and a logical heading hierarchy — completed
   - [P1] Provide visible focus indicator styles in `articulate-base.css` (do not remove outlines) — completed
@@ -864,8 +886,8 @@ References
 
   1. Use the existing branch; do not create a new branch.
   2. Temporarily disable Aurora overrides to rely on Shared: comment/rename `Aurora/Partials/HeadAssets.cshtml` and `FootAssets.cshtml` (or make them pass-through to base), and avoid view/partial overrides.
-  3. Pin Pico version and add `Themes/Shared/assets/vendor/pico.min.css`.
-  4. Create `Themes/Shared/assets/css/articulate-base.css` with:
+  3. Pin Pico version and add `Themes/Shared/src/css/pico.min.css`.
+  4. Create `Themes/Shared/src/css/articulate-base.css` with:
      - Font variables (system stacks) and token surface.
      - Light grayscale tokens (background, text, muted, borders, primary).
      - `.prose` scoped typography styles for article content.

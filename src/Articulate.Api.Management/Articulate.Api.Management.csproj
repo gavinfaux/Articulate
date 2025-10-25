@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk.Razor">
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFrameworks>net9.0;net10.0</TargetFrameworks>
     <CompressionEnabled>false</CompressionEnabled>
     <StaticWebAssetBasePath>/</StaticWebAssetBasePath>
   </PropertyGroup>
@@ -37,9 +37,15 @@
     </PackageReference>
   </ItemGroup>
 
-  <!--Umbraco CMS version range + NuGet audit mode-->
-  <PropertyGroup>
-    <UmbracoCmsPackageVersion>[15.2.3, 16.999.999)</UmbracoCmsPackageVersion>
+  <!--Umbraco CMS version range per target + NuGet audit mode-->
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net9.0'">
+    <!-- Support Umbraco 15.x–16.x on .NET 9 -->
+    <UmbracoCmsPackageVersion>[15.4.4,17.0.0)</UmbracoCmsPackageVersion>
+    <NuGetAuditMode>direct</NuGetAuditMode>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0'">
+    <!-- Support Umbraco 17.x (including pre-release) on .NET 10 -->
+    <UmbracoCmsPackageVersion>[17.0.0-beta,18.0.0)</UmbracoCmsPackageVersion>
     <NuGetAuditMode>direct</NuGetAuditMode>
   </PropertyGroup>
 
@@ -131,6 +137,29 @@
     <Content Include="build\Articulate.Api.Management.targets" Pack="true" PackagePath="build\" />
   </ItemGroup>
 
+  <PropertyGroup>
+    <!-- If not explicitly provided, default to false for local dev -->
+    <SkipClientInstall Condition="'$(SkipClientInstall)'==''">false</SkipClientInstall>
+    <!-- If running in GitHub Actions, default to true so CI workflows that handle node tooling can skip this target -->
+    <SkipClientInstall Condition="'$(GITHUB_ACTIONS)'=='true'">true</SkipClientInstall>
+
+    <!-- relative client folder -->
+    <ClientFolder>$(ProjectDir)Client</ClientFolder>
+  </PropertyGroup>
+
+  <Target Name="InstallClientDependencies" BeforeTargets="Build"
+          Condition="Exists('$(ClientFolder)/package.json') and '$(SkipClientInstall)' != 'true' and !Exists('$(ClientFolder)/node_modules/.modules.yaml')">
+    <Message Text="Client dependencies not found. Bootstrapping via pnpm in $(ClientFolder)..." Importance="High" />
+
+    <!-- Windows -->
+    <Exec Condition="'$(OS)' == 'Windows_NT'"
+          Command="cmd /c &quot;where pnpm &gt;nul 2&gt;&amp;1 || (corepack enable &amp;&amp; corepack prepare pnpm@latest --activate) &amp;&amp; pushd &quot;$(ClientFolder)&quot; &amp;&amp; pnpm run ci:install &amp;&amp; popd&quot;" />
+
+    <!-- POSIX (macOS/Linux) -->
+    <Exec Condition="'$(OS)' != 'Windows_NT'"
+          Command="/bin/sh -c 'command -v pnpm >/dev/null 2>&amp;1 || (corepack enable &amp;&amp; corepack prepare pnpm@latest --activate); cd &quot;$(ClientFolder)&quot; &amp;&amp; pnpm run ci:install'" />
+
+  </Target>
 </Project>
 
 

@@ -66,20 +66,27 @@ jobs:
         cache: 'pnpm'
         cache-dependency-path: 'src/Articulate.Api.Management/Client/pnpm-lock.yaml'
 
-    - name: Nuget Restore
-      run: nuget restore $env:Solution_File
+    - name: Setup .NET SDKs
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: |
+          9.0.100
+          10.0.100-rc.2.25502.107
+        include-prerelease: true
 
-    - name: MSBuild Clean
-      run: msbuild $env:Solution_File /p:Configuration=${{ env.Configuration }} /t:Clean
+    - name: Dotnet Restore
+      run: dotnet restore $env:Solution_File
 
-    - name: MSBuild Build
-      run: msbuild $env:Solution_File /p:Configuration=${{ env.Configuration }}
+    - name: Dotnet Clean
+      run: dotnet clean $env:Solution_File --configuration ${{ env.Configuration }}
+
+    - name: Dotnet Build
+      run: dotnet build $env:Solution_File --configuration ${{ env.Configuration }} --no-restore
 
     - name: Dotnet Pack
-      run: dotnet pack $env:Solution_File --output ${{ env.Release_Folder }} --configuration ${{ env.Configuration }}
+      run: dotnet pack $env:Solution_File --configuration ${{ env.Configuration }} --no-build --output ${{ env.Release_Folder }}
 
     - uses: actions/upload-artifact@v4
       with:
         name: Articulate.${{ env.NBGV_SemVer2 }}
         path: ${{ env.Release_Folder }}/Articulate.*
-

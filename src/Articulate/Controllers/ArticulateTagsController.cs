@@ -1,10 +1,12 @@
 #nullable enable
 using Articulate.Attributes;
 using Articulate.Services;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.Extensions.Logging;
+using Microsoft.Net.Http.Headers;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.PublishedCache;
 using Umbraco.Cms.Core.Routing;
@@ -100,6 +102,26 @@ namespace Articulate.Controllers
                 new PostTagCollection(contentByTags),
                 PublishedValueFallback);
 
+            // Content negotiation for AI agents on tag/category list pages
+            Response.Headers.Append("Vary", "X-Content-Variant");
+            var preferred = GetPreferredTextFormat(Request);
+            if (preferred == TextFormat.Markdown)
+            {
+                Response.Headers["X-Content-Variant"] = "md";
+                Response.Headers["Cache-Control"] = "public, max-age=0, s-maxage=60";
+                var md = BuildTagsMarkdown(tagListModel);
+                return Content(md, "text/markdown; charset=utf-8");
+            }
+            if (preferred == TextFormat.PlainText)
+            {
+                Response.Headers["X-Content-Variant"] = "txt";
+                Response.Headers["Cache-Control"] = "public, max-age=0, s-maxage=60";
+                var txt = BuildTagsPlain(tagListModel);
+                return Content(txt, "text/plain; charset=utf-8");
+            }
+
+            Response.Headers["X-Content-Variant"] = "html";
+            Response.Headers["Cache-Control"] = "public, max-age=0, s-maxage=60";
             return View("Tags", tagListModel);
         }
 
@@ -139,6 +161,84 @@ namespace Articulate.Controllers
             }
 
             return contentByTag is not { Posts: not null } ? NotFound() : GetPagedListView(masterModel, CurrentPage, contentByTag.Posts, contentByTag.PostCount, p);
+        }
+
+        private enum TextFormat
+        {
+            None,
+            Markdown,
+            PlainText
+        }
+
+        private static TextFormat GetPreferredTextFormat(HttpRequest request)
+        {
+            var accepts = request.GetTypedHeaders().Accept;
+            if (accepts is null || accepts.Count == 0)
+            {
+                return TextFormat.None;
+            }
+
+            static bool IsMarkdown(MediaTypeHeaderValue mt)
+            {
+                var type = mt.Type.Value;
+                var sub = mt.SubType.Value;
+                if (type is null || sub is null) return false;
+                return type.Equals("text", StringComparison.OrdinalIgnoreCase)
+                    && (sub.Equals("markdown", StringComparison.OrdinalIgnoreCase)
+                        || sub.Equals("x-markdown", StringComparison.OrdinalIgnoreCase)
+                        || sub.EndsWith("+markdown", StringComparison.OrdinalIgnoreCase));
+            }
+
+            static bool IsPlain(MediaTypeHeaderValue mt)
+            {
+                var type = mt.Type.Value;
+                var sub = mt.SubType.Value;
+                if (type is null || sub is null) return false;
+                return type.Equals("text", StringComparison.OrdinalIgnoreCase)
+                       && (sub.Equals("plain", StringComparison.OrdinalIgnoreCase)
+                           || sub.Equals("*", StringComparison.Ordinal));
+            }
+
+            double qMarkdown = 0, qPlain = 0;
+            foreach (var mt in accepts)
+            {
+                var q = mt.Quality.HasValue ? (double)mt.Quality.Value : 1.0;
+                if (IsMarkdown(mt)) qMarkdown = Math.Max(qMarkdown, q);
+                if (IsPlain(mt)) qPlain = Math.Max(qPlain, q);
+            }
+
+            if (qMarkdown <= 0 && qPlain <= 0)
+            {
+                return TextFormat.None;
+            }
+
+            return qMarkdown >= qPlain ? TextFormat.Markdown : TextFormat.PlainText;
+        }
+
+        private static string BuildTagsMarkdown(TagListModel model)
+        {
+            var sb = new System.Text.StringBuilder();
+            sb.Append("# ").AppendLine(model.Name);
+            sb.AppendLine();
+            foreach (var tag in model.Tags)
+            {
+                sb.Append("- [").Append(tag.TagName).Append("](").Append(tag.TagUrl).Append(") — ")
+                    .Append(tag.PostCount).AppendLine(tag.PostCount == 1 ? " post" : " posts");
+            }
+            return sb.ToString();
+        }
+
+        private static string BuildTagsPlain(TagListModel model)
+        {
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine(model.Name);
+            foreach (var tag in model.Tags)
+            {
+                sb.Append("- ").Append(tag.TagName).Append(" — ")
+                    .Append(tag.PostCount).Append(tag.PostCount == 1 ? " post " : " posts ")
+                    .AppendLine(tag.TagUrl);
+            }
+            return sb.ToString();
         }
     }
 }

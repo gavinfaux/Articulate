@@ -65,7 +65,7 @@ namespace Articulate.Models
         {
         }
 
-        [Obsolete("No longer used or supported")]
+        [Obsolete("No longer used or supported", true)]
         public IImageUrlGenerator? ImageUrlGenerator => null;
 
         /// <summary>

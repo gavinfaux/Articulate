@@ -7,6 +7,7 @@ using Umbraco.Cms.Core.Web;
 
 namespace Articulate.Routing
 {
+    [Obsolete("'ContentFinderByUrl' is obsolete: 'Scheduled for removal in Umbraco 18'", false)]
     public class DateFormattedPostContentFinder(
         ILogger<DateFormattedPostContentFinder> logger,
         IUmbracoContextAccessor umbracoContextAccessor)

@@ -1,2 +1,7 @@
 @* Shared base JS. Keep minimal and stable. Themes may include this via FootAssets to layer scripts. *@
-<script src="~/App_Plugins/Articulate/Themes/Shared/assets/js/base.js" asp-append-version="true"></script>
+<environment include="Development">
+    <script src="~/App_Plugins/Articulate/Themes/Shared/src/js/base.js" asp-append-version="true"></script>
+</environment>
+<environment exclude="Development">
+    <script src="~/App_Plugins/Articulate/Themes/Shared/dist/js/shared.js" asp-append-version="true"></script>
+</environment>

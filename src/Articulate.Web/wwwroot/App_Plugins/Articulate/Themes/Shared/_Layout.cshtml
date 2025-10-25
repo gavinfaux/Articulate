@@ -30,6 +30,13 @@
     @Model.RssFeed()
     @Model.RenderOpenSearch()
 
+    @* Advertise alternate representations for agents (content negotiation) *@
+    @if (Model is Articulate.Models.PostModel postModel)
+    {
+        <link rel="alternate" type="text/markdown" href="@postModel.Url()" />
+        <link rel="alternate" type="text/plain" href="@postModel.Url()" />
+    }
+
     @* Theme-first assets: Head *@
     @await Html.PartialAsync("HeadAssets")
 

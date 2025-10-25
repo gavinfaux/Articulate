@@ -1,6 +1,6 @@
 # Articulate C# API Breaking Changes: v5 vs v6
 
-This document provides a detailed list of breaking changes to the public C# API between Articulate version 5.x and 6.0.0. It is intended for developers who are extending Articulate or have custom code that interacts with its C# services, controllers, or models.
+This document provides a detailed list of breaking changes to the public C# API between Articulate version 5.x and 6.0.0 (including prerelease builds). It is intended for developers who are extending Articulate or have custom code that interacts with its C# services, controllers, or models.
 
 ## 1. Package Structure
 
@@ -139,4 +139,10 @@ In v6, all back-office API controllers and related logic have been moved into a 
 | **Build Tools** | Node.js/pnpm Requirement | **New Requirement**. A Node.js-based build process (using Vite) is now required to build the back-office client-side assets. You must have Node.js and pnpm installed. |
 | **Build Commands** | `pnpm run build` | **New Requirement**. To produce the final client-side assets, you must run `pnpm install` followed by `pnpm run build` from the `src/Articulate/` directory. |
 | **Host Project Setup** | `<CopyStaticWebAssetsToPublish>` | **New Requirement**. Any web project that references the `Articulate` project (e.g., a test site) must include `<CopyStaticWebAssetsToPublish>true</CopyStaticWebAssetsToPublish>` in its `.csproj` file to ensure the back-office assets are correctly copied on build. |
+
+## 10. Front‑end Markdown Editor route disabled
+
+| Area | Change | Status & Notes |
+| --- | --- | --- |
+| Front‑end editor route | `/a-new` | **Disabled/Redirected**. In v6 the front‑end editor is removed. Requests to `/a-new` now 302‑redirect to the blog home. Creating new posts is handled by the backoffice Markdown editor (Articulate.Api.Management). |
 

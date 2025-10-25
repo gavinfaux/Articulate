@@ -1,6 +1,7 @@
 #nullable enable
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
+using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.Routing;
@@ -10,6 +11,7 @@ using Umbraco.Cms.Web.Website.ActionResults;
 
 namespace Articulate.Controllers
 {
+    [OutputCache(PolicyName = "Articulate60")]
     public class ArticulateAuthorController(
         ILogger<ArticulateAuthorController> logger,
         ICompositeViewEngine compositeViewEngine,

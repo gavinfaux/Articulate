@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk.Razor">
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFrameworks>net9.0;net10.0</TargetFrameworks>
     <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
     <StaticWebAssetBasePath>/</StaticWebAssetBasePath>
     <CompressionEnabled>false</CompressionEnabled>
@@ -39,9 +39,16 @@
     </PackageReference>
   </ItemGroup>
 
-  <!--Umbraco CMS version range + NuGet audit mode-->
-  <PropertyGroup>
-    <UmbracoCmsPackageVersion>[15.2.3, 16.999.999)</UmbracoCmsPackageVersion>
+  <!--Umbraco CMS version range per target + NuGet audit mode-->
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net9.0'">
+    <!-- Support Umbraco 15.x–16.x on .NET 9 -->
+    <UmbracoCmsPackageVersion>[15.4.4,17.0.0)</UmbracoCmsPackageVersion>
+    <NuGetAuditMode>direct</NuGetAuditMode>
+    <EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0'">
+    <!-- Support Umbraco 17.x (including pre-release) on .NET 10 -->
+    <UmbracoCmsPackageVersion>[17.0.0-beta,18.0.0)</UmbracoCmsPackageVersion>
     <NuGetAuditMode>direct</NuGetAuditMode>
     <EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
   </PropertyGroup>
@@ -64,9 +71,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Remove="bundleconfig.json" />
     <Folder Include="wwwroot\" />
-    <None Include="bundleconfig.json" />
   </ItemGroup>
 
   <ItemGroup>

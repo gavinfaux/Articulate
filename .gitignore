@@ -491,6 +491,10 @@ $RECYCLE.BIN/
 # extension build, built by npm/msbuild 
 /src/Articulate.Api.Management/wwwroot/App_Plugins/Articulate
 
+# theme build artifacts
+/src/Articulate.Web/wwwroot/App_Plugins/Articulate/Themes/**/dist/
+/src/Articulate.Web/wwwroot/App_Plugins/Articulate/MarkdownEditor/dist/
+
 # test website junk
 /src/Articulate.Tests.Website/Articulate/Temp
 /src/Articulate.Tests.Website/umbraco/**

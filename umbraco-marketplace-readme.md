@@ -26,8 +26,13 @@ Supporting all the features you'd want in a blogging platform
 
 ## Minimum requirements
 
-* Articulate version 5+ is only compatible with Umbraco 10.1.0+
-* Articulate version 6+ is only compatible with Umbraco 15.2.3+ (15.4.2 recommended) and 16+
+* **Umbraco 13 LTS (maintenance)** – Articulate 5.x (security support until Dec 2025, EOL Dec 2026)
+* **Umbraco 15.4.4+ / 16 / 17 (current)** – Articulate 6.x on .NET 9/10 Razor Class Libraries
+
+## Installation notes
+
+* **Umbraco 13 LTS:** install Articulate 5.x from the marketplace, run pending migrations, and save the `Articulate Image Picker` data type once to restore demo media (issue [#460](https://github.com/Shazwazza/Articulate/issues/460)).
+* **Umbraco 15.4.4+ / 16 / 17:** install Articulate 6.x. Builds target `net9.0`/`net10.0`; follow the solution README for source builds and the `Articulate.Tests.Website` development site.
 
 ## [Documentation](https://github.com/Shazwazza/Articulate/wiki)
 

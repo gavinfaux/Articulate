@@ -1,6 +1,7 @@
 #nullable enable
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
+using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Models.PublishedContent;
@@ -13,6 +14,7 @@ namespace Articulate.Controllers
     /// <summary>
     /// Renders the Articulate Archive node as a blog post list by date
     /// </summary>
+    [OutputCache(PolicyName = "Articulate60")]
     public class ArticulateArchiveController(
         ILogger<ArticulateArchiveController> logger,
         ICompositeViewEngine compositeViewEngine,

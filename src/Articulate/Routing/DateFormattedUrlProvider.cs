@@ -5,23 +5,41 @@ using Umbraco.Cms.Core.Configuration.Models;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.Routing;
 using Umbraco.Cms.Core.Services;
+using Umbraco.Cms.Core.Services.Navigation;
 using Umbraco.Cms.Core.Web;
 
 namespace Articulate.Routing
 {
+    [Obsolete("'DefaultUrlProvider' is obsolete: 'Use NewDefaultUrlProvider instead. Scheduled for removal in V18.'", false)]
     public class DateFormattedUrlProvider : DefaultUrlProvider
     {
+#if NET10_0_OR_GREATER
         [Obsolete("Please use ILanguageService and IDictionaryItemService for localization. Will be removed in V15.", false)]
         public DateFormattedUrlProvider(
-            IOptionsMonitor<RequestHandlerSettings> requestSettings,
-            ILogger<DateFormattedUrlProvider> logger,
-            ISiteDomainMapper siteDomainMapper,
-            IUmbracoContextAccessor umbracoContextAccessor,
-            UriUtility uriUtility,
-            ILocalizationService localizationService)
-            : base(requestSettings, logger, siteDomainMapper, umbracoContextAccessor, uriUtility, localizationService)
+    IOptionsMonitor<RequestHandlerSettings> requestSettings,
+    ILogger<DateFormattedUrlProvider> logger,
+    ISiteDomainMapper siteDomainMapper,
+    IUmbracoContextAccessor umbracoContextAccessor,
+    UriUtility uriUtility,
+    ILocalizationService localizationService,
+    IDocumentNavigationQueryService navigationQueryService,
+    IPublishedContentStatusFilteringService publishedContentStatusFilteringService)
+    : base(requestSettings, logger, siteDomainMapper, umbracoContextAccessor, uriUtility, localizationService, navigationQueryService, publishedContentStatusFilteringService)
         {
         }
+#else
+        [Obsolete("Please use ILanguageService and IDictionaryItemService for localization. Will be removed in V15.", false)]
+        public DateFormattedUrlProvider(
+    IOptionsMonitor<RequestHandlerSettings> requestSettings,
+    ILogger<DateFormattedUrlProvider> logger,
+    ISiteDomainMapper siteDomainMapper,
+    IUmbracoContextAccessor umbracoContextAccessor,
+    UriUtility uriUtility,
+    ILocalizationService localizationService)
+    : base(requestSettings, logger, siteDomainMapper, umbracoContextAccessor, uriUtility, localizationService)
+        {
+        }
+#endif
 
         public override UrlInfo? GetUrl(IPublishedContent content, UrlMode mode, string? culture, Uri current)
         {
@@ -58,11 +76,19 @@ namespace Articulate.Routing
             {
                 return null;
             }
+#if NET10_0_OR_GREATER
+            UrlInfo? parentPath = base.GetUrl(parent, mode, culture, current);
+            var parentUrl = parentPath?.Url?.ToString()?.EnsureEndsWith("/") ?? string.Empty;
+            var newUrl = parentUrl + urlFolder + "/" + content.UrlSegment?.EnsureEndsWith("/");
+            return UrlInfo.AsUrl(newUrl, "Articulate.Routing.DateFormattedUrlProvider", culture);
 
+#else
             UrlInfo? parentPath = base.GetUrl(parent, mode, culture, current);
             var newUrl = parentPath?.Text.EnsureEndsWith("/") + urlFolder + "/" + content.UrlSegment?.EnsureEndsWith("/");
-
             return UrlInfo.Url(newUrl, culture);
+
+#endif
+
         }
     }
 }

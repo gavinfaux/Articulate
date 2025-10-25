@@ -37,7 +37,13 @@
     @Model.RenderOpenSearch()
 
     <link href="https://code.getmdl.io/1.3.0/material.pink-blue.min.css" rel="stylesheet" fetchpriority="high">
-    <link href="~/App_Plugins/Articulate/Themes/Material/assets/css/bundle.min.css" rel="stylesheet" fetchpriority="high" asp-append-version="true">
+    <environment include="Development">
+        <link href="~/App_Plugins/Articulate/Themes/Material/src/css/styles.css" rel="stylesheet" fetchpriority="high" asp-append-version="true">
+        <link href="~/App_Plugins/Articulate/Themes/Material/src/css/styles_custom.css" rel="stylesheet" asp-append-version="true">
+    </environment>
+    <environment exclude="Development">
+        <link href="~/App_Plugins/Articulate/Themes/Material/dist/css/material.css" rel="stylesheet" fetchpriority="high" asp-append-version="true">
+    </environment>
 
 
     <link href="https://fonts.googleapis.com/css?family=Roboto:regular,bold,italic,thin,light,bolditalic,black,medium&lang=en&display=swap" rel="stylesheet">

@@ -9,9 +9,9 @@ Aurora is the modern default theme for Articulate. It builds on the Shared base 
 - Asset partials:
   - `Partials/HeadAssets.cshtml` (CSS, fonts, meta)
   - `Partials/FootAssets.cshtml` (JS)
-- Assets:
-  - `assets/css/` — `reset.css`, `tokens.css`, `base.css`, `components.css`, `utilities.css`
-  - `assets/js/` — add your bundles as needed
+- Source assets:
+  - `src/css/` — `reset.css`, `tokens.css`, `base.css`, `components.css`, `utilities.css`
+  - `src/js/` — add your bundles as needed
 
 ## Asset strategy: extend vs replace
 
@@ -27,17 +27,17 @@ Layouts call `HeadAssets` and `FootAssets`. Resolution is theme-first, then Shar
 ```cshtml
 @* Partials/HeadAssets.cshtml *@
 @await Html.PartialAsync("BaseHeadAssets")
-<link href="~/App_Plugins/Articulate/Themes/Aurora/assets/css/reset.css" rel="stylesheet" asp-append-version="true" />
-<link href="~/App_Plugins/Articulate/Themes/Aurora/assets/css/tokens.css" rel="stylesheet" asp-append-version="true" />
-<link href="~/App_Plugins/Articulate/Themes/Aurora/assets/css/base.css" rel="stylesheet" asp-append-version="true" />
-<link href="~/App_Plugins/Articulate/Themes/Aurora/assets/css/components.css" rel="stylesheet" asp-append-version="true" />
-<link href="~/App_Plugins/Articulate/Themes/Aurora/assets/css/utilities.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/App_Plugins/Articulate/Themes/Aurora/src/css/reset.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/App_Plugins/Articulate/Themes/Aurora/src/css/tokens.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/App_Plugins/Articulate/Themes/Aurora/src/css/base.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/App_Plugins/Articulate/Themes/Aurora/src/css/components.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/App_Plugins/Articulate/Themes/Aurora/src/css/utilities.css" rel="stylesheet" asp-append-version="true" />
 ```
 
 ```cshtml
 @* Partials/FootAssets.cshtml *@
 @await Html.PartialAsync("BaseFootAssets")
-@* <script src="~/App_Plugins/Articulate/Themes/Aurora/assets/js/app.js" asp-append-version="true"></script> *@
+@* <script src="~/App_Plugins/Articulate/Themes/Aurora/src/js/app.js" asp-append-version="true"></script> *@
 ```
 
 - Replace Shared (full override): omit `BaseHeadAssets`/`BaseFootAssets` includes and provide only Aurora assets.
@@ -57,7 +57,7 @@ Keep Shared views generic; place Aurora-specific chrome in `_Layout.cshtml`.
 ## Referencing assets
 
 - Always use virtual paths with `~` and `asp-append-version="true"` for cache busting, e.g.:
-  - `~/App_Plugins/Articulate/Themes/Aurora/assets/css/base.css`
+  - `~/App_Plugins/Articulate/Themes/Aurora/src/css/base.css`
 - Keep forward slashes for virtual paths (avoid `Path.Combine`).
 
 ## Conventions

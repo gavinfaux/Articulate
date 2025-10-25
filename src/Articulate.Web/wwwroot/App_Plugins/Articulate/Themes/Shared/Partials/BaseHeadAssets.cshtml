@@ -1,4 +1,9 @@
 @* Shared base CSS. Themes may include this via their own HeadAssets to layer on top, or omit it to fully replace. *@
-<link href="~/App_Plugins/Articulate/Themes/Shared/assets/css/pico.min.css" rel="stylesheet" asp-append-version="true" />
-<link href="~/App_Plugins/Articulate/Themes/Shared/assets/css/articulate-base.css" rel="stylesheet" asp-append-version="true" />
-<link href="~/App_Plugins/Articulate/Themes/Shared/assets/css/base.css" rel="stylesheet" asp-append-version="true" />
+<environment include="Development">
+    <link href="~/App_Plugins/Articulate/Themes/Shared/src/css/pico.min.css" rel="stylesheet" asp-append-version="true" />
+    <link href="~/App_Plugins/Articulate/Themes/Shared/src/css/articulate-base.css" rel="stylesheet" asp-append-version="true" />
+    <link href="~/App_Plugins/Articulate/Themes/Shared/src/css/base.css" rel="stylesheet" asp-append-version="true" />
+</environment>
+<environment exclude="Development">
+    <link href="~/App_Plugins/Articulate/Themes/Shared/dist/css/shared-base.css" rel="stylesheet" asp-append-version="true" />
+</environment>
