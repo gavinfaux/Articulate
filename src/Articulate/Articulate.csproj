@@ -90,6 +90,7 @@
   <ItemGroup>
     <PackageReference Include="Markdig" Version="0.31.0" />
     <PackageReference Include="Argotic.Core" Version="3000.0.3" />
+    <PackageReference Include="Smidge" Version="4.6.0" />
     <PackageReference Include="Umbraco.Cms.Web.BackOffice" Version="13.8.1" />
     <PackageReference Include="Umbraco.Cms.Web.Website" Version="13.8.1" />
     <PackageReference Include="System.ServiceModel.Syndication" Version="6.0.0" />
