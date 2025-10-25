@@ -73,11 +73,12 @@ Now you're all set! Any source changes you wish to make just do that in Visual S
 For a fast local loop when editing Razor, HTML, CSS, and JS:
 
 - Backend + Razor hot reload (same origin):
-  - `dotnet watch run --project src/Articulate.Tests.Website`
+  - `dotnet run watch --project src/Articulate.Tests.Website`
   - In Development, the test website is configured to:
     - Use Razor runtime compilation for .cshtml
     - Auto-reload the browser for static assets and views
-
+    - use `dotnet run watch --project src/Articulate.Tests.Website --no-hot-reload` if using back office to prevent automatic browser refesh
+    
 - Backoffice client HMR (Vite):
   - From `src/Articulate.Api.Management/Client`
     - `pnpm install`

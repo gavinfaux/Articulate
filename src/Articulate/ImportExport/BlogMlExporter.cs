@@ -281,13 +281,8 @@ namespace Articulate.ImportExport
             return ext switch
             {
                 "jpg" => "image/jpeg",
-                "svg" => "image/svg+xml",
                 "png" => "image/png",
                 "gif" => "image/gif",
-                "webp" => "image/webp",
-                "avif" => "image/avif",
-                "bmp" => "image/bmp",
-                "tiff" => "image/tiff",
                 _ when !string.IsNullOrWhiteSpace(ext) => $"image/{ext}",
                 _ => string.Empty
             };
