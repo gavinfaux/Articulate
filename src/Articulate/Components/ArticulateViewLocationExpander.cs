@@ -64,7 +64,10 @@ namespace Articulate.Components
 
             // Values may be null in unit testing scenarios when constructed directly.
             IDictionary<string, string?>? values = context.Values;
-            values?[ThemeKey] = themeName;
+            if (values is not null)
+            {
+                values[ThemeKey] = themeName;
+            }
 
             if (string.IsNullOrWhiteSpace(themeName))
             {

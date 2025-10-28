@@ -103,7 +103,10 @@ Located in `src/Articulate.Api.Management/Client`, `package.json` is the heart o
   - `generate:api`: Runs a custom script to generate the TypeScript API client.
   - `lint`: Lints the codebase to ensure code quality.
 
-The .NET project automatically runs `pnpm run ci:install` the first time you build if `node_modules/.modules.yaml` is missing. Set `/p:SkipClientInstall=true` when you want to suppress that bootstrap step (e.g., in bespoke CI jobs).
+Before running `.NET` builds make sure client dependencies are installed manually:
+
+- From `src/Articulate.Api.Management/Client`, run `pnpm install` to hydrate `node_modules/`.
+- Re-run `pnpm install` whenever you clean out the workspace or update dependencies.
 
 ### Custom Build Scripts (`src/Articulate.Api.Management/Client/scripts`)
 
@@ -122,6 +125,29 @@ This file, located in `src/Articulate.Api.Management/Client/public`, is the mode
 3. **Building for Production**: Execute `pnpm run build` (locally or as part of the release pipeline). The command compiles TypeScript, bundles with Vite, and invokes `post-build.js`.
 4. **Integration with Umbraco**: `post-build.js` moves the bundles into `src/Articulate.Api.Management/wwwroot/App_Plugins/Articulate/BackOffice` alongside the `umbraco-package.json` manifest so the Razor Class Library can expose them as static web assets.
 5. **Full Release Build**: Use `pwsh build/build.ps1` to reproduce the CI flow—restore, clean, build, and pack the solution in Release mode. GitHub Actions (`.github/workflows/build.yml`) runs the same sequence on Windows with Node/pnpm setup to produce signed artefacts.
+
+#### Troubleshooting client builds
+
+If `pnpm run build` fails during `dotnet build`, make sure the client dependencies are installed locally:
+
+1. From `src/Articulate.Api.Management/Client`, run `pnpm install` (ensure pnpm 10.17+ is available via corepack or manual install).
+2. Retry `pnpm run build` (or `pnpm run build:release`); Vite should complete without errors.
+3. If build output looks stale, remove `node_modules/` and rerun `pnpm install`.
+4. When in doubt, clear `node_modules/`, `pnpm-lock.yaml`, and rerun `pnpm install`.
+
+```powershell
+# From src/Articulate.Api.Management/Client
+pnpm dlx rimraf node_modules pnpm-lock.yaml
+pnpm install
+```
+
+If you prefer plain PowerShell commands without `pnpm dlx`, run:
+
+```powershell
+Remove-Item -Recurse -Force .\node_modules
+Remove-Item -Force .\pnpm-lock.yaml
+pnpm install
+```
 
 ## 8. Anatomy of a Backoffice Component
 
@@ -250,7 +276,7 @@ This section covers the low-level details of the project setup, build process, a
 
 The main `Articulate.csproj` file contains important logic for packaging themes and exposing static assets.
 
-- **Client Assets**: The project consumes the bundles produced by `pnpm run build` in `src/Articulate.Api.Management/Client`. Make sure those assets exist under `src/Articulate.Api.Management/wwwroot/App_Plugins/Articulate/BackOffice` before invoking `dotnet pack`; `build/build.ps1` and the CI workflow handle this sequencing.
+- **Client Assets**: The project consumes the bundles produced by `pnpm run build` in `src/Articulate.Api.Management/Client`. Make sure those assets exist under `src/Articulate.Api.Management/wwwroot/App_Plugins/Articulate/BackOffice` before invoking `dotnet pack`; `build/build.ps1` and the CI workflow handle this sequencing by building the projects serially per TFM (`Articulate` → `Articulate.Api.Management` → `Articulate.Web`) and suppressing redundant dependency builds so the management client assets land before the Razor sites compile.
 - **Theme Embedding**: Built-in themes live in `src/Articulate.Web/wwwroot/App_Plugins/Articulate/Themes`. The project embeds them as resources so they ship as static web assets and can be copied into `~/Views/ArticulateThemes` via `ArticulateThemeRepository`.
 
 ### The Test Website (`Articulate.Tests.Website`)

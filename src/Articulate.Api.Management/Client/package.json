@@ -8,7 +8,7 @@
     "node": ">=22",
     "pnpm": ">=10.17.0"
   },
-  "packageManager": "pnpm@10.17.0",
+  "packageManager": "pnpm@10.19.0+sha512.c9fc7236e92adf5c8af42fd5bf1612df99c2ceb62f27047032f4720b33f8eacdde311865e91c411f2774f618d82f320808ecb51718bfa82c060c4ba7c76a32b8",
   "keywords": [
     "blog",
     "umbraco",
@@ -29,7 +29,7 @@
     "lint": "eslint src",
     "check": "tsc --noEmit",
     "generate:api": "cross-env NODE_TLS_REJECT_UNAUTHORIZED=0 node ./scripts/generate-api.js https://localhost:44366/umbraco/swagger/articulate/swagger.json ./src/api --excludeTags 'Markdown Editor'",
-    "ci:install": "corepack enable && corepack prepare pnpm@latest --activate && pnpm install"
+    "clean": "npx rimraf node_modules pnpm-lock.yaml"
   },
   "dependenciesComments": {
     "monaco-editor": "Articulate Markdown Editor property editor (not the mobile markdown editor), only required until Umbraco Core editor supports better markdown to HTML processing; see https://github.com/umbraco/Umbraco-CMS/issues/19500"

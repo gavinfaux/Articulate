@@ -81,7 +81,7 @@ See here for the list of releases and their release notes
 ## [Community Discussions](https://forum.umbraco.com/)
 
 - Please use the Umbraco forums to ask questions and discuss Articulate, it's features and functionality.
-- Do not post issues here, post them [here](https://github.com/Shazwazza/Articulate/issues) on GitHub
+- Do not post issues here, post them to [Articulate/issues](https://github.com/Shazwazza/Articulate/issues) on GitHub
 
 ## Contributing
 
@@ -118,14 +118,11 @@ See docs/development-dx.md for details and tips.
 
 ### Tooling prerequisites (Node/pnpm)
 
-- The backoffice client (Lit + TypeScript) uses pnpm. Local development requires Node 22+ and pnpm 10.17+.
-- A root `.nvmrc` pins Node 22; run `nvm use` (or your preferred version manager such as `fnm` or `volta`) in the repo root to match CI. On Windows, `nvm-windows` works well.
-- You can enable pnpm via corepack (recommended):
-  - `npm corepack enable`
-  - `npm corepack prepare pnpm@latest --activate`
+- The backoffice client (Lit + TypeScript) uses pnpm. Install Node 22+ and pnpm 10.17+ before building.
+- A root `.nvmrc` pins Node 22; use `nvm`/`fnm`/`volta` (or `nvm-windows`) to align with CI locally.
+- Corepack users should run `corepack enable` / `corepack prepare pnpm@<version>` manually prior to invoking the build. The repository no longer bootstraps pnpm automatically.
 - CI installs pnpm using `pnpm/action-setup`; no extra steps required there.
-- The `Articulate.Api.Management` project invokes pnpm restore/build from MSBuild during .NET builds; see docs.
-- The client project ships `src/Articulate.Api.Management/Client/.npmrc` to align pnpm behaviour (peer resolution, hoisting) with CI; keep it in place when reinstalling dependencies.
+- The `Articulate.Api.Management` project invokes pnpm restore/build from MSBuild during .NET builds; ensure pnpm is available on your PATH.
 
 ### Visual Studio setup
 
@@ -141,7 +138,7 @@ See docs/development-dx.md for details and tips.
 
 - Projects target both `net9.0` and `net10.0`. Run `pwsh build/build.ps1` (or `dotnet build`/`dotnet pack`) in Release mode to compile and create NuGet packages.
 - `global.json` keeps 9.0.100 as the baseline but allows roll-forward to newer (preview) SDKs, so `dotnet` or Visual Studio can load the .NET 10 tooling when installed.
-- GitHub Actions mirrors this flow with `dotnet restore`, `dotnet build`, and `dotnet pack` against the solution.
+- GitHub Actions mirrors this flow by invoking `build/build.ps1`, ensuring the same serialized Core → API → Web build order with `--no-dependencies`.
 - If a future preview regresses static web-asset packing, fall back to manual `Content`/`ContentWithTargetPath`/`EmbeddedResource` packing; see docs/development-dx.md.
 
 ### Repository Guides

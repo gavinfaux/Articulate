@@ -93,9 +93,11 @@
     <EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
   </PropertyGroup>
 
-  <Target Name="RestoreClient" Inputs="Client\package.json;Client\pnpm-lock.yaml" Outputs="Client\node_modules\.modules.yaml">
+  <Target Name="RestoreClient" Inputs="Client\package.json;Client\pnpm-lock.yaml" Outputs="$(_ClientRestoreStamp)">
     <Message Text="[Articulate] Restoring pnpm packages with command: $(_PnpmRestoreCommand)..." Importance="high" />
     <Exec Command="$(_PnpmRestoreCommand)" WorkingDirectory="Client" />
+    <MakeDir Directories="$(IntermediateOutputPath)" Condition="!Exists('$(IntermediateOutputPath)')" />
+    <WriteLinesToFile File="$(_ClientRestoreStamp)" Lines="$(MSBuildProjectFile) client dependencies restored on $(MSBuildThisFileDirectory)" Overwrite="true" />
   </Target>
 
   <!--This does not always detect changes in development, clean and rebuild or build client yourself.-->
@@ -137,30 +139,4 @@
     <Content Include="build\Articulate.Api.Management.targets" Pack="true" PackagePath="build\" />
   </ItemGroup>
 
-  <PropertyGroup>
-    <!-- If not explicitly provided, default to false for local dev -->
-    <SkipClientInstall Condition="'$(SkipClientInstall)'==''">false</SkipClientInstall>
-    <!-- If running in GitHub Actions, default to true so CI workflows that handle node tooling can skip this target -->
-    <SkipClientInstall Condition="'$(GITHUB_ACTIONS)'=='true'">true</SkipClientInstall>
-
-    <!-- relative client folder -->
-    <ClientFolder>$(ProjectDir)Client</ClientFolder>
-  </PropertyGroup>
-
-  <Target Name="InstallClientDependencies" BeforeTargets="Build"
-          Condition="Exists('$(ClientFolder)/package.json') and '$(SkipClientInstall)' != 'true' and !Exists('$(ClientFolder)/node_modules/.modules.yaml')">
-    <Message Text="Client dependencies not found. Bootstrapping via pnpm in $(ClientFolder)..." Importance="High" />
-
-    <!-- Windows -->
-    <Exec Condition="'$(OS)' == 'Windows_NT'"
-          Command="cmd /c &quot;where pnpm &gt;nul 2&gt;&amp;1 || (corepack enable &amp;&amp; corepack prepare pnpm@latest --activate) &amp;&amp; pushd &quot;$(ClientFolder)&quot; &amp;&amp; pnpm run ci:install &amp;&amp; popd&quot;" />
-
-    <!-- POSIX (macOS/Linux) -->
-    <Exec Condition="'$(OS)' != 'Windows_NT'"
-          Command="/bin/sh -c 'command -v pnpm >/dev/null 2>&amp;1 || (corepack enable &amp;&amp; corepack prepare pnpm@latest --activate); cd &quot;$(ClientFolder)&quot; &amp;&amp; pnpm run ci:install'" />
-
-  </Target>
 </Project>
-
-
-

@@ -1,7 +1,9 @@
 #nullable enable
+using System.IO;
 using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Xml;
 using System.Xml.Linq;
 using Argotic.Syndication.Specialized;
 using Microsoft.AspNetCore.Html;
@@ -22,6 +24,8 @@ namespace Articulate.ImportExport
 {
     public class BlogMlImporter
     {
+        private const long MaxXmlCharacters = 10_000_000;
+
         private readonly DisqusXmlExporter _disqusXmlExporter;
         private readonly IContentTypeBaseServiceProvider _contentTypeBaseServiceProvider;
         private readonly IContentService _contentService;
@@ -84,11 +88,7 @@ namespace Articulate.ImportExport
             });
         }
 
-        internal int GetPostCount(string fileName)
-        {
-            BlogMLDocument doc = GetDocument(fileName);
-            return doc.Posts.Count();
-        }
+        internal int GetPostCount(string fileName) => GetDocument(fileName).Posts.Count();
 
         /// <summary>
         /// Imports the blogml file to articulate
@@ -130,41 +130,36 @@ namespace Articulate.ImportExport
 
             try
             {
-                await using (Stream stream = _articulateTempFileSystem.OpenFile(fileName))
+                BlogMLDocument document = GetDocument(fileName);
+                XDocument xdoc = LoadBlogMlXDocument(fileName);
+
+                Dictionary<string, string> authorIdsToName = ImportAuthors(userId, root, document.Authors);
+                returnModel.AuthorCount = authorIdsToName.Count;
+
+                IEnumerable<IContent> imported = await ImportPostsAsync(
+                    userId,
+                    xdoc,
+                    root,
+                    document.Posts,
+                    document.Authors.ToArray(),
+                    document.Categories.ToArray(),
+                    authorIdsToName,
+                    overwrite,
+                    regexMatch,
+                    regexReplace,
+                    publishAll,
+                    importFirstImage).ConfigureAwait(false);
+                IContent[] enumerable = imported as IContent[] ?? imported.ToArray();
+                returnModel.PostCount = enumerable.Length;
+
+                if (exportDisqusXml)
                 {
-                    var document = new BlogMLDocument();
-                    document.Load(stream);
-
-                    stream.Position = 0;
-                    var xdoc = XDocument.Load(stream);
-
-                    Dictionary<string, string> authorIdsToName = ImportAuthors(userId, root, document.Authors);
-                    returnModel.AuthorCount = authorIdsToName.Count;
-                    IEnumerable<IContent> imported = await ImportPostsAsync(
-                        userId,
-                        xdoc,
-                        root,
-                        document.Posts,
-                        document.Authors.ToArray(),
-                        document.Categories.ToArray(),
-                        authorIdsToName,
-                        overwrite,
-                        regexMatch,
-                        regexReplace,
-                        publishAll,
-                        importFirstImage).ConfigureAwait(false);
-                    IContent[] enumerable = imported as IContent[] ?? imported.ToArray();
-                    returnModel.PostCount = enumerable.Length;
-
-                    if (exportDisqusXml)
-                    {
-                        XDocument xDoc = _disqusXmlExporter.Export(enumerable, document);
-                        const string nsWp = "http://wordpress.org/export/1.0/";
-                        returnModel.CommentCount = xDoc.Descendants(XName.Get("comment", nsWp)).Count();
-                        using var memStream = new MemoryStream();
-                        xDoc.Save(memStream);
-                        _articulateTempFileSystem.AddFile("DisqusXmlExport.xml", memStream, true);
-                    }
+                    XDocument xDoc = _disqusXmlExporter.Export(enumerable, document);
+                    const string nsWp = "http://wordpress.org/export/1.0/";
+                    returnModel.CommentCount = xDoc.Descendants(XName.Get("comment", nsWp)).Count();
+                    using var memStream = new MemoryStream();
+                    xDoc.Save(memStream);
+                    _articulateTempFileSystem.AddFile("DisqusXmlExport.xml", memStream, true);
                 }
 
                 // commit
@@ -188,9 +183,44 @@ namespace Articulate.ImportExport
             }
 
             using Stream stream = _articulateTempFileSystem.OpenFile(fileName);
-            var document = new BlogMLDocument();
-            document.Load(stream);
-            return document;
+            try
+            {
+                using XmlReader reader = CreateSecureXmlReader(stream);
+                var document = new BlogMLDocument();
+                document.Load(reader);
+                return document;
+            }
+            catch (XmlException ex)
+            {
+                throw new InvalidDataException("The BlogML file contains invalid XML.", ex);
+            }
+        }
+
+        private XDocument LoadBlogMlXDocument(string fileName)
+        {
+            using Stream stream = _articulateTempFileSystem.OpenFile(fileName);
+            try
+            {
+                using XmlReader reader = CreateSecureXmlReader(stream);
+                return XDocument.Load(reader, LoadOptions.None);
+            }
+            catch (XmlException ex)
+            {
+                throw new InvalidDataException("The BlogML file contains invalid XML.", ex);
+            }
+        }
+
+        private static XmlReader CreateSecureXmlReader(Stream stream)
+        {
+            var settings = new XmlReaderSettings
+            {
+                DtdProcessing = DtdProcessing.Prohibit,
+                XmlResolver = null,
+                MaxCharactersInDocument = MaxXmlCharacters,
+                MaxCharactersFromEntities = 1024
+            };
+
+            return XmlReader.Create(stream, settings);
         }
 
         // TODO: Review

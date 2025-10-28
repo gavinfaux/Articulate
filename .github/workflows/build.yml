@@ -66,6 +66,15 @@ jobs:
         cache: 'pnpm'
         cache-dependency-path: 'src/Articulate.Api.Management/Client/pnpm-lock.yaml'
 
+    - name: Cache client node_modules
+      uses: actions/cache@v4
+      with:
+        path: |
+          src/Articulate.Api.Management/Client/node_modules
+        key: ${{ runner.os }}-pnpm-node_modules-${{ hashFiles('src/Articulate.Api.Management/Client/pnpm-lock.yaml') }}
+        restore-keys: |
+          ${{ runner.os }}-pnpm-node_modules-
+
     - name: Setup .NET SDKs
       uses: actions/setup-dotnet@v4
       with:
@@ -74,17 +83,9 @@ jobs:
           10.0.100-rc.2.25502.107
         include-prerelease: true
 
-    - name: Dotnet Restore
-      run: dotnet restore $env:Solution_File
-
-    - name: Dotnet Clean
-      run: dotnet clean $env:Solution_File --configuration ${{ env.Configuration }}
-
-    - name: Dotnet Build
-      run: dotnet build $env:Solution_File --configuration ${{ env.Configuration }} --no-restore
-
-    - name: Dotnet Pack
-      run: dotnet pack $env:Solution_File --configuration ${{ env.Configuration }} --no-build --output ${{ env.Release_Folder }}
+    - name: Run build pipeline script
+      shell: pwsh
+      run: ./build/build.ps1
 
     - uses: actions/upload-artifact@v4
       with:

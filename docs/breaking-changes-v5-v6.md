@@ -145,4 +145,3 @@ In v6, all back-office API controllers and related logic have been moved into a 
 | Area | Change | Status & Notes |
 | --- | --- | --- |
 | Front‑end editor route | `/a-new` | **Disabled/Redirected**. In v6 the front‑end editor is removed. Requests to `/a-new` now 302‑redirect to the blog home. Creating new posts is handled by the backoffice Markdown editor (Articulate.Api.Management). |
-

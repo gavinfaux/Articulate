@@ -45,14 +45,14 @@ These policies ensure distinct cache entries are produced per variant.
 
 Recommended approach: at the edge, derive a compact variant from `Accept` and include that header in the cache key.
 
-1) Normalize the request at the edge
+1. Normalize the request at the edge
 
 - Compute `X-Content-Variant` on the request:
   - If `Accept` contains `markdown`, `x-markdown`, or `+markdown` → `md`
   - Else if `Accept` contains `text/plain` → `txt`
   - Else → `html`
 
-2) Include the header in the CDN cache key
+1. Include the header in the CDN cache key
 
 - Add `X-Content-Variant` to the cache key so md/txt/html variants cache separately.
 - Forward `Accept` to origin (optional but recommended). The origin already sets the same header and varies by it.
@@ -67,7 +67,7 @@ Provider notes:
 
 Use two Transform Rules (markdown/plain) plus one fallback (html), then a Cache Rule to include the header.
 
-1) Transform Rules → HTTP Request Header Modification
+1. Transform Rules → HTTP Request Header Modification
 
 - Rule A: markdown
   - When incoming requests match… Expression
@@ -91,11 +91,12 @@ Use two Transform Rules (markdown/plain) plus one fallback (html), then a Cache 
     - Value: `html`
 
 Notes
+
 - Adjust the path prefix (`/blog`) to your Articulate mount path or use a broader condition (e.g., your hostname).
 - Put the rules in the order above so markdown/plain match before the fallback.
 - The `lower(... ) contains "markdown"` check also matches `x-markdown` and `+markdown` types.
 
-2) Cache Rules → Create rule
+1. Cache Rules → Create rule
 
 - When incoming requests match… Expression
   - `http.request.uri.path starts_with "/blog"`
@@ -107,6 +108,7 @@ Notes
   - Origin Cache Control → On
 
 Optional
+
 - Response Header Modification: you can add/inspect `Vary: X-Content-Variant` at the edge. The origin already sends it.
 
 #### Cloudflare examples: Subpath mount (e.g., /blog)

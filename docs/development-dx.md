@@ -1,12 +1,12 @@
-## Development DX: Hot Reload + HMR
+# Development DX: Hot Reload + HMR
 
 This repository supports a fast inner loop for Razor views, HTML, CSS, and JS when working on Articulate.
 
-### Prerequisites
+## Prerequisites
 
-- .NET 9 SDK
+- .NET 9 and 10rc SDK
 - Node 22+ and pnpm 10.17+
-- A checked-in `.nvmrc` pins Node 22; run `nvm use` (or another version manager) from the repo root so local tooling matches CI.
+- A checked-in `.nvmrc` pins Node 22; run `nvm use` (or another version manager e.g. fmn) from the repo root so local tooling matches CI.
 - Enable pnpm via corepack (recommended):
   - `npm corepack enable`
   - `npm corepack prepare pnpm@latest --activate`
@@ -77,9 +77,7 @@ corepack enable pnpm
 
 ```
 
-
 Run in parallel for the backoffice extension (Lit + TypeScript):
-
 
 ```
 cd src/Articulate.Api.Management/Client
@@ -101,7 +99,7 @@ Tips:
   - Build step runs `pnpm run build` (or `build:release` in CI/Release).
   - Non‑CI Debug builds continue on client build errors for faster iteration; CI/Release fails on client build errors.
   - Ensure Node/pnpm are available locally; CI installs pnpm automatically.
-- Run `pwsh build/build.ps1` (or `dotnet build`/`dotnet pack`) to reproduce the Release build locally; the script mirrors the CI pipeline using the SDK resolved from `global.json`.
+- Run `pwsh build/build.ps1` (or `dotnet build`/`dotnet pack`) to reproduce the Release build locally; the script mirrors the CI pipeline using the SDK resolved from `global.json`. The updated pipeline builds projects sequentially per target framework (`Articulate` → `Articulate.Api.Management` → `Articulate.Web`), passing `--no-dependencies` to downstream projects so the client assets compile before the Razor sites without triggering static web asset cache locks.
 
 ### Regenerating the client SDK (optional)
 
@@ -123,4 +121,3 @@ Until the .NET 10 SDK regains full static web asset packing for Razor Class Libr
 - Explicitly include pnpm output (`wwwroot/App_Plugins/**`) so backoffice bundles are copied even if the SDK omits them.
 
 Revert to the standard static web asset configuration once a stable .NET 10 SDK fixes the regression.
-
