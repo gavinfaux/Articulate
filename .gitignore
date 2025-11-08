@@ -494,6 +494,7 @@ $RECYCLE.BIN/
 # theme build artifacts
 /src/Articulate.Web/wwwroot/App_Plugins/Articulate/Themes/**/dist/
 /src/Articulate.Web/wwwroot/App_Plugins/Articulate/MarkdownEditor/dist/
+/src/Articulate.StaticAssets/wwwroot/App_Plugins/Articulate/
 
 # test website junk
 /src/Articulate.Tests.Website/Articulate/Temp
@@ -501,3 +502,10 @@ $RECYCLE.BIN/
 /src/Articulate.Tests.Website/wwwroot/media
 /src/Articulate.Tests.Website/Views/Articulate
 
+/src/.idea
+src/qodana.yaml
+src/Articulate.net9.slnf
+/src/u15
+/src/u16
+/src/u17
+/build/tmp

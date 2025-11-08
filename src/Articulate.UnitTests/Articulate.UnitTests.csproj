@@ -1,17 +1,10 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>net9.0;net10.0</TargetFrameworks>
     <IsPackable>false</IsPackable>
-    <EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
   </PropertyGroup>
 
-  <!-- Umbraco test package versions per TFM -->
-  <PropertyGroup Condition="'$(TargetFramework)' == 'net9.0'">
-    <UmbracoCmsTestsPackageVersion>[15.4.4,17.0.0)</UmbracoCmsTestsPackageVersion>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0'">
-    <UmbracoCmsTestsPackageVersion>[17.0.0-beta,18.0.0)</UmbracoCmsTestsPackageVersion>
-  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="FluentAssertions" Version="8.6.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.10.0" />

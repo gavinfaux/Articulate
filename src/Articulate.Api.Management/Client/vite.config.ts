@@ -1,8 +1,8 @@
 import { execSync } from "child_process";
+import { build as esbuildBuild, transform as esbuildTransform } from "esbuild";
 import fs, { promises as fsp } from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { build as esbuildBuild, transform as esbuildTransform } from "esbuild";
 import { defineConfig, Plugin } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 
@@ -15,9 +15,11 @@ type EsbuildMessage = import("esbuild").Message;
 const projectRoot = path.resolve(__dirname, "..");
 const repoRoot = path.resolve(projectRoot, "..", "..");
 const webProjectRoot = path.resolve(projectRoot, "..", "Articulate.Web");
-const outputPath = path.resolve(projectRoot, "wwwroot/App_Plugins/Articulate/BackOffice");
+const staticAssetsProjectRoot = path.resolve(projectRoot, "..", "Articulate.StaticAssets");
 
-const resolveWebAsset = (relativePath: string) => path.resolve(webProjectRoot, relativePath);
+const resolveStaticAsset = (relativePath: string) => path.resolve(staticAssetsProjectRoot, relativePath);
+const resolveWebSource = (relativePath: string) => path.resolve(webProjectRoot, relativePath);
+const outputPath = resolveStaticAsset("wwwroot/App_Plugins/Articulate/BackOffice");
 const relativeToRepo = (absolutePath: string) => path.relative(repoRoot, absolutePath);
 
 type BundleMode = "concat" | "bundle";
@@ -31,8 +33,10 @@ type BundleDefinition = {
   entry?: string;
 };
 
-const themesRoot = resolveWebAsset("wwwroot/App_Plugins/Articulate/Themes");
-const markdownEditorRoot = resolveWebAsset("wwwroot/App_Plugins/Articulate/MarkdownEditor");
+const themesSourceRoot = resolveWebSource("wwwroot/App_Plugins/Articulate/Themes");
+const themesOutputRoot = resolveStaticAsset("wwwroot/App_Plugins/Articulate/Themes");
+const markdownEditorSourceRoot = resolveWebSource("wwwroot/App_Plugins/Articulate/MarkdownEditor");
+const markdownEditorOutputRoot = resolveStaticAsset("wwwroot/App_Plugins/Articulate/MarkdownEditor");
 
 const isCssFile = (filePath: string) => path.extname(filePath).toLowerCase() === ".css";
 const isJsFile = (filePath: string) => path.extname(filePath).toLowerCase() === ".js";
@@ -66,42 +70,43 @@ const collectFiles = (dir: string, predicate: (file: string) => boolean): string
 };
 
 const getThemeBundles = (): BundleDefinition[] => {
-  if (!fs.existsSync(themesRoot)) {
+  if (!fs.existsSync(themesSourceRoot)) {
     return [];
   }
 
   const bundles: BundleDefinition[] = [];
   const themeDirs = fs
-    .readdirSync(themesRoot, { withFileTypes: true })
+    .readdirSync(themesSourceRoot, { withFileTypes: true })
     .filter((dirent) => dirent.isDirectory() && !dirent.name.startsWith("."));
 
   for (const dirent of themeDirs) {
-    const themePath = path.join(themesRoot, dirent.name);
+    const themeSourcePath = path.join(themesSourceRoot, dirent.name);
+    const themeOutputPath = path.join(themesOutputRoot, dirent.name);
     const themeKey = dirent.name.toLowerCase();
 
-    const cssFromSrc = collectFiles(path.join(themePath, "src"), isCssFile);
-    const cssFromAssets = collectFiles(path.join(themePath, "assets", "css"), isCssFile);
+    const cssFromSrc = collectFiles(path.join(themeSourcePath, "src"), isCssFile);
+    const cssFromAssets = collectFiles(path.join(themeSourcePath, "assets", "css"), isCssFile);
     const cssInputs = cssFromSrc.length > 0 ? cssFromSrc : cssFromAssets;
 
     if (cssInputs.length > 0) {
       bundles.push({
         name: `${dirent.name} CSS`,
         loader: "css",
-        output: path.join(themePath, "dist/css", `${themeKey}.css`),
+        output: path.join(themeOutputPath, "dist/css", `${themeKey}.css`),
         mode: "concat",
         inputs: cssInputs,
       });
     }
 
-    const jsFromSrc = collectFiles(path.join(themePath, "src"), isJsFile);
-    const jsFromAssets = collectFiles(path.join(themePath, "assets", "js"), isJsFile);
+    const jsFromSrc = collectFiles(path.join(themeSourcePath, "src"), isJsFile);
+    const jsFromAssets = collectFiles(path.join(themeSourcePath, "assets", "js"), isJsFile);
     const jsInputs = jsFromSrc.length > 0 ? jsFromSrc : jsFromAssets;
 
     if (jsInputs.length > 0) {
       bundles.push({
         name: `${dirent.name} JS`,
         loader: "js",
-        output: path.join(themePath, "dist/js", `${themeKey}.js`),
+        output: path.join(themeOutputPath, "dist/js", `${themeKey}.js`),
         mode: "concat",
         inputs: jsInputs,
       });
@@ -112,36 +117,36 @@ const getThemeBundles = (): BundleDefinition[] => {
 };
 
 const getMarkdownEditorBundles = (): BundleDefinition[] => {
-  if (!fs.existsSync(markdownEditorRoot)) {
+  if (!fs.existsSync(markdownEditorSourceRoot)) {
     return [];
   }
 
   const bundles: BundleDefinition[] = [];
-  const markdownCssFromSrc = collectFiles(path.join(markdownEditorRoot, "src"), isCssFile);
-  const markdownCssFromAssets = collectFiles(path.join(markdownEditorRoot, "assets", "css"), isCssFile);
+  const markdownCssFromSrc = collectFiles(path.join(markdownEditorSourceRoot, "src"), isCssFile);
+  const markdownCssFromAssets = collectFiles(path.join(markdownEditorSourceRoot, "assets", "css"), isCssFile);
   const cssInputs = markdownCssFromSrc.length > 0 ? markdownCssFromSrc : markdownCssFromAssets;
 
   if (cssInputs.length > 0) {
     bundles.push({
       name: "Markdown editor CSS",
       loader: "css",
-      output: path.join(markdownEditorRoot, "dist/css/md-editor.css"),
+      output: path.join(markdownEditorOutputRoot, "dist/css/md-editor.css"),
       mode: "concat",
       inputs: cssInputs,
     });
   }
 
-  const jsSourceDir = fs.existsSync(path.join(markdownEditorRoot, "src"))
-    ? path.join(markdownEditorRoot, "src")
-    : path.join(markdownEditorRoot, "assets", "js");
+  const jsSourceDir = fs.existsSync(path.join(markdownEditorSourceRoot, "src"))
+    ? path.join(markdownEditorSourceRoot, "src")
+    : path.join(markdownEditorSourceRoot, "assets", "js");
   const jsInputs = collectFiles(jsSourceDir, isJsFile);
 
   const entryCandidates = [
-    path.join(markdownEditorRoot, "src", "md-editor.ts"),
-    path.join(markdownEditorRoot, "src", "md-editor.js"),
-    path.join(markdownEditorRoot, "src", "js", "md-editor.ts"),
-    path.join(markdownEditorRoot, "src", "js", "md-editor.js"),
-    path.join(markdownEditorRoot, "assets", "js", "md-editor.js"),
+    path.join(markdownEditorSourceRoot, "src", "md-editor.ts"),
+    path.join(markdownEditorSourceRoot, "src", "md-editor.js"),
+    path.join(markdownEditorSourceRoot, "src", "js", "md-editor.ts"),
+    path.join(markdownEditorSourceRoot, "src", "js", "md-editor.js"),
+    path.join(markdownEditorSourceRoot, "assets", "js", "md-editor.js"),
   ];
   const entryPoint = entryCandidates.find((entry) => fs.existsSync(entry));
 
@@ -152,7 +157,7 @@ const getMarkdownEditorBundles = (): BundleDefinition[] => {
     bundles.push({
       name: "Markdown editor JS",
       loader: "js",
-      output: path.join(markdownEditorRoot, "dist/js/md-editor.js"),
+      output: path.join(markdownEditorOutputRoot, "dist/js/md-editor.js"),
       mode: "bundle",
       inputs: Array.from(watchFiles),
       entry: entryPoint,
@@ -276,8 +281,8 @@ const staticAssetsPlugin = (): Plugin => {
       normalizedChangedFile === undefined
         ? bundles
         : bundles.filter((bundle) =>
-            [...bundle.inputs, ...(bundle.entry ? [bundle.entry] : [])].includes(normalizedChangedFile ?? "")
-          );
+          [...bundle.inputs, ...(bundle.entry ? [bundle.entry] : [])].includes(normalizedChangedFile ?? "")
+        );
 
     if (targets.length === 0) {
       return;
@@ -439,7 +444,7 @@ const umbracoPackagePlugin = (): Plugin => {
         return;
       }
 
-       const newPath = path.resolve(outputPath, "..", umbracoPackageJson);
+      const newPath = path.resolve(outputPath, "..", umbracoPackageJson);
       fs.renameSync(packageJsonPath, newPath);
       console.log(`Moved ${packageJsonPath} to ${newPath}`);
     },
@@ -508,22 +513,22 @@ export default defineConfig(({ mode }) => ({
     sourcemap: true,
     ...(mode === "production"
       ? {
-          minify: "terser" as const,
-          terserOptions: {
-            compress: {
-              ecma: 2020,
-              passes: 2,
-              drop_console: true,
-              drop_debugger: true,
-            },
-            format: {
-              comments: false,
-            },
+        minify: "terser" as const,
+        terserOptions: {
+          compress: {
+            ecma: 2020,
+            passes: 2,
+            drop_console: true,
+            drop_debugger: true,
           },
-        }
+          format: {
+            comments: false,
+          },
+        },
+      }
       : {
-          minify: "esbuild" as const,
-        }),
+        minify: "esbuild" as const,
+      }),
     rollupOptions: {
       external: [/^@umbraco/],
     },

@@ -1,6 +1,6 @@
-#if DEBUG
-using Westwind.AspNetCore.LiveReload;
-#endif
+//#if DEBUG
+//using Westwind.AspNetCore.LiveReload;
+//#endif
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -29,14 +29,14 @@ if (builder.Environment.IsDevelopment())
             }
         });
 
-    // Live reload for static assets (css/js) and cshtml changes without proxying
-    builder.Services.AddLiveReload(opt =>
-    {
-        opt.ServerRefreshTimeout = 300;
-        // Monitor this website's content root; runtime compilation watches RCL view folders
-        opt.FolderToMonitor = builder.Environment.ContentRootPath;
-        opt.ClientFileExtensions = ".cshtml,.css,.js,.png,.jpg,.jpeg,.gif,.svg,.webp,.json";
-    });
+    //// Live reload for static assets (css/js) and cshtml changes without proxying
+    //builder.Services.AddLiveReload(opt =>
+    //{
+    //    opt.ServerRefreshTimeout = 300;
+    //    // Monitor this website's content root; runtime compilation watches RCL view folders
+    //    opt.FolderToMonitor = builder.Environment.ContentRootPath;
+    //    opt.ClientFileExtensions = ".cshtml,.css,.js,.png,.jpg,.jpeg,.gif,.svg,.webp,.json";
+    //});
 
 }
 #endif
@@ -66,10 +66,10 @@ if (app.Environment.IsProduction())
 
 if (app.Environment.IsDevelopment())
 {
-#if DEBUG
-    // Inject live reload websocket + script in development
-    app.UseLiveReload();
-#endif
+//#if DEBUG
+//    // Inject live reload websocket + script in development
+//    app.UseLiveReload();
+//#endif
     app.UseDeveloperExceptionPage();
 }
 

@@ -3,40 +3,118 @@ $PSScriptFilePath = Get-Item $MyInvocation.MyCommand.Path
 $RepoRoot = $PSScriptFilePath.Directory.Parent.FullName
 $BuildFolder = Join-Path -Path $RepoRoot -ChildPath "build"
 $ReleaseFolder = Join-Path -Path $BuildFolder -ChildPath "Release"
+$TmpFolder = Join-Path -Path $BuildFolder -ChildPath "tmp"
 $SolutionRoot = Join-Path -Path $RepoRoot -ChildPath "src"
 $SolutionPath = Join-Path -Path $SolutionRoot -ChildPath "Articulate.sln"
-$ProjectBuildOrder = @(
-    "Articulate/Articulate.csproj",
-    "Articulate.Api.Management/Articulate.Api.Management.csproj",
-    "Articulate.Web/Articulate.Web.csproj"
-)
 $TargetFrameworks = @("net9.0", "net10.0")
+$TestProjects = @("Articulate.UnitTests/Articulate.UnitTests.csproj")
+
+# Performance-friendly env
+$env:DOTNET_CLI_TELEMETRY_OPTOUT = "1"
+$env:DOTNET_SKIP_FIRST_TIME_EXPERIENCE = "1"
+$env:DOTNET_NOLOGO = "1"
+$env:NUGET_XMLDOC_MODE = "skip"
+$env:RestoreFallbackFolders = ""
+
+# Compute CPU parallelism for MSBuild
+$cpu = [Environment]::ProcessorCount
+if ($env:MAXCPU -and ($env:MAXCPU -as [int]) -gt 0) {
+    $cpu = [int]$env:MAXCPU
+}
+$msbuildArgs = @("-m", "-maxcpucount:$cpu", "-p:BuildInParallel=true", "-p:RestoreUseStaticGraphEvaluation=true")
+$dotnetCommon = @("-v", "minimal")
+
+Write-Host "Using up to $cpu parallel MSBuild nodes"
+
+# Friendly note if running on Windows against a WSL filesystem (\\wsl$ UNC)
+if ($RepoRoot.StartsWith("\\\\wsl$", [System.StringComparison]::OrdinalIgnoreCase) -or 
+    $RepoRoot.StartsWith("\\\\wsl.localhost\\", [System.StringComparison]::OrdinalIgnoreCase)) {
+    Write-Warning "Windows->WSL performance tip: Repo is under '$RepoRoot'. Builds run faster inside the WSL distro. Prefer running bash build/build.sh from WSL ext4."
+}
 
 if (Test-Path $ReleaseFolder) {
     Write-Warning "$ReleaseFolder already exists on your local machine. It will now be deleted."
     Remove-Item $ReleaseFolder -Recurse -Force
 }
+New-Item -ItemType Directory -Force -Path $ReleaseFolder | Out-Null
+New-Item -ItemType Directory -Force -Path $TmpFolder | Out-Null
 
 dotnet --version
 
-Write-Host "Restoring solution packages..."
-& dotnet restore $SolutionPath
-if (-not $?) {
-    throw "dotnet restore failed"
+# Optionally build backoffice client assets (can be skipped via SKIP_CLIENT_BUILD=1)
+$ClientDir = Join-Path -Path $SolutionRoot -ChildPath "Articulate.Api.Management/Client"
+# Enable client build explicitly or when running in CI (GitHub Actions or CI=true)
+$EnableClientBuild = $false
+if ($env:ENABLE_CLIENT_BUILD) { $EnableClientBuild = [System.Convert]::ToBoolean($env:ENABLE_CLIENT_BUILD) }
+elseif ($env:GITHUB_ACTIONS -eq 'true' -or $env:CI -eq 'true') { $EnableClientBuild = $true }
+if ($EnableClientBuild -and (Test-Path $ClientDir)) {
+    if (-not (Get-Command pnpm -ErrorAction SilentlyContinue)) { throw "pnpm not found. Install pnpm 10.17+ and try again." }
+    Push-Location $ClientDir
+    & pnpm install
+    if (-not $?) { throw "pnpm install failed" }
+    & pnpm run build:release
+    if (-not $?) { throw "pnpm build:release failed" }
+    Pop-Location
+} else {
+    Write-Host "Skipping client asset build (set ENABLE_CLIENT_BUILD=1 to enable)"
 }
 
+Write-Host "Starting clean and restore process for solution: $SolutionPath"
+
+# 1) Clean problematic project.assets.json files (occasionally fixes MSB4018)
+Write-Host "1. Cleaning up NuGet caches..."
+@(
+    "Articulate.Api.Management",
+    "Articulate.StaticAssets",
+    "Articulate.Tests.Website",
+    "Articulate.UnitTests",
+    "Articulate.Web",
+    "Articulate"
+) | ForEach-Object {
+    $p = Join-Path $SolutionRoot -ChildPath "$_/obj/project.assets.json"
+    if (Test-Path $p) { Remove-Item $p -Force -ErrorAction SilentlyContinue }
+}
+
+# 2) Create a slim solution excluding demo projects that depend on local packages (u15/u16/u17)
+$tmpSln = Join-Path $TmpFolder -ChildPath "Articulate.Packable.sln"
+if (-not (Test-Path $tmpSln)) {
+    & dotnet new sln -n Articulate.Packable -o $TmpFolder | Out-Null
+    & dotnet sln $tmpSln add `
+        (Join-Path $SolutionRoot 'Articulate/Articulate.csproj') `
+        (Join-Path $SolutionRoot 'Articulate.Web/Articulate.Web.csproj') `
+        (Join-Path $SolutionRoot 'Articulate.Api.Management/Articulate.Api.Management.csproj') `
+        (Join-Path $SolutionRoot 'Articulate.StaticAssets/Articulate.StaticAssets.csproj') `
+        (Join-Path $SolutionRoot 'Articulate.Tests.Website/Articulate.Tests.Website.csproj') | Out-Null
+}
+
+# 3) Restore (solution-level) with static graph + parallelism
+Write-Host "2. Restoring solution packages in parallel (slim solution)..."
+& dotnet restore $tmpSln @dotnetCommon @msbuildArgs
+if (-not $?) { throw "dotnet restore failed" }
+
+# 4) Build TFMs (sequential but highly parallel within MSBuild)
+Write-Host "3. Building solution for: $($TargetFrameworks -join ', ')"
 foreach ($tfm in $TargetFrameworks) {
-    Write-Host "Building solution for $tfm..."
-    & dotnet build $SolutionPath --configuration Release --no-restore -f $tfm
-    if (-not $?) {
-        throw "dotnet build failed for $tfm"
-    }
+    Write-Host "[build] -> $tfm"
+    $sw = [System.Diagnostics.Stopwatch]::StartNew()
+    & dotnet build $tmpSln -c Release -f $tfm --no-restore @dotnetCommon @msbuildArgs
+    if ($LASTEXITCODE -ne 0) { throw "dotnet build failed for $tfm" }
+    $sw.Stop()
+    Write-Host "[build] <- $tfm done in $([int]$sw.Elapsed.TotalSeconds)s"
 }
 
-Write-Host "Packing solution..."
-& dotnet pack $SolutionPath --configuration Release --no-build --no-restore --output $ReleaseFolder
-if (-not $?) {
-    throw "dotnet pack failed"
+# 5) Pack primary projects (sequential)
+Write-Host "4. Packing projects..."
+$projectsToPack = @(
+    (Join-Path $SolutionRoot 'Articulate/Articulate.csproj'),
+    (Join-Path $SolutionRoot 'Articulate.Web/Articulate.Web.csproj'),
+    (Join-Path $SolutionRoot 'Articulate.Api.Management/Articulate.Api.Management.csproj'),
+    (Join-Path $SolutionRoot 'Articulate.StaticAssets/Articulate.StaticAssets.csproj')
+)
+foreach ($project in $projectsToPack) {
+    Write-Host "[pack] -> $([IO.Path]::GetFileName($project))"
+    & dotnet pack $project -c Release --no-build --no-restore -o $ReleaseFolder @dotnetCommon @msbuildArgs -p:NoPackageAnalysis=true
+    if ($LASTEXITCODE -ne 0) { throw "dotnet pack failed for $project" }
 }
 
 $TotalSeconds = (Get-Date) - $ScriptStart

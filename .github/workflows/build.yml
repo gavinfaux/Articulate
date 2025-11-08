@@ -45,14 +45,6 @@ jobs:
             echo "Git tag missing, release build may not be traceable."
         }
 
-    - name: Add MSBuild to PATH
-      uses: microsoft/setup-msbuild@v2
-
-    - name: Setup .NET
-      uses: nuget/setup-nuget@v2.0.1
-      with:
-        nuget-version: 'latest'
-
     - name: Setup pnpm
       uses: pnpm/action-setup@v4
       with:
@@ -66,14 +58,20 @@ jobs:
         cache: 'pnpm'
         cache-dependency-path: 'src/Articulate.Api.Management/Client/pnpm-lock.yaml'
 
-    - name: Cache client node_modules
+    - name: Resolve pnpm store path
+      id: pnpm-cache
+      shell: pwsh
+      run: |
+        $path = pnpm store path
+        echo "path=$path" >> $env:GITHUB_OUTPUT
+
+    - name: Cache pnpm store
       uses: actions/cache@v4
       with:
-        path: |
-          src/Articulate.Api.Management/Client/node_modules
-        key: ${{ runner.os }}-pnpm-node_modules-${{ hashFiles('src/Articulate.Api.Management/Client/pnpm-lock.yaml') }}
+        path: ${{ steps.pnpm-cache.outputs.path }}
+        key: ${{ runner.os }}-pnpm-store-${{ hashFiles('src/Articulate.Api.Management/Client/pnpm-lock.yaml') }}
         restore-keys: |
-          ${{ runner.os }}-pnpm-node_modules-
+          ${{ runner.os }}-pnpm-store-
 
     - name: Setup .NET SDKs
       uses: actions/setup-dotnet@v4

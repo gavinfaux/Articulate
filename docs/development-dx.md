@@ -6,10 +6,12 @@ This repository supports a fast inner loop for Razor views, HTML, CSS, and JS wh
 
 - .NET 9 and 10rc SDK
 - Node 22+ and pnpm 10.17+
-- A checked-in `.nvmrc` pins Node 22; run `nvm use` (or another version manager e.g. fmn) from the repo root so local tooling matches CI.
+- Node version manager:
+  - The repo includes `.nvmrc` (Node 22); use `nvm` or `fnm` (Fast Node Manager).
+  - `fnm` quickstart: `curl -fsSL https://fnm.vercel.app/install | bash`, restart shell, then run `fnm use` in the repo root.
 - Enable pnpm via corepack (recommended):
-  - `npm corepack enable`
-  - `npm corepack prepare pnpm@latest --activate`
+  - `corepack enable`
+  - `corepack prepare pnpm@10.17.0 --activate`
 - Visual Studio: opening the repo offers to apply `.vsconfig`, which installs the ASP.NET workload plus .NET 9 SDK and (optional) preview SDK component.
 
 ### Backend + Razor hot reload (same origin)
@@ -69,11 +71,11 @@ See `docs/ai-content-negotiation.md` for full examples. Origin already varies by
 
 ### Backoffice client HMR (Vite)
 
-Enable pnpm package manager (on time setup)
+Enable pnpm package manager (one‑time setup)
 
 ```bash
-npm corepack enable
-corepack enable pnpm
+corepack enable
+corepack prepare pnpm@10.17.0 --activate
 
 ```
 
@@ -94,12 +96,33 @@ Tips:
 
 ### Client build integration
 
-- The `src/Articulate.Api.Management/Articulate.Api.Management.csproj` integrates pnpm into the .NET build:
-  - Restore step runs `pnpm install` (CI uses `--frozen-lockfile`).
-  - Build step runs `pnpm run build` (or `build:release` in CI/Release).
-  - Non‑CI Debug builds continue on client build errors for faster iteration; CI/Release fails on client build errors.
-  - Ensure Node/pnpm are available locally; CI installs pnpm automatically.
-- Run `pwsh build/build.ps1` (or `dotnet build`/`dotnet pack`) to reproduce the Release build locally; the script mirrors the CI pipeline using the SDK resolved from `global.json`. The updated pipeline builds projects sequentially per target framework (`Articulate` → `Articulate.Api.Management` → `Articulate.Web`), passing `--no-dependencies` to downstream projects so the client assets compile before the Razor sites without triggering static web asset cache locks.
+- MSBuild does not invoke pnpm/Vite by default. The client assets are built with Vite and committed under `src/Articulate.Web/wwwroot/App_Plugins/Articulate/**/dist/**`.
+- To rebuild assets during packaging, use the build scripts with an opt‑in flag:
+  - Windows: `set ENABLE_CLIENT_BUILD=1 && build\build.ps1`
+  - Linux/WSL: `ENABLE_CLIENT_BUILD=1 bash build/build.sh`
+- Or run it manually during development:
+  - `cd src/Articulate.Api.Management/Client && pnpm install && pnpm run build` (dev) or `pnpm run build:release` (prod bundling)
+- Packaging pulls from the `dist/` folders (see `src/Articulate.StaticAssets/Articulate.StaticAssets.csproj`). If you change theme or Markdown editor sources, rebuild to refresh those folders before packing.
+
+### Build scripts (Windows, Linux/WSL) and flags
+
+- Windows PowerShell: `build/build.ps1`
+  - Parallel MSBuild; uses all cores by default. Override workers: `set MAXCPU=8`.
+  - Client assets: skipped by default. Enable: `set ENABLE_CLIENT_BUILD=1`.
+  - Prints a note if the repo is under `\\wsl$` suggesting to build inside WSL for speed.
+- Linux/WSL Bash: `build/build.sh`
+  - Parallel MSBuild; auto‑detects CPU. Override workers: `export MAXCPU=8`.
+  - Client assets: skipped by default. Enable: `export ENABLE_CLIENT_BUILD=1`.
+  - WSL‑aware: warns if building from `/mnt/*` and recommends cloning under `~/src/...` (ext4) for faster I/O.
+
+Both scripts restore once at solution level, build both TFMs with maximum parallelism, and pack these projects into `build/Release`: `Articulate.Core`, `Articulate`, `Articulate.Api.Management`, and `Articulate.StaticAssets`.
+
+### Cross‑platform local workflow (dual clone)
+
+- For consistently fast local builds, keep two clones:
+  - WSL/distro ext4 clone: `~/src/Articulate6-wip` → run `bash build/build.sh`.
+  - Windows NTFS clone: `F:\int\Articulate6-wip` → run `pwsh build/build.ps1`.
+- Keep them in sync via Git (`git pull` in each). WSL builds from `/mnt/*` are slower due to drvfs; using the distro’s ext4 typically yields 2–5× faster restore/build for metadata‑heavy steps.
 
 ### Regenerating the client SDK (optional)
 

@@ -24,6 +24,16 @@ This guide supports automation agents and human contributors working in the Arti
 - Pack: `dotnet pack src/Articulate.sln --output build/Release --configuration Release`
 - Release pipeline: `pwsh build/build.ps1` (restores → cleans → builds → packs all TFMs)
 
+### Build script flags and environment
+- `build/build.sh` (Linux/WSL):
+  - Parallel by default; auto‑detects CPU count. Override with `MAXCPU=<N>`.
+  - Client assets: skipped by default. Enable with `ENABLE_CLIENT_BUILD=1`.
+  - WSL‑aware: warns when building from `/mnt/*` and suggests cloning into the distro’s ext4 (e.g., `~/src/...`).
+- `build/build.ps1` (Windows):
+  - Parallel by default; uses all logical cores. Override with `set MAXCPU=<N>` before running.
+  - Client assets: skipped by default. Enable with `set ENABLE_CLIENT_BUILD=1`.
+  - Prints a note if running against `\\wsl$` paths and suggests using the Linux script inside WSL.
+
 ## Coding Style & Naming Conventions
 - C#: .NET 9/10, C# latest, nullable warnings as errors, implicit usings, 4‑space indent.
   - Private fields: `_camelCase`; public members: `PascalCase`; prefer expression-bodied members.
@@ -43,8 +53,23 @@ This guide supports automation agents and human contributors working in the Arti
 - Toolchains: `.nvmrc` → Node 22 (`nvm use`), pnpm 10.17+, `global.json` pins .NET 9.0.100 with roll‑forward.
 - Frontend bundles: Vite emits theme assets to `Themes/*/dist/` and Markdown editor to `MarkdownEditor/dist/`. In Production, Razor uses environment tag helpers with `asp-append-version`. Run `pnpm run build` before packaging/deploying.
 
+### Node version managers (nvm vs fnm)
+- The repo includes `.nvmrc` (Node 22). You can use either:
+  - `nvm` (widely used), or
+  - `fnm` (Fast Node Manager) — recommended for speed and cross‑platform ergonomics.
+- Example with `fnm`:
+  - Install: `curl -fsSL https://fnm.vercel.app/install | bash`
+  - Restart your shell, then in repo root: `fnm use` (respects `.nvmrc`), then `corepack enable && corepack prepare pnpm@10.17.0 --activate`.
+
 ## Notes for Automation/Agents
 - Follow existing structure; avoid unrelated changes. Prefer surgical patches and add tests near modified code. Keep build/test commands green across both TFMs.
 - When running scripted tasks, respect multi-targeting: validate both `net9.0` and `net10.0` builds/tests where feasible.
 - Theme and Markdown editor source assets now live under `Themes/*/src/**` and `MarkdownEditor/src/**`; regenerating bundles requires `pnpm run build` before packaging or Release builds.
 - The legacy `/a-new/` front-end route currently issues a 302 redirect via `src/Articulate/Controllers/MarkdownEditorController.cs`. Remove that shim if you need to restore the SPA controller in `Articulate.Web`.
+
+### Cross‑platform workflow (WSL + Windows)
+- For fastest local builds, keep two clones:
+  - WSL clone under ext4, e.g. `~/src/Articulate6-wip` → use `bash build/build.sh`.
+  - Windows clone on a local NTFS drive, e.g. `F:\int\Articulate6-wip` → use `pwsh build/build.ps1`.
+- Keep them in sync via Git (commit/push in one, `git pull` in the other).
+- Reason: WSL builds under `/mnt/*` are I/O‑limited; ext4 in the distro is much faster for metadata‑heavy steps (NuGet/pnpm/Razor).

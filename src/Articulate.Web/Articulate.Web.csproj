@@ -1,25 +1,17 @@
-<Project Sdk="Microsoft.NET.Sdk.Razor">
+﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
   <PropertyGroup>
     <TargetFrameworks>net9.0;net10.0</TargetFrameworks>
-    <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
-    <StaticWebAssetBasePath>/</StaticWebAssetBasePath>
-    <CompressionEnabled>false</CompressionEnabled>
-    <Nullable>enable</Nullable>
+    <EnableDefaultStaticWebAssets>false</EnableDefaultStaticWebAssets>
+    <DisableImplicitStaticWebAssets>true</DisableImplicitStaticWebAssets>
+    <StaticWebAssetProjectMode>Disable</StaticWebAssetProjectMode>
   </PropertyGroup>
 
   <PropertyGroup>
     <PackageId>Articulate</PackageId>
     <Title>Articulate</Title>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
-  <ItemGroup>
-    <SupportedPlatform Include="browser" />
-  </ItemGroup>
-
-  <!--NoWarn for missing XML comments on public API-->
-  <PropertyGroup>
-    <NoWarn>$(NoWarn);1591</NoWarn>
-  </PropertyGroup>
 
   <!--
     Nuget - Dotnet SourceLink & Symbol Package
@@ -32,57 +24,20 @@
     ie less work - just include this package & be done...
     https://github.com/dotnet/reproducible-builds
     -->
-  <ItemGroup>
-    <PackageReference Include="DotNet.ReproducibleBuilds" Version="1.2.25">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers, buildtransitive</IncludeAssets>
-    </PackageReference>
-  </ItemGroup>
-
-  <!--Umbraco CMS version range per target + NuGet audit mode-->
-  <PropertyGroup Condition="'$(TargetFramework)' == 'net9.0'">
-    <!-- Support Umbraco 15.x–16.x on .NET 9 -->
-    <UmbracoCmsPackageVersion>[15.4.4,17.0.0)</UmbracoCmsPackageVersion>
-    <NuGetAuditMode>direct</NuGetAuditMode>
-    <EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0'">
-    <!-- Support Umbraco 17.x (including pre-release) on .NET 10 -->
-    <UmbracoCmsPackageVersion>[17.0.0-beta,18.0.0)</UmbracoCmsPackageVersion>
-    <NuGetAuditMode>direct</NuGetAuditMode>
-    <EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Microsoft.CodeAnalysis" Version="4.14.0" PrivateAssets="All" />
-  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Articulate\Articulate.csproj" />
     <ProjectReference Include="..\Articulate.Api.Management\Articulate.Api.Management.csproj" />
   </ItemGroup>
-
-  <!--Additional implicit using directives-->
   <ItemGroup>
-    <Using Include="Umbraco.Cms.Core.DependencyInjection" />
-    <Using Include="Umbraco.Extensions" />
-    <Using Include="Articulate" />
-    <Using Include="Articulate.Models" />
+    <StaticWebAsset Remove="wwwroot\App_Plugins\**" />
+    <Content Remove="wwwroot\**" />
+    <None Remove="wwwroot\**" />
+    <EmbeddedResource Remove="wwwroot\**" />
   </ItemGroup>
 
   <ItemGroup>
     <Folder Include="wwwroot\" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="..\..\LICENSE">
-      <Pack>True</Pack>
-      <PackagePath>\</PackagePath>
-    </None>
-    <None Include="..\..\README.md">
-      <Pack>true</Pack>
-      <PackagePath>\</PackagePath>
-    </None>
   </ItemGroup>
 
   <ItemGroup>

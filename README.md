@@ -7,6 +7,12 @@
 ---
 _❤️ If you use and like Articulate please consider [becoming a GitHub Sponsor](https://github.com/sponsors/Shazwazza/) ❤️_
 
+## Contents
+- [Tooling prerequisites (Node/pnpm)](#tooling-prerequisites-nodepnpm)
+- [Build & Pack (multi-target .NET 9/10)](#build--pack-multi-target-net-910)
+- [Script options](#script-options)
+- [WSL + Windows workflow (fast local builds)](#wsl--windows-workflow-fast-local-builds)
+
 ## Installation
 
 Two support tracks are available depending on the Umbraco version you run.
@@ -119,7 +125,10 @@ See docs/development-dx.md for details and tips.
 ### Tooling prerequisites (Node/pnpm)
 
 - The backoffice client (Lit + TypeScript) uses pnpm. Install Node 22+ and pnpm 10.17+ before building.
-- A root `.nvmrc` pins Node 22; use `nvm`/`fnm`/`volta` (or `nvm-windows`) to align with CI locally.
+- Node version managers:
+  - The repo includes `.nvmrc` (Node 22). You can use `nvm`, but `fnm` (Fast Node Manager) is a quicker, cross‑platform alternative.
+  - `fnm` quickstart: `curl -fsSL https://fnm.vercel.app/install | bash`, restart shell, then run `fnm use` in the repo root (respects `.nvmrc`).
+  - Enable pnpm: `corepack enable && corepack prepare pnpm@10.17.0 --activate`.
 - Corepack users should run `corepack enable` / `corepack prepare pnpm@<version>` manually prior to invoking the build. The repository no longer bootstraps pnpm automatically.
 - CI installs pnpm using `pnpm/action-setup`; no extra steps required there.
 - The `Articulate.Api.Management` project invokes pnpm restore/build from MSBuild during .NET builds; ensure pnpm is available on your PATH.
@@ -136,10 +145,31 @@ See docs/development-dx.md for details and tips.
 
 ### Build & Pack (multi-target .NET 9/10)
 
-- Projects target both `net9.0` and `net10.0`. Run `pwsh build/build.ps1` (or `dotnet build`/`dotnet pack`) in Release mode to compile and create NuGet packages.
+- Projects target both `net9.0` and `net10.0`. Run `pwsh build/build.ps1` (Windows) or `bash build/build.sh` (Linux/WSL) to compile and create NuGet packages.
 - `global.json` keeps 9.0.100 as the baseline but allows roll-forward to newer (preview) SDKs, so `dotnet` or Visual Studio can load the .NET 10 tooling when installed.
 - GitHub Actions mirrors this flow by invoking `build/build.ps1`, ensuring the same serialized Core → API → Web build order with `--no-dependencies`.
 - If a future preview regresses static web-asset packing, fall back to manual `Content`/`ContentWithTargetPath`/`EmbeddedResource` packing; see docs/development-dx.md.
+
+#### Script options
+- Common: builds are parallel and pack `Articulate`, `Articulate.Core`, `Articulate.Api.Management`, and `Articulate.StaticAssets` into `build/Release`.
+- Windows (`build/build.ps1`):
+  - Override CPU workers: `set MAXCPU=8` (default = all cores)
+  - Enable client assets build: `set ENABLE_CLIENT_BUILD=1`
+- Linux/WSL (`build/build.sh`):
+  - Override CPU workers: `export MAXCPU=8` (default = auto‑detect)
+  - Enable client assets build: `export ENABLE_CLIENT_BUILD=1`
+  - WSL tip: if the repo is under `/mnt/*`, the script prints a performance warning. Clone under `~/src/...` for faster I/O.
+
+Client/Vite build
+- MSBuild does not run pnpm/Vite automatically. Packages include the committed `dist/` outputs under `src/Articulate.Web/wwwroot/App_Plugins/Articulate/**/dist/**`.
+- To regenerate assets as part of a build: set `ENABLE_CLIENT_BUILD=1` when invoking the build scripts.
+- To rebuild manually: `cd src/Articulate.Api.Management/Client && pnpm install && pnpm run build` (or `build:release`).
+
+### WSL + Windows workflow (fast local builds)
+- For best performance keep two clones:
+  - WSL ext4 clone (e.g. `~/src/Articulate6-wip`) → `bash build/build.sh`
+  - Windows NTFS clone (e.g. `F:\int\Articulate6-wip`) → `pwsh build/build.ps1`
+- Sync via Git (`git pull`). WSL builds from `/mnt/*` are slow due to drvfs; building from the distro’s ext4 is 2–5× faster for metadata‑heavy steps.
 
 ### Repository Guides
 

@@ -1,15 +1,31 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
     <PropertyGroup>
-        <!-- Default single target only when project doesn't specify TFM(s) -->
-        <TargetFramework Condition="'$(TargetFramework)' == '' and '$(TargetFrameworks)' == ''">net9.0</TargetFramework>
+        <TargetFrameworks Condition="'$(TargetFramework)' == '' and '$(TargetFrameworks)' == ''">net9.0;net10.0</TargetFrameworks>
         <LangVersion>latest</LangVersion>
         <!--TODO: Enable after phased migration. https://learn.microsoft.com/en-us/dotnet/csharp/nullable-migration-strategies-->
         <Nullable>warnings</Nullable>
         <WarningsAsErrors>Nullable</WarningsAsErrors>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    </PropertyGroup>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<NuGetAuditMode>direct</NuGetAuditMode>
+		<DisableImplicitNuGetFallbackFolder>true</DisableImplicitNuGetFallbackFolder>
+	</PropertyGroup>
+	<!--Umbraco CMS version range per target + NuGet audit mode-->
+	<PropertyGroup Condition="'$(TargetFramework)' == 'net9.0'">
+		<!-- Support Umbraco 15.x-16.x on .NET 9 -->
+		<UmbracoCmsPackageVersion>[15.4.4,17.0.0)</UmbracoCmsPackageVersion>
+		<UmbracoCmsTestsPackageVersion>[15.4.4,17.0.0)</UmbracoCmsTestsPackageVersion>
+		<AspNetRuntimeCompilationVersion>9.0.0</AspNetRuntimeCompilationVersion>
+		<NuGetAuditMode>direct</NuGetAuditMode>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(TargetFramework)' == 'net10.0'">
+		<!-- Support Umbraco 17.x (including pre-release) on .NET 10 -->
+		<UmbracoCmsPackageVersion>[17.0.0-rc1,18.0.0)</UmbracoCmsPackageVersion>
+		<UmbracoCmsTestsPackageVersion>[17.0.0-rc1,18.0.0)</UmbracoCmsTestsPackageVersion>
+		<AspNetRuntimeCompilationVersion>10.0.0-rc.2.25502.107</AspNetRuntimeCompilationVersion>
+		<NuGetAuditMode>direct</NuGetAuditMode>
+	</PropertyGroup>
     <PropertyGroup>
         <!-- TODO: Enable when 6.0 version is shipped -->
         <EnablePackageValidation>false</EnablePackageValidation>
@@ -18,11 +34,43 @@
         <EnableStrictModeForCompatibleTfms>true</EnableStrictModeForCompatibleTfms>
         <GenerateCompatibilitySuppressionFile>true</GenerateCompatibilitySuppressionFile>
     </PropertyGroup>
+    <PropertyGroup>
+        <CompressionEnabled>false</CompressionEnabled>
+    </PropertyGroup>
+    <PropertyGroup>
+        <StaticWebAssetBasePath Condition="'$(StaticWebAssetBasePath)' == ''">/</StaticWebAssetBasePath>
+        <AddRazorSupportForMvc Condition="'$(AddRazorSupportForMvc)' == ''">true</AddRazorSupportForMvc>
+        <NoWarn>$(NoWarn);1591</NoWarn>
+        <EnforceCodeStyleInBuild Condition="'$(EnforceCodeStyleInBuild)' == ''">true</EnforceCodeStyleInBuild>
+    </PropertyGroup>
     <ItemGroup>
         <PackageReference Include="Nerdbank.GitVersioning" Condition="!Exists('packages.config')" Version="3.7.115" PrivateAssets="All"/>
         <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.556" PrivateAssets="All"/>
         <GlobalPackageReference Include="Umbraco.Code" Version="2.3.0" PrivateAssets="All"/>
         <GlobalPackageReference Include="Umbraco.GitVersioning.Extensions" Version="0.2.0" PrivateAssets="All"/>
+    </ItemGroup>
+    <ItemGroup Condition="'$(IsPackable)' != 'false'">
+        <PackageReference Include="DotNet.ReproducibleBuilds" Version="1.2.25" PrivateAssets="all">
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.CodeAnalysis" Version="4.14.0" PrivateAssets="All" />
+    </ItemGroup>
+    <ItemGroup Condition="'$(UsingMicrosoftNETSdkRazor)' == 'true'">
+        <SupportedPlatform Include="browser" />
+        <Using Include="Umbraco.Cms.Core.DependencyInjection" />
+        <Using Include="Umbraco.Extensions" />
+        <Using Include="Articulate" />
+        <Using Include="Articulate.Models" />
+    </ItemGroup>
+    <ItemGroup Condition="'$(IsPackable)' != 'false'">
+        <None Include="$(MSBuildThisFileDirectory)LICENSE">
+            <Pack>true</Pack>
+            <PackagePath>\</PackagePath>
+        </None>
+        <None Include="$(MSBuildThisFileDirectory)README.md">
+            <Pack>true</Pack>
+            <PackagePath>\</PackagePath>
+        </None>
     </ItemGroup>
     <PropertyGroup>
         <GitVersionBaseDirectory>$(MSBuildThisFileDirectory)</GitVersionBaseDirectory>

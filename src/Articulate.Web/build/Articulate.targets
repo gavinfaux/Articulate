@@ -1,49 +1,12 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <PropertyGroup>
-    <ArticulateEmitContentTargets Condition="'$(ArticulateEmitContentTargets)' == ''">true</ArticulateEmitContentTargets>
-    <ArticulateTargetAppPlugins Condition="'$(ArticulateTargetAppPlugins)' == ''">$([System.IO.Path]::Combine('$(MSBuildProjectDirectory)', 'App_Plugins', 'Articulate'))</ArticulateTargetAppPlugins>
-  </PropertyGroup>
-
-  <Target Name="CopyArticulateAssets"
-          Condition="'$(ArticulateEmitContentTargets)' == 'true'"
-          BeforeTargets="Build">
-    <ItemGroup>
-      <_ArticulateContentFiles Include="$(MSBuildThisFileDirectory)..\contentFiles\any\any\App_Plugins\Articulate\**\*.*"
-                               Condition="Exists('$(MSBuildThisFileDirectory)..\contentFiles\any\any\App_Plugins\Articulate')" />
-      <_ArticulateContentFiles Include="$(MSBuildThisFileDirectory)..\content\App_Plugins\Articulate\**\*.*"
-                               Condition="Exists('$(MSBuildThisFileDirectory)..\content\App_Plugins\Articulate')" />
-    </ItemGroup>
-
-    <Message Text="Copying Articulate assets to $(ArticulateTargetAppPlugins)"
-             Importance="High"
-             Condition="'@(_ArticulateContentFiles)' != ''" />
-
-    <Copy SourceFiles="@(_ArticulateContentFiles)"
-          DestinationFiles="@(_ArticulateContentFiles->'$([System.IO.Path]::Combine('$(ArticulateTargetAppPlugins)', '%(RecursiveDir)%(Filename)%(Extension)'))')"
-          SkipUnchangedFiles="true"
-          Condition="'@(_ArticulateContentFiles)' != ''" />
-  </Target>
-
-  <Target Name="ClearArticulateAssets"
-          Condition="'$(ArticulateEmitContentTargets)' == 'true'"
-          BeforeTargets="Clean">
-    <Message Text="Removing Articulate assets from $(ArticulateTargetAppPlugins)"
-             Importance="Normal"
-             Condition="Exists('$(ArticulateTargetAppPlugins)')" />
-
-    <RemoveDir Directories="$(ArticulateTargetAppPlugins)"
-               Condition="Exists('$(ArticulateTargetAppPlugins)')" />
-  </Target>
 
   <Target Name="CopyApiXmlDocumentationToOutput" AfterTargets="PrepareForRun">
     <ItemGroup>
       <_ArticulateDllSourceItem Include="@(ReferenceCopyLocalPaths)"
                                 Condition="$([System.String]::new('%(Filename)').Equals('Articulate.Api.Management'))" />
     </ItemGroup>
-    <PropertyGroup>
-      <_ArticulateSourceXmlPath>$([System.IO.Path]::ChangeExtension('%(_ArticulateDllSourceItem.FullPath)', '.xml'))</_ArticulateSourceXmlPath>
-      <_ArticulateDestXmlPath>$(OutDir)Articulate.Api.Management.xml</_ArticulateDestXmlPath>
-    </PropertyGroup>
+    <_ArticulateSourceXmlPath>$([System.IO.Path]::ChangeExtension('%(_ArticulateDllSourceItem.FullPath)', '.xml'))</_ArticulateSourceXmlPath>
+    <_ArticulateDestXmlPath>$(OutDir)Articulate.Api.Management.xml</_ArticulateDestXmlPath>
     <Copy SourceFiles="$(_ArticulateSourceXmlPath)" DestinationFiles="$(_ArticulateDestXmlPath)"
           SkipUnchangedFiles="true" Condition="Exists('$(_ArticulateSourceXmlPath)')" />
   </Target>
