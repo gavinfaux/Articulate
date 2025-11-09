@@ -41,6 +41,7 @@ namespace Articulate.Routing
         }
 #endif
 
+        /// <inheritdoc/>
         public override UrlInfo? GetUrl(IPublishedContent content, UrlMode mode, string? culture, Uri current)
         {
             if (content is

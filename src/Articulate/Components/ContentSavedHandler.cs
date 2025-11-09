@@ -13,6 +13,7 @@ namespace Articulate.Components
         : INotificationHandler<ContentSavedNotification>
     {
         // TODO: Review
+        /// <inheritdoc/>
         public void Handle(ContentSavedNotification notification)
         {
             foreach (IContent c in notification.SavedEntities)
@@ -34,11 +35,11 @@ namespace Articulate.Components
                         {
                             IContent articles = contentService.Create(string.Empty, c, ArticulateConstants.ContentType.ArticulateArchive);
                             articles.SetCultureName(ArticulateConstants.Convention.ArticlesDocument, defaultLang);
-                            contentService.Save(articles);
+                            _ = contentService.Save(articles);
                         }
                         else
                         {
-                            contentService.CreateAndSave(ArticulateConstants.Convention.ArticlesDocument, c, ArticulateConstants.ContentType.ArticulateArchive);
+                            _ = contentService.CreateAndSave(ArticulateConstants.Convention.ArticlesDocument, c, ArticulateConstants.ContentType.ArticulateArchive);
                         }
                     }
                 }
@@ -58,11 +59,11 @@ namespace Articulate.Components
                 {
                     IContent authors = contentService.Create(string.Empty, c, ArticulateConstants.ContentType.ArticulateAuthors);
                     authors.SetCultureName(ArticulateConstants.Convention.AuthorsDocument, defaultLang);
-                    contentService.Save(authors);
+                    _ = contentService.Save(authors);
                 }
                 else
                 {
-                    contentService.CreateAndSave(ArticulateConstants.Convention.AuthorsDocument, c, ArticulateConstants.ContentType.ArticulateAuthors);
+                    _ = contentService.CreateAndSave(ArticulateConstants.Convention.AuthorsDocument, c, ArticulateConstants.ContentType.ArticulateAuthors);
                 }
             }
         }

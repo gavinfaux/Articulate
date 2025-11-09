@@ -1,8 +1,4 @@
 #nullable enable
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
 using Articulate.Api.Management.Options;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -57,7 +53,7 @@ namespace Articulate.Api.Management.Services
 
             if (existing is null)
             {
-                await applications.CreateAsync(descriptor, cancellationToken);
+                _ = await applications.CreateAsync(descriptor, cancellationToken);
                 _logger.LogInformation("Registered OpenIddict client '{ClientId}' for Articulate.", settings.ClientId);
             }
             else

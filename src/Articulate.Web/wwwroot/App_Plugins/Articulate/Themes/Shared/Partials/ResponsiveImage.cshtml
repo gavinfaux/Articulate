@@ -1,24 +1,22 @@
-@{
-#nullable enable
-
-}
-
 @model Umbraco.Cms.Core.Models.MediaWithCrops
 
 
 @functions {
+	#nullable enable
     private string? GetUrl(int w, string alias = "")
     {
         try
         {
-            return string.IsNullOrWhiteSpace(alias)
-                ? Model.GetCropUrl(width: w)
-                : Model.GetCropUrl(width: w, cropAlias: alias);
+            if (Model != null)
+                return string.IsNullOrWhiteSpace(alias)
+                    ? Model.GetCropUrl(width: w)
+                    : Model.GetCropUrl(width: w, cropAlias: alias);
         }
         catch
         {
-            return Model.GetCropUrl();
+            if (Model != null) return Model.GetCropUrl();
         }
+		return string.Empty;
     }
 
     private static string AppendQueryParam(string url, string key, string value)

@@ -15,8 +15,10 @@ namespace Articulate.Components
         IRuntimeState runtimeState)
         : IAsyncComponent
     {
+        /// <inheritdoc/>
         public Task InitializeAsync(bool isRestarting, CancellationToken cancellationToken) => Task.Run(Initialize, cancellationToken);
 
+        /// <inheritdoc/>
         public Task TerminateAsync(bool isRestarting, CancellationToken cancellationToken) => Task.Run(Terminate, cancellationToken);
 
         private void Initialize()
@@ -29,7 +31,7 @@ namespace Articulate.Components
             var migrationPlan = new ArticulatePlan();
 
             var upgrader = new Upgrader(migrationPlan);
-            upgrader.Execute(migrationPlanExecutor, scopeProvider, keyValueService);
+            _ = upgrader.Execute(migrationPlanExecutor, scopeProvider, keyValueService);
         }
 
         private static void Terminate()

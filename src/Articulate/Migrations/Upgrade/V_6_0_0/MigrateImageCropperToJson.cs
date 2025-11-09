@@ -22,6 +22,7 @@ namespace Articulate.Migrations.Upgrade.V_6_0_0
         private readonly IScopeProvider _scopeProvider = scopeProvider;
         private readonly IDataTypeService _dataTypeService = dataTypeService;
 
+        /// <inheritdoc/>
         protected override void Migrate()
         {
             List<int> imageCropperDataTypeIds = GetImageCropperDataTypeIdsAsync().GetAwaiter().GetResult();

@@ -10,6 +10,7 @@ namespace Articulate.Routing
         IDocumentCacheService documentCacheService)
         : IApplicationModelConvention
     {
+        /// <inheritdoc/>
         public void Apply(ApplicationModel application)
         {
             foreach (ControllerModel controller in application.Controllers)

@@ -16,9 +16,11 @@ namespace Articulate.Api.Management.Swagger
     {
         private readonly IOptions<ApiVersioningOptions> _apiVersioningOptions = apiVersioningOptions;
 
+        /// <inheritdoc/>
         public override string Handle(ApiDescription apiDescription) => ArticulateOperationId(apiDescription);
 
         // Adapted from Umbraco.Cms.Api.Common.OpenApi.OperationIdHandler
+        /// <inheritdoc/>
         protected override bool CanHandle(
             ApiDescription apiDescription,
             ControllerActionDescriptor controllerActionDescriptor)

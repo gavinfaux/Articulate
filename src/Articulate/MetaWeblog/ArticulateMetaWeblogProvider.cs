@@ -95,13 +95,16 @@ namespace Articulate.MetaWeblog
         }
 
         // Seems these are not used/supported
+        /// <inheritdoc/>
         public Task<int> AddCategoryAsync(string key, string username, string password, NewCategory category) =>
             throw new NotImplementedException();
 
         // Not supporting pages from the WordPress implementation
+        /// <inheritdoc/>
         public Task<string> AddPageAsync(string blogid, string username, string password, Page page, bool publish) =>
             throw new NotImplementedException();
 
+        /// <inheritdoc/>
         public async Task<string> AddPostAsync(string blogid, string username, string password, Post post, bool publish)
         {
             IUser user = await ValidateUserAsync(username, password).ConfigureAwait(false);
@@ -130,9 +133,11 @@ namespace Articulate.MetaWeblog
             return content.Id.ToString(CultureInfo.InvariantCulture);
         }
 
+        /// <inheritdoc/>
         public Task<bool> DeletePageAsync(string blogid, string username, string password, string pageid) =>
             throw new NotImplementedException();
 
+        /// <inheritdoc/>
         public async Task<bool> DeletePostAsync(string key, string postid, string username, string password, bool publish)
         {
             IUser user = await ValidateUserAsync(username, password).ConfigureAwait(false);
@@ -152,12 +157,14 @@ namespace Articulate.MetaWeblog
             }
 
             // Put in recylce bin - rather than unpublish
-            _contentService.MoveToRecycleBin(content, userId);
+            _ = _contentService.MoveToRecycleBin(content, userId);
             return true;
         }
 
+        /// <inheritdoc/>
         public Task<bool> EditPageAsync(string blogid, string pageid, string username, string password, Page page, bool publish) => throw new NotImplementedException();
 
+        /// <inheritdoc/>
         public async Task<bool> EditPostAsync(string postid, string username, string password, Post post, bool publish)
         {
             IUser user = await ValidateUserAsync(username, password).ConfigureAwait(false);
@@ -190,12 +197,14 @@ namespace Articulate.MetaWeblog
             return true;
         }
 
+        /// <inheritdoc/>
         public Task<Author[]> GetAuthorsAsync(string blogid, string username, string password) =>
             throw new NotImplementedException();
 
+        /// <inheritdoc/>
         public async Task<CategoryInfo[]> GetCategoriesAsync(string blogid, string username, string password)
         {
-            await ValidateUserAsync(username, password).ConfigureAwait(false);
+            _ = await ValidateUserAsync(username, password).ConfigureAwait(false);
 
             // TODO: These would be across all Articulate Blog root nodes :S
             IEnumerable<ITag> all = await _tagService.GetAllAsync(ArticulateConstants.DataType.ArticulateCategories)
@@ -203,7 +212,7 @@ namespace Articulate.MetaWeblog
 
             CategoryInfo[] tags = all.Select(x => new CategoryInfo
             {
-                title = x.Text, categoryid = x.Id.ToString()
+                title = x.Text, categoryid = x.Id.ToString(),
 
                 // TODO HTML & RSS URL ? (Wasnt used before)
             }).ToArray();
@@ -211,15 +220,18 @@ namespace Articulate.MetaWeblog
             return tags;
         }
 
+        /// <inheritdoc/>
         public Task<Page> GetPageAsync(string blogid, string pageid, string username, string password) =>
             throw new NotImplementedException();
 
+        /// <inheritdoc/>
         public Task<Page[]> GetPagesAsync(string blogid, string username, string password, int numPages) =>
             throw new NotImplementedException();
 
+        /// <inheritdoc/>
         public async Task<Post> GetPostAsync(string postid, string username, string password)
         {
-            await ValidateUserAsync(username, password).ConfigureAwait(false);
+            _ = await ValidateUserAsync(username, password).ConfigureAwait(false);
 
             Attempt<int> asInt = postid.TryConvertTo<int>();
             if (!asInt)
@@ -242,9 +254,10 @@ namespace Articulate.MetaWeblog
             return fromContent;
         }
 
+        /// <inheritdoc/>
         public async Task<Post[]> GetRecentPostsAsync(string blogid, string username, string password, int numberOfPosts)
         {
-            await ValidateUserAsync(username, password).ConfigureAwait(false);
+            _ = await ValidateUserAsync(username, password).ConfigureAwait(false);
 
             IPublishedContent node =
                 BlogRoot().ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive)?.FirstOrDefault() ??
@@ -258,9 +271,10 @@ namespace Articulate.MetaWeblog
             return recent;
         }
 
+        /// <inheritdoc/>
         public async Task<Tag[]> GetTagsAsync(string blogid, string username, string password)
         {
-            await ValidateUserAsync(username, password).ConfigureAwait(false);
+            _ = await ValidateUserAsync(username, password).ConfigureAwait(false);
 
             // TODO: These would be across all Articulate Blog root nodes :S
             IEnumerable<ITag> all = await _tagService.GetAllAsync(ArticulateConstants.DataType.ArticulateTags)
@@ -272,12 +286,14 @@ namespace Articulate.MetaWeblog
             return tags;
         }
 
+        /// <inheritdoc/>
         public Task<UserInfo> GetUserInfoAsync(string key, string username, string password) =>
             throw new NotImplementedException();
 
+        /// <inheritdoc/>
         public async Task<BlogInfo[]> GetUsersBlogsAsync(string key, string username, string password)
         {
-            await ValidateUserAsync(username, password).ConfigureAwait(false);
+            _ = await ValidateUserAsync(username, password).ConfigureAwait(false);
 
             IPublishedContent node = BlogRoot();
             BlogInfo[] blogs =
@@ -288,9 +304,10 @@ namespace Articulate.MetaWeblog
             return blogs;
         }
 
+        /// <inheritdoc/>
         public async Task<MediaObjectInfo> NewMediaObjectAsync(string blogid, string username, string password, MediaObject mediaObject)
         {
-            await ValidateUserAsync(username, password).ConfigureAwait(false);
+            _ = await ValidateUserAsync(username, password).ConfigureAwait(false);
 
             // TODO: File validation
             var bytes = Convert.FromBase64String(mediaObject.bits);
@@ -385,7 +402,7 @@ namespace Articulate.MetaWeblog
                                 fileName,
                                 fileStream);
 
-                            _mediaService.Save(mediaItem);
+                            _ = _mediaService.Save(mediaItem);
 
                             var udi = Udi.Create(Constants.UdiEntityType.Media, mediaItem.Key);
 
@@ -440,12 +457,12 @@ namespace Articulate.MetaWeblog
                     content.SetInvariantOrDefaultCultureValue("publishedDate", post.dateCreated, contentType, _languageService);
                 }
 
-                _contentService.Save(content, user.Id);
-                _contentService.Publish(content, ["*"], user.Id);
+                _ = _contentService.Save(content, user.Id);
+                _ = _contentService.Publish(content, ["*"], user.Id);
             }
             else
             {
-                _contentService.Save(content, user.Id);
+                _ = _contentService.Save(content, user.Id);
             }
         }
 
@@ -476,7 +493,7 @@ namespace Articulate.MetaWeblog
                 : MarkdownHelper.ToHtml(post.GetValue<string>("markdown")),
             permalink = post.GetValue<string>(Constants.Conventions.Content.UrlName).IsNullOrWhiteSpace()
                 ? post.Name?.ToUrlSegment(_shortStringHelper)
-                : post.GetValue<string>(Constants.Conventions.Content.UrlName)?.ToUrlSegment(_shortStringHelper)
+                : post.GetValue<string>(Constants.Conventions.Content.UrlName)?.ToUrlSegment(_shortStringHelper),
         };
 
         /// <summary>
@@ -501,7 +518,7 @@ namespace Articulate.MetaWeblog
             wp_slug = post.Url(),
             mt_excerpt = post.Excerpt,
             mt_keywords = string.Join(',', post.Tags.ToArray()),
-            title = post.Name
+            title = post.Name,
         };
 
         private async Task<IUser> ValidateUserAsync(string username, string password)

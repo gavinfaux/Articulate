@@ -16,10 +16,10 @@ using Umbraco.Cms.Web.Common;
 namespace Articulate.Controllers
 {
     /// <summary>
-    /// Renders the blog post archive by tags/categories and also the tag/category blog listing
+    /// Renders the blog post archive by tags/categories and also the tag/category blog listing.
     /// </summary>
     /// <remarks>
-    /// Cached for one minute
+    /// Cached for one minute.
     /// </remarks>
     [OutputCache(PolicyName = "Articulate60")]
     [ArticulateDynamicRoute]
@@ -36,9 +36,9 @@ namespace Articulate.Controllers
             publishedValueFallback)
     {
         /// <summary>
-        /// Used to render the category listing (virtual node)
+        /// Used to render the category listing (virtual node).
         /// </summary>
-        /// <param name="tag">The category to display if supplied</param>
+        /// <param name="tag">The category to display if supplied.</param>
         /// <param name="p"></param>
         /// <returns></returns>
         public IActionResult Categories(string tag, int? p)
@@ -57,9 +57,9 @@ namespace Articulate.Controllers
         }
 
         /// <summary>
-        /// Used to render the tag listing (virtual node)
+        /// Used to render the tag listing (virtual node).
         /// </summary>
-        /// <param name="tag">The tag to display if supplied</param>
+        /// <param name="tag">The tag to display if supplied.</param>
         /// <param name="p"></param>
         /// <returns></returns>
         public IActionResult Tags(string tag, int? p)
@@ -104,24 +104,25 @@ namespace Articulate.Controllers
 
             // Content negotiation for AI agents on tag/category list pages
             Response.Headers.Append("Vary", "X-Content-Variant");
-            var preferred = GetPreferredTextFormat(Request);
+            TextFormat preferred = GetPreferredTextFormat(Request);
             if (preferred == TextFormat.Markdown)
             {
                 Response.Headers["X-Content-Variant"] = "md";
-                Response.Headers["Cache-Control"] = "public, max-age=0, s-maxage=60";
+                Response.Headers.CacheControl = "public, max-age=0, s-maxage=60";
                 var md = BuildTagsMarkdown(tagListModel);
                 return Content(md, "text/markdown; charset=utf-8");
             }
+
             if (preferred == TextFormat.PlainText)
             {
                 Response.Headers["X-Content-Variant"] = "txt";
-                Response.Headers["Cache-Control"] = "public, max-age=0, s-maxage=60";
+                Response.Headers.CacheControl = "public, max-age=0, s-maxage=60";
                 var txt = BuildTagsPlain(tagListModel);
                 return Content(txt, "text/plain; charset=utf-8");
             }
 
             Response.Headers["X-Content-Variant"] = "html";
-            Response.Headers["Cache-Control"] = "public, max-age=0, s-maxage=60";
+            Response.Headers.CacheControl = "public, max-age=0, s-maxage=60";
             return View("Tags", tagListModel);
         }
 
@@ -167,12 +168,12 @@ namespace Articulate.Controllers
         {
             None,
             Markdown,
-            PlainText
+            PlainText,
         }
 
         private static TextFormat GetPreferredTextFormat(HttpRequest request)
         {
-            var accepts = request.GetTypedHeaders().Accept;
+            IList<MediaTypeHeaderValue>? accepts = request.GetTypedHeaders().Accept;
             if (accepts is null || accepts.Count == 0)
             {
                 return TextFormat.None;
@@ -182,29 +183,44 @@ namespace Articulate.Controllers
             {
                 var type = mt.Type.Value;
                 var sub = mt.SubType.Value;
-                if (type is null || sub is null) return false;
+                if (type is null || sub is null)
+                {
+                    return false;
+                }
+
                 return type.Equals("text", StringComparison.OrdinalIgnoreCase)
-                    && (sub.Equals("markdown", StringComparison.OrdinalIgnoreCase)
-                        || sub.Equals("x-markdown", StringComparison.OrdinalIgnoreCase)
-                        || sub.EndsWith("+markdown", StringComparison.OrdinalIgnoreCase));
+                       && (sub.Equals("markdown", StringComparison.OrdinalIgnoreCase)
+                           || sub.Equals("x-markdown", StringComparison.OrdinalIgnoreCase)
+                           || sub.EndsWith("+markdown", StringComparison.OrdinalIgnoreCase));
             }
 
             static bool IsPlain(MediaTypeHeaderValue mt)
             {
                 var type = mt.Type.Value;
                 var sub = mt.SubType.Value;
-                if (type is null || sub is null) return false;
+                if (type is null || sub is null)
+                {
+                    return false;
+                }
+
                 return type.Equals("text", StringComparison.OrdinalIgnoreCase)
                        && (sub.Equals("plain", StringComparison.OrdinalIgnoreCase)
                            || sub.Equals("*", StringComparison.Ordinal));
             }
 
             double qMarkdown = 0, qPlain = 0;
-            foreach (var mt in accepts)
+            foreach (MediaTypeHeaderValue mt in accepts)
             {
                 var q = mt.Quality.HasValue ? (double)mt.Quality.Value : 1.0;
-                if (IsMarkdown(mt)) qMarkdown = Math.Max(qMarkdown, q);
-                if (IsPlain(mt)) qPlain = Math.Max(qPlain, q);
+                if (IsMarkdown(mt))
+                {
+                    qMarkdown = Math.Max(qMarkdown, q);
+                }
+
+                if (IsPlain(mt))
+                {
+                    qPlain = Math.Max(qPlain, q);
+                }
             }
 
             if (qMarkdown <= 0 && qPlain <= 0)
@@ -218,26 +234,28 @@ namespace Articulate.Controllers
         private static string BuildTagsMarkdown(TagListModel model)
         {
             var sb = new System.Text.StringBuilder();
-            sb.Append("# ").AppendLine(model.Name);
-            sb.AppendLine();
-            foreach (var tag in model.Tags)
+            _ = sb.Append("# ").AppendLine(model.Name);
+            _ = sb.AppendLine();
+            foreach (PostsByTagModel tag in model.Tags)
             {
-                sb.Append("- [").Append(tag.TagName).Append("](").Append(tag.TagUrl).Append(") — ")
+                _ = sb.Append("- [").Append(tag.TagName).Append("](").Append(tag.TagUrl).Append(") — ")
                     .Append(tag.PostCount).AppendLine(tag.PostCount == 1 ? " post" : " posts");
             }
+
             return sb.ToString();
         }
 
         private static string BuildTagsPlain(TagListModel model)
         {
             var sb = new System.Text.StringBuilder();
-            sb.AppendLine(model.Name);
-            foreach (var tag in model.Tags)
+            _ = sb.AppendLine(model.Name);
+            foreach (PostsByTagModel tag in model.Tags)
             {
-                sb.Append("- ").Append(tag.TagName).Append(" — ")
+                _ = sb.Append("- ").Append(tag.TagName).Append(" — ")
                     .Append(tag.PostCount).Append(tag.PostCount == 1 ? " post " : " posts ")
                     .AppendLine(tag.TagUrl);
             }
+
             return sb.ToString();
         }
     }

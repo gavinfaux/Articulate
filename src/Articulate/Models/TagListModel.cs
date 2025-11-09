@@ -42,6 +42,7 @@ namespace Articulate.Models
 
         public PostTagCollection Tags { get; }
 
+        /// <inheritdoc/>
         public override string Name { get; }
     }
 }

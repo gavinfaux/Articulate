@@ -18,13 +18,13 @@ public sealed class ArticulatePlan : MigrationPlan
     public ArticulatePlan()
         : base(ArticulateConstants.Migration.ArticulatePackageMigrationPlan)
     {
-        From(InitialState);
+        _ = From(InitialState);
         DefinePlan();
     }
 
     private void DefinePlan()
     {
-        To<Articulate.Migrations.Upgrade.V_6_0_0.MigrateArticulateRichText>("{5B6B5B4C-F79A-4CC7-9D77-5F0326BD94FE}");
+        _ = To<Articulate.Migrations.Upgrade.V_6_0_0.MigrateArticulateRichText>("{5B6B5B4C-F79A-4CC7-9D77-5F0326BD94FE}");
 
         // To<Articulate.Migrations.Upgrade.V_6_0_0.MigrateImageCropperToJson>("{F21DA998-30EF-4E16-86EA-97A212DE509F}");
     }

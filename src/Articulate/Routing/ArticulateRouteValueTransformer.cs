@@ -32,6 +32,7 @@ namespace Articulate.Routing
         private bool _hasCache;
         private bool _disposedValue;
 
+        /// <inheritdoc/>
         public override async ValueTask<RouteValueDictionary> TransformAsync(HttpContext httpContext, RouteValueDictionary values)
         {
             // check if Umbraco has already matched content, we don't want to execute if things
@@ -83,6 +84,7 @@ namespace Articulate.Routing
             return routeResult.RouteSuccess ? newValues : [];
         }
 
+        /// <inheritdoc/>
         public void Dispose() => Dispose(disposing: true);
 
         private void Dispose(bool disposing)
@@ -146,10 +148,10 @@ namespace Articulate.Routing
             // re-assign the domain if there was one.
             if (assignedDomain != null)
             {
-                requestBuilder.SetDomain(assignedDomain);
+                _ = requestBuilder.SetDomain(assignedDomain);
             }
 
-            requestBuilder.SetPublishedContent(publishedContent);
+            _ = requestBuilder.SetPublishedContent(publishedContent);
 
             IPublishedRequest publishedRequest = requestBuilder.Build();
 

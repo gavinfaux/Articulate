@@ -12,9 +12,6 @@ namespace Articulate.Models
         IPublishedValueFallback publishedValueFallback)
         : ListModel(content, pager, listItems, publishedValueFallback), IImageModel
     {
-        private DateTime? _lastPostDate;
-        private MediaWithCrops? _image;
-
         [Obsolete("Use AuthorModel(IEnumerable<IPublishedContent>? listItems,PagerModel? pager, int postCount,  IPublishedValueFallback publishedValueFallback)")]
         public AuthorModel(
             IPublishedContent? content,
@@ -31,14 +28,16 @@ namespace Articulate.Models
 
         public string AuthorUrl => this.Value<string>("authorUrl") ?? string.Empty;
 
-        public MediaWithCrops? Image => _image ??= Unwrap().Value<MediaWithCrops>("authorImage");
+        /// <inheritdoc/>
+        public MediaWithCrops? Image => field ??= Unwrap().Value<MediaWithCrops>("authorImage");
 
         public int PostCount { get; } = postCount;
 
         // We know the list of posts passed in is already ordered descending so get the first
         [Obsolete("Please use TryGetChildrenKeys() on IDocumentNavigationQueryService or IMediaNavigationQueryService instead. Scheduled for removal in V16.", false)]
-        public DateTime? LastPostDate => _lastPostDate ??= Children.FirstOrDefault()?.Value<DateTime>("publishedDate");
+        public DateTime? LastPostDate { get => field ??= Children.FirstOrDefault()?.Value<DateTime>("publishedDate"); private set; }
 
+        /// <inheritdoc/>
         string IImageModel.Url => this.Url();
     }
 }

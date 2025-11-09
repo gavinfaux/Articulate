@@ -10,6 +10,7 @@ namespace Articulate.Syndication
     public class RssFeedGenerator(ILogger<RssFeedGenerator> logger, IHostingEnvironment hostingEnvironment)
         : IRssFeedGenerator
     {
+        /// <inheritdoc/>
         public SyndicationFeed GetFeed(IMasterModel rootPageModel, IEnumerable<PostModel> posts)
         {
             var feed = new SyndicationFeed(
@@ -19,7 +20,7 @@ namespace Articulate.Syndication
                 GetFeedItems(rootPageModel, posts))
             {
                 Generator = "Articulate, blogging built on Umbraco",
-                ImageUrl = GetBlogImage(rootPageModel)
+                ImageUrl = GetBlogImage(rootPageModel),
             };
 
             // TODO: attempting to add media:thumbnail...
@@ -53,7 +54,7 @@ namespace Articulate.Syndication
                 post.Id.ToString(CultureInfo.InvariantCulture),
                 post.PublishedDate)
             {
-                PublishDate = post.PublishedDate
+                PublishDate = post.PublishedDate,
 
                 // don't include this as it will override the main content bits
                 // Summary = new TextSyndicationContent(post.Excerpt)

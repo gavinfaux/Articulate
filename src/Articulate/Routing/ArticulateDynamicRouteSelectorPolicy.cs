@@ -21,8 +21,10 @@ namespace Articulate.Routing
     /// </remarks>
     internal class ArticulateDynamicRouteSelectorPolicy : MatcherPolicy, IEndpointSelectorPolicy
     {
+        /// <inheritdoc/>
         public override int Order => 100;
 
+        /// <inheritdoc/>
         public bool AppliesToEndpoints(IReadOnlyList<Endpoint> endpoints) =>
 
             // Don't apply this filter to any endpoint group that is a controller route i.e. only dynamic routes.
@@ -31,6 +33,7 @@ namespace Articulate.Routing
             // then ensure this is only applied if all endpoints are IDynamicEndpointMetadata
             endpoints.All(x => x.Metadata.GetMetadata<IDynamicEndpointMetadata>() is not null);
 
+        /// <inheritdoc/>
         public Task ApplyAsync(HttpContext httpContext, CandidateSet candidates)
         {
             UmbracoRouteValues? umbracoRouteValues = httpContext.Features.Get<UmbracoRouteValues>();

@@ -33,6 +33,7 @@ namespace Articulate.Controllers
         : RenderController(logger, compositeViewEngine, umbracoContextAccessor)
     {
         // NonAction so it is not routed since we want to use an overload below
+        /// <inheritdoc/>
         [NonAction]
         public override IActionResult Index() => Index(0);
 

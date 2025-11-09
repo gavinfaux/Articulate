@@ -13,6 +13,7 @@ namespace Articulate.Routing
         IUmbracoContextAccessor umbracoContextAccessor)
         : ContentFinderByUrl(logger, umbracoContextAccessor)
     {
+        /// <inheritdoc/>
         public override async Task<bool> TryFindContent(IPublishedRequestBuilder contentRequest)
         {
             await Task.CompletedTask.ConfigureAwait(false);
@@ -72,7 +73,7 @@ namespace Articulate.Routing
                 return false;
             }
 
-            contentRequest.SetPublishedContent(node);
+            _ = contentRequest.SetPublishedContent(node);
             return true;
         }
     }

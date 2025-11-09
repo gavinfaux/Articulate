@@ -12,6 +12,7 @@ namespace Articulate
         IExamineManager examineManager)
         : IArticulateSearcher
     {
+        /// <inheritdoc/>
         public IEnumerable<IPublishedContent> Search(string term, string? indexName, int blogArchiveNodeId, int pageSize, int pageIndex, out long totalResults)
         {
             var splitSearch = term.Split([' '], StringSplitOptions.RemoveEmptyEntries);
@@ -24,7 +25,7 @@ namespace Articulate
                 { "nodeName", 3 },
                 { "tags", 1 },
                 { "categories", 1 },
-                { "umbracoUrlName", 3 }
+                { "umbracoUrlName", 3 },
             };
 
             // The multipliers for match types
@@ -37,8 +38,8 @@ namespace Articulate
             foreach (KeyValuePair<string, int> field in fields)
             {
                 // full exact match (which has a higher boost)
-                fieldQuery.Append($"{field.Key}:{"\"" + term + "\""}^{field.Value * exactMatch}");
-                fieldQuery.Append(' ');
+                _ = fieldQuery.Append($"{field.Key}:{"\"" + term + "\""}^{field.Value * exactMatch}");
+                _ = fieldQuery.Append(' ');
 
                 // NOTE: Phrase match wildcard isn't really supported unless you use the Lucene
                 // API like ComplexPhraseWildcardSomethingOrOther...
@@ -46,12 +47,12 @@ namespace Articulate
                 foreach (var s in splitSearch)
                 {
                     // match on each term, no wildcard, higher boost
-                    fieldQuery.Append($"{field.Key}:{s}^{field.Value * termMatch}");
-                    fieldQuery.Append(' ');
+                    _ = fieldQuery.Append($"{field.Key}:{s}^{field.Value * termMatch}");
+                    _ = fieldQuery.Append(' ');
 
                     // match on each term, with wildcard
-                    fieldQuery.Append($"{field.Key}:{s}*");
-                    fieldQuery.Append(' ');
+                    _ = fieldQuery.Append($"{field.Key}:{s}*");
+                    _ = fieldQuery.Append(' ');
                 }
             }
 

@@ -10,7 +10,6 @@ namespace Articulate.Models
     public class ListModel : MasterModel
     {
         private readonly IEnumerable<IPublishedContent>? _listItems;
-        private IEnumerable<PostModel>? _resolvedList;
 
         /// <summary>
         /// Accepts an explicit list of child items
@@ -80,20 +79,20 @@ namespace Articulate.Models
         {
             get
             {
-                if (_resolvedList is not null)
+                if (field is not null)
                 {
-                    return _resolvedList;
+                    return field;
                 }
 
                 if (_listItems is null)
                 {
-                    _resolvedList = ChildrenForAllCultures.Select(x => new PostModel(x, PublishedValueFallback)).ToArray();
-                    return _resolvedList;
+                    field = ChildrenForAllCultures.Select(x => new PostModel(x, PublishedValueFallback)).ToArray();
+                    return field;
                 }
 
                 if (_listItems is not null && Pages is not null)
                 {
-                    _resolvedList = _listItems
+                    field = _listItems
 
                         // Skip will already be done in this case, but we'll take again anyways just to be safe
                         .Take(Pages.PageSize)
@@ -102,11 +101,13 @@ namespace Articulate.Models
                 }
                 else
                 {
-                    _resolvedList = [];
+                    field = [];
                 }
 
-                return _resolvedList;
+                return field;
             }
+
+            private set;
         }
 
         /// <summary>

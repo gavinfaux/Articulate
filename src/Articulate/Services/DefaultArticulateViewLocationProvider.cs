@@ -5,6 +5,7 @@ namespace Articulate.Services
 {
     public sealed class DefaultArticulateViewLocationProvider : IArticulateViewLocationProvider
     {
+        /// <inheritdoc/>
         public IEnumerable<string> GetLocations(string themeName)
         {
             // Build ordered list of search locations. We include both virtual and content-root system paths.

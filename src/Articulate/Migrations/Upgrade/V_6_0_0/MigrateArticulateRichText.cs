@@ -14,6 +14,7 @@ namespace Articulate.Migrations.Upgrade.V_6_0_0
         ILogger<MigrateArticulateRichText> logger)
         : MigrateDataTypeConfigurationBase(context, scopeProvider, dataTypeService, logger)
     {
+        /// <inheritdoc/>
         protected override void Migrate()
         {
             try

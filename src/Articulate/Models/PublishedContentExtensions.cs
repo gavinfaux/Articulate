@@ -239,22 +239,22 @@ namespace Articulate.Models
         public static IHtmlContent AuthorCitation(this PostModel model)
         {
             var builder = new HtmlContentBuilder();
-            builder.AppendHtml("<span>");
-            builder.Append("By ");
+            _ = builder.AppendHtml("<span>");
+            _ = builder.Append("By ");
 
             // TODO: Check if the current theme has an Author.cshtml theme file otherwise don't render a link!
             // In that case we should have a 'ThemeSupport' class that will check to see what a theme supports.
             if (model.Author.BlogUrl.IsNullOrWhiteSpace())
             {
-                builder.Append(model.Author.Name);
+                _ = builder.Append(model.Author.Name);
             }
             else
             {
-                builder.AppendHtml($"""<a href="{model.Author.BlogUrl}">{model.Author.Name}</a>""");
+                _ = builder.AppendHtml($"""<a href="{model.Author.BlogUrl}">{model.Author.Name}</a>""");
             }
 
-            builder.AppendHtml("&nbsp;on&nbsp;");
-            builder.AppendHtml("</span>");
+            _ = builder.AppendHtml("&nbsp;on&nbsp;");
+            _ = builder.AppendHtml("</span>");
 
             return builder;
         }
@@ -304,9 +304,9 @@ namespace Articulate.Models
             var metaDescriptionTag = new TagBuilder("meta")
             {
                 TagRenderMode = TagRenderMode.SelfClosing,
-                Attributes = { ["name"] = "description", ["content"] = model.PageDescription }
+                Attributes = { ["name"] = "description", ["content"] = model.PageDescription },
             };
-            htmlContent.AppendHtml(metaDescriptionTag);
+            _ = htmlContent.AppendHtml(metaDescriptionTag);
 
             if (string.IsNullOrWhiteSpace(model.PageTags))
             {
@@ -316,9 +316,9 @@ namespace Articulate.Models
             var tagsTag = new TagBuilder("meta")
             {
                 TagRenderMode = TagRenderMode.SelfClosing,
-                Attributes = { ["name"] = "tags", ["content"] = model.PageTags }
+                Attributes = { ["name"] = "tags", ["content"] = model.PageTags },
             };
-            htmlContent.AppendHtml(tagsTag);
+            _ = htmlContent.AppendHtml(tagsTag);
 
             return htmlContent;
         }
@@ -373,13 +373,13 @@ namespace Articulate.Models
                 var a = new TagBuilder("a");
                 a.MergeAttribute("href", tag.tag.TagUrl);
                 a.MergeAttribute("title", tag.tag.TagName);
-                a.InnerHtml.SetContent(tag.tag.TagName);
+                _ = a.InnerHtml.SetContent(tag.tag.TagName);
 
                 var li = new TagBuilder("li");
                 li.AddCssClass("tag-cloud-" + tag.weight);
-                li.InnerHtml.AppendHtml(a);
+                _ = li.InnerHtml.AppendHtml(a);
 
-                ul.InnerHtml.AppendHtml(li);
+                _ = ul.InnerHtml.AppendHtml(li);
             }
 
             return ul;
@@ -399,9 +399,9 @@ namespace Articulate.Models
                     var li = new TagBuilder("li");
                     li.AddCssClass("tag-cloud-" + tag.weight);
 
-                    li.InnerHtml.AppendHtml(tagLink(tag.tag));
+                    _ = li.InnerHtml.AppendHtml(tagLink(tag.tag));
 
-                    ul.InnerHtml.AppendHtml(li);
+                    _ = ul.InnerHtml.AppendHtml(li);
                 }
 
                 ul.WriteTo(writer, HtmlEncoder.Default);
@@ -421,30 +421,30 @@ namespace Articulate.Models
                 Attributes =
                 {
                     ["name"] = "twitter:card", ["content"] = "summary"
-                } // non-closing since that's just the way it is
+                }, // non-closing since that's just the way it is
             };
-            builder.AppendHtml(twitterTag);
+            _ = builder.AppendHtml(twitterTag);
 
             var openGraphTitle = new TagBuilder("meta")
             {
                 TagRenderMode = TagRenderMode.SelfClosing,
-                Attributes = { ["property"] = "og:title", ["content"] = model.Name }
+                Attributes = { ["property"] = "og:title", ["content"] = model.Name },
             };
-            builder.AppendHtml(openGraphTitle);
+            _ = builder.AppendHtml(openGraphTitle);
 
             var openGraphType = new TagBuilder("meta")
             {
                 TagRenderMode = TagRenderMode.SelfClosing,
-                Attributes = { ["property"] = "og:type", ["content"] = "article" }
+                Attributes = { ["property"] = "og:type", ["content"] = "article" },
             };
-            builder.AppendHtml(openGraphType);
+            _ = builder.AppendHtml(openGraphType);
 
             var openGraphUrl = new TagBuilder("meta")
             {
                 TagRenderMode = TagRenderMode.SelfClosing,
-                Attributes = { ["property"] = "og:url", ["content"] = model.Url(mode: UrlMode.Absolute) }
+                Attributes = { ["property"] = "og:url", ["content"] = model.Url(mode: UrlMode.Absolute) },
             };
-            builder.AppendHtml(openGraphUrl);
+            _ = builder.AppendHtml(openGraphUrl);
         }
 
         public static void PostSocialMetaTags(PostModel model, HttpRequest request)
@@ -463,10 +463,10 @@ namespace Articulate.Models
                     Attributes =
                     {
                         ["property"] = "og:image", ["content"] = GetDomain(request) + model.CroppedPostImageUrl
-                    }
+                    },
                 };
 
-                builder.AppendHtml(openGraphImage);
+                _ = builder.AppendHtml(openGraphImage);
             }
 
             if (model.SocialMetaDescription.IsNullOrWhiteSpace() && model.Excerpt.IsNullOrWhiteSpace())
@@ -480,10 +480,10 @@ namespace Articulate.Models
                 Attributes =
                 {
                     ["property"] = "og:description", ["content"] = model.SocialMetaDescription.IsNullOrWhiteSpace() ? model.Excerpt : model.SocialMetaDescription
-                }
+                },
             };
 
-            builder.AppendHtml(openGraphDesc);
+            _ = builder.AppendHtml(openGraphDesc);
         }
 
         public static IPublishedContent[] GetListNodes(IMasterModel masterModel)
@@ -558,13 +558,13 @@ namespace Articulate.Models
                 {
                     var th = new TagBuilder("th");
                     th.AddCssClass(cssClasses.Length - 1 >= 1 ? cssClasses[i] : string.Empty);
-                    th.InnerHtml.SetContent(headers[i]);
-                    tr.InnerHtml.AppendHtml(th);
+                    _ = th.InnerHtml.SetContent(headers[i]);
+                    _ = tr.InnerHtml.AppendHtml(th);
                 }
 
-                thead.InnerHtml.AppendHtml(tr);
+                _ = thead.InnerHtml.AppendHtml(tr);
 
-                table.InnerHtml.AppendHtml(thead);
+                _ = table.InnerHtml.AppendHtml(thead);
 
                 var tbody = new TagBuilder("tbody");
                 for (var rowIndex = 0; rowIndex < rows; rowIndex++)
@@ -580,18 +580,18 @@ namespace Articulate.Models
                         if (item != null)
                         {
                             // if there's an item at that grid location, call its template
-                            tdContent.InnerHtml.SetHtmlContent(cellTemplates[colIndex](item));
+                            _ = tdContent.InnerHtml.SetHtmlContent(cellTemplates[colIndex](item));
 
                             // cellTemplates[colIndex](item).WriteTo(writer, HtmlEncoder.Default);
                         }
 
-                        trContent.InnerHtml.AppendHtml(tdContent);
+                        _ = trContent.InnerHtml.AppendHtml(tdContent);
                     }
 
-                    tbody.InnerHtml.AppendHtml(trContent);
+                    _ = tbody.InnerHtml.AppendHtml(trContent);
                 }
 
-                table.InnerHtml.AppendHtml(tbody);
+                _ = table.InnerHtml.AppendHtml(tbody);
 
                 table.WriteTo(writer, HtmlEncoder.Default);
                 return Task.CompletedTask;

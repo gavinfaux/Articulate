@@ -15,7 +15,7 @@ using Umbraco.Cms.Web.Website.ActionResults;
 namespace Articulate.Controllers
 {
     /// <summary>
-    /// Base controller providing common functionality for listing pages
+    /// Base controller providing common functionality for listing pages.
     /// </summary>
     public abstract class ListControllerBase(
         ILogger<ListControllerBase> logger,
@@ -32,7 +32,7 @@ namespace Articulate.Controllers
         protected IPublishedValueFallback PublishedValueFallback { get; } = publishedValueFallback;
 
         /// <summary>
-        /// Gets a paged list view for a given posts by author/tags/categories model
+        /// Gets a paged list view for a given posts by author/tags/categories model.
         /// </summary>
         protected IActionResult GetPagedListView(IMasterModel masterModel, IPublishedContent pageNode, IEnumerable<IPublishedContent> listItems, long totalPosts, int? p)
         {
@@ -54,11 +54,11 @@ namespace Articulate.Controllers
             Response.Headers.Append("Vary", "X-Content-Variant");
 
             // Content negotiation for LLMs/agents on list pages
-            var preferred = GetPreferredTextFormat(Request);
+            TextFormat preferred = GetPreferredTextFormat(Request);
             if (preferred == TextFormat.Markdown)
             {
                 Response.Headers["X-Content-Variant"] = "md";
-                Response.Headers["Cache-Control"] = "public, max-age=0, s-maxage=60";
+                Response.Headers.CacheControl = "public, max-age=0, s-maxage=60";
                 var md = BuildListMarkdown(listModel);
                 return Content(md, "text/markdown; charset=utf-8");
             }
@@ -66,14 +66,14 @@ namespace Articulate.Controllers
             if (preferred == TextFormat.PlainText)
             {
                 Response.Headers["X-Content-Variant"] = "txt";
-                Response.Headers["Cache-Control"] = "public, max-age=0, s-maxage=60";
+                Response.Headers.CacheControl = "public, max-age=0, s-maxage=60";
                 var txt = BuildListPlain(listModel);
                 return Content(txt, "text/plain; charset=utf-8");
             }
 
             // Default HTML
             Response.Headers["X-Content-Variant"] = "html";
-            Response.Headers["Cache-Control"] = "public, max-age=0, s-maxage=60";
+            Response.Headers.CacheControl = "public, max-age=0, s-maxage=60";
             return View("List", listModel);
         }
 
@@ -112,7 +112,7 @@ namespace Articulate.Controllers
 
                 foreach (var v in val)
                 {
-                    queryStrings.Append($"&{key}={v}");
+                    _ = queryStrings.Append($"&{key}={v}");
                 }
             }
 
@@ -135,12 +135,12 @@ namespace Articulate.Controllers
         {
             None,
             Markdown,
-            PlainText
+            PlainText,
         }
 
         private static TextFormat GetPreferredTextFormat(HttpRequest request)
         {
-            var accepts = request.GetTypedHeaders().Accept;
+            IList<MediaTypeHeaderValue>? accepts = request.GetTypedHeaders().Accept;
             if (accepts is null || accepts.Count == 0)
             {
                 return TextFormat.None;
@@ -150,29 +150,44 @@ namespace Articulate.Controllers
             {
                 var type = mt.Type.Value;
                 var sub = mt.SubType.Value;
-                if (type is null || sub is null) return false;
+                if (type is null || sub is null)
+                {
+                    return false;
+                }
+
                 return type.Equals("text", StringComparison.OrdinalIgnoreCase)
-                    && (sub.Equals("markdown", StringComparison.OrdinalIgnoreCase)
-                        || sub.Equals("x-markdown", StringComparison.OrdinalIgnoreCase)
-                        || sub.EndsWith("+markdown", StringComparison.OrdinalIgnoreCase));
+                       && (sub.Equals("markdown", StringComparison.OrdinalIgnoreCase)
+                           || sub.Equals("x-markdown", StringComparison.OrdinalIgnoreCase)
+                           || sub.EndsWith("+markdown", StringComparison.OrdinalIgnoreCase));
             }
 
             static bool IsPlain(MediaTypeHeaderValue mt)
             {
                 var type = mt.Type.Value;
                 var sub = mt.SubType.Value;
-                if (type is null || sub is null) return false;
+                if (type is null || sub is null)
+                {
+                    return false;
+                }
+
                 return type.Equals("text", StringComparison.OrdinalIgnoreCase)
                        && (sub.Equals("plain", StringComparison.OrdinalIgnoreCase)
                            || sub.Equals("*", StringComparison.Ordinal));
             }
 
             double qMarkdown = 0, qPlain = 0;
-            foreach (var mt in accepts)
+            foreach (MediaTypeHeaderValue mt in accepts)
             {
                 var q = mt.Quality.HasValue ? (double)mt.Quality.Value : 1.0;
-                if (IsMarkdown(mt)) qMarkdown = Math.Max(qMarkdown, q);
-                if (IsPlain(mt)) qPlain = Math.Max(qPlain, q);
+                if (IsMarkdown(mt))
+                {
+                    qMarkdown = Math.Max(qMarkdown, q);
+                }
+
+                if (IsPlain(mt))
+                {
+                    qPlain = Math.Max(qPlain, q);
+                }
             }
 
             if (qMarkdown <= 0 && qPlain <= 0)
@@ -183,51 +198,53 @@ namespace Articulate.Controllers
             return qMarkdown >= qPlain ? TextFormat.Markdown : TextFormat.PlainText;
         }
 
-        private string BuildListMarkdown(ListModel listModel)
+        private static string BuildListMarkdown(ListModel listModel)
         {
             var sb = new StringBuilder();
-            sb.Append("# ").AppendLine(listModel.Name);
-            sb.AppendLine();
-            foreach (var item in listModel.Posts)
+            _ = sb.Append("# ").AppendLine(listModel.Name);
+            _ = sb.AppendLine();
+            foreach (PostModel item in listModel.Posts)
             {
                 var url = item.Url();
                 var date = item.PublishedDate.ToString("yyyy-MM-dd");
                 var excerpt = (item.Excerpt ?? string.Empty).NewLinesToSpaces();
                 if (!string.IsNullOrWhiteSpace(excerpt))
                 {
-                    sb.Append("- [").Append(item.Name).Append("](").Append(url).Append(") — ")
+                    _ = sb.Append("- [").Append(item.Name).Append("](").Append(url).Append(") — ")
                         .Append(date).Append(" — ").AppendLine(excerpt);
                 }
                 else
                 {
-                    sb.Append("- [").Append(item.Name).Append("](").Append(url).Append(") — ")
+                    _ = sb.Append("- [").Append(item.Name).Append("](").Append(url).Append(") — ")
                         .AppendLine(date);
                 }
             }
+
             return sb.ToString();
         }
 
-        private string BuildListPlain(ListModel listModel)
+        private static string BuildListPlain(ListModel listModel)
         {
             var sb = new StringBuilder();
-            sb.AppendLine(listModel.Name);
-            foreach (var item in listModel.Posts)
+            _ = sb.AppendLine(listModel.Name);
+            foreach (PostModel item in listModel.Posts)
             {
                 var url = item.Url();
                 var date = item.PublishedDate.ToString("yyyy-MM-dd");
                 var excerpt = (item.Excerpt ?? string.Empty).NewLinesToSpaces();
                 if (!string.IsNullOrWhiteSpace(excerpt))
                 {
-                    sb.Append("- ").Append(item.Name).Append(" — ")
+                    _ = sb.Append("- ").Append(item.Name).Append(" — ")
                         .Append(date).Append(" — ").Append(excerpt)
-                        .Append(" ").AppendLine(url);
+                        .Append(' ').AppendLine(url);
                 }
                 else
                 {
-                    sb.Append("- ").Append(item.Name).Append(" — ")
-                        .Append(date).Append(" ").AppendLine(url);
+                    _ = sb.Append("- ").Append(item.Name).Append(" — ")
+                        .Append(date).Append(' ').AppendLine(url);
                 }
             }
+
             return sb.ToString();
         }
     }

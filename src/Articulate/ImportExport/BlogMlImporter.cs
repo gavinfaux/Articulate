@@ -1,5 +1,4 @@
 #nullable enable
-using System.IO;
 using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -163,7 +162,7 @@ namespace Articulate.ImportExport
                 }
 
                 // commit
-                scope.Complete();
+                _ = scope.Complete();
                 returnModel.Completed = true;
                 return returnModel;
             }
@@ -217,7 +216,7 @@ namespace Articulate.ImportExport
                 DtdProcessing = DtdProcessing.Prohibit,
                 XmlResolver = null,
                 MaxCharactersInDocument = MaxXmlCharacters,
-                MaxCharactersFromEntities = 1024
+                MaxCharactersFromEntities = 1024,
             };
 
             return XmlReader.Create(stream, settings);
@@ -248,8 +247,8 @@ namespace Articulate.ImportExport
                 // create the authors node
                 authorsNode = _contentService.CreateWithInvariantOrDefaultCultureName(ArticulateConstants.Convention.AuthorsDocument, rootNode, authorsType, _languageService);
 
-                _contentService.Save(authorsNode, userId: userId);
-                _contentService.Publish(authorsNode, ["*"], userId: userId);
+                _ = _contentService.Save(authorsNode, userId: userId);
+                _ = _contentService.Publish(authorsNode, ["*"], userId: userId);
             }
 
             // get the authors nodes for this authors container
@@ -287,8 +286,8 @@ namespace Articulate.ImportExport
                                 authorType,
                                 _languageService);
 
-                            _contentService.Save(authorNode, userId: userId);
-                            _contentService.Publish(authorNode, ["*"], userId: userId);
+                            _ = _contentService.Save(authorNode, userId: userId);
+                            _ = _contentService.Publish(authorNode, ["*"], userId: userId);
                         }
 
                         result.Add(author.Id, authorNode.Name!);
@@ -309,8 +308,8 @@ namespace Articulate.ImportExport
                                 authorType,
                                 _languageService);
 
-                            _contentService.Save(authorNode, userId: userId);
-                            _contentService.Publish(authorNode, ["*"], userId: userId);
+                            _ = _contentService.Save(authorNode, userId: userId);
+                            _ = _contentService.Publish(authorNode, ["*"], userId: userId);
                         }
 
                         result.Add(author.Id, authorNode.Name!);
@@ -346,7 +345,7 @@ namespace Articulate.ImportExport
                 // create the authors node
                 archiveNode = _contentService.CreateWithInvariantOrDefaultCultureName(ArticulateConstants.Convention.AuthorsDocument, rootNode, archiveDocType, _languageService);
 
-                _contentService.Save(archiveNode);
+                _ = _contentService.Save(archiveNode);
             }
 
             // get the posts for this archive container
@@ -471,12 +470,12 @@ namespace Articulate.ImportExport
 
                 if (publishAll)
                 {
-                    _contentService.Save(postNode, userId: userId);
-                    _contentService.Publish(postNode, ["*"], userId);
+                    _ = _contentService.Save(postNode, userId: userId);
+                    _ = _contentService.Publish(postNode, ["*"], userId);
                 }
                 else
                 {
-                    _contentService.Save(postNode, userId);
+                    _ = _contentService.Save(postNode, userId);
                 }
 
                 result.Add(postNode);

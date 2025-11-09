@@ -10,12 +10,13 @@ namespace Articulate.Components
     {
         private const string ThemeKey = "articulate-theme";
 
+        /// <inheritdoc/>
         public IEnumerable<string> ExpandViewLocations(ViewLocationExpanderContext context, IEnumerable<string> viewLocations)
         {
             IDictionary<string, string?>? values = context.Values;
             string? themeName = null;
 
-            values?.TryGetValue(ThemeKey, out themeName);
+            _ = values?.TryGetValue(ThemeKey, out themeName);
 
             if (string.IsNullOrEmpty(themeName))
             {
@@ -50,6 +51,7 @@ namespace Articulate.Components
             return themeLocations.Concat(viewLocations);
         }
 
+        /// <inheritdoc/>
         public void PopulateValues(ViewLocationExpanderContext context)
         {
             HttpContext? httpContext = context.ActionContext?.HttpContext;
@@ -64,14 +66,11 @@ namespace Articulate.Components
 
             // Values may be null in unit testing scenarios when constructed directly.
             IDictionary<string, string?>? values = context.Values;
-            if (values is not null)
-            {
-                values[ThemeKey] = themeName;
-            }
+            values?[ThemeKey] = themeName;
 
             if (string.IsNullOrWhiteSpace(themeName))
             {
-                httpContext.Items.Remove("ThemeName");
+                _ = httpContext.Items.Remove("ThemeName");
             }
             else
             {

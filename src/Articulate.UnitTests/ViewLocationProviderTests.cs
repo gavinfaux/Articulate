@@ -14,9 +14,9 @@ namespace Articulate.UnitTests
             var provider = new DefaultArticulateViewLocationProvider();
             var locations = provider.GetLocations("Aurora").ToArray();
 
-            locations.Should().NotBeEmpty();
-            locations.Should().OnlyContain(p => !p.Contains("\\"));
-            locations.First().Should().StartWith("~/Views/Articulate/");
+            _ = locations.Should().NotBeEmpty();
+            _ = locations.Should().OnlyContain(p => !p.Contains("\\"));
+            _ = locations.First().Should().StartWith("~/Views/Articulate/");
         }
 
         [Test]
@@ -36,7 +36,7 @@ namespace Articulate.UnitTests
             var resolved = search.FirstOrDefault(existing.Contains);
 
             // Assert: we fall back to Shared content-root view
-            resolved.Should().Be("wwwroot/App_Plugins/Articulate/Themes/Shared/Post.cshtml");
+            _ = resolved.Should().Be("wwwroot/App_Plugins/Articulate/Themes/Shared/Post.cshtml");
         }
 
         [Test]
@@ -48,13 +48,13 @@ namespace Articulate.UnitTests
             var list = provider.GetLocations(theme).ToList();
 
             // Assert: forward slashes only
-            list.Should().OnlyContain(p => !p.Contains("\\"));
+            _ = list.Should().OnlyContain(p => !p.Contains("\\"));
 
             // Assert: all end with placeholder suffix
-            list.Should().OnlyContain(p => p.EndsWith("{0}.cshtml"));
+            _ = list.Should().OnlyContain(p => p.EndsWith("{0}.cshtml"));
 
             // Assert: no duplicates
-            list.Distinct().Count().Should().Be(list.Count);
+            _ = list.Distinct().Count().Should().Be(list.Count);
 
             // Group ordering: user > legacy user > system (virtual, content-root) > shared (virtual, content-root) > markdown (virtual, content-root)
             var user = "~/Views/Articulate/";
@@ -116,18 +116,18 @@ namespace Articulate.UnitTests
             // Order must be non-decreasing by group index
             for (var i = 1; i < groups.Length; i++)
             {
-                groups[i].Should().BeGreaterThanOrEqualTo(groups[i - 1]);
+                _ = groups[i].Should().BeGreaterThanOrEqualTo(groups[i - 1]);
             }
 
             // Must include at least one from each expected group present in provider output
-            groups.Should().Contain(0);
-            groups.Should().Contain(1);
-            groups.Should().Contain(2);
-            groups.Should().Contain(3);
-            groups.Should().Contain(4);
-            groups.Should().Contain(5);
-            groups.Should().Contain(6);
-            groups.Should().Contain(7);
+            _ = groups.Should().Contain(0);
+            _ = groups.Should().Contain(1);
+            _ = groups.Should().Contain(2);
+            _ = groups.Should().Contain(3);
+            _ = groups.Should().Contain(4);
+            _ = groups.Should().Contain(5);
+            _ = groups.Should().Contain(6);
+            _ = groups.Should().Contain(7);
         }
 
         [Test]
@@ -136,8 +136,8 @@ namespace Articulate.UnitTests
             var provider = new DefaultArticulateViewLocationProvider();
             var locations = provider.GetLocations("Aurora").ToArray();
 
-            locations.Should().Contain(p => p == "~/App_Plugins/Articulate/MarkdownEditor/{0}.cshtml");
-            locations.Should().Contain(p => p == "wwwroot/App_Plugins/Articulate/MarkdownEditor/{0}.cshtml");
+            _ = locations.Should().Contain(p => p == "~/App_Plugins/Articulate/MarkdownEditor/{0}.cshtml");
+            _ = locations.Should().Contain(p => p == "wwwroot/App_Plugins/Articulate/MarkdownEditor/{0}.cshtml");
         }
 
         [Test]
@@ -148,32 +148,32 @@ namespace Articulate.UnitTests
             var list = provider.GetLocations(theme).ToList();
 
             // User
-            list.Should().Contain(p =>
+            _ = list.Should().Contain(p =>
                 p.StartsWith("~/Views/Articulate/" + theme + "/") && p.Contains("/Partials/") &&
                 p.EndsWith("{0}.cshtml"));
 
             // Legacy user
-            list.Should().Contain(p =>
+            _ = list.Should().Contain(p =>
                 p.StartsWith("~/Views/ArticulateThemes/" + theme + "/") && p.Contains("/Partials/") &&
                 p.EndsWith("{0}.cshtml"));
 
             // System virtual
-            list.Should().Contain(p =>
+            _ = list.Should().Contain(p =>
                 p.StartsWith("~/App_Plugins/Articulate/Themes/" + theme + "/") && p.Contains("/Partials/") &&
                 p.EndsWith("{0}.cshtml"));
 
             // System content-root
-            list.Should().Contain(p =>
+            _ = list.Should().Contain(p =>
                 p.StartsWith("wwwroot/App_Plugins/Articulate/Themes/" + theme + "/") && p.Contains("/Partials/") &&
                 p.EndsWith("{0}.cshtml"));
 
             // Shared virtual
-            list.Should().Contain(p =>
+            _ = list.Should().Contain(p =>
                 p.StartsWith("~/App_Plugins/Articulate/Themes/Shared/") && p.Contains("/Partials/") &&
                 p.EndsWith("{0}.cshtml"));
 
             // Shared content-root
-            list.Should().Contain(p =>
+            _ = list.Should().Contain(p =>
                 p.StartsWith("wwwroot/App_Plugins/Articulate/Themes/Shared/") && p.Contains("/Partials/") &&
                 p.EndsWith("{0}.cshtml"));
         }
@@ -184,8 +184,8 @@ namespace Articulate.UnitTests
             var provider = new DefaultArticulateViewLocationProvider();
             var locations = provider.GetLocations("Aurora").ToArray();
 
-            locations.Should().Contain(p => p.Contains("/Themes/Shared/") && p.EndsWith("{0}.cshtml"));
-            locations.Should().Contain(p =>
+            _ = locations.Should().Contain(p => p.Contains("/Themes/Shared/") && p.EndsWith("{0}.cshtml"));
+            _ = locations.Should().Contain(p =>
                 p.StartsWith("wwwroot/App_Plugins/Articulate/") && p.Contains("/Themes/Aurora/"));
         }
 
@@ -196,10 +196,10 @@ namespace Articulate.UnitTests
             var theme = "Aurora";
             var list = provider.GetLocations(theme).ToList();
 
-            list.Should().Contain(p => p == "~/App_Plugins/Articulate/Themes/" + theme + "/Views/{0}.cshtml");
-            list.Should().Contain(p => p == "wwwroot/App_Plugins/Articulate/Themes/" + theme + "/Views/{0}.cshtml");
-            list.Should().Contain(p => p == "~/App_Plugins/Articulate/Themes/Shared/Views/{0}.cshtml");
-            list.Should().Contain(p => p == "wwwroot/App_Plugins/Articulate/Themes/Shared/Views/{0}.cshtml");
+            _ = list.Should().Contain(p => p == "~/App_Plugins/Articulate/Themes/" + theme + "/Views/{0}.cshtml");
+            _ = list.Should().Contain(p => p == "wwwroot/App_Plugins/Articulate/Themes/" + theme + "/Views/{0}.cshtml");
+            _ = list.Should().Contain(p => p == "~/App_Plugins/Articulate/Themes/Shared/Views/{0}.cshtml");
+            _ = list.Should().Contain(p => p == "wwwroot/App_Plugins/Articulate/Themes/Shared/Views/{0}.cshtml");
         }
 
         [Test]
@@ -214,7 +214,7 @@ namespace Articulate.UnitTests
             var existing = new HashSet<string> { "wwwroot/App_Plugins/Articulate/Themes/Shared/_Layout.cshtml" };
 
             var resolved = search.FirstOrDefault(existing.Contains);
-            resolved.Should().Be("wwwroot/App_Plugins/Articulate/Themes/Shared/_Layout.cshtml");
+            _ = resolved.Should().Be("wwwroot/App_Plugins/Articulate/Themes/Shared/_Layout.cshtml");
         }
 
         [Test]
@@ -229,7 +229,7 @@ namespace Articulate.UnitTests
             var existing = new HashSet<string> { "~/App_Plugins/Articulate/Themes/Aurora/_Layout.cshtml" };
 
             var resolved = search.FirstOrDefault(existing.Contains);
-            resolved.Should().Be("~/App_Plugins/Articulate/Themes/Aurora/_Layout.cshtml");
+            _ = resolved.Should().Be("~/App_Plugins/Articulate/Themes/Aurora/_Layout.cshtml");
         }
 
         [Test]
@@ -248,7 +248,7 @@ namespace Articulate.UnitTests
             };
 
             var resolved = search.FirstOrDefault(existing.Contains);
-            resolved.Should().Be("wwwroot/App_Plugins/Articulate/Themes/Shared/Partials/HeadAssets.cshtml");
+            _ = resolved.Should().Be("wwwroot/App_Plugins/Articulate/Themes/Shared/Partials/HeadAssets.cshtml");
         }
 
         [Test]
@@ -264,7 +264,7 @@ namespace Articulate.UnitTests
             var existing = new HashSet<string> { "~/App_Plugins/Articulate/Themes/Aurora/Partials/HeadAssets.cshtml" };
 
             var resolved = search.FirstOrDefault(existing.Contains);
-            resolved.Should().Be("~/App_Plugins/Articulate/Themes/Aurora/Partials/HeadAssets.cshtml");
+            _ = resolved.Should().Be("~/App_Plugins/Articulate/Themes/Aurora/Partials/HeadAssets.cshtml");
         }
     }
 }

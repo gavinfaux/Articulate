@@ -10,7 +10,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Org.BouncyCastle.Asn1.Ocsp;
 using Umbraco.Cms.Api.Common.Attributes;
 using Umbraco.Cms.Api.Management.Controllers;
 using Umbraco.Cms.Core;
@@ -309,6 +308,7 @@ namespace Articulate.Api.Management.Controllers
                 ModelState.AddModelError("SaveOperation", "Content failed to save. Please check logs for details.");
                 return ValidationProblem(ModelState);
             }
+
             PublishResult publishStatus = _contentService.Publish(content, ["*"], authorId);
             if (!publishStatus.Success)
             {
@@ -409,7 +409,7 @@ namespace Articulate.Api.Management.Controllers
                         Umbraco.Cms.Core.Constants.Conventions.Media.File,
                         cleanFileName,
                         stream);
-                    _mediaService.Save(mediaItem);
+                    _ = _mediaService.Save(mediaItem);
                     IPublishedContent? media = _umbracoHelper.Media(mediaItem.Key);
 
                     if (media is null)

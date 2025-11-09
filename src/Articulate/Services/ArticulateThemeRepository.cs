@@ -18,6 +18,7 @@ namespace Articulate.Services
         private const string EmbeddedResourceRoot = "Articulate.Theme/";
         private readonly Assembly _articulateAssembly = typeof(ArticulateThemeRepository).Assembly;
 
+        /// <inheritdoc/>
         async Task IArticulateThemeRepository.CopyThemeAsync(string themeName, string newThemeName)
         {
             var userThemesPath = hostingEnvironment.MapPathContentRoot(Paths.UserViewVirtualRoot);
@@ -42,7 +43,7 @@ namespace Articulate.Services
 
             try
             {
-                Directory.CreateDirectory(destinationPhysicalPath);
+                _ = Directory.CreateDirectory(destinationPhysicalPath);
 
                 foreach (var resourceName in themeResources)
                 {
@@ -52,7 +53,7 @@ namespace Articulate.Services
 
                     if (Path.GetDirectoryName(destinationFilePath) is { } directoryPath)
                     {
-                        Directory.CreateDirectory(directoryPath);
+                        _ = Directory.CreateDirectory(directoryPath);
                     }
                     else
                     {
@@ -81,6 +82,7 @@ namespace Articulate.Services
             }
         }
 
+        /// <inheritdoc/>
         public async Task<IEnumerable<string>?> GetAllThemesAsync() =>
             await appCaches.RuntimeCache.GetCacheItemAsync(
                 AllThemesCacheKey,
@@ -95,6 +97,7 @@ namespace Articulate.Services
                 },
                 TimeSpan.FromSeconds(30)).ConfigureAwait(false);
 
+        /// <inheritdoc/>
         public Task<IEnumerable<string>> GetDefaultThemesAsync() => Task.Run(() => DefaultThemes.AllThemeNames);
 
         private Task<IEnumerable<string>> GetThemesFromPathAsync(string virtualPath)

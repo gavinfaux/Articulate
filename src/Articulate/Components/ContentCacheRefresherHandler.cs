@@ -56,7 +56,7 @@ namespace Articulate.Components
                     if (content.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.Articulate))
                     {
                         // ensure routes are rebuilt
-                        appCaches.RequestCache.GetCacheItem(ArticulateConstants.RefreshRoutesToken, () => true);
+                        _ = appCaches.RequestCache.GetCacheItem(ArticulateConstants.RefreshRoutesToken, () => true);
                     }
 
                     break;
@@ -82,7 +82,7 @@ namespace Articulate.Components
                 if (item is not null && item.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.Articulate))
                 {
                     // ensure routes are rebuilt
-                    appCaches.RequestCache.GetCacheItem(ArticulateConstants.RefreshRoutesToken, () => true);
+                    _ = appCaches.RequestCache.GetCacheItem(ArticulateConstants.RefreshRoutesToken, () => true);
                     return;
                 }
 
@@ -97,7 +97,7 @@ namespace Articulate.Components
                     // For now we have no choice, rebuild routes on each delete :/
                     if (item is null)
                     {
-                        appCaches.RequestCache.GetCacheItem(ArticulateConstants.RefreshRoutesToken, () => true);
+                        _ = appCaches.RequestCache.GetCacheItem(ArticulateConstants.RefreshRoutesToken, () => true);
                         return;
                     }
                 }
@@ -110,7 +110,7 @@ namespace Articulate.Components
                     return;
                 }
 
-                appCaches.RequestCache.GetCacheItem(ArticulateConstants.RefreshRoutesToken, () => true);
+                _ = appCaches.RequestCache.GetCacheItem(ArticulateConstants.RefreshRoutesToken, () => true);
             }
         }
     }

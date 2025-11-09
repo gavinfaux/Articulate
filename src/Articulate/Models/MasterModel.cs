@@ -9,20 +9,8 @@ namespace Articulate.Models
     /// </summary>
     public class MasterModel : PublishedContentWrapped, IMasterModel
     {
-        private IPublishedContent _rootBlogNode;
-        private string _theme;
-        private IPublishedContent _blogListNode;
         private IPublishedContent _blogAuthorsNode;
         private int? _pageSize;
-        private string _blogTitle;
-        private string _blogDescription;
-        private string _blogBanner;
-        private string _blogLogo;
-        private string _disqusShortName;
-        private string _customRssFeed;
-
-        private string _pageTitle;
-        private string _pageDescription;
 
         /// <summary>
         /// The basic model for all articulate objects
@@ -40,19 +28,20 @@ namespace Articulate.Models
         /// </summary>
         public string Theme
         {
-            get => _theme ??= Unwrap().Value<string>("theme", fallback: Fallback.ToAncestors);
-            protected set => _theme = value;
+            get => field ??= Unwrap().Value<string>("theme", fallback: Fallback.ToAncestors);
+            protected set;
         }
 
+        /// <inheritdoc/>
         public IPublishedContent RootBlogNode
         {
             get
             {
                 IPublishedContent root = Unwrap().AncestorOrSelf(ArticulateConstants.ContentType.Articulate);
-                _rootBlogNode = root ?? throw new InvalidOperationException("Could not find the Articulate root document for the current rendered page");
-                return _rootBlogNode;
+                field = root ?? throw new InvalidOperationException("Could not find the Articulate root document for the current rendered page");
+                return field;
             }
-            protected set => _rootBlogNode = value;
+            protected set;
         }
 
         /// <summary>
@@ -66,11 +55,11 @@ namespace Articulate.Models
             get
             {
                 IPublishedContent list = RootBlogNode.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive)?.FirstOrDefault();
-                _blogListNode = list ?? throw new InvalidOperationException("Could not find the ArticulateArchive document for the current rendered page");
+                field = list ?? throw new InvalidOperationException("Could not find the ArticulateArchive document for the current rendered page");
 
-                return _blogListNode;
+                return field;
             }
-            protected set => _blogListNode = value;
+            protected set;
         }
 
         /// <summary>
@@ -84,45 +73,52 @@ namespace Articulate.Models
                 _blogAuthorsNode = authors ?? throw new InvalidOperationException("Could not find the ArticulateAuthors document for the current rendered page");
                 return _blogAuthorsNode;
             }
-            protected set => _blogListNode = value;
+            protected set => BlogArchiveNode = value;
         }
 
+        /// <inheritdoc/>
         public string DisqusShortName
         {
-            get => _disqusShortName ??= Unwrap().Value<string>("disqusShortname", fallback: Fallback.ToAncestors);
-            protected set => _disqusShortName = value;
+            get => field ??= Unwrap().Value<string>("disqusShortname", fallback: Fallback.ToAncestors);
+            protected set;
         }
 
+        /// <inheritdoc/>
         public string CustomRssFeed
         {
-            get => _customRssFeed ??= RootBlogNode.Value<string>("customRssFeedUrl");
-            protected set => _customRssFeed = value;
+            get => field ??= RootBlogNode.Value<string>("customRssFeedUrl");
+            protected set;
         }
 
+        /// <inheritdoc/>
         public string BlogLogo
         {
-            get => _blogLogo ??= RootBlogNode.Value<MediaWithCrops>("blogLogo")?.GetCropUrl("square") ?? string.Empty;
-            protected set => _blogLogo = value;
+            get => field ??= RootBlogNode.Value<MediaWithCrops>("blogLogo")?.GetCropUrl("square") ?? string.Empty;
+            protected set;
         }
 
+        /// <inheritdoc/>
         public string BlogBanner
         {
-            get => _blogBanner ??= RootBlogNode.Value<MediaWithCrops>("blogBanner")?.GetCropUrl("wide") ?? string.Empty;
-            protected set => _blogBanner = value;
+            get => field ??= RootBlogNode.Value<MediaWithCrops>("blogBanner")?.GetCropUrl("wide") ?? string.Empty;
+            protected set;
         }
 
+        /// <inheritdoc/>
         public string BlogTitle
         {
-            get => _blogTitle ??= Unwrap().Value<string>("blogTitle", fallback: Fallback.ToAncestors);
-            protected set => _blogTitle = value;
+            get => field ??= Unwrap().Value<string>("blogTitle", fallback: Fallback.ToAncestors);
+            protected set;
         }
 
+        /// <inheritdoc/>
         public string BlogDescription
         {
-            get => _blogDescription ??= Unwrap().Value<string>("blogDescription", fallback: Fallback.ToAncestors);
-            protected set => _blogDescription = value;
+            get => field ??= Unwrap().Value<string>("blogDescription", fallback: Fallback.ToAncestors);
+            protected set;
         }
 
+        /// <inheritdoc/>
         public int PageSize
         {
             get
@@ -137,18 +133,21 @@ namespace Articulate.Models
             protected set => _pageSize = value;
         }
 
+        /// <inheritdoc/>
         public string PageTitle
         {
-            get => _pageTitle ??= Name + " - " + BlogTitle;
-            protected set => _pageTitle = value;
+            get => field ??= Name + " - " + BlogTitle;
+            protected set;
         }
 
+        /// <inheritdoc/>
         public string PageDescription
         {
-            get => _pageDescription ??= BlogDescription;
-            protected set => _pageDescription = value;
+            get => field ??= BlogDescription;
+            protected set;
         }
 
+        /// <inheritdoc/>
         public string PageTags { get; protected set; }
 
         [Obsolete("No longer used or supported",true)]

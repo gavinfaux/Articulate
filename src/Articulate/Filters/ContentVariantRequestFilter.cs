@@ -1,5 +1,6 @@
 #nullable enable
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Headers;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Net.Http.Headers;
 
@@ -11,39 +12,49 @@ namespace Articulate.Filters
     /// </summary>
     internal sealed class ContentVariantRequestFilter : IActionFilter
     {
+        /// <inheritdoc/>
         public void OnActionExecuting(ActionExecutingContext context)
         {
-            var headers = context.HttpContext.Request.Headers;
+            IHeaderDictionary headers = context.HttpContext.Request.Headers;
             if (headers.ContainsKey("X-Content-Variant"))
             {
                 return;
             }
 
-            var typed = context.HttpContext.Request.GetTypedHeaders();
-            var accepts = typed.Accept;
+            RequestHeaders typed = context.HttpContext.Request.GetTypedHeaders();
+            IList<MediaTypeHeaderValue>? accepts = typed.Accept;
 
             // Default HTML if no Accept provided
             var variant = "html";
             if (accepts is not null && accepts.Count > 0)
             {
                 double qMarkdown = 0, qPlain = 0;
-                foreach (var mt in accepts)
+                foreach (MediaTypeHeaderValue mt in accepts)
                 {
                     var q = mt.Quality.HasValue ? (double)mt.Quality.Value : 1.0;
                     var type = mt.Type.Value;
                     var sub = mt.SubType.Value;
-                    if (type is null || sub is null) continue;
+                    if (type is null || sub is null)
+                    {
+                        continue;
+                    }
 
                     var isMarkdown = type.Equals("text", StringComparison.OrdinalIgnoreCase)
                                      && (sub.Equals("markdown", StringComparison.OrdinalIgnoreCase)
                                          || sub.Equals("x-markdown", StringComparison.OrdinalIgnoreCase)
                                          || sub.EndsWith("+markdown", StringComparison.OrdinalIgnoreCase));
-                    if (isMarkdown) qMarkdown = Math.Max(qMarkdown, q);
+                    if (isMarkdown)
+                    {
+                        qMarkdown = Math.Max(qMarkdown, q);
+                    }
 
                     var isPlain = type.Equals("text", StringComparison.OrdinalIgnoreCase)
                                   && (sub.Equals("plain", StringComparison.OrdinalIgnoreCase)
                                       || sub.Equals("*", StringComparison.Ordinal));
-                    if (isPlain) qPlain = Math.Max(qPlain, q);
+                    if (isPlain)
+                    {
+                        qPlain = Math.Max(qPlain, q);
+                    }
                 }
 
                 if (qMarkdown > 0 || qPlain > 0)
@@ -55,6 +66,7 @@ namespace Articulate.Filters
             headers["X-Content-Variant"] = variant;
         }
 
+        /// <inheritdoc/>
         public void OnActionExecuted(ActionExecutedContext context)
         {
         }

@@ -8,10 +8,6 @@ namespace Articulate.Models
 {
     public sealed class PostModel : MasterModel, IImageModel
     {
-        private PostAuthorModel? _author;
-        private MediaWithCrops? _postImage;
-        private string? _croppedPostImageUrl;
-
         [Obsolete("Use PostModel(IPublishedContent content, IPublishedValueFallback publishedValueFallback)")]
         public PostModel(IPublishedContent content, IPublishedValueFallback publishedValueFallback, IVariationContextAccessor variationContextAccessor)
             : this(content, publishedValueFallback)
@@ -36,31 +32,31 @@ namespace Articulate.Models
         {
             get
             {
-                if (_author is not null)
+                if (field is not null)
                 {
-                    return _author;
+                    return field;
                 }
 
-                _author = new PostAuthorModel
+                field = new PostAuthorModel
                 {
-                    Name = Unwrap().Value<string>("author", fallback: Fallback.ToAncestors)
+                    Name = Unwrap().Value<string>("author", fallback: Fallback.ToAncestors),
                 };
 
                 // look up assocated author node if we can
                 IPublishedContent? authors = RootBlogNode.Children(content => content.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateAuthors))?.FirstOrDefault();
-                IPublishedContent? authorNode = authors?.Children(content => content.Name.InvariantEquals(_author.Name))?.FirstOrDefault();
+                IPublishedContent? authorNode = authors?.Children(content => content.Name.InvariantEquals(field.Name))?.FirstOrDefault();
 
                 if (authorNode is null)
                 {
-                    return _author;
+                    return field;
                 }
 
-                _author.Bio = authorNode.Value<string>("authorBio");
-                _author.Url = authorNode.Value<string>("authorUrl");
-                _author.Image = authorNode.Value<MediaWithCrops>("authorImage");
-                _author.BlogUrl = authorNode.Url();
+                field.Bio = authorNode.Value<string>("authorBio");
+                field.Url = authorNode.Value<string>("authorUrl");
+                field.Image = authorNode.Value<MediaWithCrops>("authorImage");
+                field.BlogUrl = authorNode.Url();
 
-                return _author;
+                return field;
             }
         }
 
@@ -71,7 +67,7 @@ namespace Articulate.Models
         /// <summary>
         /// Gets the blog post associated image
         /// </summary>
-        public MediaWithCrops? PostImage => _postImage ??= Unwrap().Value<MediaWithCrops>("postImage");
+        public MediaWithCrops? PostImage => field ??= Unwrap().Value<MediaWithCrops>("postImage");
 
         /// <summary>
         /// Gets a Cropped version of the PostImageUrl
@@ -80,9 +76,9 @@ namespace Articulate.Models
         {
             get
             {
-                if (_croppedPostImageUrl is not null)
+                if (field is not null)
                 {
-                    return _croppedPostImageUrl;
+                    return field;
                 }
 
                 if (PostImage is null)
@@ -91,9 +87,11 @@ namespace Articulate.Models
                 }
 
                 var wideCropUrl = PostImage.GetCropUrl("wide");
-                _croppedPostImageUrl = (wideCropUrl ?? string.Empty) + (wideCropUrl is not null && wideCropUrl.Contains('?') ? "&" : "?");
-                return _croppedPostImageUrl;
+                field = (wideCropUrl ?? string.Empty) + (wideCropUrl is not null && wideCropUrl.Contains('?') ? "&" : "?");
+                return field;
             }
+
+            private set;
         }
 
         /// <summary>
@@ -109,10 +107,13 @@ namespace Articulate.Models
 
         public string ExternalUrl => this.Value<string>("externalUrl") ?? string.Empty;
 
+        /// <inheritdoc/>
         MediaWithCrops? IImageModel.Image => PostImage;
 
+        /// <inheritdoc/>
         string IImageModel.Name => Name;
 
+        /// <inheritdoc/>
         string IImageModel.Url => this.Url();
     }
 }

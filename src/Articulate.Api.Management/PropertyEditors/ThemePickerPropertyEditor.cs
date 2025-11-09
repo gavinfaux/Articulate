@@ -9,6 +9,7 @@ namespace Articulate.Api.Management.PropertyEditors
     public class ThemePickerPropertyEditor(IDataValueEditorFactory dataValueEditorFactory)
         : DataEditor(dataValueEditorFactory)
     {
+        /// <inheritdoc/>
         protected override IConfigurationEditor CreateConfigurationEditor() => new ThemePickerConfigurationEditor();
     }
 }

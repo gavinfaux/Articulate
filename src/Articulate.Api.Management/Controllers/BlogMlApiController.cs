@@ -1,5 +1,4 @@
 #nullable enable
-using System.IO;
 using Articulate.Api.Management.Attributes;
 using Articulate.Api.Management.Models;
 using Articulate.ImportExport;
@@ -10,7 +9,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Api.Common.Attributes;
 using Umbraco.Cms.Api.Management.Controllers;
-using Umbraco.Cms.Api.Management.Routing;
 using Umbraco.Cms.Core.Models.Membership;
 using Umbraco.Cms.Core.Security;
 using Umbraco.Cms.Web.Common.Authorization;
