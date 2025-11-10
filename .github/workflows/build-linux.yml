@@ -1,0 +1,81 @@
+name: Articulate Build (Linux)
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    env:
+      RELEASE_FOLDER: build/Release
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: dotnet/nbgv@master
+        with:
+          setAllVars: true
+
+      - name: Log Build Context
+        run: |
+          echo "Articulate Build Context"
+          echo "Version: ${NBGV_SemVer2}"
+          echo "Commit: ${NBGV_GitCommitIdShort}"
+          echo "Date: ${NBGV_GitCommitDate}"
+
+      - name: Validate Git Tag
+        continue-on-error: true
+        run: |
+          if git describe --tags --exact-match >/dev/null 2>&1; then
+            echo "Git tag found."
+          else
+            echo "Git tag missing, release build may not be traceable."
+          fi
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+
+      - name: Setup NodeJS
+        uses: actions/setup-node@v5
+        with:
+          node-version-file: 'src/Articulate.Api.Management/Client/.nvmrc'
+          cache: 'pnpm'
+          cache-dependency-path: 'src/Articulate.Api.Management/Client/pnpm-lock.yaml'
+
+      - name: Resolve pnpm store path
+        id: pnpm-cache
+        run: |
+          echo "path=$(pnpm store path)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-cache.outputs.path }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('src/Articulate.Api.Management/Client/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Setup .NET SDKs
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            9.0.100
+            10.0.100-rc.2.25502.107
+          include-prerelease: true
+
+      - name: Run build pipeline script
+        run: bash ./build/build.sh
+
+      - name: Upload packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: Articulate.${{ env.NBGV_SemVer2 }}.linux
+          path: ${{ env.RELEASE_FOLDER }}/Articulate.*
