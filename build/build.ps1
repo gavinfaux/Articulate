@@ -107,20 +107,32 @@ foreach ($tfm in $TargetFrameworks) {
 
 # 5) Pack primary projects (sequential)
 Write-Host "4. Packing projects..."
+$articulateProject = (Join-Path $SolutionRoot 'Articulate/Articulate.csproj')
+$articulateWebProject = (Join-Path $SolutionRoot 'Articulate.Web/Articulate.Web.csproj')
+$articulateApiProject = (Join-Path $SolutionRoot 'Articulate.Api.Management/Articulate.Api.Management.csproj')
+$articulateStaticAssetsProject = (Join-Path $SolutionRoot 'Articulate.StaticAssets/Articulate.StaticAssets.csproj')
+
+# Pack StaticAssets first so the local feed has the dependency before restoring Articulate.Web
+Write-Host "[pack] -> $([IO.Path]::GetFileName($articulateStaticAssetsProject))"
+& dotnet pack -c Release $articulateStaticAssetsProject --no-build --no-restore -o $ReleaseFolder @dotnetCommon @msbuildArgs -p:NoPackageAnalysis=true
+if ($LASTEXITCODE -ne 0) { throw "dotnet pack failed for $articulateStaticAssetsProject" }
+
 $projectsToPack = @(
-    (Join-Path $SolutionRoot 'Articulate/Articulate.csproj'),
-    (Join-Path $SolutionRoot 'Articulate.Web/Articulate.Web.csproj'),
-    (Join-Path $SolutionRoot 'Articulate.Api.Management/Articulate.Api.Management.csproj'),
-    (Join-Path $SolutionRoot 'Articulate.StaticAssets/Articulate.StaticAssets.csproj')
+    $articulateProject,
+    $articulateWebProject,
+    $articulateApiProject
 )
 foreach ($project in $projectsToPack) {
     Write-Host "[pack] -> $([IO.Path]::GetFileName($project))"
     $packArgs = @()
+    $restoreArgs = @("--no-build", "--no-restore")
     # Enable transitive dependency on Articulate.StaticAssets only when packing Articulate (RCL)
-    if ($project -like "*Articulate.Web/Articulate.Web.csproj") {
+    if ($project -eq $articulateWebProject) {
         $packArgs += "-p:Articulate_EnableAssetsPackDependency=true"
+        # Allow pack to perform a restore with the dependency flag enabled
+        $restoreArgs = @("--no-build")
     }
-    & dotnet pack $project -c Release --no-build --no-restore -o $ReleaseFolder @dotnetCommon @msbuildArgs -p:NoPackageAnalysis=true @packArgs
+    & dotnet pack -c Release $project @restoreArgs -o $ReleaseFolder @dotnetCommon @msbuildArgs -p:NoPackageAnalysis=true @packArgs
     if ($LASTEXITCODE -ne 0) { throw "dotnet pack failed for $project" }
 }
 

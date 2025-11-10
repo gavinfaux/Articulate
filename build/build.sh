@@ -138,23 +138,33 @@ fi
 #   done
 # done
 
-# --- 5) Pack primary projects in parallel (preserve original outputs) ---
-echo "4. Packing projects in parallel..."
+# --- 5) Pack primary projects (ensure StaticAssets dependency captured) ---
+echo "4. Packing projects..."
+ARTICULATE_PROJECT="$SOLUTION_ROOT/Articulate/Articulate.csproj"
+ARTICULATE_WEB_PROJECT="$SOLUTION_ROOT/Articulate.Web/Articulate.Web.csproj"
+ARTICULATE_API_PROJECT="$SOLUTION_ROOT/Articulate.Api.Management/Articulate.Api.Management.csproj"
+ARTICULATE_STATIC_ASSETS_PROJECT="$SOLUTION_ROOT/Articulate.StaticAssets/Articulate.StaticAssets.csproj"
+
+echo "[pack] -> $(basename "$ARTICULATE_STATIC_ASSETS_PROJECT")"
+dotnet pack -c Release "$ARTICULATE_STATIC_ASSETS_PROJECT" --no-build --no-restore -o "$RELEASE_FOLDER" \
+  "${DOTNET_COMMON[@]}" "${MSBUILD_PARALLEL[@]}" -p:NoPackageAnalysis=true
+
 PACK_PROJECTS=(
-  "$SOLUTION_ROOT/Articulate/Articulate.csproj"
-  "$SOLUTION_ROOT/Articulate.Web/Articulate.Web.csproj"
-  "$SOLUTION_ROOT/Articulate.Api.Management/Articulate.Api.Management.csproj"
-  "$SOLUTION_ROOT/Articulate.StaticAssets/Articulate.StaticAssets.csproj"
+  "$ARTICULATE_PROJECT"
+  "$ARTICULATE_WEB_PROJECT"
+  "$ARTICULATE_API_PROJECT"
 )
 
 declare -a pack_pids=()
 for proj in "${PACK_PROJECTS[@]}"; do
   echo "[pack] -> $(basename "$proj")"
   EXTRA_PACK_ARGS=()
-  if [[ "$proj" == *"Articulate.Web/Articulate.Web.csproj"* ]]; then
+  RESTORE_SWITCHES=(--no-build --no-restore)
+  if [[ "$proj" == "$ARTICULATE_WEB_PROJECT" ]]; then
     EXTRA_PACK_ARGS+=(-p:Articulate_EnableAssetsPackDependency=true)
+    RESTORE_SWITCHES=(--no-build) # let pack perform restore with dependency flag
   fi
-  dotnet pack "$proj" -c Release --no-build --no-restore -o "$RELEASE_FOLDER" \
+  dotnet pack -c Release "$proj" "${RESTORE_SWITCHES[@]}" -o "$RELEASE_FOLDER" \
     "${DOTNET_COMMON[@]}" "${MSBUILD_PARALLEL[@]}" -p:NoPackageAnalysis=true "${EXTRA_PACK_ARGS[@]}" &
   pack_pids+=($!)
 done
