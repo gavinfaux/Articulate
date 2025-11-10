@@ -18,11 +18,17 @@
     <Articulate_EnableAssetsPackDependency Condition="'$(Articulate_EnableAssetsPackDependency)' == ''">false</Articulate_EnableAssetsPackDependency>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Articulate_EnableAssetsPackDependency)' == 'true'">
-    <!-- Compute a major-version-bounded range: [currentMajor.0.0, nextMajor.0.0) -->
-    <_ArticulateMajor>$([System.Text.RegularExpressions.Regex]::Match('$(Version)', '^\d+').Value)</_ArticulateMajor>
+    <!-- Allow callers (build scripts) to override the dependency range explicitly -->
+    <_ArticulateAssetsDependencyVersionRange Condition="'$(Articulate_StaticAssetsVersionRange)' != ''">$(Articulate_StaticAssetsVersionRange)</_ArticulateAssetsDependencyVersionRange>
+    <!-- Or supply explicit floor (full semver, incl. pre-release) + major ceiling -->
+    <_ArticulateAssetsDependencyVersionRange Condition="'$(_ArticulateAssetsDependencyVersionRange)' == '' and '$(Articulate_StaticAssetsVersionFloorExact)' != '' and '$(Articulate_StaticAssetsVersionCeilingMajor)' != ''">
+      [$(Articulate_StaticAssetsVersionFloorExact), $(Articulate_StaticAssetsVersionCeilingMajor).0.0)
+    </_ArticulateAssetsDependencyVersionRange>
+    <!-- Compute a major-version-bounded range: [currentMajor.0.0, nextMajor.0.0) when not provided -->
+    <_ArticulateMajor Condition="'$(_ArticulateAssetsDependencyVersionRange)' == ''">$([System.Text.RegularExpressions.Regex]::Match('$(Version)', '^\d+').Value)</_ArticulateMajor>
     <_ArticulateMajor Condition="'$(_ArticulateMajor)' == ''">0</_ArticulateMajor>
-    <_ArticulateNextMajor>$([System.Decimal]::Add($([System.Decimal]::Parse('$(_ArticulateMajor)')), 1))</_ArticulateNextMajor>
-    <_ArticulateAssetsDependencyVersionRange>[$(_ArticulateMajor).0.0, $(_ArticulateNextMajor).0.0)</_ArticulateAssetsDependencyVersionRange>
+    <_ArticulateNextMajor Condition="'$(_ArticulateAssetsDependencyVersionRange)' == ''">$([System.Decimal]::Add($([System.Decimal]::Parse('$(_ArticulateMajor)')), 1))</_ArticulateNextMajor>
+    <_ArticulateAssetsDependencyVersionRange Condition="'$(_ArticulateAssetsDependencyVersionRange)' == ''">[$(_ArticulateMajor).0.0, $(_ArticulateNextMajor).0.0)</_ArticulateAssetsDependencyVersionRange>
   </PropertyGroup>
   <ItemGroup Condition="'$(Articulate_EnableAssetsPackDependency)' == 'true'">
     <PackageReference Include="Articulate.StaticAssets" Version="$(_ArticulateAssetsDependencyVersionRange)" />

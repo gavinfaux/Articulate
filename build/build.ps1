@@ -117,6 +117,28 @@ Write-Host "[pack] -> $([IO.Path]::GetFileName($articulateStaticAssetsProject))"
 & dotnet pack -c Release $articulateStaticAssetsProject --no-build --no-restore -o $ReleaseFolder @dotnetCommon @msbuildArgs -p:NoPackageAnalysis=true
 if ($LASTEXITCODE -ne 0) { throw "dotnet pack failed for $articulateStaticAssetsProject" }
 
+# Derive a major-version range for the static assets dependency using the freshly packed nupkg
+$staticAssetsVersionFloorExact = $null
+$staticAssetsVersionCeilingMajor = $null
+$staticAssetsPackage = Get-ChildItem -Path $ReleaseFolder -Filter 'Articulate.StaticAssets.*.nupkg' | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+if ($null -eq $staticAssetsPackage) { throw "Unable to locate Articulate.StaticAssets nupkg in $ReleaseFolder after packing." }
+if ($staticAssetsPackage.BaseName -notmatch '^Articulate\.StaticAssets\.(?<version>.+)$') { throw "Unexpected Articulate.StaticAssets package name: $($staticAssetsPackage.Name)" }
+$staticAssetsVersionFloorExact = $Matches.version
+$staticAssetsMajorMatch = [System.Text.RegularExpressions.Regex]::Match($staticAssetsVersionFloorExact, '^\d+')
+if (-not $staticAssetsMajorMatch.Success) { throw "Unable to parse major version from Articulate.StaticAssets package '$($staticAssetsPackage.Name)'" }
+$staticAssetsMajor = [int]$staticAssetsMajorMatch.Value
+$staticAssetsVersionCeilingMajor = $staticAssetsMajor + 1
+
+# Surface dependency bounds via environment variables to avoid CLI quoting issues
+if ($staticAssetsVersionFloorExact) { $env:Articulate_StaticAssetsVersionFloorExact = $staticAssetsVersionFloorExact }
+if ($staticAssetsVersionCeilingMajor) { $env:Articulate_StaticAssetsVersionCeilingMajor = $staticAssetsVersionCeilingMajor }
+
+# Refresh Articulate.Web restore graph with the conditional dependency enabled (now that the nupkg exists)
+$articulateWebRestoreProps = @("-p:Configuration=Release", "-p:Articulate_EnableAssetsPackDependency=true")
+Write-Host "[pack] Restoring Articulate.Web with Articulate.StaticAssets dependency..."
+& dotnet restore $articulateWebProject @dotnetCommon @msbuildArgs @articulateWebRestoreProps
+if ($LASTEXITCODE -ne 0) { throw "dotnet restore failed for $articulateWebProject with Articulate.StaticAssets dependency" }
+
 $projectsToPack = @(
     $articulateProject,
     $articulateWebProject,
@@ -129,12 +151,14 @@ foreach ($project in $projectsToPack) {
     # Enable transitive dependency on Articulate.StaticAssets only when packing Articulate (RCL)
     if ($project -eq $articulateWebProject) {
         $packArgs += "-p:Articulate_EnableAssetsPackDependency=true"
-        # Allow pack to perform a restore with the dependency flag enabled
-        $restoreArgs = @("--no-build")
     }
     & dotnet pack -c Release $project @restoreArgs -o $ReleaseFolder @dotnetCommon @msbuildArgs -p:NoPackageAnalysis=true @packArgs
     if ($LASTEXITCODE -ne 0) { throw "dotnet pack failed for $project" }
 }
+
+# Clean up env overrides for downstream commands/sessions
+Remove-Item Env:Articulate_StaticAssetsVersionFloorExact -ErrorAction SilentlyContinue | Out-Null
+Remove-Item Env:Articulate_StaticAssetsVersionCeilingMajor -ErrorAction SilentlyContinue | Out-Null
 
 $skipGitLeaks = $env:SKIP_GITLEAKS -eq '1'
 $runningInCi = ($env:CI -eq 'true') -or ($env:GITHUB_ACTIONS -eq 'true')

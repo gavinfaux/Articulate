@@ -149,6 +149,34 @@ echo "[pack] -> $(basename "$ARTICULATE_STATIC_ASSETS_PROJECT")"
 dotnet pack -c Release "$ARTICULATE_STATIC_ASSETS_PROJECT" --no-build --no-restore -o "$RELEASE_FOLDER" \
   "${DOTNET_COMMON[@]}" "${MSBUILD_PARALLEL[@]}" -p:NoPackageAnalysis=true
 
+# Determine the version floor/ceiling for the conditional dependency (based on the freshly packed nupkg)
+STATIC_ASSETS_NUPKG=$(ls -t "$RELEASE_FOLDER"/Articulate.StaticAssets.*.nupkg 2>/dev/null | head -n1)
+if [[ -z "$STATIC_ASSETS_NUPKG" ]]; then
+  echo "Unable to locate Articulate.StaticAssets nupkg under $RELEASE_FOLDER after packing." >&2
+  exit 1
+fi
+STATIC_ASSETS_FILENAME=$(basename "$STATIC_ASSETS_NUPKG")
+if [[ "$STATIC_ASSETS_FILENAME" =~ ^Articulate\.StaticAssets\.(.+)\.nupkg$ ]]; then
+  STATIC_ASSETS_VERSION_FLOOR_EXACT="${BASH_REMATCH[1]}"
+else
+  echo "Unexpected Articulate.StaticAssets package name: $STATIC_ASSETS_FILENAME" >&2
+  exit 1
+fi
+if [[ "$STATIC_ASSETS_VERSION_FLOOR_EXACT" =~ ^([0-9]+) ]]; then
+  STATIC_ASSETS_MAJOR="${BASH_REMATCH[1]}"
+else
+  echo "Unable to parse major version from Articulate.StaticAssets package '$STATIC_ASSETS_FILENAME'" >&2
+  exit 1
+fi
+STATIC_ASSETS_VERSION_CEILING_MAJOR="$((STATIC_ASSETS_MAJOR + 1))"
+export Articulate_StaticAssetsVersionFloorExact="$STATIC_ASSETS_VERSION_FLOOR_EXACT"
+export Articulate_StaticAssetsVersionCeilingMajor="$STATIC_ASSETS_VERSION_CEILING_MAJOR"
+
+echo "[pack] Restoring Articulate.Web with Articulate.StaticAssets dependency..."
+RESTORE_PROPS=(-p:Configuration=Release -p:Articulate_EnableAssetsPackDependency=true)
+dotnet restore "$ARTICULATE_WEB_PROJECT" \
+  "${DOTNET_COMMON[@]}" "${MSBUILD_PARALLEL[@]}" "${RESTORE_PROPS[@]}"
+
 PACK_PROJECTS=(
   "$ARTICULATE_PROJECT"
   "$ARTICULATE_WEB_PROJECT"
@@ -162,7 +190,6 @@ for proj in "${PACK_PROJECTS[@]}"; do
   RESTORE_SWITCHES=(--no-build --no-restore)
   if [[ "$proj" == "$ARTICULATE_WEB_PROJECT" ]]; then
     EXTRA_PACK_ARGS+=(-p:Articulate_EnableAssetsPackDependency=true)
-    RESTORE_SWITCHES=(--no-build) # let pack perform restore with dependency flag
   fi
   dotnet pack -c Release "$proj" "${RESTORE_SWITCHES[@]}" -o "$RELEASE_FOLDER" \
     "${DOTNET_COMMON[@]}" "${MSBUILD_PARALLEL[@]}" -p:NoPackageAnalysis=true "${EXTRA_PACK_ARGS[@]}" &
@@ -177,6 +204,9 @@ if [[ $pack_fail -ne 0 ]]; then
   echo "One or more pack operations failed" >&2
   exit 1
 fi
+
+unset Articulate_StaticAssetsVersionFloorExact
+unset Articulate_StaticAssetsVersionCeilingMajor
 
 if [[ "${CI:-}" == "true" || "${GITHUB_ACTIONS:-}" == "true" ]]; then
   echo "Skipping GitLeaks scan (handled by CI workflow action)."
