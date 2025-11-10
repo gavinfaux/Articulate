@@ -9,26 +9,26 @@
 
 - Goals
   - Replace copy-based themes with a Shared base that child themes inherit. *(Deferred; current builds continue using the legacy master-based themes.)*
-- Deliver a modern default theme (Aurora) that overrides only what it needs. *(Deferred; theme ships in a later release.)*
+  - Deliver a modern default theme (Aurora) that overrides only what it needs. *(Deferred; theme ships in a later release.)*
   - Provide a clear Theme Contract (HTML structure, CSS naming, optional sections, metadata).
   - Add Shared fallback to view resolution; centralize layout selection via DI.
   - Keep legacy themes working (back-compat) without making them the default.
 
 - Non-Goals
   - Full backoffice theme authoring UI (future).
-- A bespoke asset pipeline beyond the shared Vite build (static bundles ride on the Vite plugin).
+  - A bespoke asset pipeline beyond the shared Vite build (static bundles ride on the Vite plugin).
   - Hard requirements for JS frameworks.
 
 ## 2. Scope
 
 - In Scope
-- Shared base theme under `App_Plugins/Articulate/Themes/Shared/` with layout, partials, and minimal CSS. *(Deferred.)* When it lands it will follow the modern ASP.NET Core pattern (`Shared/_ViewStart.cshtml`, `_Layout.cshtml`, Razor views/partials, opt-in sections such as Header/Sidebar/Scripts) so the package can light up every major Articulate feature without legacy baggage.
-- Aurora theme (deferred) under `App_Plugins/Articulate/Themes/Aurora/` with modern CSS, using Shared fallback for views. Aurora will build on the Shared scaffolding to showcase the full blogging experience—comments, search, tag clouds, author bios, etc.—while allowing themes to opt in/out of the shared sections.
-  - View resolution fallback to Shared for Views/Partials.
-  - Centralized layout selection via `IArticulateThemeResolver` in Shared `_ViewStart.cshtml`.
-  - Theme-first asset partials: `HeadAssets.cshtml` and `FootAssets.cshtml` with Shared base partials `BaseHeadAssets.cshtml` and `BaseFootAssets.cshtml`.
-  - Theme metadata files (planned): `base.json` (Shared), `theme.json` (Aurora).
-  - Documentation: README in Shared; this SDD.
+  - Shared base theme under `App_Plugins/Articulate/Themes/Shared/` with layout, partials, and minimal CSS. *(Deferred.)* When it lands it will follow the modern ASP.NET Core pattern (`Shared/_ViewStart.cshtml`, `_Layout.cshtml`, Razor views/partials, opt-in sections such as Header/Sidebar/Scripts) so the package can light up every major Articulate feature without legacy baggage.
+  - Aurora theme (deferred) under `App_Plugins/Articulate/Themes/Aurora/` with modern CSS, using Shared fallback for views. Aurora will build on the Shared scaffolding to showcase the full blogging experience—comments, search, tag clouds, author bios, etc.—while allowing themes to opt in/out of the shared sections.
+    - View resolution fallback to Shared for Views/Partials.
+    - Centralized layout selection via `IArticulateThemeResolver` in Shared `_ViewStart.cshtml`.
+    - Theme-first asset partials: `HeadAssets.cshtml` and `FootAssets.cshtml` with Shared base partials `BaseHeadAssets.cshtml` and `BaseFootAssets.cshtml`.
+    - Theme metadata files (planned): `base.json` (Shared), `theme.json` (Aurora).
+    - Documentation: README in Shared; this SDD.
 
 - Out of Scope
   - Runtime validation UI for theme contract (tracked as TODO; log/toast planned).
@@ -50,9 +50,9 @@
   - HTML structure uses BEM-like classes (e.g., `.post-preview__title`, `.post-preview--featured`).
   - Optional sections (slots) exposed by Shared (and Aurora): `Header`, `Sidebar`, `Scripts`.
 - Assets model (current state & future work):
-    - Legacy themes continue to include CSS/JS directly from their layouts (`Master.cshtml`).
-    - Bundled assets produced by Vite land in each theme’s `dist/` folder and are linked with ASP.NET Core environment tag helpers.
-    - Planned: Shared provides minimal base CSS/JS via `BaseHeadAssets.cshtml` and `BaseFootAssets.cshtml`, with optional extension by derived themes.
+  - Legacy themes continue to include CSS/JS directly from their layouts (`Master.cshtml`).
+  - Bundled assets produced by Vite land in each theme’s `dist/` folder and are linked with ASP.NET Core environment tag helpers.
+  - Planned: Shared provides minimal base CSS/JS via `BaseHeadAssets.cshtml` and `BaseFootAssets.cshtml`, with optional extension by derived themes.
   - Metadata files:
     - Shared: `assets/base.json` with `contractVersion`, `name`, `version`, `sections`.
     - Theme: `assets/theme.json` with `extends`, `contractVersion`, `overrides`.
@@ -284,7 +284,7 @@ Use this section to build or customize a theme with minimal friction.
 - Recommended layout: `Material/Master.cshtml` (wraps the theme chrome)
 - Optional view overrides: put view files under `Material/` (e.g., `List.cshtml`, `Partials/Menu.cshtml`). Missing views fall back to `Themes/Shared`.
 - Editable theme assets: place under `Material/src/` (e.g., `src/css/*.css`, `src/js/*.js`)
-- Bundled output: Vite writes optimised files to `Material/dist/` (`css/`, `js/`) during `pnpm run build` and the directories stay git-ignored.
+- Bundled output: Vite writes optimized files to `Material/dist/` (`css/`, `js/`) during `pnpm run build` and the directories stay git-ignored.
 - Partials (assets): theme-specific head/foot markup lives directly in the layout (older themes) or in optional partials.
 
 1. Asset loading: extend vs replace

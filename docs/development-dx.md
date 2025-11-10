@@ -23,7 +23,7 @@ Run the test website with Hot Reload; in Development it enables:
 
 Commands:
 
-```
+```bash
 dotnet watch run --project src/Articulate.Tests.Website
 ```
 
@@ -39,7 +39,7 @@ Notes:
 
 You can test the text variants against the test site using `curl`:
 
-```
+```bash
 curl -I -H "Accept: text/markdown" https://localhost:44366/blog/my-post
 curl -I -H "Accept: text/plain"    https://localhost:44366/blog/my-post
 curl -I                            https://localhost:44366/blog/my-post
@@ -53,7 +53,7 @@ Expect headers:
 
 Body checks:
 
-```
+```bash
 curl -H "Accept: text/markdown" https://localhost:44366/blog/my-post
 curl -H "Accept: text/plain"    https://localhost:44366/blog/my-post
 curl -H "Accept: text/markdown" "https://localhost:44366/blog/archive?p=1"
@@ -81,7 +81,7 @@ corepack prepare pnpm@10.17.0 --activate
 
 Run in parallel for the backoffice extension (Lit + TypeScript):
 
-```
+```bash
 cd src/Articulate.Api.Management/Client
 pnpm install
 pnpm run dev
@@ -106,29 +106,17 @@ Tips:
 
 ### Build scripts (Windows, Linux/WSL) and flags
 
-- Windows PowerShell: `build/build.ps1`
-  - Parallel MSBuild; uses all cores by default. Override workers: `set MAXCPU=8`.
-  - Client assets: skipped by default. Enable: `set ENABLE_CLIENT_BUILD=1`.
-  - Prints a note if the repo is under `\\wsl$` suggesting to build inside WSL for speed.
-- Linux/WSL Bash: `build/build.sh`
-  - Parallel MSBuild; auto‑detects CPU. Override workers: `export MAXCPU=8`.
-  - Client assets: skipped by default. Enable: `export ENABLE_CLIENT_BUILD=1`.
-  - WSL‑aware: warns if building from `/mnt/*` and recommends cloning under `~/src/...` (ext4) for faster I/O.
-
-Both scripts restore once at solution level, build both TFMs with maximum parallelism, and pack these projects into `build/Release`: `Articulate.Core`, `Articulate`, `Articulate.Api.Management`, and `Articulate.StaticAssets`.
+For up‑to‑date build/pack flags and cross‑platform notes, see `AGENTS.md` → “Build, Test, and Development Commands”. The script behavior (parallelism, `ENABLE_CLIENT_BUILD`, WSL tips) is maintained there to avoid duplication.
 
 ### Cross‑platform local workflow (dual clone)
 
-- For consistently fast local builds, keep two clones:
-  - WSL/distro ext4 clone: `~/src/Articulate6-wip` → run `bash build/build.sh`.
-  - Windows NTFS clone: `F:\int\Articulate6-wip` → run `pwsh build/build.ps1`.
-- Keep them in sync via Git (`git pull` in each). WSL builds from `/mnt/*` are slower due to drvfs; using the distro’s ext4 typically yields 2–5× faster restore/build for metadata‑heavy steps.
+Refer to `AGENTS.md` → “Cross‑platform workflow (WSL + Windows)” for the canonical dual‑clone guidance. This DX doc keeps the focus on hot‑reload/HMR flows.
 
 ### Regenerating the client SDK (optional)
 
 If OpenAPI changes, regenerate the typed client:
 
-```
+```bash
 cd src/Articulate.Api.Management/Client
 pnpm run generate:api
 ```

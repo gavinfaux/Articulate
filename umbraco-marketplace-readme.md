@@ -1,3 +1,5 @@
+# Articulate Marketplace Listing
+
 [![Articulate Build](https://github.com/Shazwazza/Articulate/actions/workflows/build.yml/badge.svg)](https://github.com/Shazwazza/Articulate/actions/workflows/build.yml)
 
 ![Articulate](https://raw.githubusercontent.com/Shazwazza/Articulate/develop/assets/Logo.png?raw=true)
@@ -40,7 +42,7 @@ Docs on installation, creating posts, customizing/creating themes, etc...
 
 ## [Discussions](https://our.umbraco.org/projects/starter-kits/articulate/discussions)
 
-Please post to this Umbraco discussions forum to discuss Articulate, it's features and functionality. Do not post issues here, post them [here](https://github.com/Shazwazza/Articulate/issues) on GitHub
+Please post to this Umbraco discussions forum to discuss Articulate, it's features and functionality. Do not post issues here; file them via the [Articulate GitHub issues list](https://github.com/Shazwazza/Articulate/issues)
 
 ## [Issues](https://github.com/Shandem/Articulate/issues)
 

@@ -4,13 +4,26 @@
 
 This guide is intended for developers who are maintaining or contributing to the Articulate package. It provides a comprehensive overview of the migration from the legacy AngularJS backoffice to the modern Lit and TypeScript architecture for Umbraco 15. It details the key architectural changes, the new development workflow, and the structure of both the front-end and back-end code to facilitate a smooth onboarding process.
 
+> Source of truth for commands
+>
+> - Build/test/run commands now live in `AGENTS.md` and the scoped guides:
+>   - Root: `AGENTS.md`
+>   - Core: `src/Articulate/AGENTS.md`
+>   - RCL/Themes: `src/Articulate.Web/AGENTS.md`
+>   - Management API: `src/Articulate.Api.Management/AGENTS.md`
+>   - Backoffice client: `src/Articulate.Api.Management/Client/AGENTS.md`
+>   - Unit tests: `src/Articulate.UnitTests/AGENTS.md`
+>   - Demo website: `src/Articulate.Tests.Website/AGENTS.md`
+>
+> - This doc focuses on background and workflow context; defer to scoped AGENTS for exact steps.
+
 ## 1. Core Architectural Changes
 
 Several fundamental architectural changes were made during the migration to .NET 8 and Umbraco 15.
 
 ### [Razor Class Library (RCL)](https://learn.microsoft.com/en-us/aspnet/core/razor-pages/ui-class?view=aspnetcore-8.0&tabs=visual-studio)
 
-The project SDK was migrated from `Microsoft.NET.Sdk` to `Microsoft.NET.Sdk.Razor`. This turns the project into a Razor Class Library (RCL), which is the modern, standardised way to ship .NET packages with compiled Razor views and static assets (`.js`, `.css`, etc.).
+The project SDK was migrated from `Microsoft.NET.Sdk` to `Microsoft.NET.Sdk.Razor`. This turns the project into a Razor Class Library (RCL), which is the modern, standardized way to ship .NET packages with compiled Razor views and static assets (`.js`, `.css`, etc.).
 
 ### `wwwroot` for Static Assets
 
@@ -18,13 +31,13 @@ As part of the move to RCL, all client-side assets have been moved from the root
 
 - The compiled backoffice client application.
 - Razor themes.
-- The mobile-optimised Markdown Editor.
+- The mobile-optimized Markdown Editor.
 
 These assets are now published with the package and served as static web assets, which is a more robust and standard way of handling them in .NET.
 
 ### Markdown Editor Migration (AngularJS to [Alpine.JS](https://alpinejs.dev/))
 
-The mobile-optimised Markdown Editor, a key feature of Articulate, has been migrated from its original AngularJS 1.2 implementation to a modern, lightweight version using the CSP-compliant build of Alpine.JS. This removes the last dependency on AngularJS and improves security and performance.
+The mobile-optimized Markdown Editor, a key feature of Articulate, has been migrated from its original AngularJS 1.2 implementation to a modern, lightweight version using the CSP-compliant build of Alpine.JS. This removes the last dependency on AngularJS and improves security and performance.
 
 ## 2. The Old Architecture: AngularJS
 
@@ -40,7 +53,7 @@ The legacy backoffice implementation for Articulate was built using AngularJS. T
 
 ## 3. The New Architecture: [Lit](https://lit.dev/) & [TypeScript](https://www.typescriptlang.org/)
 
-The new backoffice is built on a modern front-end stack that leverages Lit, TypeScript, and ES6 modules. This aligns with Umbraco's shift towards a more standardised and maintainable extension model. The new architecture promotes the use of single-file components, which encapsulate both the template and logic, making them easier to manage.
+The new backoffice is built on a modern front-end stack that leverages Lit, TypeScript, and ES6 modules. This aligns with Umbraco's shift towards a more standardized and maintainable extension model. The new architecture promotes the use of single-file components, which encapsulate both the template and logic, making them easier to manage.
 
 ### Key Components
 
@@ -86,7 +99,7 @@ Here is a list of key files and directories in the current architecture:
 
 The Markdown Editor used in Articulate's backoffice is a direct clone of the `markdown-editor` package found in `Umbraco.Web.UI.Client`. This was done to ensure that Articulate has a stable, feature-rich markdown editing experience that is consistent with the Umbraco backoffice.
 
-By maintaining a local copy, we can avoid potential breaking changes from upstream updates and have the flexibility to apply customisations if needed in the future. The source code for this component is located in `src/Articulate.Api.Management/Client/src/packages/markdown-editor`.
+By maintaining a local copy, we can avoid potential breaking changes from upstream updates and have the flexibility to apply customizations if needed in the future. The source code for this component is located in `src/Articulate.Api.Management/Client/src/packages/markdown-editor`.
 
 ## 7. Development Workflow and Build Process
 
@@ -112,7 +125,7 @@ Before running `.NET` builds make sure client dependencies are installed manuall
 
 - **`generate-api.js`**: This script uses `@hey-api/openapi-ts` to connect to a running instance of the Articulate site, fetch the OpenAPI/Swagger JSON definition, and generate a fully typed TypeScript client. This ensures the front-end is always in sync with the back-end API.
 - **`post-build.js`**: After Vite creates the production build, this script moves the compiled bundles into `src/Articulate.Api.Management/wwwroot/App_Plugins/Articulate/BackOffice`, making them available to the Razor Class Library.
-- **`set-version.js`**: This utility synchronises the version number across `package.json` and `umbraco-package.json`, ensuring consistency for releases.
+- **`set-version.js`**: This utility synchronizes the version number across `package.json` and `umbraco-package.json`, ensuring consistency for releases.
 
 ### `umbraco-package.json`
 
@@ -124,7 +137,7 @@ This file, located in `src/Articulate.Api.Management/Client/public`, is the mode
 2. **API Changes**: If a C# API endpoint is modified, run `pnpm run generate:api` in the same folder to regenerate the typed client.
 3. **Building for Production**: Execute `pnpm run build` (locally or as part of the release pipeline). The command compiles TypeScript, bundles with Vite, and invokes `post-build.js`.
 4. **Integration with Umbraco**: `post-build.js` moves the bundles into `src/Articulate.Api.Management/wwwroot/App_Plugins/Articulate/BackOffice` alongside the `umbraco-package.json` manifest so the Razor Class Library can expose them as static web assets.
-5. **Full Release Build**: Use `pwsh build/build.ps1` to reproduce the CI flow—restore, clean, build, and pack the solution in Release mode. GitHub Actions (`.github/workflows/build.yml`) runs the same sequence on Windows with Node/pnpm setup to produce signed artefacts.
+5. **Full Release Build**: Use `pwsh build/build.ps1` to reproduce the CI flow—restore, clean, build, and pack the solution in Release mode. GitHub Actions (`.github/workflows/build.yml`) runs the same sequence on Windows with Node/pnpm setup to produce signed artifacts.
 
 #### Troubleshooting client builds
 
@@ -195,7 +208,7 @@ This directory contains the individual views that are managed by the main dashbo
 
 This directory contains helper functions that are used across multiple components:
 
-- **`error-utils.ts`**: Provides a standardised way to format and display API errors.
+- **`error-utils.ts`**: Provides a standardized way to format and display API errors.
 - **`form-utils.ts`**: Contains helpers for working with forms and form data.
 - **`notification-utils.ts`**: A wrapper around the Umbraco notification service for displaying success or error messages.
 - **`template-utils.ts`**: Contains shared Lit templates and styles.
@@ -249,7 +262,7 @@ In older versions, view resolution was handled by a custom `IViewEngine` and `Pa
 
 ### Asset Bundling & The Service Layer
 
-With the move to RCL, the bundling and serving of theme assets (CSS, JS) has also been modernised.
+With the move to RCL, the bundling and serving of theme assets (CSS, JS) has also been modernized.
 
 - **`DefaultThemes.cs`**: This static class defines the list of built-in themes. Its primary role now is to provide the list of built-in system themes..
 - **`PathHelper.cs`**: The role of this class has been significantly reduced. It is no longer used for resolving view paths. Instead, it now primarily serves as a helper to provide the correct virtual paths to theme *assets* (CSS/JS) for the bundling process, distinguishing between built-in themes (served from `_content/Articulate/Themes/...`) and user-created themes (served from `~/Views/ArticulateThemes/...`).

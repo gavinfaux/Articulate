@@ -33,7 +33,7 @@ Many of the old API controllers have been removed from the `Articulate` project 
 | `ArticulateBlogImportController` | `BlogMlApiController` | **Replaced**. The new controller handles both BlogML import and export. |
 | `ThemeEditorController` | `ThemeOptionsApiController` | **Replaced**. Manages theme settings and copying. |
 | `ArticulatePropertyEditorsController` | `ThemePickerApiController` | **Replaced & Refactored**. Logic is now split. `ThemePickerApiController` handles theme selection. |
-| `MardownEditorApiController` | `MarkdownEditorApiController` | **Replaced**. Handles server-side markdown operations like image uploads. |
+| `MarkdownEditorApiController` | `MarkdownEditorApiController` | **Replaced**. Handles server-side markdown operations like image uploads. |
 
 ## 3. Theming and View Resolution Overhaul
 
@@ -94,7 +94,7 @@ Several core models and helper classes have been updated or replaced.
 | `ExportBlogMlModel` | N/A | **Removed**. This model, used for BlogML export, has been removed as this functionality is now handled by the back-office API. |
 | `ImportBlogMlModel` | N/A | **Removed**. This model, used for BlogML import, has been removed as this functionality is now handled by the back-office API. |
 | `ImportModel` | N/A | **Removed**. This model, used for BlogML import, has been removed as this functionality is now handled by the back-office API. |
-| `MardownEditorModel` | N/A | **Removed**. This model, used for the back-office Markdown editor, has been removed. |
+| `MarkdownEditorModel` | N/A | **Removed**. This model, used for the back-office Markdown editor, has been removed. |
 | `MarkdownEditorInitModel` | `Articulate.Models.MarkdownEditorInitModel` | **Moved**. The init model now lives in `Articulate.Core` so Razor Class Library views (and the `Articulate.StaticAssets` RCL) can consume it. Update namespaces from `Articulate.Web.Models` to `Articulate.Models`. |
 | `PostCopyThemeModel` | N/A | **Removed**. This model, used for copying themes, has been removed as this functionality is now handled by the back-office API. |
 
@@ -122,7 +122,7 @@ In v6, all back-office API controllers and related logic have been moved into a 
 | Old Controller (in `Articulate`) | New Controller (in `Articulate.Api.Management`) | Status & Notes |
 | --- | --- | --- |
 | `ArticulateBlogImportController` | `BlogMlApiController` | **Replaced**. Handles BlogML import and export. |
-| `MardownEditorApiController` | `MarkdownEditorApiController` | **Replaced**. Provides the back-end for the Markdown editor. |
+| `MarkdownEditorApiController` | `MarkdownEditorApiController` | **Replaced**. Provides the back-end for the Markdown editor. |
 | `ThemeEditorController` | `ThemeOptionsApiController` | **Replaced**. Manages theme files and options. |
 | `ArticulatePropertyEditorsController` | `ThemePickerApiController` | **Replaced**. The theme picker logic is now in its own dedicated controller. |
 

@@ -1,3 +1,5 @@
+# Articulate
+
 [![Articulate Build](https://github.com/Shazwazza/Articulate/actions/workflows/build.yml/badge.svg)](https://github.com/Shazwazza/Articulate/actions/workflows/build.yml)
 
 ![Articulate](https://raw.githubusercontent.com/Shazwazza/Articulate/develop/assets/Logo.png?raw=true)
@@ -8,6 +10,7 @@
 _❤️ If you use and like Articulate please consider [becoming a GitHub Sponsor](https://github.com/sponsors/Shazwazza/) ❤️_
 
 ## Contents
+
 - [Tooling prerequisites (Node/pnpm)](#tooling-prerequisites-nodepnpm)
 - [Build & Pack (multi-target .NET 9/10)](#build--pack-multi-target-net-910)
 - [Script options](#script-options)
@@ -46,7 +49,7 @@ Supporting all the features you'd want in a blogging platform
 - Post from your mobile phone including photos direct from you camera
 - Disqus or Facebook comment support (or build your own)
 - Search
-- Blogml import/export (including Disqus import)
+- BlogML import/export (including Disqus import)
 - Customizable RSS feeds
 - Customizable urls
 - Author profiles
@@ -74,7 +77,7 @@ Note: the legacy front‑end “Markdown Editor” route `/a-new` does not expos
 
 ## [Documentation](https://github.com/Shazwazza/Articulate/wiki)
 
-Docs on installation, creating posts, customising/creating themes, etc...
+Docs on installation, creating posts, customizing/creating themes, etc...
 
 ## [Issues](https://github.com/Shandem/Articulate/issues)
 
@@ -100,6 +103,8 @@ See here for the list of releases and their release notes
 1. Complete the Umbraco installer and sign in; migrations seed the Articulate schema and demo content automatically.
 
 Changes to the Razor Class Library or client code hot-reload through the test site (see the Developer Experience section below).
+
+> **New:** Commits now run automated checks. Husky + lint-staged lint any staged TypeScript files and rebuild the client bundle when `Client/src/**` changes. GitLeaks also scans staged content for secrets. Install pnpm (Node 22+) and the [GitLeaks CLI](https://github.com/gitleaks/gitleaks/releases) locally so the hooks can run.
 
 ### Developer Experience (hot reload)
 
@@ -151,6 +156,7 @@ See docs/development-dx.md for details and tips.
 - If a future preview regresses static web-asset packing, fall back to manual `Content`/`ContentWithTargetPath`/`EmbeddedResource` packing; see docs/development-dx.md.
 
 #### Script options
+
 - Common: builds are parallel and pack `Articulate`, `Articulate.Core`, `Articulate.Api.Management`, and `Articulate.StaticAssets` into `build/Release`. The scripts flip on the `Articulate_EnableAssetsPackDependency` flag when packing `Articulate` so the resulting nupkg advertises the static-assets dependency without affecting local restores.
 - Windows (`build/build.ps1`):
   - Override CPU workers: `set MAXCPU=8` (default = all cores)
@@ -161,11 +167,14 @@ See docs/development-dx.md for details and tips.
   - WSL tip: if the repo is under `/mnt/*`, the script prints a performance warning. Clone under `~/src/...` for faster I/O.
 
 Client/Vite build
+
 - MSBuild does not run pnpm/Vite automatically. Packages include the committed `dist/` outputs under `src/Articulate.Web/wwwroot/App_Plugins/Articulate/**/dist/**`.
 - To regenerate assets as part of a build: set `ENABLE_CLIENT_BUILD=1` when invoking the build scripts.
 - To rebuild manually: `cd src/Articulate.Api.Management/Client && pnpm install && pnpm run build` (or `build:release`).
+- Pre-commit hooks automatically lint staged `.ts/.tsx` files and run `pnpm run build` when client source changes. Install pnpm + GitLeaks locally; if you intentionally need to bypass the hooks, commit with `HUSKY=0 git commit ...`.
 
 ### WSL + Windows workflow (fast local builds)
+
 - For best performance keep two clones:
   - WSL ext4 clone (e.g. `~/src/Articulate6-wip`) → `bash build/build.sh`
   - Windows NTFS clone (e.g. `F:\int\Articulate6-wip`) → `pwsh build/build.ps1`
@@ -184,7 +193,7 @@ Client/Vite build
 If you need to make changes to the underlying Umbraco schema (doc types, data types, etc...) or the installed package's content/media, then you will need
 to re-create the Articulate package in the back office with all required dependencies and then re-save the package.zip file and commit it to the repository.
 
-## Copyright & Licence
+## Copyright & License
 
 &copy; 2025 by Shannon Deminick
 

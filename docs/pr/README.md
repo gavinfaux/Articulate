@@ -1,4 +1,4 @@
-## Archived PRDs
+# Archived PRDs
 
 The product requirement drafts that previously lived under `docs/pr/feat` have been retired.
 

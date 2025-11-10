@@ -117,7 +117,7 @@ Use these expressions verbatim, changing the host and path as needed:
 
 - Markdown (Transform Rule)
 
-```
+```text
 (http.request.method in {"GET" "HEAD"})
 and http.host eq "example.com"
 and (lower(http.request.headers["accept"][0]) contains "markdown")
@@ -127,7 +127,7 @@ and not http.request.uri.path matches "(?i)\\.(?:css|js|png|jpe?g|gif|svg|ico|we
 
 - Plain text (Transform Rule)
 
-```
+```text
 (http.request.method in {"GET" "HEAD"})
 and http.host eq "example.com"
 and (lower(http.request.headers["accept"][0]) contains "text/plain")
@@ -137,7 +137,7 @@ and not http.request.uri.path matches "(?i)\\.(?:css|js|png|jpe?g|gif|svg|ico|we
 
 - Fallback html (Transform Rule)
 
-```
+```text
 (http.request.method in {"GET" "HEAD"})
 and http.host eq "example.com"
 and http.request.uri.path starts_with "/blog"
@@ -146,7 +146,7 @@ and not http.request.uri.path matches "(?i)\\.(?:css|js|png|jpe?g|gif|svg|ico|we
 
 - Cache Rule (include header X-Content-Variant in cache key)
 
-```
+```text
 http.request.method in {"GET" "HEAD"}
 and http.host eq "example.com"
 and http.request.uri.path starts_with "/blog"
@@ -159,7 +159,7 @@ If your blog is at the site root, exclude `/umbraco` and static file extensions 
 
 - Markdown (Transform Rule)
 
-```
+```text
 (http.request.method in {"GET" "HEAD"})
 and http.host eq "example.com"
 and (lower(http.request.headers["accept"][0]) contains "markdown")
@@ -169,7 +169,7 @@ and not http.request.uri.path matches "(?i)\\.(?:css|js|png|jpe?g|gif|svg|ico|we
 
 - Plain text (Transform Rule)
 
-```
+```text
 (http.request.method in {"GET" "HEAD"})
 and http.host eq "example.com"
 and (lower(http.request.headers["accept"][0]) contains "text/plain")
@@ -179,7 +179,7 @@ and not http.request.uri.path matches "(?i)\\.(?:css|js|png|jpe?g|gif|svg|ico|we
 
 - Fallback html (Transform Rule)
 
-```
+```text
 (http.request.method in {"GET" "HEAD"})
 and http.host eq "example.com"
 and not http.request.uri.path starts_with "/umbraco"
@@ -188,7 +188,7 @@ and not http.request.uri.path matches "(?i)\\.(?:css|js|png|jpe?g|gif|svg|ico|we
 
 - Cache Rule (include header X-Content-Variant in cache key)
 
-```
+```text
 http.request.method in {"GET" "HEAD"}
 and http.host eq "example.com"
 and not http.request.uri.path starts_with "/umbraco"
