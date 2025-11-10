@@ -113,7 +113,12 @@ $projectsToPack = @(
 )
 foreach ($project in $projectsToPack) {
     Write-Host "[pack] -> $([IO.Path]::GetFileName($project))"
-    & dotnet pack $project -c Release --no-build --no-restore -o $ReleaseFolder @dotnetCommon @msbuildArgs -p:NoPackageAnalysis=true
+    $packArgs = @()
+    # Enable transitive dependency on Articulate.StaticAssets only when packing Articulate (RCL)
+    if ($project -like "*Articulate.Web/Articulate.Web.csproj") {
+        $packArgs += "-p:Articulate_EnableAssetsPackDependency=true"
+    }
+    & dotnet pack $project -c Release --no-build --no-restore -o $ReleaseFolder @dotnetCommon @msbuildArgs -p:NoPackageAnalysis=true @packArgs
     if ($LASTEXITCODE -ne 0) { throw "dotnet pack failed for $project" }
 }
 

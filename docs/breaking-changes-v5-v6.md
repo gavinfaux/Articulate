@@ -95,7 +95,7 @@ Several core models and helper classes have been updated or replaced.
 | `ImportBlogMlModel` | N/A | **Removed**. This model, used for BlogML import, has been removed as this functionality is now handled by the back-office API. |
 | `ImportModel` | N/A | **Removed**. This model, used for BlogML import, has been removed as this functionality is now handled by the back-office API. |
 | `MardownEditorModel` | N/A | **Removed**. This model, used for the back-office Markdown editor, has been removed. |
-| `MarkdownEditorInitModel` | N/A | **Removed**. This model, used for the back-office Markdown editor, has been removed. |
+| `MarkdownEditorInitModel` | `Articulate.Models.MarkdownEditorInitModel` | **Moved**. The init model now lives in `Articulate.Core` so Razor Class Library views (and the `Articulate.StaticAssets` RCL) can consume it. Update namespaces from `Articulate.Web.Models` to `Articulate.Models`. |
 | `PostCopyThemeModel` | N/A | **Removed**. This model, used for copying themes, has been removed as this functionality is now handled by the back-office API. |
 
 ## 7. Public Method Signature Changes

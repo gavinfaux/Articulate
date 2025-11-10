@@ -1,6 +1,5 @@
-
-
-namespace Articulate.Web.Models
+#nullable enable
+namespace Articulate.Models
 {
     public class MarkdownEditorInitModel
     {
@@ -22,6 +21,5 @@ namespace Articulate.Web.Models
         public int? BackOfficeUserId { get; set; }
 
         public bool HasRequiredPermissions { get; set; }
-
     }
 }

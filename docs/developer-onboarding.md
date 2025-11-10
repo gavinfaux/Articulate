@@ -338,20 +338,10 @@ If you prefer to keep a single controller, replace the `Redirect(target)` call i
 
 ### Packaging for Release
 
-**IMPORTANT**: To create a valid NuGet package for distribution today, you **must** use the **`Pack`** command from within Visual Studio (right-click the `Articulate` project and select `Pack`).
+The CLI and IDE paths now produce identical NuGet packages—no Visual Studio-only workaround required.
 
-- Visual Studio’s pack restores/builds the solution and emits static-web-asset entries in the nupkg (`_content/Articulate/...`), so a clean Umbraco CMS site can reference the package without extra work.
-- `dotnet pack` from the CLI currently degrades to shipping the same assets under `content/` / `contentFiles/any/any`. Those files are still present but the host site would need custom MSBuild/Publish steps (or manual copying) to surface them at runtime because they are no longer wired into the static-web-asset pipeline.
+1. Run `pwsh build/build.ps1` (Windows) or `bash build/build.sh` (Linux/WSL). The scripts restore, build both TFMs, and pack the four distributable projects into `build/Release`.
+2. During the pack step, the scripts pass `-p:Articulate_EnableAssetsPackDependency=true` only to `Articulate.Web`. That injects a dependency on the `Articulate.StaticAssets` Razor Class Library, so consumers that install `Articulate` automatically receive the `/App_Plugins/Articulate/**` payload via static web assets.
+3. `Articulate.StaticAssets` remains a pure RCL that mirrors the built `dist/` folders from `Articulate.Web`. Because `Articulate` depends on it transitively at pack time, no manual `<Content>` fallbacks or `.targets` hooks are required—the standard static-web-asset pipeline lights up in consuming Umbraco sites.
 
-If the package is consumed by a stock Umbraco CMS project, only the Visual Studio build behaves correctly out of the box. The CLI-produced package would require the consuming app to copy the content files into `wwwroot/App_Plugins/Articulate` or add startup/build logic that mirrors what static-web-assets normally provide (`UseStaticWebAssets` alone is not sufficient). To bridge the gap, the package now ships a temporary MSBuild hook (`build/Articulate.targets`) that copies the App_Plugins payload during consumer builds whenever the nupkg exposes it via `content/` or `contentFiles/`. It honours `ArticulateEmitContentTargets` (default `true`) if you need to opt out and `ArticulateTargetAppPlugins` when you need a different destination. Remove these targets once the dedicated static-assets RCL lands.
-
-#### Roadmap: Fixing the pack gap
-
-To eliminate the Visual Studio requirement, plan an MVP that separates the static assets into their own Razor Class Library and, if needed, a content-files fallback:
-
-1. **Create `Articulate.StaticAssets`** (RCL targeting `net9.0;net10.0`). Move the views, themes, Markdown editor assets, and the backoffice bundle (`wwwroot/App_Plugins/Articulate/**`) into this project. It should have no runtime code—just Razor + static files.
-2. **Reference from `Articulate`**. Keep `Articulate` focused on runtime services/controllers. The RCL exposes static-web-assets automatically, so `dotnet pack` on the solution emits a NuGet with the assets without extra MSBuild hacks.
-3. **Update MSBuild**. Point existing `EmbeddedResource` and packaging metadata to the new project, and ensure `Articulate.Api.Management` still copies the backoffice output into the RCL before packing.
-4. **Fallback strategy**. If a specific SDK still drops assets, add conditional `<Content Include="wwwroot\**\*" Pack="true" PackagePath="contentFiles/any/any" />` entries or `.targets` files in `build/` so consumers get the files via contentFiles/build even when static-web-asset packaging regresses.
-
-Implementing step 1–3 should restore command-line parity; step 4 remains a safety net for future SDK regressions.
+Direct `dotnet pack` invocations still work if you prefer granular control; just include `-p:Articulate_EnableAssetsPackDependency=true` when packing `src/Articulate.Web/Articulate.Web.csproj`. Otherwise the build scripts are the canonical path that CI and local release builds already follow.

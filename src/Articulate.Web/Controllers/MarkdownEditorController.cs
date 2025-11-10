@@ -3,7 +3,7 @@ using Articulate.Api.Management.Extensions;
 using Articulate.Api.Management.Options;
 using Articulate.Services;
 using Articulate.Attributes;
-using Articulate.Web.Models;
+using Articulate.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.Mvc.ViewEngines;

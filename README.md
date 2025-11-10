@@ -31,7 +31,7 @@ _Need help?_ Head over to [Articulate on GitHub](https://github.com/Shazwazza/Ar
 
 Articulate 6 targets Umbraco 15.4.4+, 16, and 17 (preview) via a multi-targeted Razor Class Library.
 
-- Install the package on Umbraco 15/16 from NuGet or source and follow any migration prompts in the Packages section.
+- Install `Articulate` from NuGet (`dotnet add package Articulate`). The package now ships a transitive dependency on `Articulate.StaticAssets`, so the `/App_Plugins/Articulate/**` files light up automatically—no extra package references or manual copies required.
 - When building from source, run the test site `dotnet run -f net9.0 --project src/Articulate.Tests.Website/Articulate.Tests.Website.csproj` (or `-f net10.0` for Umbraco 17) and sign into the Umbraco backoffice to finish setup.
 
 ## Features
@@ -151,7 +151,7 @@ See docs/development-dx.md for details and tips.
 - If a future preview regresses static web-asset packing, fall back to manual `Content`/`ContentWithTargetPath`/`EmbeddedResource` packing; see docs/development-dx.md.
 
 #### Script options
-- Common: builds are parallel and pack `Articulate`, `Articulate.Core`, `Articulate.Api.Management`, and `Articulate.StaticAssets` into `build/Release`.
+- Common: builds are parallel and pack `Articulate`, `Articulate.Core`, `Articulate.Api.Management`, and `Articulate.StaticAssets` into `build/Release`. The scripts flip on the `Articulate_EnableAssetsPackDependency` flag when packing `Articulate` so the resulting nupkg advertises the static-assets dependency without affecting local restores.
 - Windows (`build/build.ps1`):
   - Override CPU workers: `set MAXCPU=8` (default = all cores)
   - Enable client assets build: `set ENABLE_CLIENT_BUILD=1`

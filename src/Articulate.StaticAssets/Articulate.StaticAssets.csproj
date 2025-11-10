@@ -36,7 +36,9 @@
     </ArticulateWebAsset>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Articulate.Web\Articulate.Web.csproj" />
+    <!-- Only reference Articulate.Core for Razor model types; avoid coupling to Articulate.Web to prevent cyclic NuGet deps -->
+    <ProjectReference Include="..\Articulate\Articulate.csproj" />
+    <!-- Keep API management as a private, non-packaged build-time reference (for local asset workflows) -->
     <ProjectReference Include="..\Articulate.Api.Management\Articulate.Api.Management.csproj"
                       ReferenceOutputAssembly="false"
                       PrivateAssets="All" />

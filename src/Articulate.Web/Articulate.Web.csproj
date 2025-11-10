@@ -12,6 +12,22 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <!-- Conditional transitive dependency on Articulate.StaticAssets (enabled only at pack time) -->
+  <PropertyGroup>
+    <!-- Off by default so repo builds/restores don't require the packaged asset dependency -->
+    <Articulate_EnableAssetsPackDependency Condition="'$(Articulate_EnableAssetsPackDependency)' == ''">false</Articulate_EnableAssetsPackDependency>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Articulate_EnableAssetsPackDependency)' == 'true'">
+    <!-- Compute a major-version-bounded range: [currentMajor.0.0, nextMajor.0.0) -->
+    <_ArticulateMajor>$([System.Text.RegularExpressions.Regex]::Match('$(Version)', '^\d+').Value)</_ArticulateMajor>
+    <_ArticulateMajor Condition="'$(_ArticulateMajor)' == ''">0</_ArticulateMajor>
+    <_ArticulateNextMajor>$([System.Int32]::Parse($(_ArticulateMajor)) + 1)</_ArticulateNextMajor>
+    <_ArticulateAssetsDependencyVersionRange>[$(_ArticulateMajor).0.0, $(_ArticulateNextMajor).0.0)</_ArticulateAssetsDependencyVersionRange>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(Articulate_EnableAssetsPackDependency)' == 'true'">
+    <PackageReference Include="Articulate.StaticAssets" Version="$(_ArticulateAssetsDependencyVersionRange)" />
+  </ItemGroup>
+
 
   <!--
     Nuget - Dotnet SourceLink & Symbol Package

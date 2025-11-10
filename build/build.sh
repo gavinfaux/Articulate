@@ -150,8 +150,12 @@ PACK_PROJECTS=(
 declare -a pack_pids=()
 for proj in "${PACK_PROJECTS[@]}"; do
   echo "[pack] -> $(basename "$proj")"
+  EXTRA_PACK_ARGS=()
+  if [[ "$proj" == *"Articulate.Web/Articulate.Web.csproj"* ]]; then
+    EXTRA_PACK_ARGS+=(-p:Articulate_EnableAssetsPackDependency=true)
+  fi
   dotnet pack "$proj" -c Release --no-build --no-restore -o "$RELEASE_FOLDER" \
-    "${DOTNET_COMMON[@]}" "${MSBUILD_PARALLEL[@]}" -p:NoPackageAnalysis=true &
+    "${DOTNET_COMMON[@]}" "${MSBUILD_PARALLEL[@]}" -p:NoPackageAnalysis=true "${EXTRA_PACK_ARGS[@]}" &
   pack_pids+=($!)
 done
 
