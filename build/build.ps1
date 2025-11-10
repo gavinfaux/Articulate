@@ -58,7 +58,7 @@ if ($EnableClientBuild -and (Test-Path $ClientDir)) {
     if (-not $?) { throw "pnpm build:release failed" }
     Pop-Location
 } else {
-    Write-Host "Skipping client asset build (set ENABLE_CLIENT_BUILD=1 to enable)"
+    Write-Host "Skipping client asset build (set ENABLE_CLIENT_BUILD=true or $env:ENABLE_CLIENT_BUILD = 'true') to enable."
 }
 
 Write-Host "Starting clean and restore process for solution: $SolutionPath"

@@ -151,6 +151,7 @@ See docs/development-dx.md for details and tips.
 ### Build & Pack (multi-target .NET 9/10)
 
 - Projects target both `net9.0` and `net10.0`. Run `pwsh build/build.ps1` (Windows) or `bash build/build.sh` (Linux/WSL) to compile and create NuGet packages.
+- New clones on Linux/WSL may need execute bits re-applied once: `chmod +x build/build.sh build/build.ps1`. Git preserves script permissions on Windows, but when cloning onto ext4 the shell scripts lack execute permissions and the build will fail with `permission denied` until you run `chmod`.
 - `global.json` keeps 9.0.100 as the baseline but allows roll-forward to newer (preview) SDKs, so `dotnet` or Visual Studio can load the .NET 10 tooling when installed.
 - GitHub Actions mirrors this flow by invoking `build/build.ps1`, ensuring the same serialized Core → API → Web build order with `--no-dependencies`.
 - If a future preview regresses static web-asset packing, fall back to manual `Content`/`ContentWithTargetPath`/`EmbeddedResource` packing; see docs/development-dx.md.
@@ -160,16 +161,16 @@ See docs/development-dx.md for details and tips.
 - Common: builds are parallel and pack `Articulate`, `Articulate.Core`, `Articulate.Api.Management`, and `Articulate.StaticAssets` into `build/Release`. The scripts flip on the `Articulate_EnableAssetsPackDependency` flag when packing `Articulate` so the resulting nupkg advertises the static-assets dependency without affecting local restores.
 - Windows (`build/build.ps1`):
   - Override CPU workers: `set MAXCPU=8` (default = all cores)
-  - Enable client assets build: `set ENABLE_CLIENT_BUILD=1`
+  - Enable client assets build: `$env:ENABLE_CLIENT_BUILD = 'true'` (or `set ENABLE_CLIENT_BUILD=true`)
 - Linux/WSL (`build/build.sh`):
   - Override CPU workers: `export MAXCPU=8` (default = auto‑detect)
-  - Enable client assets build: `export ENABLE_CLIENT_BUILD=1`
+  - Enable client assets build: `export ENABLE_CLIENT_BUILD=true`
   - WSL tip: if the repo is under `/mnt/*`, the script prints a performance warning. Clone under `~/src/...` for faster I/O.
 
 Client/Vite build
 
 - MSBuild does not run pnpm/Vite automatically. Packages include the committed `dist/` outputs under `src/Articulate.Web/wwwroot/App_Plugins/Articulate/**/dist/**`.
-- To regenerate assets as part of a build: set `ENABLE_CLIENT_BUILD=1` when invoking the build scripts.
+- To regenerate assets as part of a build: set `ENABLE_CLIENT_BUILD=true` when invoking the build scripts.
 - To rebuild manually: `cd src/Articulate.Api.Management/Client && pnpm install && pnpm run build` (or `build:release`).
 - Pre-commit hooks automatically lint staged `.ts/.tsx` files and run `pnpm run build` when client source changes. Install pnpm + GitLeaks locally; if you intentionally need to bypass the hooks, commit with `HUSKY=0 git commit ...`.
 

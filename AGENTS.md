@@ -30,11 +30,11 @@ This guide supports automation agents and human contributors working in the Arti
 
 - `build/build.sh` (Linux/WSL):
   - Parallel by default; auto‑detects CPU count. Override with `MAXCPU=<N>`.
-  - Client assets: skipped by default. Enable with `ENABLE_CLIENT_BUILD=1`.
+  - Client assets: skipped by default. Enable with `ENABLE_CLIENT_BUILD=true`.
   - WSL‑aware: warns when building from `/mnt/*` and suggests cloning into the distro’s ext4 (e.g., `~/src/...`).
 - `build/build.ps1` (Windows):
   - Parallel by default; uses all logical cores. Override with `set MAXCPU=<N>` before running.
-  - Client assets: skipped by default. Enable with `set ENABLE_CLIENT_BUILD=1`.
+  - Client assets: skipped by default. Enable with `set ENABLE_CLIENT_BUILD=true`.
   - Prints a note if running against `\\wsl$` paths and suggests using the Linux script inside WSL.
 
 ## Coding Style & Naming Conventions

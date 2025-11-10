@@ -53,8 +53,8 @@ fi
 
 dotnet --version
 
-# Optionally build backoffice client assets (ENABLE_CLIENT_BUILD=1 or CI=true)
-if [[ ("${ENABLE_CLIENT_BUILD:-}" == "1" || "${CI:-}" == "true" || "${GITHUB_ACTIONS:-}" == "true") && -d "$CLIENT_DIR" ]]; then
+# Optionally build backoffice client assets (ENABLE_CLIENT_BUILD=true or CI=true)
+if [[ ("${ENABLE_CLIENT_BUILD:-}" == "true" || "${CI:-}" == "true" || "${GITHUB_ACTIONS:-}" == "true") && -d "$CLIENT_DIR" ]]; then
   echo "Building backoffice client assets (pnpm build:release)..."
   # Ensure writable cache/home for corepack/pnpm in sandboxed environments
   CACHE_DIR="$REPO_ROOT/.cache"
@@ -68,7 +68,7 @@ if [[ ("${ENABLE_CLIENT_BUILD:-}" == "1" || "${CI:-}" == "true" || "${GITHUB_ACT
   fi
   (cd "$CLIENT_DIR" && pnpm install --frozen-lockfile --prefer-offline && pnpm run build:release)
 else
-  echo "Skipping client asset build (set ENABLE_CLIENT_BUILD=1 to enable)"
+  echo "Skipping client asset build (set ENABLE_CLIENT_BUILD=true or export ENABLE_CLIENT_BUILD=true to enable)"
 fi
 
 # Avoid NuGet fallback folders (already disabled in Directory.Build.props, but double-sure)

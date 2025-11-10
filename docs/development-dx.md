@@ -98,8 +98,8 @@ Tips:
 
 - MSBuild does not invoke pnpm/Vite by default. The client assets are built with Vite and committed under `src/Articulate.Web/wwwroot/App_Plugins/Articulate/**/dist/**`.
 - To rebuild assets during packaging, use the build scripts with an opt‑in flag:
-  - Windows: `set ENABLE_CLIENT_BUILD=1 && build\build.ps1`
-  - Linux/WSL: `ENABLE_CLIENT_BUILD=1 bash build/build.sh`
+  - Windows: `set ENABLE_CLIENT_BUILD=true && build\build.ps1`
+  - Linux/WSL: `ENABLE_CLIENT_BUILD=true bash build/build.sh`
 - Or run it manually during development:
   - `cd src/Articulate.Api.Management/Client && pnpm install && pnpm run build` (dev) or `pnpm run build:release` (prod bundling)
 - Packaging pulls from the `dist/` folders (see `src/Articulate.StaticAssets/Articulate.StaticAssets.csproj`). If you change theme or Markdown editor sources, rebuild to refresh those folders before packing.
