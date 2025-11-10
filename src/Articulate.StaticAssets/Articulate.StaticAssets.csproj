@@ -10,6 +10,7 @@
   </PropertyGroup>
   
   <ItemGroup>
+    <SupportedPlatform Include="browser" />
     <Folder Include="wwwroot\App_Plugins\Articulate\" />
   </ItemGroup>
 

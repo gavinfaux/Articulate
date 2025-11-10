@@ -6,26 +6,26 @@
         <!--TODO: Enable after phased migration. https://learn.microsoft.com/en-us/dotnet/csharp/nullable-migration-strategies-->
         <Nullable>warnings</Nullable>
         <WarningsAsErrors>Nullable</WarningsAsErrors>
-		<ImplicitUsings>enable</ImplicitUsings>
-		<GenerateDocumentationFile>true</GenerateDocumentationFile>
-		<NuGetAuditMode>direct</NuGetAuditMode>
-		<DisableImplicitNuGetFallbackFolder>true</DisableImplicitNuGetFallbackFolder>
-	</PropertyGroup>
-	<!--Umbraco CMS version range per target + NuGet audit mode-->
-	<PropertyGroup Condition="'$(TargetFramework)' == 'net9.0'">
-		<!-- Support Umbraco 15.x-16.x on .NET 9 -->
-		<UmbracoCmsPackageVersion>[15.4.4,17.0.0)</UmbracoCmsPackageVersion>
-		<UmbracoCmsTestsPackageVersion>[15.4.4,17.0.0)</UmbracoCmsTestsPackageVersion>
-		<AspNetRuntimeCompilationVersion>9.0.0</AspNetRuntimeCompilationVersion>
-		<NuGetAuditMode>direct</NuGetAuditMode>
-	</PropertyGroup>
-	<PropertyGroup Condition="'$(TargetFramework)' == 'net10.0'">
-		<!-- Support Umbraco 17.x (including pre-release) on .NET 10 -->
-		<UmbracoCmsPackageVersion>[17.0.0-rc1,18.0.0)</UmbracoCmsPackageVersion>
-		<UmbracoCmsTestsPackageVersion>[17.0.0-rc1,18.0.0)</UmbracoCmsTestsPackageVersion>
-		<AspNetRuntimeCompilationVersion>10.0.0-rc.2.25502.107</AspNetRuntimeCompilationVersion>
-		<NuGetAuditMode>direct</NuGetAuditMode>
-	</PropertyGroup>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <NuGetAuditMode>direct</NuGetAuditMode>
+        <DisableImplicitNuGetFallbackFolder>true</DisableImplicitNuGetFallbackFolder>
+    </PropertyGroup>
+    <!--Umbraco CMS version range per target + NuGet audit mode-->
+    <PropertyGroup Condition="'$(TargetFramework)' == 'net9.0'">
+        <!-- Support Umbraco 15.x-16.x on .NET 9 -->
+        <UmbracoCmsPackageVersion>[15.4.4,17.0.0)</UmbracoCmsPackageVersion>
+        <UmbracoCmsTestsPackageVersion>[15.4.4,17.0.0)</UmbracoCmsTestsPackageVersion>
+        <AspNetRuntimeCompilationVersion>9.0.0</AspNetRuntimeCompilationVersion>
+        <NuGetAuditMode>direct</NuGetAuditMode>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0'">
+        <!-- Support Umbraco 17.x (including pre-release) on .NET 10 -->
+        <UmbracoCmsPackageVersion>[17.0.0-rc1,18.0.0)</UmbracoCmsPackageVersion>
+        <UmbracoCmsTestsPackageVersion>[17.0.0-rc1,18.0.0)</UmbracoCmsTestsPackageVersion>
+        <AspNetRuntimeCompilationVersion>10.0.0-rc.2.25502.107</AspNetRuntimeCompilationVersion>
+        <NuGetAuditMode>direct</NuGetAuditMode>
+    </PropertyGroup>
     <PropertyGroup>
         <!-- TODO: Enable when 6.0 version is shipped -->
         <EnablePackageValidation>false</EnablePackageValidation>
@@ -56,7 +56,6 @@
         <PackageReference Include="Microsoft.CodeAnalysis" Version="4.14.0" PrivateAssets="All" />
     </ItemGroup>
     <ItemGroup Condition="'$(UsingMicrosoftNETSdkRazor)' == 'true'">
-        <SupportedPlatform Include="browser" />
         <Using Include="Umbraco.Cms.Core.DependencyInjection" />
         <Using Include="Umbraco.Extensions" />
         <Using Include="Articulate" />
