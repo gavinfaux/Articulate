@@ -5,6 +5,7 @@ using Articulate.Api.Management.Swagger;
 using Microsoft.Extensions.DependencyInjection;
 using Umbraco.Cms.Api.Common.OpenApi;
 using Umbraco.Cms.Core.Composing;
+using Umbraco.Cms.Core.Notifications;
 
 namespace Articulate.Api.Management.Composers
 {
@@ -23,7 +24,11 @@ namespace Articulate.Api.Management.Composers
             _ = builder.Services.ConfigureOptions<ArticulateSwaggerOptions>();
             _ = builder.Services.Configure<ArticulateOpenIdClientOptions>(
                 builder.Config.GetSection(ArticulateOpenIdClientOptions.SectionName));
-            _ = builder.Services.AddHostedService<ArticulateApplicationManager>();
+#if NET10_0_OR_GREATER
+            _ = builder.AddNotificationAsyncHandler<UmbracoApplicationStartedNotification, ArticulateApplicationManager>();
+#else
+            _ = builder.AddNotificationHandler<UmbracoApplicationStartedNotification, ArticulateApplicationManager>();
+#endif
         }
     }
 }

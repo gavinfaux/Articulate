@@ -1,10 +1,11 @@
 #nullable enable
 using Articulate.Api.Management.Options;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using OpenIddict.Abstractions;
+using Umbraco.Cms.Core.Events;
+using Umbraco.Cms.Core.Notifications;
 
 namespace Articulate.Api.Management.Services
 {
@@ -14,14 +15,28 @@ namespace Articulate.Api.Management.Services
     internal sealed class ArticulateApplicationManager(
         IServiceScopeFactory scopeFactory,
         IOptions<ArticulateOpenIdClientOptions> options,
-        ILogger<ArticulateApplicationManager> logger) : IHostedService
+        ILogger<ArticulateApplicationManager> logger) :
+#if NET10_0_OR_GREATER
+        INotificationAsyncHandler<UmbracoApplicationStartedNotification>
+#else
+        INotificationHandler<UmbracoApplicationStartedNotification>
+#endif
     {
         private readonly IServiceScopeFactory _scopeFactory = scopeFactory;
         private readonly IOptions<ArticulateOpenIdClientOptions> _options = options;
         private readonly ILogger<ArticulateApplicationManager> _logger = logger;
 
+#if NET10_0_OR_GREATER
         /// <inheritdoc />
-        public async Task StartAsync(CancellationToken cancellationToken)
+        public Task HandleAsync(UmbracoApplicationStartedNotification notification, CancellationToken cancellationToken) =>
+            EnsureOpenIdClientAsync(cancellationToken);
+#else
+        /// <inheritdoc />
+        public void Handle(UmbracoApplicationStartedNotification notification) =>
+            EnsureOpenIdClientAsync(CancellationToken.None).GetAwaiter().GetResult();
+#endif
+
+        private async Task EnsureOpenIdClientAsync(CancellationToken cancellationToken)
         {
             ArticulateOpenIdClientOptions settings = _options.Value;
 
@@ -62,9 +77,6 @@ namespace Articulate.Api.Management.Services
                 _logger.LogInformation("Updated OpenIddict client '{ClientId}' for Articulate.", settings.ClientId);
             }
         }
-
-        /// <inheritdoc />
-        public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 
         private OpenIddictApplicationDescriptor? BuildDescriptor(ArticulateOpenIdClientOptions settings)
         {
