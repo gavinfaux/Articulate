@@ -477,6 +477,9 @@ $RECYCLE.BIN/
 ## Articulate specific
 ##
 /src/.vscode
+appsettings-schema.Umbraco.Cms.json
+umbraco-package-schema.json
+appsettings-schema.json
 
 # The packages folder can be ignored because of Package Restore
 **/[Pp]ackages/*
