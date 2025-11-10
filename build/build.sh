@@ -174,7 +174,11 @@ elif [[ "${SKIP_GITLEAKS:-}" == "1" ]]; then
   echo "Skipping GitLeaks scan (SKIP_GITLEAKS=1)."
 elif command -v gitleaks >/dev/null 2>&1; then
   echo "Running GitLeaks scan..."
-  if ! gitleaks detect --source "$REPO_ROOT" --redact --no-banner; then
+  GITLEAKS_ARGS=(detect --source "$REPO_ROOT" --redact --no-banner)
+  if [[ -f "$REPO_ROOT/.gitleaks.baseline" ]]; then
+    GITLEAKS_ARGS+=(--baseline-path "$REPO_ROOT/.gitleaks.baseline")
+  fi
+  if ! gitleaks "${GITLEAKS_ARGS[@]}"; then
     echo "GitLeaks detected sensitive content." >&2
     exit 1
   fi

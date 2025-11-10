@@ -58,7 +58,7 @@ if ($EnableClientBuild -and (Test-Path $ClientDir)) {
     if (-not $?) { throw "pnpm build:release failed" }
     Pop-Location
 } else {
-    Write-Host "Skipping client asset build (set ENABLE_CLIENT_BUILD=true or $env:ENABLE_CLIENT_BUILD = 'true') to enable."
+    Write-Host "Skipping client asset build (set ENABLE_CLIENT_BUILD=true or `$env:ENABLE_CLIENT_BUILD = 'true') to enable."
 }
 
 Write-Host "Starting clean and restore process for solution: $SolutionPath"
@@ -137,7 +137,13 @@ elseif ($skipGitLeaks)
 elseif (Get-Command gitleaks -ErrorAction SilentlyContinue)
 {
     Write-Host "Running GitLeaks scan..."
-    & gitleaks detect --source $RepoRoot --redact --no-banner
+    $gitLeaksArgs = @("detect", "--source", $RepoRoot, "--redact", "--no-banner")
+    $baselinePath = Join-Path $RepoRoot ".gitleaks.baseline"
+    if (Test-Path $baselinePath)
+    {
+        $gitLeaksArgs += @("--baseline-path", $baselinePath)
+    }
+    & gitleaks @gitLeaksArgs
     if ($LASTEXITCODE -ne 0)
     {
         throw "GitLeaks detected sensitive content."

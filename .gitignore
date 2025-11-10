@@ -502,9 +502,11 @@ $RECYCLE.BIN/
 /src/Articulate.Tests.Website/wwwroot/media
 /src/Articulate.Tests.Website/Views/Articulate
 
+# gitleaks
+gitleaks-report.json
+
+# rider 
 /src/.idea
-src/qodana.yaml
-src/Articulate.net9.slnf
 /src/u15
 /src/u16
 /src/u17
