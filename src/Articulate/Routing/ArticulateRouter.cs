@@ -133,7 +133,7 @@ namespace Articulate.Routing
         {
             var nodePaths = new HashSet<int>(content.Path.Split(',').Select(int.Parse).ToList());
 
-            return domains.Where(domain => nodePaths.Contains(domain.ContentId)).ToList();
+            return [.. domains.Where(domain => nodePaths.Contains(domain.ContentId))];
         }
 
         /// <summary>

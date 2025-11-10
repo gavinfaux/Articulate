@@ -90,8 +90,8 @@ namespace Articulate.Syndication
         private List<SyndicationItem> GetFeedItems(IMasterModel model, IEnumerable<PostModel> posts)
         {
             var rootUrl = model.RootBlogNode.Url(mode: UrlMode.Absolute);
-            IEnumerable<PostModel> postModels = posts as PostModel[] ?? posts.ToArray();
-            return !postModels.Any() ? [] : postModels.Select(post => GetFeedItem(post, rootUrl)).WhereNotNull().ToList();
+            IEnumerable<PostModel> postModels = posts as PostModel[] ?? [.. posts];
+            return !postModels.Any() ? [] : [.. postModels.Select(post => GetFeedItem(post, rootUrl)).WhereNotNull()];
         }
     }
 }

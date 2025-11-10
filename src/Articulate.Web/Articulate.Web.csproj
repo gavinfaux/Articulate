@@ -46,19 +46,18 @@
     <ProjectReference Include="..\Articulate.Api.Management\Articulate.Api.Management.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <StaticWebAsset Remove="wwwroot\App_Plugins\**" />
     <Content Remove="wwwroot\**" />
     <None Remove="wwwroot\**" />
     <EmbeddedResource Remove="wwwroot\**" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="wwwroot\" />
+    <!--Copy Api package XML documentation for Swagger docs, transative install-->
+    <Content Include="build\Articulate.targets" Pack="true" PackagePath="build\" />
   </ItemGroup>
 
   <ItemGroup>
-    <!--Copy Api package XML documentation for Swagger docs, transative install-->
-    <Content Include="build\Articulate.targets" Pack="true" PackagePath="build\" />
+    <Folder Include="wwwroot" />
   </ItemGroup>
 
 </Project>

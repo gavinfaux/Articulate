@@ -409,9 +409,9 @@ namespace Articulate.Models
                 return Task.CompletedTask;
             });
 
-        public static IHtmlContent ListTags(this PostModel model, Func<string, HelperResult> tagLink, string delimiter = ", ") => ListCategoriesOrTags(model.Tags.ToArray(), tagLink, delimiter);
+        public static IHtmlContent ListTags(this PostModel model, Func<string, HelperResult> tagLink, string delimiter = ", ") => ListCategoriesOrTags([.. model.Tags], tagLink, delimiter);
 
-        public static IHtmlContent ListCategories(this PostModel model, Func<string, HelperResult> tagLink, string delimiter = ", ") => ListCategoriesOrTags(model.Categories.ToArray(), tagLink, delimiter);
+        public static IHtmlContent ListCategories(this PostModel model, Func<string, HelperResult> tagLink, string delimiter = ", ") => ListCategoriesOrTags([.. model.Categories], tagLink, delimiter);
 
         public static void SocialMetaTags(this IPublishedContent model, IHtmlContentBuilder builder)
         {
@@ -533,7 +533,7 @@ namespace Articulate.Models
             where T : class
             => new HelperResult(writer =>
             {
-                T[] items = collection.ToArray();
+                T[] items = [.. collection];
                 var rows = items.Length;
                 var cols = headers.Length;
                 if (cellTemplates.Length != cols)

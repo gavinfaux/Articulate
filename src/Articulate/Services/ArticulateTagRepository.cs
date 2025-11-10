@@ -45,7 +45,7 @@ namespace Articulate.Services
             string tagGroup,
             string baseUrlName)
         {
-            TagModel[] tags = tagQuery.GetAllContentTags(tagGroup).ToArray();
+            TagModel[] tags = [.. tagQuery.GetAllContentTags(tagGroup)];
             if (tags.Length == 0)
             {
                 return [];

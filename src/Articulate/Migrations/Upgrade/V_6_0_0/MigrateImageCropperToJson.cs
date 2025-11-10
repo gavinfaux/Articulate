@@ -49,10 +49,9 @@ namespace Articulate.Migrations.Upgrade.V_6_0_0
         }
 
         private async Task<List<int>> GetImageCropperDataTypeIdsAsync() =>
-            (await _dataTypeService
+            [.. (await _dataTypeService
                 .GetByEditorAliasAsync(Constants.PropertyEditors.Aliases.ImageCropper).ConfigureAwait(false))
-            .Select(dt => dt.Id)
-            .ToList();
+            .Select(dt => dt.Id)];
 
         private List<int> GetNodeIdsToUpdate(List<int> imageCropperDataTypeIds)
         {
@@ -88,7 +87,7 @@ namespace Articulate.Migrations.Upgrade.V_6_0_0
             for (var i = 0; i < nodeIdsToUpdate.Count; i += batchSize)
             {
                 var batchIds = nodeIdsToUpdate.Skip(i).Take(batchSize).ToArray();
-                IMedia[] mediaBatch = mediaService.GetByIds(batchIds).ToArray();
+                IMedia[] mediaBatch = [.. mediaService.GetByIds(batchIds)];
                 mediaToSave.AddRange(from media in mediaBatch let wasModified = TryUpdateMediaProperties(media, imageCropperDataTypeIds) where wasModified select media);
             }
 

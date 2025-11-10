@@ -157,7 +157,7 @@ namespace Articulate.ImportExport
             IContent[] posts;
             do
             {
-                posts = contentService.GetPagedChildren(archiveNode.Id, pageIndex, pageSize, out _, ordering: Ordering.By("createDate")).ToArray();
+                posts = [.. contentService.GetPagedChildren(archiveNode.Id, pageIndex, pageSize, out _, ordering: Ordering.By("createDate"))];
 
                 foreach (IContent child in posts)
                 {

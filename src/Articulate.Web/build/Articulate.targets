@@ -5,8 +5,10 @@
       <_ArticulateDllSourceItem Include="@(ReferenceCopyLocalPaths)"
                                 Condition="$([System.String]::new('%(Filename)').Equals('Articulate.Api.Management'))" />
     </ItemGroup>
-    <_ArticulateSourceXmlPath>$([System.IO.Path]::ChangeExtension('%(_ArticulateDllSourceItem.FullPath)', '.xml'))</_ArticulateSourceXmlPath>
-    <_ArticulateDestXmlPath>$(OutDir)Articulate.Api.Management.xml</_ArticulateDestXmlPath>
+    <PropertyGroup>
+      <_ArticulateSourceXmlPath>$([System.IO.Path]::ChangeExtension('%(_ArticulateDllSourceItem.FullPath)', '.xml'))</_ArticulateSourceXmlPath>
+      <_ArticulateDestXmlPath>$(OutDir)Articulate.Api.Management.xml</_ArticulateDestXmlPath>
+    </PropertyGroup>
     <Copy SourceFiles="$(_ArticulateSourceXmlPath)" DestinationFiles="$(_ArticulateDestXmlPath)"
           SkipUnchangedFiles="true" Condition="Exists('$(_ArticulateSourceXmlPath)')" />
   </Target>

@@ -140,15 +140,15 @@ namespace Articulate.ImportExport
                     xdoc,
                     root,
                     document.Posts,
-                    document.Authors.ToArray(),
-                    document.Categories.ToArray(),
+                    [.. document.Authors],
+                    [.. document.Categories],
                     authorIdsToName,
                     overwrite,
                     regexMatch,
                     regexReplace,
                     publishAll,
                     importFirstImage).ConfigureAwait(false);
-                IContent[] enumerable = imported as IContent[] ?? imported.ToArray();
+                IContent[] enumerable = imported as IContent[] ?? [.. imported];
                 returnModel.PostCount = enumerable.Length;
 
                 if (exportDisqusXml)
@@ -269,7 +269,7 @@ namespace Articulate.ImportExport
                 {
                     // first check if a user exists by email
                     IUser? found = _userService.GetByEmail(author.EmailAddress);
-                    IEnumerable<IContent>? authorNodes = allAuthorNodes as IContent[] ?? allAuthorNodes.ToArray();
+                    IEnumerable<IContent>? authorNodes = allAuthorNodes as IContent[] ?? [.. allAuthorNodes];
                     if (found is not null)
                     {
                         // check if an author node exists for this user
@@ -362,7 +362,7 @@ namespace Articulate.ImportExport
                 IContent? postNode;
 
                 // Use post.id if it's there
-                IEnumerable<IContent> postNodes = allPostNodes as IContent[] ?? allPostNodes.ToArray();
+                IEnumerable<IContent> postNodes = allPostNodes as IContent[] ?? [.. allPostNodes];
                 if (!string.IsNullOrWhiteSpace(post.Id))
                 {
                     postNode = postNodes.FirstOrDefault(x => x.GetValue<string>("importId") == post.Id);

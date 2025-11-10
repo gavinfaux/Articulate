@@ -1,9 +1,8 @@
 using Articulate.Api.Management.Controllers;
 using Articulate.Api.Management.Extensions;
 using Articulate.Api.Management.Options;
-using Articulate.Services;
 using Articulate.Attributes;
-using Articulate.Models;
+using Articulate.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
@@ -98,7 +97,7 @@ namespace Articulate.Web.Controllers
                 IsBackOfficeLoggedIn = isBackOfficeLoggedIn,
                 BackOfficeUserName = currentUser?.Name,
                 BackOfficeUserId = currentUser?.Id,
-                HasRequiredPermissions = hasRequiredPermissions
+                HasRequiredPermissions = hasRequiredPermissions,
             };
 
             return RenderView(vm);

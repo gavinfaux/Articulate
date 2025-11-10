@@ -210,12 +210,12 @@ namespace Articulate.MetaWeblog
             IEnumerable<ITag> all = await _tagService.GetAllAsync(ArticulateConstants.DataType.ArticulateCategories)
                 .ConfigureAwait(false);
 
-            CategoryInfo[] tags = all.Select(x => new CategoryInfo
+            CategoryInfo[] tags = [.. all.Select(x => new CategoryInfo
             {
                 title = x.Text, categoryid = x.Id.ToString(),
 
                 // TODO HTML & RSS URL ? (Wasnt used before)
-            }).ToArray();
+            })];
 
             return tags;
         }
@@ -263,10 +263,9 @@ namespace Articulate.MetaWeblog
                 BlogRoot().ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive)?.FirstOrDefault() ??
                 throw new InvalidOperationException("No Articulate Archive node found");
 
-            Post[] recent = _contentService
+            Post[] recent = [.. _contentService
                 .GetPagedChildren(node.Id, 0, numberOfPosts, out var totalPosts, ordering: Ordering.By("updateDate", Direction.Descending))
-                .Select(FromContent)
-                .ToArray();
+                .Select(FromContent)];
 
             return recent;
         }
@@ -280,8 +279,7 @@ namespace Articulate.MetaWeblog
             IEnumerable<ITag> all = await _tagService.GetAllAsync(ArticulateConstants.DataType.ArticulateTags)
                 .ConfigureAwait(false);
 
-            Tag[] tags = all.Select(x => new Tag { name = x.Text })
-                .ToArray();
+            Tag[] tags = [.. all.Select(x => new Tag { name = x.Text })];
 
             return tags;
         }
@@ -511,7 +509,7 @@ namespace Articulate.MetaWeblog
         /// </remarks>
         private static Post FromPost(PostModel post) => new()
         {
-            categories = post.Categories.ToArray(),
+            categories = [.. post.Categories],
             description = post.Body.ToString(),
             dateCreated = post.PublishedDate != default ? post.PublishedDate : post.UpdateDate,
             postid = post.Id.ToString(CultureInfo.InvariantCulture),

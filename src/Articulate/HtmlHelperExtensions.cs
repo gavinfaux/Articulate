@@ -88,10 +88,10 @@ namespace Articulate
         public static IHtmlContent? TagCloud(this IHtmlHelper html, PostTagCollection model, Func<PostsByTagModel, HelperResult> tagLink, decimal maxWeight, int maxResults) => model.TagCloud(tagLink, maxWeight, maxResults);
 
         [Obsolete("Use Articulate.Models.PublishedContentExtensions.ListTags(model, tagLink, maxWeight, maxResults, delimiter)")]
-        public static IHtmlContent? ListTags(this IHtmlHelper html, PostModel model, Func<string, HelperResult> tagLink, string delimiter = ", ") => PublishedContentExtensions.ListCategoriesOrTags(model.Tags.ToArray(), tagLink, delimiter);
+        public static IHtmlContent? ListTags(this IHtmlHelper html, PostModel model, Func<string, HelperResult> tagLink, string delimiter = ", ") => PublishedContentExtensions.ListCategoriesOrTags([.. model.Tags], tagLink, delimiter);
 
         [Obsolete("Use Articulate.Models.PublishedContentExtensions.ListCategories(model, tagLink, delimiter)")]
-        public static IHtmlContent? ListCategories(this IHtmlHelper html, PostModel model, Func<string, HelperResult> tagLink, string delimiter = ", ") => PublishedContentExtensions.ListCategoriesOrTags(model.Categories.ToArray(), tagLink, delimiter);
+        public static IHtmlContent? ListCategories(this IHtmlHelper html, PostModel model, Func<string, HelperResult> tagLink, string delimiter = ", ") => PublishedContentExtensions.ListCategoriesOrTags([.. model.Categories], tagLink, delimiter);
 
         [Obsolete("Use Use Articulate.Models.PublishedContentExtensions.ListCategoriesOrTags(items, tagLink, delimiter)")]
         public static IHtmlContent? ListCategoriesOrTags(this IHtmlHelper html, string[] items, Func<string, HelperResult> tagLink, string delimiter) => PublishedContentExtensions.ListCategoriesOrTags(items, tagLink, delimiter);

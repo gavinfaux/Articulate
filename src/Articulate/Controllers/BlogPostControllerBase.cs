@@ -35,8 +35,8 @@ namespace Articulate.Controllers
             Response.Headers.Append("Vary", "X-Content-Variant");
 
             // Content negotiation for LLMs/agents: serve markdown or plain text when requested
-            TextFormat preferred = GetPreferredTextFormat(Request);
-            if (preferred == TextFormat.Markdown)
+            ContentNegotiation.TextFormat preferred = ContentNegotiation.GetPreferredTextFormat(Request);
+            if (preferred == ContentNegotiation.TextFormat.Markdown)
             {
                 // Use original markdown when available; otherwise fall back to plain text rendering
                 var markdown = CurrentPage.Value<string>("markdown");
@@ -49,10 +49,10 @@ namespace Articulate.Controllers
                 }
 
                 // Downgrade if markdown not available
-                preferred = TextFormat.PlainText;
+                preferred = ContentNegotiation.TextFormat.PlainText;
             }
 
-            if (preferred == TextFormat.PlainText)
+            if (preferred == ContentNegotiation.TextFormat.PlainText)
             {
                 Response.Headers["X-Content-Variant"] = "txt";
                 Response.Headers.CacheControl = "public, max-age=0, s-maxage=120";
@@ -66,74 +66,6 @@ namespace Articulate.Controllers
             Response.Headers["X-Content-Variant"] = "html";
             Response.Headers.CacheControl = "public, max-age=0, s-maxage=120";
             return View("Post", post);
-        }
-
-        private enum TextFormat
-        {
-            None,
-            Markdown,
-            PlainText,
-        }
-
-        private static TextFormat GetPreferredTextFormat(HttpRequest request)
-        {
-            IList<MediaTypeHeaderValue>? accepts = request.GetTypedHeaders().Accept;
-            if (accepts is null || accepts.Count == 0)
-            {
-                return TextFormat.None;
-            }
-
-            static bool IsMarkdown(MediaTypeHeaderValue mt)
-            {
-                var type = mt.Type.Value;
-                var sub = mt.SubType.Value;
-                if (type is null || sub is null)
-                {
-                    return false;
-                }
-
-                return type.Equals("text", StringComparison.OrdinalIgnoreCase)
-                       && (sub.Equals("markdown", StringComparison.OrdinalIgnoreCase)
-                           || sub.Equals("x-markdown", StringComparison.OrdinalIgnoreCase)
-                           || sub.EndsWith("+markdown", StringComparison.OrdinalIgnoreCase));
-            }
-
-            static bool IsPlain(MediaTypeHeaderValue mt)
-            {
-                var type = mt.Type.Value;
-                var sub = mt.SubType.Value;
-                if (type is null || sub is null)
-                {
-                    return false;
-                }
-
-                return type.Equals("text", StringComparison.OrdinalIgnoreCase)
-                       && (sub.Equals("plain", StringComparison.OrdinalIgnoreCase)
-                           || sub.Equals("*", StringComparison.Ordinal));
-            }
-
-            double qMarkdown = 0, qPlain = 0;
-            foreach (MediaTypeHeaderValue mt in accepts)
-            {
-                var q = mt.Quality.HasValue ? (double)mt.Quality.Value : 1.0;
-                if (IsMarkdown(mt))
-                {
-                    qMarkdown = Math.Max(qMarkdown, q);
-                }
-
-                if (IsPlain(mt))
-                {
-                    qPlain = Math.Max(qPlain, q);
-                }
-            }
-
-            if (qMarkdown <= 0 && qPlain <= 0)
-            {
-                return TextFormat.None;
-            }
-
-            // Prefer higher quality; tie-breaker prefers markdown
-            return qMarkdown >= qPlain ? TextFormat.Markdown : TextFormat.PlainText;
         }
 
         private static string FormatMarkdown(PostModel post, string markdown)

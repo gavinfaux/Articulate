@@ -57,7 +57,7 @@ namespace Articulate.Controllers
 
             var master = new MasterModel(model.Content, PublishedValueFallback);
 
-            var count = umbracoHelper.GetPostCount(listNodes.Select(x => x.Id).ToArray());
+            var count = umbracoHelper.GetPostCount([.. listNodes.Select(x => x.Id)]);
 
             IEnumerable<PostModel> posts = umbracoHelper.GetRecentPosts(
                 master,

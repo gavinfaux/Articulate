@@ -47,9 +47,7 @@ namespace Articulate.Controllers
 
             maxItems ??= 25;
 
-            IPublishedContent[] listNodes = CurrentPage.Children()
-                .Where(x => x.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateArchive))
-                .ToArray();
+            IPublishedContent[] listNodes = [.. CurrentPage.Children().Where(x => x.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateArchive))];
             if (listNodes.Length == 0)
             {
                 throw new InvalidOperationException("An ArticulateArchive document must exist under the root Articulate document");

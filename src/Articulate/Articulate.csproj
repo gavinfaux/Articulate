@@ -30,7 +30,6 @@
     <InternalsVisibleTo Include="Articulate.Api.Management" />
     <InternalsVisibleTo Include="Articulate.Web" />
     <InternalsVisibleTo Include="Articulate.UnitTests" />
-    <InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="..\Articulate.Web\wwwroot\App_Plugins\Articulate\Themes\**">
