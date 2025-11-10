@@ -45,7 +45,9 @@ dotnet --version
 $ClientDir = Join-Path -Path $SolutionRoot -ChildPath "Articulate.Api.Management/Client"
 # Enable client build explicitly or when running in CI (GitHub Actions or CI=true)
 $EnableClientBuild = $false
-if ($env:ENABLE_CLIENT_BUILD) { $EnableClientBuild = [System.Convert]::ToBoolean($env:ENABLE_CLIENT_BUILD) }
+if ($env:ENABLE_CLIENT_BUILD) {
+    $EnableClientBuild = 'true'.Equals($env:ENABLE_CLIENT_BUILD, [System.StringComparison]::OrdinalIgnoreCase)
+}
 elseif ($env:GITHUB_ACTIONS -eq 'true' -or $env:CI -eq 'true') { $EnableClientBuild = $true }
 if ($EnableClientBuild -and (Test-Path $ClientDir)) {
     if (-not (Get-Command pnpm -ErrorAction SilentlyContinue)) { throw "pnpm not found. Install pnpm 10.17+ and try again." }
@@ -120,6 +122,30 @@ foreach ($project in $projectsToPack) {
     }
     & dotnet pack $project -c Release --no-build --no-restore -o $ReleaseFolder @dotnetCommon @msbuildArgs -p:NoPackageAnalysis=true @packArgs
     if ($LASTEXITCODE -ne 0) { throw "dotnet pack failed for $project" }
+}
+
+$skipGitLeaks = $env:SKIP_GITLEAKS -eq '1'
+$runningInCi = ($env:CI -eq 'true') -or ($env:GITHUB_ACTIONS -eq 'true')
+if ($runningInCi)
+{
+    Write-Host "Skipping GitLeaks scan (handled by CI workflow action)."
+}
+elseif ($skipGitLeaks)
+{
+    Write-Host "Skipping GitLeaks scan (SKIP_GITLEAKS=1)."
+}
+elseif (Get-Command gitleaks -ErrorAction SilentlyContinue)
+{
+    Write-Host "Running GitLeaks scan..."
+    & gitleaks detect --source $RepoRoot --redact --no-banner
+    if ($LASTEXITCODE -ne 0)
+    {
+        throw "GitLeaks detected sensitive content."
+    }
+}
+else
+{
+    Write-Host "Skipping GitLeaks scan (gitleaks CLI not found on PATH)."
 }
 
 $TotalSeconds = (Get-Date) - $ScriptStart

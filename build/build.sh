@@ -168,6 +168,20 @@ if [[ $pack_fail -ne 0 ]]; then
   exit 1
 fi
 
+if [[ "${CI:-}" == "true" || "${GITHUB_ACTIONS:-}" == "true" ]]; then
+  echo "Skipping GitLeaks scan (handled by CI workflow action)."
+elif [[ "${SKIP_GITLEAKS:-}" == "1" ]]; then
+  echo "Skipping GitLeaks scan (SKIP_GITLEAKS=1)."
+elif command -v gitleaks >/dev/null 2>&1; then
+  echo "Running GitLeaks scan..."
+  if ! gitleaks detect --source "$REPO_ROOT" --redact --no-banner; then
+    echo "GitLeaks detected sensitive content." >&2
+    exit 1
+  fi
+else
+  echo "Skipping GitLeaks scan (gitleaks CLI not found on PATH)."
+fi
+
 END_TIME=$(date +%s.%N)
 ELAPSED=$(awk -v start="$START_TIME" -v end="$END_TIME" 'BEGIN {printf "%.1f", end - start}')
 echo "Build pipeline completed in ${ELAPSED}s. Packages available at $RELEASE_FOLDER"

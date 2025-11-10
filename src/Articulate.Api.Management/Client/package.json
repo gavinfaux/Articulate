@@ -30,7 +30,7 @@
     "check": "tsc --noEmit",
     "lint-staged": "lint-staged",
     "gitleaks:protect": "gitleaks protect --staged --no-banner --redact",
-    "prepare": "husky install ../../../.husky",
+    "prepare": "node ./scripts/install-husky.mjs",
     "generate:api": "cross-env NODE_TLS_REJECT_UNAUTHORIZED=0 node ./scripts/generate-api.js https://localhost:44366/umbraco/swagger/articulate/swagger.json ./src/api --excludeTags 'Markdown Editor'",
     "clean": "npx rimraf node_modules pnpm-lock.yaml"
   },

@@ -104,7 +104,7 @@ See here for the list of releases and their release notes
 
 Changes to the Razor Class Library or client code hot-reload through the test site (see the Developer Experience section below).
 
-> **New:** Commits now run automated checks. Husky + lint-staged lint any staged TypeScript files and rebuild the client bundle when `Client/src/**` changes. GitLeaks also scans staged content for secrets. Install pnpm (Node 22+) and the [GitLeaks CLI](https://github.com/gitleaks/gitleaks/releases) locally so the hooks can run.
+> **New:** Commits now run automated checks. Husky + lint-staged lint any staged TypeScript files and rebuild the client bundle when `Client/src/**` changes. GitLeaks also scans staged content for secrets via the official GitHub Action in CI. Install pnpm (Node 22+) and the [GitLeaks CLI](https://github.com/gitleaks/gitleaks/releases) locally so hooks and the `.ps1`/`.sh` builds can run `gitleaks detect --redact` outside CI. Set `SKIP_GITLEAKS=1` if you need to skip the local scan temporarily (for example, when the CLI is unavailable in a sandbox).
 
 ### Developer Experience (hot reload)
 

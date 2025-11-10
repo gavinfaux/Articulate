@@ -73,6 +73,11 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-pnpm-store-
 
+    - name: GitLeaks Scan
+      uses: gitleaks/gitleaks-action@v2
+      with:
+        fail-on: high
+
     - name: Setup .NET SDKs
       uses: actions/setup-dotnet@v4
       with:
