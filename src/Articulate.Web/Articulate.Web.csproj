@@ -51,11 +51,6 @@
     <ProjectReference Include="..\Articulate\Articulate.csproj" />
     <ProjectReference Include="..\Articulate.Api.Management\Articulate.Api.Management.csproj" />
   </ItemGroup>
-  <ItemGroup>
-    <Content Remove="wwwroot\**" />
-    <None Remove="wwwroot\**" />
-    <EmbeddedResource Remove="wwwroot\**" />
-  </ItemGroup>
 
   <ItemGroup>
     <!--Copy Api package XML documentation for Swagger docs, transative install-->

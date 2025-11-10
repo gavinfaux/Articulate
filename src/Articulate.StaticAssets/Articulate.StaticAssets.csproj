@@ -15,15 +15,6 @@
   </ItemGroup>
 
   <ItemGroup Condition="Exists('$(ArticulateWebAssetsRoot)')">
-    <!-- Link all Razor views so they compile into the assembly with App_Plugins-relative paths -->
-    <Content Include="$(ArticulateWebAssetsRoot)\**\*.cshtml"
-             Link="App_Plugins\Articulate\%(RecursiveDir)%(Filename)%(Extension)">
-      <RelativePath>App_Plugins\Articulate\%(RecursiveDir)%(Filename)%(Extension)</RelativePath>
-      <Pack>false</Pack>
-    </Content>
-  </ItemGroup>
-
-  <ItemGroup Condition="Exists('$(ArticulateWebAssetsRoot)')">
     <!-- Only import built assets; raw Razor + src files stay in Articulate.Web -->
     <ArticulateWebAsset Include="$(ArticulateWebAssetsRoot)\MarkdownEditor\dist\**\*.*"
                         Exclude="$(ArticulateWebAssetsRoot)\**\*.cshtml"
