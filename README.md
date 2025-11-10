@@ -151,7 +151,7 @@ See docs/development-dx.md for details and tips.
 ### Build & Pack (multi-target .NET 9/10)
 
 - Projects target both `net9.0` and `net10.0`. Run `pwsh build/build.ps1` (Windows) or `bash build/build.sh` (Linux/WSL) to compile and create NuGet packages.
-- New clones on Linux/WSL may need execute bits re-applied once: `chmod +x build/build.sh build/build.ps1`. Git preserves script permissions on Windows, but when cloning onto ext4 the shell scripts lack execute permissions and the build will fail with `permission denied` until you run `chmod`.
+- These scripts are committed with `chmod +x`, so clones on native Linux/WSL filesystems (e.g. `~/src/...`) keep the execute bit. If you clone under `/mnt/*` (NTFS) the bit is dropped and you'll need to run `chmod +x build/build.sh build/build.ps1` once; otherwise the shell script fails with `permission denied`.
 - `global.json` keeps 9.0.100 as the baseline but allows roll-forward to newer (preview) SDKs, so `dotnet` or Visual Studio can load the .NET 10 tooling when installed.
 - GitHub Actions mirrors this flow by invoking `build/build.ps1`, ensuring the same serialized Core → API → Web build order with `--no-dependencies`.
 - If a future preview regresses static web-asset packing, fall back to manual `Content`/`ContentWithTargetPath`/`EmbeddedResource` packing; see docs/development-dx.md.
