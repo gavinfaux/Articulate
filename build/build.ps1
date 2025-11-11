@@ -9,6 +9,18 @@ $SolutionPath = Join-Path -Path $SolutionRoot -ChildPath "Articulate.sln"
 $TargetFrameworks = @("net9.0", "net10.0")
 $TestProjects = @("Articulate.UnitTests/Articulate.UnitTests.csproj")
 
+# Ensure dotnet is discoverable when installed under the user profile (parity with build.sh)
+if (-not (Get-Command dotnet -ErrorAction SilentlyContinue)) {
+    $userProfile = if ($HOME) { $HOME } else { $env:USERPROFILE }
+    if ($userProfile) {
+        $userDotnet = Join-Path $userProfile ".dotnet"
+        $dotnetExe = Join-Path $userDotnet "dotnet.exe"
+        if (Test-Path $dotnetExe) {
+            $env:PATH = "$env:PATH;$userDotnet;$userDotnet\tools"
+        }
+    }
+}
+
 # Performance-friendly env
 $env:DOTNET_CLI_TELEMETRY_OPTOUT = "1"
 $env:DOTNET_SKIP_FIRST_TIME_EXPERIENCE = "1"
@@ -41,7 +53,7 @@ New-Item -ItemType Directory -Force -Path $TmpFolder | Out-Null
 
 dotnet --version
 
-# Optionally build backoffice client assets (can be skipped via SKIP_CLIENT_BUILD=1)
+# Optionally build backoffice client assets
 $ClientDir = Join-Path -Path $SolutionRoot -ChildPath "Articulate.Api.Management/Client"
 # Enable client build explicitly or when running in CI (GitHub Actions or CI=true)
 $EnableClientBuild = $false
@@ -52,7 +64,7 @@ elseif ($env:GITHUB_ACTIONS -eq 'true' -or $env:CI -eq 'true') { $EnableClientBu
 if ($EnableClientBuild -and (Test-Path $ClientDir)) {
     if (-not (Get-Command pnpm -ErrorAction SilentlyContinue)) { throw "pnpm not found. Install pnpm 10.17+ and try again." }
     Push-Location $ClientDir
-    & pnpm install
+    & pnpm install --frozen-lockfile --prefer-offline
     if (-not $?) { throw "pnpm install failed" }
     & pnpm run build:release
     if (-not $?) { throw "pnpm build:release failed" }
@@ -92,18 +104,22 @@ Write-Host "2. Restoring solution packages in parallel (slim solution)..."
 & dotnet restore $tmpSln @dotnetCommon @msbuildArgs
 if (-not $?) { throw "dotnet restore failed" }
 
-# 4) Build TFMs (sequential but highly parallel within MSBuild)
-Write-Host "3. Building solution for: $($TargetFrameworks -join ', ')"
-foreach ($tfm in $TargetFrameworks) {
+# 4) Build TFMs (parallel to align with build.sh)
+$buildThrottle = [Math]::Max(1, [Math]::Min($cpu, $TargetFrameworks.Count))
+Write-Host "3. Building solution in parallel for: $($TargetFrameworks -join ', ')"
+$TargetFrameworks | ForEach-Object -Parallel {
+    $tfm = $PSItem
     Write-Host "[build] -> $tfm"
     $sw = [System.Diagnostics.Stopwatch]::StartNew()
-    & dotnet build $tmpSln -c Release -f $tfm --no-restore @dotnetCommon @msbuildArgs
+    $commonArgs = $using:dotnetCommon
+    $parallelMsbuildArgs = $using:msbuildArgs
+    & dotnet build $using:tmpSln -c Release -f $tfm --no-restore @commonArgs @parallelMsbuildArgs
     if ($LASTEXITCODE -ne 0) { throw "dotnet build failed for $tfm" }
     $sw.Stop()
     Write-Host "[build] <- $tfm done in $([int]$sw.Elapsed.TotalSeconds)s"
-}
+} -ThrottleLimit $buildThrottle
 
-# 5) Pack primary projects (sequential)
+# 5) Pack primary projects (parallel where safe)
 Write-Host "4. Packing projects..."
 $articulateProject = (Join-Path $SolutionRoot 'Articulate/Articulate.csproj')
 $articulateWebProject = (Join-Path $SolutionRoot 'Articulate.Web/Articulate.Web.csproj')
@@ -120,12 +136,16 @@ $projectsToPack = @(
     $articulateWebProject,
     $articulateApiProject
 )
-foreach ($project in $projectsToPack) {
+$packThrottle = [Math]::Max(1, [Math]::Min($cpu, $projectsToPack.Count))
+$projectsToPack | ForEach-Object -Parallel {
+    $project = $PSItem
     Write-Host "[pack] -> $([IO.Path]::GetFileName($project))"
     $restoreArgs = @("--no-build", "--no-restore")
-    & dotnet pack -c Release $project @restoreArgs -o $ReleaseFolder @dotnetCommon @msbuildArgs -p:NoPackageAnalysis=true
+    $commonArgs = $using:dotnetCommon
+    $parallelMsbuildArgs = $using:msbuildArgs
+    & dotnet pack -c Release $project @restoreArgs -o $using:ReleaseFolder @commonArgs @parallelMsbuildArgs -p:NoPackageAnalysis=true
     if ($LASTEXITCODE -ne 0) { throw "dotnet pack failed for $project" }
-}
+} -ThrottleLimit $packThrottle
 
 $skipGitLeaks = $env:SKIP_GITLEAKS -eq '1'
 $runningInCi = ($env:CI -eq 'true') -or ($env:GITHUB_ACTIONS -eq 'true')
