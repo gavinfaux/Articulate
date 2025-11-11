@@ -17,14 +17,12 @@
         <UmbracoCmsPackageVersion>[15.4.4,17.0.0)</UmbracoCmsPackageVersion>
         <UmbracoCmsTestsPackageVersion>[15.4.4,17.0.0)</UmbracoCmsTestsPackageVersion>
         <AspNetRuntimeCompilationVersion>9.0.0</AspNetRuntimeCompilationVersion>
-        <NuGetAuditMode>direct</NuGetAuditMode>
     </PropertyGroup>
     <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0'">
         <!-- Support Umbraco 17.x (including pre-release) on .NET 10 -->
         <UmbracoCmsPackageVersion>[17.0.0-rc1,18.0.0)</UmbracoCmsPackageVersion>
         <UmbracoCmsTestsPackageVersion>[17.0.0-rc1,18.0.0)</UmbracoCmsTestsPackageVersion>
         <AspNetRuntimeCompilationVersion>10.0.0-rc.2.25502.107</AspNetRuntimeCompilationVersion>
-        <NuGetAuditMode>direct</NuGetAuditMode>
     </PropertyGroup>
     <PropertyGroup>
         <!-- TODO: Enable when 6.0 version is shipped -->
@@ -44,13 +42,13 @@
         <EnforceCodeStyleInBuild Condition="'$(EnforceCodeStyleInBuild)' == ''">true</EnforceCodeStyleInBuild>
     </PropertyGroup>
     <ItemGroup>
-        <PackageReference Include="Nerdbank.GitVersioning" Condition="!Exists('packages.config')" Version="3.7.115" PrivateAssets="All"/>
+        <PackageReference Include="Nerdbank.GitVersioning" Condition="!Exists('packages.config')" Version="3.9.50" PrivateAssets="All"/>
         <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.556" PrivateAssets="All"/>
         <GlobalPackageReference Include="Umbraco.Code" Version="2.3.0" PrivateAssets="All"/>
         <GlobalPackageReference Include="Umbraco.GitVersioning.Extensions" Version="0.2.0" PrivateAssets="All"/>
     </ItemGroup>
     <ItemGroup Condition="'$(IsPackable)' != 'false'">
-        <PackageReference Include="DotNet.ReproducibleBuilds" Version="1.2.25" PrivateAssets="all">
+        <PackageReference Include="DotNet.ReproducibleBuilds" Version="1.2.39" PrivateAssets="all">
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="Microsoft.CodeAnalysis" Version="4.14.0" PrivateAssets="All" />
