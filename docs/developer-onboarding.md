@@ -2,7 +2,7 @@
 
 ## Who is this guide for?
 
-This guide is intended for developers who are maintaining or contributing to the Articulate package. It provides a comprehensive overview of the migration from the legacy AngularJS backoffice to the modern Lit and TypeScript architecture for Umbraco 15. It details the key architectural changes, the new development workflow, and the structure of both the front-end and back-end code to facilitate a smooth onboarding process.
+This guide is intended for developers who are maintaining or contributing to the Articulate package. It provides a comprehensive overview of the migration from the legacy AngularJS backoffice to the modern Lit and TypeScript architecture for Umbraco 15/16/17 on .NET 9/10. It details the key architectural changes, the new development workflow, and the structure of both the front-end and back-end code to facilitate a smooth onboarding process.
 
 > Source of truth for commands
 >
@@ -19,21 +19,21 @@ This guide is intended for developers who are maintaining or contributing to the
 
 ## 1. Core Architectural Changes
 
-Several fundamental architectural changes were made during the migration to .NET 8 and Umbraco 15.
+Several fundamental architectural changes were made during the migration to multi-targeted .NET 9/10 builds for Umbraco 15, 16, and 17.
 
-### [Razor Class Library (RCL)](https://learn.microsoft.com/en-us/aspnet/core/razor-pages/ui-class?view=aspnetcore-8.0&tabs=visual-studio)
+### [Razor Class Library (RCL)](https://learn.microsoft.com/en-us/aspnet/core/razor-pages/ui-class?view=aspnetcore-9.0&tabs=visual-studio)
 
 The project SDK was migrated from `Microsoft.NET.Sdk` to `Microsoft.NET.Sdk.Razor`. This turns the project into a Razor Class Library (RCL), which is the modern, standardized way to ship .NET packages with compiled Razor views and static assets (`.js`, `.css`, etc.).
 
 ### `wwwroot` for Static Assets
 
-As part of the move to RCL, all client-side assets have been moved from the root `App_Plugins` folder to a `wwwroot` directory within the project (`src/Articulate/wwwroot`). This includes:
+As part of the move to RCL, all shipped `/App_Plugins/Articulate/**` assets live under the Razor Class Library (`src/Articulate.Web/wwwroot/App_Plugins/Articulate`). Those assets are produced by the pnpm/Vite build and committed to source so NuGet consumers get the final `dist/` outputs:
 
-- The compiled backoffice client application.
-- Razor themes.
-- The mobile-optimized Markdown Editor.
+- `src/Articulate.Api.Management/wwwroot/App_Plugins/Articulate/BackOffice` - compiled backoffice client application.
+- `src/Articulate.Web/wwwroot/App_Plugins/Articulate/Themes/*/dist/**` - bundled Razor themes (CSS/JS) generated from each theme's `src/` tree.
+- `src/Articulate.Web/wwwroot/App_Plugins/Articulate/MarkdownEditor/dist/**` - the mobile-optimized Markdown editor SPA that replaces the legacy Angular implementation.
 
-These assets are now published with the package and served as static web assets, which is a more robust and standard way of handling them in .NET.
+These folders are published as static web assets through the `Articulate` and `Articulate.StaticAssets` packages, which is the modern approach for Umbraco extensions.
 
 ### Markdown Editor Migration (AngularJS to [Alpine.JS](https://alpinejs.dev/))
 
@@ -92,14 +92,22 @@ Here is a list of key files and directories in the current architecture:
   - `src/Articulate.Api.Management/Composers/ArticulateApiComposer.cs`
   - `src/Articulate.Api.Management/Options/ArticulateSwaggerOptions.cs`
   - These files are responsible for configuring the Swagger/OpenAPI generation.
-- **Markdown Editor Package**: `src/Articulate.Api.Management/Client/src/packages/markdown-editor`
-  - Contains the source code for the Markdown Editor, which is a clone of the `Umbraco.Web.UI.Client` markdown-editor package.
+- **Backoffice Markdown Editor Package**: `src/Articulate.Api.Management/Client/src/packages/articulate-markdown-editor`
+  - Contains the Lit wrapper and manifest glue for the Umbraco markdown editor property editor used inside the backoffice.
 
-## 6. Markdown Editor
+## 6. Markdown Editors
 
-The Markdown Editor used in Articulate's backoffice is a direct clone of the `markdown-editor` package found in `Umbraco.Web.UI.Client`. This was done to ensure that Articulate has a stable, feature-rich markdown editing experience that is consistent with the Umbraco backoffice.
+Articulate ships two markdown editing experiences:
 
-By maintaining a local copy, we can avoid potential breaking changes from upstream updates and have the flexibility to apply customizations if needed in the future. The source code for this component is located in `src/Articulate.Api.Management/Client/src/packages/markdown-editor`.
+1. **Backoffice property editor (Lit + Umbraco markdown package)**  
+   - Location: `src/Articulate.Api.Management/Client/src/packages/articulate-markdown-editor`.  
+   - Purpose: wraps the official Umbraco markdown editor package in Lit components so it can be registered as a backoffice property editor, keeping the editing UX aligned with core Umbraco while allowing Articulate-specific defaults.
+
+2. **Mobile/front-end Markdown editor SPA (Alpine.js)**  
+   - Location: `src/Articulate.Web/wwwroot/App_Plugins/Articulate/MarkdownEditor`.  
+   - Purpose: replaces the legacy AngularJS mobile editor with a lightweight Alpine.js implementation that authenticates against the management API (OpenIddict) and lets authors compose posts from any device.
+
+Keeping both implementations in-repo ensures we can react quickly to upstream changes, harden routing/auth flows, and ship working bundles inside the NuGet packages.
 
 ## 7. Development Workflow and Build Process
 
@@ -137,7 +145,7 @@ This file, located in `src/Articulate.Api.Management/Client/public`, is the mode
 2. **API Changes**: If a C# API endpoint is modified, run `pnpm run generate:api` in the same folder to regenerate the typed client.
 3. **Building for Production**: Execute `pnpm run build` (locally or as part of the release pipeline). The command compiles TypeScript, bundles with Vite, and invokes `post-build.js`.
 4. **Integration with Umbraco**: `post-build.js` moves the bundles into `src/Articulate.Api.Management/wwwroot/App_Plugins/Articulate/BackOffice` alongside the `umbraco-package.json` manifest so the Razor Class Library can expose them as static web assets.
-5. **Full Release Build**: Use `pwsh build/build.ps1` to reproduce the CI flow—restore, clean, build, and pack the solution in Release mode. GitHub Actions (`.github/workflows/build.yml`) runs the same sequence on Windows with Node/pnpm setup to produce signed artifacts.
+5. **Full Release Build**: Use `pwsh build/build.ps1` to reproduce the CI flow-restore, clean, build, and pack the solution in Release mode. GitHub Actions (`.github/workflows/build.yml`) runs the same sequence on Windows with Node/pnpm setup to produce signed artifacts.
 
 #### Troubleshooting client builds
 
@@ -234,7 +242,7 @@ These are standard Umbraco API controllers that handle requests from the backoff
 #### Markdown Editor Authentication (OpenIddict)
 
 - The mobile Markdown editor authenticates against the management API using OpenIddict client credentials. On successful sign-in it exchanges the authorization code for tokens, stores them in session storage, and uses the generated SDK to perform post operations.
-- The end-to-end “happy path” (authorize → compose → upload images → publish) is implemented and tested in the demo site. Ensure `Articulate:ManagementApi:OpenIddict` settings are present so the editor can obtain a client ID/secret.
+- The end-to-end "happy path" (authorize -> compose -> upload images -> publish) is implemented and tested in the demo site. Ensure `Articulate:ManagementApi:OpenIddict` settings are present so the editor can obtain a client ID/secret.
 - The authentication flow spans both C# and client-side components:
   - **`ArticulateApplicationManager.cs`** wires up OpenIddict server registrations, token lifetimes, allowed flows (authorization code + PKCE), and the OAuth callback endpoints that the Markdown editor consumes.
   - **`BackOfficeAuthService.cs`** executes the server-side exchange for backoffice users, mapping Umbraco identities into JWT claims and enforcing the scopes the markdown editor relies on (posts, uploads, profile).
@@ -264,7 +272,7 @@ In older versions, view resolution was handled by a custom `IViewEngine` and `Pa
 
 With the move to RCL, the bundling and serving of theme assets (CSS, JS) has also been modernized.
 
-- **`DefaultThemes.cs`**: This static class defines the list of built-in themes. Its primary role now is to provide the list of built-in system themes..
+- **`ArticulateConstants.DefaultThemes`** (inside `src/Articulate/ArticulateConstants.cs`): defines the list of built-in themes that ship with the package and feed the theme copy logic.
 - **`PathHelper.cs`**: The role of this class has been significantly reduced. It is no longer used for resolving view paths. Instead, it now primarily serves as a helper to provide the correct virtual paths to theme *assets* (CSS/JS) for the bundling process, distinguishing between built-in themes (served from `_content/Articulate/Themes/...`) and user-created themes (served from `~/Views/ArticulateThemes/...`).
 - **`ArticulateThemeRepository.cs`**: This service remains responsible for the business logic of managing themes, such as retrieving theme lists and handling the copying of default themes to the user-editable `~/Views/ArticulateThemes` directory.
 
@@ -289,7 +297,7 @@ This section covers the low-level details of the project setup, build process, a
 
 The main `Articulate.csproj` file contains important logic for packaging themes and exposing static assets.
 
-- **Client Assets**: The project consumes the bundles produced by `pnpm run build` in `src/Articulate.Api.Management/Client`. Make sure those assets exist under `src/Articulate.Api.Management/wwwroot/App_Plugins/Articulate/BackOffice` before invoking `dotnet pack`; `build/build.ps1` and the CI workflow handle this sequencing by building the projects serially per TFM (`Articulate` → `Articulate.Api.Management` → `Articulate.Web`) and suppressing redundant dependency builds so the management client assets land before the Razor sites compile.
+- **Client Assets**: `pnpm run build` (or `pnpm run build:release`) inside `src/Articulate.Api.Management/Client` writes the management bundles to `src/Articulate.Api.Management/wwwroot/App_Plugins/Articulate/BackOffice` and refreshes the theme/Markdown editor `dist/` folders under `src/Articulate.Web/wwwroot/App_Plugins/Articulate`. Run that command before packing so the checked-in `dist/` folders stay in sync. `build/build.ps1` turns on `ENABLE_CLIENT_BUILD` automatically in CI (and when you opt in locally) to run pnpm before MSBuild; otherwise it uses the last committed assets.
 - **Theme Embedding**: Built-in themes live in `src/Articulate.Web/wwwroot/App_Plugins/Articulate/Themes`. The project embeds them as resources so they ship as static web assets and can be copied into `~/Views/ArticulateThemes` via `ArticulateThemeRepository`.
 
 ### The Test Website (`Articulate.Tests.Website`)
@@ -298,8 +306,14 @@ The test website is the primary environment for developing and debugging the Art
 
 - **Project Reference**: `Articulate.Tests.Website.csproj` references the main `Articulate` project using a `<ProjectReference>`. The setting `<CopyStaticWebAssetsToPublish>true</CopyStaticWebAssetsToPublish>` is crucial, as it ensures that the backoffice assets from the `Articulate` RCL are correctly copied to the test site for development and testing.
 - **`Program.cs` Configuration**:
-  - **Request Size Limits**: The file also includes important configuration for increasing the maximum request body size for both Kestrel and IIS. This is necessary to support features like BlogML import and multi-file uploads from the Markdown Editor.
-  - **`UseStaticWebAssets`**: The line `builder.WebHost.UseStaticWebAssets()` is commented out but includes a note explaining its purpose: it is **only** required if you need to run the test site in a simulated `Release` or `Production` environment directly from your IDE. For normal development and debugging, it is not needed.
+  - **Runtime compilation helpers**: In Debug/Development the site enables Razor runtime compilation and wires `src/Articulate.Web/wwwroot` as an additional file provider so theme/asset edits show up without rebuilding. Because runtime compilation conflicts with .NET hot reload, run `dotnet watch run --no-hot-reload --project src/Articulate.Tests.Website` and manually refresh the browser after each Razor change.
+  - **Delivery API enabled**: `AddDeliveryApi()` runs by default so the demo site mirrors real deployments that expose management and delivery endpoints together.
+  - **`UseStaticWebAssets` guidance**: The `builder.WebHost.UseStaticWebAssets()` call remains commented with a note explaining that it is only required when you intentionally run the test site in a simulated Production mode from the IDE. Leave it disabled for normal development to avoid circular static-asset references.
+
+### Supported SDK & Umbraco versions
+
+- Install `.NET 9.0.100` plus the `.NET 10 RC` (`10.0.0-rc.2`) SDK so both TFMs build locally; Visual Studio uses the repo `global.json` to enforce the baseline 9.0 SDK while roll-forward keeps the RC available for `net10`.
+- The `net10.0` TFM targets Umbraco 17 RC1 (`17.0.0-rc1`), while `net9.0` covers Umbraco 15.4.4+ / 16 via the NuGet version ranges defined in `Directory.Build.props`.
 
 ### AI/LLM Content Negotiation & Caching
 
@@ -322,7 +336,7 @@ CDN strategy (recommended): normalize at the edge and key on `X-Content-Variant`
 
 ### Dynamic routes overview
 
-The router maps dynamic endpoints under your Articulate root (“mount path”), based on settings:
+The router maps dynamic endpoints under your Articulate root ("mount path"), based on settings:
 
 - Search: `/{searchUrlName}`
 - Tags/Categories:
@@ -351,10 +365,11 @@ If you prefer to keep a single controller, replace the `Redirect(target)` call i
 
 ### Packaging for Release
 
-The CLI and IDE paths now produce identical NuGet packages—no Visual Studio-only workaround required.
+The CLI and IDE paths now produce identical NuGet packages-no Visual Studio-only workaround required.
 
 1. Run `pwsh build/build.ps1` (Windows) or `bash build/build.sh` (Linux/WSL). The scripts restore, build both TFMs, and pack the four distributable projects into `build/Release`.
 2. During the pack step the scripts simply run `dotnet pack` for each project. Because `Articulate.Web` references `Articulate.StaticAssets` directly, the generated `Articulate` nupkg automatically declares the dependency without any extra flags or version math.
-3. `Articulate.StaticAssets` remains a pure RCL that mirrors the built `dist/` folders from `Articulate.Web`. With the dependency expressed in the project graph, no manual `<Content>` fallbacks or `.targets` hooks are required—the standard static-web-asset pipeline lights up in consuming Umbraco sites.
+3. `Articulate.StaticAssets` remains a pure RCL that mirrors the built `dist/` folders from `Articulate.Web`. With the dependency expressed in the project graph, no manual `<Content>` fallbacks or `.targets` hooks are required-the standard static-web-asset pipeline lights up in consuming Umbraco sites.
 
 Direct `dotnet pack` invocations still work if you prefer granular control; just run `dotnet pack src/Articulate.Web/Articulate.Web.csproj` (and the other projects) normally. The `ProjectReference` ensures the StaticAssets dependency is recorded automatically.
+

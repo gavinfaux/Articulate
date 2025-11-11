@@ -6,8 +6,7 @@
 
 > A wonderful Blog engine built on Umbraco
 
----
-_❤️ If you use and like Articulate please consider [becoming a GitHub Sponsor](https://github.com/sponsors/Shazwazza/) ❤️_
+_If you use and like Articulate please consider [becoming a GitHub Sponsor](https://github.com/sponsors/Shazwazza/)._ 
 
 ## Contents
 
@@ -20,22 +19,22 @@ _❤️ If you use and like Articulate please consider [becoming a GitHub Sponso
 
 Two support tracks are available depending on the Umbraco version you run.
 
-### Umbraco 13 LTS (maintenance mode)
+### Umbraco 13 LTS (maintenance mode)
 
-Articulate 5.x remains available for Umbraco 13, which is in security maintenance until **December 2025** and reaches end of life in **December 2026**. The package still installs from the Umbraco marketplace.
+Articulate 5.x remains available for Umbraco 13, which is in security maintenance until **December 2025** and reaches end of life in **December 2026**. The package still installs from the Umbraco marketplace.
 
 - After installing, open the Packages section (`umbraco/section/packages/view/installed`) and run any pending migrations.
-- Save the `Articulate Image Picker` data type once to fix bundled demo media (issue [#460](https://github.com/Shazwazza/Articulate/issues/460)). This step is only required on Umbraco 13.
-- For long-term projects consider upgrading to Umbraco 15+ where Articulate 6 receives active feature work.
+- Save the `Articulate Image Picker` data type once to fix bundled demo media (issue [#460](https://github.com/Shazwazza/Articulate/issues/460)). This step is only required on Umbraco 13.
+- For long-term projects consider upgrading to Umbraco 15+ where Articulate 6 receives active feature work.
 
 _Need help?_ Head over to [Articulate on GitHub](https://github.com/Shazwazza/Articulate) for extra tips, known issues and fixes.
 
-### Umbraco 15.4.4+ / 16 / 17 (current track)
+### Umbraco 15.4.4+ / 16 / 17 (current track)
 
-Articulate 6 targets Umbraco 15.4.4+, 16, and 17 (preview) via a multi-targeted Razor Class Library.
+Articulate 6 targets Umbraco 15.4.4+, 16, and 17 RC1 (`17.0.0-rc1`) via a multi-targeted Razor Class Library.
 
-- Install `Articulate` from NuGet (`dotnet add package Articulate`). The package now ships a transitive dependency on `Articulate.StaticAssets`, so the `/App_Plugins/Articulate/**` files light up automatically—no extra package references or manual copies required.
-- When building from source, run the test site `dotnet run -f net9.0 --project src/Articulate.Tests.Website/Articulate.Tests.Website.csproj` (or `-f net10.0` for Umbraco 17) and sign into the Umbraco backoffice to finish setup.
+- Install `Articulate` from NuGet (`dotnet add package Articulate`). The package now ships a transitive dependency on `Articulate.StaticAssets`, so the `/App_Plugins/Articulate/**` files light up automatically-no extra package references or manual copies required.
+- When building from source, run the test site `dotnet run -f net9.0 --project src/Articulate.Tests.Website/Articulate.Tests.Website.csproj` (or `-f net10.0` for Umbraco 17) and sign into the Umbraco backoffice to finish setup.
 
 ## Features
 
@@ -68,12 +67,12 @@ Supporting all the features you'd want in a blogging platform
 - Live Writer Manifest: `/wlwmanifest/{id}`
 - MetaWeblog: `/metaweblog/{id}`
 
-Note: the legacy front‑end “Markdown Editor” route `/a-new` does not expose an editor in v6. It temporarily 302‑redirects to the blog home. Use the backoffice Markdown editor (Articulate.Api.Management) to compose and publish posts.
+Note: the legacy front-end "Markdown Editor" route `/a-new` does not expose an editor in v6. It temporarily 302-redirects to the blog home. Use the backoffice Markdown editor (Articulate.Api.Management) to compose and publish posts.
 
 ## Minimum requirements
 
-- Articulate 5.x (maintenance): Umbraco 13 LTS (security support through Dec 2025, EOL Dec 2026)
-- Articulate 6.x (current): Umbraco 15.4.4+ and 16 on .NET 9; Umbraco 17 (beta) on .NET 10 previews
+- Articulate 5.x (maintenance): Umbraco 13 LTS (security support through Dec 2025, EOL Dec 2026)
+- Articulate 6.x (current): Umbraco 15.4.4+ and 16 on .NET 9; Umbraco 17 RC1 (`17.0.0-rc1`) on .NET 10 previews
 
 ## [Documentation](https://github.com/Shazwazza/Articulate/wiki)
 
@@ -99,22 +98,23 @@ See here for the list of releases and their release notes
 1. Build once to restore NuGet packages and pnpm-managed client assets.
 1. Use the test site for development:  
    `dotnet run -f net9.0 --project src/Articulate.Tests.Website/Articulate.Tests.Website.csproj`  
-   (`-f net10.0` when validating Umbraco 17).
+   (`-f net10.0` when validating Umbraco 17).
 1. Complete the Umbraco installer and sign in; migrations seed the Articulate schema and demo content automatically.
 
-Changes to the Razor Class Library or client code hot-reload through the test site (see the Developer Experience section below).
+Razor Class Library changes are picked up via runtime compilation (manual browser refresh) and client code uses Vite HMR through the test site (see the Developer Experience section below).
 
 > **New:** Commits now run automated checks. Husky + lint-staged lint any staged TypeScript files and rebuild the client bundle when `Client/src/**` changes. GitLeaks also scans staged content for secrets via the official GitHub Action in CI. Install pnpm (Node 22+) and the [GitLeaks CLI](https://github.com/gitleaks/gitleaks/releases) locally so hooks and the `.ps1`/`.sh` builds can run `gitleaks detect --redact` outside CI. Set `SKIP_GITLEAKS=1` if you need to skip the local scan temporarily (for example, when the CLI is unavailable in a sandbox).
 
-### Developer Experience (hot reload)
+### Developer Experience (runtime compilation + HMR)
 
 For a fast local loop when editing Razor, HTML, CSS, and JS:
 
-- Backend + Razor hot reload (same origin):
-  - `dotnet watch run --project src/Articulate.Tests.Website`
+- Backend + Razor runtime compilation (same origin):
+  - `dotnet watch run --no-hot-reload --project src/Articulate.Tests.Website`
+  - Razor runtime compilation and .NET hot reload are mutually exclusive, so disable hot reload and manually refresh the browser whenever you change Razor files.
   - In Development, the test website is configured to:
     - Use Razor runtime compilation for .cshtml
-    - Auto-reload the browser for static assets and views
+    - Watch static assets so CSS/JS/images update without restarting the site
 
 - Backoffice client HMR (Vite):
   - From `src/Articulate.Api.Management/Client`
@@ -123,26 +123,27 @@ For a fast local loop when editing Razor, HTML, CSS, and JS:
   - Use alongside the test website for HMR of the backoffice extension.
   - Use `pnpm run build` to emit assets into `wwwroot/App_Plugins/Articulate/BackOffice` when validating a full .NET build or packing.
   - `pnpm run lint` and `pnpm run check` help keep the client codebase healthy during edits.
-  - Vite now bundles/minifies theme static assets into per-theme `dist/` folders (e.g. `Themes/VAPOR/dist/css/vapor.css`) and compiles the mobile Markdown editor into `MarkdownEditor/dist/`, eliminating the Visual Studio Bundler & Minifier dependency. Author CSS/JS under `Themes/*/src/` and `MarkdownEditor/src/`; Razor views use ASP.NET Core environment tag helpers to load those source files in Development and the bundled assets in Production, so remember to run `pnpm run build` before deploying/starting with `ASPNETCORE_ENVIRONMENT=Production`. CSS minification prefers Lightning CSS when installed (`pnpm add -D lightningcss`) and falls back to esbuild otherwise.
+  - Vite now bundles/minifies theme static assets into per-theme `dist/` folders (e.g. `Themes/VAPOR/dist/css/vapor.css`) and compiles the mobile Markdown editor into `MarkdownEditor/dist/`, eliminating the Visual Studio Bundler & Minifier dependency. Author CSS/JS under `Themes/*/src/` and `MarkdownEditor/src/`; Razor views use ASP.NET Core environment tag helpers to load those source files in Development and the bundled assets in Production, so remember to run `pnpm run build` before deploying/starting with `ASPNETCORE_ENVIRONMENT=Production`. Lightning CSS ships in the devDependencies for fast CSS minification; remove it (or skip install) to fall back to esbuild if needed.
 
 See docs/development-dx.md for details and tips.
 
-### Tooling prerequisites (Node/pnpm)
+### Tooling prerequisites (Node/pnpm / .NET)
 
 - The backoffice client (Lit + TypeScript) uses pnpm. Install Node 22+ and pnpm 10.17+ before building.
+- .NET SDKs: install .NET 9.0.100 and the latest .NET 10 RC (`10.0.0-rc.2`) so you can target both TFMs locally. The `global.json` ensures `9.0.100` is used while allowing preview roll-forward for .NET 10.
 - Node version managers:
-  - The repo includes `.nvmrc` (Node 22). You can use `nvm`, but `fnm` (Fast Node Manager) is a quicker, cross‑platform alternative.
+  - The repo includes `.nvmrc` (Node 22). You can use `nvm`, but `fnm` (Fast Node Manager) is a quicker, cross-platform alternative.
   - `fnm` quickstart: `curl -fsSL https://fnm.vercel.app/install | bash`, restart shell, then run `fnm use` in the repo root (respects `.nvmrc`).
   - Enable pnpm: `corepack enable && corepack prepare pnpm@10.17.0 --activate`.
 - Corepack users should run `corepack enable` / `corepack prepare pnpm@<version>` manually prior to invoking the build. The repository no longer bootstraps pnpm automatically.
 - CI installs pnpm using `pnpm/action-setup`; no extra steps required there.
-- The `Articulate.Api.Management` project invokes pnpm restore/build from MSBuild during .NET builds; ensure pnpm is available on your PATH.
+- Build scripts and Husky hooks call pnpm when client assets need rebuilding; ensure pnpm is available on your PATH so `build/build.ps1` and the pre-commit hook can run the client build.
 - Nerdbank.GitVersioning CLI (`nbgv`) stamps the client bundle version. Install it once with `dotnet tool install --global nbgv --add-source https://api.nuget.org/v3/index.json` (or `dotnet tool update --global nbgv ...`) and ensure `~/.dotnet/tools` is on your PATH. WSL users who hit `No NuGet sources are defined or enabled` should add nuget.org via `dotnet nuget add source https://api.nuget.org/v3/index.json -n nuget.org` before installing the tool.
 
 ### Visual Studio setup
 
 - Opening the solution in Visual Studio honours the repo `global.json` (baseline 9.0.100 with `rollForward: "latestMajor"` and `allowPrerelease: true`). Install a 9.0.1xx SDK locally so VS picks the latest .NET 9, and enable preview SDKs in VS only when you want to build/run the net10 TFM.
-- Optional preview builds rely on the .NET 10 RC SDK; enable “Use previews of the .NET SDK” in VS when you need to target net10 locally.
+- Optional preview builds rely on the .NET 10 RC SDK (`10.0.0-rc.2`); enable "Use previews of the .NET SDK" in VS when you need to target net10 locally.
 - The repository ships a `.vsconfig` requesting:
   - `Microsoft.VisualStudio.Workload.NetWeb`
   - `Microsoft.NetCore.Component.SDK.9.0`
@@ -154,17 +155,17 @@ See docs/development-dx.md for details and tips.
 - Projects target both `net9.0` and `net10.0`. Run `pwsh build/build.ps1` (Windows) or `bash build/build.sh` (Linux/WSL) to compile and create NuGet packages.
 - These scripts are committed with `chmod +x`, so clones on native Linux/WSL filesystems (e.g. `~/src/...`) keep the execute bit. If you clone under `/mnt/*` (NTFS) the bit is dropped and you'll need to run `chmod +x build/build.sh build/build.ps1` once; otherwise the shell script fails with `permission denied`.
 - `global.json` keeps 9.0.100 as the baseline but allows roll-forward to newer (preview) SDKs, so `dotnet` or Visual Studio can load the .NET 10 tooling when installed.
-- GitHub Actions mirrors this flow by invoking `build/build.ps1`, ensuring the same serialized Core → API → Web build order with `--no-dependencies`.
+- GitHub Actions mirrors this flow by invoking `build/build.ps1` so the local and CI outputs stay aligned.
 - If a future preview regresses static web-asset packing, fall back to manual `Content`/`ContentWithTargetPath`/`EmbeddedResource` packing; see docs/development-dx.md.
 
 #### Script options
 
-- Common: builds are parallel and pack `Articulate`, `Articulate.Core`, `Articulate.Api.Management`, and `Articulate.StaticAssets` into `build/Release`. The `Articulate` package now depends on `Articulate.StaticAssets` automatically via the project graph—no extra flags or manual restores required.
+- Common: builds are parallel and pack `Articulate`, `Articulate.Core`, `Articulate.Api.Management`, and `Articulate.StaticAssets` into `build/Release`. The `Articulate` package now depends on `Articulate.StaticAssets` automatically via the project graph-no extra flags or manual restores required.
 - Windows (`build/build.ps1`):
   - Override CPU workers: `set MAXCPU=8` (default = all cores)
   - Enable client assets build: `$env:ENABLE_CLIENT_BUILD = 'true'` (or `set ENABLE_CLIENT_BUILD=true`)
 - Linux/WSL (`build/build.sh`):
-  - Override CPU workers: `export MAXCPU=8` (default = auto‑detect)
+  - Override CPU workers: `export MAXCPU=8` (default = auto-detect)
   - Enable client assets build: `export ENABLE_CLIENT_BUILD=true`
   - WSL tip: if the repo is under `/mnt/*`, the script prints a performance warning. Clone under `~/src/...` for faster I/O.
 
@@ -178,15 +179,15 @@ Client/Vite build
 ### WSL + Windows workflow (fast local builds)
 
 - For best performance keep two clones:
-  - WSL ext4 clone (e.g. `~/src/Articulate6-wip`) → `bash build/build.sh`
-  - Windows NTFS clone (e.g. `F:\int\Articulate6-wip`) → `pwsh build/build.ps1`
-- Sync via Git (`git pull`). WSL builds from `/mnt/*` are slow due to drvfs; building from the distro’s ext4 is 2–5× faster for metadata‑heavy steps.
+  - WSL ext4 clone (e.g. `~/src/Articulate6-wip`) -> `bash build/build.sh`
+  - Windows NTFS clone (e.g. `F:\int\Articulate6-wip`) -> `pwsh build/build.ps1`
+- Sync via Git (`git pull`). WSL builds from `/mnt/*` are slow due to drvfs; building from the distro's ext4 is 2-5x faster for metadata-heavy steps.
 
 ### Repository Guides
 
 - Developer onboarding & architecture: `docs/developer-onboarding.md`
-- Hot reload & HMR tips: `docs/development-dx.md`
-- v5 → v6 API differences: `docs/breaking-changes-v5-v6.md`
+- Runtime compilation & HMR tips: `docs/development-dx.md`
+- v5 -> v6 API differences: `docs/breaking-changes-v5-v6.md`
 - Automation/AI reference: `AGENTS.md`
 - AI/LLM content negotiation + CDN setup: `docs/ai-content-negotiation.md`
 
@@ -200,3 +201,4 @@ to re-create the Articulate package in the back office with all required depende
 &copy; 2025 by Shannon Deminick
 
 This is free software and is licensed under the [The MIT License (MIT)](http://opensource.org/licenses/MIT)
+

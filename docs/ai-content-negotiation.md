@@ -1,12 +1,12 @@
-# AI/LLM‑Friendly Content Negotiation
+# AI/LLM-Friendly Content Negotiation
 
-Articulate can serve machine‑friendly representations of posts and lists when a client sends an `Accept` header asking for text formats. This makes your blog content easier for AI agents, crawlers, and automations to consume without scraping HTML.
+Articulate can serve machine-friendly representations of posts and lists when a client sends an `Accept` header asking for text formats. This makes your blog content easier for AI agents, crawlers, and automations to consume without scraping HTML.
 
 ## What It Serves
 
-- `Accept: text/markdown` → Original post markdown when available; concise page header + markdown body
-- `Accept: text/plain` → Plain‑text version of the post/list (HTML stripped, decoded)
-- Otherwise → Normal HTML views
+- `Accept: text/markdown` -> Original post markdown when available; concise page header + markdown body
+- `Accept: text/plain` -> Plain-text version of the post/list (HTML stripped, decoded)
+- Otherwise -> Normal HTML views
 
 Lists (archive, author, tags, categories, search) also support these formats and render concise index entries per post.
 
@@ -14,7 +14,7 @@ Lists (archive, author, tags, categories, search) also support these formats and
 
 - Controllers parse `Accept` (with quality factors) and pick the best available representation.
 - For posts using the Markdown editor, the stored markdown is returned for `text/markdown`. If no markdown exists, the controller falls back to `text/plain`.
-- For plain text, the rendered HTML body is stripped of tags and HTML‑decoded.
+- For plain text, the rendered HTML body is stripped of tags and HTML-decoded.
 
 ## Origin HTTP Headers
 
@@ -29,28 +29,28 @@ Rationale:
 
 - `X-Content-Variant` is a normalized variant header the edge/CDN can key on, avoiding cache fragmentation on raw `Accept`.
 - `Vary: X-Content-Variant` ensures downstream caches keep separate entries for html/md/txt.
-- `s-maxage` guides shared caches (e.g., CDNs) while keeping browsers short‑lived.
+- `s-maxage` guides shared caches (e.g., CDNs) while keeping browsers short-lived.
 
 ## Server Output Caching
 
-Articulate registers output‑cache policies that vary by `X-Content-Variant` (and also `Accept` as a fallback):
+Articulate registers output-cache policies that vary by `X-Content-Variant` (and also `Accept` as a fallback):
 
-- `Articulate120` → used by post controllers (single posts)
-- `Articulate60` → used by list/search/author controllers
-- `Articulate300` → used by RSS
+- `Articulate120` -> used by post controllers (single posts)
+- `Articulate60` -> used by list/search/author controllers
+- `Articulate300` -> used by RSS
 
 These policies ensure distinct cache entries are produced per variant.
 
-## CDN Configuration (Strategy B: Normalize → Key on Variant)
+## CDN Configuration (Strategy B: Normalize -> Key on Variant)
 
 Recommended approach: at the edge, derive a compact variant from `Accept` and include that header in the cache key.
 
 1. Normalize the request at the edge
 
 - Compute `X-Content-Variant` on the request:
-  - If `Accept` contains `markdown`, `x-markdown`, or `+markdown` → `md`
-  - Else if `Accept` contains `text/plain` → `txt`
-  - Else → `html`
+  - If `Accept` contains `markdown`, `x-markdown`, or `+markdown` -> `md`
+  - Else if `Accept` contains `text/plain` -> `txt`
+  - Else -> `html`
 
 1. Include the header in the CDN cache key
 
@@ -63,16 +63,16 @@ Provider notes:
   - Transform Rule: set request header `X-Content-Variant` using the above logic.
   - Cache Rules: include request header `X-Content-Variant` in the cache key; respect origin caching or set Edge TTLs.
 
-### Cloudflare (UI) — step‑by‑step
+### Cloudflare (UI) - step-by-step
 
 Use two Transform Rules (markdown/plain) plus one fallback (html), then a Cache Rule to include the header.
 
-1. Transform Rules → HTTP Request Header Modification
+1. Transform Rules -> HTTP Request Header Modification
 
 - Rule A: markdown
-  - When incoming requests match… Expression
+  - When incoming requests match... Expression
     - `(http.request.uri.path starts_with "/blog") and (lower(http.request.headers["accept"][0]) contains "markdown")`
-  - Then… Set static request header
+  - Then... Set static request header
     - Name: `X-Content-Variant`
     - Value: `md`
 
@@ -96,16 +96,16 @@ Notes
 - Put the rules in the order above so markdown/plain match before the fallback.
 - The `lower(... ) contains "markdown"` check also matches `x-markdown` and `+markdown` types.
 
-1. Cache Rules → Create rule
+1. Cache Rules -> Create rule
 
-- When incoming requests match… Expression
+- When incoming requests match... Expression
   - `http.request.uri.path starts_with "/blog"`
 - Settings
-  - Cache Key → Custom
+  - Cache Key -> Custom
     - Include: Header `X-Content-Variant`
   - Edge TTL
-    - Either “Respect existing headers” (origin `s-maxage`) or set a fixed TTL
-  - Origin Cache Control → On
+    - Either "Respect existing headers" (origin `s-maxage`) or set a fixed TTL
+  - Origin Cache Control -> On
 
 Optional
 
@@ -196,7 +196,7 @@ and not http.request.uri.path matches "(?i)\\.(?:css|js|png|jpe?g|gif|svg|ico|we
 ```
 
 - AWS CloudFront
-  - Lambda@Edge/CloudFront Functions (viewer‑request): set `x-content-variant` as above.
+  - Lambda@Edge/CloudFront Functions (viewer-request): set `x-content-variant` as above.
   - Cache Policy: include header `x-content-variant` in the cache key; honor origin cache headers.
 
 - Fastly
@@ -205,11 +205,11 @@ and not http.request.uri.path matches "(?i)\\.(?:css|js|png|jpe?g|gif|svg|ico|we
     - `set req.hash += req.http.X-Content-Variant;`
   - Keep `beresp.http.Vary = "X-Content-Variant";` from origin; optionally add `Surrogate-Control: max-age=60/120`.
 
-If you prefer a config‑only fallback (no edge logic), you can include raw `Accept` in the cache key; however, it may result in more variants due to q‑values and header permutations. Strategy B avoids that.
+If you prefer a config-only fallback (no edge logic), you can include raw `Accept` in the cache key; however, it may result in more variants due to q-values and header permutations. Strategy B avoids that.
 
 ## HTML Discoverability
 
-To help non‑negotiating clients discover text formats, post pages include alternate links in the `<head>`:
+To help non-negotiating clients discover text formats, post pages include alternate links in the `<head>`:
 
 ```html
 <link rel="alternate" type="text/markdown" href="/blog/my-post" />
@@ -234,4 +234,5 @@ To help non‑negotiating clients discover text formats, post pages include alte
 ## Notes
 
 - Posts without a markdown body will return plain text when `text/markdown` is requested.
-- TTLs (`s-maxage`) are aligned to output‑cache policies and can be tuned if your site updates more or less frequently.
+- TTLs (`s-maxage`) are aligned to output-cache policies and can be tuned if your site updates more or less frequently.
+

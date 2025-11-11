@@ -6,8 +6,7 @@
 
 > A wonderful Blog engine built on Umbraco
 
----
-_❤️ If you use and like Articulate please consider [becoming a GitHub Sponsor](https://github.com/sponsors/Shazwazza/) ❤️_
+_If you use and like Articulate please consider [becoming a GitHub Sponsor](https://github.com/sponsors/Shazwazza/)._
 
 ## Features
 
@@ -28,13 +27,13 @@ Supporting all the features you'd want in a blogging platform
 
 ## Minimum requirements
 
-* **Umbraco 13 LTS (maintenance)** – Articulate 5.x (security support until Dec 2025, EOL Dec 2026)
-* **Umbraco 15.4.4+ / 16 / 17 (current)** – Articulate 6.x on .NET 9/10 Razor Class Libraries
+* **Umbraco 13 LTS (maintenance)** - Articulate 5.x (security support until Dec 2025, EOL Dec 2026)
+* **Umbraco 15.4.4+ / 16 / 17 (current)** - Articulate 6.x multi-targets `net9.0;net10.0` (Umbraco 15/16 on .NET 9, Umbraco 17 RC on .NET 10 previews)
 
 ## Installation notes
 
-* **Umbraco 13 LTS:** install Articulate 5.x from the marketplace, run pending migrations, and save the `Articulate Image Picker` data type once to restore demo media (issue [#460](https://github.com/Shazwazza/Articulate/issues/460)).
-* **Umbraco 15.4.4+ / 16 / 17:** install Articulate 6.x. Builds target `net9.0`/`net10.0`; follow the solution README for source builds and the `Articulate.Tests.Website` development site.
+* **Umbraco 13 LTS:** install Articulate 5.x from the marketplace, run pending migrations, and save the `Articulate Image Picker` data type once to restore demo media (issue [#460](https://github.com/Shazwazza/Articulate/issues/460)).
+* **Umbraco 15.4.4+ / 16 / 17:** install Articulate 6.x from NuGet. When building from source, run the development site with `dotnet run -f net9.0 --project src/Articulate.Tests.Website/Articulate.Tests.Website.csproj` (or `-f net10.0` for Umbraco 17) and sign into the Umbraco backoffice to let migrations seed demo content.
 
 ## [Documentation](https://github.com/Shazwazza/Articulate/wiki)
 
@@ -54,25 +53,24 @@ See here for the list of releases and their release notes
 
 ## Contributing
 
-1. Clone/fork the repository
-1. Open the /src/Articulate.sln file
-1. Build the solution (will also perform a Nuget restore)
-1. Ensure that Articulate.Web is set as the startup project
-1. Start the Articulate.Web project
-1. This will run the Umbraco installer, install as per normal
-1. The Articulate package migrations will also execute and install all of the Articulate schema and content items
+1. Clone/fork the repository and open `src/Articulate.sln` in Visual Studio or Rider.
+1. Build once to restore NuGet packages. For the backoffice client, run `pnpm install` inside `src/Articulate.Api.Management/Client`.
+1. Use the development site for day-to-day testing:  
+   `dotnet run -f net9.0 --project src/Articulate.Tests.Website/Articulate.Tests.Website.csproj`  
+   (`-f net10.0` when validating Umbraco 17). Complete the Umbraco installer; migrations seed the Articulate schema and demo content automatically.
+1. When editing the Vite client, run `pnpm run dev` (or `pnpm run build` / `pnpm run build:release` to refresh the `dist/` assets that ship inside the package).
+1. Use `pwsh build/build.ps1` (Windows) or `bash build/build.sh` (Linux/WSL) to reproduce the release build: the scripts restore, build `net9.0/net10.0`, and pack the `Articulate`, `Articulate.Core`, `Articulate.Api.Management`, and `Articulate.StaticAssets` NuGet packages into `build/Release/`.
 
-Now you're all set! Any source changes you wish to make just do that in Visual Studio, build the solution when you need to and the changes will be reflected in the website.
+Now you're all set! Edit code, rebuild, and refresh the test site to validate changes end-to-end.
 
 ### Changing Umbraco Articulate schema/data elements
 
 If you need to make changes to the underlying Umbraco schema (doc types, data types, etc...) or the installed package's content/media, then you will need
 to re-create the Articulate package in the back office with all required dependencies and then re-save the package.zip file and commit it to the repository.
 
-### Updating to latest committed changes
-
 ## Copyright & Licence
 
 &copy; 2025 by Shannon Deminick
 
 This is free software and is licensed under the [The MIT License (MIT)](http://opensource.org/licenses/MIT)
+

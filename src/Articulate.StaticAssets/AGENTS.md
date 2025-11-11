@@ -1,11 +1,11 @@
-# Static Assets – Scoped Guide
+# Static Assets - Scoped Guide
 
 Scope: applies to `src/Articulate.StaticAssets/**`.
 
 ## Purpose
 
 - Hosts packaged static assets consumed by the solution.
-- Do not hand‑edit build outputs; regenerate via client builds where applicable.
+- Do not hand-edit build outputs; regenerate via client builds where applicable.
 
 ## Build
 
@@ -14,3 +14,4 @@ Scope: applies to `src/Articulate.StaticAssets/**`.
 ## Validation Checklist
 
 - Assemblies/package contents align with generated client assets.
+

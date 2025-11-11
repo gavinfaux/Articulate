@@ -111,20 +111,11 @@ Several public helper methods have had their signatures changed or have been mar
 
 ## 8. New Projects and Back-Office API Refactoring
 
-In v6, all back-office API controllers and related logic have been moved into a new, separate project: `Articulate.Api.Management`. A new `Articulate.Web` project has also been introduced to serve front-end assets.
+In v6, all back-office API controllers and related logic have been moved into a new, separate project: `Articulate.Api.Management`. A new `Articulate.Web` project hosts the Razor Class Library that consumers install, and the `Articulate.StaticAssets` project packages the built `/App_Plugins/Articulate/**/dist/**` assets that ship with the NuGet.
 
 **Reasoning:** This creates a clear separation between the core Articulate functionality, the back-office management API, and front-end components. It aligns with modern .NET architecture and makes the solution easier to maintain and extend.
 
-**Impact:** Any integrations that were directly calling the old back-office API controllers will be broken. The old controllers have been removed and replaced by new ones in the `Articulate.Api.Management` project with different routes and authorization policies. The table below summarizes the replacements.
-
-### Back-Office API Controller Replacements
-
-| Old Controller (in `Articulate`) | New Controller (in `Articulate.Api.Management`) | Status & Notes |
-| --- | --- | --- |
-| `ArticulateBlogImportController` | `BlogMlApiController` | **Replaced**. Handles BlogML import and export. |
-| `MarkdownEditorApiController` | `MarkdownEditorApiController` | **Replaced**. Provides the back-end for the Markdown editor. |
-| `ThemeEditorController` | `ThemeOptionsApiController` | **Replaced**. Manages theme files and options. |
-| `ArticulatePropertyEditorsController` | `ThemePickerApiController` | **Replaced**. The theme picker logic is now in its own dedicated controller. |
+**Impact:** Any integrations that were directly calling the old back-office API controllers will be broken. The old controllers have been removed and replaced by new ones in the `Articulate.Api.Management` project with different routes and authorization policies (see Section 2 for the controller mapping).
 
 ## 9. Development and Build Process
 
@@ -137,11 +128,12 @@ In v6, all back-office API controllers and related logic have been moved into a 
 | Area | Change | Status & Notes |
 | --- | --- | --- |
 | **Build Tools** | Node.js/pnpm Requirement | **New Requirement**. A Node.js-based build process (using Vite) is now required to build the back-office client-side assets. You must have Node.js and pnpm installed. |
-| **Build Commands** | `pnpm run build` | **New Requirement**. To produce the final client-side assets, you must run `pnpm install` followed by `pnpm run build` from the `src/Articulate/` directory. |
+| **Build Commands** | `pnpm run build` | **New Requirement**. To produce the final client-side assets, you must run `pnpm install` followed by `pnpm run build` (or `pnpm run build:release`) from `src/Articulate.Api.Management/Client`. |
 | **Host Project Setup** | `<CopyStaticWebAssetsToPublish>` | **New Requirement**. Any web project that references the `Articulate` project (e.g., a test site) must include `<CopyStaticWebAssetsToPublish>true</CopyStaticWebAssetsToPublish>` in its `.csproj` file to ensure the back-office assets are correctly copied on build. |
 
-## 10. Front‑end Markdown Editor route disabled
+## 10. Front-end Markdown Editor route disabled
 
 | Area | Change | Status & Notes |
 | --- | --- | --- |
-| Front‑end editor route | `/a-new` | **Disabled/Redirected**. In v6 the front‑end editor is removed. Requests to `/a-new` now 302‑redirect to the blog home. Creating new posts is handled by the backoffice Markdown editor (Articulate.Api.Management). |
+| Front-end editor route | `/a-new` | **Disabled/Redirected**. In v6 the front-end editor is removed. Requests to `/a-new` now 302-redirect to the blog home. Creating new posts is handled by the backoffice Markdown editor (Articulate.Api.Management). |
+

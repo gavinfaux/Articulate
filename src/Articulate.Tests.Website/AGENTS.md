@@ -1,4 +1,4 @@
-# Demo Website – Scoped Guide
+# Demo Website - Scoped Guide
 
 Scope: applies to `src/Articulate.Tests.Website/**`.
 
@@ -9,10 +9,11 @@ Scope: applies to `src/Articulate.Tests.Website/**`.
 
 ## Purpose
 
-- Smoke‑test routing, views, property editors, and management endpoints.
+- Smoke-test routing, views, property editors, and management endpoints.
 - Use for quick manual validation after changes to core/Web/API or client assets.
 
 ## Validation Checklist
 
 - Site boots and renders blog routes.
 - Backoffice features load when relevant.
+

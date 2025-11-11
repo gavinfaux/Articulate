@@ -1,4 +1,4 @@
-# Articulate.Api.Management (Server) – Scoped Guide
+# Articulate.Api.Management (Server) - Scoped Guide
 
 Scope: applies to `src/Articulate.Api.Management/**` excluding `Client/`.
 
@@ -21,3 +21,4 @@ Scope: applies to `src/Articulate.Api.Management/**` excluding `Client/`.
 
 - Builds green on both TFMs.
 - Demo site can hit management endpoints when run against matching Umbraco version.
+

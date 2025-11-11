@@ -1,10 +1,10 @@
-# Development DX: Hot Reload + HMR
+# Development DX: Runtime Compilation + HMR
 
-This repository supports a fast inner loop for Razor views, HTML, CSS, and JS when working on Articulate.
+This repository supports a fast inner loop for Razor views, HTML, CSS, and JS when working on Articulate. Razor runtime compilation powers the .cshtml experience, which means .NET hot reload must stay disabled; refresh the browser manually after each Razor change.
 
 ## Prerequisites
 
-- .NET 9 and 10rc SDK
+- .NET 9.0.100 and .NET 10 RC (`10.0.0-rc.2`) SDKs
 - Node 22+ and pnpm 10.17+
 - Node version manager:
   - The repo includes `.nvmrc` (Node 22); use `nvm` or `fnm` (Fast Node Manager).
@@ -12,28 +12,28 @@ This repository supports a fast inner loop for Razor views, HTML, CSS, and JS wh
 - Enable pnpm via corepack (recommended):
   - `corepack enable`
   - `corepack prepare pnpm@10.17.0 --activate`
-- Visual Studio: opening the repo offers to apply `.vsconfig`, which installs the ASP.NET workload plus .NET 9 SDK and (optional) preview SDK component.
+- Visual Studio: opening the repo offers to apply `.vsconfig`, which installs the ASP.NET workload plus .NET 9 SDK and the .NET 10 RC preview component.
 
-### Backend + Razor hot reload (same origin)
+### Backend + Razor runtime compilation (same origin)
 
-Run the test website with Hot Reload; in Development it enables:
+Run the test website with hot reload disabled; in Development it enables:
 
 - Razor runtime compilation for `.cshtml`
-- LiveReload for static assets (css/js/images/json)
+- File watching for static assets (css/js/images/json) so you can rebuild bundles without restarting
 
 Commands:
 
 ```bash
-dotnet watch run --project src/Articulate.Tests.Website
+dotnet watch run --no-hot-reload --project src/Articulate.Tests.Website
 ```
 
 Navigate to `https://localhost:44366/`.
 
 Notes:
 
+- Razor runtime compilation does not support .NET hot reload, so keep `--no-hot-reload` and manually refresh your browser after saving Razor files.
 - This setup avoids a separate proxy/port so auth callbacks, cookies and management API calls remain on the same origin.
 - Development-only packages/middleware are conditioned to Debug/Development builds and are not used in production.
-- To prevent automatic live reload run `dotnet watch` with the `--no-hot-reload` argument, use when manual reload is preferable DX.
 
 ### Verifying AI/LLM Content Negotiation locally
 
@@ -64,14 +64,14 @@ curl -H "Accept: text/markdown" "https://localhost:44366/blog/archive?p=1"
 In production behind a CDN, normalize the request header `X-Content-Variant` at the edge and include it in the cache key.
 
 - Cloudflare: Transform Rule to set `X-Content-Variant` (md/txt/html) from `Accept`; Cache Rule adds it to cache key.
-- CloudFront: Lambda@Edge viewer‑request sets `x-content-variant`; cache policy includes the header.
+- CloudFront: Lambda@Edge viewer-request sets `x-content-variant`; cache policy includes the header.
 - Fastly: VCL sets `req.http.X-Content-Variant` and appends to `req.hash`.
 
 See `docs/ai-content-negotiation.md` for full examples. Origin already varies by `X-Content-Variant` and emits `s-maxage` so no appsettings changes are required.
 
 ### Backoffice client HMR (Vite)
 
-Enable pnpm package manager (one‑time setup)
+Enable pnpm package manager (one-time setup)
 
 ```bash
 corepack enable
@@ -91,13 +91,13 @@ Tips:
 
 - Use `pnpm run build` to emit assets into `wwwroot/App_Plugins/Articulate/BackOffice` when validating a full .NET build or packing.
 - `pnpm run lint` and `pnpm run check` help keep the client codebase healthy during edits.
-- Vite now bundles and minifies theme assets into `Themes/*/dist/` and compiles the Markdown editor into `MarkdownEditor/dist/` on build/dev, replacing the Visual Studio Bundler & Minifier extension. Author CSS/JS under `Themes/*/src/` and `MarkdownEditor/src/`; Development serves those source files while Production serves the bundled output—run `pnpm run build` before deploying or running with `ASPNETCORE_ENVIRONMENT=Production`. When the optional `lightningcss` package is installed (`pnpm add -D lightningcss`) the plugin uses it for CSS minification; otherwise it falls back to esbuild.
+- Vite now bundles and minifies theme assets into `Themes/*/dist/` and compiles the Markdown editor into `MarkdownEditor/dist/` on build/dev, replacing the Visual Studio Bundler & Minifier extension. Author CSS/JS under `Themes/*/src/` and `MarkdownEditor/src/`; Development serves those source files while Production serves the bundled output-run `pnpm run build` before deploying or running with `ASPNETCORE_ENVIRONMENT=Production`. Lightning CSS ships in the devDependencies for CSS minification; remove it (or skip install) to let the pipeline fall back to esbuild.
 - The client `.npmrc` (checked into `src/Articulate.Api.Management/Client`) aligns pnpm peer handling with CI; leave it untouched when reinstalling dependencies.
 
 ### Client build integration
 
 - MSBuild does not invoke pnpm/Vite by default. The client assets are built with Vite and committed under `src/Articulate.Web/wwwroot/App_Plugins/Articulate/**/dist/**`.
-- To rebuild assets during packaging, use the build scripts with an opt‑in flag:
+- To rebuild assets during packaging, use the build scripts with an opt-in flag:
   - Windows: `set ENABLE_CLIENT_BUILD=true && build\build.ps1`
   - Linux/WSL: `ENABLE_CLIENT_BUILD=true bash build/build.sh`
 - Or run it manually during development:
@@ -106,11 +106,11 @@ Tips:
 
 ### Build scripts (Windows, Linux/WSL) and flags
 
-For up‑to‑date build/pack flags and cross‑platform notes, see `AGENTS.md` → “Build, Test, and Development Commands”. The script behavior (parallelism, `ENABLE_CLIENT_BUILD`, WSL tips) is maintained there to avoid duplication.
+For up-to-date build/pack flags and cross-platform notes, see `AGENTS.md` -> "Build, Test, and Development Commands". The script behavior (parallelism, `ENABLE_CLIENT_BUILD`, WSL tips) is maintained there to avoid duplication.
 
-### Cross‑platform local workflow (dual clone)
+### Cross-platform local workflow (dual clone)
 
-Refer to `AGENTS.md` → “Cross‑platform workflow (WSL + Windows)” for the canonical dual‑clone guidance. This DX doc keeps the focus on hot‑reload/HMR flows.
+Refer to `AGENTS.md` -> "Cross-platform workflow (WSL + Windows)" for the canonical dual-clone guidance. This DX doc keeps the focus on hot-reload/HMR flows.
 
 ### Regenerating the client SDK (optional)
 
@@ -132,3 +132,4 @@ Until the .NET 10 SDK regains full static web asset packing for Razor Class Libr
 - Explicitly include pnpm output (`wwwroot/App_Plugins/**`) so backoffice bundles are copied even if the SDK omits them.
 
 Revert to the standard static web asset configuration once a stable .NET 10 SDK fixes the regression.
+

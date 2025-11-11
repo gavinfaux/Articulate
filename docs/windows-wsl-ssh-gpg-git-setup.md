@@ -4,20 +4,22 @@ This guide describes the streamlined developer setup we use on Windows with WSL 
 
 The core approach:
 
-- Single OpenSSH client and agent: Windows’ built‑in OpenSSH and `ssh-agent` service.
+- Single OpenSSH client and agent: Windows' built-in OpenSSH and `ssh-agent` service.
 - One SSH key, many clients: all tools (Git CLI, VS Code, GitHub Desktop, GitKraken, Visual Studio, WSL) share the same agent and keys.
-- Commit signing via GPG on both Windows and WSL with long‑lived caching and a GUI prompt in WSL.
+- Commit signing via GPG on both Windows and WSL with long-lived caching and a GUI prompt in WSL.
+
+Paths below use `<YourUser>` as a placeholder for your Windows account name.
 
 ---
 
 ## Prerequisites
 
-- Windows 11 with OpenSSH Client and `ssh-agent` enabled (built‑in).
+- Windows 11 with OpenSSH Client and `ssh-agent` enabled (built-in).
 - Git for Windows (no custom `GIT_SSH` required).
 - Gpg4win installed on Windows.
 - WSL with Ubuntu 24.04 (or similar), with `socat` installed.
 - `npiperelay.exe` installed on Windows (e.g., via winget) at:
-  `C:\\Users\\gavin\\AppData\\Local\\Microsoft\\WinGet\\Links\\npiperelay.exe`
+  `C:\\Users\\<YourUser>\\AppData\\Local\\Microsoft\\WinGet\\Links\\npiperelay.exe`
 
 Optional (for GUI pinentry under WSL):
 
@@ -37,8 +39,8 @@ Optional (for GUI pinentry under WSL):
       IdentityAgent "\\\\.\\pipe\\openssh-ssh-agent"
     ```
 
-  - Keys: `C:\\Users\\gavin\\.ssh\\id_ed25519` (+ `.pub`).
-  - Load key once per logon in PowerShell profile (`C:\\Users\\gavin\\Documents\\PowerShell\\Microsoft.PowerShell_profile.ps1`):
+  - Keys: `C:\\Users\\<YourUser>\\.ssh\\id_ed25519` (+ `.pub`).
+  - Load key once per logon in PowerShell profile (`C:\\Users\\<YourUser>\\Documents\\PowerShell\\Microsoft.PowerShell_profile.ps1`):
 
     ```powershell
     if (-not (ssh-add -l 2>$null)) {
@@ -59,7 +61,7 @@ Optional (for GUI pinentry under WSL):
     ```
 
 - GPG (Windows, Gpg4win)
-  - File: `C:\\Users\\gavin\\AppData\\Roaming\\gnupg\\gpg-agent.conf`
+  - File: `C:\\Users\\<YourUser>\\AppData\\Roaming\\gnupg\\gpg-agent.conf`
 
     ```text
     default-cache-ttl 28800
@@ -81,7 +83,7 @@ Optional (for GUI pinentry under WSL):
   - Symlink SSH directory (already present):
 
     ```bash
-    ln -s /mnt/c/Users/gavin/.ssh ~/.ssh
+    ln -s /mnt/c/Users/<YourUser>/.ssh ~/.ssh
     chmod 600 ~/.ssh/id_ed25519 ~/.ssh/config
     ```
 
@@ -90,7 +92,7 @@ Optional (for GUI pinentry under WSL):
 
     ```bash
     #!/usr/bin/env bash
-    NPIPERELAY='/mnt/c/Users/gavin/AppData/Local/Microsoft/WinGet/Links/npiperelay.exe'
+    NPIPERELAY='/mnt/c/Users/<YourUser>/AppData/Local/Microsoft/WinGet/Links/npiperelay.exe'
     WIN_SSH_PIPE='//./pipe/openssh-ssh-agent'
     export SSH_AUTH_SOCK="$HOME/.ssh/agent.sock"
     if [ ! -x "$NPIPERELAY" ] || ! command -v socat >/dev/null 2>&1 || ! command -v ss >/dev/null 2>&1; then
@@ -162,7 +164,7 @@ Optional (for GUI pinentry under WSL):
 
 ## Optional UX Tweaks
 
-- Disable auto‑tmux (current state)
+- Disable auto-tmux (current state)
   - `.bashrc` and `.zshrc` have the tmux autostart block commented out so shells start clean.
   - Quick attach alias (Bash and Zsh):
 
@@ -183,7 +185,7 @@ Optional (for GUI pinentry under WSL):
     ```
 
 - 1Password (alternative SSH agent)
-  - We’re standardizing on Windows `ssh-agent`. If you later prefer 1Password’s agent, set its socket in `~/.ssh/config` and remove keys from the Windows agent. Not needed for this setup.
+  - We're standardizing on Windows `ssh-agent`. If you later prefer 1Password's agent, set its socket in `~/.ssh/config` and remove keys from the Windows agent. Not needed for this setup.
 
 ---
 
@@ -210,3 +212,5 @@ Optional (for GUI pinentry under WSL):
   - `gpg --clearsign README.md` triggers a Qt GUI pinentry (first use), then caches.
 
 This setup keeps SSH and GPG consistent across Windows and WSL with minimal prompts and a clean, predictable developer experience.
+
+

@@ -1,4 +1,4 @@
-# Component Name – Scoped AGENTS Guide (Template)
+# Component Name - Scoped AGENTS Guide (Template)
 
 Scope: applies to `<path>/**`.
 
@@ -24,3 +24,4 @@ Scope: applies to `<path>/**`.
 
 - Prefer concise, actionable steps. Link to the root `AGENTS.md` for repo-wide standards.
 - Defer detailed architecture/background to docs under `docs/`.
+

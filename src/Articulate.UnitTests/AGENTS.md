@@ -1,4 +1,4 @@
-# Unit Tests – Scoped Guide
+# Unit Tests - Scoped Guide
 
 Scope: applies to `src/Articulate.UnitTests/**`.
 
@@ -17,3 +17,4 @@ Scope: applies to `src/Articulate.UnitTests/**`.
 
 - Tests pass on both TFMs.
 - New behavior covered by focused tests.
+
