@@ -15,14 +15,15 @@
   </ItemGroup>
 
   <ItemGroup Condition="Exists('$(ArticulateWebAssetsRoot)')">
-    <!-- Only import built assets; raw Razor + src files stay in Articulate.Web -->
-    <ArticulateWebAsset Include="$(ArticulateWebAssetsRoot)\MarkdownEditor\dist\**\*.*"
-                        Exclude="$(ArticulateWebAssetsRoot)\**\*.cshtml"
-                        Condition="Exists('$(ArticulateWebAssetsRoot)\MarkdownEditor\dist')">
+    <!-- Copy all Markdown editor assets (not just dist) so dev builds can serve src content -->
+    <ArticulateWebAsset Include="$(ArticulateWebAssetsRoot)\MarkdownEditor\**\*.*"
+                        Exclude="$(ArticulateWebAssetsRoot)\MarkdownEditor\**\*.cshtml"
+                        Condition="Exists('$(ArticulateWebAssetsRoot)\MarkdownEditor')">
       <RelativeCopyPath>$([MSBuild]::MakeRelative('$(ArticulateWebAssetsRoot)', '%(FullPath)'))</RelativeCopyPath>
     </ArticulateWebAsset>
-    <ArticulateWebAsset Include="$(ArticulateWebAssetsRoot)\Themes\**\dist\**\*.*"
-                        Exclude="$(ArticulateWebAssetsRoot)\**\*.cshtml"
+    <!-- Ditto for Themes: include source assets to keep debug scenarios working -->
+    <ArticulateWebAsset Include="$(ArticulateWebAssetsRoot)\Themes\**\*.*"
+                        Exclude="$(ArticulateWebAssetsRoot)\Themes\**\*.cshtml"
                         Condition="Exists('$(ArticulateWebAssetsRoot)\Themes')">
       <RelativeCopyPath>$([MSBuild]::MakeRelative('$(ArticulateWebAssetsRoot)', '%(FullPath)'))</RelativeCopyPath>
     </ArticulateWebAsset>
