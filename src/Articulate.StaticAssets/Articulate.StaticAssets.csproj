@@ -5,26 +5,26 @@
     <Nullable>enable</Nullable>
     <PackageId>Articulate.StaticAssets</PackageId>
     <Title>Articulate Static Web Assets</Title>
-    <ArticulateWebAssetsRoot>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\..\Articulate.Web\wwwroot\App_Plugins\Articulate'))</ArticulateWebAssetsRoot>
-    <ClientProjectDirectory>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\..\Articulate.Api.Management\Client'))</ClientProjectDirectory>
+    <ArticulateWebAssetsRoot>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/../Articulate.Web/wwwroot/App_Plugins/Articulate'))</ArticulateWebAssetsRoot>
+    <ClientProjectDirectory>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/../Articulate.Api.Management/Client'))</ClientProjectDirectory>
   </PropertyGroup>
-  
+
   <ItemGroup>
     <SupportedPlatform Include="browser" />
-    <Folder Include="wwwroot\App_Plugins\Articulate\" />
+    <Folder Include="wwwroot/App_Plugins/Articulate/" />
   </ItemGroup>
 
   <ItemGroup Condition="Exists('$(ArticulateWebAssetsRoot)')">
-    <!-- Copy all Markdown editor assets (not just dist) so dev builds can serve src content -->
-    <ArticulateWebAsset Include="$(ArticulateWebAssetsRoot)\MarkdownEditor\**\*.*"
-                        Exclude="$(ArticulateWebAssetsRoot)\MarkdownEditor\**\*.cshtml"
-                        Condition="Exists('$(ArticulateWebAssetsRoot)\MarkdownEditor')">
+    <!-- Mirror all Markdown editor assets except Razor views -->
+    <ArticulateWebAsset Include="$(ArticulateWebAssetsRoot)/MarkdownEditor/**/*.*"
+                        Exclude="$(ArticulateWebAssetsRoot)/MarkdownEditor/**/*.cshtml"
+                        Condition="Exists('$(ArticulateWebAssetsRoot)/MarkdownEditor')">
       <RelativeCopyPath>$([MSBuild]::MakeRelative('$(ArticulateWebAssetsRoot)', '%(FullPath)'))</RelativeCopyPath>
     </ArticulateWebAsset>
-    <!-- Ditto for Themes: include source assets to keep debug scenarios working -->
-    <ArticulateWebAsset Include="$(ArticulateWebAssetsRoot)\Themes\**\*.*"
-                        Exclude="$(ArticulateWebAssetsRoot)\Themes\**\*.cshtml"
-                        Condition="Exists('$(ArticulateWebAssetsRoot)\Themes')">
+    <!-- Mirror entire theme folders (excluding Razor views) -->
+    <ArticulateWebAsset Include="$(ArticulateWebAssetsRoot)/Themes/**/*.*"
+                        Exclude="$(ArticulateWebAssetsRoot)/Themes/**/*.cshtml"
+                        Condition="Exists('$(ArticulateWebAssetsRoot)/Themes')">
       <RelativeCopyPath>$([MSBuild]::MakeRelative('$(ArticulateWebAssetsRoot)', '%(FullPath)'))</RelativeCopyPath>
     </ArticulateWebAsset>
   </ItemGroup>
@@ -44,15 +44,15 @@
           Condition="Exists('$(ArticulateWebAssetsRoot)')"
           BeforeTargets="ResolveStaticWebAssetsInputs"
           Inputs="@(ArticulateWebAsset)"
-          Outputs="@(ArticulateWebAsset -> '$(MSBuildProjectDirectory)\wwwroot\App_Plugins\Articulate\%(RelativeCopyPath)')">
+          Outputs="@(ArticulateWebAsset -> '$(MSBuildProjectDirectory)/wwwroot/App_Plugins/Articulate/%(RelativeCopyPath)')">
     <Message Text="Synchronizing Articulate.Web static assets into Articulate.StaticAssets" Importance="Low" />
     <PropertyGroup>
-      <_TargetRoot>$(MSBuildProjectDirectory)\wwwroot\App_Plugins\Articulate</_TargetRoot>
+      <_TargetRoot>$(MSBuildProjectDirectory)/wwwroot/App_Plugins/Articulate</_TargetRoot>
     </PropertyGroup>
-    <RemoveDir Directories="$(_TargetRoot)\Themes" Condition="Exists('$(_TargetRoot)\Themes')" />
-    <RemoveDir Directories="$(_TargetRoot)\MarkdownEditor" Condition="Exists('$(_TargetRoot)\MarkdownEditor')" />
+    <RemoveDir Directories="$(_TargetRoot)/Themes" Condition="Exists('$(_TargetRoot)/Themes')" />
+    <RemoveDir Directories="$(_TargetRoot)/MarkdownEditor" Condition="Exists('$(_TargetRoot)/MarkdownEditor')" />
     <Copy SourceFiles="@(ArticulateWebAsset)"
-          DestinationFiles="@(ArticulateWebAsset -> '$(MSBuildProjectDirectory)\wwwroot\App_Plugins\Articulate\%(RelativeCopyPath)')"
+          DestinationFiles="@(ArticulateWebAsset -> '$(MSBuildProjectDirectory)/wwwroot/App_Plugins/Articulate/%(RelativeCopyPath)')"
           SkipUnchangedFiles="true" />
   </Target>
 </Project>

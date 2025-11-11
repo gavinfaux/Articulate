@@ -85,7 +85,6 @@ echo "1. Cleaning up NuGet caches..."
 rm -f "$SOLUTION_ROOT/Articulate.Api.Management/obj/project.assets.json" || true
 rm -f "$SOLUTION_ROOT/Articulate.StaticAssets/obj/project.assets.json" || true
 rm -f "$SOLUTION_ROOT/Articulate.Tests.Website/obj/project.assets.json" || true
-rm -f "$SOLUTION_ROOT/Articulate.UnitTests/obj/project.assets.json" || true
 rm -f "$SOLUTION_ROOT/Articulate.Web/obj/project.assets.json" || true
 rm -f "$SOLUTION_ROOT/Articulate/obj/project.assets.json" || true
 
@@ -100,7 +99,7 @@ if [[ ! -f "$TMP_SLN" ]]; then
     "$SOLUTION_ROOT/Articulate.Web/Articulate.Web.csproj" \
     "$SOLUTION_ROOT/Articulate.Api.Management/Articulate.Api.Management.csproj" \
     "$SOLUTION_ROOT/Articulate.StaticAssets/Articulate.StaticAssets.csproj" \
-    "$SOLUTION_ROOT/Articulate.Tests.Website/Articulate.Tests.Website.csproj" >/dev/null
+    >/dev/null
 fi
 
 # --- 3) Solution-level restore (slim sln) with static graph + parallelism ---

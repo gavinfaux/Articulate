@@ -491,7 +491,7 @@ appsettings-schema.json
 !src/Articulate.Api.Management/Client/src/packages/
 !src/Articulate.Api.Management/Client/src/packages/**
 
-# extension build, built by npm/msbuild 
+# extension build, built by npm/msbuild
 /src/Articulate.Api.Management/wwwroot/App_Plugins/Articulate
 
 # theme build artifacts
@@ -508,7 +508,7 @@ appsettings-schema.json
 # gitleaks
 gitleaks-report.json
 
-# rider 
+# rider
 /src/.idea
 
 /src/u15

@@ -137,6 +137,7 @@ See docs/development-dx.md for details and tips.
 - Corepack users should run `corepack enable` / `corepack prepare pnpm@<version>` manually prior to invoking the build. The repository no longer bootstraps pnpm automatically.
 - CI installs pnpm using `pnpm/action-setup`; no extra steps required there.
 - The `Articulate.Api.Management` project invokes pnpm restore/build from MSBuild during .NET builds; ensure pnpm is available on your PATH.
+- Nerdbank.GitVersioning CLI (`nbgv`) stamps the client bundle version. Install it once with `dotnet tool install --global nbgv --add-source https://api.nuget.org/v3/index.json` (or `dotnet tool update --global nbgv ...`) and ensure `~/.dotnet/tools` is on your PATH. WSL users who hit `No NuGet sources are defined or enabled` should add nuget.org via `dotnet nuget add source https://api.nuget.org/v3/index.json -n nuget.org` before installing the tool.
 
 ### Visual Studio setup
 

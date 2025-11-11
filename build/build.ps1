@@ -69,7 +69,6 @@ Write-Host "1. Cleaning up NuGet caches..."
     "Articulate.Api.Management",
     "Articulate.StaticAssets",
     "Articulate.Tests.Website",
-    "Articulate.UnitTests",
     "Articulate.Web",
     "Articulate"
 ) | ForEach-Object {
@@ -85,8 +84,7 @@ if (-not (Test-Path $tmpSln)) {
         (Join-Path $SolutionRoot 'Articulate/Articulate.csproj') `
         (Join-Path $SolutionRoot 'Articulate.Web/Articulate.Web.csproj') `
         (Join-Path $SolutionRoot 'Articulate.Api.Management/Articulate.Api.Management.csproj') `
-        (Join-Path $SolutionRoot 'Articulate.StaticAssets/Articulate.StaticAssets.csproj') `
-        (Join-Path $SolutionRoot 'Articulate.Tests.Website/Articulate.Tests.Website.csproj') | Out-Null
+        (Join-Path $SolutionRoot 'Articulate.StaticAssets/Articulate.StaticAssets.csproj') | Out-Null
 }
 
 # 3) Restore (solution-level) with static graph + parallelism
