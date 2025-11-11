@@ -65,6 +65,10 @@ jobs:
 
       - name: GitLeaks Scan
         uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}      
+          GITLEAKS_VERSION: ${{ secrets.GITLEAKS_VERSION }}      
         with:
           fail-on: high
 
