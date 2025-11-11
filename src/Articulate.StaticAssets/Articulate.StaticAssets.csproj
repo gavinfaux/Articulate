@@ -44,11 +44,6 @@
           Condition="Exists('$(ArticulateWebAssetsRoot)')"
           BeforeTargets="ResolveStaticWebAssetsInputs">
     <Message Text="Synchronizing Articulate.Web static assets into Articulate.StaticAssets" Importance="Low" />
-    <PropertyGroup>
-      <_TargetRoot>$(MSBuildProjectDirectory)/wwwroot/App_Plugins/Articulate</_TargetRoot>
-    </PropertyGroup>
-    <RemoveDir Directories="$(_TargetRoot)/Themes" Condition="Exists('$(_TargetRoot)/Themes')" />
-    <RemoveDir Directories="$(_TargetRoot)/MarkdownEditor" Condition="Exists('$(_TargetRoot)/MarkdownEditor')" />
     <Copy SourceFiles="@(ArticulateWebAsset)"
           DestinationFiles="@(ArticulateWebAsset -> '$(MSBuildProjectDirectory)/wwwroot/App_Plugins/Articulate/%(RelativeCopyPath)')"
           SkipUnchangedFiles="true" />
