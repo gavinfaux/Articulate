@@ -60,8 +60,8 @@
             </div>
             <div class="mdl-card__supporting-text">
                 @asArray[i].Posts?.OrderByDescending(x => x.PublishedDate).Table(new { @class = "mdl-data-table mdl-js-data-table full-box-width" },
-                    ["Date", "Name", ""],
-                    ["mdl-data-table__cell--non-numeric date", "mdl-data-table__cell--non-numeric", "mdl-data-table__cell--non-numeric"],
+                    new[] { "Date", "Name", string.Empty },
+                    new[] { "mdl-data-table__cell--non-numeric date", "mdl-data-table__cell--non-numeric", "mdl-data-table__cell--non-numeric" },
                     @<span>@item?.PublishedDate.ToString("yyyy-MM-dd")</span>,
                     @<a href="@item?.Url()">@item?.Name</a>,
                     @<a href="@item?.Url()#disqus_thread" data-disqus-identifier="@item?.Key"></a>)
