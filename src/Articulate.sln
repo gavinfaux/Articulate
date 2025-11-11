@@ -4,6 +4,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 18.0.11201.2
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Articulate", "Articulate\Articulate.csproj", "{F0C76578-5C97-4375-A862-884E2A848A4E}"
+	ProjectSection(ProjectDependencies) = postProject
+		{83EBC079-D5F1-4697-B342-9BD4129CBDE5} = {83EBC079-D5F1-4697-B342-9BD4129CBDE5}
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{7396E5F1-0587-41C4-BDD9-63FF3F8C73D7}"
 	ProjectSection(SolutionItems) = preProject
@@ -30,6 +33,9 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Articulate.Tests.Website", "Articulate.Tests.Website\Articulate.Tests.Website.csproj", "{C33B50A7-85F4-4A59-A1C6-5B860DEEFAE3}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Articulate.Api.Management", "Articulate.Api.Management\Articulate.Api.Management.csproj", "{B95BDC71-52B3-48F8-A2FD-1B0CFC14CEA5}"
+	ProjectSection(ProjectDependencies) = postProject
+		{83EBC079-D5F1-4697-B342-9BD4129CBDE5} = {83EBC079-D5F1-4697-B342-9BD4129CBDE5}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Articulate.Web", "Articulate.Web\Articulate.Web.csproj", "{151A74D4-597F-42B4-BFDC-11635E44144C}"
 	ProjectSection(ProjectDependencies) = postProject

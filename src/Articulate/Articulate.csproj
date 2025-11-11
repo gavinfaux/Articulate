@@ -7,17 +7,6 @@
     <Title>Articulate Core</Title>
     <Description>A wonderful Blog engine built on Umbraco</Description>
   </PropertyGroup>
-  <!--
-    Nuget - Dotnet SourceLink & Symbol Package
-    https://github.com/dotnet/sourcelink#using-source-link-in-net-projects
-    https://devblogs.microsoft.com/dotnet/producing-packages-with-source-link/
-
-    Newer recommended way from Claire Novotny - Nuget PM
-    Use package Dotnet.ReproducibleBuilds
-    This sets the same properties as above URLs, and a few additional build properties
-    ie less work - just include this package & be done...
-    https://github.com/dotnet/reproducible-builds
-    -->
   <!--Nuget Package Dependencies-->
   <ItemGroup>
     <PackageReference Include="Umbraco.Cms.Web.Website" Version="$(UmbracoCmsPackageVersion)" />
@@ -74,5 +63,8 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="wwwroot" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Articulate.StaticAssets\Articulate.StaticAssets.csproj" />
   </ItemGroup>
 </Project>

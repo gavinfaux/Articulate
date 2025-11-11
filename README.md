@@ -159,7 +159,7 @@ See docs/development-dx.md for details and tips.
 
 #### Script options
 
-- Common: builds are parallel and pack `Articulate`, `Articulate.Core`, `Articulate.Api.Management`, and `Articulate.StaticAssets` into `build/Release`. The scripts flip on the `Articulate_EnableAssetsPackDependency` flag when packing `Articulate` so the resulting nupkg advertises the static-assets dependency without affecting local restores.
+- Common: builds are parallel and pack `Articulate`, `Articulate.Core`, `Articulate.Api.Management`, and `Articulate.StaticAssets` into `build/Release`. The `Articulate` package now depends on `Articulate.StaticAssets` automatically via the project graph—no extra flags or manual restores required.
 - Windows (`build/build.ps1`):
   - Override CPU workers: `set MAXCPU=8` (default = all cores)
   - Enable client assets build: `$env:ENABLE_CLIENT_BUILD = 'true'` (or `set ENABLE_CLIENT_BUILD=true`)

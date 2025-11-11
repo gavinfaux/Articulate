@@ -10,42 +10,34 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- Remove the global usings we don’t want in this project -->
+    <Using Remove="Umbraco.Cms.Core.DependencyInjection" />
+    <Using Remove="Umbraco.Extensions" />
+    <Using Remove="Articulate" />
+    <Using Remove="Articulate.Models" />
+  </ItemGroup>
+
+  <ItemGroup>
     <SupportedPlatform Include="browser" />
     <Folder Include="wwwroot/App_Plugins/Articulate/" />
   </ItemGroup>
 
   <ItemGroup Condition="Exists('$(ArticulateWebAssetsRoot)')">
     <!-- Mirror all Markdown editor assets except Razor views -->
-    <ArticulateWebAsset Include="$(ArticulateWebAssetsRoot)/MarkdownEditor/**/*.*"
-                        Exclude="$(ArticulateWebAssetsRoot)/MarkdownEditor/**/*.cshtml"
-                        Condition="Exists('$(ArticulateWebAssetsRoot)/MarkdownEditor')">
+    <ArticulateWebAsset Include="$(ArticulateWebAssetsRoot)/MarkdownEditor/**/*.*" Exclude="$(ArticulateWebAssetsRoot)/MarkdownEditor/**/*.cshtml" Condition="Exists('$(ArticulateWebAssetsRoot)/MarkdownEditor')">
       <RelativeCopyPath>$([MSBuild]::MakeRelative('$(ArticulateWebAssetsRoot)', '%(FullPath)'))</RelativeCopyPath>
     </ArticulateWebAsset>
     <!-- Mirror entire theme folders (excluding Razor views) -->
-    <ArticulateWebAsset Include="$(ArticulateWebAssetsRoot)/Themes/**/*.*"
-                        Exclude="$(ArticulateWebAssetsRoot)/Themes/**/*.cshtml"
-                        Condition="Exists('$(ArticulateWebAssetsRoot)/Themes')">
+    <ArticulateWebAsset Include="$(ArticulateWebAssetsRoot)/Themes/**/*.*" Exclude="$(ArticulateWebAssetsRoot)/Themes/**/*.cshtml" Condition="Exists('$(ArticulateWebAssetsRoot)/Themes')">
       <RelativeCopyPath>$([MSBuild]::MakeRelative('$(ArticulateWebAssetsRoot)', '%(FullPath)'))</RelativeCopyPath>
     </ArticulateWebAsset>
-  </ItemGroup>
-  <ItemGroup>
-    <!-- Only reference Articulate.Core for Razor model types; avoid coupling to Articulate.Web to prevent cyclic NuGet deps -->
-    <ProjectReference Include="..\Articulate\Articulate.csproj" />
-    <!-- Keep API management as a private, non-packaged build-time reference (for local asset workflows) -->
-    <ProjectReference Include="..\Articulate.Api.Management\Articulate.Api.Management.csproj"
-                      ReferenceOutputAssembly="false"
-                      PrivateAssets="All" />
   </ItemGroup>
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
-  <Target Name="SyncArticulateWebAssets"
-          Condition="Exists('$(ArticulateWebAssetsRoot)')"
-          BeforeTargets="ResolveStaticWebAssetsInputs">
+  <Target Name="SyncArticulateWebAssets" Condition="Exists('$(ArticulateWebAssetsRoot)')" BeforeTargets="ResolveStaticWebAssetsInputs">
     <Message Text="Synchronizing Articulate.Web static assets into Articulate.StaticAssets" Importance="Low" />
-    <Copy SourceFiles="@(ArticulateWebAsset)"
-          DestinationFiles="@(ArticulateWebAsset -> '$(MSBuildProjectDirectory)/wwwroot/App_Plugins/Articulate/%(RelativeCopyPath)')"
-          SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(ArticulateWebAsset)" DestinationFiles="@(ArticulateWebAsset -> '$(MSBuildProjectDirectory)/wwwroot/App_Plugins/Articulate/%(RelativeCopyPath)')" SkipUnchangedFiles="true" />
   </Target>
 </Project>

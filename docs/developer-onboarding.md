@@ -354,7 +354,7 @@ If you prefer to keep a single controller, replace the `Redirect(target)` call i
 The CLI and IDE paths now produce identical NuGet packages—no Visual Studio-only workaround required.
 
 1. Run `pwsh build/build.ps1` (Windows) or `bash build/build.sh` (Linux/WSL). The scripts restore, build both TFMs, and pack the four distributable projects into `build/Release`.
-2. During the pack step, the scripts pass `-p:Articulate_EnableAssetsPackDependency=true` only to `Articulate.Web`. That injects a dependency on the `Articulate.StaticAssets` Razor Class Library, so consumers that install `Articulate` automatically receive the `/App_Plugins/Articulate/**` payload via static web assets.
-3. `Articulate.StaticAssets` remains a pure RCL that mirrors the built `dist/` folders from `Articulate.Web`. Because `Articulate` depends on it transitively at pack time, no manual `<Content>` fallbacks or `.targets` hooks are required—the standard static-web-asset pipeline lights up in consuming Umbraco sites.
+2. During the pack step the scripts simply run `dotnet pack` for each project. Because `Articulate.Web` references `Articulate.StaticAssets` directly, the generated `Articulate` nupkg automatically declares the dependency without any extra flags or version math.
+3. `Articulate.StaticAssets` remains a pure RCL that mirrors the built `dist/` folders from `Articulate.Web`. With the dependency expressed in the project graph, no manual `<Content>` fallbacks or `.targets` hooks are required—the standard static-web-asset pipeline lights up in consuming Umbraco sites.
 
-Direct `dotnet pack` invocations still work if you prefer granular control; just include `-p:Articulate_EnableAssetsPackDependency=true` when packing `src/Articulate.Web/Articulate.Web.csproj`. Otherwise the build scripts are the canonical path that CI and local release builds already follow.
+Direct `dotnet pack` invocations still work if you prefer granular control; just run `dotnet pack src/Articulate.Web/Articulate.Web.csproj` (and the other projects) normally. The `ProjectReference` ensures the StaticAssets dependency is recorded automatically.

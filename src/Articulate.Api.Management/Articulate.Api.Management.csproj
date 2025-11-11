@@ -15,6 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Articulate.StaticAssets\Articulate.StaticAssets.csproj" />
     <ProjectReference Include="..\Articulate\Articulate.csproj" />
   </ItemGroup>
   <ItemGroup>

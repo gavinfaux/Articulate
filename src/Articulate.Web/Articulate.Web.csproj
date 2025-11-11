@@ -12,44 +12,20 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
-  <!-- Conditional transitive dependency on Articulate.StaticAssets (enabled only at pack time) -->
-  <PropertyGroup>
-    <!-- Off by default so repo builds/restores don't require the packaged asset dependency -->
-    <Articulate_EnableAssetsPackDependency Condition="'$(Articulate_EnableAssetsPackDependency)' == ''">false</Articulate_EnableAssetsPackDependency>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Articulate_EnableAssetsPackDependency)' == 'true'">
-    <!-- Allow callers (build scripts) to override the dependency range explicitly -->
-    <_ArticulateAssetsDependencyVersionRange Condition="'$(Articulate_StaticAssetsVersionRange)' != ''">$(Articulate_StaticAssetsVersionRange)</_ArticulateAssetsDependencyVersionRange>
-    <!-- Or supply explicit floor (full semver, incl. pre-release) + major ceiling -->
-    <_ArticulateAssetsDependencyVersionRange Condition="'$(_ArticulateAssetsDependencyVersionRange)' == '' and '$(Articulate_StaticAssetsVersionFloorExact)' != '' and '$(Articulate_StaticAssetsVersionCeilingMajor)' != ''">
-      [$(Articulate_StaticAssetsVersionFloorExact), $(Articulate_StaticAssetsVersionCeilingMajor).0.0)
-    </_ArticulateAssetsDependencyVersionRange>
-    <!-- Compute a major-version-bounded range: [currentMajor.0.0, nextMajor.0.0) when not provided -->
-    <_ArticulateMajor Condition="'$(_ArticulateAssetsDependencyVersionRange)' == ''">$([System.Text.RegularExpressions.Regex]::Match('$(Version)', '^\d+').Value)</_ArticulateMajor>
-    <_ArticulateMajor Condition="'$(_ArticulateMajor)' == ''">0</_ArticulateMajor>
-    <_ArticulateNextMajor Condition="'$(_ArticulateAssetsDependencyVersionRange)' == ''">$([System.Decimal]::Add($([System.Decimal]::Parse('$(_ArticulateMajor)')), 1))</_ArticulateNextMajor>
-    <_ArticulateAssetsDependencyVersionRange Condition="'$(_ArticulateAssetsDependencyVersionRange)' == ''">[$(_ArticulateMajor).0.0, $(_ArticulateNextMajor).0.0)</_ArticulateAssetsDependencyVersionRange>
-  </PropertyGroup>
-  <ItemGroup Condition="'$(Articulate_EnableAssetsPackDependency)' == 'true'">
-    <PackageReference Include="Articulate.StaticAssets" Version="$(_ArticulateAssetsDependencyVersionRange)" />
-  </ItemGroup>
-
-
-  <!--
-    Nuget - Dotnet SourceLink & Symbol Package
-    https://github.com/dotnet/sourcelink#using-source-link-in-net-projects
-    https://devblogs.microsoft.com/dotnet/producing-packages-with-source-link/
-
-    Newer recommended way from Claire Novotny - Nuget PM
-    Use package Dotnet.ReproducibleBuilds
-    This sets the same properties as above URLs, and a few additional build properties
-    ie less work - just include this package & be done...
-    https://github.com/dotnet/reproducible-builds
-    -->
-
   <ItemGroup>
+    <ProjectReference Include="..\Articulate.StaticAssets\Articulate.StaticAssets.csproj" />
     <ProjectReference Include="..\Articulate\Articulate.csproj" />
     <ProjectReference Include="..\Articulate.Api.Management\Articulate.Api.Management.csproj" />
+  </ItemGroup>
+
+  <!-- Keep the wwwroot/App_Plugins tree on disk for development, but stop the SDK from treating it as static web assets.
+       Articulate.StaticAssets is the authoritative RCL that ships those files. -->
+  <ItemGroup>
+    <Content Remove="wwwroot\App_Plugins\**\*.*" />
+    <StaticWebAsset Remove="wwwroot\App_Plugins\**\*.*" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="wwwroot\App_Plugins\**\*.cshtml" />
   </ItemGroup>
 
   <ItemGroup>
