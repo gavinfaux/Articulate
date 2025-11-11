@@ -66,7 +66,12 @@ if [[ ("${ENABLE_CLIENT_BUILD:-}" == "true" || "${CI:-}" == "true" || "${GITHUB_
     echo "pnpm not found. Install pnpm 10.17+ and try again." >&2
     exit 1
   fi
-  (cd "$CLIENT_DIR" && pnpm install --frozen-lockfile --prefer-offline && pnpm run build:release)
+  (
+    cd "$CLIENT_DIR" \
+    && pnpm install --frozen-lockfile --prefer-offline \
+    && pnpm run build:release \
+    && git checkout -- package.json umbraco-package.json
+  )
 else
   echo "Skipping client asset build (set ENABLE_CLIENT_BUILD=true or export ENABLE_CLIENT_BUILD=true to enable)"
 fi
