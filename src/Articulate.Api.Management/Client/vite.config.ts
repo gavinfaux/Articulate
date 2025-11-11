@@ -34,9 +34,11 @@ type BundleDefinition = {
 };
 
 const themesSourceRoot = resolveWebSource("wwwroot/App_Plugins/Articulate/Themes");
-const themesOutputRoot = resolveStaticAsset("wwwroot/App_Plugins/Articulate/Themes");
+// Emit theme bundles into the Razor Class Library so MSBuild can sync them into Articulate.StaticAssets.
+const themesOutputRoot = resolveWebSource("wwwroot/App_Plugins/Articulate/Themes");
 const markdownEditorSourceRoot = resolveWebSource("wwwroot/App_Plugins/Articulate/MarkdownEditor");
-const markdownEditorOutputRoot = resolveStaticAsset("wwwroot/App_Plugins/Articulate/MarkdownEditor");
+// Same principle for the Markdown editor: build into Articulate.Web and let MSBuild mirror to StaticAssets.
+const markdownEditorOutputRoot = resolveWebSource("wwwroot/App_Plugins/Articulate/MarkdownEditor");
 
 const isCssFile = (filePath: string) => path.extname(filePath).toLowerCase() === ".css";
 const isJsFile = (filePath: string) => path.extname(filePath).toLowerCase() === ".js";

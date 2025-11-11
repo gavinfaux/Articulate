@@ -510,6 +510,7 @@ gitleaks-report.json
 
 # rider 
 /src/.idea
+
 /src/u15
 /src/u16
 /src/u17

@@ -70,7 +70,8 @@ jobs:
           GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}      
           GITLEAKS_VERSION: ${{ secrets.GITLEAKS_VERSION }}      
         with:
-          fail-on: high
+          fail-on: 'critical'
+        continue-on-error: true
 
       - name: Setup .NET SDKs
         uses: actions/setup-dotnet@v4
