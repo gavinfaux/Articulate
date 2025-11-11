@@ -54,6 +54,7 @@ fi
 dotnet --version
 
 # Optionally build backoffice client assets (ENABLE_CLIENT_BUILD=true or CI=true)
+client_build_ran=0
 if [[ ("${ENABLE_CLIENT_BUILD:-}" == "true" || "${CI:-}" == "true" || "${GITHUB_ACTIONS:-}" == "true") && -d "$CLIENT_DIR" ]]; then
   echo "Building backoffice client assets (pnpm build:release)..."
   # Ensure writable cache/home for corepack/pnpm in sandboxed environments
@@ -69,11 +70,19 @@ if [[ ("${ENABLE_CLIENT_BUILD:-}" == "true" || "${CI:-}" == "true" || "${GITHUB_
   (
     cd "$CLIENT_DIR" \
     && pnpm install --frozen-lockfile --prefer-offline \
-    && pnpm run build:release \
-    && git checkout -- package.json umbraco-package.json
+    && pnpm run build:release
   )
+  client_build_ran=1
 else
   echo "Skipping client asset build (set ENABLE_CLIENT_BUILD=true or export ENABLE_CLIENT_BUILD=true to enable)"
+fi
+if [[ $client_build_ran -eq 1 ]]; then
+  if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    git checkout -- \
+      src/Articulate.Api.Management/Client/package.json \
+      src/Articulate.Api.Management/Client/public/umbraco-package.json \
+      src/Articulate.StaticAssets/wwwroot/App_Plugins/Articulate/umbraco-package.json >/dev/null 2>&1 || true
+  fi
 fi
 
 # Avoid NuGet fallback folders (already disabled in Directory.Build.props, but double-sure)

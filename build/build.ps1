@@ -45,6 +45,7 @@ dotnet --version
 $ClientDir = Join-Path -Path $SolutionRoot -ChildPath "Articulate.Api.Management/Client"
 # Enable client build explicitly or when running in CI (GitHub Actions or CI=true)
 $EnableClientBuild = $false
+$clientBuildRan = $false
 if ($env:ENABLE_CLIENT_BUILD) {
     $EnableClientBuild = 'true'.Equals($env:ENABLE_CLIENT_BUILD, [System.StringComparison]::OrdinalIgnoreCase)
 }
@@ -56,12 +57,16 @@ if ($EnableClientBuild -and (Test-Path $ClientDir)) {
     if (-not $?) { throw "pnpm install failed" }
     & pnpm run build:release
     if (-not $?) { throw "pnpm build:release failed" }
-    if (-not $?) { throw "pnpm build:release failed" }
-    # After the build, restore package.json/umbraco-package.json versions to avoid dirty check-ins
-    git checkout -- package.json umbraco-package.json
     Pop-Location
+    $clientBuildRan = $true
 } else {
     Write-Host "Skipping client asset build (set ENABLE_CLIENT_BUILD=true or `$env:ENABLE_CLIENT_BUILD = 'true') to enable."
+}
+if ($clientBuildRan -and (Get-Command git -ErrorAction SilentlyContinue)) {
+    & git checkout -- `
+        "src/Articulate.Api.Management/Client/package.json" `
+        "src/Articulate.Api.Management/Client/public/umbraco-package.json" `
+        "src/Articulate.StaticAssets/wwwroot/App_Plugins/Articulate/umbraco-package.json" | Out-Null
 }
 
 Write-Host "Starting clean and restore process for solution: $SolutionPath"
