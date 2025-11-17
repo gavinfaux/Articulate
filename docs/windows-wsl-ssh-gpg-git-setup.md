@@ -212,5 +212,3 @@ Optional (for GUI pinentry under WSL):
   - `gpg --clearsign README.md` triggers a Qt GUI pinentry (first use), then caches.
 
 This setup keeps SSH and GPG consistent across Windows and WSL with minimal prompts and a clean, predictable developer experience.
-
-

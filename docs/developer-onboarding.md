@@ -312,7 +312,7 @@ The test website is the primary environment for developing and debugging the Art
 
 ### Supported SDK & Umbraco versions
 
-- Install `.NET 9.0.100` plus the `.NET 10 RC` (`10.0.0-rc.2`) SDK so both TFMs build locally; Visual Studio uses the repo `global.json` to enforce the baseline 9.0 SDK while roll-forward keeps the RC available for `net10`.
+- Install `.NET 9.0.100` plus the `.NET 10` (`10.0.0`) SDK so both TFMs build locally; Visual Studio uses the repo `global.json` to enforce the baseline 9.0 SDK while roll-forward keeps the release available for `net10`.
 - The `net10.0` TFM targets Umbraco 17 RC1 (`17.0.0-rc1`), while `net9.0` covers Umbraco 15.4.4+ / 16 via the NuGet version ranges defined in `Directory.Build.props`.
 
 ### AI/LLM Content Negotiation & Caching
@@ -372,4 +372,3 @@ The CLI and IDE paths now produce identical NuGet packages-no Visual Studio-only
 3. `Articulate.StaticAssets` remains a pure RCL that mirrors the built `dist/` folders from `Articulate.Web`. With the dependency expressed in the project graph, no manual `<Content>` fallbacks or `.targets` hooks are required-the standard static-web-asset pipeline lights up in consuming Umbraco sites.
 
 Direct `dotnet pack` invocations still work if you prefer granular control; just run `dotnet pack src/Articulate.Web/Articulate.Web.csproj` (and the other projects) normally. The `ProjectReference` ensures the StaticAssets dependency is recorded automatically.
-

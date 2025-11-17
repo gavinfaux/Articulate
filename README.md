@@ -6,11 +6,11 @@
 
 > A wonderful Blog engine built on Umbraco
 
-_If you use and like Articulate please consider [becoming a GitHub Sponsor](https://github.com/sponsors/Shazwazza/)._ 
+_If you use and like Articulate please consider [becoming a GitHub Sponsor](https://github.com/sponsors/Shazwazza/)._
 
 ## Contents
 
-- [Tooling prerequisites (Node/pnpm)](#tooling-prerequisites-nodepnpm)
+- [Development prerequisites](#development-prerequisites)
 - [Build & Pack (multi-target .NET 9/10)](#build--pack-multi-target-net-910)
 - [Script options](#script-options)
 - [WSL + Windows workflow (fast local builds)](#wsl--windows-workflow-fast-local-builds)
@@ -127,14 +127,15 @@ For a fast local loop when editing Razor, HTML, CSS, and JS:
 
 See docs/development-dx.md for details and tips.
 
-### Tooling prerequisites (Node/pnpm / .NET)
+### Development prerequisites
 
 - The backoffice client (Lit + TypeScript) uses pnpm. Install Node 22+ and pnpm 10.17+ before building.
-- .NET SDKs: install .NET 9.0.100 and the latest .NET 10 RC (`10.0.0-rc.2`) so you can target both TFMs locally. The `global.json` ensures `9.0.100` is used while allowing preview roll-forward for .NET 10.
+- .NET SDKs: install .NET 9.0.100 and .NET 10 (`10.0.0`) so you can target both TFMs locally. The `global.json` ensures `9.0.100` is used while allowing roll-forward for .NET 10.
 - Node version managers:
-  - The repo includes `.nvmrc` (Node 22). You can use `nvm`, but `fnm` (Fast Node Manager) is a quicker, cross-platform alternative.
-  - `fnm` quickstart: `curl -fsSL https://fnm.vercel.app/install | bash`, restart shell, then run `fnm use` in the repo root (respects `.nvmrc`).
-  - Enable pnpm: `corepack enable && corepack prepare pnpm@10.17.0 --activate`.
+  - The repo includes `.nvmrc` (Node 22); use `nvm` for the default flow (`nvm use`).
+  - Prefer to stick with `nvm` so docs/scripts match expectations, but `fnm` (Fast Node Manager) remains a compatible alternative if you already use it.
+  - `fnm` quickstart (optional): `curl -fsSL https://fnm.vercel.app/install | bash`, restart shell, then run `fnm use` in the repo root (respects `.nvmrc`).
+- Enable pnpm: `corepack enable && corepack prepare pnpm@10.17.0 --activate`.
 - Corepack users should run `corepack enable` / `corepack prepare pnpm@<version>` manually prior to invoking the build. The repository no longer bootstraps pnpm automatically.
 - CI installs pnpm using `pnpm/action-setup`; no extra steps required there.
 - Build scripts and Husky hooks call pnpm when client assets need rebuilding; ensure pnpm is available on your PATH so `build/build.ps1` and the pre-commit hook can run the client build.
@@ -143,7 +144,7 @@ See docs/development-dx.md for details and tips.
 ### Visual Studio setup
 
 - Opening the solution in Visual Studio honours the repo `global.json` (baseline 9.0.100 with `rollForward: "latestMajor"` and `allowPrerelease: true`). Install a 9.0.1xx SDK locally so VS picks the latest .NET 9, and enable preview SDKs in VS only when you want to build/run the net10 TFM.
-- Optional preview builds rely on the .NET 10 RC SDK (`10.0.0-rc.2`); enable "Use previews of the .NET SDK" in VS when you need to target net10 locally.
+- Optional builds rely on the .NET 10 SDK (`10.0.0`); enable the .NET 10 SDK in VS when you need to target net10 locally.
 - The repository ships a `.vsconfig` requesting:
   - `Microsoft.VisualStudio.Workload.NetWeb`
   - `Microsoft.NetCore.Component.SDK.9.0`
@@ -160,21 +161,22 @@ See docs/development-dx.md for details and tips.
 
 #### Script options
 
-- Common: builds are parallel and pack `Articulate`, `Articulate.Core`, `Articulate.Api.Management`, and `Articulate.StaticAssets` into `build/Release`. The `Articulate` package now depends on `Articulate.StaticAssets` automatically via the project graph-no extra flags or manual restores required.
+- Common: builds are parallel and pack `Articulate`, `Articulate.Core`, `Articulate.Api.Management`, and `Articulate.StaticAssets` into `build/Release`. The `Articulate` package now depends on `Articulate.StaticAssets` automatically via the project graph—no extra flags or manual restores required.
 - Windows (`build/build.ps1`):
   - Override CPU workers: `set MAXCPU=8` (default = all cores)
-  - Enable client assets build: `$env:ENABLE_CLIENT_BUILD = 'true'` (or `set ENABLE_CLIENT_BUILD=true`)
+  - Disable client build: `set ENABLE_CLIENT_BUILD=false` (default = `true`)
 - Linux/WSL (`build/build.sh`):
   - Override CPU workers: `export MAXCPU=8` (default = auto-detect)
-  - Enable client assets build: `export ENABLE_CLIENT_BUILD=true`
+  - Disable client build: `export ENABLE_CLIENT_BUILD=false` (default = `true`)
   - WSL tip: if the repo is under `/mnt/*`, the script prints a performance warning. Clone under `~/src/...` for faster I/O.
 
-Client/Vite build
+#### Client/Vite build
 
-- MSBuild does not run pnpm/Vite automatically. Packages include the committed `dist/` outputs under `src/Articulate.Web/wwwroot/App_Plugins/Articulate/**/dist/**`.
-- To regenerate assets as part of a build: set `ENABLE_CLIENT_BUILD=true` when invoking the build scripts.
-- To rebuild manually: `cd src/Articulate.Api.Management/Client && pnpm install && pnpm run build` (or `build:release`).
-- Pre-commit hooks automatically lint staged `.ts/.tsx` files and run `pnpm run build` when client source changes. Install pnpm + GitLeaks locally; if you intentionally need to bypass the hooks, commit with `HUSKY=0 git commit ...`.
+- **Automatic via MSBuild**: The `Articulate.StaticAssets` project orchestrates the client build through MSBuild targets. By default, `ENABLE_CLIENT_BUILD=true` runs `pnpm install && pnpm run build:release` during the build.
+- **Incremental & cached**: Client assets are cached at `build/ClientAssets/` to avoid redundant Vite runs. The first TFM builds the client; subsequent TFMs reuse the cached stamp via MSBuild's `Inputs`/`Outputs` mechanism.
+- **Manual rebuild**: `cd src/Articulate.Api.Management/Client && pnpm install && pnpm run build` (or `build:release`).
+- **Skip client build**: Set `ENABLE_CLIENT_BUILD=false` when invoking the build scripts to skip the client build (useful for CI or when assets are already built).
+- **Pre-commit hooks**: Automatically lint staged `.ts/.tsx` files and run `pnpm run build` when client source changes. Install pnpm + GitLeaks locally; if you intentionally need to bypass the hooks, commit with `HUSKY=0 git commit ...`.
 
 ### WSL + Windows workflow (fast local builds)
 
@@ -201,4 +203,3 @@ to re-create the Articulate package in the back office with all required depende
 &copy; 2025 by Shannon Deminick
 
 This is free software and is licensed under the [The MIT License (MIT)](http://opensource.org/licenses/MIT)
-

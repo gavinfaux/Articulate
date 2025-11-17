@@ -23,4 +23,3 @@ Scope: applies to `src/Articulate/**`.
 - Builds green on net9.0 and net10.0.
 - Unit tests pass across both TFMs.
 - Demo site serves expected routes if you touched routing/content negotiation.
-

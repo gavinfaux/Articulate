@@ -16,4 +16,3 @@ Scope: applies to `src/Articulate.Tests.Website/**`.
 
 - Site boots and renders blog routes.
 - Backoffice features load when relevant.
-

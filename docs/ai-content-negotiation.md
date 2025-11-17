@@ -235,4 +235,3 @@ To help non-negotiating clients discover text formats, post pages include altern
 
 - Posts without a markdown body will return plain text when `text/markdown` is requested.
 - TTLs (`s-maxage`) are aligned to output-cache policies and can be tuned if your site updates more or less frequently.
-

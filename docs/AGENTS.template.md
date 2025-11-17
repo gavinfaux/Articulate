@@ -24,4 +24,3 @@ Scope: applies to `<path>/**`.
 
 - Prefer concise, actionable steps. Link to the root `AGENTS.md` for repo-wide standards.
 - Defer detailed architecture/background to docs under `docs/`.
-

@@ -23,4 +23,3 @@ Scope: applies to `src/Articulate.Web/**`.
 
 - RCL builds on both TFMs.
 - Any theme changes produce fresh `dist/` assets.
-

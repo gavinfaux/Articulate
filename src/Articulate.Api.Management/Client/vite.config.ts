@@ -1,6 +1,8 @@
 import { execSync } from "child_process";
 import { build as esbuildBuild, transform as esbuildTransform } from "esbuild";
 import fs, { promises as fsp } from "fs";
+import fsExtra from "fs-extra";
+
 import path from "path";
 import { fileURLToPath } from "url";
 import { defineConfig, Plugin } from "vite";
@@ -16,6 +18,33 @@ const projectRoot = path.resolve(__dirname, "..");
 const repoRoot = path.resolve(projectRoot, "..", "..");
 const webProjectRoot = path.resolve(projectRoot, "..", "Articulate.Web");
 const staticAssetsProjectRoot = path.resolve(projectRoot, "..", "Articulate.StaticAssets");
+
+const copyPublicAssetsPlugin = (): Plugin => {
+  const publicDir = path.resolve(repoRoot, "src", "Articulate.Api.Management", "Client", "public");
+  const publicTargetDir = path.join(outputPath, "assets");
+
+  return {
+    name: "articulate-copy-public-assets",
+    async closeBundle() {
+      if (!fs.existsSync(publicDir)) {
+        console.warn(
+          `[articulate-copy-public-assets] Skipping copy because ${relativeToRepo(publicDir)} does not exist.`
+        );
+        return;
+      }
+
+      await fsExtra.copy(publicDir, publicTargetDir, {
+        overwrite: true,
+        errorOnExist: false,
+        filter: (src) => !path.basename(src).startsWith("."),
+      });
+
+      console.log(
+        `[articulate-copy-public-assets] copied ${relativeToRepo(publicDir)} -> ${relativeToRepo(publicTargetDir)}`
+      );
+    },
+  };
+};
 
 const resolveStaticAsset = (relativePath: string) => path.resolve(staticAssetsProjectRoot, relativePath);
 const resolveWebSource = (relativePath: string) => path.resolve(webProjectRoot, relativePath);
@@ -451,8 +480,7 @@ const umbracoPackagePlugin = (): Plugin => {
       console.log(`Moved ${packageJsonPath} to ${newPath}`);
     },
   };
-
-}
+};
 
 // Stamp umbraco-package.json and package.json with the version on release
 const versioningPlugin = (): Plugin => {
@@ -535,6 +563,11 @@ export default defineConfig(({ mode }) => ({
       external: [/^@umbraco/],
     },
   },
-  plugins: [tsconfigPaths(), staticAssetsPlugin(), versioningPlugin(), umbracoPackagePlugin()],
+  plugins: [
+    tsconfigPaths(),
+    staticAssetsPlugin(),
+    copyPublicAssetsPlugin(),
+    versioningPlugin(),
+    umbracoPackagePlugin(),
+  ],
 }));
-

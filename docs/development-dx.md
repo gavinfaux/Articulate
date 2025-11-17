@@ -4,11 +4,12 @@ This repository supports a fast inner loop for Razor views, HTML, CSS, and JS wh
 
 ## Prerequisites
 
-- .NET 9.0.100 and .NET 10 RC (`10.0.0-rc.2`) SDKs
+- .NET 9.0.100 and .NET 10 (`10.0.0`) SDKs
 - Node 22+ and pnpm 10.17+
 - Node version manager:
-  - The repo includes `.nvmrc` (Node 22); use `nvm` or `fnm` (Fast Node Manager).
-  - `fnm` quickstart: `curl -fsSL https://fnm.vercel.app/install | bash`, restart shell, then run `fnm use` in the repo root.
+  - The repo includes `.nvmrc` (Node 22); run `nvm use` for the standard flow so scripts/docs align.
+  - Already using `fnm` (Fast Node Manager)? It remains compatible; just run `fnm use` in the repo root.
+  - `fnm` quickstart (optional): `curl -fsSL https://fnm.vercel.app/install | bash`, restart shell, then run `fnm use` in the repo root.
 - Enable pnpm via corepack (recommended):
   - `corepack enable`
   - `corepack prepare pnpm@10.17.0 --activate`
@@ -96,13 +97,14 @@ Tips:
 
 ### Client build integration
 
-- MSBuild does not invoke pnpm/Vite by default. The client assets are built with Vite and committed under `src/Articulate.Web/wwwroot/App_Plugins/Articulate/**/dist/**`.
-- To rebuild assets during packaging, use the build scripts with an opt-in flag:
-  - Windows: `set ENABLE_CLIENT_BUILD=true && build\build.ps1`
-  - Linux/WSL: `ENABLE_CLIENT_BUILD=true bash build/build.sh`
-- Or run it manually during development:
+- **Automatic via MSBuild**: The `Articulate.StaticAssets` project orchestrates the client build through MSBuild targets. By default, `ENABLE_CLIENT_BUILD=true` (the default) runs `pnpm install && pnpm run build:release` during the build.
+- **Incremental & cached**: Client assets are cached at `build/ClientAssets/` to avoid redundant Vite runs. The first TFM (e.g., net9.0) builds the client; subsequent TFMs (e.g., net10.0) reuse the cached stamp via MSBuild's `Inputs`/`Outputs` mechanism.
+- **Skip client build**: To skip the client build (useful in CI or when assets are already built), set `ENABLE_CLIENT_BUILD=false`:
+  - Windows: `set ENABLE_CLIENT_BUILD=false && build\build.ps1`
+  - Linux/WSL: `ENABLE_CLIENT_BUILD=false bash build/build.sh`
+- **Manual rebuild during development**:
   - `cd src/Articulate.Api.Management/Client && pnpm install && pnpm run build` (dev) or `pnpm run build:release` (prod bundling)
-- Packaging pulls from the `dist/` folders (see `src/Articulate.StaticAssets/Articulate.StaticAssets.csproj`). If you change theme or Markdown editor sources, rebuild to refresh those folders before packing.
+- **Theme and Markdown editor assets**: Vite bundles theme CSS/JS into `Themes/*/dist/` and the Markdown editor into `MarkdownEditor/dist/`. Packaging pulls from these `dist/` folders. If you change theme or Markdown editor sources, rebuild to refresh those folders before packing.
 
 ### Build scripts (Windows, Linux/WSL) and flags
 
@@ -132,4 +134,3 @@ Until the .NET 10 SDK regains full static web asset packing for Razor Class Libr
 - Explicitly include pnpm output (`wwwroot/App_Plugins/**`) so backoffice bundles are copied even if the SDK omits them.
 
 Revert to the standard static web asset configuration once a stable .NET 10 SDK fixes the regression.
-

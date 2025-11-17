@@ -22,7 +22,7 @@
         <!-- Support Umbraco 17.x (including pre-release) on .NET 10 -->
         <UmbracoCmsPackageVersion>[17.0.0-rc1,18.0.0)</UmbracoCmsPackageVersion>
         <UmbracoCmsTestsPackageVersion>[17.0.0-rc1,18.0.0)</UmbracoCmsTestsPackageVersion>
-        <AspNetRuntimeCompilationVersion>10.0.0-rc.2.25502.107</AspNetRuntimeCompilationVersion>
+        <AspNetRuntimeCompilationVersion>10.0.0</AspNetRuntimeCompilationVersion>
     </PropertyGroup>
     <PropertyGroup>
         <!-- TODO: Enable when 6.0 version is shipped -->

@@ -8,6 +8,12 @@ $SolutionRoot = Join-Path -Path $RepoRoot -ChildPath "src"
 $SolutionPath = Join-Path -Path $SolutionRoot -ChildPath "Articulate.sln"
 $TargetFrameworks = @("net9.0", "net10.0")
 $TestProjects = @("Articulate.UnitTests/Articulate.UnitTests.csproj")
+$PSMajorVersion = $PSVersionTable.PSVersion.Major
+$SupportsParallel = $PSMajorVersion -ge 7
+if (-not $SupportsParallel)
+{
+    Write-Warning "PowerShell $PSMajorVersion detected; ForEach-Object -Parallel isn't available so build + pack will run sequentially."
+}
 
 # Ensure dotnet is discoverable when installed under the user profile (parity with build.sh)
 if (-not (Get-Command dotnet -ErrorAction SilentlyContinue)) {
@@ -34,6 +40,8 @@ if ($env:MAXCPU -and ($env:MAXCPU -as [int]) -gt 0) {
     $cpu = [int]$env:MAXCPU
 }
 $msbuildArgs = @("-m", "-maxcpucount:$cpu", "-p:BuildInParallel=true", "-p:RestoreUseStaticGraphEvaluation=true")
+$clientBuildValue = if ([string]::IsNullOrEmpty($env:ENABLE_CLIENT_BUILD)) { 'true' } else { $env:ENABLE_CLIENT_BUILD }
+$clientBuildProperty = "-p:EnableClientBuild=$clientBuildValue"
 $dotnetCommon = @("-v", "minimal")
 
 Write-Host "Using up to $cpu parallel MSBuild nodes"
@@ -52,26 +60,6 @@ New-Item -ItemType Directory -Force -Path $ReleaseFolder | Out-Null
 New-Item -ItemType Directory -Force -Path $TmpFolder | Out-Null
 
 dotnet --version
-
-# Optionally build backoffice client assets
-$ClientDir = Join-Path -Path $SolutionRoot -ChildPath "Articulate.Api.Management/Client"
-# Enable client build explicitly or when running in CI (GitHub Actions or CI=true)
-$EnableClientBuild = $false
-if ($env:ENABLE_CLIENT_BUILD) {
-    $EnableClientBuild = 'true'.Equals($env:ENABLE_CLIENT_BUILD, [System.StringComparison]::OrdinalIgnoreCase)
-}
-elseif ($env:GITHUB_ACTIONS -eq 'true' -or $env:CI -eq 'true') { $EnableClientBuild = $true }
-if ($EnableClientBuild -and (Test-Path $ClientDir)) {
-    if (-not (Get-Command pnpm -ErrorAction SilentlyContinue)) { throw "pnpm not found. Install pnpm 10.17+ and try again." }
-    Push-Location $ClientDir
-    & pnpm install --frozen-lockfile --prefer-offline
-    if (-not $?) { throw "pnpm install failed" }
-    & pnpm run build:release
-    if (-not $?) { throw "pnpm build:release failed" }
-    Pop-Location
-} else {
-    Write-Host "Skipping client asset build (set ENABLE_CLIENT_BUILD=true or `$env:ENABLE_CLIENT_BUILD = 'true') to enable."
-}
 
 Write-Host "Starting clean and restore process for solution: $SolutionPath"
 
@@ -101,23 +89,38 @@ if (-not (Test-Path $tmpSln)) {
 
 # 3) Restore (solution-level) with static graph + parallelism
 Write-Host "2. Restoring solution packages in parallel (slim solution)..."
-& dotnet restore $tmpSln @dotnetCommon @msbuildArgs
+& dotnet restore $tmpSln @dotnetCommon @msbuildArgs $clientBuildProperty
 if (-not $?) { throw "dotnet restore failed" }
 
 # 4) Build TFMs (parallel to align with build.sh)
 $buildThrottle = [Math]::Max(1, [Math]::Min($cpu, $TargetFrameworks.Count))
-Write-Host "3. Building solution in parallel for: $($TargetFrameworks -join ', ')"
-$TargetFrameworks | ForEach-Object -Parallel {
-    $tfm = $PSItem
-    Write-Host "[build] -> $tfm"
-    $sw = [System.Diagnostics.Stopwatch]::StartNew()
-    $commonArgs = $using:dotnetCommon
-    $parallelMsbuildArgs = $using:msbuildArgs
-    & dotnet build $using:tmpSln -c Release -f $tfm --no-restore @commonArgs @parallelMsbuildArgs
-    if ($LASTEXITCODE -ne 0) { throw "dotnet build failed for $tfm" }
-    $sw.Stop()
-    Write-Host "[build] <- $tfm done in $([int]$sw.Elapsed.TotalSeconds)s"
-} -ThrottleLimit $buildThrottle
+Write-Host "3. Building solution for: $($TargetFrameworks -join ', ')"
+if ($SupportsParallel)
+{
+    $TargetFrameworks | ForEach-Object -Parallel {
+        $tfm = $PSItem
+        Write-Host "[build] -> $tfm"
+        $sw = [System.Diagnostics.Stopwatch]::StartNew()
+        $commonArgs = $using:dotnetCommon
+        $parallelMsbuildArgs = $using:msbuildArgs
+        & dotnet build $using:tmpSln -c Release -f $tfm --no-restore @commonArgs @parallelMsbuildArgs $using:clientBuildProperty
+        if ($LASTEXITCODE -ne 0) { throw "dotnet build failed for $tfm" }
+        $sw.Stop()
+        Write-Host "[build] <- $tfm done in $([int]$sw.Elapsed.TotalSeconds)s"
+    } -ThrottleLimit $buildThrottle
+}
+else
+{
+    foreach ($tfm in $TargetFrameworks)
+    {
+        Write-Host "[build] -> $tfm"
+        $sw = [System.Diagnostics.Stopwatch]::StartNew()
+        & dotnet build $tmpSln -c Release -f $tfm --no-restore @dotnetCommon @msbuildArgs $clientBuildProperty
+        if ($LASTEXITCODE -ne 0) { throw "dotnet build failed for $tfm" }
+        $sw.Stop()
+        Write-Host "[build] <- $tfm done in $([int]$sw.Elapsed.TotalSeconds)s"
+    }
+}
 
 # 5) Pack primary projects (parallel where safe)
 Write-Host "4. Packing projects..."
@@ -137,15 +140,27 @@ $projectsToPack = @(
     $articulateApiProject
 )
 $packThrottle = [Math]::Max(1, [Math]::Min($cpu, $projectsToPack.Count))
-$projectsToPack | ForEach-Object -Parallel {
-    $project = $PSItem
-    Write-Host "[pack] -> $([IO.Path]::GetFileName($project))"
-    $restoreArgs = @("--no-build", "--no-restore")
-    $commonArgs = $using:dotnetCommon
-    $parallelMsbuildArgs = $using:msbuildArgs
-    & dotnet pack -c Release $project @restoreArgs -o $using:ReleaseFolder @commonArgs @parallelMsbuildArgs -p:NoPackageAnalysis=true
-    if ($LASTEXITCODE -ne 0) { throw "dotnet pack failed for $project" }
-} -ThrottleLimit $packThrottle
+if ($SupportsParallel)
+{
+    $projectsToPack | ForEach-Object -Parallel {
+        $project = $PSItem
+        Write-Host "[pack] -> $([IO.Path]::GetFileName($project))"
+        $restoreArgs = @("--no-build", "--no-restore")
+        $commonArgs = $using:dotnetCommon
+        $parallelMsbuildArgs = $using:msbuildArgs
+        & dotnet pack -c Release $project @restoreArgs -o $using:ReleaseFolder @commonArgs @parallelMsbuildArgs -p:NoPackageAnalysis=true $using:clientBuildProperty
+        if ($LASTEXITCODE -ne 0) { throw "dotnet pack failed for $project" }
+    } -ThrottleLimit $packThrottle
+}
+else
+{
+    foreach ($project in $projectsToPack)
+    {
+        Write-Host "[pack] -> $([IO.Path]::GetFileName($project))"
+        & dotnet pack -c Release $project --no-build --no-restore -o $ReleaseFolder @dotnetCommon @msbuildArgs -p:NoPackageAnalysis=true $clientBuildProperty
+        if ($LASTEXITCODE -ne 0) { throw "dotnet pack failed for $project" }
+    }
+}
 
 $skipGitLeaks = $env:SKIP_GITLEAKS -eq '1'
 $runningInCi = ($env:CI -eq 'true') -or ($env:GITHUB_ACTIONS -eq 'true')

@@ -73,4 +73,3 @@ to re-create the Articulate package in the back office with all required depende
 &copy; 2025 by Shannon Deminick
 
 This is free software and is licensed under the [The MIT License (MIT)](http://opensource.org/licenses/MIT)
-

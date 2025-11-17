@@ -9,7 +9,7 @@ This guide supports automation agents and human contributors working in the Arti
 - `src/Articulate.Api.Management/` - management API; backoffice client in `Client/` (Vite + TypeScript).
 - `src/Articulate.UnitTests/` - xUnit test suites.
 - `src/Articulate.Tests.Website/` - demo site for local validation.
-- Projects target `net9.0;net10.0` (Umbraco 15/16 on net9, Umbraco 17 on net10). Use `-f net9.0` / `-f net10.0` with `dotnet` commands when testing specific TFMs. Package ranges: net9.0 -> `[15.4.4,17.0.0)`, net10.0 -> `[17.0.0-rc1,18.0.0)`.
+- Projects target `net9.0;net10.0` (Umbraco 15/16 on net9, Umbraco 17 on net10). Use `-f net9.0` / `-f net10.0` with `dotnet` commands when testing specific TFMs. Package ranges: net9.0 -> `[15.4.4,17.0.0)`, net10.0 -> `[17.0.0-rc1,18.0.0)`. SDKs: .NET 9.0.100 and .NET 10 (`10.0.0`).
 
 ## Build, Test, and Development Commands
 
@@ -24,18 +24,22 @@ This guide supports automation agents and human contributors working in the Arti
 - Lint/check client: `pnpm run lint` / `pnpm run check`
 - Clean: `dotnet clean src/Articulate.sln --configuration Release`
 - Pack: `dotnet pack src/Articulate.sln --output build/Release --configuration Release`
-- Release pipeline: `pwsh build/build.ps1` (restores -> cleans -> builds -> packs all TFMs)
+- Release pipeline: `pwsh build/build.ps1` (Windows) or `bash build/build.sh` (Linux/WSL) (restores -> cleans -> builds -> packs all TFMs)
 
 ### Build script flags and environment
 
-- `build/build.sh` (Linux/WSL):
-  - Parallel by default; auto-detects CPU count. Override with `MAXCPU=<N>`.
-  - Client assets: skipped by default. Enable with `ENABLE_CLIENT_BUILD=true`.
-  - WSL-aware: warns when building from `/mnt/*` and suggests cloning into the distro's ext4 (e.g., `~/src/...`).
-- `build/build.ps1` (Windows):
-  - Parallel by default; uses all logical cores. Override with `set MAXCPU=<N>` before running.
-  - Client assets: skipped by default. Enable with `set ENABLE_CLIENT_BUILD=true`.
-  - Prints a note if running against `\\wsl$` paths and suggests using the Linux script inside WSL.
+Both `build/build.sh` (Linux/WSL) and `build/build.ps1` (Windows) use MSBuild properties to control the client build:
+
+- **`ENABLE_CLIENT_BUILD`** (environment variable):
+  - Default: `true` (client build runs automatically).
+  - Set to `false` to skip client build (e.g., `export ENABLE_CLIENT_BUILD=false` or `set ENABLE_CLIENT_BUILD=false`).
+  - The first TFM to run builds the client; subsequent TFMs reuse the cached stamp via MSBuild's incremental build.
+- **`MAXCPU`** (environment variable):
+  - `build/build.sh` (Linux/WSL): auto-detects CPU count. Override with `export MAXCPU=<N>`.
+  - `build/build.ps1` (Windows): uses all logical cores. Override with `set MAXCPU=<N>` before running.
+- **WSL-specific**:
+  - `build/build.sh` warns when building from `/mnt/*` and suggests cloning into the distro's ext4 (e.g., `~/src/...`).
+  - `build/build.ps1` prints a note if running against `\\wsl$` paths and suggests using the Linux script inside WSL.
 
 ## Coding Style & Naming Conventions
 
@@ -62,10 +66,9 @@ This guide supports automation agents and human contributors working in the Arti
 
 ### Node version managers (nvm vs fnm)
 
-- The repo includes `.nvmrc` (Node 22). You can use either:
-  - `nvm` (widely used), or
-  - `fnm` (Fast Node Manager) - recommended for speed and cross-platform ergonomics.
-- Example with `fnm`:
+- The repo includes `.nvmrc` (Node 22). Stick with `nvm` for the default workflow so docs/scripts match expectations.
+- Already on `fnm` (Fast Node Manager)? It's compatible; just run `fnm use` in the repo root.
+- Example with `fnm` (optional):
   - Install: `curl -fsSL https://fnm.vercel.app/install | bash`
   - Restart your shell, then in repo root: `fnm use` (respects `.nvmrc`), then `corepack enable && corepack prepare pnpm@10.17.0 --activate`.
 
@@ -96,4 +99,3 @@ This guide supports automation agents and human contributors working in the Arti
   - `src/Articulate.Tests.Website/AGENTS.md` - Demo website
   - `src/Articulate.StaticAssets/AGENTS.md` - Packaged static assets
 - Agents: prefer the most deeply nested `AGENTS.md` in scope; keep changes surgical, concise, and relevant. Where you need to communicate externally (readmes, marketplace), keep copy SEO-aware, task-focused, and free of filler.
-

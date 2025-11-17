@@ -491,13 +491,13 @@ appsettings-schema.json
 !src/Articulate.Api.Management/Client/src/packages/
 !src/Articulate.Api.Management/Client/src/packages/**
 
-# extension build, built by npm/msbuild
-/src/Articulate.Api.Management/wwwroot/App_Plugins/Articulate
 
 # theme build artifacts
 /src/Articulate.Web/wwwroot/App_Plugins/Articulate/Themes/**/dist/
 /src/Articulate.Web/wwwroot/App_Plugins/Articulate/MarkdownEditor/dist/
 /src/Articulate.StaticAssets/wwwroot/App_Plugins/Articulate/
+/build/tmp
+build/ClientAssets/BackofficeClient.stamp
 
 # test website junk
 /src/Articulate.Tests.Website/Articulate/Temp
@@ -514,4 +514,3 @@ gitleaks-report.json
 /src/u15
 /src/u16
 /src/u17
-/build/tmp

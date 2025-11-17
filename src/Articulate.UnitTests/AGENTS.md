@@ -17,4 +17,3 @@ Scope: applies to `src/Articulate.UnitTests/**`.
 
 - Tests pass on both TFMs.
 - New behavior covered by focused tests.
-

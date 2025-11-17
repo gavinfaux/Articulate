@@ -38,6 +38,10 @@ fi
 MSBUILD_PARALLEL=(-m -maxcpucount:"$CPU_COUNT" -p:BuildInParallel=true -p:RestoreUseStaticGraphEvaluation=true)
 DOTNET_COMMON=(--nologo -v minimal)
 
+# Handle ENABLE_CLIENT_BUILD environment variable (default to true)
+CLIENT_BUILD_VALUE=${ENABLE_CLIENT_BUILD:-true}
+CLIENT_BUILD_PROPERTY="-p:EnableClientBuild=$CLIENT_BUILD_VALUE"
+
 echo "Using up to $CPU_COUNT parallel MSBuild nodes"
 
 # Advise when running in WSL against Windows-mounted drives (slow)
@@ -52,28 +56,6 @@ if [[ -d "$RELEASE_FOLDER" ]]; then
 fi
 
 dotnet --version
-
-# Optionally build backoffice client assets (ENABLE_CLIENT_BUILD=true or CI=true)
-if [[ ("${ENABLE_CLIENT_BUILD:-}" == "true" || "${CI:-}" == "true" || "${GITHUB_ACTIONS:-}" == "true") && -d "$CLIENT_DIR" ]]; then
-  echo "Building backoffice client assets (pnpm build:release)..."
-  # Ensure writable cache/home for corepack/pnpm in sandboxed environments
-  CACHE_DIR="$REPO_ROOT/.cache"
-  HOME_DIR="$REPO_ROOT/.home"
-  mkdir -p "$CACHE_DIR" "$HOME_DIR"
-  export XDG_CACHE_HOME="${XDG_CACHE_HOME:-$CACHE_DIR}"
-  export HOME="${HOME:-$HOME_DIR}"
-  if ! command -v pnpm >/dev/null 2>&1; then
-    echo "pnpm not found. Install pnpm 10.17+ and try again." >&2
-    exit 1
-  fi
-  (
-    cd "$CLIENT_DIR" \
-    && pnpm install --frozen-lockfile --prefer-offline \
-    && pnpm run build:release
-  )
-else
-  echo "Skipping client asset build (set ENABLE_CLIENT_BUILD=true or export ENABLE_CLIENT_BUILD=true to enable)"
-fi
 
 # Avoid NuGet fallback folders (already disabled in Directory.Build.props, but double-sure)
 export RestoreFallbackFolders=
@@ -104,7 +86,7 @@ fi
 
 # --- 3) Solution-level restore (slim sln) with static graph + parallelism ---
 echo "2. Restoring solution packages in parallel (slim solution)..."
-dotnet restore "$TMP_SLN" "${DOTNET_COMMON[@]}" "${MSBUILD_PARALLEL[@]}"
+dotnet restore "$TMP_SLN" "${DOTNET_COMMON[@]}" "${MSBUILD_PARALLEL[@]}" "$CLIENT_BUILD_PROPERTY"
 
 # --- 4) Build both TFMs in parallel to saturate CPUs ---
 echo "3. Building solution in parallel for: ${TARGET_FRAMEWORKS[*]}"
@@ -113,7 +95,7 @@ build_one_tfm() {
   local tfm="$1"
   echo "[build] -> $tfm"
   local t0=$(date +%s)
-  dotnet build "$TMP_SLN" -c Release -f "$tfm" --no-restore "${DOTNET_COMMON[@]}" "${MSBUILD_PARALLEL[@]}"
+  dotnet build "$TMP_SLN" -c Release -f "$tfm" --no-restore "${DOTNET_COMMON[@]}" "${MSBUILD_PARALLEL[@]}" "$CLIENT_BUILD_PROPERTY"
   local t1=$(date +%s)
   echo "[build] <- $tfm done in $((t1 - t0))s"
 }
@@ -150,7 +132,7 @@ ARTICULATE_STATIC_ASSETS_PROJECT="$SOLUTION_ROOT/Articulate.StaticAssets/Articul
 
 echo "[pack] -> $(basename "$ARTICULATE_STATIC_ASSETS_PROJECT")"
 dotnet pack -c Release "$ARTICULATE_STATIC_ASSETS_PROJECT" --no-build --no-restore -o "$RELEASE_FOLDER" \
-  "${DOTNET_COMMON[@]}" "${MSBUILD_PARALLEL[@]}" -p:NoPackageAnalysis=true
+  "${DOTNET_COMMON[@]}" "${MSBUILD_PARALLEL[@]}" "$CLIENT_BUILD_PROPERTY" -p:NoPackageAnalysis=true
 
 PACK_PROJECTS=(
   "$ARTICULATE_PROJECT"
@@ -163,7 +145,7 @@ for proj in "${PACK_PROJECTS[@]}"; do
   echo "[pack] -> $(basename "$proj")"
   RESTORE_SWITCHES=(--no-build --no-restore)
   dotnet pack -c Release "$proj" "${RESTORE_SWITCHES[@]}" -o "$RELEASE_FOLDER" \
-    "${DOTNET_COMMON[@]}" "${MSBUILD_PARALLEL[@]}" -p:NoPackageAnalysis=true &
+    "${DOTNET_COMMON[@]}" "${MSBUILD_PARALLEL[@]}" "$CLIENT_BUILD_PROPERTY" -p:NoPackageAnalysis=true &
   pack_pids+=($!)
 done
 

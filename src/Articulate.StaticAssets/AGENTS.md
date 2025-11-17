@@ -5,13 +5,36 @@ Scope: applies to `src/Articulate.StaticAssets/**`.
 ## Purpose
 
 - Hosts packaged static assets consumed by the solution.
+- Orchestrates the client build (Vite) via MSBuild targets.
+- Mirrors theme and Markdown editor assets from `Articulate.Web` into the static assets package.
 - Do not hand-edit build outputs; regenerate via client builds where applicable.
+
+## Client Build Process
+
+The `BuildBackofficeClient` target (in `.csproj`) runs `pnpm install && pnpm run build:release` to:
+
+1. Compile TypeScript backoffice client (Lit + TS).
+2. Copy static assets from `Client/public` to the build output.
+3. Write a build stamp (`build/ClientAssets/BackofficeClient.stamp`) to track completion.
+
+**Key behaviors:**
+
+- **Shared cache**: Client assets are cached at repo level (`build/ClientAssets/`) to avoid redundant Vite runs.
+- **Incremental build**: MSBuild's `Inputs`/`Outputs` mechanism ensures:
+  - First TFM (e.g., net9.0) runs Vite if inputs are newer than the stamp.
+  - Subsequent TFMs (e.g., net10.0) skip Vite and reuse the cached assets.
+- **Control via `ENABLE_CLIENT_BUILD`**: Set to `false` to skip the client build (e.g., `export ENABLE_CLIENT_BUILD=false`).
 
 ## Build
 
 - Build both TFMs: `dotnet build src/Articulate.StaticAssets/Articulate.StaticAssets.csproj -f net9.0 -c Release` and `-f net10.0`.
+- Or use the release scripts (recommended):
+  - Windows: `pwsh build/build.ps1`
+  - Linux/WSL: `bash build/build.sh`
+  - Both scripts are fully aligned: same parallelism, client build control, and error handling.
 
 ## Validation Checklist
 
 - Assemblies/package contents align with generated client assets.
-
+- Client build stamp exists at `build/ClientAssets/BackofficeClient.stamp` after a full build.
+- No EPERM or file-not-found errors during parallel TFM builds.

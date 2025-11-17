@@ -7,6 +7,10 @@
     <Title>Articulate Static Web Assets</Title>
     <ArticulateWebAssetsRoot>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/../Articulate.Web/wwwroot/App_Plugins/Articulate'))</ArticulateWebAssetsRoot>
     <ClientProjectDirectory>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/../Articulate.Api.Management/Client'))</ClientProjectDirectory>
+    <EnableClientBuild Condition="'$(EnableClientBuild)'=='' and '$(ENABLE_CLIENT_BUILD)'!=''">$(ENABLE_CLIENT_BUILD)</EnableClientBuild>
+    <EnableClientBuild Condition="'$(EnableClientBuild)'==''">true</EnableClientBuild>
+    <ClientAssetsCacheDir>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/../../build/ClientAssets'))</ClientAssetsCacheDir>
+    <ClientBuildStamp>$(ClientAssetsCacheDir)/BackofficeClient.stamp</ClientBuildStamp>
   </PropertyGroup>
 
   <ItemGroup>
@@ -36,8 +40,34 @@
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
+  <ItemGroup Condition="'$(EnableClientBuild)'=='true'">
+    <ClientBuildInput Include="$(ClientProjectDirectory)/pnpm-lock.yaml" />
+    <ClientBuildInput Include="$(ClientProjectDirectory)/package.json" />
+    <ClientBuildInput Include="$(ClientProjectDirectory)/tsconfig*.json" />
+    <ClientBuildInput Include="$(ClientProjectDirectory)/vite.config.*" />
+    <ClientBuildInput Include="$(ClientProjectDirectory)/src/**/*" />
+  </ItemGroup>
+
+  <Target Name="BuildBackofficeClient"
+          Condition="'$(EnableClientBuild)'=='true' and Exists('$(ClientProjectDirectory)')"
+          BeforeTargets="ResolveStaticWebAssetsInputs"
+          Inputs="@(ClientBuildInput)"
+          Outputs="$(ClientBuildStamp)">
+    <Message Text="Building Articulate backoffice client (EnableClientBuild=true)" Importance="High" />
+    <MakeDir Directories="$(ClientAssetsCacheDir)" />
+    <Exec Command="pnpm install --frozen-lockfile --prefer-offline || pnpm install"
+          WorkingDirectory="$(ClientProjectDirectory)" />
+    <Exec Command="pnpm run build:release" WorkingDirectory="$(ClientProjectDirectory)" />
+    <WriteLinesToFile File="$(ClientBuildStamp)" Lines="$([System.DateTime]::UtcNow.ToString('o'))" Overwrite="true" />
+  </Target>
+
   <Target Name="SyncArticulateWebAssets" Condition="Exists('$(ArticulateWebAssetsRoot)')" BeforeTargets="ResolveStaticWebAssetsInputs">
     <Message Text="Synchronizing Articulate.Web static assets into Articulate.StaticAssets" Importance="Low" />
     <Copy SourceFiles="@(ArticulateWebAsset)" DestinationFiles="@(ArticulateWebAsset -> '$(MSBuildProjectDirectory)/wwwroot/App_Plugins/Articulate/%(RelativeCopyPath)')" SkipUnchangedFiles="true" />
+  </Target>
+
+  <Target Name="CleanClientAssets" AfterTargets="Clean">
+    <Delete Condition="Exists('$(ClientBuildStamp)')" Files="$(ClientBuildStamp)" />
+    <RemoveDir Condition="Exists('$(ClientAssetsCacheDir)')" Directories="$(ClientAssetsCacheDir)" />
   </Target>
 </Project>

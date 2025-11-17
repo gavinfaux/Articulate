@@ -15,10 +15,10 @@ Scope: applies to `src/Articulate.Api.Management/**` excluding `Client/`.
 ## Client Assets Integration
 
 - Backoffice client lives in `Client/`. Build via `pnpm run build` (see `Client/AGENTS.md`).
-- Build outputs land in `wwwroot/...` and feed theme/MarkdownEditor `dist/` in the RCL.
+- Build outputs land in `wwwroot/App_Plugins/Articulate/BackOffice/` and are consumed by `Articulate.StaticAssets` during packaging.
+- **Note**: The client build is orchestrated by `Articulate.StaticAssets` via MSBuild targets (not by this project). See `src/Articulate.StaticAssets/AGENTS.md` for details on the automatic client build process.
 
 ## Validation Checklist
 
 - Builds green on both TFMs.
 - Demo site can hit management endpoints when run against matching Umbraco version.
-

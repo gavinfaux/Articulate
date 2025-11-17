@@ -5,7 +5,8 @@ Scope: applies to `src/Articulate.Api.Management/Client/**`.
 ## Environment
 
 - Node 22 (`.nvmrc`), pnpm 10.17+. Quick start:
-  - `fnm use` or `nvm use`
+  - `nvm use` (default)
+  - already on `fnm`? `fnm use` works too
   - `corepack enable && corepack prepare pnpm@10.17.0 --activate`
 
 ## Commands
@@ -28,4 +29,3 @@ Scope: applies to `src/Articulate.Api.Management/Client/**`.
 
 - Build succeeds; outputs updated in server `wwwroot` and RCL `dist/`.
 - Lint and type-check clean.
-

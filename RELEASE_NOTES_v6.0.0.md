@@ -37,7 +37,7 @@ To improve modularity and maintainability, the single Articulate package from v5
 
 ### Package & API Changes
 
-- **Default Themes** - The default built-in themes still use MasterPage layouts and have been updated work with modern browsers, there are no breaking changes to the built-in themes. The built-in themes are now packaged as `Articulate.Web` and are located in the `Themes` folder. 
+- **Default Themes** - The default built-in themes still use MasterPage layouts and have been updated work with modern browsers, there are no breaking changes to the built-in themes. The built-in themes are now packaged as `Articulate.Web` and are located in the `Themes` folder.
 - **Project names vs NuGet Package IDs**
   - The package structure has changed. The main `Articulate` project still contains the front end models, controllers, core logic and public API, but is now packaged as `Articulate.Core`.
   - The backoffice extension and related management API is now in `Articulate.Api.Management`
@@ -57,12 +57,13 @@ To improve modularity and maintainability, the single Articulate package from v5
 1. **Export/Import** - In the back office export BlogML from Articulate 5 instance and then import the BlogML file into Articulate 6.x instance. This will migrate all blog posts and managed media; assets stored in the `media\articulate` folder are **not** migrated.
 
 2. **Upgrade**
-  - **Backup**: Create full backup of your Umbraco installation and Articulate content
-  - **Umbraco Upgrade**: Upgrade to Umbraco 15.2.3+ or 16+ first
-  - **Package Installation**: Install Articulate 6.0.0-beta via NuGet or Umbraco package
-  - **Post-Installation**: Follow the new post-installation checks in the README
-  - **Data Migration**: Re-run Articulate package migrations if needed
-  - **Theme Updates**: Verify and update custom themes and extension points for compatibility
+
+- **Backup**: Create full backup of your Umbraco installation and Articulate content
+- **Umbraco Upgrade**: Upgrade to Umbraco 15.2.3+ or 16+ first
+- **Package Installation**: Install Articulate 6.0.0-beta via NuGet or Umbraco package
+- **Post-Installation**: Follow the new post-installation checks in the README
+- **Data Migration**: Re-run Articulate package migrations if needed
+- **Theme Updates**: Verify and update custom themes and extension points for compatibility
 
 ### Development Setup
 
@@ -113,8 +114,3 @@ This major version represents a significant investment in modernizing Articulate
 **Compatibility:** Umbraco 15.2.3+ and 16+  
 **License:** MIT  
 **Repository:** <https://github.com/Shazwazza/Articulate>
-
-
-
-
-
