@@ -29,7 +29,7 @@ namespace Articulate.Options
 
         /// <summary>
         /// Default comments provider to use when none is specified via ViewData["CommentsProvider"].
-        /// Supported values: disqus, giscus, utterances, hyvor, isso. Null/empty shows a placeholder.
+        /// Supported values: <c>disqus</c> or <c>giscus</c>. Null/empty shows a placeholder.
         /// </summary>
         public string? DefaultCommentsProvider { get; set; }
 
@@ -40,27 +40,36 @@ namespace Articulate.Options
         public DisqusOptions Disqus { get; set; } = new();
 
         public GiscusOptions Giscus { get; set; } = new();
-
-        public UtterancesOptions Utterances { get; set; } = new();
-
-        public HyvorOptions Hyvor { get; set; } = new();
-
-        public IssoOptions Isso { get; set; } = new();
     }
 
     public class DisqusOptions
     {
+        /// <summary>
+        /// Required when using Disqus. Set this to your Disqus site shortname (e.g., <c>contoso-blog</c>).
+        /// </summary>
         public string? Shortname { get; set; }
     }
 
     public class GiscusOptions
     {
+        /// <summary>
+        /// Required when using Giscus. Owner/name of the repository that hosts the discussions.
+        /// </summary>
         public string? Repo { get; set; }
 
+        /// <summary>
+        /// Required when using Giscus. The node ID of the repository (available in the Giscus onboarding UI).
+        /// </summary>
         public string? RepoId { get; set; }
 
+        /// <summary>
+        /// Required when using Giscus. The discussion category slug configured for comments.
+        /// </summary>
         public string? Category { get; set; }
 
+        /// <summary>
+        /// Required when using Giscus. The node ID of the category selected above.
+        /// </summary>
         public string? CategoryId { get; set; }
 
         public string? Mapping { get; set; } = "pathname";
@@ -74,28 +83,5 @@ namespace Articulate.Options
         public bool EmitMetadata { get; set; } = false;
 
         public string? InputPosition { get; set; } = "bottom";
-    }
-
-    public class UtterancesOptions
-    {
-        public string? Repo { get; set; }
-
-        public string? IssueTerm { get; set; } = "pathname";
-
-        public string? Label { get; set; } = "comment";
-
-        public string? Theme { get; set; } = "github-light";
-    }
-
-    public class HyvorOptions
-    {
-        public int? Website { get; set; }
-
-        public string? Host { get; set; } // optional self-host
-    }
-
-    public class IssoOptions
-    {
-        public string? Host { get; set; }
     }
 }

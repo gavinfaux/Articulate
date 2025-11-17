@@ -1,4 +1,5 @@
 #nullable enable
+using System.Collections.ObjectModel;
 using OpenIddict.Abstractions;
 
 namespace Articulate.Api.Management.Options
@@ -39,7 +40,8 @@ namespace Articulate.Api.Management.Options
         public string? ClientSecret { get; set; }
 
         /// <summary>
-        /// Gets or sets the redirect URIs allowed for the custom client.
+        /// Gets or sets the redirect URIs allowed for the custom client. When <see cref="Enabled"/> is
+        /// <see langword="true"/>, at least one absolute URI must be provided.
         /// </summary>
         public List<string> RedirectUris { get; set; } = new();
 
@@ -49,31 +51,34 @@ namespace Articulate.Api.Management.Options
         public List<string> PostLogoutRedirectUris { get; set; } = new();
 
         /// <summary>
-        /// Gets or sets the permissions granted to the custom client. Defaults cover the authorization code flow.
+        /// Gets the permissions granted to the custom client. Defaults cover the authorization code flow.
         /// </summary>
-        public List<string> Permissions { get; set; } = new()
-        {
-
-              OpenIddictConstants.Permissions.Endpoints.Authorization,
-                OpenIddictConstants.Permissions.Endpoints.Token,
-                OpenIddictConstants.Permissions.Endpoints.EndSession,
-                OpenIddictConstants.Permissions.Endpoints.Revocation,
-                OpenIddictConstants.Permissions.GrantTypes.AuthorizationCode,
-                OpenIddictConstants.Permissions.ResponseTypes.Code,
-        };
+        public IReadOnlyCollection<string> Permissions => _defaultPermissions;
 
         /// <summary>
-        /// Gets or sets the requirements enforced for the custom client. Defaults enforce PKCE support.
+        /// Gets the requirements enforced for the custom client. Defaults enforce PKCE support.
         /// </summary>
-        public List<string> Requirements { get; set; } = new()
-        {
-            OpenIddictConstants.Requirements.Features.ProofKeyForCodeExchange
-        };
+        public IReadOnlyCollection<string> Requirements => _defaultRequirements;
 
         /// <summary>
         /// Determines whether a non-empty client secret is configured.
         /// </summary>
         public bool HasClientSecret() => !string.IsNullOrWhiteSpace(ClientSecret);
+
+        private static readonly IReadOnlyCollection<string> _defaultPermissions = Array.AsReadOnly(new[]
+        {
+            OpenIddictConstants.Permissions.Endpoints.Authorization,
+            OpenIddictConstants.Permissions.Endpoints.Token,
+            OpenIddictConstants.Permissions.Endpoints.EndSession,
+            OpenIddictConstants.Permissions.Endpoints.Revocation,
+            OpenIddictConstants.Permissions.GrantTypes.AuthorizationCode,
+            OpenIddictConstants.Permissions.ResponseTypes.Code,
+        });
+
+        private static readonly IReadOnlyCollection<string> _defaultRequirements = Array.AsReadOnly(new[]
+        {
+            OpenIddictConstants.Requirements.Features.ProofKeyForCodeExchange
+        });
     }
 }
 

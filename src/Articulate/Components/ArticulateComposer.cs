@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 using Umbraco.Cms.Core.Composing;
 using Umbraco.Cms.Core.Notifications;
 using Umbraco.Cms.Core.Routing;
@@ -55,6 +56,7 @@ namespace Articulate.Components
 
             _ = services.AddOptions<ArticulateOptions>()
                 .BindConfiguration("Articulate");
+            _ = services.AddSingleton<IValidateOptions<ArticulateOptions>, ArticulateOptionsValidator>();
 
             _ = builder.AddNotificationHandler<ContentSavingNotification, ContentSavingHandler>();
             _ = builder.AddNotificationHandler<ContentSavedNotification, ContentSavedHandler>();
