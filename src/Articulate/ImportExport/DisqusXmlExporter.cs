@@ -88,6 +88,7 @@ namespace Articulate.ImportExport
                         new XElement(nsWp + "comment_author", comment.UserName ?? string.Empty),
                         new XElement(nsWp + "comment_author_email", comment.UserEmailAddress ?? string.Empty),
                         new XElement(nsWp + "comment_author_url", comment.UserUrl is null ? string.Empty : comment.UserUrl.ToString()),
+                        // BlogML has no notion of IPs or threading; emit the required Disqus nodes with empty defaults.
                         new XElement(nsWp + "comment_author_IP", string.Empty),
                         new XElement(nsWp + "comment_date_gmt", FormatAsDisqusDate(comment.CreatedOn)),
                         new XElement(nsWp + "comment_content", new XCData(commentText)),
