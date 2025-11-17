@@ -1,5 +1,4 @@
 #nullable enable
-using System.Collections.ObjectModel;
 using OpenIddict.Abstractions;
 
 namespace Articulate.Api.Management.Options
