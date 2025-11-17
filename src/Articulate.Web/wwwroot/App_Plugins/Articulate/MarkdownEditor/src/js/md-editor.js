@@ -2,27 +2,7 @@ import { apiService } from "./apiService.js";
 import { authService } from "./authService.js";
 import { config, initConfig } from "./config.js";
 import { formatApiError } from "./error-formatter.js";
-import { uiService } from "./uiService.js";
-
-const DRAFT_STORAGE_KEY = "articulate:markdown-editor:draft";
-
-function loadDraftPayload() {
-  try {
-    const raw = sessionStorage.getItem(DRAFT_STORAGE_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch (error) {
-    console.warn("[MarkdownEditor] Failed to parse draft payload", error);
-    return null;
-  }
-}
-
-function storeDraftPayload(payload) {
-  try {
-    sessionStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(payload));
-  } catch (error) {
-    console.warn("[MarkdownEditor] Unable to store draft payload", error);
-  }
-}
+const DEFAULT_RETRY_LABEL = "Retry now";
 
 function createEmptyPost(existingNodeId) {
   return {
@@ -61,15 +41,8 @@ document.addEventListener("alpine:init", () => {
     fileMap: new Map(),
     successUrl: null,
     currentUser: null,
-    dialog: {
-      title: "",
-      message: "",
-      buttonText: "OK",
-      onConfirm: () => {},
-    },
-    pendingRetry: null,
-    draftSaveHandle: null,
-    draftHandled: false,
+    retryAction: null,
+    retryLabel: DEFAULT_RETRY_LABEL,
     caption: "Create New Post",
     currentStep: "loading",
     editorInstance: null,
@@ -245,31 +218,17 @@ document.addEventListener("alpine:init", () => {
       }
     },
 
-    saveDraftDebounced() {
-      window.clearTimeout(this.draftSaveHandle);
-      this.draftSaveHandle = window.setTimeout(() => this.saveDraft(), 400);
-    },
-
-    saveDraft() {
-      try {
-        const payload = {
-          post: this.post,
-          timestamp: Date.now(),
-        };
-        storeDraftPayload(payload);
-        console.debug("[MarkdownEditor] Draft saved to session storage");
-      } catch (error) {
-        console.warn("[MarkdownEditor] Failed to persist draft", error);
-      }
-    },
-
-    clearDraft() {
-      sessionStorage.removeItem(DRAFT_STORAGE_KEY);
-    },
-
     setStep(step) {
       const previousStep = this.currentStep;
       this.currentStep = step;
+
+      const shouldResetBanner =
+        previousStep !== step &&
+        (step === "editor" || step === "optional" || step === "success");
+      if (shouldResetBanner) {
+        this.errorDetails = null;
+        this.clearRetryAction();
+      }
 
       switch (step) {
         case "editor":
@@ -290,7 +249,6 @@ document.addEventListener("alpine:init", () => {
       }
 
       if (step === "editor") {
-        this.checkDraftBeforeEditor();
         this.$nextTick(() => {
           this.initializeEditor();
           this.focusRef("titleInput");
@@ -306,103 +264,34 @@ document.addEventListener("alpine:init", () => {
       }
     },
 
-    scheduleRetry(operation) {
-      this.pendingRetry = operation;
-      uiService.showDialog(
-        this.$refs.criticalErrorDialog,
-        this.dialog,
-        "Connection issue",
-        "We lost contact with Umbraco. We'll retry automatically in a moment, or you can retry now.",
-        () => {
-          this.confirmRetry();
-        },
-        "Retry now"
-      );
-
-      setTimeout(() => {
-        if (this.pendingRetry) {
-          this.confirmRetry();
-        }
-      }, 5000);
+    clearRetryAction() {
+      this.retryAction = null;
+      this.retryLabel = DEFAULT_RETRY_LABEL;
     },
 
-    confirmRetry() {
-      const operation = this.pendingRetry;
-      this.pendingRetry = null;
-      this.$refs.criticalErrorDialog?.close();
-      this.resetDialogState();
-      if (typeof operation === "function") {
+    setRetryAction(operation, options = {}) {
+      this.clearRetryAction();
+      if (typeof operation !== "function") {
+        return;
+      }
+
+      const wrappedOperation = () => {
+        this.clearRetryAction();
         operation();
-      }
-    },
-
-    checkDraftBeforeEditor() {
-      if (this.draftHandled) {
-        return;
-      }
-
-      const payload = loadDraftPayload();
-      if (!payload?.post) {
-        this.draftHandled = true;
-        return;
-      }
-
-      const hasDraftContent = this.hasMeaningfulDraft(payload.post);
-      if (!hasDraftContent) {
-        this.clearDraft();
-        this.draftHandled = true;
-        return;
-      }
-
-      this.draftHandled = true;
-      const timestamp = payload.timestamp
-        ? new Date(payload.timestamp).toLocaleString()
-        : null;
-      const message = timestamp
-        ? `A saved draft from ${timestamp} was found. Resume editing?`
-        : "A saved draft was found. Resume editing?";
-
-      const resume = window.confirm(message);
-      if (resume) {
-        this.applyDraft(payload.post);
-        return;
-      }
-
-      this.clearDraft();
-      this.resetLocalPost();
-    },
-
-    hasMeaningfulDraft(draftPost) {
-      if (!draftPost) {
-        return false;
-      }
-
-      const fields = [
-        draftPost.title,
-        draftPost.body,
-        draftPost.excerpt,
-        draftPost.tags,
-        draftPost.categories,
-        draftPost.slug,
-      ];
-
-      return fields.some((value) => typeof value === "string" && value.trim().length);
-    },
-
-    applyDraft(draftPost) {
-      const nodeId = this.post.articulateBlogNode;
-      this.post = {
-        ...createEmptyPost(nodeId),
-        ...draftPost,
-        articulateBlogNode: nodeId ?? draftPost.articulateBlogNode ?? nodeId,
       };
-      console.info("[MarkdownEditor] Draft restored to editor");
+
+      this.retryAction = wrappedOperation;
+      this.retryLabel = options.label ?? DEFAULT_RETRY_LABEL;
     },
 
-    resetLocalPost() {
-      const nodeId = this.post.articulateBlogNode;
-      this.post = createEmptyPost(nodeId);
-      this.fileMap.clear();
+    scheduleRetry(operation) {
+      this.setRetryAction(operation);
+    },
+
+    triggerRetry() {
+      if (this.retryAction) {
+        this.retryAction();
+      }
     },
 
     redirectToLogin() {
@@ -558,21 +447,23 @@ document.addEventListener("alpine:init", () => {
           this.errorDetails = null;
           this.showLogin("Please sign in below.");
         } else if (formattedError.isNetworkError) {
-          this.errorDetails = formattedError;
+          this.errorDetails = this.normalizeErrorDetails(
+            formattedError,
+            "Connection issue"
+          );
           this.showLogin(
             friendlyDetail ||
               "We couldn't reach Umbraco. Please check your connection and try again.",
             { preserveErrors: true }
           );
-          uiService.showDialog(
-            this.$refs.criticalErrorDialog,
-            this.dialog,
-            formattedError.title,
-            formattedError.details.join(" "),
-            () => window.location.reload()
-          );
+          this.setRetryAction(() => window.location.reload(), {
+            label: "Reload page",
+          });
         } else {
-          this.errorDetails = formattedError;
+          this.errorDetails = this.normalizeErrorDetails(
+            formattedError,
+            "Something went wrong"
+          );
           this.showLogin(
             friendlyDetail ||
               "We ran into a problem. Please sign in again once the issue is resolved.",
@@ -598,7 +489,6 @@ document.addEventListener("alpine:init", () => {
       this.errorDetails = null;
 
       try {
-        this.saveDraft();
         console.debug("[MarkdownEditor] handlePublish: preparing API call", {
           uploadTokens: Array.from(this.fileMap.keys()),
           fileCount: this.fileMap.size,
@@ -614,14 +504,17 @@ document.addEventListener("alpine:init", () => {
             "[MarkdownEditor] publish complete; success url:",
             result.url
           );
-          this.clearDraft();
+          this.clearRetryAction();
         } else {
           throw new Error("Received an empty or invalid URL from the server.");
         }
       } catch (error) {
         console.error("[MarkdownEditor] handlePublish failed", error);
         const formattedError = await formatApiError(error);
-        this.errorDetails = formattedError;
+        this.errorDetails = this.normalizeErrorDetails(
+          formattedError,
+          "Publish failed"
+        );
 
         // For auth/network/permission failures, surface a dialog.
         if (
@@ -630,15 +523,11 @@ document.addEventListener("alpine:init", () => {
           formattedError.isForbidden
         ) {
           if (formattedError.isAuthError) {
-            uiService.showDialog(
-              this.$refs.criticalErrorDialog,
-              this.dialog,
-              formattedError.title,
-              formattedError.details.join(" "),
-              () => {
-                this.redirectToLogin();
-              }
-            );
+            this.setRetryAction(() => {
+              this.redirectToLogin();
+            }, {
+              label: "Sign in again",
+            });
           } else {
             this.scheduleRetry(() => this.handlePublish());
           }
@@ -678,7 +567,6 @@ document.addEventListener("alpine:init", () => {
 
     updatePostTitle(event) {
       this.post.title = event?.target?.value ?? "";
-      this.saveDraftDebounced();
     },
 
     updatePostField(event) {
@@ -701,7 +589,6 @@ document.addEventListener("alpine:init", () => {
         default:
           break;
       }
-      this.saveDraftDebounced();
     },
 
     handleImageUpload(event) {
@@ -776,17 +663,6 @@ document.addEventListener("alpine:init", () => {
       this.$refs.cameraUpload?.click();
     },
 
-    confirmCriticalError() {
-      if (
-        this.dialog.onConfirm &&
-        typeof this.dialog.onConfirm === "function"
-      ) {
-        this.dialog.onConfirm();
-      }
-      this.$refs.criticalErrorDialog?.close();
-      this.resetDialogState();
-    },
-
     async logout() {
       this.isLoading = true;
       try {
@@ -795,28 +671,16 @@ document.addEventListener("alpine:init", () => {
       } catch (error) {
         console.error("[MarkdownEditor] logout failed", error);
         const formattedError = await formatApiError(error, "Sign-out failed");
-        this.errorDetails = formattedError;
-
-        uiService.showDialog(
-          this.$refs.criticalErrorDialog,
-          this.dialog,
-          formattedError.title,
-          formattedError.details.join(" "),
-          () => this.redirectToLogin(),
-          "Continue to login"
+        this.errorDetails = this.normalizeErrorDetails(
+          formattedError,
+          "Sign-out failed"
         );
+        this.setRetryAction(() => this.redirectToLogin(), {
+          label: "Continue to login",
+        });
       } finally {
         this.isLoading = false;
       }
-    },
-
-    handleDialogClose() {
-      this.resetDialogState();
-    },
-
-    resetDialogState() {
-      this.dialog.buttonText = "OK";
-      this.dialog.onConfirm = () => {};
     },
 
     showLogin(message, options = {}) {
@@ -830,6 +694,26 @@ document.addEventListener("alpine:init", () => {
       }
       this.setStep("login");
       this.$nextTick(() => this.focusRef("loginButton"));
+    },
+
+    normalizeErrorDetails(error, fallbackTitle) {
+      if (!error) {
+        return null;
+      }
+
+      const details = Array.isArray(error.details)
+        ? error.details.filter(Boolean)
+        : [];
+
+      const title = (error.title || fallbackTitle || "Something went wrong")
+        .toString()
+        .trim();
+
+      return {
+        ...error,
+        title,
+        details,
+      };
     },
   }));
 });
