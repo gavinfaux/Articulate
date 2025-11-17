@@ -66,7 +66,6 @@ echo "Starting clean and restore process for solution: $SOLUTION_PATH"
 echo "1. Cleaning up NuGet caches..."
 rm -f "$SOLUTION_ROOT/Articulate.Api.Management/obj/project.assets.json" || true
 rm -f "$SOLUTION_ROOT/Articulate.StaticAssets/obj/project.assets.json" || true
-rm -f "$SOLUTION_ROOT/Articulate.Tests.Website/obj/project.assets.json" || true
 rm -f "$SOLUTION_ROOT/Articulate.Web/obj/project.assets.json" || true
 rm -f "$SOLUTION_ROOT/Articulate/obj/project.assets.json" || true
 

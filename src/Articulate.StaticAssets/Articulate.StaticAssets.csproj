@@ -12,6 +12,10 @@
     <ClientBuildTargetFramework Condition="'$(ClientBuildTargetFramework)'==''">net9.0</ClientBuildTargetFramework>
     <ClientAssetsCacheDir>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/../../build/ClientAssets'))</ClientAssetsCacheDir>
     <ClientBuildStamp>$(ClientAssetsCacheDir)/BackofficeClient.stamp</ClientBuildStamp>
+    <!-- Default client build command: favor debug-friendly build locally, production build for CI/Release -->
+    <ClientBuildCommand Condition="'$(ClientBuildCommand)'=='' and ('$(CI)'=='true' or '$(GITHUB_ACTIONS)'=='true')">pnpm run build:release</ClientBuildCommand>
+    <ClientBuildCommand Condition="'$(ClientBuildCommand)'=='' and '$(Configuration)'=='Release'">pnpm run build:release</ClientBuildCommand>
+    <ClientBuildCommand Condition="'$(ClientBuildCommand)'==''">pnpm run build</ClientBuildCommand>
   </PropertyGroup>
 
   <ItemGroup>
@@ -58,8 +62,17 @@
     <MakeDir Directories="$(ClientAssetsCacheDir)" />
     <Exec Command="pnpm install --frozen-lockfile --prefer-offline || pnpm install"
           WorkingDirectory="$(ClientProjectDirectory)" />
-    <Exec Command="pnpm run build:release" WorkingDirectory="$(ClientProjectDirectory)" />
+    <Exec Command="$(ClientBuildCommand)" WorkingDirectory="$(ClientProjectDirectory)" />
     <WriteLinesToFile File="$(ClientBuildStamp)" Lines="$([System.DateTime]::UtcNow.ToString('o'))" Overwrite="true" />
+  </Target>
+
+  <Target Name="EnsureClientAssets"
+          Condition="'$(EnableClientBuild)'=='true' and '$(TargetFramework)'!='$(ClientBuildTargetFramework)' and !Exists('$(ClientBuildStamp)')"
+          BeforeTargets="ResolveStaticWebAssetsInputs">
+    <Message Text="Client assets missing; triggering BuildBackofficeClient for $(ClientBuildTargetFramework)" Importance="High" />
+    <MSBuild Projects="$(MSBuildProjectFullPath)"
+             Targets="BuildBackofficeClient"
+             Properties="TargetFramework=$(ClientBuildTargetFramework);Configuration=$(Configuration)" />
   </Target>
 
   <Target Name="SyncArticulateWebAssets" Condition="Exists('$(ArticulateWebAssetsRoot)')" BeforeTargets="ResolveStaticWebAssetsInputs">

@@ -68,7 +68,6 @@ Write-Host "1. Cleaning up NuGet caches..."
 @(
     "Articulate.Api.Management",
     "Articulate.StaticAssets",
-    "Articulate.Tests.Website",
     "Articulate.Web",
     "Articulate"
 ) | ForEach-Object {
