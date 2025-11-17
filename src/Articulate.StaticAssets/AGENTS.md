@@ -19,10 +19,12 @@ The `BuildBackofficeClient` target (in `.csproj`) runs `pnpm install && pnpm run
 
 **Key behaviors:**
 
+- **Serialized TFM builds**: Build scripts run TFMs sequentially (net9.0 first, then net10.0) to ensure proper client build ordering.
+- **Designated client build**: Client build runs only for `ClientBuildTargetFramework` (default: `net9.0`) to prevent Vite race conditions.
 - **Shared cache**: Client assets are cached at repo level (`build/ClientAssets/`) to avoid redundant Vite runs.
 - **Incremental build**: MSBuild's `Inputs`/`Outputs` mechanism ensures:
-  - First TFM (e.g., net9.0) runs Vite if inputs are newer than the stamp.
-  - Subsequent TFMs (e.g., net10.0) skip Vite and reuse the cached assets.
+  - net9.0 runs Vite if inputs are newer than the stamp.
+  - net10.0 skips Vite and reuses the cached assets.
 - **Control via `ENABLE_CLIENT_BUILD`**: Set to `false` to skip the client build (e.g., `export ENABLE_CLIENT_BUILD=false`).
 
 ## Build

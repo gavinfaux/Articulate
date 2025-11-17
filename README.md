@@ -173,7 +173,8 @@ See docs/development-dx.md for details and tips.
 #### Client/Vite build
 
 - **Automatic via MSBuild**: The `Articulate.StaticAssets` project orchestrates the client build through MSBuild targets. By default, `ENABLE_CLIENT_BUILD=true` runs `pnpm install && pnpm run build:release` during the build.
-- **Incremental & cached**: Client assets are cached at `build/ClientAssets/` to avoid redundant Vite runs. The first TFM builds the client; subsequent TFMs reuse the cached stamp via MSBuild's `Inputs`/`Outputs` mechanism.
+- **Sequential TFM builds**: Build scripts run TFMs sequentially (net9.0 first, net10.0 second) to ensure net9.0 builds the client and net10.0 reuses the cached assets.
+- **Incremental & cached**: Client assets are cached at `build/ClientAssets/` to avoid redundant Vite runs. MSBuild's `Inputs`/`Outputs` mechanism ensures only net9.0 runs Vite; net10.0 reuses the stamp.
 - **Manual rebuild**: `cd src/Articulate.Api.Management/Client && pnpm install && pnpm run build` (or `build:release`).
 - **Skip client build**: Set `ENABLE_CLIENT_BUILD=false` when invoking the build scripts to skip the client build (useful for CI or when assets are already built).
 - **Pre-commit hooks**: Automatically lint staged `.ts/.tsx` files and run `pnpm run build` when client source changes. Install pnpm + GitLeaks locally; if you intentionally need to bypass the hooks, commit with `HUSKY=0 git commit ...`.

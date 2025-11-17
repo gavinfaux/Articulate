@@ -92,34 +92,16 @@ Write-Host "2. Restoring solution packages in parallel (slim solution)..."
 & dotnet restore $tmpSln @dotnetCommon @msbuildArgs $clientBuildProperty
 if (-not $?) { throw "dotnet restore failed" }
 
-# 4) Build TFMs (parallel to align with build.sh)
-$buildThrottle = [Math]::Max(1, [Math]::Min($cpu, $TargetFrameworks.Count))
+# 4) Build TFMs sequentially to ensure net9.0 (client build) runs before net10.0
 Write-Host "3. Building solution for: $($TargetFrameworks -join ', ')"
-if ($SupportsParallel)
+foreach ($tfm in $TargetFrameworks)
 {
-    $TargetFrameworks | ForEach-Object -Parallel {
-        $tfm = $PSItem
-        Write-Host "[build] -> $tfm"
-        $sw = [System.Diagnostics.Stopwatch]::StartNew()
-        $commonArgs = $using:dotnetCommon
-        $parallelMsbuildArgs = $using:msbuildArgs
-        & dotnet build $using:tmpSln -c Release -f $tfm --no-restore @commonArgs @parallelMsbuildArgs $using:clientBuildProperty
-        if ($LASTEXITCODE -ne 0) { throw "dotnet build failed for $tfm" }
-        $sw.Stop()
-        Write-Host "[build] <- $tfm done in $([int]$sw.Elapsed.TotalSeconds)s"
-    } -ThrottleLimit $buildThrottle
-}
-else
-{
-    foreach ($tfm in $TargetFrameworks)
-    {
-        Write-Host "[build] -> $tfm"
-        $sw = [System.Diagnostics.Stopwatch]::StartNew()
-        & dotnet build $tmpSln -c Release -f $tfm --no-restore @dotnetCommon @msbuildArgs $clientBuildProperty
-        if ($LASTEXITCODE -ne 0) { throw "dotnet build failed for $tfm" }
-        $sw.Stop()
-        Write-Host "[build] <- $tfm done in $([int]$sw.Elapsed.TotalSeconds)s"
-    }
+    Write-Host "[build] -> $tfm"
+    $sw = [System.Diagnostics.Stopwatch]::StartNew()
+    & dotnet build $tmpSln -c Release -f $tfm --no-restore @dotnetCommon @msbuildArgs $clientBuildProperty
+    if ($LASTEXITCODE -ne 0) { throw "dotnet build failed for $tfm" }
+    $sw.Stop()
+    Write-Host "[build] <- $tfm done in $([int]$sw.Elapsed.TotalSeconds)s"
 }
 
 # 5) Pack primary projects (parallel where safe)

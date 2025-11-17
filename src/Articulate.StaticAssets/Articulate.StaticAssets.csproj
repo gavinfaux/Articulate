@@ -9,6 +9,7 @@
     <ClientProjectDirectory>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/../Articulate.Api.Management/Client'))</ClientProjectDirectory>
     <EnableClientBuild Condition="'$(EnableClientBuild)'=='' and '$(ENABLE_CLIENT_BUILD)'!=''">$(ENABLE_CLIENT_BUILD)</EnableClientBuild>
     <EnableClientBuild Condition="'$(EnableClientBuild)'==''">true</EnableClientBuild>
+    <ClientBuildTargetFramework Condition="'$(ClientBuildTargetFramework)'==''">net9.0</ClientBuildTargetFramework>
     <ClientAssetsCacheDir>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/../../build/ClientAssets'))</ClientAssetsCacheDir>
     <ClientBuildStamp>$(ClientAssetsCacheDir)/BackofficeClient.stamp</ClientBuildStamp>
   </PropertyGroup>
@@ -40,7 +41,7 @@
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(EnableClientBuild)'=='true'">
+  <ItemGroup Condition="'$(EnableClientBuild)'=='true' and '$(TargetFramework)'=='$(ClientBuildTargetFramework)'">
     <ClientBuildInput Include="$(ClientProjectDirectory)/pnpm-lock.yaml" />
     <ClientBuildInput Include="$(ClientProjectDirectory)/package.json" />
     <ClientBuildInput Include="$(ClientProjectDirectory)/tsconfig*.json" />
@@ -49,7 +50,7 @@
   </ItemGroup>
 
   <Target Name="BuildBackofficeClient"
-          Condition="'$(EnableClientBuild)'=='true' and Exists('$(ClientProjectDirectory)')"
+          Condition="'$(EnableClientBuild)'=='true' and '$(TargetFramework)'=='$(ClientBuildTargetFramework)' and Exists('$(ClientProjectDirectory)')"
           BeforeTargets="ResolveStaticWebAssetsInputs"
           Inputs="@(ClientBuildInput)"
           Outputs="$(ClientBuildStamp)">

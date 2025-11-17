@@ -98,7 +98,8 @@ Tips:
 ### Client build integration
 
 - **Automatic via MSBuild**: The `Articulate.StaticAssets` project orchestrates the client build through MSBuild targets. By default, `ENABLE_CLIENT_BUILD=true` (the default) runs `pnpm install && pnpm run build:release` during the build.
-- **Incremental & cached**: Client assets are cached at `build/ClientAssets/` to avoid redundant Vite runs. The first TFM (e.g., net9.0) builds the client; subsequent TFMs (e.g., net10.0) reuse the cached stamp via MSBuild's `Inputs`/`Outputs` mechanism.
+- **Sequential TFM builds**: Build scripts run TFMs sequentially (net9.0 first, net10.0 second) to ensure proper client build ordering and prevent asset hash conflicts.
+- **Incremental & cached**: Client assets are cached at `build/ClientAssets/` to avoid redundant Vite runs. Only net9.0 builds the client; net10.0 reuses the cached stamp via MSBuild's `Inputs`/`Outputs` mechanism.
 - **Skip client build**: To skip the client build (useful in CI or when assets are already built), set `ENABLE_CLIENT_BUILD=false`:
   - Windows: `set ENABLE_CLIENT_BUILD=false && build\build.ps1`
   - Linux/WSL: `ENABLE_CLIENT_BUILD=false bash build/build.sh`

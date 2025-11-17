@@ -33,7 +33,7 @@ Both `build/build.sh` (Linux/WSL) and `build/build.ps1` (Windows) use MSBuild pr
 - **`ENABLE_CLIENT_BUILD`** (environment variable):
   - Default: `true` (client build runs automatically).
   - Set to `false` to skip client build (e.g., `export ENABLE_CLIENT_BUILD=false` or `set ENABLE_CLIENT_BUILD=false`).
-  - The first TFM to run builds the client; subsequent TFMs reuse the cached stamp via MSBuild's incremental build.
+  - TFMs build sequentially: net9.0 runs first (builds client), net10.0 runs second (reuses cached stamp via MSBuild's incremental build).
 - **`MAXCPU`** (environment variable):
   - `build/build.sh` (Linux/WSL): auto-detects CPU count. Override with `export MAXCPU=<N>`.
   - `build/build.ps1` (Windows): uses all logical cores. Override with `set MAXCPU=<N>` before running.
