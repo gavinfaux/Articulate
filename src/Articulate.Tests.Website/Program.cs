@@ -1,8 +1,11 @@
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 #if DEBUG
-// Development hotload DX: Razor runtime compilation + Live Reload
-if (builder.Environment.IsDevelopment())
+const string RuntimeWatchFlag = "Articulate__WatchRclViews";
+bool enableRuntimeWatch = builder.Configuration.GetValue<bool>(RuntimeWatchFlag);
+
+// Development hotload DX: Razor runtime compilation + Live Reload (opt-in via Articulate__WatchRclViews=true)
+if (builder.Environment.IsDevelopment() && enableRuntimeWatch)
 {
     // Enable runtime compilation and wire additional file providers to watch RCL/view folders
     builder.Services
