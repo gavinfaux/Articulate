@@ -4,6 +4,7 @@ import fs, { promises as fsp } from "fs";
 import fsExtra from "fs-extra";
 
 import path from "path";
+import type { PluginContext } from "rollup";
 import { fileURLToPath } from "url";
 import { defineConfig, Plugin } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
@@ -21,7 +22,7 @@ const staticAssetsProjectRoot = path.resolve(projectRoot, "..", "Articulate.Stat
 
 const copyPublicAssetsPlugin = (): Plugin => {
   const publicDir = path.resolve(repoRoot, "src", "Articulate.Api.Management", "Client", "public");
-  const publicTargetDir = path.join(outputPath, "assets");
+  const publicTargetDir = outputPath;
 
   return {
     name: "articulate-copy-public-assets",
@@ -344,7 +345,7 @@ const staticAssetsPlugin = (): Plugin => {
       refreshBundles();
       for (const bundle of bundles) {
         for (const input of [...bundle.inputs, ...(bundle.entry ? [bundle.entry] : [])]) {
-          this.addWatchFile(input);
+          (this as PluginContext).addWatchFile?.(input);
         }
       }
 
@@ -365,7 +366,7 @@ const staticAssetsPlugin = (): Plugin => {
       refreshBundles();
       for (const bundle of bundles) {
         for (const input of [...bundle.inputs, ...(bundle.entry ? [bundle.entry] : [])]) {
-          this.addWatchFile(input);
+          (this as PluginContext).addWatchFile?.(input);
         }
       }
 
@@ -385,7 +386,8 @@ const formatEsbuildWarning = (warning: EsbuildMessage) =>
 
 const formatLightningWarning = (warning: LightningWarning) => {
   if (warning.type === "warning" && warning.loc) {
-    const { line, column, source } = warning.loc;
+    const { line, column } = warning.loc;
+    const source = (warning.loc as { source?: string }).source;
     const from = source ? `${source}:${line}:${column}` : `${line}:${column}`;
     return `${warning.message} (${from})`;
   }

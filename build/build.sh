@@ -63,15 +63,8 @@ export RestoreFallbackFolders=
 echo "Starting clean and restore process for solution: $SOLUTION_PATH"
 
 # --- 0) Clean the solution so Release/CI builds start fresh ---
-echo "0. Cleaning solution outputs..."
+echo "1. Cleaning solution outputs..."
 dotnet clean "$SOLUTION_PATH" -c Release "${DOTNET_COMMON[@]}"
-
-# --- 1) Clean problematic asset files (occasionally fixes MSB4018) ---
-# echo "1. Cleaning up NuGet caches..."
-# rm -f "$SOLUTION_ROOT/Articulate.Api.Management/obj/project.assets.json" || true
-# rm -f "$SOLUTION_ROOT/Articulate.StaticAssets/obj/project.assets.json" || true
-# rm -f "$SOLUTION_ROOT/Articulate.Web/obj/project.assets.json" || true
-# rm -f "$SOLUTION_ROOT/Articulate/obj/project.assets.json" || true
 
 # --- 2) Create a temporary slim solution excluding local demo apps (u15/u16/u17) ---
 TMP_SLN_DIR="$BUILD_FOLDER/tmp"

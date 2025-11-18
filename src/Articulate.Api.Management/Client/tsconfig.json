@@ -28,6 +28,7 @@
     "paths": {}
   },
   "include": [
-    "src/**/*.ts"
+    "src/**/*.ts",
+    "src/types/**/*.d.ts"
   ]
 }

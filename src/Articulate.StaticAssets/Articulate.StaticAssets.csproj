@@ -117,5 +117,8 @@
   <Target Name="CleanClientAssets" AfterTargets="Clean">
     <Delete Condition="Exists('$(ClientBuildStamp)')" Files="$(ClientBuildStamp)" />
     <RemoveDir Condition="Exists('$(ClientAssetsCacheDir)')" Directories="$(ClientAssetsCacheDir)" />
+    <RemoveDir Condition="Exists('$(BackofficeOutputDir)')" Directories="$(BackofficeOutputDir)" />
+    <RemoveDir Condition="Exists('$(MarkdownEditorOutputDir)')" Directories="$(MarkdownEditorOutputDir)" />
+    <RemoveDir Condition="Exists('$(ThemesOutputDir)')" Directories="$(ThemesOutputDir)" />
   </Target>
 </Project>
