@@ -13,7 +13,7 @@ This repository supports a fast inner loop for Razor views, HTML, CSS, and JS wh
 - Enable pnpm via corepack (recommended):
   - `corepack enable`
   - `corepack prepare pnpm@10.20.0 --activate`
-- Visual Studio: opening the repo offers to apply `.vsconfig`, which installs the ASP.NET workload plus .NET 9 SDK and the .NET 10 RC preview component.
+- Visual Studio: opening the repo offers to apply `.vsconfig`, which installs the ASP.NET workload plus .NET 9 SDK and the .NET 10 SDK component.
 
 ### Backend + Razor runtime compilation (same origin)
 
