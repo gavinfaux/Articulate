@@ -106,7 +106,6 @@
     <Message Text="Refreshing BackOffice Content/StaticWebAsset items to match regenerated bundles" Importance="Low" />
     <ItemGroup>
       <Content Remove="$(BackofficeOutputDir)\**\*.*" />
-      <StaticWebAsset Remove="$(BackofficeOutputDir)\**\*.*" />
     </ItemGroup>
     <ItemGroup>
       <Content Include="$(BackofficeOutputDir)\**\*.*">

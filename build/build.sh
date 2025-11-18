@@ -91,31 +91,19 @@ fi
 echo "2. Restoring solution packages in parallel (slim solution)..."
 dotnet restore "$TMP_SLN" "${DOTNET_COMMON[@]}" "${MSBUILD_PARALLEL[@]}" "$CLIENT_BUILD_PROPERTY"
 
-# --- 4) Build both TFMs in parallel to saturate CPUs ---
-echo "3. Building solution in parallel for: ${TARGET_FRAMEWORKS[*]}"
+# --- 4) Build TFMs sequentially (net9 first, then net10) to keep client build ordering deterministic ---
+echo "3. Building solution for: ${TARGET_FRAMEWORKS[*]}"
 
-build_one_tfm() {
-  local tfm="$1"
-  echo "[build] -> $tfm"
-  local t0=$(date +%s)
-  dotnet build "$TMP_SLN" -c Release -f "$tfm" --no-restore "${DOTNET_COMMON[@]}" "${MSBUILD_PARALLEL[@]}" "$CLIENT_BUILD_PROPERTY"
-  local t1=$(date +%s)
-  echo "[build] <- $tfm done in $((t1 - t0))s"
-}
-
-declare -a pids=()
 for tfm in "${TARGET_FRAMEWORKS[@]}"; do
-  build_one_tfm "$tfm" & pids+=($!)
+  echo "[build] -> $tfm"
+  t0=$(date +%s)
+  if ! dotnet build "$TMP_SLN" -c Release -f "$tfm" --no-restore "${DOTNET_COMMON[@]}" "${MSBUILD_PARALLEL[@]}" "$CLIENT_BUILD_PROPERTY"; then
+    echo "dotnet build failed for $tfm" >&2
+    exit 1
+  fi
+  t1=$(date +%s)
+  echo "[build] <- $tfm done in $((t1 - t0))s"
 done
-
-fail=0
-for pid in "${pids[@]}"; do
-  if ! wait "$pid"; then fail=1; fi
-done
-if [[ $fail -ne 0 ]]; then
-  echo "One or more TFM builds failed" >&2
-  exit 1
-fi
 
 # --- 4) Optional tests (kept disabled to optimize CI time) ---
 # for tfm in "${TARGET_FRAMEWORKS[@]}"; do
