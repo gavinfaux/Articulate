@@ -15,7 +15,8 @@ The `BuildBackofficeClient` target (in `.csproj`) runs `pnpm install && pnpm run
 
 1. Compile TypeScript backoffice client (Lit + TS).
 2. Copy static assets from `Client/public` to the build output.
-3. Write a build stamp (`build/ClientAssets/BackofficeClient.stamp`) to track completion.
+3. Write a build stamp (`build/ClientAssets/BackofficeClient.stamp`) to track completion for other TFMs.
+4. Emit a generated asset manifest (`build/ClientAssets/BackofficeClient.assets.cache`) listing every file Vite produced so MSBuild can detect when hashed filenames change.
 
 **Key behaviors:**
 
@@ -25,6 +26,7 @@ The `BuildBackofficeClient` target (in `.csproj`) runs `pnpm install && pnpm run
 - **Incremental build**: MSBuild's `Inputs`/`Outputs` mechanism ensures:
   - net9.0 runs Vite if inputs are newer than the stamp.
   - net10.0 skips Vite and reuses the cached assets.
+- **Stale-asset cleanup**: `CleanBackofficeStaticAssets` and `CleanMirroredStaticAssets` wipe the BackOffice/Markdown/Themes mirrors right before rebuild/sync, guaranteeing `ResolveStaticWebAssetsInputs` sees a fresh file list.
 - **Control via `ENABLE_CLIENT_BUILD`**: Set to `false` to skip the client build (e.g., `export ENABLE_CLIENT_BUILD=false`).
 
 ## Build
