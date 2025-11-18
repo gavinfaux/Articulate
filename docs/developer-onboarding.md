@@ -313,7 +313,7 @@ The test website is the primary environment for developing and debugging the Art
 ### Supported SDK & Umbraco versions
 
 - Install `.NET 9.0.100` plus the `.NET 10` (`10.0.0`) SDK so both TFMs build locally; Visual Studio uses the repo `global.json` to enforce the baseline 9.0 SDK while roll-forward keeps the release available for `net10`.
-- The `net10.0` TFM targets Umbraco 17 RC1 (`17.0.0-rc1`), while `net9.0` covers Umbraco 15.4.4+ / 16 via the NuGet version ranges defined in `Directory.Build.props`.
+- The `net10.0` TFM targets Umbraco 17 RC2 (`17.0.0-rc2`), while `net9.0` covers Umbraco 15.4.4+ / 16 via the NuGet version ranges defined in `Directory.Build.props`.
 
 ### AI/LLM Content Negotiation & Caching
 

@@ -31,7 +31,7 @@ _Need help?_ Head over to [Articulate on GitHub](https://github.com/Shazwazza/Ar
 
 ### Umbraco 15.4.4+ / 16 / 17 (current track)
 
-Articulate 6 targets Umbraco 15.4.4+, 16, and 17 RC1 (`17.0.0-rc1`) via a multi-targeted Razor Class Library.
+Articulate 6 targets Umbraco 15.4.4+, 16, and 17 RC2 (`17.0.0-rc2`) via a multi-targeted Razor Class Library.
 
 - Install `Articulate` from NuGet (`dotnet add package Articulate`). The package now ships a transitive dependency on `Articulate.StaticAssets`, so the `/App_Plugins/Articulate/**` files light up automatically-no extra package references or manual copies required.
 - When building from source, run the test site `dotnet run -f net9.0 --project src/Articulate.Tests.Website/Articulate.Tests.Website.csproj` (or `-f net10.0` for Umbraco 17) and sign into the Umbraco backoffice to finish setup.
@@ -72,7 +72,7 @@ Note: the legacy front-end "Markdown Editor" route `/a-new` does not expose an e
 ## Minimum requirements
 
 - Articulate 5.x (maintenance): Umbraco 13 LTS (security support through Dec 2025, EOL Dec 2026)
-- Articulate 6.x (current): Umbraco 15.4.4+ and 16 on .NET 9; Umbraco 17 RC1 (`17.0.0-rc1`) on .NET 10 previews
+- Articulate 6.x (current): Umbraco 15.4.4+ and 16 on .NET 9; Umbraco 17 RC2 (`17.0.0-rc2`) on .NET 10 previews
 
 ## [Documentation](https://github.com/Shazwazza/Articulate/wiki)
 

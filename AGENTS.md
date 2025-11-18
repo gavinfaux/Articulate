@@ -9,7 +9,7 @@ This guide supports automation agents and human contributors working in the Arti
 - `src/Articulate.Api.Management/` - management API; backoffice client in `Client/` (Vite + TypeScript).
 - `src/Articulate.UnitTests/` - xUnit test suites.
 - `src/Articulate.Tests.Website/` - demo site for local validation.
-- Projects target `net9.0;net10.0` (Umbraco 15/16 on net9, Umbraco 17 on net10). Use `-f net9.0` / `-f net10.0` with `dotnet` commands when testing specific TFMs. Package ranges: net9.0 -> `[15.4.4,17.0.0)`, net10.0 -> `[17.0.0-rc1,18.0.0)`. SDKs: .NET 9.0.100 and .NET 10 (`10.0.0`).
+- Projects target `net9.0;net10.0` (Umbraco 15/16 on net9, Umbraco 17 on net10). Use `-f net9.0` / `-f net10.0` with `dotnet` commands when testing specific TFMs. Package ranges: net9.0 -> `[15.4.4,17.0.0)`, net10.0 -> `[17.0.0-rc2,18.0.0)`. SDKs: .NET 9.0.100 and .NET 10 (`10.0.0`).
 
 ## Build, Test, and Development Commands
 

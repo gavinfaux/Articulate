@@ -58,7 +58,7 @@ namespace Articulate.ImportExport
                     body = MarkdownHelper.ToHtml(post.GetValue<string>("markdown"));
                 }
 
-                var publishedDate = post.GetValue<DateTime>("publishedDate");
+                DateTime publishedDate = post.GetValue<DateTime>("publishedDate");
                 if (publishedDate == default)
                 {
                     publishedDate = post.CreateDate;
