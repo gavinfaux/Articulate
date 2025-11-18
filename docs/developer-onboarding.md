@@ -151,7 +151,7 @@ This file, located in `src/Articulate.Api.Management/Client/public`, is the mode
 
 If `pnpm run build` fails during `dotnet build`, make sure the client dependencies are installed locally:
 
-1. From `src/Articulate.Api.Management/Client`, run `pnpm install` (ensure pnpm 10.17+ is available via corepack or manual install).
+1. From `src/Articulate.Api.Management/Client`, run `pnpm install` (ensure pnpm 10.20+ is available via corepack or manual install).
 2. Retry `pnpm run build` (or `pnpm run build:release`); Vite should complete without errors.
 3. If build output looks stale, remove `node_modules/` and rerun `pnpm install`.
 4. When in doubt, clear `node_modules/`, `pnpm-lock.yaml`, and rerun `pnpm install`.

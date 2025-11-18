@@ -40,7 +40,7 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 10
+          version: 10.20
           run_install: false
 
       - name: Setup NodeJS
@@ -78,8 +78,7 @@ jobs:
         with:
           dotnet-version: |
             9.0.100
-            10.0.100-rc.2.25502.107
-          include-prerelease: true
+            10.0.100
 
       - name: Run build pipeline script
         run: bash ./build/build.sh

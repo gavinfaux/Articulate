@@ -10,7 +10,7 @@ REPO_ROOT="$(cd "$(dirname -- "$0")/.." && pwd)"
 CLIENT_DIR="$REPO_ROOT/src/Articulate.Api.Management/Client"
 
 if ! command -v pnpm >/dev/null 2>&1; then
-  echo "pnpm is required for the pre-commit checks (install pnpm 10.17+)." >&2
+  echo "pnpm is required for the pre-commit checks (install pnpm 10.20+)." >&2
   exit 1
 fi
 

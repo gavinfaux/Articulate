@@ -4,10 +4,10 @@ Scope: applies to `src/Articulate.Api.Management/Client/**`.
 
 ## Environment
 
-- Node 22 (`.nvmrc`), pnpm 10.17+. Quick start:
+- Node 22 (`.nvmrc`), pnpm 10.20+. Quick start:
   - `nvm use` (default)
   - already on `fnm`? `fnm use` works too
-  - `corepack enable && corepack prepare pnpm@10.17.0 --activate`
+  - `corepack enable && corepack prepare pnpm@10.20.0 --activate`
 
 ## Commands
 

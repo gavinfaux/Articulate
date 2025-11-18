@@ -129,13 +129,13 @@ See docs/development-dx.md for details and tips.
 
 ### Development prerequisites
 
-- The backoffice client (Lit + TypeScript) uses pnpm. Install Node 22+ and pnpm 10.17+ before building.
+- The backoffice client (Lit + TypeScript) uses pnpm. Install Node 22+ and pnpm 10.20+ before building.
 - .NET SDKs: install .NET 9.0.100 and .NET 10 (`10.0.0`) so you can target both TFMs locally. The `global.json` ensures `9.0.100` is used while allowing roll-forward for .NET 10.
 - Node version managers:
   - The repo includes `.nvmrc` (Node 22); use `nvm` for the default flow (`nvm use`).
   - Prefer to stick with `nvm` so docs/scripts match expectations, but `fnm` (Fast Node Manager) remains a compatible alternative if you already use it.
   - `fnm` quickstart (optional): `curl -fsSL https://fnm.vercel.app/install | bash`, restart shell, then run `fnm use` in the repo root (respects `.nvmrc`).
-- Enable pnpm: `corepack enable && corepack prepare pnpm@10.17.0 --activate`.
+- Enable pnpm: `corepack enable && corepack prepare pnpm@10.20.0 --activate`.
 - Corepack users should run `corepack enable` / `corepack prepare pnpm@<version>` manually prior to invoking the build. The repository no longer bootstraps pnpm automatically.
 - CI installs pnpm using `pnpm/action-setup`; no extra steps required there.
 - Build scripts and Husky hooks call pnpm when client assets need rebuilding; ensure pnpm is available on your PATH so `build/build.ps1` and the pre-commit hook can run the client build.
