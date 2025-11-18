@@ -63,17 +63,22 @@ dotnet --version
 
 Write-Host "Starting clean and restore process for solution: $SolutionPath"
 
+# 0) Clean the solution to ensure release/CI builds start from a fresh slate
+Write-Host "0. Cleaning solution outputs..."
+& dotnet clean $SolutionPath -c Release @dotnetCommon
+if (-not $?) { throw "dotnet clean failed" }
+
 # 1) Clean problematic project.assets.json files (occasionally fixes MSB4018)
-Write-Host "1. Cleaning up NuGet caches..."
-@(
-    "Articulate.Api.Management",
-    "Articulate.StaticAssets",
-    "Articulate.Web",
-    "Articulate"
-) | ForEach-Object {
-    $p = Join-Path $SolutionRoot -ChildPath "$_/obj/project.assets.json"
-    if (Test-Path $p) { Remove-Item $p -Force -ErrorAction SilentlyContinue }
-}
+# Write-Host "1. Cleaning up NuGet caches..."
+# @(
+#     "Articulate.Api.Management",
+#     "Articulate.StaticAssets",
+#     "Articulate.Web",
+#     "Articulate"
+# ) | ForEach-Object {
+#    $p = Join-Path $SolutionRoot -ChildPath "$_/obj/project.assets.json"
+#    if (Test-Path $p) { Remove-Item $p -Force -ErrorAction SilentlyContinue }
+# }
 
 # 2) Create a slim solution excluding demo projects that depend on local packages (u15/u16/u17)
 $tmpSln = Join-Path $TmpFolder -ChildPath "Articulate.Packable.sln"

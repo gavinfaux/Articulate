@@ -111,6 +111,8 @@ Tips:
 
 For up-to-date build/pack flags and cross-platform notes, see `AGENTS.md` -> "Build, Test, and Development Commands". The script behavior (parallelism, `ENABLE_CLIENT_BUILD`, WSL tips) is maintained there to avoid duplication.
 
+Note: Build scripts (`pwsh build/build.ps1` (Windows) or `bash build/build.sh` (Linux/WSL)) mirror the CI pipeline: they clean the solution, restore, build net9/net10 sequentially, and pack the NuGet artifacts into `build/Release/`.
+
 ### Cross-platform local workflow (dual clone)
 
 Refer to `AGENTS.md` -> "Cross-platform workflow (WSL + Windows)" for the canonical dual-clone guidance. This DX doc keeps the focus on hot-reload/HMR flows.
