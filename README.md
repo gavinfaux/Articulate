@@ -78,7 +78,7 @@ Note: the legacy front-end "Markdown Editor" route `/a-new` does not expose an e
 
 Docs on installation, creating posts, customizing/creating themes, etc...
 
-## [Issues](https://github.com/Shandem/Articulate/issues)
+## [Issues](https://github.com/Shazwazza/Articulate/issues)
 
 If you have any issues, please post them here on GitHub
 

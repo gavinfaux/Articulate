@@ -43,7 +43,7 @@ Docs on installation, creating posts, customizing/creating themes, etc...
 
 Please post to this Umbraco discussions forum to discuss Articulate, it's features and functionality. Do not post issues here; file them via the [Articulate GitHub issues list](https://github.com/Shazwazza/Articulate/issues)
 
-## [Issues](https://github.com/Shandem/Articulate/issues)
+## [Issues](https://github.com/Shazwazza/Articulate/issues)
 
 If you have any issues, please post them here on GitHub
 
