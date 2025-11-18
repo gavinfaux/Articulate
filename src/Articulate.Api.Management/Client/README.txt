@@ -12,7 +12,7 @@
                                                                                         
 
 == Requirements ==
-* Node LTS Version 22+
+* Node LTS Version 24+
 * Use a tool such as NVM (Node Version Manager) for your OS to help manage multiple versions of Node
 
 == Node Version Manager tools ==

@@ -103,7 +103,7 @@ See here for the list of releases and their release notes
 
 Razor Class Library changes are picked up via runtime compilation (manual browser refresh) and client code uses Vite HMR through the test site (see the Developer Experience section below).
 
-> **New:** Commits now run automated checks. Husky + lint-staged lint any staged TypeScript files and rebuild the client bundle when `Client/src/**` changes. GitLeaks also scans staged content for secrets via the official GitHub Action in CI. Install pnpm (Node 22+) and the [GitLeaks CLI](https://github.com/gitleaks/gitleaks/releases) locally so hooks and the `.ps1`/`.sh` builds can run `gitleaks detect --redact` outside CI. Set `SKIP_GITLEAKS=1` if you need to skip the local scan temporarily (for example, when the CLI is unavailable in a sandbox).
+> **New:** Commits now run automated checks. Husky + lint-staged lint any staged TypeScript files and rebuild the client bundle when `Client/src/**` changes. GitLeaks also scans staged content for secrets via the official GitHub Action in CI. Install pnpm (Node 24+) and the [GitLeaks CLI](https://github.com/gitleaks/gitleaks/releases) locally so hooks and the `.ps1`/`.sh` builds can run `gitleaks detect --redact` outside CI. Set `SKIP_GITLEAKS=1` if you need to skip the local scan temporarily (for example, when the CLI is unavailable in a sandbox).
 
 ### Developer Experience (runtime compilation + HMR)
 
@@ -129,10 +129,10 @@ See docs/development-dx.md for details and tips.
 
 ### Development prerequisites
 
-- The backoffice client (Lit + TypeScript) uses pnpm. Install Node 22+ and pnpm 10.20+ before building.
+- The backoffice client (Lit + TypeScript) uses pnpm. Install Node 24+ and pnpm 10.20+ before building.
 - .NET SDKs: install .NET 9.0.100 and .NET 10 (`10.0.0`) so you can target both TFMs locally. The `global.json` ensures `9.0.100` is used while allowing roll-forward for .NET 10.
 - Node version managers:
-  - The repo includes `.nvmrc` (Node 22); use `nvm` for the default flow (`nvm use`).
+  - The repo includes `.nvmrc` (Node 24); use `nvm` for the default flow (`nvm use`).
   - Prefer to stick with `nvm` so docs/scripts match expectations, but `fnm` (Fast Node Manager) remains a compatible alternative if you already use it.
   - `fnm` quickstart (optional): `curl -fsSL https://fnm.vercel.app/install | bash`, restart shell, then run `fnm use` in the repo root (respects `.nvmrc`).
 - Enable pnpm: `corepack enable && corepack prepare pnpm@10.20.0 --activate`.
@@ -149,7 +149,7 @@ See docs/development-dx.md for details and tips.
   - `Microsoft.VisualStudio.Workload.NetWeb`
   - `Microsoft.NetCore.Component.SDK.9.0`
   - `Microsoft.NetCore.Component.SDK.Preview`
-  Opening the folder in VS 2022/next prompts to install those components, ensuring .NET 9 is present and preview SDKs are available when you opt in.
+  Opening the folder in VS 2024/next prompts to install those components, ensuring .NET 9 is present and preview SDKs are available when you opt in.
 
 ### Build & Pack (multi-target .NET 9/10)
 

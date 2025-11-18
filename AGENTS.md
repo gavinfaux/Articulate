@@ -61,12 +61,12 @@ Both `build/build.sh` (Linux/WSL) and `build/build.ps1` (Windows) use MSBuild pr
 
 ## Security & Configuration Tips
 
-- Toolchains: `.nvmrc` -> Node 22 (`nvm use`), pnpm 10.20+, `global.json` pins .NET 9.0.100 with roll-forward.
+- Toolchains: `.nvmrc` -> Node 24 (`nvm use`), pnpm 10.20+, `global.json` pins .NET 9.0.100 with roll-forward.
 - Frontend bundles: Vite emits theme assets to `Themes/*/dist/` and Markdown editor to `MarkdownEditor/dist/`. In Production, Razor uses environment tag helpers with `asp-append-version`. Run `pnpm run build` before packaging/deploying.
 
 ### Node version managers (nvm vs fnm)
 
-- The repo includes `.nvmrc` (Node 22). Stick with `nvm` for the default workflow so docs/scripts match expectations.
+- The repo includes `.nvmrc` (Node 24). Stick with `nvm` for the default workflow so docs/scripts match expectations.
 - Already on `fnm` (Fast Node Manager)? It's compatible; just run `fnm use` in the repo root.
 - Example with `fnm` (optional):
   - Install: `curl -fsSL https://fnm.vercel.app/install | bash`

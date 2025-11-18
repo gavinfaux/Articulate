@@ -33,7 +33,7 @@ To improve modularity and maintainability, the single Articulate package from v5
 
 - **Umbraco Version**: Requires Umbraco 15.2.3+ (previously 10.1.0).
 - **.NET Version**: Requires .NET 9.0 (previously .NET 6.0/7.0/8.0).
-- **Node.js**: A new requirement for client-side development is Node.js ≥22 and pnpm ≥10.20.0.
+- **Node.js**: A new requirement for client-side development is Node.js ≥24 and pnpm ≥10.20.0.
 
 ### Package & API Changes
 

@@ -5,9 +5,9 @@ This repository supports a fast inner loop for Razor views, HTML, CSS, and JS wh
 ## Prerequisites
 
 - .NET 9.0.100 and .NET 10 (`10.0.0`) SDKs
-- Node 22+ and pnpm 10.20+
+- Node 24+ and pnpm 10.20+
 - Node version manager:
-  - The repo includes `.nvmrc` (Node 22); run `nvm use` for the standard flow so scripts/docs align.
+  - The repo includes `.nvmrc` (Node 24); run `nvm use` for the standard flow so scripts/docs align.
   - Already using `fnm` (Fast Node Manager)? It remains compatible; just run `fnm use` in the repo root.
   - `fnm` quickstart (optional): `curl -fsSL https://fnm.vercel.app/install | bash`, restart shell, then run `fnm use` in the repo root.
 - Enable pnpm via corepack (recommended):
