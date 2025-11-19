@@ -57,6 +57,14 @@ document.addEventListener("alpine:init", () => {
       );
     },
 
+    get errorTitle() {
+      if (!this.errorDetails || !this.errorDetails.title) {
+        return "";
+      }
+
+      return this.errorDetails.title.toString().trim();
+    },
+
     get isNotLoading() {
       return !this.isLoading;
     },
@@ -182,6 +190,14 @@ document.addEventListener("alpine:init", () => {
 
     get showHeader() {
       return !this.isLoginContext;
+    },
+
+    get hasRetryAction() {
+      return typeof this.retryAction === "function";
+    },
+
+    get isRetryDisabled() {
+      return this.isLoading || !this.hasRetryAction;
     },
 
     get canShowNextButton() {

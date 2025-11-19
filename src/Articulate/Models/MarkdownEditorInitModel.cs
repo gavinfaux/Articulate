@@ -21,5 +21,7 @@ namespace Articulate.Models
         public int? BackOfficeUserId { get; set; }
 
         public bool HasRequiredPermissions { get; set; }
+
+        public string? PostLogoutRedirectUrl { get; set; }
     }
 }

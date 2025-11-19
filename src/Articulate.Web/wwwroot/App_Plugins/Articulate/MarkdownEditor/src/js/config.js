@@ -33,6 +33,7 @@ const config = {
     articulateBlogNode: null,
     isBackOfficeLoggedIn: false,
     debugLayout: false,
+    postLogoutRedirectUrl: null,
 
     // Static OAuth parameters
     oauth: {
@@ -56,7 +57,18 @@ const config = {
  * @param {DOMStringMap} dataset The dataset from the document body.
  */
 function initConfig(dataset) {
-    const { authUrl, authEndUrl, tokenUrl, currentUserUrl, editorPostUrl, articulateBlogNode, oauthClientId, backofficeLoggedIn, debugLayout } = dataset;
+    const {
+        authUrl,
+        authEndUrl,
+        tokenUrl,
+        currentUserUrl,
+        editorPostUrl,
+        articulateBlogNode,
+        oauthClientId,
+        backofficeLoggedIn,
+        debugLayout,
+        postLogoutRedirect
+    } = dataset;
 
     if (!authUrl || !editorPostUrl || !currentUserUrl || !tokenUrl || !authEndUrl || !articulateBlogNode || typeof backofficeLoggedIn === "undefined") {
         console.error("CRITICAL: One or more dataset values missing. The application cannot function.");
@@ -81,6 +93,13 @@ function initConfig(dataset) {
     if (typeof debugLayout === "string") {
         const normalized = debugLayout.trim().toLowerCase();
         config.debugLayout = normalized === "true" || normalized === "1";
+    }
+
+    if (typeof postLogoutRedirect === "string") {
+        const trimmedRedirect = postLogoutRedirect.trim();
+        config.postLogoutRedirectUrl = trimmedRedirect.length ? trimmedRedirect : null;
+    } else {
+        config.postLogoutRedirectUrl = null;
     }
 
     config.oauth.clientId = trimmedClientId;

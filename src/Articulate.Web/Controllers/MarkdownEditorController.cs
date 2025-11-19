@@ -89,6 +89,13 @@ namespace Articulate.Web.Controllers
                 clientId = string.Empty;
             }
 
+            string? postLogoutRedirect = openIdClientOptions.PostLogoutRedirectUris
+                .FirstOrDefault(uri => Uri.TryCreate(uri, UriKind.Absolute, out _));
+            if (postLogoutRedirect is null && openIdClientOptions.PostLogoutRedirectUris.Count > 0)
+            {
+                logger.LogWarning("Configured post-logout redirect URIs for Articulate are not absolute. The Markdown editor will fall back to the site origin after sign-out.");
+            }
+
             var vm = new MarkdownEditorInitModel
             {
                 ArticulateBlogNode = CurrentPage.Id,
@@ -98,6 +105,7 @@ namespace Articulate.Web.Controllers
                 BackOfficeUserName = currentUser?.Name,
                 BackOfficeUserId = currentUser?.Id,
                 HasRequiredPermissions = hasRequiredPermissions,
+                PostLogoutRedirectUrl = postLogoutRedirect,
             };
 
             return RenderView(vm);
