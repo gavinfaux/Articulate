@@ -101,6 +101,8 @@ See here for the list of releases and their release notes
    (`-f net10.0` when validating Umbraco 17).
 1. Complete the Umbraco installer and sign in; migrations seed the Articulate schema and demo content automatically.
 
+> **Local URL reminder:** The test site defaults to IIS Express `https://localhost:44366` when launched from Visual Studio, and to Kestrel `https://localhost:5001` when run via `dotnet run` (or VS Code). Keep the corresponding values in `appsettings*.json` (e.g., `UmbracoApplicationUrl`, backoffice host, OAuth redirect URIs) aligned with whichever port you use.
+
 Razor Class Library changes are picked up via runtime compilation (manual browser refresh) and client code uses Vite HMR through the test site (see the Developer Experience section below).
 
 > **New:** Commits now run automated checks. Husky + lint-staged lint any staged TypeScript files and rebuild the client bundle when `Client/src/**` changes. GitLeaks also scans staged content for secrets via the official GitHub Action in CI. Install pnpm (Node 24+) and the [GitLeaks CLI](https://github.com/gitleaks/gitleaks/releases) locally so hooks and the `.ps1`/`.sh` builds can run `gitleaks detect --redact` outside CI. Set `SKIP_GITLEAKS=1` if you need to skip the local scan temporarily (for example, when the CLI is unavailable in a sandbox).
