@@ -4,8 +4,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using OpenIddict.Abstractions;
+using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.Events;
 using Umbraco.Cms.Core.Notifications;
+using Umbraco.Cms.Core.Services;
 
 namespace Articulate.Api.Management.Services
 {
@@ -15,6 +17,7 @@ namespace Articulate.Api.Management.Services
     internal sealed class ArticulateApplicationManager(
         IServiceScopeFactory scopeFactory,
         IOptions<ArticulateOpenIdClientOptions> options,
+        IRuntimeState runtimeState,
         ILogger<ArticulateApplicationManager> logger) :
 #if NET10_0_OR_GREATER
         INotificationAsyncHandler<UmbracoApplicationStartedNotification>
@@ -25,6 +28,7 @@ namespace Articulate.Api.Management.Services
         private readonly IServiceScopeFactory _scopeFactory = scopeFactory;
         private readonly IOptions<ArticulateOpenIdClientOptions> _options = options;
         private readonly ILogger<ArticulateApplicationManager> _logger = logger;
+        private readonly IRuntimeState _runtimeState = runtimeState;
 
 #if NET10_0_OR_GREATER
         /// <inheritdoc />
@@ -39,6 +43,18 @@ namespace Articulate.Api.Management.Services
         private async Task EnsureOpenIdClientAsync(CancellationToken cancellationToken)
         {
             ArticulateOpenIdClientOptions settings = _options.Value;
+
+            if (_runtimeState.Level == RuntimeLevel.Install)
+            {
+                _logger.LogInformation("Skipping Articulate OpenId client registration: Umbraco installer is running.");
+                return;
+            }
+
+            if (_runtimeState.Level < RuntimeLevel.Run)
+            {
+                _logger.LogDebug("Skipping Articulate OpenId client registration: runtime level '{Level}' is below Run.", _runtimeState.Level);
+                return;
+            }
 
             if (!settings.Enabled)
             {
