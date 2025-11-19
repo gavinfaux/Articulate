@@ -44,8 +44,8 @@ namespace Articulate.Syndication
             var rootUri = new Uri(rootUrl);
             var mediaRoot = rootUri.GetLeftPart(UriPartial.Authority) + appPath.EnsureStartsWith('/').TrimEnd('/');
 
-            var content = RssFeedGeneratorRegexes.RelativeMediaHrefRegex().Replace(GetPostContent(post), match => match.Groups.Count == 2 ? $" href=\"{rootUrl.TrimEnd('/')}{match.Groups[1].Value.EnsureStartsWith('/')}\"" : string.Empty);
-            content = RssFeedGeneratorRegexes.RelativeMediaSrcRegex().Replace(content, match => match.Groups.Count == 2 ? $" src=\"{mediaRoot}{match.Groups[1].Value.EnsureStartsWith('/')}\"" : string.Empty);
+            var content = RssFeedGeneratorRegexes.RelativeMediaHrefRegex().Replace(GetPostContent(post), match => match.Groups.Count == 2 ? $" href=\"{rootUrl.TrimEnd('/')}{match.Groups[1].Value.EnsureStartsWith('/')}\"" : match.Value);
+            content = RssFeedGeneratorRegexes.RelativeMediaSrcRegex().Replace(content, match => match.Groups.Count == 2 ? $" src=\"{mediaRoot}{match.Groups[1].Value.EnsureStartsWith('/')}\"" : match.Value);
 
             var item = new SyndicationItem(
                 post.Name,
