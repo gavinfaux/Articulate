@@ -358,14 +358,19 @@ document.addEventListener("alpine:init", () => {
         return;
       }
 
-      if (this.editorInstance && this.editorInstance.textarea === textarea) {
-        if (
-          typeof this.editorInstance.getContent === "function" &&
-          this.post.body !== this.editorInstance.getContent()
-        ) {
-          this.editorInstance.setContent(this.post.body ?? "");
+      if (this.editorInstance) {
+        if (this.editorInstance.textarea === textarea) {
+          if (
+            typeof this.editorInstance.getContent === "function" &&
+            this.post.body !== this.editorInstance.getContent()
+          ) {
+            this.editorInstance.setContent(this.post.body ?? "");
+          }
+          return;
         }
-        return;
+
+        // Stale instance on different element? Destroy it.
+        this.destroyEditor();
       }
 
       this.editorInstance = new tinyMde.Editor({
@@ -511,6 +516,14 @@ document.addEventListener("alpine:init", () => {
           bodyLength: this.post.body?.length ?? 0,
         });
 
+        // Filter fileMap to only include files actually referenced in the markdown body
+        const bodyText = this.post.body || "";
+        for (const token of this.fileMap.keys()) {
+          if (!bodyText.includes(token)) {
+            this.fileMap.delete(token);
+          }
+        }
+
         const result = await apiService.createPost(this.post, this.fileMap);
         // On success, display url
         if (result.url) {
@@ -545,6 +558,7 @@ document.addEventListener("alpine:init", () => {
               label: "Sign in again",
             });
           } else {
+            // Retry using current context
             this.scheduleRetry(() => this.handlePublish());
           }
         }
