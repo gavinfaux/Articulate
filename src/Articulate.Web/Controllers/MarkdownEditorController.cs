@@ -60,6 +60,11 @@ namespace Articulate.Web.Controllers
             {
                 string[] requiredPermissions = [ActionNew.ActionLetter, ActionPublish.ActionLetter];
                 hasRequiredPermissions = backOfficeAuthService.HasPermissions(currentUser, archive, requiredPermissions);
+
+                if (!hasRequiredPermissions)
+                {
+                    return Forbid();
+                }
             }
 
             IReadOnlyDictionary<string, string>? managementApiUrls = apiDescriptionProvider.ManagementApiUrlMap([
@@ -112,6 +117,8 @@ namespace Articulate.Web.Controllers
 
             IActionResult RenderView(MarkdownEditorInitModel model)
             {
+                // We restrict camera access to the same origin (self) for security.
+                // If the editor is hosted on a CDN or different origin, this policy may need to be adjusted (e.g. 'camera=*' or specific origins).
                 Response.Headers["Permissions-Policy"] = "camera=(self)";
                 return View("MarkdownEditor", model);
             }
