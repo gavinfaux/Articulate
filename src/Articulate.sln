@@ -33,14 +33,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Articulate.Tests.Website", "Articulate.Tests.Website\Articulate.Tests.Website.csproj", "{C33B50A7-85F4-4A59-A1C6-5B860DEEFAE3}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Articulate.Api.Management", "Articulate.Api.Management\Articulate.Api.Management.csproj", "{B95BDC71-52B3-48F8-A2FD-1B0CFC14CEA5}"
-	ProjectSection(ProjectDependencies) = postProject
-		{83EBC079-D5F1-4697-B342-9BD4129CBDE5} = {83EBC079-D5F1-4697-B342-9BD4129CBDE5}
-	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Articulate.Web", "Articulate.Web\Articulate.Web.csproj", "{151A74D4-597F-42B4-BFDC-11635E44144C}"
-	ProjectSection(ProjectDependencies) = postProject
-		{83EBC079-D5F1-4697-B342-9BD4129CBDE5} = {83EBC079-D5F1-4697-B342-9BD4129CBDE5}
-	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Articulate.UnitTests", "Articulate.UnitTests\Articulate.UnitTests.csproj", "{CB92F83B-4F4D-44B6-3FBE-F8E7784D704C}"
 EndProject

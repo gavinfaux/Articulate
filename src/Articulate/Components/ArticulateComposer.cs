@@ -41,7 +41,7 @@ namespace Articulate.Components
             _ = services.AddTransient<IArticulateThemeResolver, ArticulateThemeResolver>();
             _ = services.AddScoped<BackOfficeAuthService>();
 
-            // Register DI-driven view location provider and configure Razor view engine without BuildServiceProvider
+            // Register DI-driven view location provider and configure Razor view engine with provider
             _ = services.AddSingleton<IArticulateViewLocationProvider, DefaultArticulateViewLocationProvider>();
             _ = services.Configure<RazorViewEngineOptions>(options =>
             {

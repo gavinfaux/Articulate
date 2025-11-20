@@ -110,8 +110,6 @@ namespace Articulate.Routing
                         {
                             MapRssRoute(httpContext, rootNodePath, articulateRootNode, domains);
 
-                            // Legacy front-end editor route: temporarily mapped to a redirect controller
-                            // (temporary 302 to blog home). Keep until backoffice-only flow is fully documented.
                             MapMarkdownEditorRoute(httpContext, rootNodePath, articulateRootNode, domains);
                             MapAuthorsRssRoute(httpContext, rootNodePath, articulateRootNode, domains);
 

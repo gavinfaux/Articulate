@@ -62,9 +62,6 @@
     <None Include="Properties\launchSettings.json" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="wwwroot" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\Articulate.StaticAssets\Articulate.StaticAssets.csproj" />
   </ItemGroup>
 </Project>

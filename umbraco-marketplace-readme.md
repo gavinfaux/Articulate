@@ -28,7 +28,7 @@ Supporting all the features you'd want in a blogging platform
 ## Minimum requirements
 
 * **Umbraco 13 LTS (maintenance)** - Articulate 5.x (security support until Dec 2025, EOL Dec 2026)
-* **Umbraco 15.4.4+ / 16 / 17 (current)** - Articulate 6.x multi-targets `net9.0;net10.0` (Umbraco 15/16 on .NET 9, Umbraco 17 RC on .NET 10 previews)
+* **Umbraco 15.4.4+ / 16 / 17 (current)** - Articulate 6.x multi-targets `net9.0;net10.0` (Umbraco 15/16 on .NET 9, Umbraco 17 RC on .NET 10)
 
 ## Installation notes
 
@@ -54,12 +54,12 @@ See here for the list of releases and their release notes
 ## Contributing
 
 1. Clone/fork the repository and open `src/Articulate.sln` in Visual Studio or Rider.
-1. Build once to restore NuGet packages. For the backoffice client, run `pnpm install` inside `src/Articulate.Api.Management/Client`.
-1. Use the development site for day-to-day testing:  
+2. Build once to restore NuGet packages. For the backoffice client, run `pnpm install` inside `src/Articulate.Api.Management/Client`.
+3. Use the development site for day-to-day testing:  
    `dotnet run -f net9.0 --project src/Articulate.Tests.Website/Articulate.Tests.Website.csproj`  
    (`-f net10.0` when validating Umbraco 17). Complete the Umbraco installer; migrations seed the Articulate schema and demo content automatically.
-1. When editing the Vite client, run `pnpm run dev` (or `pnpm run build` / `pnpm run build:release` to refresh the `dist/` assets that ship inside the package).
-1. Use `pwsh build/build.ps1` (Windows) or `bash build/build.sh` (Linux/WSL) to reproduce the release build: the scripts restore, build `net9.0/net10.0`, and pack the `Articulate`, `Articulate.Core`, `Articulate.Api.Management`, and `Articulate.StaticAssets` NuGet packages into `build/Release/`.
+4. When editing the Vite client, run `pnpm run dev` (or `pnpm run build` / `pnpm run build:release` to refresh the `dist/` assets that ship inside the package).
+5. Use `pwsh build/build.ps1` (Windows) or `bash build/build.sh` (Linux/WSL) to reproduce the release build: the scripts restore, build `net9.0/net10.0`, and pack the `Articulate`, `Articulate.Core`, `Articulate.Api.Management`, and `Articulate.StaticAssets` NuGet packages into `build/Release/`.
 
 Now you're all set! Edit code, rebuild, and refresh the test site to validate changes end-to-end.
 
