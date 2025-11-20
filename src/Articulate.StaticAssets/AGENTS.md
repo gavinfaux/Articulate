@@ -27,7 +27,7 @@ The `BuildBackofficeClient` target (in `.csproj`) runs `pnpm install && pnpm run
   - net9.0 runs Vite if inputs are newer than the stamp.
   - net10.0 skips Vite and reuses the cached assets.
 - **Stale-asset cleanup**: `CleanBackofficeStaticAssets` and `CleanMirroredStaticAssets` wipe the BackOffice/Markdown/Themes mirrors right before rebuild/sync, guaranteeing `ResolveStaticWebAssetsInputs` sees a fresh file list.
-- **Control via `ENABLE_CLIENT_BUILD`**: Set to `false` to skip the client build (e.g., `export ENABLE_CLIENT_BUILD=false`).
+- **Control via `ENABLE_CLIENT_BUILD`**: Leave unset/`false` locally to reuse existing assets; set to `true` (e.g., `export ENABLE_CLIENT_BUILD=true`) to run the pnpm build. CI sets it to `true` automatically.
 
 ## Build
 

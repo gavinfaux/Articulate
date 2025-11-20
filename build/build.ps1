@@ -40,7 +40,15 @@ if ($env:MAXCPU -and ($env:MAXCPU -as [int]) -gt 0) {
     $cpu = [int]$env:MAXCPU
 }
 $msbuildArgs = @("-m", "-maxcpucount:$cpu", "-p:BuildInParallel=true", "-p:RestoreUseStaticGraphEvaluation=true")
-$clientBuildValue = if ([string]::IsNullOrEmpty($env:ENABLE_CLIENT_BUILD)) { 'true' } else { $env:ENABLE_CLIENT_BUILD }
+$runningInCi = ($env:CI -eq 'true') -or ($env:GITHUB_ACTIONS -eq 'true')
+if ([string]::IsNullOrEmpty($env:ENABLE_CLIENT_BUILD))
+{
+    $clientBuildValue = if ($runningInCi) { 'true' } else { 'false' }
+}
+else
+{
+    $clientBuildValue = $env:ENABLE_CLIENT_BUILD
+}
 $clientBuildProperty = "-p:EnableClientBuild=$clientBuildValue"
 $dotnetCommon = @("-v", "minimal")
 
@@ -65,7 +73,7 @@ Write-Host "Starting clean and restore process for solution: $SolutionPath"
 
 # 0) Clean the solution to ensure release/CI builds start from a fresh slate
 Write-Host "1. Cleaning solution outputs..."
-& dotnet clean $SolutionPath -c Release @dotnetCommon
+& dotnet clean $SolutionPath -c Release @dotnetCommon $clientBuildProperty
 if (-not $?) { throw "dotnet clean failed" }
 
 # 2) Create a slim solution excluding demo projects that depend on local packages (u15/u16/u17)

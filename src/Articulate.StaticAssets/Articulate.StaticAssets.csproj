@@ -8,7 +8,7 @@
     <ArticulateWebAssetsRoot>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/../Articulate.Web/wwwroot/App_Plugins/Articulate'))</ArticulateWebAssetsRoot>
     <ClientProjectDirectory>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/../Articulate.Api.Management/Client'))</ClientProjectDirectory>
     <EnableClientBuild Condition="'$(EnableClientBuild)'=='' and '$(ENABLE_CLIENT_BUILD)'!=''">$(ENABLE_CLIENT_BUILD)</EnableClientBuild>
-    <EnableClientBuild Condition="'$(EnableClientBuild)'==''">true</EnableClientBuild>
+    <EnableClientBuild Condition="'$(EnableClientBuild)'==''">false</EnableClientBuild>
     <ClientBuildTargetFramework Condition="'$(ClientBuildTargetFramework)'==''">net9.0</ClientBuildTargetFramework>
     <ClientAssetsCacheDir>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/../../build/ClientAssets'))</ClientAssetsCacheDir>
     <ClientBuildStamp>$(ClientAssetsCacheDir)/BackofficeClient.stamp</ClientBuildStamp>
@@ -114,7 +114,7 @@
     </ItemGroup>
   </Target>
 
-  <Target Name="CleanClientAssets" AfterTargets="Clean">
+  <Target Name="CleanClientAssets" AfterTargets="Clean" Condition="'$(EnableClientBuild)'=='true'">
     <Delete Condition="Exists('$(ClientBuildStamp)')" Files="$(ClientBuildStamp)" />
     <RemoveDir Condition="Exists('$(ClientAssetsCacheDir)')" Directories="$(ClientAssetsCacheDir)" />
     <RemoveDir Condition="Exists('$(BackofficeOutputDir)')" Directories="$(BackofficeOutputDir)" />

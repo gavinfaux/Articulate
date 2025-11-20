@@ -60,7 +60,7 @@ To improve modularity and maintainability, the single Articulate package from v5
 
 - **Backup**: Create full backup of your Umbraco installation and Articulate content
 - **Umbraco Upgrade**: Upgrade to Umbraco 15.2.3+ or 16+ first
-- **Package Installation**: Install Articulate 6.0.0-beta via NuGet or Umbraco package
+- **Package Installation**: Install Articulate 6.0.0-beta via NuGet
 - **Post-Installation**: Follow the new post-installation checks in the README
 - **Data Migration**: Re-run Articulate package migrations if needed
 - **Theme Updates**: Verify and update custom themes and extension points for compatibility

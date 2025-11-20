@@ -97,12 +97,10 @@ Tips:
 
 ### Client build integration
 
-- **Automatic via MSBuild**: The `Articulate.StaticAssets` project orchestrates the client build through MSBuild targets. By default, `ENABLE_CLIENT_BUILD=true` (the default) runs `pnpm install && pnpm run build:release` during the build.
+- **Automatic via MSBuild**: The `Articulate.StaticAssets` project orchestrates the client build through MSBuild targets. CI forces `ENABLE_CLIENT_BUILD=true`; local devs must opt in with `set/export ENABLE_CLIENT_BUILD=true` before invoking the build scripts to trigger `pnpm install && pnpm run build:release`.
 - **Sequential TFM builds**: Build scripts run TFMs sequentially (net9.0 first, net10.0 second) to ensure proper client build ordering and prevent asset hash conflicts.
 - **Incremental & cached**: Client assets are cached at `build/ClientAssets/` to avoid redundant Vite runs. Only net9.0 builds the client; net10.0 reuses the cached stamp via MSBuild's `Inputs`/`Outputs` mechanism.
-- **Skip client build**: To skip the client build (useful in CI or when assets are already built), set `ENABLE_CLIENT_BUILD=false`:
-  - Windows: `set ENABLE_CLIENT_BUILD=false && build\build.ps1`
-  - Linux/WSL: `ENABLE_CLIENT_BUILD=false bash build/build.sh`
+- **Opt in/out**: Leave `ENABLE_CLIENT_BUILD` unset/`false` locally to reuse committed client assets. Set it to `true` when you want the build pipeline to run Vite. CI always sets it to `true` so releases include fresh bundles.
 - **Manual rebuild during development**:
   - `cd src/Articulate.Api.Management/Client && pnpm install && pnpm run build` (dev) or `pnpm run build:release` (prod bundling)
 - **Theme and Markdown editor assets**: Vite bundles theme CSS/JS into `Themes/*/dist/` and the Markdown editor into `MarkdownEditor/dist/`. Packaging pulls from these `dist/` folders. If you change theme or Markdown editor sources, rebuild to refresh those folders before packing.

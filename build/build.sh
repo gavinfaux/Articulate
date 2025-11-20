@@ -38,8 +38,13 @@ fi
 MSBUILD_PARALLEL=(-m -maxcpucount:"$CPU_COUNT" -p:BuildInParallel=true -p:RestoreUseStaticGraphEvaluation=true)
 DOTNET_COMMON=(--nologo -v minimal)
 
-# Handle ENABLE_CLIENT_BUILD environment variable (default to true)
-CLIENT_BUILD_VALUE=${ENABLE_CLIENT_BUILD:-true}
+# Handle ENABLE_CLIENT_BUILD environment variable (default to false locally, true in CI)
+if [[ "${CI:-}" == "true" || "${GITHUB_ACTIONS:-}" == "true" ]]; then
+  CLIENT_BUILD_DEFAULT=true
+else
+  CLIENT_BUILD_DEFAULT=false
+fi
+CLIENT_BUILD_VALUE=${ENABLE_CLIENT_BUILD:-$CLIENT_BUILD_DEFAULT}
 CLIENT_BUILD_PROPERTY="-p:EnableClientBuild=$CLIENT_BUILD_VALUE"
 
 echo "Using up to $CPU_COUNT parallel MSBuild nodes"
@@ -64,7 +69,7 @@ echo "Starting clean and restore process for solution: $SOLUTION_PATH"
 
 # --- 0) Clean the solution so Release/CI builds start fresh ---
 echo "1. Cleaning solution outputs..."
-dotnet clean "$SOLUTION_PATH" -c Release "${DOTNET_COMMON[@]}"
+dotnet clean "$SOLUTION_PATH" -c Release "${DOTNET_COMMON[@]}" "$CLIENT_BUILD_PROPERTY"
 
 # --- 2) Create a temporary slim solution excluding local demo apps (u15/u16/u17) ---
 TMP_SLN_DIR="$BUILD_FOLDER/tmp"

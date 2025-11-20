@@ -6,7 +6,8 @@
 
 > A wonderful Blog engine built on Umbraco
 
-_If you use and like Articulate please consider [becoming a GitHub Sponsor](https://github.com/sponsors/Shazwazza/)._
+---
+_❤️ If you use and like Articulate please consider [becoming a GitHub Sponsor](https://github.com/sponsors/Shazwazza/) ❤️_
 
 ## Contents
 
@@ -166,19 +167,19 @@ See docs/development-dx.md for details and tips.
 - Common: builds are parallel and pack `Articulate`, `Articulate.Core`, `Articulate.Api.Management`, and `Articulate.StaticAssets` into `build/Release`. The `Articulate` package now depends on `Articulate.StaticAssets` automatically via the project graph—no extra flags or manual restores required.
 - Windows (`build/build.ps1`):
   - Override CPU workers: `set MAXCPU=8` (default = all cores)
-  - Disable client build: `set ENABLE_CLIENT_BUILD=false` (default = `true`)
+  - Enable client build: `set ENABLE_CLIENT_BUILD=true` (default = `false` locally; CI auto-enables)
 - Linux/WSL (`build/build.sh`):
   - Override CPU workers: `export MAXCPU=8` (default = auto-detect)
-  - Disable client build: `export ENABLE_CLIENT_BUILD=false` (default = `true`)
+  - Enable client build: `export ENABLE_CLIENT_BUILD=true` (default = `false` locally; CI auto-enables)
   - WSL tip: if the repo is under `/mnt/*`, the script prints a performance warning. Clone under `~/src/...` for faster I/O.
 
 #### Client/Vite build
 
-- **Automatic via MSBuild**: The `Articulate.StaticAssets` project orchestrates the client build through MSBuild targets. By default, `ENABLE_CLIENT_BUILD=true` runs `pnpm install && pnpm run build:release` during the build.
+- **Automatic via MSBuild**: The `Articulate.StaticAssets` project orchestrates the client build through MSBuild targets. CI sets `ENABLE_CLIENT_BUILD=true` automatically; local builds must opt in with `set/export ENABLE_CLIENT_BUILD=true` before running the build scripts.
 - **Sequential TFM builds**: Build scripts run TFMs sequentially (net9.0 first, net10.0 second) to ensure net9.0 builds the client and net10.0 reuses the cached assets.
 - **Incremental & cached**: Client assets are cached at `build/ClientAssets/` to avoid redundant Vite runs. MSBuild's `Inputs`/`Outputs` mechanism ensures only net9.0 runs Vite; net10.0 reuses the stamp.
 - **Manual rebuild**: `cd src/Articulate.Api.Management/Client && pnpm install && pnpm run build` (or `build:release`).
-- **Skip client build**: Set `ENABLE_CLIENT_BUILD=false` when invoking the build scripts to skip the client build (useful for CI or when assets are already built).
+- **Opt in to client build**: Set `ENABLE_CLIENT_BUILD=true` locally to rebuild the client (CI does this automatically). Leave it unset/`false` to reuse checked-in assets.
 - **Pre-commit hooks**: Automatically lint staged `.ts/.tsx` files and run `pnpm run build` when client source changes. Install pnpm + GitLeaks locally; if you intentionally need to bypass the hooks, commit with `HUSKY=0 git commit ...`.
 
 ### WSL + Windows workflow (fast local builds)
