@@ -60,20 +60,8 @@ namespace Articulate
             /// </summary>
             internal const string LayoutSystemVirtualPath = "~/App_Plugins/Articulate";
 
-            /// <summary>
-            ///     Virtual base path for legacy user themes (alias for LegacyUserVirtualPath).
-            /// </summary>
-            internal const string LegacyUserViewVirtualRoot = LegacyUserVirtualPath;
-
-            /// <summary>
-            ///     Virtual base path for legacy user themes. Example: ~/Views/ArticulateThemes/{Theme}/...
-            /// </summary>
-            internal const string LegacyUserVirtualPath = "~/Views/ArticulateThemes";
-
             internal const string MarkdownEditorPath = "MarkdownEditor";
             internal const string PartialsPath = "Partials";
-
-            // Clarified aliases (non-breaking): prefer these names moving forward
 
             /// <summary>
             ///     Content-root base path for system views (alias for SystemViewPath).
@@ -99,9 +87,9 @@ namespace Articulate
             internal const string UserViewVirtualRoot = UserVirtualPath;
 
             /// <summary>
-            ///     Virtual base path for user themes. Example: ~/Views/Articulate/{Theme}/...
+            ///     Virtual base path for user themes. Example: ~/Views/ArticulateThemes/{Theme}/...
             /// </summary>
-            internal const string UserVirtualPath = "~/Views/Articulate";
+            internal const string UserVirtualPath = "~/Views/ArticulateThemes";
 
             internal const string ViewPlaceHolder = "{0}.cshtml";
             internal const string ViewsPath = "Views";

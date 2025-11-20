@@ -12,8 +12,7 @@ namespace Articulate.Services
             var partialPlaceHolder = PathHelper.JoinVirtual(Paths.PartialsPath, Paths.ViewPlaceHolder);
             var viewsPlaceHolder = PathHelper.JoinVirtual(Paths.ViewsPath, Paths.ViewPlaceHolder);
 
-            const string userRoot = Paths.UserViewVirtualRoot; // prefer new clarified names
-            const string legacyUserRoot = Paths.LegacyUserViewVirtualRoot;
+            const string userRoot = Paths.UserViewVirtualRoot;
             const string systemVirtualRoot = Paths.SystemViewVirtualRoot;
             const string systemContentRoot = Paths.SystemViewContentRoot;
             const string themes = Paths.ThemesPath;
@@ -26,11 +25,6 @@ namespace Articulate.Services
                 PathHelper.JoinVirtual(userRoot, themeName, Paths.ViewPlaceHolder),
                 PathHelper.JoinVirtual(userRoot, themeName, viewsPlaceHolder),
                 PathHelper.JoinVirtual(userRoot, themeName, partialPlaceHolder),
-
-                // Legacy user theme (virtual)
-                PathHelper.JoinVirtual(legacyUserRoot, themeName, Paths.ViewPlaceHolder),
-                PathHelper.JoinVirtual(legacyUserRoot, themeName, viewsPlaceHolder),
-                PathHelper.JoinVirtual(legacyUserRoot, themeName, partialPlaceHolder),
 
                 // System theme (virtual)
                 PathHelper.JoinVirtual(systemVirtualRoot, themes, themeName, Paths.ViewPlaceHolder),
