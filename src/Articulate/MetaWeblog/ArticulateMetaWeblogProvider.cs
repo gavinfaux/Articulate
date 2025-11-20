@@ -2,19 +2,17 @@ using System;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Security.Authentication;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Articulate.Models;
-using HeyRed.MarkdownSharp;
-using Newtonsoft.Json;
+using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.IO;
-using Umbraco.Cms.Core.Media;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Models.Membership;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.PropertyEditors;
-using Umbraco.Cms.Core.PropertyEditors.ValueConverters;
 using Umbraco.Cms.Core.Security;
 using Umbraco.Cms.Core.Serialization;
 using Umbraco.Cms.Core.Services;
@@ -27,6 +25,11 @@ namespace Articulate.MetaWeblog
 {
     public class ArticulateMetaWeblogProvider : IMetaWeblogProvider
     {
+        private readonly Lazy<IMedia> _articulateRootMediaFolder;
+        private readonly IContentTypeBaseServiceProvider _contentTypeBaseServiceProvider;
+        private readonly ILogger<ArticulateMetaWeblogProvider> _logger;
+        private readonly IMediaService _mediaService;
+        private readonly MediaUrlGeneratorCollection _mediaUrlGenerators;
         private readonly IUmbracoContextAccessor _umbracoContextAccessor;
         private readonly IUserService _userService;
         private readonly IContentTypeService _contentTypeService;
@@ -60,6 +63,10 @@ namespace Articulate.MetaWeblog
             IPublishedValueFallback publishedValueFallback,
             IVariationContextAccessor variationContextAccessor,
             ITagService tagService,
+            IContentTypeBaseServiceProvider contentTypeBaseServiceProvider,
+            ILogger<ArticulateMetaWeblogProvider> logger,
+            IMediaService mediaService,
+            MediaUrlGeneratorCollection mediaUrlGenerators,
             int articulateBlogRootNodeId)
         {
             _umbracoContextAccessor = umbracoContextAccessor;
@@ -77,11 +84,22 @@ namespace Articulate.MetaWeblog
             _variationContextAccessor = variationContextAccessor;
             _tagService = tagService;
             _articulateBlogRootNodeId = articulateBlogRootNodeId;
+            _contentTypeBaseServiceProvider = contentTypeBaseServiceProvider;
+            _logger = logger;
+            _mediaService = mediaService;
+            _mediaUrlGenerators = mediaUrlGenerators;
+            _articulateRootMediaFolder = new Lazy<IMedia>(() =>
+            {
+                var root = _mediaService.GetRootMedia().FirstOrDefault(x =>
+                    x.Name == "Articulate" && x.ContentType.Alias.InvariantEquals(Constants.Conventions.MediaTypes.Folder));
+                return root ??= _mediaService.CreateMediaWithIdentity("Articulate",
+                    Constants.System.Root, Constants.Conventions.MediaTypes.Folder);
+            });
         }
 
-        public Task<BlogInfo[]> GetUsersBlogsAsync(string key, string username, string password)
+        public async Task<BlogInfo[]> GetUsersBlogsAsync(string key, string username, string password)
         {
-            ValidateUser(username, password);
+            await ValidateUser(username, password);
 
             var node = BlogRoot();
             var blogs = new BlogInfo[]
@@ -94,12 +112,12 @@ namespace Articulate.MetaWeblog
                 }
             };
 
-            return Task.FromResult(blogs);
+            return blogs;
         }
 
-        public Task<CategoryInfo[]> GetCategoriesAsync(string blogid, string username, string password)
+        public async Task<CategoryInfo[]> GetCategoriesAsync(string blogid, string username, string password)
         {
-            ValidateUser(username, password);
+            await ValidateUser(username, password);
 
             // TODO: These would be across all Articulate Blog root nodes :S
             var tags = _tagService.GetAllTags("ArticulateCategories")
@@ -111,12 +129,12 @@ namespace Articulate.MetaWeblog
                     // TODO HTML & RSS URL ? (Wasnt used before)
                 }).ToArray();
 
-            return Task.FromResult(tags);
+            return tags;
         }
 
-        public Task<WilderMinds.MetaWeblog.Tag[]> GetTagsAsync(string blogid, string username, string password)
+        public async Task<WilderMinds.MetaWeblog.Tag[]> GetTagsAsync(string blogid, string username, string password)
         {
-            ValidateUser(username, password);
+            await ValidateUser(username, password);
 
             // TODO: These would be across all Articulate Blog root nodes :S
             var tags = _tagService.GetAllTags("ArticulateTags")
@@ -126,12 +144,12 @@ namespace Articulate.MetaWeblog
                 })
                 .ToArray();
 
-            return Task.FromResult(tags);
+            return tags;
         }
 
-        public Task<Post[]> GetRecentPostsAsync(string blogid, string username, string password, int numberOfPosts)
+        public async Task<Post[]> GetRecentPostsAsync(string blogid, string username, string password, int numberOfPosts)
         {
-            ValidateUser(username, password);
+            await ValidateUser(username, password);
 
             var node = BlogRoot().ChildrenOfType(ArticulateConstants.ArticulateArchiveContentTypeAlias).FirstOrDefault();
             if (node == null)
@@ -144,12 +162,12 @@ namespace Articulate.MetaWeblog
                     .Select(FromContent)
                     .ToArray();
 
-            return Task.FromResult(recent);
+            return recent;
         }
 
-        public Task<string> AddPostAsync(string blogid, string username, string password, Post post, bool publish)
+        public async Task<string> AddPostAsync(string blogid, string username, string password, Post post, bool publish)
         {
-            var user = ValidateUser(username, password);
+            var user = await ValidateUser(username, password);
 
             var root = BlogRoot();
 
@@ -176,36 +194,36 @@ namespace Articulate.MetaWeblog
 
             AddOrUpdateContent(content, contentType, post, user, publish, extractFirstImageAsProperty);
 
-            return Task.FromResult(content.Id.ToString(CultureInfo.InvariantCulture));
+            return content.Id.ToString(CultureInfo.InvariantCulture);
 
         }
 
-        public Task<bool> DeletePostAsync(string key, string postid, string username, string password, bool publish)
+        public async Task<bool> DeletePostAsync(string key, string postid, string username, string password, bool publish)
         {
-            var user = ValidateUser(username, password);
+            var user = await ValidateUser(username, password);
             var userId = user.Id;
 
             var asInt = postid.TryConvertTo<int>();
             if (!asInt)
             {
-                return Task.FromResult(false);
+                return false;
             }
 
             //first see if it's published
             var content = _contentService.GetById(asInt.Result);
             if (content == null)
             {
-                return Task.FromResult(false);
+                return false;
             }
 
             // Put in recylce bin - rather than unpublish
             _contentService.MoveToRecycleBin(content, userId);
-            return Task.FromResult(true);
+            return true;
         }
 
-        public Task<Post> GetPostAsync(string postid, string username, string password)
+        public async Task<Post> GetPostAsync(string postid, string username, string password)
         {
-            ValidateUser(username, password);
+            await ValidateUser(username, password);
 
             var asInt = postid.TryConvertTo<int>();
             if (!asInt)
@@ -218,7 +236,7 @@ namespace Articulate.MetaWeblog
             if (post != null)
             {
                 var fromPost = FromPost(new PostModel(post, _publishedValueFallback, _variationContextAccessor));
-                return Task.FromResult(fromPost);
+                return fromPost;
             }
 
             var content = _contentService.GetById(asInt.Result);
@@ -228,12 +246,12 @@ namespace Articulate.MetaWeblog
             }
 
             var fromContent = FromContent(content);
-            return Task.FromResult(fromContent);
+            return fromContent;
         }
 
-        public Task<MediaObjectInfo> NewMediaObjectAsync(string blogid, string username, string password, MediaObject mediaObject)
+        public async Task<MediaObjectInfo> NewMediaObjectAsync(string blogid, string username, string password, MediaObject mediaObject)
         {
-            ValidateUser(username, password);
+            await ValidateUser(username, password);
 
             var bytes = Convert.FromBase64String(mediaObject.bits);
 
@@ -249,13 +267,13 @@ namespace Articulate.MetaWeblog
                     url = absUrl
                 };
 
-                return Task.FromResult(result);
+                return result;
             }
         }
 
-        public Task<bool> EditPostAsync(string postid, string username, string password, Post post, bool publish)
+        public async Task<bool> EditPostAsync(string postid, string username, string password, Post post, bool publish)
         {
-            var user = ValidateUser(username, password);
+            var user = await ValidateUser(username, password);
 
             var asInt = postid.TryConvertTo<int>();
             if (!asInt)
@@ -282,7 +300,7 @@ namespace Articulate.MetaWeblog
             AddOrUpdateContent(umbracoContent, contentType, post, user, publish, extractFirstImageAsProperty);
 
             // Bool - assume to notify if published with new updates
-            return Task.FromResult(true);
+            return true;
         }
 
         // Seems these are not used/supported
@@ -304,7 +322,13 @@ namespace Articulate.MetaWeblog
             content.SetInvariantOrDefaultCultureValue("author", user.Name, contentType, _localizationService);
             if (content.HasProperty("richText"))
             {
-                var firstImage = "";
+
+                var firstImageMatch = _mediaSrc.Match(post.description);
+                string firstImageRelativePath = null;
+                if (firstImageMatch.Success && firstImageMatch.Groups.Count == 2)
+                {
+                    firstImageRelativePath = firstImageMatch.Groups[1].Value;
+                }
 
                 // Extract the articulate firstImage.
                 // Re-update the URL to be the one from the media file system.
@@ -317,11 +341,6 @@ namespace Articulate.MetaWeblog
                     {
                         var relativePath = match.Groups[1].Value;
                         var mediaFileSystemPath = _mediaFileManager.FileSystem.GetUrl(relativePath);
-                        if (firstImage.IsNullOrWhiteSpace())
-                        {
-                            // get the first images absolute media path                            
-                            firstImage = mediaFileSystemPath;
-                        }
 
                         return " src=\"" + mediaFileSystemPath + "\"";
                     }
@@ -355,33 +374,50 @@ namespace Articulate.MetaWeblog
                 content.SetInvariantOrDefaultCultureValue("richText", contentToSave, contentType, _localizationService);
                 if (extractFirstImageAsProperty
                     && content.HasProperty("postImage")
-                        && !firstImage.IsNullOrWhiteSpace())
+                        && !firstImageRelativePath.IsNullOrWhiteSpace())
                 {
-                    var configuration = _dataTypeService.GetDataType(content.Properties["postImage"].PropertyType.DataTypeId).ConfigurationAs<ImageCropperConfiguration>();
-                    var crops = configuration?.Crops ?? Array.Empty<ImageCropperConfiguration.Crop>();
-
-                    var imageCropValue = new ImageCropperValue
+                    if (!string.IsNullOrWhiteSpace(firstImageRelativePath) && _mediaFileManager.FileSystem.FileExists(firstImageRelativePath))
                     {
-                        Src = firstImage,
-                        Crops = crops.Select(x => new ImageCropperValue.ImageCropperCrop
+                        try
                         {
-                            Alias = x.Alias,
-                            Height = x.Height,
-                            Width = x.Width
-                        }).ToList()
-                    };
+                            using (var fileStream = _mediaFileManager.FileSystem.OpenFile(firstImageRelativePath))
+                            {
+                                var fileName = Path.GetFileName(firstImageRelativePath);
 
-                    content.SetInvariantOrDefaultCultureValue(
-                        "postImage",
-                        JsonConvert.SerializeObject(imageCropValue),
-                        contentType,
-                        _localizationService);
+                                var mediaItem = _mediaService.CreateMedia(fileName, _articulateRootMediaFolder.Value,
+                                    Constants.Conventions.MediaTypes.Image);
+                                mediaItem.SetValue(
+                                    _mediaFileManager,
+                                    _mediaUrlGenerators,
+                                    _shortStringHelper,
+                                    _contentTypeBaseServiceProvider,
+                                    Constants.Conventions.Media.File,
+                                    fileName,
+                                    fileStream);
+
+                                _mediaService.Save(mediaItem);
+
+                                var udi = Udi.Create(Constants.UdiEntityType.Media, mediaItem.Key);
+
+                                content.SetInvariantOrDefaultCultureValue(
+                                    "postImage",
+                                    udi.ToString(),
+                                    contentType,
+                                    _localizationService);
+                            }
+                        }
+                        catch (Exception ex)
+                        {   // Catch any exception and log it, post will still be saved
+                            _logger.LogError(ex, "Could not create media item for featured image {FileName}",
+                                firstImageRelativePath);
+                        }
+                    }
                 }
             }
 
             if (!post.link.IsNullOrWhiteSpace())
             {
-                content.SetInvariantOrDefaultCultureValue("umbracoUrlName", post.link, contentType, _localizationService);
+                content.SetInvariantOrDefaultCultureValue(Constants.Conventions.Content.UrlName, post.link, contentType, _localizationService);
             }
 
             if (!post.mt_excerpt.IsNullOrWhiteSpace())
@@ -464,11 +500,11 @@ namespace Articulate.MetaWeblog
 
             description = post.ContentType.Alias == "ArticulateRichText"
             ? post.GetValue<string>("richText")
-            : new Markdown().Transform(post.GetValue<string>("markdown")),
+            : MarkdownHelper.ToHtml(post.GetValue<string>("markdown")),
 
-            permalink = post.GetValue<string>("umbracoUrlName").IsNullOrWhiteSpace()
+            permalink = post.GetValue<string>(Constants.Conventions.Content.UrlName).IsNullOrWhiteSpace()
             ? post.Name.ToUrlSegment(_shortStringHelper)
-            : post.GetValue<string>("umbracoUrlName").ToUrlSegment(_shortStringHelper)
+            : post.GetValue<string>(Constants.Conventions.Content.UrlName).ToUrlSegment(_shortStringHelper)
         };
 
         private IPublishedContent BlogRoot()
@@ -483,12 +519,12 @@ namespace Articulate.MetaWeblog
             return node;
         }
 
-        private IUser ValidateUser(string username, string password)
+        private async Task<IUser> ValidateUser(string username, string password)
         {
-            if (_backOfficeUserManager.ValidateCredentialsAsync(username, password).Result == false)
+            if (await _backOfficeUserManager.ValidateCredentialsAsync(username, password) == false)
             {
                 // Throw some error if not valid credentials - so we exit out early of stuff
-                throw new InvalidOperationException("Credentials issue");
+                throw new AuthenticationException("Failed to validate user credentials");
             }
 
             return _userService.GetByUsername(username);
