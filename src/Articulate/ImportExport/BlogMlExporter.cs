@@ -336,14 +336,22 @@ namespace Articulate.ImportExport
                 try
                 {
                     using var doc = JsonDocument.Parse(mediaItemJson);
-                    var mediaKeyStr = doc.RootElement.EnumerateArray().FirstOrDefault().GetProperty("mediaKey")
-                        .GetString();
+                    var mediaKeyStr = doc.RootElement.EnumerateArray().FirstOrDefault().GetProperty("mediaKey").GetString();
 
                     if (Guid.TryParse(mediaKeyStr, out var mediaKey))
                     {
                         var media = _mediaService.GetById(mediaKey);
                         if (media?.GetValue<string>(Constants.Conventions.Media.File) is { } mediaFilePath)
                         {
+                            if (mediaFilePath.DetectIsJson())
+                            {
+                                using var mediaJson = JsonDocument.Parse(mediaFilePath);
+                                if (mediaJson.RootElement.TryGetProperty("src", out var mediaSrc))
+                                {
+                                    mediaFilePath = mediaSrc.GetString();
+                                }
+                            }
+
                             var mime = ImageMimeType(mediaFilePath);
                             if (!string.IsNullOrWhiteSpace(mime))
                             {
