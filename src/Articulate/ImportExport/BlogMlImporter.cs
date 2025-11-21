@@ -490,30 +490,37 @@ namespace Articulate.ImportExport
             {
                 await using (stream)
                 {
-                    // create a media item
-                    IMedia media = _mediaService.CreateMedia(postNode.Name ?? $"Post {post.Id} image", _articulateRootMediaFolder.Value, Constants.Conventions.MediaTypes.Image);
-                    media.SetValue(
-                        _mediaFileManager,
-                        _mediaUrlGenerators,
-                        _shortStringHelper,
-                        _contentTypeBaseServiceProvider,
-                        Constants.Conventions.Media.File,
-                        attachment.Url.OriginalString,
-                        stream);
-
-                    if (!_mediaService.Save(media))
+                    try
                     {
-                        throw new InvalidOperationException("Could not create new media item");
+                        // create a media item
+                        IMedia media = _mediaService.CreateMedia(postNode.Name ?? $"Post {post.Id} image", _articulateRootMediaFolder.Value, Constants.Conventions.MediaTypes.Image);
+                        media.SetValue(
+                            _mediaFileManager,
+                            _mediaUrlGenerators,
+                            _shortStringHelper,
+                            _contentTypeBaseServiceProvider,
+                            Constants.Conventions.Media.File,
+                            attachment.Url.OriginalString,
+                            stream);
+
+                        if (!_mediaService.Save(media))
+                        {
+                            throw new InvalidOperationException("Could not create new media item");
+                        }
+
+                        // Create an Udi of the media
+                        var udi = Udi.Create(Constants.UdiEntityType.Media, media.Key);
+
+                        postNode.SetInvariantOrDefaultCultureValue(
+                            "postImage",
+                            udi.ToString(),
+                            postType,
+                            _languageService);
                     }
-
-                    // Create an Udi of the media
-                    var udi = Udi.Create(Constants.UdiEntityType.Media, media.Key);
-
-                    postNode.SetInvariantOrDefaultCultureValue(
-                        "postImage",
-                        udi.ToString(),
-                        postType,
-                        _languageService);
+                    catch (PathTooLongException ex)
+                    {
+                        _logger.LogWarning(ex, "Could not save image for post.");
+                    }
                 }
             }
         }

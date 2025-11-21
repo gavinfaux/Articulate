@@ -230,7 +230,7 @@ namespace Articulate.ImportExport
                     var tags = tagService.GetTagsForEntity(child.Id, tagGroup).Select(t => t.Text).ToList();
                     if (tags.Count > 0)
                     {
-                        blogMlPost.AddExtension(new TagsSyndicationExtension { Context = { Tags = new Collection<string>(tags) } });
+                        _ = blogMlPost.AddExtension(new TagsSyndicationExtension { Context = { Tags = new Collection<string>(tags) } });
                     }
 
                     if (!TryExtractImageV3(exportImagesAsBase64, child, postAbsoluteUrl, blogMlPost))
@@ -238,7 +238,7 @@ namespace Articulate.ImportExport
                         _ = TryExtractImageV1(exportImagesAsBase64, child, postAbsoluteUrl, blogMlPost);
                     }
 
-                    blogMlDoc.AddPost(blogMlPost);
+                    _ = blogMlDoc.AddPost(blogMlPost);
                 }
 
                 pageIndex++;
@@ -248,7 +248,7 @@ namespace Articulate.ImportExport
 
         private bool TryExtractImageV1(bool exportImagesAsBase64, IContent child, Uri postAbsoluteUrl, BlogMLPost blogMlPost)
         {
-            //add the image attached if there is one
+            // add the image attached if there is one
             if (child.HasProperty("postImage"))
             {
                 try
@@ -258,13 +258,19 @@ namespace Articulate.ImportExport
                     if (!string.IsNullOrWhiteSpace(mediaUdi))
                     {
                         var udi = (GuidUdi)UdiParser.Parse(mediaUdi);
-                        var media = _mediaService.GetById(udi.Guid)
+                        IMedia media = mediaService.GetById(udi.Guid)
                             ?? throw new InvalidOperationException("No media found by id " + udi);
 
-                        var mediaPath = _mediaFileManager.GetMediaPath(
-                            media.GetValue(Constants.Conventions.Media.File).ToString(),
+                        string? filename = media.GetValue(Constants.Conventions.Media.File)?.ToString();
+                        if (filename is null)
+                        {
+                            return false;
+                        }
+
+                        var mediaPath = mediaFileManager.GetMediaPath(
+                            filename,
                             media.Key,
-                            media.Properties[Constants.Conventions.Media.File].PropertyType.Key);
+                            media.Properties[Constants.Conventions.Media.File]!.PropertyType.Key);
 
                         var mime = BlogMlExporter.ImageMimeType(mediaPath);
 
@@ -274,7 +280,7 @@ namespace Articulate.ImportExport
 
                             if (exportImagesAsBase64)
                             {
-                                using var mediaFileStream = _mediaFileManager.GetFile(media, out _);
+                                using Stream mediaFileStream = mediaFileManager.GetFile(media, out _);
                                 byte[] bytes;
                                 using (var memoryStream = new MemoryStream())
                                 {
@@ -311,7 +317,7 @@ namespace Articulate.ImportExport
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Could not add the file to the blogML post attachments");
+                    logger.LogError(ex, "Could not add the file to the blogML post attachments");
                 }
             }
 
@@ -328,18 +334,23 @@ namespace Articulate.ImportExport
                     using var doc = JsonDocument.Parse(mediaItemJson);
                     var mediaKeyStr = doc.RootElement.EnumerateArray().FirstOrDefault().GetProperty("mediaKey").GetString();
 
-                    if (Guid.TryParse(mediaKeyStr, out var mediaKey))
+                    if (Guid.TryParse(mediaKeyStr, out Guid mediaKey))
                     {
-                        var media = _mediaService.GetById(mediaKey);
+                        IMedia? media = mediaService.GetById(mediaKey);
                         if (media?.GetValue<string>(Constants.Conventions.Media.File) is { } mediaFilePath)
                         {
                             if (mediaFilePath.DetectIsJson())
                             {
                                 using var mediaJson = JsonDocument.Parse(mediaFilePath);
-                                if (mediaJson.RootElement.TryGetProperty("src", out var mediaSrc))
+                                if (mediaJson.RootElement.TryGetProperty("src", out JsonElement mediaSrc))
                                 {
                                     mediaFilePath = mediaSrc.GetString();
                                 }
+                            }
+
+                            if (mediaFilePath is null)
+                            {
+                                return false;
                             }
 
                             var mime = ImageMimeType(mediaFilePath);
@@ -356,7 +367,7 @@ namespace Articulate.ImportExport
 
                                 if (exportImagesAsBase64)
                                 {
-                                    using var mediaFileStream = _mediaFileManager.GetFile(media, out _);
+                                    using Stream mediaFileStream = mediaFileManager.GetFile(media, out _);
                                     using var memoryStream = new MemoryStream();
                                     mediaFileStream.CopyTo(memoryStream);
                                     attachment.Content = Convert.ToBase64String(memoryStream.ToArray());
@@ -375,7 +386,7 @@ namespace Articulate.ImportExport
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Could not add the file to the blogML post attachments for post {PostId}", child.Id);
+                    logger.LogError(ex, "Could not add the file to the blogML post attachments for post {PostId}", child.Id);
                 }
             }
 
