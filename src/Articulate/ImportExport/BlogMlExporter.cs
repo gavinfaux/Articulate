@@ -8,6 +8,7 @@ using System.Text.Json;
 using Argotic.Common;
 using Argotic.Syndication.Specialized;
 using Microsoft.Extensions.Logging;
+using Org.BouncyCastle.Asn1.Ocsp;
 using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.IO;
 using Umbraco.Cms.Core.Models;
@@ -47,7 +48,7 @@ namespace Articulate.ImportExport
         {
             _mediaFileManager = mediaFileManager;
             _articulateTempFileSystem = articulateTempFileSystem;
-    _contentService = contentService ?? throw new ArgumentNullException(nameof(contentService));
+            _contentService = contentService ?? throw new ArgumentNullException(nameof(contentService));
             _mediaService = mediaService;
             _contentTypeService = contentTypeService;
             _dataTypeService = dataTypeService;
@@ -166,7 +167,7 @@ namespace Articulate.ImportExport
                     {
                         Id = author?.Key.ToString(),
                         CreatedOn = author?.CreateDate ?? DateTime.Today,
-                        LastModifiedOn = author?.UpdateDate ??  DateTime.Today,
+                        LastModifiedOn = author?.UpdateDate ?? DateTime.Today,
                         ApprovalStatus = BlogMLApprovalStatus.Approved,
                         Title = new BlogMLTextConstruct(author?.Name)
                     };
@@ -242,54 +243,9 @@ namespace Articulate.ImportExport
                             });
                     }
 
-                    if (child.HasProperty("postImage") && child.GetValue<string>("postImage") is { } mediaItemJson &&
-                        mediaItemJson.DetectIsJson())
+                    if (!TryExtractImageV3(exportImagesAsBase64, child, postAbsoluteUrl, blogMlPost))
                     {
-                        try
-                        {
-                            using var doc = JsonDocument.Parse(mediaItemJson);
-                            var mediaKeyStr = doc.RootElement.EnumerateArray().FirstOrDefault().GetProperty("mediaKey")
-                                .GetString();
-
-                            if (Guid.TryParse(mediaKeyStr, out Guid mediaKey))
-                            {
-                                IMedia media = _mediaService.GetById(mediaKey);
-                                if (media?.GetValue<string>(Constants.Conventions.Media.File) is { } mediaFilePath)
-                                {
-                                    var mime = ImageMimeType(mediaFilePath);
-                                    if (!string.IsNullOrWhiteSpace(mime))
-                                    {
-                                        var imageUrl =
-                                            new Uri(postAbsoluteUrl.GetLeftPart(UriPartial.Authority) + mediaFilePath.EnsureStartsWith('/'), UriKind.Absolute);
-                                        var attachment = new BlogMLAttachment
-                                        {
-                                            Url = imageUrl,
-                                            ExternalUri = imageUrl,
-                                            IsEmbedded = exportImagesAsBase64,
-                                            MimeType = mime
-                                        };
-
-                                        if (exportImagesAsBase64)
-                                        {
-                                            using Stream mediaFileStream = _mediaFileManager.GetFile(media, out _);
-                                            using var memoryStream = new MemoryStream();
-                                            mediaFileStream.CopyTo(memoryStream);
-                                            attachment.Content = Convert.ToBase64String(memoryStream.ToArray());
-                                        }
-                                        else
-                                        {
-                                            attachment.Content = string.Empty;
-                                        }
-
-                                        blogMlPost.Attachments.Add(attachment);
-                                    }
-                                }
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.LogError(ex, "Could not add the file to the blogML post attachments for post {PostId}", child.Id);
-                        }
+                        _ = TryExtractImageV1(exportImagesAsBase64, child, postAbsoluteUrl, blogMlPost);
                     }
 
                     blogMlDoc.AddPost(blogMlPost);
@@ -298,6 +254,134 @@ namespace Articulate.ImportExport
                 pageIndex++;
             }
             while (posts.Length == pageSize);
+        }
+
+        private bool TryExtractImageV1(bool exportImagesAsBase64, IContent child, Uri postAbsoluteUrl, BlogMLPost blogMlPost)
+        {
+            //add the image attached if there is one
+            if (child.HasProperty("postImage"))
+            {
+                try
+                {
+                    var mediaUdi = child.GetValue<string>("postImage");
+
+                    if (!string.IsNullOrWhiteSpace(mediaUdi))
+                    {
+                        var udi = (GuidUdi)UdiParser.Parse(mediaUdi);
+                        var media = _mediaService.GetById(udi.Guid)
+                            ?? throw new InvalidOperationException("No media found by id " + udi);
+
+                        var mediaPath = _mediaFileManager.GetMediaPath(
+                            media.GetValue(Constants.Conventions.Media.File).ToString(),
+                            media.Key,
+                            media.Properties[Constants.Conventions.Media.File].PropertyType.Key);
+
+                        var mime = BlogMlExporter.ImageMimeType(mediaPath);
+
+                        if (!mime.IsNullOrWhiteSpace())
+                        {
+                            var imageUrl = new Uri(postAbsoluteUrl.GetLeftPart(UriPartial.Authority) + mediaPath.EnsureStartsWith('/'), UriKind.Absolute);
+
+                            if (exportImagesAsBase64)
+                            {
+                                using var mediaFileStream = _mediaFileManager.GetFile(media, out _);
+                                byte[] bytes;
+                                using (var memoryStream = new MemoryStream())
+                                {
+                                    mediaFileStream.CopyTo(memoryStream);
+                                    bytes = memoryStream.ToArray();
+                                }
+
+                                blogMlPost.Attachments.Add(new BlogMLAttachment
+                                {
+                                    Content = Convert.ToBase64String(bytes),
+                                    Url = imageUrl,
+                                    ExternalUri = imageUrl,
+                                    IsEmbedded = true,
+                                    MimeType = mime
+                                });
+
+                                return true;
+                            }
+                            else
+                            {
+                                blogMlPost.Attachments.Add(new BlogMLAttachment
+                                {
+                                    Content = string.Empty,
+                                    Url = imageUrl,
+                                    ExternalUri = imageUrl,
+                                    IsEmbedded = false,
+                                    MimeType = mime
+                                });
+
+                                return true;
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Could not add the file to the blogML post attachments");
+                }
+            }
+
+            return false;
+        }
+
+        private bool TryExtractImageV3(bool exportImagesAsBase64, IContent child, Uri postAbsoluteUrl, BlogMLPost blogMlPost)
+        {
+            if (child.HasProperty("postImage") && child.GetValue<string>("postImage") is { } mediaItemJson &&
+                mediaItemJson.DetectIsJson())
+            {
+                try
+                {
+                    using var doc = JsonDocument.Parse(mediaItemJson);
+                    var mediaKeyStr = doc.RootElement.EnumerateArray().FirstOrDefault().GetProperty("mediaKey")
+                        .GetString();
+
+                    if (Guid.TryParse(mediaKeyStr, out var mediaKey))
+                    {
+                        var media = _mediaService.GetById(mediaKey);
+                        if (media?.GetValue<string>(Constants.Conventions.Media.File) is { } mediaFilePath)
+                        {
+                            var mime = ImageMimeType(mediaFilePath);
+                            if (!string.IsNullOrWhiteSpace(mime))
+                            {
+                                var imageUrl = new Uri(postAbsoluteUrl.GetLeftPart(UriPartial.Authority) + mediaFilePath.EnsureStartsWith('/'), UriKind.Absolute);
+                                var attachment = new BlogMLAttachment
+                                {
+                                    Url = imageUrl,
+                                    ExternalUri = imageUrl,
+                                    IsEmbedded = exportImagesAsBase64,
+                                    MimeType = mime
+                                };
+
+                                if (exportImagesAsBase64)
+                                {
+                                    using var mediaFileStream = _mediaFileManager.GetFile(media, out _);
+                                    using var memoryStream = new MemoryStream();
+                                    mediaFileStream.CopyTo(memoryStream);
+                                    attachment.Content = Convert.ToBase64String(memoryStream.ToArray());
+                                }
+                                else
+                                {
+                                    attachment.Content = string.Empty;
+                                }
+
+                                blogMlPost.Attachments.Add(attachment);
+
+                                return true;
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Could not add the file to the blogML post attachments for post {PostId}", child.Id);
+                }
+            }
+
+            return false;
         }
 
         private static string ImageMimeType(string src)
