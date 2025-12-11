@@ -8,7 +8,7 @@
     "node": ">=24",
     "pnpm": ">=10.20.0"
   },
-  "packageManager": "pnpm@10.20.0+sha512.cf9998222162dd85864d0a8102e7892e7ba4ceadebbf5a31f9c2fce48dfce317a9c53b9f6464d1ef9042cba2e02ae02a9f7c143a2b438cd93c91840f0192b9dd",
+  "packageManager": "pnpm@10.24.0+sha512.01ff8ae71b4419903b65c60fb2dc9d34cf8bb6e06d03bde112ef38f7a34d6904c424ba66bea5cdcf12890230bf39f9580473140ed9c946fef328b6e5238a345a",
   "keywords": [
     "blog",
     "umbraco",
@@ -24,15 +24,15 @@
     "build:release": "tsc && vite build --mode production",
     "preview": "vite preview",
     "watch": "vite build --watch",
-    "lint:errors": "pnpm run lint -- --quiet",
-    "lint:fix": "pnpm run lint -- --fix",
+    "lint:errors": "pnpm run lint --quiet",
+    "lint:fix": "pnpm run lint --fix",
     "lint": "eslint src",
     "check": "tsc --noEmit",
     "lint-staged": "lint-staged",
     "gitleaks:protect": "gitleaks protect --staged --no-banner --redact",
     "prepare": "node ./scripts/install-husky.mjs",
     "generate:api": "cross-env NODE_TLS_REJECT_UNAUTHORIZED=0 node ./scripts/generate-api.js https://localhost:44366/umbraco/swagger/articulate/swagger.json ./src/api --excludeTags 'Markdown Editor'",
-    "clean": "npx rimraf node_modules pnpm-lock.yaml"
+    "clean": "pnpm dlx rimraf node_modules pnpm-lock.yaml mise.lock"
   },
   "dependenciesComments": {
     "monaco-editor": "Articulate Markdown Editor property editor (not the mobile markdown editor), only required until Umbraco Core editor supports better markdown to HTML processing; see https://github.com/umbraco/Umbraco-CMS/issues/19500"
@@ -42,13 +42,13 @@
   },
   "devDependencies": {
     "@eslint/compat": "^1.4.1",
-    "@eslint/eslintrc": "^3.3.1",
+    "@eslint/eslintrc": "^3.3.3",
     "@eslint/js": "^9.39.1",
     "@hey-api/client-fetch": "^0.12.0",
     "@hey-api/openapi-ts": "^0.72.2",
     "@types/fs-extra": "^11.0.4",
-    "@typescript-eslint/eslint-plugin": "^8.47.0",
-    "@typescript-eslint/parser": "^8.47.0",
+    "@typescript-eslint/eslint-plugin": "^8.48.1",
+    "@typescript-eslint/parser": "^8.48.1",
     "@umbraco-cms/backoffice": "^15.4.4",
     "chalk": "^5.6.2",
     "cross-env": "^10.1.0",
@@ -68,15 +68,15 @@
     "lightningcss": "1.30.2",
     "lint-staged": "^15.5.2",
     "node-fetch": "~3.3.2",
-    "prettier": "^3.6.2",
+    "prettier": "^3.7.4",
     "terser": "^5.44.1",
     "typescript": "~5.9.3",
-    "vite": "^7.2.2",
+    "vite": "^7.2.6",
     "vite-tsconfig-paths": "~5.1.4"
   },
   "lint-staged": {
     "src/**/*.{ts,tsx}": [
-      "pnpm exec eslint --max-warnings=0"
+      "pnpm exec eslint --max-warnings=0 --no-warn-ignored"
     ]
   }
 }

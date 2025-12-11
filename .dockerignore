@@ -1,0 +1,34 @@
+# Build output
+**/bin/
+**/obj/
+**/artifacts/
+**/dist/
+
+# User- and tool-specific
+.vs/
+.vscode/
+*.user
+*.suo
+*.swp
+
+# Package managers
+**/node_modules/
+**/pnpm-lock.yaml
+**/package-lock.json
+
+# Git
+.git/
+.gitignore
+
+# Umbraco runtime data (generated at runtime or seeded via volumes)
+umbraco/Data/
+umbraco/Logs/
+umbraco/models/
+**/Umbraco.sqlite.db*
+
+# Logs
+**/*.log
+
+# OS junk
+[Dd]esktop.ini
+[Tt]humbs.db

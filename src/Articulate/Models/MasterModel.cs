@@ -150,7 +150,7 @@ namespace Articulate.Models
         /// <inheritdoc/>
         public string PageTags { get; protected set; }
 
-        [Obsolete("No longer used or supported",true)]
+        [Obsolete("No longer used or supported", true)]
         public IVariationContextAccessor VariationContextAccessor => null;
 
         protected IPublishedValueFallback PublishedValueFallback { get; }

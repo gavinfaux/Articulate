@@ -10,11 +10,10 @@ using Umbraco.Cms.Core.Web;
 
 namespace Articulate.Routing
 {
-    [Obsolete("'DefaultUrlProvider' is obsolete: 'Use NewDefaultUrlProvider instead. Scheduled for removal in V18.'", false)]
+    [Obsolete("'DateFormattedUrlProvider' is obsolete: 'Scheduled for removal in V18.'", false)]
     public class DateFormattedUrlProvider : DefaultUrlProvider
     {
 #if NET10_0_OR_GREATER
-        [Obsolete("Please use ILanguageService and IDictionaryItemService for localization. Will be removed in V15.", false)]
         public DateFormattedUrlProvider(
     IOptionsMonitor<RequestHandlerSettings> requestSettings,
     ILogger<DateFormattedUrlProvider> logger,
@@ -28,7 +27,7 @@ namespace Articulate.Routing
         {
         }
 #else
-        [Obsolete("Please use ILanguageService and IDictionaryItemService for localization. Will be removed in V15.", false)]
+        [Obsolete("Please use ILanguageService and IDictionaryItemService for localization. Will be removed in future", false)]
         public DateFormattedUrlProvider(
     IOptionsMonitor<RequestHandlerSettings> requestSettings,
     ILogger<DateFormattedUrlProvider> logger,
@@ -85,7 +84,7 @@ namespace Articulate.Routing
 
 #else
             UrlInfo? parentPath = base.GetUrl(parent, mode, culture, current);
-            var newUrl = parentPath?.Text.EnsureEndsWith("/") + urlFolder + "/" + content.UrlSegment?.EnsureEndsWith("/");
+            var newUrl = parentPath?.Text?.EnsureEndsWith("/") + urlFolder + "/" + content.UrlSegment?.EnsureEndsWith("/");
             return UrlInfo.Url(newUrl, culture);
 
 #endif

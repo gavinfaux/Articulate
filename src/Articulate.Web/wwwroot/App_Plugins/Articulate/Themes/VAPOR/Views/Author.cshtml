@@ -18,8 +18,7 @@
         @if (Model.Image is not null)
         {
             var img = Model.Image.GetCropUrl("wide");
-            <img class="postImage" src="@img" fetchpriority="high" width="625" height="320" alt="@Model.Name post image" />
-        }
+            <img class="postImage" src="@img" fetchpriority="high" width="625" height="320" alt="@Model.Name author profile image" />        }
         <p>@Model.Bio</p>
         @if (!Model.AuthorUrl.IsNullOrWhiteSpace())
         {

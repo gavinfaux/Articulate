@@ -257,6 +257,14 @@ namespace Articulate.MetaWeblog
         /// <inheritdoc/>
         public async Task<Post[]> GetRecentPostsAsync(string blogid, string username, string password, int numberOfPosts)
         {
+            if (numberOfPosts < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(numberOfPosts), "Number of posts must be non-negative");
+            }
+
+            // Cap at reasonable maximum to prevent abuse
+            numberOfPosts = Math.Min(numberOfPosts, 1000);
+
             _ = await ValidateUserAsync(username, password).ConfigureAwait(false);
 
             IPublishedContent node =
@@ -269,7 +277,6 @@ namespace Articulate.MetaWeblog
 
             return recent;
         }
-
         /// <inheritdoc/>
         public async Task<Tag[]> GetTagsAsync(string blogid, string username, string password)
         {
@@ -307,12 +314,57 @@ namespace Articulate.MetaWeblog
         {
             _ = await ValidateUserAsync(username, password).ConfigureAwait(false);
 
-            // TODO: File validation
-            var bytes = Convert.FromBase64String(mediaObject.bits);
+            if (string.IsNullOrWhiteSpace(mediaObject.bits))
+            {
+                throw new ArgumentException("Invalid file", nameof(mediaObject));
+            }
 
+            // Validate file type
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", };
+            var extension = Path.GetExtension(mediaObject.name).ToLowerInvariant();
+            if (!allowedExtensions.Contains(extension))
+            {
+                throw new ArgumentException($"File type {extension} not allowed", nameof(mediaObject));
+            }
+
+            // Validate file size (e.g., max 10MB)
+            const int maxFileSize = 10 * 1024 * 1024;
+            byte[] bytes;
+            try
+            {
+                bytes = Convert.FromBase64String(mediaObject.bits);
+                if (bytes.Length > maxFileSize)
+                {
+                    throw new ArgumentException($"File size {bytes.Length} exceeds maximum {maxFileSize} bytes", nameof(mediaObject));
+                }
+            }
+            catch (FormatException)
+            {
+                throw new ArgumentException("Invalid base64 content", nameof(mediaObject));
+            }
+
+            var reservedNames = new HashSet<string>
+            {
+                "con",
+                "prn",
+                "aux",
+                "nul",
+                "com1",
+                "lpt1",
+            };
+
+
+            var untrustedFileName = Path.GetFullPath(mediaObject.name);
+            if (untrustedFileName.StartsWith("..") || untrustedFileName.Contains("/..") ||
+                reservedNames.Contains(untrustedFileName.ToLowerInvariant()))
+            {
+                throw new ArgumentException("Invalid file", nameof(mediaObject));
+
+            }
+ 
             // Save File
+            var fileUrl = "articulate/" + Path.GetRandomFileName().ToSafeFileName(_shortStringHelper);
             using var ms = new MemoryStream(bytes);
-            var fileUrl = "articulate/" + mediaObject.name.ToSafeFileName(_shortStringHelper);
             _mediaFileManager.FileSystem.AddFile(fileUrl, ms);
             var absUrl = _mediaFileManager.FileSystem.GetUrl(fileUrl);
 
@@ -320,7 +372,6 @@ namespace Articulate.MetaWeblog
 
             return result;
         }
-
         // TODO: Review
         private void AddOrUpdateContent(IContent content, IContentType contentType, Post post, IUser user, bool publish, bool extractFirstImageAsProperty)
         {
@@ -534,3 +585,4 @@ namespace Articulate.MetaWeblog
         }
     }
 }
+

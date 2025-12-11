@@ -1,0 +1,111 @@
+services:
+  articulate-net10:
+    profiles:
+      - ""
+      - mssql
+    build:
+      context: .
+      dockerfile: Dockerfile.net10
+      args:
+        # Controls Release vs Debug build (default: Release)
+        # Override: BUILD_CONFIGURATION=Debug docker compose up --build
+        BUILD_CONFIGURATION: ${BUILD_CONFIGURATION:-Release}
+        # Umbraco version range/pin for net10 image (default targets Umbraco 17.x)
+        UMBRACO_CMS_VERSION: ${UMBRACO_CMS_VERSION:-[17.0.1,18.0.0)}
+    image: ${IMAGE_TAG:-articulate-local:net10}
+    user: "1654:1654"
+    environment:
+      # Runtime environment - override via env var or command line
+      # Development mode: ASPNETCORE_ENVIRONMENT=Development docker compose up
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Container}
+      ASPNETCORE_URLS: http://+:8080
+      # Unattended install for first run (override via env vars)
+      Umbraco__CMS__Unattended__InstallUnattended: "true"
+      Umbraco__CMS__Unattended__UpgradeUnattended: "true"
+      Umbraco__CMS__Unattended__UnattendedUserName: ${UMBRACO_USER_NAME:-admin}
+      Umbraco__CMS__Unattended__UnattendedUserEmail: ${UMBRACO_USER_EMAIL:-admin@example.com}
+      Umbraco__CMS__Unattended__UnattendedUserPassword: ${UMBRACO_USER_PASSWORD:-ChangeMe123!}
+      # Public URLs must match the port you expose from the container
+      Umbraco__CMS__Security__BackOfficeHost: ${UMBRACO_PUBLIC_HOST:-https://localhost:8450}
+      Umbraco__CMS__WebRouting__UmbracoApplicationUrl: ${UMBRACO_PUBLIC_URL:-https://localhost:8450/}
+      # Articulate management OpenID Connect redirect URIs (localhost defaults)
+      Articulate__ManagementApi__OpenIddict__Client__RedirectUris__0: ${ARTICULATE_REDIRECT_URI:-https://localhost:8450/a-new/}
+      Articulate__ManagementApi__OpenIddict__Client__PostLogoutRedirectUris__0: ${ARTICULATE_LOGOUT_REDIRECT_URI:-https://localhost:8450/umbraco/management/api/v1/security/back-office/signout?post_logout_redirect_uri=https%3A%2F%2Flocalhost%3A8450%2F}
+      Articulate__ManagementApi__OpenIddict__Client__PostLogoutRedirectUris__1: ${ARTICULATE_HOME_REDIRECT_URI:-https://localhost:8450/}
+      Umbraco__CMS__ModelsBuilder__ModelsMode: ${MODELS_MODE:-Nothing}
+    volumes:
+      - articulate-media:/app/wwwroot/media
+      - articulate-db-net10:/app/umbraco/Data
+    read_only: false
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    depends_on:
+      mssql-net10:
+        condition: service_healthy
+        required: false
+
+  # Dedicated SQL Server for net10 stack (isolated volume/hostname)
+  # Switch to SQL Server by enabling the 'mssql' profile:
+  #   COMPOSE_PROFILES=mssql docker compose -f docker-compose.net10.yml up -d
+  # Set UMBRACO_CONNECTIONSTRING, e.g.:
+  #   Server=mssql-net10,1433;Database=ArticulateNet10;User Id=sa;Password=${MSSQL_SA_PASSWORD};Encrypt=False;
+  mssql-net10:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:-P@ssw0rd12345!}
+    ports:
+      - "14330:1433"
+    volumes:
+      - mssql-data-net10:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c '</dev/tcp/localhost/1433'"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+    profiles:
+      - mssql
+
+  # mssql:
+  #   image: mcr.microsoft.com/mssql/server:2022-latest
+  #   environment:
+  #     ACCEPT_EULA: "Y"
+  #     MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:-P@ssw0rd12345!}
+  #   ports:
+  #     - "14333:1433"
+  #   volumes:
+  #     - mssql-data:/var/opt/mssql
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "8090:8080"
+      - "8450:8443"
+    environment:
+      ARTICULATE_HOST: articulate-net10
+      HTTPS_HOST: localhost:8450
+    command: caddy run --config /etc/caddy/Caddyfile --adapter caddyfile
+    volumes:
+      - caddy-data:/data
+      - caddy-config:/config
+      - ./build/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+    depends_on:
+      - articulate-net10
+
+volumes:
+  articulate-media:
+    name: articulate17_net10_media
+  articulate-db-net10:
+    name: articulate17_net10_db
+  # Isolated SQL Server data for net10 (only used when profile 'mssql' is enabled)
+  mssql-data-net10:
+    name: articulate_net10_mssql
+  caddy-data:
+  caddy-config:

@@ -10,14 +10,21 @@
     </a>
 </div>
 <div class="demo-blog__posts mdl-grid">
+    @{
+        var isSearch = Model.IsSearchRoute(Context);
+        var term = Context.GetSearchTerm();
+        var posts = Model.Posts?.ToList() ?? new List<PostModel>();
+        ViewBag.PostsList = posts;
+        var hasResults = posts.Any();
+    }
 
-    @if (!Model.Children().Any())
+    @if (!hasResults)
     {
         <div class="mdl-card mdl-cell mdl-cell--12-col comments">
 
             @await Html.PartialAsync("SearchBox", Model)
 
-            @if (Context.Request.Query.TryGetValue("term", out var term) && !term.ToString().IsNullOrWhiteSpace())
+            @if (!term.IsNullOrWhiteSpace())
             {
                 <div class="mdl-card__media mdl-color-text--grey-50">
                     <h3>No blog posts found</h3>
@@ -27,8 +34,36 @@
     }
     else
     {
+        if (isSearch)
+        {
+            @await Html.PartialAsync("TitleTile", Model)
+
+            <div class="mdl-card mdl-cell mdl-cell--8-col search-summary-card">
+                <div class="mdl-card__media mdl-color--blue-500 mdl-color-text--white">
+                    <div class="search-summary-card__label">Search results</div>
+                    <h3 class="search-summary-card__term">@(!term.IsNullOrWhiteSpace() ? term : "All posts")</h3>
+                    <div class="search-summary-card__count">@posts.Count result@(posts.Count == 1 ? "" : "s")</div>
+                </div>
+                <div class="mdl-card__supporting-text search-summary-card__form">
+                    @await Html.PartialAsync("SearchBox", Model)
+                </div>
+            </div>
+
+            <div class="mdl-card mdl-cell mdl-cell--4-col search-filters-card">
+                <div class="mdl-card__supporting-text">
+                    <h4 class="search-filters-card__title">Quick filters</h4>
+                    <ul class="search-filters-card__list">
+                        <li><a href="@Model.ArticulateSearchUrl()">All</a></li>
+                        <li><a href="@Model.ArticulateTagsUrl()">Tags</a></li>
+                        <li><a href="@Model.ArticulateCategoriesUrl()">Categories</a></li>
+                        <li><a href="@Model.ArticulateAuthorsUrl()">Authors</a></li>
+                    </ul>
+                </div>
+            </div>
+        }
+
         var doneFirst = false;
-        foreach (var post in Model.Posts)
+        foreach (var post in posts)
         {
             if (!doneFirst && Model.ContentType.Alias == ArticulateConstants.ContentType.ArticulateArchive)
             {

@@ -7,8 +7,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Umbraco.Cms.Api.Common.Attributes;
 using Umbraco.Cms.Api.Management.Controllers;
+using Umbraco.Cms.Core.Configuration.Models;
 using Umbraco.Cms.Core.Models.Membership;
 using Umbraco.Cms.Core.Security;
 using Umbraco.Cms.Web.Common.Authorization;
@@ -28,10 +30,11 @@ namespace Articulate.Api.Management.Controllers
         BlogMlImporter blogMlImporter,
         IBackOfficeSecurityAccessor backOfficeSecurityAccessor,
         ArticulateTempFileSystem articulateTempFileSystem,
-        ILogger<BlogMlApiController> logger)
+        ILogger<BlogMlApiController> logger,
+        IOptionsMonitor<RuntimeSettings> runtimeSettings)
         : ManagementApiControllerBase
     {
-        private const long MaxImportFileBytes = 50 * 1024 * 1024; // 50 MB safety limit
+        private const long DefaultMaxImportFileBytes = 50 * 1024 * 1024; // 50 MB safety fallback
 
         /// <summary>
         /// Begins the BlogML import process by accepting an uploaded XML file.
@@ -64,19 +67,28 @@ namespace Articulate.Api.Management.Controllers
                     statusCode: StatusCodes.Status415UnsupportedMediaType);
             }
 
-            if (importFile.Length is > MaxImportFileBytes or 0)
+            long maxImportFileBytes = GetMaxImportFileBytes();
+
+            if (importFile.Length <= 0)
             {
                 return Problem(
                     title: "File Size Invalid",
-                    detail: $"BlogML imports must be between 1 byte and {MaxImportFileBytes / (1024 * 1024)} MB.",
-                    statusCode: StatusCodes.Status413PayloadTooLarge);
+                    detail: "The uploaded file is empty or invalid.",
+                    statusCode: StatusCodes.Status400BadRequest);
             }
 
+            if (importFile.Length > maxImportFileBytes)
+            {
+                return Problem(
+                    title: "File Too Large",
+                    detail: $"BlogML imports must be between 1 byte and {maxImportFileBytes / (1024 * 1024)} MB.",
+                    statusCode: StatusCodes.Status413PayloadTooLarge);
+            }
             try
             {
                 var fileName = Path.GetRandomFileName();
                 await using Stream sourceStream = importFile.OpenReadStream();
-                using var buffer = new MemoryStream(capacity: (int)Math.Min(importFile.Length, MaxImportFileBytes));
+                using var buffer = new MemoryStream(capacity: (int)Math.Min(importFile.Length, Math.Min(maxImportFileBytes, int.MaxValue)));
                 await sourceStream.CopyToAsync(buffer).ConfigureAwait(false);
                 buffer.Position = 0;
                 articulateTempFileSystem.AddFile(fileName, buffer);
@@ -86,18 +98,10 @@ namespace Articulate.Api.Management.Controllers
             }
             catch (InvalidDataException ex)
             {
-                logger.LogWarning(ex, "BlogML import file failed validation.");
-                return Problem(
-                    title: "Invalid BlogML",
-                    detail: ex.Message,
-                    statusCode: StatusCodes.Status400BadRequest);
-            }
-            catch (IOException ex)
-            {
                 logger.LogWarning(ex, "BlogML import file exceeded the configured size limit.");
                 return Problem(
                     title: "File Too Large",
-                    detail: $"The BlogML file exceeds the maximum allowed size of {MaxImportFileBytes / (1024 * 1024)} MB.",
+                    detail: $"The BlogML file exceeds the maximum allowed size of {maxImportFileBytes / (1024 * 1024)} MB.",
                     statusCode: StatusCodes.Status413PayloadTooLarge);
             }
             catch (Exception ex)
@@ -241,6 +245,27 @@ namespace Articulate.Api.Management.Controllers
 
             Response.Headers.Append("Content-Disposition", $"attachment; filename*=UTF-8''{downloadFileName}");
             return File(fileStream, "application/octet-stream");
+        }
+
+        private long GetMaxImportFileBytes()
+        {
+            long? maxRequestLengthKb = runtimeSettings.CurrentValue.MaxRequestLength;
+            if (maxRequestLengthKb is null or <= 0)
+            {
+                return DefaultMaxImportFileBytes;
+            }
+
+            try
+            {
+                checked
+                {
+                    return maxRequestLengthKb.Value * 1024L;
+                }
+            }
+            catch (OverflowException)
+            {
+                return long.MaxValue;
+            }
         }
     }
 }

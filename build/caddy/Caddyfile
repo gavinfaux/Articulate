@@ -1,0 +1,8 @@
+http://:8080 {
+    redir https://{$HTTPS_HOST:-localhost:8443}{uri} permanent
+}
+
+localhost:8443 {
+    reverse_proxy http://{$ARTICULATE_HOST}:8080
+    tls internal
+}

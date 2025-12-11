@@ -6,14 +6,12 @@ using Articulate.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Umbraco.Cms.Core.Actions;
-using Umbraco.Cms.Core.Models;
-using Umbraco.Cms.Core.Models.Membership;
-using Umbraco.Cms.Core.Services;
 using Umbraco.Cms.Core.Web;
 using Umbraco.Cms.Web.Common.Controllers;
+using ManagementConstants = Articulate.Api.Management.Constants;
 
 namespace Articulate.Web.Controllers
 {
@@ -23,7 +21,7 @@ namespace Articulate.Web.Controllers
         ICompositeViewEngine compositeViewEngine,
         IUmbracoContextAccessor umbracoContextAccessor,
         IApiDescriptionGroupCollectionProvider apiDescriptionProvider,
-        IContentService contentService,
+        IConfiguration configuration,
         IOptions<ArticulateOpenIdClientOptions> artClientOptions,
         BackOfficeAuthService backOfficeAuthService)
         : RenderController(logger, compositeViewEngine, umbracoContextAccessor)
@@ -37,38 +35,10 @@ namespace Articulate.Web.Controllers
                 return NotFound();
             }
 
-            IContent? articulateNode = contentService.GetById(CurrentPage.Id);
-            if (articulateNode is null)
-            {
-                return NotFound();
-            }
-
-            IContent? archive = contentService
-                .GetPagedChildren(CurrentPage.Id, 0, 128, out _)
-                .FirstOrDefault(x => x.ContentType.Alias.Equals(ArticulateConstants.ContentType.ArticulateArchive, StringComparison.OrdinalIgnoreCase));
-
-            if (archive is null)
-            {
-                return NotFound();
-            }
-
-            IUser? currentUser = backOfficeAuthService.GetCurrentUser();
-            bool isBackOfficeLoggedIn = currentUser is not null;
-            bool hasRequiredPermissions = false;
-
-            if (currentUser is not null)
-            {
-                string[] requiredPermissions = [ActionNew.ActionLetter, ActionPublish.ActionLetter];
-                hasRequiredPermissions = backOfficeAuthService.HasPermissions(currentUser, archive, requiredPermissions);
-
-                if (!hasRequiredPermissions)
-                {
-                    return Forbid();
-                }
-            }
+            bool isBackOfficeLoggedIn = backOfficeAuthService.GetCurrentUser() is not null;
 
             IReadOnlyDictionary<string, string>? managementApiUrls = apiDescriptionProvider.ManagementApiUrlMap([
-                Api.Management.Constants.ManagementApi.MarkdownEditor
+                ManagementConstants.ManagementApi.MarkdownEditor
             ]);
 
             string key = GetKey<MarkdownEditorApiController>(nameof(MarkdownEditorApiController.CreatePost));
@@ -86,20 +56,12 @@ namespace Articulate.Web.Controllers
                     "Check if the Articulate API routes are registered correctly at startup.");
             }
 
+            // External OAuth clients use the same authentication flow for all Umbraco versions
+            // (Authorization Code + PKCE ? Bearer tokens, not cookies)
             ArticulateOpenIdClientOptions openIdClientOptions = artClientOptions.Value;
             string clientId = openIdClientOptions.ClientId ?? string.Empty;
-            if (string.IsNullOrWhiteSpace(clientId))
-            {
-                logger.LogWarning("MarkdownEditor requires an OAuth client id; ensure Articulate:ManagementApi:OpenIddict:Client is configured.");
-                clientId = string.Empty;
-            }
-
             string? postLogoutRedirect = openIdClientOptions.PostLogoutRedirectUris
                 .FirstOrDefault(uri => Uri.TryCreate(uri, UriKind.Absolute, out _));
-            if (postLogoutRedirect is null && openIdClientOptions.PostLogoutRedirectUris.Count > 0)
-            {
-                logger.LogWarning("Configured post-logout redirect URIs for Articulate are not absolute. The Markdown editor will fall back to the site origin after sign-out.");
-            }
 
             var vm = new MarkdownEditorInitModel
             {
@@ -107,21 +69,24 @@ namespace Articulate.Web.Controllers
                 EditorPostUrl = editorUrl,
                 BackOfficeClientId = clientId,
                 IsBackOfficeLoggedIn = isBackOfficeLoggedIn,
-                BackOfficeUserName = currentUser?.Name,
-                BackOfficeUserId = currentUser?.Id,
-                HasRequiredPermissions = hasRequiredPermissions,
                 PostLogoutRedirectUrl = postLogoutRedirect,
             };
 
-            return RenderView(vm);
-
-            IActionResult RenderView(MarkdownEditorInitModel model)
+            Response.Headers["Permissions-Policy"] = "camera=(self)";
+            Response.Headers["Content-Security-Policy"] = string.Join(";", new[]
             {
-                // We restrict camera access to the same origin (self) for security.
-                // If the editor is hosted on a CDN or different origin, this policy may need to be adjusted (e.g. 'camera=*' or specific origins).
-                Response.Headers["Permissions-Policy"] = "camera=(self)";
-                return View("MarkdownEditor", model);
-            }
+                "default-src 'self'",
+                "script-src 'self'",
+                "style-src 'self'",
+                "img-src 'self' data: blob:",
+                "font-src 'self'",
+                "connect-src 'self'",
+                "frame-ancestors 'self'",
+                "base-uri 'self'",
+                "object-src 'none'"
+            });
+
+            return View("MarkdownEditor", vm);
 
             static string GetKey<T>(string actionName) => $"{typeof(T).Name}.{actionName}";
         }

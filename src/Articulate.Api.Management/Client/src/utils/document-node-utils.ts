@@ -26,23 +26,28 @@ export async function DocumentById(
   udi: string,
 ): Promise<DocumentVariantResponseModel | null> {
   try {
-    // 1. Get the authentication context and bearer token from Umbraco
     const auth = authContext.getOpenApiConfiguration();
-    const getToken = auth?.token;
-
-    if (typeof getToken !== 'function') {
-      throw new Error('Could not get authorization token function.');
-    }
-    const token = await getToken();
-
+    const credentials = auth?.credentials ?? 'include';
+    const token =
+      typeof auth?.token === 'function'
+        ? await auth.token().catch((err) => {
+            console.warn('Token retrieval failed:', err);
+            return null;
+          })
+        : null;
+    const isUsableToken = token && typeof token === 'string' && !token.toLowerCase().includes('redacted');
     const url = `/umbraco/management/api/v1/document/${udi}`;
-    // 3. Make the fetch request with the required headers
+    const headers: HeadersInit = {
+      Accept: 'application/json',
+    };
+    if (isUsableToken) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+
     const response = await fetch(url, {
       method: 'GET',
-      headers: {
-        Accept: 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
+      headers,
+      credentials,
     });
 
     if (!response.ok) {
@@ -67,14 +72,10 @@ export async function ArticulateDocumentTypeKey(authContext: UmbAuthContext): Pr
   /* TODO: Replace with Umbraco SDK API call once issue with hey-api fetch client in transpiled code at runtime is resolved. Sent data object and fetch client options both have a query field that is merged into the client options object, instead of being deserialized to a query string. This is a workaround using the browser fetch API.
    */
   try {
-    // 1. Get the authentication context and bearer token from Umbraco
     const auth = authContext.getOpenApiConfiguration();
-    const getToken = auth?.token;
-
-    if (typeof getToken !== 'function') {
-      throw new Error('Could not get authorization token function.');
-    }
-    const token = await getToken();
+    const credentials = auth?.credentials ?? 'include';
+    const token = typeof auth?.token === 'function' ? await auth.token().catch(() => null) : null;
+    const isUsableToken = token && !token.toLowerCase().includes('redacted');
     // 2. Construct the URL with query parameters using URLSearchParams for safety
     const params = new URLSearchParams({
       query: 'Articulate',
@@ -85,12 +86,17 @@ export async function ArticulateDocumentTypeKey(authContext: UmbAuthContext): Pr
     const url = `/umbraco/management/api/v1/item/document-type/search?${params.toString()}`;
 
     // 3. Make the fetch request with the required headers
+    const headers: HeadersInit = {
+      Accept: 'application/json',
+    };
+    if (isUsableToken) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+
     const response = await fetch(url, {
       method: 'GET',
-      headers: {
-        Accept: 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
+      headers,
+      credentials,
     });
 
     if (!response.ok) {

@@ -1,5 +1,6 @@
 #nullable enable
 using Articulate.ImportExport;
+using Articulate.Migrations;
 using Articulate.Options;
 using Articulate.Routing;
 using Articulate.Services;
@@ -12,6 +13,7 @@ using Microsoft.Extensions.Options;
 using Umbraco.Cms.Core.Composing;
 using Umbraco.Cms.Core.Notifications;
 using Umbraco.Cms.Core.Routing;
+using Umbraco.Cms.Infrastructure.Migrations.Notifications;
 
 namespace Articulate.Components
 {
@@ -63,6 +65,7 @@ namespace Articulate.Components
             _ = builder.AddNotificationHandler<ContentTypeSavingNotification, ContentTypeSavingHandler>();
             _ = builder.AddNotificationHandler<ContentCacheRefresherNotification, ContentCacheRefresherHandler>();
             _ = builder.AddNotificationHandler<DomainCacheRefresherNotification, DomainCacheRefresherHandler>();
+            _ = builder.AddNotificationHandler<MigrationPlansExecutedNotification, ArticulateMigrationPlanExecutedHandler>();
 
             _ = services.ConfigureOptions<ArticulatePipelineStartupFilter>();
             _ = services.ConfigureOptions<ConfigureArticulateMvcOptions>();

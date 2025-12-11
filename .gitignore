@@ -473,13 +473,18 @@ $RECYCLE.BIN/
 # Git
 .orig
 
+# gitleaks
+gitleaks-report.json
+
+# rider
+/src/.idea
+
+# vscode
+/src/.vscode
+
 ##
 ## Articulate specific
 ##
-/src/.vscode
-appsettings-schema.Umbraco.Cms.json
-umbraco-package-schema.json
-appsettings-schema.json
 
 # The packages folder can be ignored because of Package Restore
 **/[Pp]ackages/*
@@ -490,7 +495,6 @@ appsettings-schema.json
 # except monaco editor package used for now by Articulate's Markdown property editor
 !src/Articulate.Api.Management/Client/src/packages/
 !src/Articulate.Api.Management/Client/src/packages/**
-
 
 # theme build artifacts
 /src/Articulate.Web/wwwroot/App_Plugins/Articulate/Themes/**/dist/
@@ -503,13 +507,13 @@ build/ClientAssets/BackofficeClient.stamp
 /src/Articulate.Tests.Website/Articulate/Temp
 /src/Articulate.Tests.Website/umbraco/**
 /src/Articulate.Tests.Website/wwwroot/media
+!/src/Articulate.Tests.Website/wwwroot/media/.gitignore
 /src/Articulate.Tests.Website/Views/Articulate
-
-# gitleaks
-gitleaks-report.json
-
-# rider
-/src/.idea
+/src/Articulate.Tests.Website/Views/ArticulateThemes
+src/Articulate.Tests.Website/appsettings-schema.Umbraco.Cms.json
+src/Articulate.Tests.Website/umbraco-package-schema.json
+src/Articulate.Tests.Website/appsettings-schema.json
+src/Articulate.Api.Management/Client/pnpm-workspace.yaml
 
 /src/u15
 /src/u16

@@ -3,57 +3,48 @@ using Paths = Articulate.ArticulateConstants.Paths;
 
 namespace Articulate.Services
 {
+
     public sealed class DefaultArticulateViewLocationProvider : IArticulateViewLocationProvider
     {
-        /// <inheritdoc/>
+
+
         public IEnumerable<string> GetLocations(string themeName)
         {
-            // Build ordered list of search locations. We include both virtual and content-root system paths.
-            var partialPlaceHolder = PathHelper.JoinVirtual(Paths.PartialsPath, Paths.ViewPlaceHolder);
-            var viewsPlaceHolder = PathHelper.JoinVirtual(Paths.ViewsPath, Paths.ViewPlaceHolder);
+            var searchRoots = new[]
+            {
+                Paths.ArticulateRoot,
+                Path.Combine("wwwroot", Paths.ArticulateRoot)
+            };
 
-            const string userRoot = Paths.UserViewVirtualRoot;
-            const string systemVirtualRoot = Paths.SystemViewVirtualRoot;
-            const string systemContentRoot = Paths.SystemViewContentRoot;
-            const string themes = Paths.ThemesPath;
-            const string markdownEditor = Paths.MarkdownEditorPath;
+            var locations = new List<string>
+            {
+                BuildPath(Paths.UserThemesRoot, themeName, Paths.Views, Paths.ViewPlaceholder),
+                BuildPath(Paths.UserThemesRoot, themeName, Paths.Views, Paths.Partials, Paths.ViewPlaceholder)
+            };
 
-            IEnumerable<string> locations =
-            [
+            foreach (var root in searchRoots)
+            {
+                locations.Add(BuildPath(root, Paths.Themes, themeName, Paths.Views, Paths.ViewPlaceholder));
+                locations.Add(BuildPath(root, Paths.Themes, themeName, Paths.Views, Paths.Partials,
+                    Paths.ViewPlaceholder));
 
-                // User theme (virtual)
-                PathHelper.JoinVirtual(userRoot, themeName, Paths.ViewPlaceHolder),
-                PathHelper.JoinVirtual(userRoot, themeName, viewsPlaceHolder),
-                PathHelper.JoinVirtual(userRoot, themeName, partialPlaceHolder),
+                locations.Add(BuildPath(root, Paths.MarkdownEditor, Paths.Views, Paths.ViewPlaceholder));
+            }
 
-                // System theme (virtual)
-                PathHelper.JoinVirtual(systemVirtualRoot, themes, themeName, Paths.ViewPlaceHolder),
-                PathHelper.JoinVirtual(systemVirtualRoot, themes, themeName, viewsPlaceHolder),
-                PathHelper.JoinVirtual(systemVirtualRoot, themes, themeName, partialPlaceHolder),
+            return locations.Where(x => !string.IsNullOrWhiteSpace(x)).Distinct();
+        }
 
-                // System theme (content-root)
-                PathHelper.JoinContentRoot(systemContentRoot, themes, themeName, Paths.ViewPlaceHolder),
-                PathHelper.JoinContentRoot(systemContentRoot, themes, themeName, viewsPlaceHolder),
-                PathHelper.JoinContentRoot(systemContentRoot, themes, themeName, partialPlaceHolder),
+        /// <summary>
+        /// Combines path segments and forces Forward Slashes for Razor View Engine compatibility.
+        /// Ensure the result starts with "/" to denote application root relative.
+        /// </summary>
+        private static string BuildPath(params string[] parts)
+        {
+            var combined = Path.Combine(parts);
 
-                // Shared base theme fallback (system) - virtual
-                PathHelper.JoinVirtual(systemVirtualRoot, themes, "Shared", Paths.ViewPlaceHolder),
-                PathHelper.JoinVirtual(systemVirtualRoot, themes, "Shared", viewsPlaceHolder),
-                PathHelper.JoinVirtual(systemVirtualRoot, themes, "Shared", partialPlaceHolder),
+            var webPath = combined.Replace('\\', '/');
 
-                // Shared base theme fallback (system) - content-root
-                PathHelper.JoinContentRoot(systemContentRoot, themes, "Shared", Paths.ViewPlaceHolder),
-                PathHelper.JoinContentRoot(systemContentRoot, themes, "Shared", viewsPlaceHolder),
-                PathHelper.JoinContentRoot(systemContentRoot, themes, "Shared", partialPlaceHolder),
-
-                // MarkdownEditor (virtual)
-                PathHelper.JoinVirtual(systemVirtualRoot, markdownEditor, Paths.ViewPlaceHolder),
-
-                // MarkdownEditor (content-root)
-                PathHelper.JoinContentRoot(systemContentRoot, markdownEditor, Paths.ViewPlaceHolder)
-            ];
-
-            return locations.Where(s => !string.IsNullOrWhiteSpace(s));
+            return webPath.StartsWith('/') ? webPath : "/" + webPath;
         }
     }
 }

@@ -9,10 +9,9 @@
                     var thumbnail = post.PostImage?.GetCropUrl("blogPost");
                     if (thumbnail != null)
                     {
-                        <div class="postthumb" style="background: url(@thumbnail)"></div>
+                        <div class="postthumb" style="background: url('@thumbnail')"></div>
                     }
-                }
-                <div class="time">
+                }                <div class="time">
                     <time datetime="@post.PublishedDate">
                         @post.PublishedDate.ToString("MMM d, yyyy HH:mm")
                     </time>

@@ -22,13 +22,15 @@
 
         @if (Model.Tags.Any())
         {
+            var tags = Model.Tags.ToList();
             <div>
                 Posted in
 
-                @foreach (var tag in Model.Tags)
+                @for (int i = 0; i < tags.Count; i++)
                 {
+                    var tag = tags[i];
                     <a href="@Model.ArticulateTagUrl(tag)">@tag</a>
-                    if (tag != Model.Tags.Last())
+                    if (i < tags.Count - 1)
                     {
                         <span>, </span>
                     }

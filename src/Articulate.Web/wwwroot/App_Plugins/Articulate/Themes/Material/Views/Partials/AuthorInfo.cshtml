@@ -18,6 +18,6 @@
                 <a href="@Model.Author.BlogUrl">@Model.Author.Name</a>
             }
         </strong>
-        <span>2 days ago</span>
+            <span>@(Model.PublishedDate.ToString("MMMM dd, yyyy") ?? "Date unavailable")</span>
     </div>
 }

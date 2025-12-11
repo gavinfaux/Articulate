@@ -26,9 +26,8 @@ document.addEventListener("alpine:init", () => {
   }
 
   alpine.data("markdownEditor", () => ({
-    // --- Reactive State ---
     isLoading: true,
-    errorDetails: null, // { title: '', details: [] }
+    errorDetails: null,
     post: {
       articulateBlogNode: null,
       title: "",
@@ -48,7 +47,6 @@ document.addEventListener("alpine:init", () => {
     editorInstance: null,
     loginNotice: "Please sign in below.",
 
-    // --- Getters for CSP-compliant logic ---
     get hasErrorDetails() {
       return (
         this.errorDetails &&
@@ -311,7 +309,6 @@ document.addEventListener("alpine:init", () => {
     },
 
     redirectToLogin() {
-      console.info("[MarkdownEditor] redirecting to Umbraco back-office OAuth");
       authService.redirectToLogin();
     },
 
@@ -395,6 +392,12 @@ document.addEventListener("alpine:init", () => {
     },
 
     // --- Initialization ---
+    // Entry point for the Markdown editor UI. This method:
+    // - Reads dynamic configuration from the Razor view (initConfig).
+    // - Handles an OAuth authorization code callback if present.
+    // - Ensures a valid access token is available (via authService).
+    // - Resolves the current back-office user and transitions to the
+    //   appropriate step (login vs editor).
     async init() {
       try {
         console.info("[MarkdownEditor] initializing component");
@@ -410,35 +413,37 @@ document.addEventListener("alpine:init", () => {
           isBackOfficeLoggedIn: config.isBackOfficeLoggedIn,
         });
 
-        if (window.location.search.includes("code=")) {
+        const params = new URLSearchParams(window.location.search);
+        if (params.has("code")) {
           console.debug(
             "[MarkdownEditor] handling OAuth authorization callback"
           );
           await authService.handleLoginCallback();
         }
 
+        // Validate Bearer token (external OAuth clients always use token auth)
         let token = authService.getAccessToken();
-        console.debug("[MarkdownEditor] access token present?", Boolean(token));
+        console.debug('[MarkdownEditor] access token present?', Boolean(token));
 
         if (!token) {
           console.info(
-            "[MarkdownEditor] no access token found; showing login view"
+            '[MarkdownEditor] no access token found; showing login view'
           );
           this.isLoading = false;
           this.errorDetails = null;
-          this.showLogin("Please sign in below.");
+          this.showLogin('Please sign in below.');
           return;
         }
 
         const sessionEstablished = authService.hasValidAccessToken();
         if (!sessionEstablished) {
           console.info(
-            "[MarkdownEditor] access token missing or expired; showing login view"
+            '[MarkdownEditor] access token missing or expired; showing login view'
           );
           this.isLoading = false;
           this.errorDetails = null;
           this.showLogin(
-            "Your session has timed out. Please sign in again below."
+            'Your session has timed out. Please sign in again below.'
           );
           return;
         }

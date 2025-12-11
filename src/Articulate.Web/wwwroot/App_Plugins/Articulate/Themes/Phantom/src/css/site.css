@@ -1,37 +1,25 @@
-@font-face {
-    font-family: 'Open Sans';
-    font-style: normal;
-    font-weight: 400;
-    src: local("Open Sans"),local("OpenSans"),url(https://themes.googleusercontent.com/static/fonts/opensans/v8/cJZKeOuBrn4kERxqtaUH3T8E0i7KZn-EPnyo3HZu7kw.woff) format("woff");
-}
-
-@font-face {
-    font-family: 'Open Sans';
-    font-style: normal;
-    font-weight: 700;
-    src: local("Open Sans Bold"),local("OpenSans-Bold"),url(https://themes.googleusercontent.com/static/fonts/opensans/v8/k3k702ZOKiLJc3WVjuplzHhCUOGz7vYGh680lGh-uXM.woff) format("woff");
-}
-
-@font-face {
-    font-family: 'Roboto';
-    font-style: normal;
-    font-weight: 400;
-    src: local("Roboto Regular"),local("Roboto-Regular"),url(https://themes.googleusercontent.com/static/fonts/roboto/v10/2UX7WLTfW3W8TclTUvlFyQ.woff) format("woff");
+/* Google Fonts (Open Sans, Roboto) are loaded via <link> in Master.cshtml */
+a {
+    color: #4a4a4a;
+    transition: color 0.3s ease;
 }
 
 @font-face {
     font-family: 'phantom';
     src: url("../fonts/phantom.eot?42194940");
-    src: url("../fonts/phantom.eot?42194940#iefix") format("embedded-opentype"),url("../fonts/phantom.woff?42194940") format("woff"),url("../fonts/phantom.ttf?42194940") format("truetype"),url("../fonts/phantom.svg?42194940#phantom") format("svg");
+    src: url("../fonts/phantom.eot?42194940#iefix") format("embedded-opentype"),
+         url("../fonts/phantom.woff?42194940") format("woff"),
+         url("../fonts/phantom.ttf?42194940") format("truetype"),
+         url("../fonts/phantom.svg?42194940#phantom") format("svg");
     font-weight: normal;
     font-style: normal;
 }
 
-[class^="icon-"]:before, [class*=" icon-"]:before {
+[class^="icon-"]:before,
+[class*=" icon-"]:before {
     font-family: "phantom";
     font-style: normal;
     font-weight: normal;
-    speak: none;
     display: inline-block;
     text-decoration: none;
     width: 1em;
@@ -41,6 +29,15 @@
     text-transform: none;
     line-height: 1em;
     margin-left: .2em;
+}
+
+body {
+    height: 100%;
+    max-height: 100%;
+    font-family: 'Roboto', sans-serif;
+    font-size: 18px;
+    line-height: 1.6em;
+    color: #3A4145;
 }
 
 .icon-rss:before {
@@ -80,15 +77,6 @@
 html {
     height: 100%;
     max-height: 100%;
-}
-
-body {
-    height: 100%;
-    max-height: 100%;
-    font-family: 'Roboto', serif;
-    font-size: 18px;
-    line-height: 1.6em;
-    color: #3A4145;
 }
 
 ::-moz-selection {
@@ -327,6 +315,7 @@ a {
     background: #303538 no-repeat center center;
     background-size: cover;
     background-position: 20%;
+    transform: translateZ(0);
     -webkit-transform: translateZ(0);
 }
 
@@ -483,6 +472,7 @@ img.thumb {
         background: #303538 no-repeat center center;
         background-size: cover;
         background-position: 20%;
+        transform: translateZ(0);
         -webkit-transform: translateZ(0);
     }
 
@@ -490,8 +480,6 @@ img.thumb {
             display: none;
         }
 
-        .sidebar .articulate-search {
-        }
 
         .sidebar .circle {
             width: 100px;

@@ -159,8 +159,8 @@ a,
 a:visited {
   color: #3498db;
   text-decoration: none;
-  -webkit-transition: color ease 0.7s;
-  transition: color ease 0.7s;
+  -webkit-transition: color 0.7s ease;
+  transition: color 0.7s ease;
 }
 a:focus,
 a:hover {
@@ -324,17 +324,7 @@ section.author p.bio {
 .author-posts {
     padding: 15px 0 0 0; 
 }
-blockquote {
-  font-family: "Open Sans Condensed", "Open Sans", "Helvetica Neue", Helvetica, Arial, "Nimbus L", sans-serif;
-  font-size: 1.6em;
-  font-weight: 300;
-  line-height: 1.2em;
-  font-style: italic;
-  text-transform: uppercase;
-  border-left: 0.5em solid rgba(0, 0, 0, 0.05);
-  margin-left: 1em;
-  padding-left: 1em;
-}
+blockquote,
 blockquote p {
   font-family: "Open Sans Condensed", "Open Sans", "Helvetica Neue", Helvetica, Arial, "Nimbus L", sans-serif;
   font-size: 1.6em;
@@ -342,6 +332,11 @@ blockquote p {
   line-height: 1.2em;
   font-style: italic;
   text-transform: uppercase;
+}
+blockquote {
+  border-left: 0.5em solid rgba(0, 0, 0, 0.05);
+  margin-left: 1em;
+  padding-left: 1em;
 }
 .post-meta {
   color: #95a5a6;
@@ -636,11 +631,6 @@ a.archive-link {
 .gist .gist-file .gist-data .line-pre {
   line-height: 1.2em !important;
 }
-.hidden {
-  text-indent: -9999px;
-  visibility: hidden;
-  display: none;
-}
 @font-face {
   font-family: 'icons';
   src: url('../fonts/icons.eot');
@@ -827,6 +817,35 @@ section.share .share-icons {
   justify-content: flex-end;
   width: auto;
   margin: 0;
+}
+
+section.share .share-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 2px;
+  background: #ffffff;
+  color: #000000;
+  font-size: 16px;
+  line-height: 1;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+section.share .share-icon:hover,
+section.share .share-icon:focus-visible {
+  background: #000000;
+  color: #ffffff;
+  outline: none;
+}
+
+section.share .share-icon i.fa-share-nodes {
+  font-size: 16px;
 }
 
 section.share a {

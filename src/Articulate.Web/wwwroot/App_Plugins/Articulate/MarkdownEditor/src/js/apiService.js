@@ -8,14 +8,12 @@ import { authService } from './authService.js';
  * @returns {Promise<object>} The JSON response from the server.
  */
 async function createPost(postData, fileMap) {
-    const token = authService.getAccessToken();
-    if (!token) {
-        // Create a specific error type for session issues
+    const token = await authService.getAccessToken();
+    if (!token && !config.useCookieAuth) {
         const error = new Error('Session expired. Please log in again.');
         error.isAuthError = true;
         throw error;
     }
-
     const formData = new FormData();
     formData.append('json', JSON.stringify(postData));
 
@@ -33,14 +31,19 @@ async function createPost(postData, fileMap) {
 
     console.debug('[apiService] createPost: form keys', Array.from(formData.keys()));
 
-    const response = await fetch(config.editorPostUrl, {
+    const requestOptions = {
         method: 'POST',
-        headers: {
-            'Authorization': `Bearer ${token}`,
-            // 'Content-Type' is not needed; the browser sets it for FormData
-        },
+        credentials: 'include',
         body: formData,
-    });
+    };
+
+    if (token) {
+        requestOptions.headers = {
+            'Authorization': `Bearer ${token}`,
+        };
+    }
+
+    const response = await fetch(config.editorPostUrl, requestOptions);
 
     if (!response.ok) {
         // Defer parsing/normalisation to error-formatter
@@ -58,13 +61,19 @@ async function getCurrentUser() {
         throw error;
     }
 
-    const response = await fetch(config.currentUserUrl, {
+    const requestOptions = {
         method: 'GET',
+        credentials: 'include',
         headers: {
             'Accept': 'application/json',
-            'Authorization': `Bearer ${token}`
-        }
-    });
+        },
+    };
+
+    if (token) {
+        requestOptions.headers.Authorization = `Bearer ${token}`;
+    }
+
+    const response = await fetch(config.currentUserUrl, requestOptions);
 
     if (!response.ok) {
         // Defer parsing/normalisation to error-formatter

@@ -1,12 +1,20 @@
-/* Simple OAuth2 client for Articulate
-alternative: oidc-client-ts: replace auth calls with this library:
-<script src="https://cdn.jsdelivr.net/npm/oidc-client-ts@3.3.0/dist/browser/oidc-client-ts.min.js" integrity="sha256-DYkis2iqspb2cTcme2DYHL8VsYe2sRBkFzb+pVBfNkQ=" crossorigin="anonymous"></script>
-[authorization-code-grant-with-pkce](https://github.com/authts/oidc-client-ts/blob/main/docs/protocols/authorization-code-grant-with-pkce.md)
+/* Simple OAuth2/OpenID Connect client for the standalone Markdown editor.
+   Flow summary:
+   - redirectToLogin(): starts an authorization code + PKCE flow against Umbraco's
+     back-office OpenIddict endpoints (using config.authUrl).
+   - handleLoginCallback(): validates the state/code, then exchanges the
+     authorization code for an access token via config.tokenUrl.
+   - getAccessToken()/hasValidAccessToken(): manage the cached access token
+     (stored in sessionStorage) and perform lightweight client-side expiry checks.
+   - logout(): best-effort revokes the cached access token (config.revokeUrl),
+     then calls the end-session endpoint (config.authEndUrl) and finally clears
+     local token storage before redirecting the browser.
+
+   If you decide to replace this with a full-featured OIDC client library,
+   this file is the main integration point.
 */
 
 import { config } from './config.js';
-
-// Helper functions for PKCE
 async function generateCodeChallenge(codeVerifier) {
     const encoder = new TextEncoder();
     const data = encoder.encode(codeVerifier);
@@ -70,24 +78,16 @@ function parseJwtPayload(token) {
 
 // Token and session management
 function getAccessToken() {
-    const key = config.storageKeys.accessToken;
-    const sessionToken = sessionStorage.getItem(key);
-    if (sessionToken) {
-        return sessionToken;
+    if (config.useCookieAuth) {
+        return null;
     }
-
-    // Migrate any legacy tokens that might still exist in localStorage.
-    const legacyToken = localStorage.getItem(key);
-    if (legacyToken) {
-        sessionStorage.setItem(key, legacyToken);
-        localStorage.removeItem(key);
-        return legacyToken;
-    }
-
-    return null;
+    return sessionStorage.getItem(config.storageKeys.accessToken);
 }
 
 function setAccessToken(token) {
+    if (config.useCookieAuth) {
+        return;
+    }
     const key = config.storageKeys.accessToken;
     if (token) {
         sessionStorage.setItem(key, token);
@@ -99,6 +99,39 @@ function clearAccessToken() {
     const key = config.storageKeys.accessToken;
     sessionStorage.removeItem(key);
     localStorage.removeItem(key);
+}
+
+async function revokeAccessToken() {
+    const token = getAccessToken();
+    if (!token || !config.revokeUrl) {
+        return;
+    }
+
+    try {
+        const params = new URLSearchParams();
+        params.set('token', token);
+        params.set('token_type_hint', 'access_token');
+        // Public client: pass client_id instead of client authentication
+        if (config.oauth?.clientId) {
+            params.set('client_id', config.oauth.clientId);
+        }
+
+        const response = await fetch(config.revokeUrl, {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'Accept': 'application/json'
+            },
+            body: params.toString()
+        });
+
+        if (!response.ok) {
+            console.warn('[authService] Token revocation returned non-success status:', response.status);
+        }
+    } catch (error) {
+        console.warn('[authService] Failed to revoke access token.', error);
+    }
 }
 
 // Main authentication functions
@@ -159,6 +192,7 @@ async function handleLoginCallback() {
 
     const tokenResponse = await fetch(config.tokenUrl, {
         method: 'POST',
+        credentials: 'include',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
         },
@@ -173,6 +207,11 @@ async function handleLoginCallback() {
 
     if (!tokenResponse.ok) {
         throw new Error('Failed to exchange authorization code for access token.');
+    }
+
+    // For v17+ cookie auth, the server sets secure cookies; token body may be redacted.
+    if (config.useCookieAuth) {
+        return;
     }
 
     const tokenData = await tokenResponse.json();
@@ -194,6 +233,10 @@ async function handleLoginCallback() {
 }
 
 function hasValidAccessToken() {
+    if (config.useCookieAuth) {
+        return true;
+    }
+
     const token = getAccessToken();
     console.debug('[authService] validating cached access token', {
         tokenPresent: Boolean(token)
@@ -236,6 +279,12 @@ async function logout() {
     let redirectUrl = '/';
 
     try {
+        if (!config.useCookieAuth) {
+            await revokeAccessToken();
+        } else {
+            clearAccessToken();
+        }
+
         const response = await fetch(config.authEndUrl, {
             method: 'GET',
             credentials: 'include',

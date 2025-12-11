@@ -77,11 +77,10 @@ namespace Articulate.ImportExport
                 {
                     var commentText = comment.Content?.Content ?? string.Empty;
 
-                    if (comment.Content?.ContentType == BlogMLContentType.Base64)
+                    if (comment.Content?.ContentType == BlogMLContentType.Base64 && !string.IsNullOrEmpty(comment.Content.Content))
                     {
                         commentText = Encoding.UTF8.GetString(Convert.FromBase64String(comment.Content.Content));
                     }
-
                     var xComment = new XElement(
                         nsWp + "comment",
                         new XElement(nsWp + "comment_id", comment.Id),

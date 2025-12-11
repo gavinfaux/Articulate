@@ -67,7 +67,7 @@ th.date {
 }
 
 .demo-blog--blogpost .meta .post-tags {
-  -webkit-box-orient: horizontal;
+  -webkit-box-orient: vertical;
   -webkit-box-direction: normal;
   -webkit-flex-direction: column;
   -ms-flex-direction: column;
@@ -78,7 +78,6 @@ th.date {
   align-items: flex-start;
   margin-left: 15px;
 }
-
   .demo-blog--blogpost .meta .post-tags a {
     font-weight: inherit;
     text-decoration: none;

@@ -25,10 +25,10 @@ else
                     var thumbnail = post.PostImage?.GetCropUrl("blogPost");
                     if (thumbnail != null)
                     {
-                        <div class="postthumb" style="background: url(@thumbnail)"></div>
+                        var encodedUrl = System.Web.HttpUtility.UrlPathEncode(thumbnail);
+                        <div class="postthumb" style="background: url('@encodedUrl')"></div>
                     }
-                }
-                <p>
+                }                <p>
                     @post.Excerpt&hellip;
                 </p>
                 <p class="readmore">

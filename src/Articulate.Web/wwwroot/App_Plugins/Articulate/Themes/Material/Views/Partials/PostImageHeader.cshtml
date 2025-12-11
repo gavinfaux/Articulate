@@ -7,12 +7,10 @@
         var bgUrl = Model.Image.GetCropUrl("wide");
         if (bgUrl is not null)
         {
-            postBg = "url('" + bgUrl + "')";
+            postBg = $"url('{bgUrl.Replace("'", "\\'")}')";
         }
-
         <div class="mdl-card__media mdl-color-text--grey-50"
-             style="background-image: @(postBg);">
-            <h3>
+             style="background-image: @(postBg);">            <h3>
                 <a href="@Model.Url">@Model.Name</a>
             </h3>
         </div>

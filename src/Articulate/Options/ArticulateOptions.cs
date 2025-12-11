@@ -83,5 +83,10 @@ namespace Articulate.Options
         public bool EmitMetadata { get; set; } = false;
 
         public string? InputPosition { get; set; } = "bottom";
+        /// <summary>
+        /// When true, Articulate content created during the installer is published automatically.
+        /// </summary>
+        public bool AutoPublishOnStartup { get; set; } = false;
+		
     }
 }

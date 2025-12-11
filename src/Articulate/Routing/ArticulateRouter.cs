@@ -252,11 +252,49 @@ namespace Articulate.Routing
 
         private void MapMarkdownEditorRoute(HttpContext httpContext, string rootNodePath, IPublishedContent articulateRootNode, IReadOnlyList<Domain> domains)
         {
-            RouteTemplate template = TemplateParser.Parse($"{rootNodePath}a-new");
+            // Primary template derived from the routed path (handles domains)
+            MapMarkdownEditorTemplates($"{rootNodePath}a-new", httpContext, articulateRootNode, domains);
+
+            // Secondary template derived from the content URL (guards against cases where
+            // RoutePathFromNodeUrl() collapses to '/' but the actual URL includes a segment like '/articles/').
+            var contentUrl = articulateRootNode.Url();
+            if (!string.IsNullOrWhiteSpace(contentUrl))
+            {
+                string pathOnly;
+                if (Uri.TryCreate(contentUrl, UriKind.Absolute, out Uri? absolute))
+                {
+                    pathOnly = absolute.AbsolutePath;
+                }
+                else
+                {
+                    pathOnly = contentUrl;
+                }
+
+                pathOnly = pathOnly.EnsureEndsWith('/');
+                if (!pathOnly.Equals(rootNodePath, StringComparison.OrdinalIgnoreCase))
+                {
+                    MapMarkdownEditorTemplates($"{pathOnly}a-new", httpContext, articulateRootNode, domains);
+                }
+            }
+        }
+
+        private void MapMarkdownEditorTemplates(string basePath, HttpContext httpContext, IPublishedContent articulateRootNode, IReadOnlyList<Domain> domains)
+        {
+            // Allow both with and without trailing slash.
+            RouteTemplate templateNoSlash = TemplateParser.Parse(basePath.TrimEnd('/'));
             MapRoute(
                 MarkdownEditorControllerName,
                 "NewPost",
-                template,
+                templateNoSlash,
+                httpContext,
+                articulateRootNode,
+                domains);
+
+            RouteTemplate templateWithSlash = TemplateParser.Parse(basePath.EnsureEndsWith('/'));
+            MapRoute(
+                MarkdownEditorControllerName,
+                "NewPost",
+                templateWithSlash,
                 httpContext,
                 articulateRootNode,
                 domains);

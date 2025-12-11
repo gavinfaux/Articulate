@@ -19,8 +19,10 @@ namespace Articulate.Components
         public Task InitializeAsync(bool isRestarting, CancellationToken cancellationToken) => Task.Run(Initialize, cancellationToken);
 
         /// <inheritdoc/>
-        public Task TerminateAsync(bool isRestarting, CancellationToken cancellationToken) => Task.Run(Terminate, cancellationToken);
-
+        public Task TerminateAsync(bool isRestarting, CancellationToken cancellationToken)
+        {
+            return Task.CompletedTask;
+        }
         private void Initialize()
         {
             if (runtimeState.Level < RuntimeLevel.Run)
@@ -34,8 +36,5 @@ namespace Articulate.Components
             _ = upgrader.Execute(migrationPlanExecutor, scopeProvider, keyValueService);
         }
 
-        private static void Terminate()
-        {
-        }
     }
 }

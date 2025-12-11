@@ -2,6 +2,21 @@ import { UMB_AUTH_CONTEXT } from '@umbraco-cms/backoffice/auth';
 import type { UmbEntryPointOnInit, UmbEntryPointOnUnload } from '@umbraco-cms/backoffice/extension-api';
 import { client } from '../api/client.gen.js';
 
+const asBearerOrUndefined = (token?: string | null) => {
+  if (!token) return undefined;
+
+  const trimmed = token.trim();
+  const lower = trimmed.toLowerCase();
+
+  // Ignore obviously placeholder tokens
+  if (!trimmed || lower.includes('redacted') || lower === 'placeholder') return undefined;
+
+  // The @hey-api/client-fetch client applies the Bearer scheme itself. Always return a bare token
+  // (strip any existing scheme) to avoid double "Bearer " prefixes in Authorization headers.
+  const bareToken = lower.startsWith('bearer ') ? trimmed.substring(7).trim() : trimmed;
+  return bareToken || undefined;
+};
+
 /**
  * The entry point for the Articulate package extensions.
  * This function is called when the extension is initialized.
@@ -15,9 +30,9 @@ export const onInit: UmbEntryPointOnInit = (host, _extensionRegistry) => {
     const openApiConfig = authContext?.getOpenApiConfiguration();
     if (openApiConfig) {
       client.setConfig({
-        auth: openApiConfig?.token ?? undefined,
+        auth: async () => asBearerOrUndefined(openApiConfig?.token ? await openApiConfig.token() : undefined),
         baseUrl: openApiConfig?.base ?? '',
-        credentials: openApiConfig?.credentials ?? 'same-origin',
+        credentials: openApiConfig?.credentials ?? 'include',
       });
     }
   });

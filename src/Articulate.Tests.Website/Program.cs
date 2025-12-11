@@ -1,48 +1,11 @@
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
-#if DEBUG
-const string RuntimeWatchFlag = "Articulate__WatchRclViews";
-bool enableRuntimeWatch = builder.Configuration.GetValue<bool>(RuntimeWatchFlag);
-
-// Development hotload DX: Razor runtime compilation + Live Reload (opt-in via Articulate__WatchRclViews=true)
-if (builder.Environment.IsDevelopment() && enableRuntimeWatch)
-{
-    // Enable runtime compilation and wire additional file providers to watch RCL/view folders
-    builder.Services
-        .AddControllersWithViews()
-        .AddRazorRuntimeCompilation(options =>
-        {
-            IWebHostEnvironment env = builder.Environment;
-            // Watch the Articulate.Web plugin views and assets directly from source during development
-            var pluginRoot = Path.GetFullPath(Path.Combine(env.ContentRootPath, "..", "Articulate.Web", "wwwroot"));
-            if (Directory.Exists(pluginRoot))
-            {
-                options.FileProviders.Add(new Microsoft.Extensions.FileProviders.PhysicalFileProvider(pluginRoot));
-            }
-
-            // Optionally watch this website's own Views/Pages if present
-            var viewsRoot = Path.Combine(env.ContentRootPath, "Views");
-            if (Directory.Exists(viewsRoot))
-            {
-                options.FileProviders.Add(new Microsoft.Extensions.FileProviders.PhysicalFileProvider(viewsRoot));
-            }
-        });
-}
-#endif
-
 builder.CreateUmbracoBuilder()
     .AddBackOffice()
     .AddWebsite()
     .AddDeliveryApi()
     .AddComposers()
     .Build();
-
-if (builder.Environment.IsProduction())
-{
-    // Only required when running from IDE in 'hybrid' Production mode, static assets will not load without this
-    // Do not use in development mode or published releases, Umbraco will not start with a circular reference exception
-    //builder.WebHost.UseStaticWebAssets();
-}
 
 WebApplication app = builder.Build();
 

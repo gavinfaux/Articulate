@@ -50,7 +50,9 @@ namespace Articulate.Api.Management.Options
         public List<string> PostLogoutRedirectUris { get; set; } = new();
 
         /// <summary>
-        /// Gets the permissions granted to the custom client. Defaults cover the authorization code flow.
+        /// Gets the permissions granted to the custom client.
+        /// Defaults restrict the client to the authorization code flow with PKCE
+        /// and explicitly scope which OpenIddict endpoints it can call.
         /// </summary>
         public IReadOnlyCollection<string> Permissions => _defaultPermissions;
 
@@ -66,11 +68,22 @@ namespace Articulate.Api.Management.Options
 
         private static readonly IReadOnlyCollection<string> _defaultPermissions = Array.AsReadOnly(new[]
         {
+            // Allow the client to initiate the authorization code flow.
             OpenIddictConstants.Permissions.Endpoints.Authorization,
+
+            // Allow the client to exchange the authorization code for tokens.
             OpenIddictConstants.Permissions.Endpoints.Token,
+
+            // Allow the client to trigger the end-session (sign-out) endpoint.
             OpenIddictConstants.Permissions.Endpoints.EndSession,
+
+            // Allow the client to revoke its own tokens via the revocation endpoint.
             OpenIddictConstants.Permissions.Endpoints.Revocation,
+
+            // Constrain the client to the authorization code grant type.
             OpenIddictConstants.Permissions.GrantTypes.AuthorizationCode,
+
+            // Constrain the authorization response to "code" only (no implicit/hybrid).
             OpenIddictConstants.Permissions.ResponseTypes.Code,
         });
 

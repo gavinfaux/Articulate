@@ -21,7 +21,7 @@ namespace Articulate.Services
         /// <inheritdoc/>
         async Task IArticulateThemeRepository.CopyThemeAsync(string themeName, string newThemeName)
         {
-            var userThemesPath = hostingEnvironment.MapPathContentRoot(Paths.UserViewVirtualRoot);
+            var userThemesPath = Path.Combine(hostingEnvironment.ContentRootPath, Paths.UserThemes);
             var destinationPhysicalPath = Path.Combine(userThemesPath, newThemeName);
 
             // User theme names must be unique
@@ -48,8 +48,8 @@ namespace Articulate.Services
                 foreach (var resourceName in themeResources)
                 {
                     var relativePath = resourceName[resourcePathPrefix.Length..];
-
-                    var destinationFilePath = Path.Combine(destinationPhysicalPath, relativePath.TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
+                    var cleanedRelativePath = relativePath.TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                    var destinationFilePath = Path.Combine(destinationPhysicalPath, cleanedRelativePath);
 
                     if (Path.GetDirectoryName(destinationFilePath) is { } directoryPath)
                     {
@@ -109,6 +109,10 @@ namespace Articulate.Services
         }
 
         private Task<IEnumerable<string>> GetUserThemesAsync() =>
-            Task.Run(() => GetThemesFromPathAsync(Paths.UserViewVirtualRoot));
+            Task.Run(() =>
+            {
+                var physicalPath = Path.Combine(hostingEnvironment.ContentRootPath, Paths.UserThemes);
+                return GetThemesFromPathAsync(physicalPath);
+            });
     }
 }

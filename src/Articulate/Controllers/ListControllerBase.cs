@@ -16,19 +16,26 @@ namespace Articulate.Controllers
     /// <summary>
     /// Base controller providing common functionality for listing pages.
     /// </summary>
-    public abstract class ListControllerBase(
-        ILogger<ListControllerBase> logger,
-        ICompositeViewEngine compositeViewEngine,
-        IUmbracoContextAccessor umbracoContextAccessor,
-        IPublishedUrlProvider publishedUrlProvider,
-        IPublishedValueFallback publishedValueFallback)
-        : RenderController(logger, compositeViewEngine, umbracoContextAccessor)
+    public abstract class ListControllerBase : RenderController
     {
-        protected IUmbracoContextAccessor UmbracoContextAccessor { get; } = umbracoContextAccessor;
+        protected IUmbracoContextAccessor UmbracoContextAccessor { get; }
 
-        protected IPublishedUrlProvider PublishedUrlProvider { get; } = publishedUrlProvider;
+        protected IPublishedUrlProvider PublishedUrlProvider { get; }
 
-        protected IPublishedValueFallback PublishedValueFallback { get; } = publishedValueFallback;
+        protected IPublishedValueFallback PublishedValueFallback { get; }
+
+        protected ListControllerBase(
+            ILogger<ListControllerBase> logger,
+            ICompositeViewEngine compositeViewEngine,
+            IUmbracoContextAccessor umbracoContextAccessor,
+            IPublishedUrlProvider publishedUrlProvider,
+            IPublishedValueFallback publishedValueFallback)
+            : base(logger, compositeViewEngine, umbracoContextAccessor)
+        {
+            UmbracoContextAccessor = umbracoContextAccessor;
+            PublishedUrlProvider = publishedUrlProvider;
+            PublishedValueFallback = publishedValueFallback;
+        }
 
         /// <summary>
         /// Gets a paged list view for a given posts by author/tags/categories model.
@@ -111,7 +118,7 @@ namespace Articulate.Controllers
 
                 foreach (var v in val)
                 {
-                    _ = queryStrings.Append($"&{key}={v}");
+                    queryStrings.Append($"&{key}={v}");
                 }
             }
 

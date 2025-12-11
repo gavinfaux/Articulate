@@ -6,13 +6,15 @@
 
         @if (Model.Categories.Any())
         {
+            var categories = Model.Categories.ToList();
             <div>
                 Categories
 
-                @foreach (var category in Model.Categories)
+                @for (int i = 0; i < categories.Count; i++)
                 {
+                    var category = categories[i];
                     <a href="@Model.ArticulateCategoryUrl(category)" title="View Posts in the category @category">@category</a>
-                    if (category != Model.Categories.Last())
+                    if (i < categories.Count - 1)
                     {
                         <span>, </span>
                     }
@@ -22,13 +24,15 @@
 
         @if (Model.Tags.Any())
         {
+            var tags = Model.Tags.ToList();
             <div>
                 Posted in
 
-                @foreach (var tag in Model.Tags)
+                @for (int i = 0; i < tags.Count; i++)
                 {
+                    var tag = tags[i];
                     <a href="@Model.ArticulateTagUrl(tag)" title="View Posts with the tag @tag">@tag</a>
-                    if (tag != Model.Tags.Last())
+                    if (i < tags.Count - 1)
                     {
                         <span>, </span>
                     }

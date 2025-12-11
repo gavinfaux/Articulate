@@ -25,15 +25,24 @@ function ensureTrailingSlash(value) {
 // Holds all configuration, initialized dynamically from the main view.
 const config = {
     // Dynamic URLs from the view's dataset
+    // authUrl: OAuth/OIDC authorization endpoint used to start the login flow.
     authUrl: '',
+    // authEndUrl: end-session (sign-out) endpoint used during logout.
     authEndUrl: '',
+    // tokenUrl: token endpoint used to exchange the authorization code for an access token.
     tokenUrl: '',
+    // currentUserUrl: Management API endpoint used to resolve the current back-office user.
     currentUserUrl: '',
+    // editorPostUrl: Management API endpoint used to create the blog post.
     editorPostUrl: '',
     articulateBlogNode: null,
     isBackOfficeLoggedIn: false,
     debugLayout: false,
+    useCookieAuth: false,
+    // Optional post-logout redirect target returned from the server.
     postLogoutRedirectUrl: null,
+    // Optional token revocation endpoint used by authService.logout() before sign-out.
+    revokeUrl: '',
 
     // Static OAuth parameters
     oauth: {
@@ -67,18 +76,14 @@ function initConfig(dataset) {
         oauthClientId,
         backofficeLoggedIn,
         debugLayout,
-        postLogoutRedirect
+        postLogoutRedirect,
+        revocationUrl,
+        useCookieAuth
     } = dataset;
 
     if (!authUrl || !editorPostUrl || !currentUserUrl || !tokenUrl || !authEndUrl || !articulateBlogNode || typeof backofficeLoggedIn === "undefined") {
         console.error("CRITICAL: One or more dataset values missing. The application cannot function.");
         throw new Error("Missing critical configuration from dataset.");
-    }
-
-    const trimmedClientId = typeof oauthClientId === "string" ? oauthClientId.trim() : "";
-    if (!trimmedClientId) {
-        console.error("CRITICAL: OAuth client configuration missing.");
-        throw new Error("Missing OAuth client configuration.");
     }
 
     config.authUrl = authUrl;
@@ -102,8 +107,23 @@ function initConfig(dataset) {
         config.postLogoutRedirectUrl = null;
     }
 
+    if (typeof useCookieAuth === "string") {
+        const normalized = useCookieAuth.trim().toLowerCase();
+        config.useCookieAuth = normalized === "true" || normalized === "1";
+    }
+
+    const trimmedClientId = typeof oauthClientId === "string" ? oauthClientId.trim() : "";
+    if (!config.useCookieAuth && !trimmedClientId) {
+        console.error("CRITICAL: OAuth client configuration missing.");
+        throw new Error("Missing OAuth client configuration.");
+    }
+
     config.oauth.clientId = trimmedClientId;
     config.oauth.redirectUri = ensureTrailingSlash(config.oauth.redirectUri);
+
+    if (typeof revocationUrl === "string") {
+        config.revokeUrl = revocationUrl.trim();
+    }
 }
 
 export { config, initConfig };

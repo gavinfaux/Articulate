@@ -3,13 +3,19 @@
 <div class="header-placeholder">&nbsp;</div>
 
 @{
-    var backgroundStyle = !string.IsNullOrWhiteSpace(Model.BlogBanner)
-        ? "background-image: url(" + Model.BlogBanner + ");"
-        : "";
+    string backgroundStyle = "";
+    if (!string.IsNullOrWhiteSpace(Model.BlogBanner))
+    {
+        // Validate URL and encode for CSS context
+        var encodedUrl = System.Web.HttpUtility.UrlPathEncode(Model.BlogBanner);
+        if (Uri.TryCreate(encodedUrl, UriKind.RelativeOrAbsolute, out var uri))
+        {
+            backgroundStyle = $"background-image: url('{encodedUrl.Replace("'", "\\'")}');";
+        }
+    }
 }
 
 <div class="header-content" style="@backgroundStyle">
-
 
     @if (!string.IsNullOrWhiteSpace(Model.BlogLogo))
     {

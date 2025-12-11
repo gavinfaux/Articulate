@@ -2,18 +2,6 @@
 
 @{
     Layout = null;
-    if (Model?.ArticulateBlogNode is null)
-    {
-        throw new InvalidOperationException("Missing ArticulateBlogNode parameter.");
-    }
-    if (Model?.EditorPostUrl is null)
-    {
-        throw new InvalidOperationException("Missing EditorPostUrl parameter.");
-    }
-    if (string.IsNullOrWhiteSpace(Model?.BackOfficeClientId))
-    {
-        throw new InvalidOperationException("Missing BackOfficeClientId parameter.");
-    }
 }
 
 <!doctype html>
@@ -31,22 +19,15 @@
         <link href="~/App_Plugins/Articulate/MarkdownEditor/dist/css/md-editor.css" rel="stylesheet"
             fetchpriority="high" asp-append-version="true">
     </environment>
-    <link rel="preload" href="~/App_Plugins/Articulate/MarkdownEditor/vendor/mdl/material.pink-blue.min.css" as="style"
-        onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="stylesheet" href="~/App_Plugins/Articulate/MarkdownEditor/vendor/mdl/material.pink-blue.min.css" media="all" />
     <noscript>
-        <link rel="stylesheet" href="~/App_Plugins/Articulate/MarkdownEditor/vendor/mdl/material.pink-blue.min.css">
+        <link rel="stylesheet" href="~/App_Plugins/Articulate/MarkdownEditor/vendor/mdl/material.pink-blue.min.css" media="all">
     </noscript>
-    <link rel="stylesheet" href="~/App_Plugins/Articulate/MarkdownEditor/vendor/fonts/material-icons/material-icons.css"
-        media="print" onload="this.media='all'">
-    <link rel="stylesheet" href="~/App_Plugins/Articulate/MarkdownEditor/vendor/fonts/roboto/roboto.css" media="print"
-        onload="this.media='all'">
+    <link rel="stylesheet" href="~/App_Plugins/Articulate/MarkdownEditor/vendor/fonts/material-icons/material-icons.css" media="all">
 
 
-    <link rel="stylesheet" href="~/App_Plugins/Articulate/MarkdownEditor/vendor/tiny-mde/tiny-mde.min.css" media="print"
-        onload="this.media='all'">
-    <link rel="preload" as="image"
-        href="/umbraco/management/api/v1/security/back-office/graphics/login-logo-alternative" fetchpriority="high">
-
+    <link rel="stylesheet" href="~/App_Plugins/Articulate/MarkdownEditor/vendor/tiny-mde/tiny-mde.min.css" media="all">
+    <link rel="preload" as="image" href="/umbraco/management/api/v1/security/back-office/graphics/login-logo-alternative" fetchpriority="high">
 
 </head>
 
@@ -55,7 +36,8 @@
     data-auth-end-url="@MarkdownEditorInitModel.EndSessionUrl" data-token-url="@MarkdownEditorInitModel.TokenUrl"
     data-current-user-url="@MarkdownEditorInitModel.CurrentUserUrl" data-editor-post-url="@Model.EditorPostUrl"
     data-oauth-client-id="@Model.BackOfficeClientId" data-post-logout-redirect="@Model.PostLogoutRedirectUrl"
-    data-backoffice-logged-in="@Model.IsBackOfficeLoggedIn.ToString().ToLowerInvariant()" data-debug-layout="true">
+    data-backoffice-logged-in="@Model.IsBackOfficeLoggedIn.ToString().ToLowerInvariant()" data-use-cookie-auth="@Model.UseCookieAuth.ToString().ToLowerInvariant()"
+    data-revocation-url="@MarkdownEditorInitModel.RevocationUrl">
     <div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
         <header class="mdl-layout__header" x-cloak x-show="showHeader">
             <div class="mdl-layout__header-row md-editor__container">
@@ -86,7 +68,7 @@
                                     src="/umbraco/management/api/v1/security/back-office/graphics/login-logo-alternative"
                                     alt="Umbraco logo" fetchpriority="high" width="200" height="55" />
                             </div>
-                            <div class="mdl-card mdl-shadow--2dp md-editor__login-content-card">
+                            <div class="mdl-card md-editor__login-content-card">
                                 <div class="mdl-card__supporting-text">
                                     <h1 class="md-editor__login-greeting">Welcome</h1>
                                     <p class="md-editor__login-notice" x-text="loginNotice" aria-live="polite"></p>
@@ -116,14 +98,13 @@
                                 :class="titleCssClass">
                                 <input class="mdl-textfield__input" type="text" id="title" :value="postTitle"
                                     x-ref="titleInput" @@input="updatePostTitle" required>
-                                <label class="mdl-textfield__label" for="title">Title</label>
+                                <label class="mdl-textfield__label" for="title"># H1 Title</label>
                             </div>
                             <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label md-editor__body">
                                 <textarea x-ref="editor" id="editor" class="mdl-textfield__input" rows="12"></textarea>
-                                <label class="mdl-textfield__label" x-bind:class="bodyLabelClass"
-                                    for="editor">Body</label>
+                                <label class="mdl-textfield__label" x-bind:class="bodyLabelClass" for="editor">## CommonMark or GitHub Flavored Markdown content</label>
                             </div>
-                        </div>
+                        <div>
                     </div>
                 </template>
 
@@ -185,6 +166,23 @@
                     </div>
                 </template>
             </div>
+            <!-- Global Error Banner + Retry -->
+            <div class="articulate-error-box" x-show="errorDetails" x-transition role="alert" aria-live="assertive">
+                <div class="articulate-error-box__content">
+                    <strong x-text="errorTitle"></strong>
+                    <template x-if="hasErrorDetails">
+                        <ul class="articulate-error-list">
+                            <template x-for="(detail, index) in errorDetails.details" :key="index">
+                                <li x-text="detail"></li>
+                            </template>
+                        </ul>
+                    </template>
+                </div>
+                <button type="button" class="mdl-button mdl-js-button mdl-button--raised mdl-button--accent"
+                    x-show="hasRetryAction" :disabled="isRetryDisabled" @@click="triggerRetry" x-text="retryLabel"
+                    aria-live="off"></button>
+            </div>
+
             <footer class="md-editor__footer">
                 <div class="md-editor__container md-editor__footer-inner">
                     <div class="md-editor__footer-left">
@@ -198,8 +196,8 @@
                                 aria-hidden="true">photo_camera</i></button>
                     </div>
                     <div class="md-editor__footer-right">
-                        <button x-show="isOptionalStep" @@click="goToEditorStep" style="transform: rotate(180deg);"
-                            class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--accent"
+                        <button x-show="isOptionalStep" @@click="goToEditorStep"
+                            class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--accent md-editor__btn-prev"
                             title="Previous" aria-label="Previous"><i class="material-icons"
                                 aria-hidden="true">forward</i></button>
                         <button x-show="canShowNextButton" :disabled="disableNextButton" @@click="goToOptionalStep"
@@ -221,23 +219,6 @@
         <input x-ref="imageUpload" type="file" accept="image/jpeg,image/png,image/gif" @@change="handleImageUpload">
         <input x-ref="cameraUpload" type="file" accept="image/jpeg,image/png,image/gif" capture="user"
             @@change="handleImageUpload">
-    </div>
-
-    <!-- Global Error Banner + Retry -->
-    <div class="articulate-error-box" x-show="errorDetails" x-transition role="alert" aria-live="assertive">
-        <div class="articulate-error-box__content">
-            <strong x-text="errorTitle"></strong>
-            <template x-if="hasErrorDetails">
-                <ul class="articulate-error-list">
-                    <template x-for="(detail, index) in errorDetails.details" :key="index">
-                        <li x-text="detail"></li>
-                    </template>
-                </ul>
-            </template>
-        </div>
-        <button type="button" class="mdl-button mdl-js-button mdl-button--raised mdl-button--accent"
-            x-show="hasRetryAction" :disabled="isRetryDisabled" @@click="triggerRetry" x-text="retryLabel"
-            aria-live="off">
     </div>
 
     <script defer src="~/App_Plugins/Articulate/MarkdownEditor/vendor/mdl/material.min.js"></script>

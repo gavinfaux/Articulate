@@ -1,13 +1,16 @@
+# Usage:
+#   BUILD_CONFIGURATION=Debug pwsh -NoLogo -File build/build.ps1
+#   ENABLE_CLIENT_BUILD=true pwsh -NoLogo -File build/build.ps1
+
 $ScriptStart = Get-Date
 $PSScriptFilePath = Get-Item $MyInvocation.MyCommand.Path
 $RepoRoot = $PSScriptFilePath.Directory.Parent.FullName
 $BuildFolder = Join-Path -Path $RepoRoot -ChildPath "build"
-$ReleaseFolder = Join-Path -Path $BuildFolder -ChildPath "Release"
-$TmpFolder = Join-Path -Path $BuildFolder -ChildPath "tmp"
+$Configuration = if ([string]::IsNullOrWhiteSpace($env:BUILD_CONFIGURATION)) { "Release" } else { $env:BUILD_CONFIGURATION }
+$ReleaseFolder = Join-Path -Path $BuildFolder -ChildPath $Configuration
 $SolutionRoot = Join-Path -Path $RepoRoot -ChildPath "src"
 $SolutionPath = Join-Path -Path $SolutionRoot -ChildPath "Articulate.sln"
 $TargetFrameworks = @("net9.0", "net10.0")
-$TestProjects = @("Articulate.UnitTests/Articulate.UnitTests.csproj")
 $PSMajorVersion = $PSVersionTable.PSVersion.Major
 $SupportsParallel = $PSMajorVersion -ge 7
 if (-not $SupportsParallel)
@@ -53,6 +56,7 @@ $clientBuildProperty = "-p:EnableClientBuild=$clientBuildValue"
 $dotnetCommon = @("-v", "minimal")
 
 Write-Host "Using up to $cpu parallel MSBuild nodes"
+Write-Host "Build configuration: $Configuration"
 
 # Friendly note if running on Windows against a WSL filesystem (\\wsl$ UNC)
 if ($RepoRoot.StartsWith("\\\\wsl$", [System.StringComparison]::OrdinalIgnoreCase) -or 
@@ -65,81 +69,94 @@ if (Test-Path $ReleaseFolder) {
     Remove-Item $ReleaseFolder -Recurse -Force
 }
 New-Item -ItemType Directory -Force -Path $ReleaseFolder | Out-Null
-New-Item -ItemType Directory -Force -Path $TmpFolder | Out-Null
 
 dotnet --version
 
 Write-Host "Starting clean and restore process for solution: $SolutionPath"
 
+# Best-effort pre-clean to avoid locked files during dotnet clean (MarkdownEditor assets)
+$preCleanTargets = @(
+    Join-Path $SolutionRoot "Articulate.StaticAssets/wwwroot/App_Plugins/Articulate/MarkdownEditor"
+)
+function Remove-WithRetry {
+    param(
+        [string] $Path,
+        [int] $Retries = 3,
+        [int] $DelayMs = 250
+    )
+    for ($i = 0; $i -lt $Retries; $i++) {
+        try {
+            if (Test-Path $Path) {
+                Remove-Item -Recurse -Force -ErrorAction Stop $Path
+            }
+            return
+        }
+        catch {
+            if ($i -eq $Retries - 1) {
+                Write-Warning "Failed to delete $Path after $Retries attempts: $($_.Exception.Message)"
+                return
+            }
+            Start-Sleep -Milliseconds $DelayMs
+        }
+    }
+}
+$preCleanTargets | ForEach-Object { Remove-WithRetry $_ }
+
 # 0) Clean the solution to ensure release/CI builds start from a fresh slate
 Write-Host "1. Cleaning solution outputs..."
-& dotnet clean $SolutionPath -c Release @dotnetCommon $clientBuildProperty
+& dotnet clean $SolutionPath -c $Configuration @dotnetCommon $clientBuildProperty
 if (-not $?) { throw "dotnet clean failed" }
 
-# 2) Create a slim solution excluding demo projects that depend on local packages (u15/u16/u17)
-$tmpSln = Join-Path $TmpFolder -ChildPath "Articulate.Packable.sln"
-if (-not (Test-Path $tmpSln)) {
-    & dotnet new sln -n Articulate.Packable -o $TmpFolder | Out-Null
-    & dotnet sln $tmpSln add `
-        (Join-Path $SolutionRoot 'Articulate/Articulate.csproj') `
-        (Join-Path $SolutionRoot 'Articulate.Web/Articulate.Web.csproj') `
-        (Join-Path $SolutionRoot 'Articulate.Api.Management/Articulate.Api.Management.csproj') `
-        (Join-Path $SolutionRoot 'Articulate.StaticAssets/Articulate.StaticAssets.csproj') | Out-Null
-}
-
-# 3) Restore (solution-level) with static graph + parallelism
-Write-Host "2. Restoring solution packages in parallel (slim solution)..."
-& dotnet restore $tmpSln @dotnetCommon @msbuildArgs $clientBuildProperty
+# 2) Restore (solution-level) with static graph + parallelism
+Write-Host "2. Restoring solution packages in parallel..."
+& dotnet restore $SolutionPath @dotnetCommon @msbuildArgs $clientBuildProperty
 if (-not $?) { throw "dotnet restore failed" }
 
-# 4) Build TFMs sequentially to ensure net9.0 (client build) runs before net10.0
+# 3) Build TFMs sequentially to ensure net9.0 (client build) runs before net10.0
 Write-Host "3. Building solution for: $($TargetFrameworks -join ', ')"
 foreach ($tfm in $TargetFrameworks)
 {
     Write-Host "[build] -> $tfm"
     $sw = [System.Diagnostics.Stopwatch]::StartNew()
-    & dotnet build $tmpSln -c Release -f $tfm --no-restore @dotnetCommon @msbuildArgs $clientBuildProperty
+& dotnet build $SolutionPath -c $Configuration -f $tfm --no-restore @dotnetCommon @msbuildArgs $clientBuildProperty
     if ($LASTEXITCODE -ne 0) { throw "dotnet build failed for $tfm" }
     $sw.Stop()
     Write-Host "[build] <- $tfm done in $([int]$sw.Elapsed.TotalSeconds)s"
 }
 
-# 5) Pack primary projects (parallel where safe)
+# 4) Pack primary projects (parallel where safe)
 Write-Host "4. Packing projects..."
 $articulateProject = (Join-Path $SolutionRoot 'Articulate/Articulate.csproj')
 $articulateWebProject = (Join-Path $SolutionRoot 'Articulate.Web/Articulate.Web.csproj')
 $articulateApiProject = (Join-Path $SolutionRoot 'Articulate.Api.Management/Articulate.Api.Management.csproj')
 $articulateStaticAssetsProject = (Join-Path $SolutionRoot 'Articulate.StaticAssets/Articulate.StaticAssets.csproj')
 
-# Pack StaticAssets first so the local feed has the dependency before restoring Articulate.Web
-Write-Host "[pack] -> $([IO.Path]::GetFileName($articulateStaticAssetsProject))"
-& dotnet pack -c Release $articulateStaticAssetsProject --no-build --no-restore -o $ReleaseFolder @dotnetCommon @msbuildArgs -p:NoPackageAnalysis=true
-if ($LASTEXITCODE -ne 0) { throw "dotnet pack failed for $articulateStaticAssetsProject" }
-
 $projectsToPack = @(
+    $articulateStaticAssetsProject,
     $articulateProject,
     $articulateWebProject,
     $articulateApiProject
 )
-$packThrottle = [Math]::Max(1, [Math]::Min($cpu, $projectsToPack.Count))
+$packThrottle = 1
 if ($SupportsParallel)
 {
     $projectsToPack | ForEach-Object -Parallel {
         $project = $PSItem
         Write-Host "[pack] -> $([IO.Path]::GetFileName($project))"
-        $restoreArgs = @("--no-build", "--no-restore")
+        $restoreArgs = @("--no-restore")
         $commonArgs = $using:dotnetCommon
-        $parallelMsbuildArgs = $using:msbuildArgs
-        & dotnet pack -c Release $project @restoreArgs -o $using:ReleaseFolder @commonArgs @parallelMsbuildArgs -p:NoPackageAnalysis=true $using:clientBuildProperty
+        $clientBuildSwitch = $using:clientBuildProperty
+        & dotnet pack -c $using:Configuration $project @restoreArgs -o $using:ReleaseFolder @commonArgs "-p:BuildInParallel=false" $clientBuildSwitch
         if ($LASTEXITCODE -ne 0) { throw "dotnet pack failed for $project" }
-    } -ThrottleLimit $packThrottle
-}
+    } -ThrottleLimit $packThrottle -ErrorVariable packErrors
+
+if ($packErrors) { throw "One or more pack operations failed: $($packErrors | Out-String)" }}
 else
 {
     foreach ($project in $projectsToPack)
     {
         Write-Host "[pack] -> $([IO.Path]::GetFileName($project))"
-        & dotnet pack -c Release $project --no-build --no-restore -o $ReleaseFolder @dotnetCommon @msbuildArgs -p:NoPackageAnalysis=true $clientBuildProperty
+        & dotnet pack -c $Configuration $project --no-restore -o $ReleaseFolder @dotnetCommon "-p:BuildInParallel=false" $clientBuildProperty
         if ($LASTEXITCODE -ne 0) { throw "dotnet pack failed for $project" }
     }
 }

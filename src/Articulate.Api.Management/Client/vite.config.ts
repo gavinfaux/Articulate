@@ -1,7 +1,6 @@
 import { execSync } from "child_process";
 import { build as esbuildBuild, transform as esbuildTransform } from "esbuild";
 import fs, { promises as fsp } from "fs";
-import fsExtra from "fs-extra";
 
 import path from "path";
 import type { PluginContext } from "rollup";
@@ -19,33 +18,6 @@ const projectRoot = path.resolve(__dirname, "..");
 const repoRoot = path.resolve(projectRoot, "..", "..");
 const webProjectRoot = path.resolve(projectRoot, "..", "Articulate.Web");
 const staticAssetsProjectRoot = path.resolve(projectRoot, "..", "Articulate.StaticAssets");
-
-const copyPublicAssetsPlugin = (): Plugin => {
-  const publicDir = path.resolve(repoRoot, "src", "Articulate.Api.Management", "Client", "public");
-  const publicTargetDir = outputPath;
-
-  return {
-    name: "articulate-copy-public-assets",
-    async closeBundle() {
-      if (!fs.existsSync(publicDir)) {
-        console.warn(
-          `[articulate-copy-public-assets] Skipping copy because ${relativeToRepo(publicDir)} does not exist.`
-        );
-        return;
-      }
-
-      await fsExtra.copy(publicDir, publicTargetDir, {
-        overwrite: true,
-        errorOnExist: false,
-        filter: (src) => !path.basename(src).startsWith("."),
-      });
-
-      console.log(
-        `[articulate-copy-public-assets] copied ${relativeToRepo(publicDir)} -> ${relativeToRepo(publicTargetDir)}`
-      );
-    },
-  };
-};
 
 const resolveStaticAsset = (relativePath: string) => path.resolve(staticAssetsProjectRoot, relativePath);
 const resolveWebSource = (relativePath: string) => path.resolve(webProjectRoot, relativePath);
@@ -309,7 +281,7 @@ const staticAssetsPlugin = (): Plugin => {
 
   const rebuildBundles = async (changedFile?: string) => {
     const normalizedChangedFile = changedFile ? path.normalize(changedFile) : undefined;
-    const targets =
+    const targets = 
       normalizedChangedFile === undefined
         ? bundles
         : bundles.filter((bundle) =>
@@ -359,15 +331,17 @@ const staticAssetsPlugin = (): Plugin => {
       }
 
       const normalized = path.normalize(file);
-      if (!bundleFiles.has(normalized)) {
-        return;
-      }
 
+      // Refresh bundles first so newly added files (previously unseen) are picked up without restarting Vite.
       refreshBundles();
       for (const bundle of bundles) {
         for (const input of [...bundle.inputs, ...(bundle.entry ? [bundle.entry] : [])]) {
           (this as PluginContext).addWatchFile?.(input);
         }
+      }
+
+      if (!bundleFiles.has(normalized)) {
+        return;
       }
 
       await rebuildWithHandling(normalized, false);
@@ -568,7 +542,6 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     tsconfigPaths(),
     staticAssetsPlugin(),
-    copyPublicAssetsPlugin(),
     versioningPlugin(),
     umbracoPackagePlugin(),
   ],

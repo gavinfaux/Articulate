@@ -13,8 +13,7 @@
       "commandName": "IISExpress",
       "launchBrowser": true,
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development",
-        "Articulate__WatchRclViews": "false"
+        "ASPNETCORE_ENVIRONMENT": "Development"
       }
     },
     "IIS Express Production": {

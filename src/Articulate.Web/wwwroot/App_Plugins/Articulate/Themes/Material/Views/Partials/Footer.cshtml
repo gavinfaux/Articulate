@@ -6,18 +6,20 @@
 
 <footer class="mdl-mini-footer">
     <div class="mdl-mini-footer--left-section">
-        <a title="Share on Facebook" target="_blank" href="https://www.facebook.com/sharer.php?u=@absUrl"
+        <a title="Share on Facebook" target="_blank" rel="noopener noreferrer" href="https://www.facebook.com/sharer.php?u=@Uri.EscapeDataString(absUrl)"
            class="mdl-mini-footer--social-btn social-btn social-btn__blogger">
             <span class="visuallyhidden">Facebook</span>
         </a>
-        <a title="Share on Twitter" target="_blank" href="https://twitter.com/share?text=@Model.Name&amp;url=@absUrl"
+        <a title="Share on Twitter" target="_blank" rel="noopener noreferrer" href="https://twitter.com/share?text=@Uri.EscapeDataString(Model.Name)&amp;url=@Uri.EscapeDataString(absUrl)"
            class="mdl-mini-footer--social-btn social-btn social-btn__twitter">
             <span class="visuallyhidden">Twitter</span>
-        </a>
-    </div>
+        </a>    </div>
     <div class="mdl-mini-footer--right-section">
-        <button class="mdl-mini-footer--social-btn social-btn__share">
-            <i class="material-icons" role="presentation">share</i>
+        <button class="mdl-mini-footer--social-btn social-btn social-btn__share"
+                data-share-button
+                data-title="@Html.Encode(Model.Name)"
+                data-url="@Html.Encode(absUrl)">
+            <span class="social-btn__share-icon" aria-hidden="true"></span>
             <span class="visuallyhidden">share</span>
         </button>
     </div>

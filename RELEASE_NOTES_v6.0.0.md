@@ -2,115 +2,132 @@
 
 ## Overview
 
-Articulate 6.0.0-beta represents a major version upgrade that introduces significant architectural improvements and modernizes the entire codebase. This prerelease transitions from the legacy AngularJS backoffice to a modern Lit and TypeScript architecture, while also upgrading to the latest .NET and Umbraco versions. Feedback from this beta will shape the general-availability release.
+Articulate 6 is a major upgrade: modern .NET/Umbraco targets, a rewritten backoffice (Lit + TypeScript + Vite), and a modular package layout. This beta is feature complete; feedback will shape the GA release.
 
-**Previous Version:** Articulate 5.1.1  
-**New Version:** Articulate 6.0.0-beta  
-**Release Type:** Prerelease (Beta)
+**Previous:** 5.1.1  
+**Current:** 6.0.0-beta  
+**Release type:** Prerelease
 
-## 🚀 Major Updates & New Features
+## Highlights
 
-### Architectural Overhaul
+- **Frameworks:** Multi-targets .NET 9/10; tested on Umbraco 15.4.4+, 16, and 17.
+- **Containers:** Two hardened Compose targets: `docker-compose.net9.yml` (Umbraco 15/16 on .NET 9) and `docker-compose.net10.yml` (Umbraco 17 on .NET 10). Both stacks can run side-by-side using distinct ports (8080/8090) and project isolation.
+- **Backoffice rewrite:** AngularJS replaced with Lit + Vite + TypeScript; API is OpenAPI-described and ships a typed client.
+- **Tooling:** Standardizes on Vite + ESLint + Prettier for the backoffice client.
+- **Modular packages:**  
+  - `Articulate` (themes + views + static assets via `Articulate.StaticAssets`)  
+  - `Articulate.Core` (models, controllers, services)  
+  - `Articulate.Api.Management` (backoffice extension + management API)  
+  - `Articulate.StaticAssets` (all static web assets)  
+- **Modern theming:** `IViewLocationExpander` resolves `Views/Articulate` overrides first, then bundled themes.
+- **Build UX:** `mise run build` / `build-client` use the PowerShell shim; bash-first tasks `build-bash` / `build-client-bash` are available for WSL/Linux/macOS.
 
-- **Framework Modernization**: Upgraded to .NET 9.0 and converted projects to `Microsoft.NET.Sdk.Razor` (Razor Class Library).
-- **Backoffice Rewrite**: The backoffice has been completely rewritten from AngularJS to a modern stack using Lit, TypeScript, and Vite for a faster, type-safe, and more maintainable experience.
-- **API Enhancements**: Introduced new RESTful API controllers with comprehensive, auto-generated OpenAPI/Swagger documentation and strongly-typed TypeScript client generation.
-- **Enhanced Development Workflow**: Integrated modern tooling including Vite, ESLint, and Prettier to improve code quality and developer experience.
-- **Modernized Theming**: The theme and view resolution system has been updated to use modern ASP.NET Core MVC patterns, via an `IViewLocationExpander` that resolves first to custom user themes in the `Views\Articulate` folder, then falls back to the built-in themes.
+### Container security & improvements
 
-### Package Restructuring
+- **Images are digest-pinned** for reproducible builds:
+  - .NET 9 runtime `mcr.microsoft.com/dotnet/aspnet@sha256:91fe9dd2ca985f5029bf5954f4758e3573d31dfc0f5bb42f1d08779ad5ca3c51` (bookworm-slim) and SDK `@sha256:38c0e3b634152d870819138c03a6eefeff382efc1dd2feff77e041396820bdd1`.
+  - .NET 10 runtime `mcr.microsoft.com/dotnet/nightly/aspnet:10.0@sha256:4d01aa096b4844215fee067cc2c2113a5ed8186558c5827b8d8f57dc074750dd` (noble base nightly) and SDK `@sha256:65e1d762871120bcbaacbee69f65dc222210d3716a9dcf14665ebfb107527c8c` (noble base nightly).
+- **CVE-2025-45582 (GNU tar) mitigated** by swapping `tar` for `bsdtar` and purging GNU tar in runtime images.
+- **CVE-2025-8941 (pam_namespace LPE in linux-pam) mitigated** in the .NET 10 runtime by diverting and removing `/lib/x86_64-linux-gnu/security/pam_namespace.so`; SDK stage unchanged.
+- **Runtime hardening**: non-root UID 1654, read-only root filesystem, capabilities dropped (only `NET_BIND_SERVICE` kept), `no-new-privileges`, tmpfs for `/tmp`, healthcheck hitting `/umbraco`.
+- **Side-by-Side Support**: Both stacks now run concurrently, isolated by Docker Compose project names.
+  - **Net9 Stack:** HTTP `http://localhost:8080`, HTTPS `https://localhost:8443` (SQL Server port `14339` if `mssql` profile active).
+  - **Net10 Stack:** HTTP `http://localhost:8090`, HTTPS `https://localhost:8450` (SQL Server port `14330` if `mssql` profile active).
+- **Data Persistence**: Both stacks correctly persist SQLite databases (`articulate16_net9_db`, `articulate17_net10_db`) and media (`articulate16_net9_media`, `articulate17_net10_media`) across container restarts.
+- **Auto-Publish**: The container correctly identifies Articulate migrations and auto-publishes the blog tree on first run, making URLs like `/`, `/tags`, `/search` immediately `200 OK`.
+- **Build/run commands** (with `mise`):  
+  - Umbraco 15/16 (.NET 9): `mise run docker-up-build`  
+  - Umbraco 17 (.NET 10): `mise run docker10-up-build`
+- **Connection strings**: Docker site templates include default SQLite DSNs. Override `ConnectionStrings__umbracoDbDSN` for SQL Server or custom paths.
+- **Debug**: `mise run docker-debug` / `mise run docker10-debug` to start in Debug mode (Development environment + Debug build).
+- **Models mode override**: Pass `MODELS_MODE` (default `Nothing`) to request `SourceCodeManual`/`SourceCodeAuto` during local debugging.
+- **Reset behavior**: `mise run docker-reset` / `docker10-reset` remove corresponding MSSQL and SQLite data volumes for a fresh install.
 
-To improve modularity and maintainability, the single Articulate package from v5 has been partitioned into three distinct NuGet packages:
+## Hot reload (Razor + RCL assets)
 
-- **`Articulate`**: The main package that includes theme files (`.cshtml` templates and assets). Installing this package will automatically pull in the other required dependencies.
-- **`Articulate.Core`**: Contains the core business logic, models, controllers, and public APIs.
-- **`Articulate.Api.Management`**: Provides the backoffice extension and the supporting management API.
-- Installing or updating to the latest `Articulate` package will  install all necessary dependencies.
+- Use `dotnet watch -f net9.0 --project src/Articulate.Tests.Website/Articulate.Tests.Website.csproj` (or `-f net10.0`) for Razor views and static assets hot reloading.
+- Static web assets ship from `Articulate.StaticAssets` (see `src/Articulate.StaticAssets/Articulate.StaticAssets.csproj`); `Articulate.Web` and `Articulate.Api.Management` deliberately disable implicit static web assets to avoid duplication. `StaticWebAssetBasePath` defaults to `/` via `Directory.Build.props`.
+- Hot reload needs project references: keep the RCLs referenced as projects while developing. If you are testing the packaged `Articulate.StaticAssets` nupkg, `dotnet watch` cannot see source files; temporarily swap back to a `ProjectReference`, or unpack the nupkg and work from that source instead.
+- Set `DOTNET_WATCH_SUPPRESS_BROWSER_REFRESH=1` for metadata-only hot reload without automatic browser refresh.
+- Watcher limits: `dotnet watch` monitors source/Razor/project files. If you hit OS watcher caps (`ENOSPC`/`FSW buffer overflow`), raise `fs.inotify.max_user_watches` or use `DOTNET_USE_POLLING_FILE_WATCHER=1`.
+- Tooling is now pinned via `mise` (node 24.x, pnpm 10.20.0, dotnet tool nbgv). First-time setup: `pwsh -NoLogo -File ./mise-activate.ps1`, then `mise install` and `mise run init`; CI can use `mise install --locked`.
+- `pnpm run dev` / `pnpm run watch` (from `src/Articulate.Api.Management/Client`) use a custom Vite pipeline that minifies CSS/JS. Production builds use `pnpm run build:release`.
+- Full .NET build with client: set `ENABLE_CLIENT_BUILD=true` on `build/build.ps1` (or `mise run build-client`). Build mode still follows `BUILD_CONFIGURATION`: Debug → `pnpm run build`; Release/CI → `pnpm run build:release`.
+- Vite plugins of note (see `src/Articulate.Api.Management/Client/vite.config.ts`): `staticAssetsPlugin()` rebuilds theme/Markdown bundles; `versioningPlugin()` stamps package versions; `umbracoPackagePlugin()` moves `umbraco-package.json` for discovery.
+- Backoffice client HMR (Vite): from `src/Articulate.Api.Management/Client` run `pnpm install`, then `pnpm run dev`; use alongside the test website for HMR of the backoffice extension.
 
-## ⚠️ Breaking Changes
+### Client dev quickstart
 
-### System Requirements
-
-- **Umbraco Version**: Requires Umbraco 15.2.3+ (previously 10.1.0).
-- **.NET Version**: Requires .NET 9.0 (previously .NET 6.0/7.0/8.0).
-- **Node.js**: A new requirement for client-side development is Node.js ≥24 and pnpm ≥10.20.0.
-
-### Package & API Changes
-
-- **Default Themes** - The default built-in themes still use MasterPage layouts and have been updated work with modern browsers, there are no breaking changes to the built-in themes. The built-in themes are now packaged as `Articulate.Web` and are located in the `Themes` folder.
-- **Project names vs NuGet Package IDs**
-  - The package structure has changed. The main `Articulate` project still contains the front end models, controllers, core logic and public API, but is now packaged as `Articulate.Core`.
-  - The backoffice extension and related management API is now in `Articulate.Api.Management`
-  - Views (themes) and related assets are now in the `Articulate.Web` project and are packaged as `Articulate`.
-  - Installing/updating to the v6 `Articulate` package will bring in the API and Web package dependencies.
-- **Asset Locations**
-  - Client-side assets have moved from `App_Plugins\Articulate` to `wwwroot\App_Plugins\Articulate` to align with modern .NET static asset handling.
-  - Views are now compiled into the `Articulate.Web` project and are no longer in `App_Plugins\Articulate\Themes` folder when package installed. Custom themes and overrides are still supported in installations via the `Views\Articulate` folder (changed from `Views\ArticulateThemes`).
-- **API Endpoints**: All backoffice API endpoints have been restructured. Custom integrations will need to be updated.
-- **Build Process**: The client-side build process is now managed by pnpm/Vite. See the Client development setup for new commands.
-- **Public API**: The public API has been updated to use modern Umbraco/.NET patterns and conventions, some methods or signatures will have changed, been marked as obsolete (replaced with alternative method calls) or removed. For example ILocalizationService has changed to ILanguageService, IVariationContextAccessor has been removed. If you have custom themes or integrations, you will need to update your code to use the new APIs.
-
-## 🔄 Migration Guide
-
-### For Existing Articulate 5.x Users
-
-1. **Export/Import** - In the back office export BlogML from Articulate 5 instance and then import the BlogML file into Articulate 6.x instance. This will migrate all blog posts and managed media; assets stored in the `media\articulate` folder are **not** migrated.
-
-2. **Upgrade**
-
-- **Backup**: Create full backup of your Umbraco installation and Articulate content
-- **Umbraco Upgrade**: Upgrade to Umbraco 15.2.3+ or 16+ first
-- **Package Installation**: Install Articulate 6.0.0-beta via NuGet
-- **Post-Installation**: Follow the new post-installation checks in the README
-- **Data Migration**: Re-run Articulate package migrations if needed
-- **Theme Updates**: Verify and update custom themes and extension points for compatibility
-
-### Development Setup
-
-The backoffice extension is now a modern web application built with `@umbraco-cms/backoffice`, Web components (Lit + Umbraco UUI) and TypeScript. This is now located in the `Articulate.Api.Management` projects `Client` folder. Building/packaging the solution will run the Vite build process and copy the output files to the `wwwroot/App_Plugins/Articulate/BackOffice` folder where the .NET build will package as static web assets.
+From `src/Articulate.Api.Management/Client`:
 
 ```powershell
-# Install dependencies
 pnpm install
-
-# Start development server
-pnpm run dev
-
-# Generate API client (after starting Umbraco)
-pnpm run generate:api
-
-# Build for production
-pnpm run build
+pnpm run dev          # Vite backoffice (Lit) dev server
+pnpm run generate:api # Requires the Umbraco site running; regenerates typed client after API changes
+pnpm run build:release # Production bundles (terser + stamping); use pnpm run build for dev-mode bundles
 ```
 
-## 🐛 Known Issues & Limitations
+## Build & pack (multi-target .NET 9/10)
 
-### Current Limitations
+| Script                        | Command                              |
+| ----------------------------- | ------------------------------------ |
+| Windows CMD / PowerShell      | `pwsh -NoLogo -File build/build.ps1` |
+| Bash / WSL / Linux / macOS    | `./build/build.sh`                   |
 
-- **Migration Complexity**: Major version upgrade requires careful planning
-- **Custom Themes**: May require updates for full compatibility
-- **Third-party Integrations**: Custom API consumers need updates
+> WSL/Linux first-time setup: ensure the script is executable with `chmod u+x ./build/build.sh` before running it.
 
-### Recommended Actions
+- Optional envs:
+  - `BUILD_CONFIGURATION=Debug` (default is `Release`)
+  - `ENABLE_CLIENT_BUILD=true` to build the TS backoffice client locally (defaults to false locally, true in CI)
+- Defaults: Debug uses `pnpm run build`; Release/CI uses `pnpm run build:release`; both respect `BUILD_CONFIGURATION`.
+- Both scripts clean, restore, build, and pack `Articulate`, `Articulate.Web`, `Articulate.Api.Management`, and `Articulate.StaticAssets` for .NET 9 and 10.
 
-- Test thoroughly in development environment before production deployment
-- Review custom themes and extensions for compatibility
-- Update any custom API integrations
-- Plan for extended testing period due to architectural changes
+### Optional: regenerate the backoffice client during the build
 
-## 📚 Additional Resources
+`EnableClientBuild` defaults to `false` to avoid Visual Studio background builds clashing with the Vite output. When you explicitly need to rebuild the backoffice bundles (for example before packaging), set `ENABLE_CLIENT_BUILD=true` inline with the build command:
 
-- **GitHub Issues**: Report issues at <https://github.com/Shazwazza/Articulate/issues>
-- **Umbraco Forums**: Community discussions at <https://forum.umbraco.com/>
-- **Documentation**: <https://github.com/Shazwazza/Articulate/wiki>
+- PowerShell: `$env:ENABLE_CLIENT_BUILD='true'; ./build/build.ps1`
+- CMD: `set ENABLE_CLIENT_BUILD=true && pwsh -NoLogo -File build\build.ps1`
+- Bash: `ENABLE_CLIENT_BUILD=true ./build/build.sh`
 
-## 🙏 Acknowledgments
+## Changing Umbraco Articulate schema/data elements
 
-This major version represents a significant investment in modernizing Articulate for the future. Special thanks to the Umbraco community and contributors who helped shape this release.
+If you change Umbraco schema/content/media (doc types, data types, etc.), re-create the Articulate package in the back office with all required dependencies, then re-save the `package.zip` and commit it.
 
----
+## Migration notes (from 5.x)
 
-**Release Date:** September 2025  
-**Compatibility:** Umbraco 15.2.3+ and 16+  
+1.  Backup your Umbraco instance (DB + media).
+2.  Upgrade Umbraco to 15.4.4+ (or 16/17).
+3.  Install/update to `Articulate` 6.0.0-beta via NuGet (brings dependencies).
+4.  Re-run Articulate package migrations if prompted; verify post-install checks in README.
+5.  Export BlogML from Articulate 5 and import into Articulate 6; media in `media/articulate` is not auto-migrated.
+6.  Re-test custom themes and API consumers against new asset locations and endpoints.
+
+Media migration notes:
+
+- BlogML import offers an option to map `postImage` to base64 or to an attachment; pick the one that suits your editors.
+- Additional inline images stored under `media/articulate` are not migrated automatically—copy the files over (keeping paths) or perform an in-place Umbraco package upgrade if you need existing media preserved.
+
+## Known issues
+
+- Expect layout tweaks in the Lit backoffice during beta polish.
+- If Hot Reload misses a change after adding new files, restart `dotnet watch` (rare after the latest plugin refresh logic).
+- Occasional dev hiccup: after running shell builds, the next Visual Studio build can fail once; a second VS build typically succeeds.
+
+Recommended actions:
+
+- Test custom themes/extensions early; adjust for the new API surface and asset paths.
+- Validate third-party API consumers against the reorganized management endpoints.
+- Plan extra testing time for migration complexity and third-party integration updates.
+
+## Links
+
+- README (quickstart, setup): `README.md`
+- Client quickstart: `src/Articulate.Api.Management/README.txt`
+- Issues: <https://github.com/Shazwazza/Articulate/issues>
+- Docs/Wiki: <https://github.com/Shazwazza/Articulate/wiki>
+
+**Release date:** December 2025  
+**Compatibility:** Umbraco 15.4.4+, 16, 17  
 **License:** MIT  
 **Repository:** <https://github.com/Shazwazza/Articulate>

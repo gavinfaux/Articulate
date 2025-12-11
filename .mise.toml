@@ -1,0 +1,234 @@
+#:schema https://mise.jdx.dev/schema/mise.json
+# Root mise configuration for Articulate
+# - Provides repo-wide tool versions and build tasks.
+# - Child directories can add/override tools/env/tasks via their own .mise.toml.
+
+[tools]
+# Use the system-installed SDKs and let global.json enforce 9.0.100 roll-forward rules.
+# This avoids mise attempting to download .NET on dev/CI machines that already have it.
+node = "24"        # aligns with README + backoffice client
+pnpm = "10.24.0"
+"dotnet:nbgv" = "3.9.50"
+gitleaks = "latest"
+
+[settings]
+lockfile = true    # generate mise.lock for reproducible installs
+locked = false     # keep flexible in dev; CI can enable --locked or MISE_LOCKED=1 explicitly
+experimental = true # required for lockfile feature as of current mise
+
+[env]
+DOTNET_CLI_TELEMETRY_OPTOUT = "1"
+DOTNET_SKIP_FIRST_TIME_EXPERIENCE = "1"
+DOTNET_NOLOGO = "1"
+NUGET_XMLDOC_MODE = "skip"
+RestoreFallbackFolders = ""
+MISE_PWSH_CHPWD_WARNING = "0"
+
+[tasks.build]
+description = "Clean, restore, build, and pack (defaults to Release; client build off unless ENABLE_CLIENT_BUILD is set)"
+env.BUILD_CONFIGURATION = "Release"
+run = "pwsh -NoLogo -File build/mise-build.ps1"
+
+
+[tasks.build-client]
+description = "Run full build with backoffice client assets (ENABLE_CLIENT_BUILD=true)"
+env.BUILD_CONFIGURATION = "Release"
+env.ENABLE_CLIENT_BUILD = "true"
+run = "pwsh -NoLogo -File build/mise-build.ps1"
+
+[tasks.build-bash]
+description = "Build via bash (WSL/Linux/macOS)"
+env.BUILD_CONFIGURATION = "Release"
+run = "bash ./build/build.sh"
+
+[tasks.build-client-bash]
+description = "Build (client enabled) via bash (WSL/Linux/macOS)"
+env.BUILD_CONFIGURATION = "Release"
+env.ENABLE_CLIENT_BUILD = "true"
+run = "bash ./build/build.sh"
+
+[tasks.test-site]
+description = "Start the test website on net9.0 for local dev"
+run = "dotnet run -f net9.0 --project src/Articulate.Tests.Website/Articulate.Tests.Website.csproj"
+
+[tasks.test-site-net10]
+description = "Start the test website on net10.0 (Umbraco 17 validation)"
+run = "dotnet run -f net10.0 --project src/Articulate.Tests.Website/Articulate.Tests.Website.csproj"
+
+[tasks.init]
+description = "First-time setup: install pinned tools and client deps"
+run = """
+mise install
+pnpm -C src/Articulate.Api.Management/Client install --frozen-lockfile --prefer-offline || pnpm -C src/Articulate.Api.Management/Client install
+"""
+
+# =============================================================================
+# Docker Tasks (host-only, uses docker compose)
+# =============================================================================
+
+[tasks.docker-build]
+description = "Build Docker image for net9 (Umbraco 16 range)"
+run = "docker compose -p articulate-net9 -f docker-compose.net9.yml build"
+
+[tasks.docker-up]
+description = "Start container (detached)"
+run = """
+docker compose -p articulate-net9 -f docker-compose.net9.yml up -d
+echo "---------------------------------------------------"
+echo "Articulate .NET 9 Site Started"
+echo "URL:          https://localhost:8443"
+echo "Version:      Umbraco 16.x / .NET 9"
+echo "User:         admin@example.com"
+echo "Password:     ChangeMe123!"
+echo "DB Conn:      Data Source=|DataDirectory|/Umbraco.sqlite.db (SQLite Default)"
+echo "MSSQL Port:   localhost,14339 (if mssql profile active)"
+echo "---------------------------------------------------"
+"""
+
+[tasks.docker-up-build]
+description = "Rebuild and start container"
+run = """
+docker compose -p articulate-net9 -f docker-compose.net9.yml up -d --build
+echo "---------------------------------------------------"
+echo "Articulate .NET 9 Site Started"
+echo "URL:          https://localhost:8443"
+echo "Version:      Umbraco 16.x / .NET 9"
+echo "User:         admin@example.com"
+echo "Password:     ChangeMe123!"
+echo "DB Conn:      Data Source=|DataDirectory|/Umbraco.sqlite.db (SQLite Default)"
+echo "MSSQL Port:   localhost,14339 (if mssql profile active)"
+echo "---------------------------------------------------"
+"""
+
+[tasks.docker-down]
+description = "Stop container (preserves volumes)"
+run = "docker compose -p articulate-net9 -f docker-compose.net9.yml down"
+
+[tasks.docker-reset]
+description = "Full reset - removes all data and reinstalls Umbraco"
+run = """
+docker compose -p articulate-net9 -f docker-compose.net9.yml down -v
+docker volume rm articulate_net9_mssql || true
+docker volume rm articulate16_net9_db || true
+docker compose -p articulate-net9 -f docker-compose.net9.yml up -d --build
+echo "---------------------------------------------------"
+echo "Articulate .NET 9 Site Reset & Started"
+echo "URL:          https://localhost:8443"
+echo "Version:      Umbraco 16.x / .NET 9"
+echo "User:         admin@example.com"
+echo "Password:     ChangeMe123!"
+echo "DB Conn:      Data Source=|DataDirectory|/Umbraco.sqlite.db (SQLite Default)"
+echo "MSSQL Port:   localhost,14339 (if mssql profile active)"
+echo "---------------------------------------------------"
+"""
+
+[tasks.docker-logs]
+description = "Tail container logs (Ctrl+C to stop)"
+run = "docker compose -p articulate-net9 -f docker-compose.net9.yml logs -f articulate-net9"
+
+[tasks.docker-shell]
+description = "Open bash shell in running container"
+run = "docker compose -p articulate-net9 -f docker-compose.net9.yml exec articulate-net9 /bin/bash"
+
+[tasks.docker-sqlite]
+description = "Open SQLite CLI for Umbraco database"
+run = "docker compose -p articulate-net9 -f docker-compose.net9.yml exec articulate-net9 sqlite3 /app/umbraco/Data/Umbraco.sqlite.db"
+
+[tasks.docker-debug]
+description = "Start in debug mode (Development environment + Debug build)"
+env.BUILD_CONFIGURATION = "Debug"
+env.ASPNETCORE_ENVIRONMENT = "Development"
+run = "docker compose -p articulate-net9 -f docker-compose.net9.yml up -d --build"
+
+[tasks.docker-health]
+description = "Check a configurable path on the net9 site (defaults to /)"
+env.CHECK_PATH = "/"
+run = "pwsh -NoLogo -File build/docker-health.ps1 -ComposeFile docker-compose.net9.yml -Service articulate-net9 -Port 8080"
+
+[tasks.docker-export-cert]
+description = "Export Caddy's root certificate for net9 for local trust"
+run = "docker compose -p articulate-net9 -f docker-compose.net9.yml exec -T caddy cat /data/caddy/pki/authorities/local/root.crt > articulate-net9-caddy-root.crt"
+
+#[task sections for net10? keep incase?]
+[tasks.docker10-build]
+description = "Build Docker image for net10 (Umbraco 17 range)"
+run = "docker compose -p articulate-net10 -f docker-compose.net10.yml build"
+
+[tasks.docker10-up]
+description = "Start net10 container (detached)"
+run = """
+docker compose -p articulate-net10 -f docker-compose.net10.yml up -d
+echo "---------------------------------------------------"
+echo "Articulate .NET 10 Site Started"
+echo "URL:          https://localhost:8450"
+echo "Version:      Umbraco 17.x / .NET 10"
+echo "User:         admin@example.com"
+echo "Password:     ChangeMe123!"
+echo "DB Conn:      Data Source=|DataDirectory|/Umbraco.sqlite.db (SQLite Default)"
+echo "MSSQL Port:   localhost,14330 (if mssql profile active)"
+echo "---------------------------------------------------"
+"""
+
+[tasks.docker10-up-build]
+description = "Rebuild and start net10 container"
+run = """
+docker compose -p articulate-net10 -f docker-compose.net10.yml up -d --build
+echo "---------------------------------------------------"
+echo "Articulate .NET 10 Site Started"
+echo "URL:          https://localhost:8450"
+echo "Version:      Umbraco 17.x / .NET 10"
+echo "User:         admin@example.com"
+echo "Password:     ChangeMe123!"
+echo "DB Conn:      Data Source=|DataDirectory|/Umbraco.sqlite.db (SQLite Default)"
+echo "MSSQL Port:   localhost,14330 (if mssql profile active)"
+echo "---------------------------------------------------"
+"""
+
+[tasks.docker10-down]
+description = "Stop net10 container (preserves volumes)"
+run = "docker compose -p articulate-net10 -f docker-compose.net10.yml down"
+
+[tasks.docker10-reset]
+description = "Full reset net10 - removes all data and reinstalls Umbraco"
+run = """
+docker compose -p articulate-net10 -f docker-compose.net10.yml down -v
+docker volume rm articulate_net10_mssql || true
+docker volume rm articulate17_net10_db || true
+docker compose -p articulate-net10 -f docker-compose.net10.yml up -d --build
+echo "---------------------------------------------------"
+echo "Articulate .NET 10 Site Reset & Started"
+echo "URL:          https://localhost:8450"
+echo "Version:      Umbraco 17.x / .NET 10"
+echo "User:         admin@example.com"
+echo "Password:     ChangeMe123!"
+echo "DB Conn:      Data Source=|DataDirectory|/Umbraco.sqlite.db (SQLite Default)"
+echo "MSSQL Port:   localhost,14330 (if mssql profile active)"
+echo "---------------------------------------------------"
+"""
+
+[tasks.docker10-logs]
+description = "Tail net10 container logs (Ctrl+C to stop)"
+run = "docker compose -p articulate-net10 -f docker-compose.net10.yml logs -f articulate-net10"
+
+[tasks.docker10-shell]
+description = "Open bash shell in running net10 container"
+run = "docker compose -p articulate-net10 -f docker-compose.net10.yml exec articulate-net10 /bin/bash"
+
+[tasks.docker10-sqlite]
+description = "Open SQLite CLI for Umbraco database (net10)"
+run = "docker compose -p articulate-net10 -f docker-compose.net10.yml exec articulate-net10 sqlite3 /app/umbraco/Data/Umbraco.sqlite.db"
+
+[tasks.docker10-debug]
+description = "Start net10 in debug mode (Development environment + Debug build)"
+env.BUILD_CONFIGURATION = "Debug"
+env.ASPNETCORE_ENVIRONMENT = "Development"
+run = "docker compose -p articulate-net10 -f docker-compose.net10.yml up -d --build"
+
+[tasks.docker10-health]
+description = "Check a configurable path on the net10 site (defaults to /)"
+env.CHECK_PATH = "/"
+run = "pwsh -NoLogo -File build/docker-health.ps1 -ComposeFile docker-compose.net10.yml -Service articulate-net10 -Port 8090"
+
+[tasks.docker10-export-cert]
+description = "Export Caddy's root certificate for net10 for local trust"
+run = "docker compose -p articulate-net10 -f docker-compose.net10.yml exec -T caddy cat /data/caddy/pki/authorities/local/root.crt > articulate-net10-caddy-root.crt"

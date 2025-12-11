@@ -302,10 +302,6 @@ export type PostEditorsMarkdownPostData = {
          * ArticulateBlogNode, and whether the first image should be extracted as a dedicated property.
          */
         json?: string;
-        /**
-         * Any uploaded images as part of the multipart/form-data request.
-         */
-        files?: Array<Blob | File>;
     };
     path?: never;
     query?: never;

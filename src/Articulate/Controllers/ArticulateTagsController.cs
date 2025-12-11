@@ -15,10 +15,10 @@ using Umbraco.Cms.Web.Common;
 namespace Articulate.Controllers
 {
     /// <summary>
-    /// Renders the blog post archive by tags/categories and also the tag/category blog listing.
+    /// Renders the blog post archive by tags/categories and also the tag/category blog listing
     /// </summary>
     /// <remarks>
-    /// Cached for one minute.
+    /// Cached for one minute
     /// </remarks>
     [OutputCache(PolicyName = "Articulate60")]
     [ArticulateDynamicRoute]
@@ -35,9 +35,9 @@ namespace Articulate.Controllers
             publishedValueFallback)
     {
         /// <summary>
-        /// Used to render the category listing (virtual node).
+        /// Used to render the category listing (virtual node)
         /// </summary>
-        /// <param name="tag">The category to display if supplied.</param>
+        /// <param name="tag">The category to display if supplied</param>
         /// <param name="p"></param>
         /// <returns></returns>
         public IActionResult Categories(string tag, int? p)
@@ -56,9 +56,9 @@ namespace Articulate.Controllers
         }
 
         /// <summary>
-        /// Used to render the tag listing (virtual node).
+        /// Used to render the tag listing (virtual node)
         /// </summary>
-        /// <param name="tag">The tag to display if supplied.</param>
+        /// <param name="tag">The tag to display if supplied</param>
         /// <param name="p"></param>
         /// <returns></returns>
         public IActionResult Tags(string tag, int? p)

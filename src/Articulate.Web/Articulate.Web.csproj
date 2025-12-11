@@ -13,9 +13,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Articulate.StaticAssets\Articulate.StaticAssets.csproj" />
     <ProjectReference Include="..\Articulate\Articulate.csproj" />
+    <ProjectReference Include="..\Articulate.StaticAssets\Articulate.StaticAssets.csproj" />
     <ProjectReference Include="..\Articulate.Api.Management\Articulate.Api.Management.csproj" />
+
+
   </ItemGroup>
 
   <!-- Keep the wwwroot/App_Plugins tree on disk for development, but stop the SDK from treating it as static web assets.

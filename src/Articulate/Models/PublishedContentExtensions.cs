@@ -184,6 +184,37 @@ namespace Articulate.Models
             model.RootBlogNode.Value<string>("searchUrlName");
 
         /// <summary>
+        /// Returns true when the current request is the blog's search route.
+        /// </summary>
+        public static bool IsSearchRoute(this IMasterModel model, HttpContext httpContext)
+        {
+            if (model == null || httpContext?.Request?.Path.HasValue != true)
+            {
+                return false;
+            }
+
+            var searchPath = model.ArticulateSearchUrl()?.TrimEnd('/');
+            var currentPath = httpContext.Request.Path.Value?.TrimEnd('/');
+
+            return !string.IsNullOrWhiteSpace(searchPath)
+                   && currentPath != null
+                   && currentPath.Equals(searchPath, StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>
+        /// Retrieves the search term from the current request querystring (\"term\").
+        /// </summary>
+        public static string GetSearchTerm(this HttpContext httpContext)
+        {
+            if (httpContext?.Request?.Query.TryGetValue("term", out var term) == true)
+            {
+                return term.ToString();
+            }
+
+            return string.Empty;
+        }
+
+        /// <summary>
         /// The Home Blog Url
         /// </summary>
         public static string ArticulateRootUrl(this IMasterModel model) => model.RootBlogNode.Url();

@@ -37,28 +37,27 @@ namespace Articulate.Api.Management.Services
 #else
         /// <inheritdoc />
         public void Handle(UmbracoApplicationStartedNotification notification) =>
-            EnsureOpenIdClientAsync(CancellationToken.None).GetAwaiter().GetResult();
+            Task.Run(() => EnsureOpenIdClientAsync(CancellationToken.None)).GetAwaiter().GetResult();
 #endif
-
         private async Task EnsureOpenIdClientAsync(CancellationToken cancellationToken)
         {
             ArticulateOpenIdClientOptions settings = _options.Value;
 
             if (_runtimeState.Level == RuntimeLevel.Install)
             {
-                _logger.LogInformation("Skipping Articulate OpenId client registration: Umbraco installer is running.");
+                _logger.LogWarning("Skipping Articulate OpenId client registration: Umbraco installer is running.");
                 return;
             }
 
             if (_runtimeState.Level < RuntimeLevel.Run)
             {
-                _logger.LogDebug("Skipping Articulate OpenId client registration: runtime level '{Level}' is below Run.", _runtimeState.Level);
+                _logger.LogWarning("Skipping Articulate OpenId client registration: runtime level '{Level}' is below Run.", _runtimeState.Level);
                 return;
             }
 
             if (!settings.Enabled)
             {
-                _logger.LogDebug("Articulate OpenId client registration disabled via configuration.");
+                _logger.LogWarning("Articulate OpenId client registration disabled via configuration.");
                 return;
             }
 
@@ -169,24 +168,18 @@ namespace Articulate.Api.Management.Services
             }
         }
 
+
+        // ?? dup  of extension method
         private static Uri EnsureTrailingSlash(Uri uri)
         {
-            string path = uri.AbsolutePath;
-
-            if (string.IsNullOrEmpty(path) || path.EndsWith('/'))
+            var path = uri.AbsolutePath;
+            if (path.Length > 0 && path[^1] == '/')
             {
                 return uri;
             }
 
-            var builder = new UriBuilder(uri)
-            {
-                Path = path + "/"
-            };
-
+            var builder = new UriBuilder(uri) { Path = path.EnsureEndsWith('/') };
             return builder.Uri;
         }
     }
 }
-
-
-

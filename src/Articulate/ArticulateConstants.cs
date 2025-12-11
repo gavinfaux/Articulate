@@ -46,53 +46,23 @@ namespace Articulate
 
         public static class Migration
         {
-            public const string ArticulatePackageMigrationPlan = "Articulate.Core";
             public const string AutomaticPackageMigrationPlan = "Articulate";
+            public const string ArticulatePackageMigrationPlan = "Articulate.Core";
         }
 
         internal static class Paths
         {
             internal const string ArticulateTemp = "Articulate/Temp";
+            internal const string UserThemes = "Views/ArticulateThemes";
+            internal const string ArticulateRoot = "App_Plugins/Articulate";
+            internal const string Themes = "Themes";
+            internal const string Views = "Views";
+            internal const string Partials = "Partials";
+            internal const string MarkdownEditor = "MarkdownEditor";
 
-            /// <summary>
-            ///     Virtual (application-relative) base path for system assets and views.
-            ///     Preferred for Razor view resolution. Example: ~/App_Plugins/Articulate/Themes/{Theme}/...
-            /// </summary>
-            internal const string LayoutSystemVirtualPath = "~/App_Plugins/Articulate";
+            internal const string ViewPlaceholder = "{0}.cshtml";
 
-            internal const string MarkdownEditorPath = "MarkdownEditor";
-            internal const string PartialsPath = "Partials";
-
-            /// <summary>
-            ///     Content-root base path for system views (alias for SystemViewPath).
-            /// </summary>
-            internal const string SystemViewContentRoot = SystemViewPath;
-
-            /// <summary>
-            ///     Content-root (physical) base path under the project root for system assets and views.
-            ///     Example: wwwroot/App_Plugins/Articulate/Themes/{Theme}/...
-            /// </summary>
-            internal const string SystemViewPath = "wwwroot/App_Plugins/Articulate";
-
-            /// <summary>
-            ///     Virtual base path for system views (alias for LayoutSystemVirtualPath).
-            /// </summary>
-            internal const string SystemViewVirtualRoot = LayoutSystemVirtualPath;
-
-            internal const string ThemesPath = "Themes";
-
-            /// <summary>
-            ///     Virtual base path for user themes (alias for UserVirtualPath).
-            /// </summary>
-            internal const string UserViewVirtualRoot = UserVirtualPath;
-
-            /// <summary>
-            ///     Virtual base path for user themes. Example: ~/Views/ArticulateThemes/{Theme}/...
-            /// </summary>
-            internal const string UserVirtualPath = "~/Views/ArticulateThemes";
-
-            internal const string ViewPlaceHolder = "{0}.cshtml";
-            internal const string ViewsPath = "Views";
+            internal const string UserThemesRoot = "Views/ArticulateThemes";
         }
     }
 }

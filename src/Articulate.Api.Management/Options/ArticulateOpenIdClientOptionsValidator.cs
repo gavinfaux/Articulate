@@ -36,6 +36,11 @@ namespace Articulate.Api.Management.Options
 
         private static bool HasAbsoluteRedirectUri(IEnumerable<string> candidates)
         {
+            if (candidates is null)
+            {
+                return false;
+            }
+
             foreach (string candidate in candidates)
             {
                 if (Uri.TryCreate(candidate, UriKind.Absolute, out _))

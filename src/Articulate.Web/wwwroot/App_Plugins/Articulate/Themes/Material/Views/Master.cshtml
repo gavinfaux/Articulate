@@ -36,8 +36,8 @@
     @Model.RssFeed()
     @Model.RenderOpenSearch()
 
-    <link href="https://code.getmdl.io/1.3.0/material.pink-blue.min.css" rel="stylesheet" fetchpriority="high">
     <environment include="Development">
+        <link href="~/App_Plugins/Articulate/Themes/Material/src/css/material.pink-blue.min.css" rel="stylesheet" fetchpriority="high" asp-append-version="true">
         <link href="~/App_Plugins/Articulate/Themes/Material/src/css/styles.css" rel="stylesheet" fetchpriority="high" asp-append-version="true">
         <link href="~/App_Plugins/Articulate/Themes/Material/src/css/styles_custom.css" rel="stylesheet" asp-append-version="true">
     </environment>
@@ -45,9 +45,8 @@
         <link href="~/App_Plugins/Articulate/Themes/Material/dist/css/material.css" rel="stylesheet" fetchpriority="high" asp-append-version="true">
     </environment>
 
-
     <link href="https://fonts.googleapis.com/css?family=Roboto:regular,bold,italic,thin,light,bolditalic,black,medium&lang=en&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" media="print" onload="this.media='all'">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" media="all">
 
     @RenderSection("Header", false)
 
@@ -70,6 +69,7 @@
     @Model.GoogleAnalyticsNoScript()
     <div class="demo-blog @ViewBag.CssWrapperClass mdl-layout mdl-js-layout has-drawer is-upgraded">
         <main class="mdl-layout__content">
+            <h1 class="visuallyhidden">@Model.PageTitle</h1>
             @RenderBody()
 
             @await Html.PartialAsync("Footer", Model)
@@ -77,24 +77,40 @@
         <div class="mdl-layout__obfuscator"></div>
     </div>
 
-    <script defer src="https://code.getmdl.io/1.3.0/material.min.js" type="text/javascript"></script>
+    <environment include="Development">
+        <script defer src="~/App_Plugins/Articulate/Themes/Material/dist/js/share.js"></script>
+        <script defer src="~/App_Plugins/Articulate/Themes/Material/src/js/material.min.js" type="text/javascript"></script>
+    </environment>
+    <environment exclude="Development">
+        <script defer src="~/App_Plugins/Articulate/Themes/Material/dist/js/share.js" asp-append-version="true"></script>
+        <script defer src="~/App_Plugins/Articulate/Themes/Material/dist/js/material.js" type="text/javascript"></script>
+    </environment>
+
 
     @*This is kinda dumb but it's how google made the material design, this ensures media cards are clickable if they contain a link*@
     <script type="text/javascript">
-        Array.prototype.forEach.call(document.querySelectorAll('.mdl-card__media'), function(el) {
+        for (const el of document.querySelectorAll('.mdl-card__media')) {
           var link = el.querySelector('a');
           if(!link) {
-            return;
+            continue;
           }
           var target = link.getAttribute('href');
           if(!target) {
-            return;
+            continue;
+          }
+          // Prevent XSS via javascript: or data: URLs
+          try {
+            const url = new URL(target, window.location.href);
+            if (!['http:', 'https:'].includes(url.protocol)) {
+              continue;
+            }
+          } catch {
+            continue;
           }
           el.addEventListener('click', function() {
             location.href = target;
           });
-        });
+        }
     </script>
-
 </body>
 </html>

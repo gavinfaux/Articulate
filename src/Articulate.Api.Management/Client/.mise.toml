@@ -1,0 +1,69 @@
+#:schema https://mise.jdx.dev/schema/mise.json
+# Backoffice client (Vite/Lit) tooling
+# Inherits the root .mise.toml, but pins frontend-specific tools and tasks.
+
+[tools]
+node = "24"
+pnpm = "10.20.0"
+
+[tasks.install]
+description = "Install frontend deps with the pinned pnpm"
+run = "pnpm install --frozen-lockfile --prefer-offline || pnpm install"
+
+[tasks.dev]
+description = "Vite dev server with HMR"
+run = "pnpm run dev"
+
+[tasks.preview]
+description = "Vite preview server"
+run = "pnpm run preview"
+
+[tasks.watch]
+description = "Vite build in watch mode (writes bundles to disk)"
+run = "pnpm run watch"
+
+[tasks.build]
+description = "Production-like build (terser + version stamping)"
+run = "pnpm run build"
+
+[tasks.build-release]
+description = "Release-mode build used in CI/Release"
+run = "pnpm run build:release"
+
+[tasks."build:release"]
+description = "Alias: release-mode build"
+run = "pnpm run build:release"
+
+[tasks.lint]
+description = "Lint TypeScript sources"
+run = "pnpm run lint"
+
+[tasks."lint:fix"]
+description = "Alias: lint + auto-fix"
+run = "pnpm run lint:fix"
+
+[tasks."lint:errors"]
+description = "Lint and surface errors only"
+run = "pnpm run lint:errors"
+
+[tasks."lint-staged"]
+description = "Run lint-staged (pre-commit hook helper)"
+run = "pnpm run lint-staged"
+
+[tasks.check]
+description = "Type-check only (tsc --noEmit)"
+run = "pnpm run check"
+
+[tasks.generate-api]
+description = "Regenerate typed API client against the local Umbraco swagger endpoint"
+env.NODE_TLS_REJECT_UNAUTHORIZED = "0"
+run = "pnpm run generate:api"
+
+[tasks."generate:api"]
+description = "Alias: regenerate typed API client"
+env.NODE_TLS_REJECT_UNAUTHORIZED = "0"
+run = "pnpm run generate:api"
+
+[tasks.clean]
+description = "Remove node_modules and pnpm lockfile"
+run = "pnpm run clean"

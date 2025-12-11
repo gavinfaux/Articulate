@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# Usage:
+#   BUILD_CONFIGURATION=Debug ./build/build.sh
+#   ENABLE_CLIENT_BUILD=true ./build/build.sh
 
 set -euo pipefail
 
@@ -23,12 +26,12 @@ START_TIME=$(date +%s.%N)
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd -- "$SCRIPT_DIR/.." && pwd)"
 BUILD_FOLDER="$REPO_ROOT/build"
-RELEASE_FOLDER="$BUILD_FOLDER/Release"
+CONFIGURATION="${BUILD_CONFIGURATION:-Release}"
+RELEASE_FOLDER="$BUILD_FOLDER/$CONFIGURATION"
 SOLUTION_ROOT="$REPO_ROOT/src"
 SOLUTION_PATH="$SOLUTION_ROOT/Articulate.sln"
 TARGET_FRAMEWORKS=("net9.0" "net10.0")
-TEST_PROJECTS=("Articulate.UnitTests/Articulate.UnitTests.csproj")
-CLIENT_DIR="$SOLUTION_ROOT/Articulate.Api.Management/Client"
+
 
 # Compute CPU parallelism for MSBuild (allow override via MAXCPU)
 CPU_COUNT=${MAXCPU:-}
@@ -48,6 +51,7 @@ CLIENT_BUILD_VALUE=${ENABLE_CLIENT_BUILD:-$CLIENT_BUILD_DEFAULT}
 CLIENT_BUILD_PROPERTY="-p:EnableClientBuild=$CLIENT_BUILD_VALUE"
 
 echo "Using up to $CPU_COUNT parallel MSBuild nodes"
+echo "Build configuration: $CONFIGURATION"
 
 # Advise when running in WSL against Windows-mounted drives (slow)
 if [[ $IS_WSL -eq 1 && "$REPO_ROOT" == /mnt/* ]]; then
@@ -67,35 +71,36 @@ export RestoreFallbackFolders=
 
 echo "Starting clean and restore process for solution: $SOLUTION_PATH"
 
+# Best-effort pre-clean to avoid locked files during dotnet clean (MarkdownEditor assets)
+PRE_CLEAN_TARGETS=(
+  "$SOLUTION_ROOT/Articulate.StaticAssets/wwwroot/App_Plugins/Articulate/MarkdownEditor"
+)
+for target in "${PRE_CLEAN_TARGETS[@]}"; do
+  if [[ -e "$target" ]]; then
+    rm -rf "$target" 2>/dev/null || true
+    if [[ -e "$target" ]]; then
+      sleep 0.25
+      rm -rf "$target" 2>/dev/null || true
+    fi
+  fi
+done
+
 # --- 0) Clean the solution so Release/CI builds start fresh ---
 echo "1. Cleaning solution outputs..."
-dotnet clean "$SOLUTION_PATH" -c Release "${DOTNET_COMMON[@]}" "$CLIENT_BUILD_PROPERTY"
+dotnet clean "$SOLUTION_PATH" -c "$CONFIGURATION" "${DOTNET_COMMON[@]}" "$CLIENT_BUILD_PROPERTY"
 
-# --- 2) Create a temporary slim solution excluding local demo apps (u15/u16/u17) ---
-TMP_SLN_DIR="$BUILD_FOLDER/tmp"
-TMP_SLN="$TMP_SLN_DIR/Articulate.Packable.sln"
-mkdir -p "$TMP_SLN_DIR" "$RELEASE_FOLDER"
-if [[ ! -f "$TMP_SLN" ]]; then
-  dotnet new sln -n Articulate.Packable -o "$TMP_SLN_DIR" >/dev/null
-  dotnet sln "$TMP_SLN" add \
-    "$SOLUTION_ROOT/Articulate/Articulate.csproj" \
-    "$SOLUTION_ROOT/Articulate.Web/Articulate.Web.csproj" \
-    "$SOLUTION_ROOT/Articulate.Api.Management/Articulate.Api.Management.csproj" \
-    "$SOLUTION_ROOT/Articulate.StaticAssets/Articulate.StaticAssets.csproj" \
-    >/dev/null
-fi
+# --- 2) Solution-level restore with static graph + parallelism ---
+mkdir -p "$RELEASE_FOLDER"
+echo "2. Restoring solution packages in parallel..."
+dotnet restore "$SOLUTION_PATH" "${DOTNET_COMMON[@]}" "${MSBUILD_PARALLEL[@]}" "$CLIENT_BUILD_PROPERTY"
 
-# --- 3) Solution-level restore (slim sln) with static graph + parallelism ---
-echo "2. Restoring solution packages in parallel (slim solution)..."
-dotnet restore "$TMP_SLN" "${DOTNET_COMMON[@]}" "${MSBUILD_PARALLEL[@]}" "$CLIENT_BUILD_PROPERTY"
-
-# --- 4) Build TFMs sequentially (net9 first, then net10) to keep client build ordering deterministic ---
+# --- 3) Build TFMs sequentially (net9 first, then net10) to keep client build ordering deterministic ---
 echo "3. Building solution for: ${TARGET_FRAMEWORKS[*]}"
 
 for tfm in "${TARGET_FRAMEWORKS[@]}"; do
   echo "[build] -> $tfm"
   t0=$(date +%s)
-  if ! dotnet build "$TMP_SLN" -c Release -f "$tfm" --no-restore "${DOTNET_COMMON[@]}" "${MSBUILD_PARALLEL[@]}" "$CLIENT_BUILD_PROPERTY"; then
+  if ! dotnet build "$SOLUTION_PATH" -c "$CONFIGURATION" -f "$tfm" --no-restore "${DOTNET_COMMON[@]}" "${MSBUILD_PARALLEL[@]}" "$CLIENT_BUILD_PROPERTY"; then
     echo "dotnet build failed for $tfm" >&2
     exit 1
   fi
@@ -103,27 +108,15 @@ for tfm in "${TARGET_FRAMEWORKS[@]}"; do
   echo "[build] <- $tfm done in $((t1 - t0))s"
 done
 
-# --- 4) Optional tests (kept disabled to optimize CI time) ---
-# for tfm in "${TARGET_FRAMEWORKS[@]}"; do
-#   for test_project in "${TEST_PROJECTS[@]}"; do
-#     test_path="$SOLUTION_ROOT/$test_project"
-#     echo "Testing $test_project on $tfm..."
-#     dotnet test "$test_path" -c Release --no-build -f "$tfm" "${DOTNET_COMMON[@]}"
-#   done
-# done
-
-# --- 5) Pack primary projects (ensure StaticAssets dependency captured) ---
+# --- 4) Pack primary projects ---
 echo "4. Packing projects..."
 ARTICULATE_PROJECT="$SOLUTION_ROOT/Articulate/Articulate.csproj"
 ARTICULATE_WEB_PROJECT="$SOLUTION_ROOT/Articulate.Web/Articulate.Web.csproj"
 ARTICULATE_API_PROJECT="$SOLUTION_ROOT/Articulate.Api.Management/Articulate.Api.Management.csproj"
 ARTICULATE_STATIC_ASSETS_PROJECT="$SOLUTION_ROOT/Articulate.StaticAssets/Articulate.StaticAssets.csproj"
 
-echo "[pack] -> $(basename "$ARTICULATE_STATIC_ASSETS_PROJECT")"
-dotnet pack -c Release "$ARTICULATE_STATIC_ASSETS_PROJECT" --no-build --no-restore -o "$RELEASE_FOLDER" \
-  "${DOTNET_COMMON[@]}" "${MSBUILD_PARALLEL[@]}" "$CLIENT_BUILD_PROPERTY" -p:NoPackageAnalysis=true
-
 PACK_PROJECTS=(
+  "$ARTICULATE_STATIC_ASSETS_PROJECT"
   "$ARTICULATE_PROJECT"
   "$ARTICULATE_WEB_PROJECT"
   "$ARTICULATE_API_PROJECT"
@@ -133,8 +126,8 @@ declare -a pack_pids=()
 for proj in "${PACK_PROJECTS[@]}"; do
   echo "[pack] -> $(basename "$proj")"
   RESTORE_SWITCHES=(--no-build --no-restore)
-  dotnet pack -c Release "$proj" "${RESTORE_SWITCHES[@]}" -o "$RELEASE_FOLDER" \
-    "${DOTNET_COMMON[@]}" "${MSBUILD_PARALLEL[@]}" "$CLIENT_BUILD_PROPERTY" -p:NoPackageAnalysis=true &
+  dotnet pack -c "$CONFIGURATION" "$proj" "${RESTORE_SWITCHES[@]}" -o "$RELEASE_FOLDER" \
+    "${DOTNET_COMMON[@]}" "${MSBUILD_PARALLEL[@]}" "$CLIENT_BUILD_PROPERTY" &
   pack_pids+=($!)
 done
 

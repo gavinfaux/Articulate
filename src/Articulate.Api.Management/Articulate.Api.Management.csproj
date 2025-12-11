@@ -11,24 +11,20 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Umbraco.Cms.Api.Management" Version="$(UmbracoCmsPackageVersion)" />
+    <PackageReference Update="Microsoft.OpenApi" Version="$(MicrosoftOpenApiPackageVersion)" />
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\Articulate.StaticAssets\Articulate.StaticAssets.csproj" />
     <ProjectReference Include="..\Articulate\Articulate.csproj" />
   </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="Articulate.Web" />
-    <InternalsVisibleTo Include="Articulate.UnitTests" />
   </ItemGroup>
   <ItemGroup>
     <!--Copy package XML documentation for Swagger docs, direct install-->
     <Content Include="build\Articulate.Api.Management.targets" Pack="true" PackagePath="build\" />
   </ItemGroup>
   <ItemGroup>
-    <StaticWebAsset Remove="wwwroot\App_Plugins\**" />
-    <Content Remove="wwwroot\**" />
-    <None Remove="wwwroot\**" />
-    <EmbeddedResource Remove="wwwroot\**" />
+    <None Remove="Client\**" />
   </ItemGroup>
 </Project>

@@ -37,18 +37,21 @@ jobs:
             echo "Git tag missing, release build may not be traceable."
           fi
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+      - name: Setup .NET SDKs
+        uses: actions/setup-dotnet@v4
         with:
-          version: 10.20.0
-          run_install: false
+          dotnet-version: |
+            9.0.100
+            10.0.100
 
-      - name: Setup NodeJS
-        uses: actions/setup-node@v5
+      - name: Setup mise (tools from .mise.toml/mise.lock)
+        uses: jdx/mise-action@v2
         with:
-          node-version-file: 'src/Articulate.Api.Management/Client/.nvmrc'
-          cache: 'pnpm'
-          cache-dependency-path: 'src/Articulate.Api.Management/Client/pnpm-lock.yaml'
+          install: true
+          experimental: true
+
+      - name: Install toolchain (locked)
+        run: mise install --locked
 
       - name: Resolve pnpm store path
         id: pnpm-cache
