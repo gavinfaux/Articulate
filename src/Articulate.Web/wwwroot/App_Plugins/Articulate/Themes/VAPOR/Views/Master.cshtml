@@ -33,14 +33,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@@fortawesome/fontawesome-free@6.7.2/css/brands.min.css" integrity="sha256-lvqQzfgRxG8QBB5QMqpZGrljg5T/hNmC3vC7i3zntlI=" crossorigin="anonymous" media="all">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@@fortawesome/fontawesome-free@6.7.2/css/solid.min.css" integrity="sha256-ETbOOM9U8WfaXg2AkW2t+QbdpWYFRAO+HEXOth8EQbY=" crossorigin="anonymous" media="all">
 
-    <environment exclude="Development">
-        <script defer src="~/App_Plugins/Articulate/Themes/VAPOR/dist/js/share.js" asp-append-version="true"></script>
-    </environment>
-    <environment include="Development">
-        <script defer src="~/App_Plugins/Articulate/Themes/VAPOR/src/js/share.js" asp-append-version="true"></script>
-    </environment>
-
-    @RenderSection("Header", false)
+    @await RenderSectionAsync("Header", false)
 </head>
 <body class="@ViewBag.CssBodyClass">
     @Model.GoogleAnalyticsNoScript()

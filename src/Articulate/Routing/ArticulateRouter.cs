@@ -148,7 +148,7 @@ namespace Articulate.Routing
             var art = new ArticulateRouteTemplate(routeTemplate);
             if (!_routeCache.TryGetValue(art, out ArticulateRootNodeCache? dynamicRouteValues))
             {
-                ControllerActionDescriptor? controllerActionDescriptor =
+                ControllerActionDescriptor controllerActionDescriptor =
                     _controllerActionSearcher.Find<IRenderController>(
                         httpContext,
                         controllerName,

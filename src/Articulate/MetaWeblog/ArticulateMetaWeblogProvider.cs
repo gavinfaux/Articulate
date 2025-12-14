@@ -359,9 +359,8 @@ namespace Articulate.MetaWeblog
                 reservedNames.Contains(untrustedFileName.ToLowerInvariant()))
             {
                 throw new ArgumentException("Invalid file", nameof(mediaObject));
-
             }
- 
+
             // Save File
             var fileUrl = "articulate/" + Path.GetRandomFileName().ToSafeFileName(_shortStringHelper);
             using var ms = new MemoryStream(bytes);

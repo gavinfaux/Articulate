@@ -1,25 +1,18 @@
 /* Google Fonts (Open Sans, Roboto) are loaded via <link> in Master.cshtml */
-a {
-    color: #4a4a4a;
-    transition: color 0.3s ease;
-}
 
 @font-face {
-    font-family: 'phantom';
-    src: url("../fonts/phantom.eot?42194940");
-    src: url("../fonts/phantom.eot?42194940#iefix") format("embedded-opentype"),
-         url("../fonts/phantom.woff?42194940") format("woff"),
-         url("../fonts/phantom.ttf?42194940") format("truetype"),
-         url("../fonts/phantom.svg?42194940#phantom") format("svg");
-    font-weight: normal;
-    font-style: normal;
+  font-family: 'phantom';
+  src: url("../../assets/fonts/phantom.eot?42194940");
+  src: url("../../assets/fonts/phantom.eot?42194940#iefix") format("embedded-opentype"),url("../../assets/fonts/phantom.woff?42194940") format("woff"),url("../../assets/fonts/phantom.ttf?42194940") format("truetype"),url("../../assets/fonts/phantom.svg?42194940#phantom") format("svg");
+  font-weight: normal;
+  font-style: normal;
 }
 
-[class^="icon-"]:before,
-[class*=" icon-"]:before {
+[class^="icon-"]:before, [class*=" icon-"]:before {
     font-family: "phantom";
     font-style: normal;
     font-weight: normal;
+    speak-as: unset;
     display: inline-block;
     text-decoration: none;
     width: 1em;
@@ -29,15 +22,6 @@ a {
     text-transform: none;
     line-height: 1em;
     margin-left: .2em;
-}
-
-body {
-    height: 100%;
-    max-height: 100%;
-    font-family: 'Roboto', sans-serif;
-    font-size: 18px;
-    line-height: 1.6em;
-    color: #3A4145;
 }
 
 .icon-rss:before {
@@ -77,6 +61,15 @@ body {
 html {
     height: 100%;
     max-height: 100%;
+}
+
+body {
+    height: 100%;
+    max-height: 100%;
+    font-family: 'Roboto', serif;
+    font-size: 18px;
+    line-height: 1.6em;
+    color: #3A4145;
 }
 
 ::-moz-selection {

@@ -36,7 +36,6 @@ const config = {
     // editorPostUrl: Management API endpoint used to create the blog post.
     editorPostUrl: '',
     articulateBlogNode: null,
-    isBackOfficeLoggedIn: false,
     debugLayout: false,
     useCookieAuth: false,
     // Optional post-logout redirect target returned from the server.
@@ -92,7 +91,6 @@ function initConfig(dataset) {
     config.currentUserUrl = currentUserUrl;
     config.editorPostUrl = editorPostUrl;
     const normalizedBackoffice = typeof backofficeLoggedIn === "string" ? backofficeLoggedIn.trim().toLowerCase() : "";
-    config.isBackOfficeLoggedIn = normalizedBackoffice === "true" || normalizedBackoffice === "1";
     config.articulateBlogNode = articulateBlogNode;
 
     if (typeof debugLayout === "string") {

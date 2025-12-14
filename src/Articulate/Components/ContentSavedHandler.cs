@@ -56,7 +56,7 @@ namespace Articulate.Components
                             articles.Name = ArticulateConstants.Convention.ArticlesDocument;
                         }
 
-                        var saveResult = _contentService.Save(articles);
+                        OperationResult saveResult = _contentService.Save(articles);
                         if (!saveResult.Success)
                         {
                             var message = $"Failed to save articles node: {saveResult}";
@@ -87,7 +87,7 @@ namespace Articulate.Components
                     authors.Name = ArticulateConstants.Convention.AuthorsDocument;
                 }
 
-                var authorSaveResult = _contentService.Save(authors);
+                OperationResult authorSaveResult = _contentService.Save(authors);
                 if (!authorSaveResult.Success)
                 {
                     var message = $"Failed to save authors node: {authorSaveResult}";

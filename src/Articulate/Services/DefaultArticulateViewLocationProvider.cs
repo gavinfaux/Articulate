@@ -25,8 +25,7 @@ namespace Articulate.Services
             foreach (var root in searchRoots)
             {
                 locations.Add(BuildPath(root, Paths.Themes, themeName, Paths.Views, Paths.ViewPlaceholder));
-                locations.Add(BuildPath(root, Paths.Themes, themeName, Paths.Views, Paths.Partials,
-                    Paths.ViewPlaceholder));
+                locations.Add(BuildPath(root, Paths.Themes, themeName, Paths.Views, Paths.Partials, Paths.ViewPlaceholder));
 
                 locations.Add(BuildPath(root, Paths.MarkdownEditor, Paths.Views, Paths.ViewPlaceholder));
             }

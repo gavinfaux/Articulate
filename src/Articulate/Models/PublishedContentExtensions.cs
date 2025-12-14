@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
+using Microsoft.Extensions.Primitives;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Models.PublishedContent;
 
@@ -206,7 +207,7 @@ namespace Articulate.Models
         /// </summary>
         public static string GetSearchTerm(this HttpContext httpContext)
         {
-            if (httpContext?.Request?.Query.TryGetValue("term", out var term) == true)
+            if (httpContext?.Request?.Query.TryGetValue("term", out StringValues term) == true)
             {
                 return term.ToString();
             }

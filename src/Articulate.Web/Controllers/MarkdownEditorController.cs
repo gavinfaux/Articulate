@@ -6,7 +6,6 @@ using Articulate.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Umbraco.Cms.Core.Web;
@@ -21,7 +20,6 @@ namespace Articulate.Web.Controllers
         ICompositeViewEngine compositeViewEngine,
         IUmbracoContextAccessor umbracoContextAccessor,
         IApiDescriptionGroupCollectionProvider apiDescriptionProvider,
-        IConfiguration configuration,
         IOptions<ArticulateOpenIdClientOptions> artClientOptions,
         BackOfficeAuthService backOfficeAuthService)
         : RenderController(logger, compositeViewEngine, umbracoContextAccessor)
@@ -56,8 +54,6 @@ namespace Articulate.Web.Controllers
                     "Check if the Articulate API routes are registered correctly at startup.");
             }
 
-            // External OAuth clients use the same authentication flow for all Umbraco versions
-            // (Authorization Code + PKCE ? Bearer tokens, not cookies)
             ArticulateOpenIdClientOptions openIdClientOptions = artClientOptions.Value;
             string clientId = openIdClientOptions.ClientId ?? string.Empty;
             string? postLogoutRedirect = openIdClientOptions.PostLogoutRedirectUris
@@ -68,8 +64,7 @@ namespace Articulate.Web.Controllers
                 ArticulateBlogNode = CurrentPage.Id,
                 EditorPostUrl = editorUrl,
                 BackOfficeClientId = clientId,
-                IsBackOfficeLoggedIn = isBackOfficeLoggedIn,
-                PostLogoutRedirectUrl = postLogoutRedirect,
+                PostLogoutRedirectUrl = postLogoutRedirect
             };
 
             Response.Headers["Permissions-Policy"] = "camera=(self)";

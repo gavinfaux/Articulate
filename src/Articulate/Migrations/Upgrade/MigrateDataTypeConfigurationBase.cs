@@ -10,6 +10,7 @@ using Umbraco.Cms.Infrastructure.Scoping;
 namespace Articulate.Migrations.Upgrade
 {
     /// <inheritdoc />
+    [Obsolete("'MigrationBase' is obsolete: Use 'AsyncMigrationBase' instead. Scheduled for removal in Umbraco 18", false)]
     public abstract class MigrateDataTypeConfigurationBase(
         IMigrationContext context,
         IScopeProvider scopeProvider,

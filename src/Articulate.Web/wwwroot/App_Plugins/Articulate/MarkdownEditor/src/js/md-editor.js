@@ -410,7 +410,6 @@ document.addEventListener("alpine:init", () => {
 
         console.debug("[MarkdownEditor] configuration snapshot", {
           articulateBlogNode: this.post.articulateBlogNode,
-          isBackOfficeLoggedIn: config.isBackOfficeLoggedIn,
         });
 
         const params = new URLSearchParams(window.location.search);
@@ -446,12 +445,6 @@ document.addEventListener("alpine:init", () => {
             'Your session has timed out. Please sign in again below.'
           );
           return;
-        }
-
-        if (!config.isBackOfficeLoggedIn) {
-          console.debug(
-            "[MarkdownEditor] continuing without pre-existing back-office session; relying on bearer token only."
-          );
         }
 
         this.currentUser = await apiService.getCurrentUser();

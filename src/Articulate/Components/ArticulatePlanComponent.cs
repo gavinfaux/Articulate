@@ -23,6 +23,7 @@ namespace Articulate.Components
         {
             return Task.CompletedTask;
         }
+
         private void Initialize()
         {
             if (runtimeState.Level < RuntimeLevel.Run)
@@ -33,6 +34,8 @@ namespace Articulate.Components
             var migrationPlan = new ArticulatePlan();
 
             var upgrader = new Upgrader(migrationPlan);
+
+            // TODO: "Use ExecuteAsync instead. Scheduled for removal in Umbraco 18."
             _ = upgrader.Execute(migrationPlanExecutor, scopeProvider, keyValueService);
         }
 

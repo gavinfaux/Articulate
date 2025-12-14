@@ -36,7 +36,6 @@
     data-auth-end-url="@MarkdownEditorInitModel.EndSessionUrl" data-token-url="@MarkdownEditorInitModel.TokenUrl"
     data-current-user-url="@MarkdownEditorInitModel.CurrentUserUrl" data-editor-post-url="@Model.EditorPostUrl"
     data-oauth-client-id="@Model.BackOfficeClientId" data-post-logout-redirect="@Model.PostLogoutRedirectUrl"
-    data-backoffice-logged-in="@Model.IsBackOfficeLoggedIn.ToString().ToLowerInvariant()" data-use-cookie-auth="@Model.UseCookieAuth.ToString().ToLowerInvariant()"
     data-revocation-url="@MarkdownEditorInitModel.RevocationUrl">
     <div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
         <header class="mdl-layout__header" x-cloak x-show="showHeader">
@@ -104,7 +103,7 @@
                                 <textarea x-ref="editor" id="editor" class="mdl-textfield__input" rows="12"></textarea>
                                 <label class="mdl-textfield__label" x-bind:class="bodyLabelClass" for="editor">## CommonMark or GitHub Flavored Markdown content</label>
                             </div>
-                        <div>
+                        </div>
                     </div>
                 </template>
 

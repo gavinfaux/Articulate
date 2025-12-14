@@ -45,10 +45,18 @@
         <link href="~/App_Plugins/Articulate/Themes/Material/dist/css/material.css" rel="stylesheet" fetchpriority="high" asp-append-version="true">
     </environment>
 
+    <environment include="Development">
+        <script defer src="~/App_Plugins/Articulate/Themes/Material/dist/js/share.js"></script>
+    </environment>
+    <environment exclude="Development">
+        <script defer src="~/App_Plugins/Articulate/Themes/Material/dist/js/share.js" asp-append-version="true"></script>
+    </environment>
+
+
     <link href="https://fonts.googleapis.com/css?family=Roboto:regular,bold,italic,thin,light,bolditalic,black,medium&lang=en&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" media="all">
 
-    @RenderSection("Header", false)
+    @await RenderSectionAsync("Header", false)
 
     @{
         var blogBanner = Model.BlogBanner;
@@ -69,7 +77,6 @@
     @Model.GoogleAnalyticsNoScript()
     <div class="demo-blog @ViewBag.CssWrapperClass mdl-layout mdl-js-layout has-drawer is-upgraded">
         <main class="mdl-layout__content">
-            <h1 class="visuallyhidden">@Model.PageTitle</h1>
             @RenderBody()
 
             @await Html.PartialAsync("Footer", Model)
@@ -78,39 +85,29 @@
     </div>
 
     <environment include="Development">
-        <script defer src="~/App_Plugins/Articulate/Themes/Material/dist/js/share.js"></script>
         <script defer src="~/App_Plugins/Articulate/Themes/Material/src/js/material.min.js" type="text/javascript"></script>
     </environment>
     <environment exclude="Development">
-        <script defer src="~/App_Plugins/Articulate/Themes/Material/dist/js/share.js" asp-append-version="true"></script>
-        <script defer src="~/App_Plugins/Articulate/Themes/Material/dist/js/material.js" type="text/javascript"></script>
+        <script defer src="~/App_Plugins/Articulate/Themes/Material/src/dist/material.min.js" type="text/javascript"></script>
     </environment>
 
 
     @*This is kinda dumb but it's how google made the material design, this ensures media cards are clickable if they contain a link*@
     <script type="text/javascript">
-        for (const el of document.querySelectorAll('.mdl-card__media')) {
+        Array.prototype.forEach.call(document.querySelectorAll('.mdl-card__media'), function(el) {
           var link = el.querySelector('a');
           if(!link) {
-            continue;
+            return;
           }
           var target = link.getAttribute('href');
           if(!target) {
-            continue;
-          }
-          // Prevent XSS via javascript: or data: URLs
-          try {
-            const url = new URL(target, window.location.href);
-            if (!['http:', 'https:'].includes(url.protocol)) {
-              continue;
-            }
-          } catch {
-            continue;
+            return;
           }
           el.addEventListener('click', function() {
             location.href = target;
           });
-        }
+        });
     </script>
+
 </body>
 </html>

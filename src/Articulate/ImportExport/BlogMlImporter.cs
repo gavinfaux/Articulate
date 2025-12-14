@@ -268,7 +268,7 @@ namespace Articulate.ImportExport
                 {
                     // first check if a user exists by email
                     IUser? found = _userService.GetByEmail(author.EmailAddress);
-                    IEnumerable<IContent>? authorNodes = allAuthorNodes as IContent[] ?? [.. allAuthorNodes];
+                    IEnumerable<IContent> authorNodes = allAuthorNodes as IContent[] ?? [.. allAuthorNodes];
                     if (found is not null)
                     {
                         // check if an author node exists for this user

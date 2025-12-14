@@ -16,10 +16,7 @@ namespace Articulate.Models
 
         public string? BackOfficeClientId { get; set; }
 
-        public bool IsBackOfficeLoggedIn { get; set; }
-
         public string? PostLogoutRedirectUrl { get; set; }
 
-        public bool UseCookieAuth { get; set; }
     }
 }

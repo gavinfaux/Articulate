@@ -126,6 +126,23 @@
     <RemoveDir Condition="Exists('$(ThemesOutputDir)')"
               Directories="$(ThemesOutputDir)"
               ContinueOnError="WarnAndContinue" />
+    <RemoveDir Condition="Exists('$(MarkdownEditorOutputDir)')" Directories="$(MarkdownEditorOutputDir)" ContinueOnError="true"  />
+    <RemoveDir Condition="Exists('$(ThemesOutputDir)')" Directories="$(ThemesOutputDir)" ContinueOnError="true"  />
+  </Target>
+
+  <Target Name="RefreshBackofficeStaticWebAssetItems"
+          AfterTargets="BuildBackofficeClient"
+          BeforeTargets="ResolveStaticWebAssetsInputs"
+          Condition="'$(EnableClientBuild)'=='true' and Exists('$(BackofficeOutputDir)')">
+    <Message Text="Refreshing BackOffice Content/StaticWebAsset items to match regenerated bundles" Importance="Low" />
+    <ItemGroup>
+      <Content Remove="$(BackofficeOutputDir)\**\*.*" />
+    </ItemGroup>
+    <ItemGroup>
+      <Content Include="$(BackofficeOutputDir)\**\*.*">
+        <RelativePath>$([MSBuild]::MakeRelative('$(MSBuildProjectDirectory)', '%(FullPath)'))</RelativePath>
+      </Content>
+    </ItemGroup>
   </Target>
 
   <Target Name="CleanClientAssets" AfterTargets="Clean" Condition="'$(EnableClientBuild)'=='true'">
