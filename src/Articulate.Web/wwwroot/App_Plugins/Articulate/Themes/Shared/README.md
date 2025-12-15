@@ -57,7 +57,7 @@ Keep semantics, headings, and ARIA roles accessible (banner, main, region, navig
 ## Comments integration
 
 `Partials/Comments.cshtml` is a neutral placeholder. Override it inside your theme to integrate
-with a provider (e.g., Disqus, Giscus, Facebook). Shared `Post.cshtml` includes the partial only
+with a provider (e.g., Disqus, Giscus). Shared `Post.cshtml` includes the partial only
 when `Model.EnableComments` is true.
 
 Additionally, Shared provides a switch-based partial: `Partials/CommentsProvider.cshtml`.
