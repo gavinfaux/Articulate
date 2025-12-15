@@ -102,13 +102,6 @@ body {
     overflow: hidden;
 }
 
-body.debug-layout *,
-body.debug-layout *::before,
-body.debug-layout *::after {
-    outline: 1px dashed rgb(218, 41, 28);
-    outline-offset: -1px;
-}
-
 body.is-login-step {
     background-color: #f5f7fb;
     overflow: auto;
