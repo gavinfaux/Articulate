@@ -13,7 +13,7 @@ namespace Articulate
         /// <param name="model"></param>
         /// <param name="relativeAssetPath"></param>
         /// <returns></returns>
-        [Obsolete("No longer used or supported", true)]
+        [Obsolete("No longer used or supported", false)]
         public static string ThemedAsset(this IUrlHelper url, IMasterModel model, string relativeAssetPath)
         {
             var path = $"~/{Paths.UserThemes}/{model.Theme}/assets/{relativeAssetPath}";
