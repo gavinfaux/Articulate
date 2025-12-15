@@ -18,7 +18,7 @@ Supporting all the features you'd want in a blogging platform
 - Live Writer support
 - Markdown support
 - Post from your mobile phone including photos direct from your camera
-- Disqus or Facebook comment support (or build your own)
+- Disqus comment support (or build your own)
 - Search
 - BlogML import/export (including Disqus import)
 - Customizable RSS feeds

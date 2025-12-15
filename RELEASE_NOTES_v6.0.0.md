@@ -110,6 +110,7 @@ Media migration notes:
 
 ## Known issues
 
+- Facebook Comments will be discontinued on February 10, 2026, therefore the Facebook comment partial has been removed.
 - Expect layout tweaks in the Lit backoffice during beta polish.
 - If Hot Reload misses a change after adding new files, restart `dotnet watch` (rare after the latest plugin refresh logic).
 - Occasional dev hiccup: after running shell builds, the next Visual Studio build can fail once; a second VS build typically succeeds.
