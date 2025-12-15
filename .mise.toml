@@ -8,7 +8,7 @@
 # This avoids mise attempting to download .NET on dev/CI machines that already have it.
 node = "24"        # aligns with README + backoffice client
 pnpm = "10.24.0"
-"dotnet:nbgv" = "3.9.50"
+"dotnet:nbgv" = "latest"
 gitleaks = "latest"
 
 [settings]

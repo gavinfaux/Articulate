@@ -1,12 +1,3 @@
-[[tools.bun]]
-version = "1.3.3"
-backend = "core:bun"
-"platforms.linux-arm64" = { url = "https://github.com/oven-sh/bun/releases/download/bun-v1.3.3/bun-linux-aarch64.zip"}
-"platforms.linux-x64" = { url = "https://github.com/oven-sh/bun/releases/download/bun-v1.3.3/bun-linux-x64.zip"}
-"platforms.macos-arm64" = { url = "https://github.com/oven-sh/bun/releases/download/bun-v1.3.3/bun-darwin-aarch64.zip"}
-"platforms.macos-x64" = { url = "https://github.com/oven-sh/bun/releases/download/bun-v1.3.3/bun-darwin-x64.zip"}
-"platforms.windows-x64" = { url = "https://github.com/oven-sh/bun/releases/download/bun-v1.3.3/bun-windows-x64.zip"}
-
 [[tools."dotnet:nbgv"]]
 version = "3.9.50"
 backend = "dotnet:nbgv"
@@ -14,22 +5,26 @@ backend = "dotnet:nbgv"
 [[tools.gitleaks]]
 version = "8.30.0"
 backend = "aqua:gitleaks/gitleaks"
+"platforms.linux-arm64" = { checksum = "sha256:b4cbbb6ddf7d1b2a603088cd03a4e3f7ce48ee7fd449b51f7de6ee2906f5fa2f", url = "https://github.com/gitleaks/gitleaks/releases/download/v8.30.0/gitleaks_8.30.0_linux_arm64.tar.gz"}
+"platforms.linux-x64" = { checksum = "sha256:79a3ab579b53f71efd634f3aaf7e04a0fa0cf206b7ed434638d1547a2470a66e", url = "https://github.com/gitleaks/gitleaks/releases/download/v8.30.0/gitleaks_8.30.0_linux_x64.tar.gz"}
+"platforms.macos-arm64" = { checksum = "sha256:b251ab2bcd4cd8ba9e56ff37698c033ebf38582b477d21ebd86586d927cf87e7", url = "https://github.com/gitleaks/gitleaks/releases/download/v8.30.0/gitleaks_8.30.0_darwin_arm64.tar.gz"}
+"platforms.macos-x64" = { checksum = "sha256:ca221d012d247080c2f6f61f4b7a83bffa2453806b0c195c795bbe9a8c775ed5", url = "https://github.com/gitleaks/gitleaks/releases/download/v8.30.0/gitleaks_8.30.0_darwin_x64.tar.gz"}
 "platforms.windows-x64" = { checksum = "sha256:54fe94f644b832dd08e8c3a5915efb3bfa862386d59fb27ca0792cb687a83573", url = "https://github.com/gitleaks/gitleaks/releases/download/v8.30.0/gitleaks_8.30.0_windows_x64.zip"}
 
 [[tools.node]]
 version = "24.11.1"
 backend = "core:node"
+"platforms.linux-arm64" = { checksum = "sha256:0dc93ec5c798b0d347f068db6d205d03dea9a71765e6a53922b682b91265d71f", url = "https://nodejs.org/dist/v24.11.1/node-v24.11.1-linux-arm64.tar.gz"}
+"platforms.linux-x64" = { checksum = "sha256:58a5ff5cc8f2200e458bea22e329d5c1994aa1b111d499ca46ec2411d58239ca", url = "https://nodejs.org/dist/v24.11.1/node-v24.11.1-linux-x64.tar.gz"}
+"platforms.macos-arm64" = { checksum = "sha256:b05aa3a66efe680023f930bd5af3fdbbd542794da5644ca2ad711d68cbd4dc35", url = "https://nodejs.org/dist/v24.11.1/node-v24.11.1-darwin-arm64.tar.gz"}
+"platforms.macos-x64" = { checksum = "sha256:096081b6d6fcdd3f5ba0f5f1d44a47e83037ad2e78eada26671c252fe64dd111", url = "https://nodejs.org/dist/v24.11.1/node-v24.11.1-darwin-x64.tar.gz"}
+"platforms.windows-x64" = { checksum = "sha256:5355ae6d7c49eddcfde7d34ac3486820600a831bf81dc3bdca5c8db6a9bb0e76", url = "https://nodejs.org/dist/v24.11.1/node-v24.11.1-win-x64.zip"}
 
 [[tools.pnpm]]
 version = "10.24.0"
 backend = "aqua:pnpm/pnpm"
+"platforms.linux-arm64" = { checksum = "sha256:1447737a6e8003386507fdcdafa376289b4abfff5867c8ba6a189b2fded13a4b", url = "https://github.com/pnpm/pnpm/releases/download/v10.24.0/pnpm-linux-arm64"}
+"platforms.linux-x64" = { checksum = "sha256:985824ae016db3c7bbd7b39dcb4e6f5740b11cce79f5c43d5e5e640768fd4806", url = "https://github.com/pnpm/pnpm/releases/download/v10.24.0/pnpm-linux-x64"}
+"platforms.macos-arm64" = { checksum = "sha256:e3978826faa5fa7fdf63b752afc7a1bc4585ecd591b899fb956ebdd4e49f5db8", url = "https://github.com/pnpm/pnpm/releases/download/v10.24.0/pnpm-macos-arm64"}
+"platforms.macos-x64" = { checksum = "sha256:8694dabaa7d29ece4db8cfa62e0582637e6ce70138ee8e8c5dbd58a5d1c8513d", url = "https://github.com/pnpm/pnpm/releases/download/v10.24.0/pnpm-macos-x64"}
 "platforms.windows-x64" = { checksum = "sha256:e966e249a55c5d56d5d1844d220861b801c892148e763c66e95dadb9bd257d3f", url = "https://github.com/pnpm/pnpm/releases/download/v10.24.0/pnpm-win-x64.exe"}
-
-[[tools.uv]]
-version = "0.9.15"
-backend = "aqua:astral-sh/uv"
-"platforms.linux-arm64" = { checksum = "sha256:41f6ef4f86e9f8015bc31e9ca4fd44a6e2c80fc0b75d6eb74063f64ca15177c7", url = "https://github.com/astral-sh/uv/releases/download/0.9.15/uv-aarch64-unknown-linux-musl.tar.gz"}
-"platforms.linux-x64" = { checksum = "sha256:7037889adb182ce50379b3a789154ad6be00397b892fec9e93e11c457945aec0", url = "https://github.com/astral-sh/uv/releases/download/0.9.15/uv-x86_64-unknown-linux-musl.tar.gz"}
-"platforms.macos-arm64" = { checksum = "sha256:388029510fdf64771745e9fb85cd6ec042580678a9e61c90fe355301f1c42f1e", url = "https://github.com/astral-sh/uv/releases/download/0.9.15/uv-aarch64-apple-darwin.tar.gz"}
-"platforms.macos-x64" = { checksum = "sha256:a7d9ae35ce2d192cb0356f07439cfc6768d4dff8e95ae69f821e8fbe7bcb0e09", url = "https://github.com/astral-sh/uv/releases/download/0.9.15/uv-x86_64-apple-darwin.tar.gz"}
-"platforms.windows-x64" = { checksum = "sha256:a6887c93a54c46de7dcc0bc798f84a130d7f411124ad43252716f75d0c2c33e0", url = "https://github.com/astral-sh/uv/releases/download/0.9.15/uv-x86_64-pc-windows-msvc.zip"}
