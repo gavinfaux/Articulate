@@ -17,7 +17,6 @@ namespace Articulate.Components
     {
         private readonly ArticulateOptions _articulateOptions = articulateOptions.Value;
 
-        // TODO: Review
         /// <inheritdoc/>
         public void Handle(ContentSavingNotification notification)
         {

@@ -18,22 +18,7 @@
         var hasResults = posts.Any();
     }
 
-    @if (!hasResults)
-    {
-        <div class="mdl-card mdl-cell mdl-cell--12-col comments">
-
-            @await Html.PartialAsync("SearchBox", Model)
-
-            @if (!term.IsNullOrWhiteSpace())
-            {
-                <div class="mdl-card__media mdl-color-text--grey-50">
-                    <h3>No blog posts found</h3>
-                </div>
-            }
-        </div>
-    }
-    else
-    {
+    @{
         if (isSearch)
         {
             @await Html.PartialAsync("TitleTile", Model)
@@ -102,7 +87,7 @@
         if (withExcerpt)
         {
             <div class="mdl-card__supporting-text mdl-color-text--grey-600">
-                @post.Excerpt&hellip;
+                @(post.Excerpt)&hellip;
             </div>
         }
 

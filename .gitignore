@@ -515,6 +515,4 @@ src/Articulate.Tests.Website/umbraco-package-schema.json
 src/Articulate.Tests.Website/appsettings-schema.json
 src/Articulate.Api.Management/Client/pnpm-workspace.yaml
 
-/src/u15
-/src/u16
-/src/u17
+

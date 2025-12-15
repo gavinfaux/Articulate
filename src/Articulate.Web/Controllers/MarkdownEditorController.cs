@@ -20,8 +20,7 @@ namespace Articulate.Web.Controllers
         ICompositeViewEngine compositeViewEngine,
         IUmbracoContextAccessor umbracoContextAccessor,
         IApiDescriptionGroupCollectionProvider apiDescriptionProvider,
-        IOptions<ArticulateOpenIdClientOptions> artClientOptions,
-        BackOfficeAuthService backOfficeAuthService)
+        IOptions<ArticulateOpenIdClientOptions> artClientOptions)
         : RenderController(logger, compositeViewEngine, umbracoContextAccessor)
     {
         [HttpGet]
@@ -32,8 +31,6 @@ namespace Articulate.Web.Controllers
                 logger.LogWarning("MarkdownEditorController.NewPost: CurrentPage is null, returning 404");
                 return NotFound();
             }
-
-            bool isBackOfficeLoggedIn = backOfficeAuthService.GetCurrentUser() is not null;
 
             IReadOnlyDictionary<string, string>? managementApiUrls = apiDescriptionProvider.ManagementApiUrlMap([
                 ManagementConstants.ManagementApi.MarkdownEditor

@@ -7,7 +7,7 @@
 > A wonderful Blog engine built on Umbraco
 
 ---
-_If you use and like Articulate please consider [becoming a GitHub Sponsor](https://github.com/sponsors/Shazwazza/)._
+_❤️ If you use and like Articulate please consider [becoming a GitHub Sponsor](https://github.com/sponsors/Shazwazza/)._
 
 Release notes: see [RELEASE_NOTES_v6.0.0.md](RELEASE_NOTES_v6.0.0.md) for 6.x highlights and breaking changes.
 
@@ -111,6 +111,11 @@ See `docker_readme.md` for the full, up-to-date Docker guide. We support both .N
 - **net10 (Umbraco 17.x):** `mise run docker10-up-build` (HTTP: 8090, HTTPS: 8450)
 
 Remember to run `mise run build` (Release config) before building Docker images, as they consume the local NuGet packages.
+
+### Changing Umbraco Articulate schema/data elements
+
+If you need to make changes to the underlying Umbraco schema (doc types, data types, etc...) or the installed package's content/media, then you will need
+to re-create the Articulate package in the back office with all required dependencies and then re-save the package.zip file and commit it to the repository.
 
 ## Cross-platform builds (mise)
 

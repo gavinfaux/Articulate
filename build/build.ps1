@@ -34,7 +34,7 @@ if (-not (Get-Command dotnet -ErrorAction SilentlyContinue)) {
 $env:DOTNET_CLI_TELEMETRY_OPTOUT = "1"
 $env:DOTNET_SKIP_FIRST_TIME_EXPERIENCE = "1"
 $env:DOTNET_NOLOGO = "1"
-$env:NUGET_XMLDOC_MODE = "skip"
+$env:NUGET_XMLDOC_MODE = "none"
 $env:RestoreFallbackFolders = ""
 
 # Compute CPU parallelism for MSBuild

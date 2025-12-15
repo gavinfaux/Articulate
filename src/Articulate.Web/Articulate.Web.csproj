@@ -4,12 +4,12 @@
     <EnableDefaultStaticWebAssets>false</EnableDefaultStaticWebAssets>
     <DisableImplicitStaticWebAssets>true</DisableImplicitStaticWebAssets>
     <StaticWebAssetProjectMode>Disable</StaticWebAssetProjectMode>
+    <nullable>enable</nullable>
   </PropertyGroup>
 
   <PropertyGroup>
     <PackageId>Articulate</PackageId>
     <Title>Articulate</Title>
-    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>

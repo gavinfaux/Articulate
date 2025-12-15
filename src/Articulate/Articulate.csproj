@@ -30,9 +30,7 @@
       <Link>Articulate.Web\wwwroot\App_Plugins\Articulate\Themes\%(RecursiveDir)%(Filename)%(Extension)</Link>
     </EmbeddedResource>
   </ItemGroup>
-  <ItemGroup>
-    <Content Remove="Properties\launchSettings.json" />
-  </ItemGroup>
+
   <ItemGroup>
     <Compile Update="Controllers\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -58,6 +56,6 @@
     <EmbeddedResource Include="Packaging\post2.jpg" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Properties\launchSettings.json" />
+
   </ItemGroup>
 </Project>

@@ -7,10 +7,11 @@
 > A wonderful Blog engine built on Umbraco
 
 ---
-_If you use and like Articulate please consider [becoming a GitHub Sponsor](https://github.com/sponsors/Shazwazza/)._
+_❤️ If you use and like Articulate please consider [becoming a GitHub Sponsor](https://github.com/sponsors/Shazwazza/) ❤️_
 
 ## Features
 
+Supporting all the features you'd want in a blogging platform
 - Categories & Tags
 - Themes
 - Multiple archives
