@@ -31,7 +31,7 @@ Articulate 6 targets Umbraco 15.4.4, 16, and 17.
 
 - Install `Articulate` from NuGet (`dotnet add package Articulate`). The package now ships a transitive dependency on `Articulate.StaticAssets`, so the `/App_Plugins/Articulate/**` files light up automatically-no extra package references or manual copies required.
 - When building from source, run the test site `dotnet run -f net9.0 --project src/Articulate.Tests.Website/Articulate.Tests.Website.csproj` (or `-f net10.0` for Umbraco 17) and sign into the Umbraco backoffice to finish setup.
-- Migrating from 5.x: export BlogML from your Articulate 5 site and import it into Articulate 6; media in `media/articulate` is not auto-migrated. During import you can map `postImage` to base64 or an attachment; other inline images must be moved manually (copy the folder, or consider an in-place package upgrade). See the migration notes in [RELEASE_NOTES_v6.0.0.md](RELEASE_NOTES_v6.0.0.md#migration-notes-from-5x).
+- Migrating from 5.x: in place upgrade or export BlogML from your Articulate 5 site and import it into Articulate 6; media in `media/articulate` is not auto-migrated. During import you can map `postImage` to base64 or an attachment; other inline images must be moved manually (copy the folder, or consider an in-place package upgrade). See the migration notes in [RELEASE_NOTES_v6.0.0.md](RELEASE_NOTES_v6.0.0.md#migration-notes-from-5x).
 
 ## Features
 
