@@ -1,4 +1,5 @@
-﻿Microsoft Visual Studio Solution File, Format Version 12.00
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
 VisualStudioVersion = 18.0.11201.2
 MinimumVisualStudioVersion = 10.0.40219.1
@@ -16,6 +17,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{7396E5F1
 		..\Directory.Build.props = ..\Directory.Build.props
 		..\global.json = ..\global.json
 		..\nuget.config = ..\nuget.config
+		..\RELEASE_NOTES_v6.0.0.md = ..\RELEASE_NOTES_v6.0.0.md
 		..\umbraco-marketplace-readme.md = ..\umbraco-marketplace-readme.md
 		..\umbraco-marketplace.json = ..\umbraco-marketplace.json
 		..\version.json = ..\version.json
