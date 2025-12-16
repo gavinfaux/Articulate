@@ -43,13 +43,6 @@ jobs:
             echo "Git tag missing, release build may not be traceable."
         }
 
-    - name: Setup .NET SDKs
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: |
-          9.0.100
-          10.0.100
-
     - name: Setup mise (tools from .mise.toml/mise.lock)
       uses: jdx/mise-action@v2
       with:
@@ -74,6 +67,23 @@ jobs:
         key: ${{ runner.os }}-pnpm-store-${{ hashFiles('src/Articulate.Api.Management/Client/pnpm-lock.yaml') }}
         restore-keys: |
           ${{ runner.os }}-pnpm-store-
+
+    - name: GitLeaks Scan
+      uses: gitleaks/gitleaks-action@v2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}      
+        GITLEAKS_VERSION: ${{ secrets.GITLEAKS_VERSION }}      
+      with:
+        fail-on: 'critical'
+      continue-on-error: true
+
+    - name: Setup .NET SDKs
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: |
+          9.0.308
+          10.0.101
 
     - name: Run build pipeline script
       shell: pwsh
