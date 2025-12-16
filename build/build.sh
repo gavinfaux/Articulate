@@ -122,23 +122,15 @@ PACK_PROJECTS=(
   "$ARTICULATE_API_PROJECT"
 )
 
-declare -a pack_pids=()
 for proj in "${PACK_PROJECTS[@]}"; do
   echo "[pack] -> $(basename "$proj")"
-  RESTORE_SWITCHES=(--no-build --no-restore)
-  dotnet pack -c "$CONFIGURATION" "$proj" "${RESTORE_SWITCHES[@]}" -o "$RELEASE_FOLDER" \
-    "${DOTNET_COMMON[@]}" "${MSBUILD_PARALLEL[@]}" "$CLIENT_BUILD_PROPERTY" &
-  pack_pids+=($!)
+  RESTORE_SWITCHES=(--no-restore)
+  if ! dotnet pack -c "$CONFIGURATION" "$proj" "${RESTORE_SWITCHES[@]}" -o "$RELEASE_FOLDER" \
+    "${DOTNET_COMMON[@]}" -p:BuildInParallel=false "$CLIENT_BUILD_PROPERTY"; then
+    echo "dotnet pack failed for $proj" >&2
+    exit 1
+  fi
 done
-
-pack_fail=0
-for pid in "${pack_pids[@]}"; do
-  if ! wait "$pid"; then pack_fail=1; fi
-done
-if [[ $pack_fail -ne 0 ]]; then
-  echo "One or more pack operations failed" >&2
-  exit 1
-fi
 
 if [[ "${CI:-}" == "true" || "${GITHUB_ACTIONS:-}" == "true" ]]; then
   echo "Skipping GitLeaks scan (handled by CI workflow action)."
