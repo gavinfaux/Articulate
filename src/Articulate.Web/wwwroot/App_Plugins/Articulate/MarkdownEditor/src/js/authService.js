@@ -78,16 +78,10 @@ function parseJwtPayload(token) {
 
 // Token and session management
 function getAccessToken() {
-    if (config.useCookieAuth) {
-        return null;
-    }
     return sessionStorage.getItem(config.storageKeys.accessToken);
 }
 
 function setAccessToken(token) {
-    if (config.useCookieAuth) {
-        return;
-    }
     const key = config.storageKeys.accessToken;
     if (token) {
         sessionStorage.setItem(key, token);
@@ -209,11 +203,6 @@ async function handleLoginCallback() {
         throw new Error('Failed to exchange authorization code for access token.');
     }
 
-    // For v17+ cookie auth, the server sets secure cookies; token body may be redacted.
-    if (config.useCookieAuth) {
-        return;
-    }
-
     const tokenData = await tokenResponse.json();
     console.debug('[authService] token endpoint response payload', {
         hasAccessToken: Boolean(tokenData?.access_token),
@@ -233,10 +222,6 @@ async function handleLoginCallback() {
 }
 
 function hasValidAccessToken() {
-    if (config.useCookieAuth) {
-        return true;
-    }
-
     const token = getAccessToken();
     console.debug('[authService] validating cached access token', {
         tokenPresent: Boolean(token)
@@ -279,11 +264,7 @@ async function logout() {
     let redirectUrl = '/';
 
     try {
-        if (!config.useCookieAuth) {
-            await revokeAccessToken();
-        } else {
-            clearAccessToken();
-        }
+        await revokeAccessToken();
 
         const response = await fetch(config.authEndUrl, {
             method: 'GET',

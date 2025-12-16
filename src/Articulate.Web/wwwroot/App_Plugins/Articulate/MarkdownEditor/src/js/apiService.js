@@ -9,7 +9,7 @@ import { authService } from './authService.js';
  */
 async function createPost(postData, fileMap) {
     const token = await authService.getAccessToken();
-    if (!token && !config.useCookieAuth) {
+    if (!token) {
         const error = new Error('Session expired. Please log in again.');
         error.isAuthError = true;
         throw error;

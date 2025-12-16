@@ -178,7 +178,6 @@ document.addEventListener("alpine:init", () => {
 
     get loginBodyClass() {
       return {
-        "debug-layout": config.debugLayout,
         "is-login-step": this.isLoginContext,
         "is-editor-step": this.isEditorStep,
         "is-optional-step": this.isOptionalStep,
