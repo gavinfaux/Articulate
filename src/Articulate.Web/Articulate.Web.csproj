@@ -1,9 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk.Razor">
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
-    <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
-    <StaticWebAssetBasePath>/</StaticWebAssetBasePath>
-    <CompressionEnabled>false</CompressionEnabled>
+    <TargetFrameworks>net9.0;net10.0</TargetFrameworks>
+    <EnableDefaultStaticWebAssets>false</EnableDefaultStaticWebAssets>
+    <DisableImplicitStaticWebAssets>true</DisableImplicitStaticWebAssets>
+    <StaticWebAssetProjectMode>Disable</StaticWebAssetProjectMode>
+    <nullable>enable</nullable>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -12,75 +13,30 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <SupportedPlatform Include="browser" />
-  </ItemGroup>
-
-  <!--NoWarn for missing XML comments on public API-->
-  <PropertyGroup>
-    <NoWarn>$(NoWarn);1591</NoWarn>
-  </PropertyGroup>
-
-  <!--
-    Nuget - Dotnet SourceLink & Symbol Package
-    https://github.com/dotnet/sourcelink#using-source-link-in-net-projects
-    https://devblogs.microsoft.com/dotnet/producing-packages-with-source-link/
-
-    Newer recommended way from Claire Novotny - Nuget PM
-    Use package Dotnet.ReproducibleBuilds
-    This sets the same properties as above URLs, and a few additional build properties
-    ie less work - just include this package & be done...
-    https://github.com/dotnet/reproducible-builds
-    -->
-  <ItemGroup>
-    <PackageReference Include="DotNet.ReproducibleBuilds" Version="1.2.25">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers, buildtransitive</IncludeAssets>
-    </PackageReference>
-  </ItemGroup>
-
-  <!--Umbraco CMS version range + NuGet audit mode-->
-  <PropertyGroup>
-    <UmbracoCmsPackageVersion>[15.2.3, 16.999.999)</UmbracoCmsPackageVersion>
-    <NuGetAuditMode>direct</NuGetAuditMode>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Microsoft.CodeAnalysis" Version="4.14.0" PrivateAssets="All" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\Articulate\Articulate.csproj" />
+    <ProjectReference Include="..\Articulate.StaticAssets\Articulate.StaticAssets.csproj" />
     <ProjectReference Include="..\Articulate.Api.Management\Articulate.Api.Management.csproj" />
+
+
   </ItemGroup>
 
-  <!--Additional implicit using directives-->
+  <!-- Keep the wwwroot/App_Plugins tree on disk for development, but stop the SDK from treating it as static web assets.
+       Articulate.StaticAssets is the authoritative RCL that ships those files. -->
   <ItemGroup>
-    <Using Include="Umbraco.Cms.Core.DependencyInjection" />
-    <Using Include="Umbraco.Extensions" />
-    <Using Include="Articulate" />
-    <Using Include="Articulate.Models" />
+    <Content Remove="wwwroot\App_Plugins\**\*.*" />
+    <StaticWebAsset Remove="wwwroot\App_Plugins\**\*.*" />
   </ItemGroup>
-
   <ItemGroup>
-    <Content Remove="bundleconfig.json" />
-    <Folder Include="wwwroot\" />
-    <None Include="bundleconfig.json" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="..\..\LICENSE">
-      <Pack>True</Pack>
-      <PackagePath>\</PackagePath>
-    </None>
-    <None Include="..\..\README.md">
-      <Pack>true</Pack>
-      <PackagePath>\</PackagePath>
-    </None>
+    <Content Include="wwwroot\App_Plugins\**\*.cshtml" />
   </ItemGroup>
 
   <ItemGroup>
     <!--Copy Api package XML documentation for Swagger docs, transative install-->
     <Content Include="build\Articulate.targets" Pack="true" PackagePath="build\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="wwwroot" />
   </ItemGroup>
 
 </Project>
