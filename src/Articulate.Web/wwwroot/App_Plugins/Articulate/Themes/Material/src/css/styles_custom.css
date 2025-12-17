@@ -43,6 +43,11 @@ a.social-btn {
   display: inline-block;
 }
 
+/* This hides the first image displayed in an RTE blog post - used in conjunction with Windows Live Writer */
+.a-image-0 {
+  display: none;
+}
+
 .demo-blog .mdl-menu .mdl-menu__item a {
   display: block;
   text-decoration: inherit;
