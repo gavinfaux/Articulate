@@ -1,4 +1,5 @@
 #nullable enable
+using Microsoft.AspNetCore.Http;
 using System.Web;
 
 namespace Articulate
@@ -47,6 +48,34 @@ namespace Articulate
             }
 
             return EncodePath(urlPath);
+        }
+
+        public static string EnsureAbsoluteUrl(this string? url, HttpRequest? request, string fallbackScheme = "https")
+        {
+            if (string.IsNullOrWhiteSpace(url))
+            {
+                return string.Empty;
+            }
+
+            if (Uri.TryCreate(url, UriKind.Absolute, out Uri? absoluteUri))
+            {
+                return absoluteUri.ToString();
+            }
+
+            if (url.StartsWith("//", StringComparison.Ordinal))
+            {
+                var scheme = request?.Scheme ?? fallbackScheme;
+                return $"{scheme}:{url}";
+            }
+
+            if (request is null)
+            {
+                return url;
+            }
+
+            var path = url.StartsWith("/", StringComparison.Ordinal) ? url : "/" + url;
+            var baseUri = $"{request.Scheme}://{request.Host}{request.PathBase}";
+            return baseUri.TrimEnd('/') + path;
         }
 
         private static string EncodePath(string urlPath) =>

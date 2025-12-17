@@ -2,6 +2,7 @@
 using System.Globalization;
 using System.Security.Authentication;
 using System.Text.RegularExpressions;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.IO;
@@ -43,8 +44,10 @@ namespace Articulate.MetaWeblog
         private readonly ITagService _tagService;
         private readonly IUmbracoContextAccessor _umbracoContextAccessor;
         private readonly IUserService _userService;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
         public ArticulateMetaWeblogProvider(
+            IHttpContextAccessor httpContextAccessor,
             IUmbracoContextAccessor umbracoContextAccessor,
             IUserService userService,
             IContentTypeService contentTypeService,
@@ -64,6 +67,7 @@ namespace Articulate.MetaWeblog
             MediaUrlGeneratorCollection mediaUrlGenerators,
             int articulateBlogRootNodeId)
         {
+            _httpContextAccessor = httpContextAccessor;
             _umbracoContextAccessor = umbracoContextAccessor;
             _userService = userService;
             _contentTypeService = contentTypeService;
@@ -321,7 +325,7 @@ namespace Articulate.MetaWeblog
 
             // Validate file type
             var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", };
-            var extension = Path.GetExtension(mediaObject.name).ToLowerInvariant();
+            var extension = Path.GetExtension(Path.GetFileName(mediaObject.name)).ToLowerInvariant();
             if (!allowedExtensions.Contains(extension))
             {
                 throw new ArgumentException($"File type {extension} not allowed", nameof(mediaObject));
@@ -343,29 +347,14 @@ namespace Articulate.MetaWeblog
                 throw new ArgumentException("Invalid base64 content", nameof(mediaObject));
             }
 
-            var reservedNames = new HashSet<string>
-            {
-                "con",
-                "prn",
-                "aux",
-                "nul",
-                "com1",
-                "lpt1",
-            };
-
-
-            var untrustedFileName = Path.GetFullPath(mediaObject.name);
-            if (untrustedFileName.StartsWith("..") || untrustedFileName.Contains("/..") ||
-                reservedNames.Contains(untrustedFileName.ToLowerInvariant()))
-            {
-                throw new ArgumentException("Invalid file", nameof(mediaObject));
-            }
-
             // Save File
-            var fileUrl = "articulate/" + Path.GetRandomFileName().ToSafeFileName(_shortStringHelper);
+            var rndId = Guid.NewGuid().ToString("N");
+            var safeFileName = $"{rndId}{extension}".ToSafeFileName(_shortStringHelper);
+            var fileUrl = $"articulate/{rndId}/{safeFileName}";
             using var ms = new MemoryStream(bytes);
             _mediaFileManager.FileSystem.AddFile(fileUrl, ms);
-            var absUrl = _mediaFileManager.FileSystem.GetUrl(fileUrl);
+            var fileSystemUrl = _mediaFileManager.FileSystem.GetUrl(fileUrl);
+            var absUrl = fileSystemUrl.EnsureAbsoluteUrl(_httpContextAccessor.HttpContext?.Request);
 
             var result = new MediaObjectInfo { url = absUrl };
 

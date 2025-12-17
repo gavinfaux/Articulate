@@ -9,13 +9,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Umbraco.Cms.Api.Common.Attributes;
 using Umbraco.Cms.Api.Management.Controllers;
 using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.Actions;
-using Umbraco.Cms.Core.Configuration.Models;
-using Umbraco.Cms.Core.Hosting;
 using Umbraco.Cms.Core.IO;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Models.Membership;
@@ -65,8 +62,6 @@ namespace Articulate.Api.Management.Controllers
         private readonly IContentTypeBaseServiceProvider _contentTypeBaseServiceProvider;
         private readonly IContentTypeService _contentTypeService;
         private readonly IDataTypeService _dataTypeService;
-        private readonly GlobalSettings _globalSettings;
-        private readonly IHostingEnvironment _hostingEnvironment;
         private readonly IJsonSerializer _jsonSerializer;
         private readonly ILanguageService _languageService;
         private readonly ILogger<MarkdownEditorApiController> _logger;
@@ -84,8 +79,6 @@ namespace Articulate.Api.Management.Controllers
             MediaFileManager mediaFileManager,
             PropertyEditorCollection propertyEditors,
             IJsonSerializer jsonSerializer,
-            IOptions<GlobalSettings> globalSettings,
-            IHostingEnvironment hostingEnvironment,
             IMediaService mediaService,
             MediaUrlGeneratorCollection mediaUrlGenerators,
             IContentTypeBaseServiceProvider contentTypeBaseServiceProvider,
@@ -101,8 +94,6 @@ namespace Articulate.Api.Management.Controllers
             _mediaFileManager = mediaFileManager;
             _propertyEditors = propertyEditors;
             _jsonSerializer = jsonSerializer;
-            _globalSettings = globalSettings.Value;
-            _hostingEnvironment = hostingEnvironment;
             _mediaService = mediaService;
             _mediaUrlGenerators = mediaUrlGenerators;
             _contentTypeBaseServiceProvider = contentTypeBaseServiceProvider;
@@ -332,15 +323,8 @@ namespace Articulate.Api.Management.Controllers
                 return new ParseImageResponse();
             }
 
-            var reservedNames = new HashSet<string>
-            {
-                "con",
-                "prn",
-                "aux",
-                "nul",
-                "com1",
-                "lpt1",
-            };
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" };
+            const long maxFileSize = 10 * 1024 * 1024;
             var firstImage = string.Empty;
             var bodyText = body; // Start with the original body text
 
@@ -371,26 +355,35 @@ namespace Articulate.Api.Management.Controllers
                     continue; // Move to the next match
                 }
 
-                var untrustedFileName = Path.GetFullPath(file.FileName);
-                if (untrustedFileName.StartsWith("..") || untrustedFileName.Contains("/.."))
+                var originalFileName = Path.GetFileName(file.FileName);
+                var extension = Path.GetExtension(originalFileName).ToLowerInvariant();
+                if (!allowedExtensions.Contains(extension))
                 {
-                    // Path traversal attempt. Strip from markdown.
+                    // Invalid file type. Strip from markdown.
                     replacementMap[match.Value] = string.Empty;
                     continue;
                 }
 
-                var filename = Path.GetFileName(file.FileName);
-                var cleanFileName = string.Join('_', filename.Split(Path.GetInvalidFileNameChars()));
-                if (cleanFileName.IsNullOrWhiteSpace() || cleanFileName.Length > 100 ||
-                    reservedNames.Contains(cleanFileName.ToLowerInvariant()))
+                if (file.Length <= 0 || file.Length > maxFileSize)
                 {
-                    // Invalid filename. Strip from markdown.
+                    // Invalid file size. Strip from markdown.
                     replacementMap[match.Value] = string.Empty;
                     continue;
+                }
+
+                var safeAltFallback = string.Join('_', originalFileName.Split(Path.GetInvalidFileNameChars()));
+                if (safeAltFallback.Length > 100)
+                {
+                    safeAltFallback = safeAltFallback[..100];
                 }
 
                 // validation passed, save the file
-                var altText = !string.IsNullOrWhiteSpace(userLabel) ? userLabel : cleanFileName;
+                var altText = !string.IsNullOrWhiteSpace(userLabel)
+                    ? userLabel
+                    : (safeAltFallback.IsNullOrWhiteSpace() ? "image" : safeAltFallback);
+
+                var rndId = Guid.NewGuid().ToString("N");
+                var safeFileName = $"{rndId}{extension}".ToSafeFileName(_shortStringHelper);
 
                 using var stream = new MemoryStream();
                 await file.CopyToAsync(stream).ConfigureAwait(false);
@@ -407,7 +400,7 @@ namespace Articulate.Api.Management.Controllers
                         _shortStringHelper,
                         _contentTypeBaseServiceProvider,
                         Umbraco.Cms.Core.Constants.Conventions.Media.File,
-                        cleanFileName,
+                        safeFileName,
                         stream);
                     _ = _mediaService.Save(mediaItem);
                     IPublishedContent? media = _umbracoHelper.Media(mediaItem.Key);
@@ -426,14 +419,13 @@ namespace Articulate.Api.Management.Controllers
                 }
 
                 stream.Position = 0;
-                var rndId = Guid.NewGuid().ToString("N");
-                var fileUrl = $"articulate/{rndId}/{cleanFileName}";
+                var fileUrl = $"articulate/{rndId}/{safeFileName}";
                 _mediaFileManager.FileSystem.AddFile(fileUrl, stream);
-                var mediaRootPath = _hostingEnvironment.ToAbsolute(_globalSettings.UmbracoMediaPath);
-                var mediaFilePath = $"{mediaRootPath.TrimEnd('/')}/{fileUrl}";
+                var fileSystemUrl = _mediaFileManager.FileSystem.GetUrl(fileUrl);
+                var absoluteUrl = fileSystemUrl.EnsureAbsoluteUrl(Request);
 
                 // Replace its tag with the final URL.
-                replacementMap[match.Value] = $"![{altText}]({mediaFilePath})";
+                replacementMap[match.Value] = $"![{altText}]({absoluteUrl})";
             }
 
             // STEP 3: Apply markdown replacements
