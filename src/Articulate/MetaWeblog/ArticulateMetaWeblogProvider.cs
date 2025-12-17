@@ -2,6 +2,7 @@
 using System.Globalization;
 using System.Security.Authentication;
 using System.Text.RegularExpressions;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.IO;
@@ -21,27 +22,30 @@ namespace Articulate.MetaWeblog
 {
     public class ArticulateMetaWeblogProvider : IMetaWeblogProvider
     {
+        private static readonly char[] _commaSeparator = [','];
+        private readonly int _articulateBlogRootNodeId;
         private readonly Lazy<IMedia> _articulateRootMediaFolder;
-        private readonly IContentTypeBaseServiceProvider _contentTypeBaseServiceProvider;
-        private readonly ILogger<ArticulateMetaWeblogProvider> _logger;
-        private readonly IMediaService _mediaService;
-        private readonly MediaUrlGeneratorCollection _mediaUrlGenerators;
-        private readonly IUmbracoContextAccessor _umbracoContextAccessor;
-        private readonly IUserService _userService;
-        private readonly IContentTypeService _contentTypeService;
-        private readonly ILanguageService _languageService;
         private readonly IBackOfficeUserManager _backOfficeUserManager;
         private readonly IContentService _contentService;
-        private readonly IShortStringHelper _shortStringHelper;
+        private readonly IContentTypeBaseServiceProvider _contentTypeBaseServiceProvider;
+        private readonly IContentTypeService _contentTypeService;
         private readonly IDataTypeService _dataTypeService;
-        private readonly PropertyEditorCollection _propertyEditors;
         private readonly IJsonSerializer _jsonSerializer;
+        private readonly ILanguageService _languageService;
+        private readonly ILogger<ArticulateMetaWeblogProvider> _logger;
         private readonly MediaFileManager _mediaFileManager;
+        private readonly IMediaService _mediaService;
+        private readonly MediaUrlGeneratorCollection _mediaUrlGenerators;
+        private readonly PropertyEditorCollection _propertyEditors;
         private readonly IPublishedValueFallback _publishedValueFallback;
+        private readonly IShortStringHelper _shortStringHelper;
         private readonly ITagService _tagService;
-        private readonly int _articulateBlogRootNodeId;
+        private readonly IUmbracoContextAccessor _umbracoContextAccessor;
+        private readonly IUserService _userService;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
         public ArticulateMetaWeblogProvider(
+            IHttpContextAccessor httpContextAccessor,
             IUmbracoContextAccessor umbracoContextAccessor,
             IUserService userService,
             IContentTypeService contentTypeService,
@@ -61,6 +65,7 @@ namespace Articulate.MetaWeblog
             MediaUrlGeneratorCollection mediaUrlGenerators,
             int articulateBlogRootNodeId)
         {
+            _httpContextAccessor = httpContextAccessor;
             _umbracoContextAccessor = umbracoContextAccessor;
             _userService = userService;
             _contentTypeService = contentTypeService;
@@ -91,81 +96,30 @@ namespace Articulate.MetaWeblog
             });
         }
 
-        public async Task<BlogInfo[]> GetUsersBlogsAsync(string key, string username, string password)
-        {
-            await ValidateUserAsync(username, password).ConfigureAwait(false);
+        // Seems these are not used/supported
+        /// <inheritdoc/>
+        public Task<int> AddCategoryAsync(string key, string username, string password, NewCategory category) =>
+            throw new NotImplementedException();
 
-            IPublishedContent node = BlogRoot();
-            BlogInfo[] blogs =
-            [
-                new()
-                {
-                    blogid = node.Id.ToString(),
-                    blogName = node.Name,
-                    url = node.Url()
-                }
-            ];
+        // Not supporting pages from the WordPress implementation
+        /// <inheritdoc/>
+        public Task<string> AddPageAsync(string blogid, string username, string password, Page page, bool publish) =>
+            throw new NotImplementedException();
 
-            return blogs;
-        }
-
-        public async Task<CategoryInfo[]> GetCategoriesAsync(string blogid, string username, string password)
-        {
-            await ValidateUserAsync(username, password).ConfigureAwait(false);
-
-            // TODO: These would be across all Articulate Blog root nodes :S
-            IEnumerable<ITag> all = await _tagService.GetAllAsync(ArticulateConstants.DataType.ArticulateCategories).ConfigureAwait(false);
-
-            CategoryInfo[] tags = all.Select(x => new CategoryInfo
-            {
-                title = x.Text,
-                categoryid = x.Id.ToString()
-
-                // TODO HTML & RSS URL ? (Wasnt used before)
-            }).ToArray();
-
-            return tags;
-        }
-
-        public async Task<Tag[]> GetTagsAsync(string blogid, string username, string password)
-        {
-            await ValidateUserAsync(username, password).ConfigureAwait(false);
-
-            // TODO: These would be across all Articulate Blog root nodes :S
-            IEnumerable<ITag> all = await _tagService.GetAllAsync(ArticulateConstants.DataType.ArticulateTags).ConfigureAwait(false);
-
-            Tag[] tags = all.Select(x => new Tag
-            {
-                name = x.Text
-            })
-                .ToArray();
-
-            return tags;
-        }
-
-        public async Task<Post[]> GetRecentPostsAsync(string blogid, string username, string password, int numberOfPosts)
-        {
-            await ValidateUserAsync(username, password).ConfigureAwait(false);
-
-            IPublishedContent node = BlogRoot().ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive)?.FirstOrDefault() ?? throw new InvalidOperationException("No Articulate Archive node found");
-
-            Post[] recent = _contentService
-                .GetPagedChildren(node.Id, 0, numberOfPosts, out var totalPosts, ordering: Ordering.By("updateDate", direction: Direction.Descending))
-                .Select(FromContent)
-                .ToArray();
-
-            return recent;
-        }
-
+        /// <inheritdoc/>
         public async Task<string> AddPostAsync(string blogid, string username, string password, Post post, bool publish)
         {
             IUser user = await ValidateUserAsync(username, password).ConfigureAwait(false);
 
             IPublishedContent root = BlogRoot();
 
-            IPublishedContent node = root.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive)?.FirstOrDefault() ?? throw new InvalidOperationException("No Articulate Archive node found");
+            IPublishedContent node =
+                root.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive)?.FirstOrDefault() ??
+                throw new InvalidOperationException("No Articulate Archive node found");
 
-            IContentType contentType = _contentTypeService.Get(ArticulateConstants.ContentType.ArticulateRichText) ?? throw new InvalidOperationException("No content type found with alias 'ArticulateRichText'");
+            IContentType contentType = _contentTypeService.Get(ArticulateConstants.ContentType.ArticulateRichText) ??
+                                       throw new InvalidOperationException(
+                                           "No content type found with alias 'ArticulateRichText'");
 
             IContent content = _contentService.CreateWithInvariantOrDefaultCultureName(
                 post.title, node.Id, contentType, _languageService, user.Id);
@@ -181,6 +135,11 @@ namespace Articulate.MetaWeblog
             return content.Id.ToString(CultureInfo.InvariantCulture);
         }
 
+        /// <inheritdoc/>
+        public Task<bool> DeletePageAsync(string blogid, string username, string password, string pageid) =>
+            throw new NotImplementedException();
+
+        /// <inheritdoc/>
         public async Task<bool> DeletePostAsync(string key, string postid, string username, string password, bool publish)
         {
             IUser user = await ValidateUserAsync(username, password).ConfigureAwait(false);
@@ -199,56 +158,16 @@ namespace Articulate.MetaWeblog
                 return false;
             }
 
-            // Put in recylce bin - rather than unpublish
-            _contentService.MoveToRecycleBin(content, userId);
+            // Put in recycle bin - rather than unpublish
+            OperationResult recycleResult = _contentService.MoveToRecycleBin(content, userId);
+            recycleResult.EnsureSuccess(_logger, $"move content {content.Id} to recycle bin");
             return true;
         }
 
-        public async Task<Post> GetPostAsync(string postid, string username, string password)
-        {
-            await ValidateUserAsync(username, password).ConfigureAwait(false);
+        /// <inheritdoc/>
+        public Task<bool> EditPageAsync(string blogid, string pageid, string username, string password, Page page, bool publish) => throw new NotImplementedException();
 
-            Attempt<int> asInt = postid.TryConvertTo<int>();
-            if (!asInt)
-            {
-                throw new InvalidOperationException("The id could not be parsed to an integer");
-            }
-
-            // first see if it's published
-            IPublishedContent? post = _umbracoContextAccessor.GetRequiredUmbracoContext().Content.GetById(asInt.Result);
-            if (post is not null)
-            {
-                Post fromPost = FromPost(new PostModel(post, _publishedValueFallback));
-                return fromPost;
-            }
-
-            IContent content = _contentService.GetById(asInt.Result) ?? throw new InvalidOperationException("No post found with id " + postid);
-
-            Post fromContent = FromContent(content);
-            return fromContent;
-        }
-
-        public async Task<MediaObjectInfo> NewMediaObjectAsync(string blogid, string username, string password, MediaObject mediaObject)
-        {
-            await ValidateUserAsync(username, password).ConfigureAwait(false);
-
-            // TODO: File validation
-            var bytes = Convert.FromBase64String(mediaObject.bits);
-
-            // Save File
-            using var ms = new MemoryStream(bytes);
-            var fileUrl = "articulate/" + mediaObject.name.ToSafeFileName(_shortStringHelper);
-            _mediaFileManager.FileSystem.AddFile(fileUrl, ms);
-            var absUrl = _mediaFileManager.FileSystem.GetUrl(fileUrl);
-
-            var result = new MediaObjectInfo
-            {
-                url = absUrl
-            };
-
-            return result;
-        }
-
+        /// <inheritdoc/>
         public async Task<bool> EditPostAsync(string postid, string username, string password, Post post, bool publish)
         {
             IUser user = await ValidateUserAsync(username, password).ConfigureAwait(false);
@@ -259,9 +178,13 @@ namespace Articulate.MetaWeblog
                 throw new InvalidOperationException("The id could not be parsed to an integer");
             }
 
-            IContent umbracoContent = _contentService.GetById(asInt.Result) ?? throw new InvalidOperationException($"The content with id {asInt.Result} could not be found");
+            IContent umbracoContent = _contentService.GetById(asInt.Result) ??
+                                      throw new InvalidOperationException(
+                                          $"The content with id {asInt.Result} could not be found");
 
-            IContentType contentType = _contentTypeService.Get(ArticulateConstants.ContentType.ArticulateRichText) ?? throw new InvalidOperationException("No content type found with alias 'ArticulateRichText'");
+            IContentType contentType = _contentTypeService.Get(umbracoContent.ContentType.Alias) ??
+                                       throw new InvalidOperationException(
+                                           $"No content type found with alias '{umbracoContent.ContentType.Alias}'");
 
             IPublishedContent root = BlogRoot();
 
@@ -277,47 +200,172 @@ namespace Articulate.MetaWeblog
             return true;
         }
 
-        // Seems these are not used/supported
-        public Task<int> AddCategoryAsync(string key, string username, string password, NewCategory category) => throw new NotImplementedException();
+        /// <inheritdoc/>
+        public Task<Author[]> GetAuthorsAsync(string blogid, string username, string password) =>
+            throw new NotImplementedException();
 
-        public Task<Author[]> GetAuthorsAsync(string blogid, string username, string password) => throw new NotImplementedException();
-
-        public Task<UserInfo> GetUserInfoAsync(string key, string username, string password) => throw new NotImplementedException();
-
-        // Not supporting pages from the WordPress implementation
-        public Task<string> AddPageAsync(string blogid, string username, string password, Page page, bool publish) => throw new NotImplementedException();
-
-        public Task<bool> EditPageAsync(string blogid, string pageid, string username, string password, Page page, bool publish) => throw new NotImplementedException();
-
-        public Task<bool> DeletePageAsync(string blogid, string username, string password, string pageid) => throw new NotImplementedException();
-
-        public Task<Page> GetPageAsync(string blogid, string pageid, string username, string password) => throw new NotImplementedException();
-
-        public Task<Page[]> GetPagesAsync(string blogid, string username, string password, int numPages) => throw new NotImplementedException();
-
-        /// <summary>
-        /// There are so many variants of Metaweblog API so I've just included as many properties, custom ones, etc... that i can find
-        /// </summary>
-        /// <param name="post"></param>
-        /// <returns></returns>
-        /// <remarks>
-        /// http://msdn.microsoft.com/en-us/library/bb463260.aspx
-        /// http://xmlrpc.scripting.com/metaWeblogApi.html
-        /// http://cyber.law.harvard.edu/rss/rss.html#hrelementsOfLtitemgt
-        /// http://codex.wordpress.org/XML-RPC_MetaWeblog_API
-        /// https://blogengine.codeplex.com/SourceControl/latest#BlogEngine/BlogEngine.Core/API/MetaWeblog/MetaWeblogHandler.cs
-        /// </remarks>
-        private static Post FromPost(PostModel post) => new()
+        /// <inheritdoc/>
+        public async Task<CategoryInfo[]> GetCategoriesAsync(string blogid, string username, string password)
         {
-            categories = post.Categories.ToArray(),
-            description = post.Body.ToString(),
-            dateCreated = post.PublishedDate != default ? post.PublishedDate : post.UpdateDate,
-            postid = post.Id.ToString(CultureInfo.InvariantCulture),
-            wp_slug = post.Url(),
-            mt_excerpt = post.Excerpt,
-            mt_keywords = string.Join(',', post.Tags.ToArray()),
-            title = post.Name
-        };
+            _ = await ValidateUserAsync(username, password).ConfigureAwait(false);
+
+            // TODO: These would be across all Articulate Blog root nodes :S
+            IEnumerable<ITag> all = await _tagService.GetAllAsync(ArticulateConstants.DataType.ArticulateCategories)
+                .ConfigureAwait(false);
+
+            CategoryInfo[] tags = [.. all.Select(x => new CategoryInfo
+            {
+                title = x.Text, categoryid = x.Id.ToString(),
+
+                // TODO HTML & RSS URL ? (Wasnt used before)
+            })];
+
+            return tags;
+        }
+
+        /// <inheritdoc/>
+        public Task<Page> GetPageAsync(string blogid, string pageid, string username, string password) =>
+            throw new NotImplementedException();
+
+        /// <inheritdoc/>
+        public Task<Page[]> GetPagesAsync(string blogid, string username, string password, int numPages) =>
+            throw new NotImplementedException();
+
+        /// <inheritdoc/>
+        public async Task<Post> GetPostAsync(string postid, string username, string password)
+        {
+            _ = await ValidateUserAsync(username, password).ConfigureAwait(false);
+
+            Attempt<int> asInt = postid.TryConvertTo<int>();
+            if (!asInt)
+            {
+                throw new InvalidOperationException("The id could not be parsed to an integer");
+            }
+
+            // first see if it's published
+            IPublishedContent? post = _umbracoContextAccessor.GetRequiredUmbracoContext().Content.GetById(asInt.Result);
+            if (post is not null)
+            {
+                Post fromPost = FromPost(new PostModel(post, _publishedValueFallback));
+                return fromPost;
+            }
+
+            IContent content = _contentService.GetById(asInt.Result) ??
+                               throw new InvalidOperationException("No post found with id " + postid);
+
+            Post fromContent = FromContent(content);
+            return fromContent;
+        }
+
+        /// <inheritdoc/>
+        public async Task<Post[]> GetRecentPostsAsync(string blogid, string username, string password, int numberOfPosts)
+        {
+            if (numberOfPosts < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(numberOfPosts), "Number of posts must be non-negative");
+            }
+
+            // Cap at reasonable maximum to prevent abuse
+            numberOfPosts = Math.Min(numberOfPosts, 1000);
+
+            _ = await ValidateUserAsync(username, password).ConfigureAwait(false);
+
+            IPublishedContent node =
+                BlogRoot().ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive)?.FirstOrDefault() ??
+                throw new InvalidOperationException("No Articulate Archive node found");
+
+            Post[] recent = [.. _contentService
+                .GetPagedChildren(node.Id, 0, numberOfPosts, out var totalPosts, ordering: Ordering.By("updateDate", Direction.Descending))
+                .Select(FromContent)];
+
+            return recent;
+        }
+        /// <inheritdoc/>
+        public async Task<Tag[]> GetTagsAsync(string blogid, string username, string password)
+        {
+            _ = await ValidateUserAsync(username, password).ConfigureAwait(false);
+
+            // TODO: These would be across all Articulate Blog root nodes :S
+            IEnumerable<ITag> all = await _tagService.GetAllAsync(ArticulateConstants.DataType.ArticulateTags)
+                .ConfigureAwait(false);
+
+            Tag[] tags = [.. all.Select(x => new Tag { name = x.Text })];
+
+            return tags;
+        }
+
+        /// <inheritdoc/>
+        public Task<UserInfo> GetUserInfoAsync(string key, string username, string password) =>
+            throw new NotImplementedException();
+
+        /// <inheritdoc/>
+        public async Task<BlogInfo[]> GetUsersBlogsAsync(string key, string username, string password)
+        {
+            _ = await ValidateUserAsync(username, password).ConfigureAwait(false);
+
+            IPublishedContent node = BlogRoot();
+            BlogInfo[] blogs =
+            [
+                new() { blogid = node.Id.ToString(), blogName = node.Name, url = node.Url() }
+            ];
+
+            return blogs;
+        }
+
+        /// <inheritdoc/>
+        public async Task<MediaObjectInfo> NewMediaObjectAsync(string blogid, string username, string password, MediaObject mediaObject)
+        {
+            _ = await ValidateUserAsync(username, password).ConfigureAwait(false);
+
+            if (string.IsNullOrWhiteSpace(mediaObject.bits))
+            {
+                throw new ArgumentException("Invalid file", nameof(mediaObject));
+            }
+
+            // Validate file type
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", };
+            var extension = Path.GetExtension(Path.GetFileName(mediaObject.name)).ToLowerInvariant();
+            if (!allowedExtensions.Contains(extension))
+            {
+                throw new ArgumentException($"File type {extension} not allowed", nameof(mediaObject));
+            }
+
+            // Validate file size (e.g., max 10MB)
+            const int maxFileSize = 10 * 1024 * 1024;
+            byte[] bytes;
+            try
+            {
+                bytes = Convert.FromBase64String(mediaObject.bits);
+                if (bytes.Length > maxFileSize)
+                {
+                    throw new ArgumentException($"File size {bytes.Length} exceeds maximum {maxFileSize} bytes", nameof(mediaObject));
+                }
+            }
+            catch (FormatException)
+            {
+                throw new ArgumentException("Invalid base64 content", nameof(mediaObject));
+            }
+
+            // Save File
+            var rndId = Guid.NewGuid().ToString("N");
+            var safeFileName = $"{rndId}{extension}".ToSafeFileName(_shortStringHelper);
+            var fileUrl = $"articulate/{rndId}/{safeFileName}";
+            using var ms = new MemoryStream(bytes);
+            _mediaFileManager.FileSystem.AddFile(fileUrl, ms);
+            var fileSystemUrl = _mediaFileManager.FileSystem.GetUrl(fileUrl);
+            HttpRequest? request = _httpContextAccessor.HttpContext?.Request;
+            if (request is null)
+            {
+                _logger.LogWarning("No HttpContext available while generating media URL for MetaWeblog upload. Returning URL as-is: {FileSystemUrl}", fileSystemUrl);
+                return new MediaObjectInfo { url = fileSystemUrl };
+            }
+
+            var absUrl = fileSystemUrl.EnsureAbsoluteUrl(request);
+
+            var result = new MediaObjectInfo { url = absUrl };
+
+            return result;
+        }
 
         // TODO: Review
         private void AddOrUpdateContent(IContent content, IContentType contentType, Post post, IUser user, bool publish, bool extractFirstImageAsProperty)
@@ -380,7 +428,8 @@ namespace Articulate.MetaWeblog
                     && content.HasProperty("postImage")
                     && !firstImageRelativePath.IsNullOrWhiteSpace())
                 {
-                    if (!string.IsNullOrWhiteSpace(firstImageRelativePath) && _mediaFileManager.FileSystem.FileExists(firstImageRelativePath))
+                    if (!string.IsNullOrWhiteSpace(firstImageRelativePath) &&
+                        _mediaFileManager.FileSystem.FileExists(firstImageRelativePath))
                     {
                         try
                         {
@@ -397,7 +446,8 @@ namespace Articulate.MetaWeblog
                                 fileName,
                                 fileStream);
 
-                            _mediaService.Save(mediaItem);
+                            Attempt<OperationResult?> mediaSaveAttempt = _mediaService.Save(mediaItem);
+                            mediaSaveAttempt.EnsureSuccess(_logger, $"save media '{fileName}' for featured image");
 
                             var udi = Udi.Create(Constants.UdiEntityType.Media, mediaItem.Key);
 
@@ -438,7 +488,7 @@ namespace Articulate.MetaWeblog
 
             content.AssignInvariantOrDefaultCultureTags("categories", post.categories, contentType, _languageService, _dataTypeService, _propertyEditors, _jsonSerializer);
             var tags = post.mt_keywords
-                .Split([','], StringSplitOptions.RemoveEmptyEntries)
+                .Split(_commaSeparator, StringSplitOptions.RemoveEmptyEntries)
                 .Select(x => x.Trim())
                 .Distinct()
                 .ToArray();
@@ -452,13 +502,26 @@ namespace Articulate.MetaWeblog
                     content.SetInvariantOrDefaultCultureValue("publishedDate", post.dateCreated, contentType, _languageService);
                 }
 
-                _contentService.Save(content, userId: user.Id);
-                _contentService.Publish(content, ["*"], user.Id);
+                OperationResult saveAndPublishSaveResult = _contentService.Save(content, user.Id);
+                saveAndPublishSaveResult.EnsureSuccess(_logger, $"save content {content.Id}");
+
+                PublishResult publishResult = _contentService.Publish(content, ["*"], user.Id);
+                publishResult.EnsureSuccess(_logger, $"publish content {content.Id}");
             }
             else
             {
-                _contentService.Save(content, user.Id);
+                OperationResult saveResult = _contentService.Save(content, user.Id);
+                saveResult.EnsureSuccess(_logger, $"save content {content.Id}");
             }
+        }
+
+        private IPublishedContent BlogRoot()
+        {
+            IPublishedContent node =
+                _umbracoContextAccessor.GetRequiredUmbracoContext().Content.GetById(_articulateBlogRootNodeId) ??
+                throw new InvalidOperationException("No node found by route");
+
+            return node;
         }
 
         private Post FromContent(IContent post) => new()
@@ -468,42 +531,59 @@ namespace Articulate.MetaWeblog
             dateCreated = post.UpdateDate,
             mt_excerpt = post.GetValue<string>("excerpt"),
             link = string.Empty,
-
-            mt_keywords = string.IsNullOrWhiteSpace(post.GetValue<string>("tags")) == false
-                ? string.Join(',', post.GetValue<string>("tags")?.Split([','], StringSplitOptions.RemoveEmptyEntries) ?? [])
+            mt_keywords = !string.IsNullOrWhiteSpace(post.GetValue<string>("tags"))
+                ? string.Join(',', post.GetValue<string>("tags")?.Split(_commaSeparator, StringSplitOptions.RemoveEmptyEntries) ?? [])
                 : string.Empty,
-
-            categories = string.IsNullOrEmpty(post.GetValue<string>("categories")) == false
-                ? post.GetValue<string>("categories")?.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+            categories = !string.IsNullOrEmpty(post.GetValue<string>("categories"))
+                ? post.GetValue<string>("categories")?.Split(_commaSeparator, StringSplitOptions.RemoveEmptyEntries)
                 : [],
-
             description = post.ContentType.Alias == ArticulateConstants.ContentType.ArticulateRichText
                 ? post.GetValue<string>("richText")
                 : MarkdownHelper.ToHtml(post.GetValue<string>("markdown")),
-
             permalink = post.GetValue<string>(Constants.Conventions.Content.UrlName).IsNullOrWhiteSpace()
                 ? post.Name?.ToUrlSegment(_shortStringHelper)
-                : post.GetValue<string>(Constants.Conventions.Content.UrlName)?.ToUrlSegment(_shortStringHelper)
+                : post.GetValue<string>(Constants.Conventions.Content.UrlName)?.ToUrlSegment(_shortStringHelper),
         };
 
-        private IPublishedContent BlogRoot()
+        /// <summary>
+        ///     There are so many variants of Metaweblog API so I've just included as many properties, custom ones, etc... that i
+        ///     can find.
+        /// </summary>
+        /// <param name="post"></param>
+        /// <returns></returns>
+        /// <remarks>
+        ///     http://msdn.microsoft.com/en-us/library/bb463260.aspx
+        ///     http://xmlrpc.scripting.com/metaWeblogApi.html
+        ///     http://cyber.law.harvard.edu/rss/rss.html#hrelementsOfLtitemgt
+        ///     http://codex.wordpress.org/XML-RPC_MetaWeblog_API
+        ///     https://blogengine.codeplex.com/SourceControl/latest#BlogEngine/BlogEngine.Core/API/MetaWeblog/MetaWeblogHandler.cs .
+        /// </remarks>
+        private static Post FromPost(PostModel post) => new()
         {
-            IPublishedContent node = _umbracoContextAccessor.GetRequiredUmbracoContext().Content.GetById(_articulateBlogRootNodeId) ?? throw new InvalidOperationException("No node found by route");
-
-            return node;
-        }
+            categories = [.. post.Categories],
+            description = post.Body.ToString(),
+            dateCreated = post.PublishedDate != default ? post.PublishedDate : post.UpdateDate,
+            postid = post.Id.ToString(CultureInfo.InvariantCulture),
+            wp_slug = post.Url(),
+            mt_excerpt = post.Excerpt,
+            mt_keywords = string.Join(',', post.Tags.ToArray()),
+            title = post.Name,
+        };
 
         private async Task<IUser> ValidateUserAsync(string username, string password)
         {
-            if (await _backOfficeUserManager.ValidateCredentialsAsync(username, password).ConfigureAwait(false) == false)
+            if (!await _backOfficeUserManager.ValidateCredentialsAsync(username, password).ConfigureAwait(false))
             {
                 // Throw some error if not valid credentials - so we exit out early of stuff
                 throw new AuthenticationException($"Failed to validate user credentials for {username}");
             }
 
-            IUser user = _userService.GetByUsername(username) ?? throw new InvalidOperationException($"Failed to find user for {username}");
+            IUser user = _userService.GetByUsername(username) ??
+                         throw new InvalidOperationException($"Failed to find user for {username}");
 
             return user;
         }
+
     }
 }
+

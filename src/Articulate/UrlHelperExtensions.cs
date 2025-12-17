@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using static Articulate.ArticulateConstants;
 
 namespace Articulate
 {
@@ -12,8 +13,12 @@ namespace Articulate
         /// <param name="model"></param>
         /// <param name="relativeAssetPath"></param>
         /// <returns></returns>
-        [Obsolete]
-        public static string ThemedAsset(this IUrlHelper url, IMasterModel model, string relativeAssetPath) => url.Content($"{ArticulateConstants.Paths.UserVirtualPath.EnsureEndsWith('/')}/{model.Theme.EnsureEndsWith('/')}") + "assets/" + relativeAssetPath;
+        [Obsolete("No longer used or supported", false)]
+        public static string ThemedAsset(this IUrlHelper url, IMasterModel model, string relativeAssetPath)
+        {
+            var path = $"~/{Paths.UserThemesRoot}/{model.Theme}/assets/{relativeAssetPath}";
+            return url.Content(path);
+        }
 
         /// <summary>
         /// Returns the main rss feed url for this blog
@@ -21,7 +26,7 @@ namespace Articulate
         /// <param name="url"></param>
         /// <param name="model"></param>
         /// <returns></returns>
-        [Obsolete("Use Articulate.Models.PublishedContentExtensions.ArticulateRssUr(this IMasterModel model)")]
+        [Obsolete("Use Articulate.Models.PublishedContentExtensions.ArticulateRssUrl(this IMasterModel model)")]
         public static string ArticulateRssUrl(this IUrlHelper url, IMasterModel model) => model.ArticulateRssUrl();
 
         [Obsolete("Use Articulate.Models.PublishedContentExtensions.ArticulateCreateBlogEntryUrl(this IMasterModel model)")]

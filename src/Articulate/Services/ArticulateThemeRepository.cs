@@ -3,7 +3,6 @@ using System.Reflection;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Core.Cache;
-using Umbraco.Cms.Core.Extensions;
 using static Articulate.ArticulateConstants;
 
 namespace Articulate.Services
@@ -18,9 +17,10 @@ namespace Articulate.Services
         private const string EmbeddedResourceRoot = "Articulate.Theme/";
         private readonly Assembly _articulateAssembly = typeof(ArticulateThemeRepository).Assembly;
 
+        /// <inheritdoc/>
         async Task IArticulateThemeRepository.CopyThemeAsync(string themeName, string newThemeName)
         {
-            var userThemesPath = hostingEnvironment.MapPathContentRoot(Paths.UserVirtualPath);
+            var userThemesPath = Path.Combine(hostingEnvironment.ContentRootPath, Paths.UserThemesRoot);
             var destinationPhysicalPath = Path.Combine(userThemesPath, newThemeName);
 
             // User theme names must be unique
@@ -36,26 +36,28 @@ namespace Articulate.Services
 
             if (themeResources.Count == 0)
             {
-                throw new DirectoryNotFoundException($"The source theme '{themeName}' could not be found as an embedded resource.");
+                throw new DirectoryNotFoundException(
+                    $"The source theme '{themeName}' could not be found as an embedded resource.");
             }
 
             try
             {
-                Directory.CreateDirectory(destinationPhysicalPath);
+                _ = Directory.CreateDirectory(destinationPhysicalPath);
 
                 foreach (var resourceName in themeResources)
                 {
                     var relativePath = resourceName[resourcePathPrefix.Length..];
-
-                    var destinationFilePath = Path.Combine(destinationPhysicalPath, relativePath.TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
+                    var cleanedRelativePath = relativePath.TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                    var destinationFilePath = Path.Combine(destinationPhysicalPath, cleanedRelativePath);
 
                     if (Path.GetDirectoryName(destinationFilePath) is { } directoryPath)
                     {
-                        Directory.CreateDirectory(directoryPath);
+                        _ = Directory.CreateDirectory(directoryPath);
                     }
                     else
                     {
-                        logger.LogError("Could not determine a valid directory path from '{destinationFilePath}' for '{ResourceName}'. Skipping file creation.", destinationFilePath, resourceName);
+                        logger.LogError(
+                            "Could not determine a valid directory path from '{destinationFilePath}' for '{ResourceName}'. Skipping file creation.", destinationFilePath, resourceName);
                         continue;
                     }
 
@@ -79,10 +81,7 @@ namespace Articulate.Services
             }
         }
 
-        public Task<IEnumerable<string>> GetDefaultThemesAsync() => Task.Run(() => DefaultThemes.AllThemeNames);
-
-        private Task<IEnumerable<string>> GetUserThemesAsync() => Task.Run(() => GetThemesFromPathAsync(Paths.UserVirtualPath));
-
+        /// <inheritdoc/>
         public async Task<IEnumerable<string>?> GetAllThemesAsync() =>
             await appCaches.RuntimeCache.GetCacheItemAsync(
                 AllThemesCacheKey,
@@ -91,20 +90,24 @@ namespace Articulate.Services
                     Task<IEnumerable<string>> defaultThemesTask = GetDefaultThemesAsync();
                     Task<IEnumerable<string>> userThemesTask = GetUserThemesAsync();
 
-                    IEnumerable<string>[] results = await Task.WhenAll(defaultThemesTask, userThemesTask).ConfigureAwait(false);
+                    IEnumerable<string>[] results =
+                        await Task.WhenAll(defaultThemesTask, userThemesTask).ConfigureAwait(false);
                     return results[0].Union(results[1]).OrderBy(name => name);
                 },
                 TimeSpan.FromSeconds(30)).ConfigureAwait(false);
 
-        private Task<IEnumerable<string>> GetThemesFromPathAsync(string virtualPath)
+        /// <inheritdoc/>
+        public Task<IEnumerable<string>> GetDefaultThemesAsync() => Task.Run(() => DefaultThemes.AllThemeNames);
+
+        private static Task<IEnumerable<string>> GetThemesFromPhysicalPathAsync(string physicalPath) =>
+            Task.Run(() => Directory.Exists(physicalPath)
+                ? new DirectoryInfo(physicalPath).GetDirectories().Select(d => d.Name)
+                : []);
+
+        private Task<IEnumerable<string>> GetUserThemesAsync()
         {
-            var physicalPath = hostingEnvironment.MapPathContentRoot(virtualPath);
-            return Task.Run(() =>
-            {
-                return Directory.Exists(physicalPath)
-                    ? new DirectoryInfo(physicalPath).GetDirectories().Select(d => d.Name)
-                    : [];
-            });
+            var physicalPath = Path.Combine(hostingEnvironment.ContentRootPath, Paths.UserThemesRoot);
+            return GetThemesFromPhysicalPathAsync(physicalPath);
         }
     }
 }

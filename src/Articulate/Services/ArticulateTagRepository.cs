@@ -28,7 +28,7 @@ namespace Articulate.Services
             Sql sql = GetTagQuery($"{Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.Tag}.id, {Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.Tag}.tag, {Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.Tag}.[group], Count(*) as NodeCount", masterModel)
                 .Where($"{Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.Tag}." + SqlSyntax.GetQuotedColumnName("group") + " = @tagGroup", new
                 {
-                    tagGroup = ArticulateConstants.DataType.ArticulateCategories
+                    tagGroup = ArticulateConstants.DataType.ArticulateCategories,
                 })
                 .GroupBy($"{Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.Tag}.id", $"{Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.Tag}.tag", $"{Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.Tag}." + SqlSyntax.GetQuotedColumnName("group") + string.Empty);
 
@@ -37,6 +37,7 @@ namespace Articulate.Services
             return results;
         }
 
+        /// <inheritdoc/>
         IEnumerable<PostsByTagModel> IArticulateTagRepository.GetContentByTags(
             UmbracoHelper helper,
             ITagQuery tagQuery,
@@ -44,7 +45,7 @@ namespace Articulate.Services
             string tagGroup,
             string baseUrlName)
         {
-            TagModel[] tags = tagQuery.GetAllContentTags(tagGroup).ToArray();
+            TagModel[] tags = [.. tagQuery.GetAllContentTags(tagGroup)];
             if (tags.Length == 0)
             {
                 return [];
@@ -62,7 +63,7 @@ namespace Articulate.Services
                         .Where("tagId IN (@tagIds) AND cmsTags." + SqlSyntax.GetQuotedColumnName("group") + " = @tagGroup", new
                         {
                             tagIds = tagBatch.Select(x => x.Id).ToArray(),
-                            tagGroup
+                            tagGroup,
                         });
 
                     List<TagDto> dbTags = Database.Fetch<TagDto>(sql);
@@ -105,6 +106,7 @@ namespace Articulate.Services
 
         }
 
+        /// <inheritdoc/>
         PostsByTagModel IArticulateTagRepository.GetContentByTag(
             UmbracoHelper helper,
             IMasterModel masterModel,
@@ -124,7 +126,7 @@ namespace Articulate.Services
                 sqlTags.Where($"CAST({Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.Tag}.tag AS NVARCHAR(200)) = @tagName AND {Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.Tag}." + SqlSyntax.GetQuotedColumnName("group") + " = @tagGroup", new
                 {
                     tagName = tag,
-                    tagGroup
+                    tagGroup,
                 });
 
                 // get the publishedDate property type id on the ArticulatePost content type

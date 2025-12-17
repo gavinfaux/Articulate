@@ -33,6 +33,7 @@ namespace Articulate.Controllers
         : RenderController(logger, compositeViewEngine, umbracoContextAccessor)
     {
         // NonAction so it is not routed since we want to use an overload below
+        /// <inheritdoc/>
         [NonAction]
         public override IActionResult Index() => Index(0);
 
@@ -46,9 +47,7 @@ namespace Articulate.Controllers
 
             maxItems ??= 25;
 
-            IPublishedContent[] listNodes = CurrentPage.Children()
-                .Where(x => x.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateArchive))
-                .ToArray();
+            IPublishedContent[] listNodes = [.. CurrentPage.Children().Where(x => x.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateArchive))];
             if (listNodes.Length == 0)
             {
                 throw new InvalidOperationException("An ArticulateArchive document must exist under the root Articulate document");
@@ -92,7 +91,7 @@ namespace Articulate.Controllers
         {
             IPublishedContent? author = umbracoHelper.Content(authorId);
 
-            ArgumentNullException.ThrowIfNull(author, nameof(author));
+            ArgumentNullException.ThrowIfNull(author);
 
             maxItems ??= 25;
 
@@ -118,7 +117,7 @@ namespace Articulate.Controllers
 
         public IActionResult Categories(string tag, int? maxItems)
         {
-            ArgumentNullException.ThrowIfNull(tag, nameof(tag));
+            ArgumentNullException.ThrowIfNull(tag);
 
             maxItems ??= 25;
 
@@ -127,7 +126,7 @@ namespace Articulate.Controllers
 
         public IActionResult Tags(string tag, int? maxItems)
         {
-            ArgumentNullException.ThrowIfNull(tag, nameof(tag));
+            ArgumentNullException.ThrowIfNull(tag);
 
             maxItems ??= 25;
 
@@ -136,9 +135,14 @@ namespace Articulate.Controllers
 
         public IActionResult RenderTagsOrCategoriesRss(string tagGroup, string baseUrl, int maxItems, string tag)
         {
+            if (CurrentPage is null)
+            {
+                logger.LogWarning("ArticulateRssController.RenderTagsOrCategoriesRss: CurrentPage is null, returning 404");
+                return NotFound();
+            }
+
             // create a blog model of the main page
             var rootPageModel = new MasterModel(CurrentPage, publishedValueFallback);
-
             PostsByTagModel contentByTag = articulateTagService.GetContentByTag(
                 umbracoHelper,
                 rootPageModel,

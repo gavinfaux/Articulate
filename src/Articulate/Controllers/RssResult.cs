@@ -10,12 +10,13 @@ namespace Articulate.Controllers
 {
     internal class RssResult(SyndicationFeed feed, IMasterModel model) : ActionResult
     {
+        /// <inheritdoc/>
         public override async Task ExecuteResultAsync(ActionContext context)
         {
             context.HttpContext.Response.ContentType = "application/xml";
 
             await using var txtWriter = new Utf8StringWriter();
-            var xmlWriter = XmlWriter.Create(
+            await using var xmlWriter = XmlWriter.Create(
                 txtWriter,
                 new XmlWriterSettings { Encoding = Encoding.UTF8, Indent = true, OmitXmlDeclaration = false, Async = true });
 

@@ -14,7 +14,8 @@ namespace Articulate.Models
             IPublishedValueFallback publishedValueFallback,
             IVariationContextAccessor variationContextAccessor)
             : this(masterModel, name, pageSize, tags, publishedValueFallback)
-        { }
+        {
+        }
 
         public TagListModel(
         IMasterModel masterModel,
@@ -41,6 +42,7 @@ namespace Articulate.Models
 
         public PostTagCollection Tags { get; }
 
+        /// <inheritdoc/>
         public override string Name { get; }
     }
 }

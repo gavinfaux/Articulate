@@ -7,13 +7,15 @@ namespace Articulate.Models
 
         public PostsByTagModel(IEnumerable<PostModel> posts, string tagName, string tagUrl, int count = -1)
         {
-            ArgumentNullException.ThrowIfNull(posts, nameof(posts));
+            ArgumentNullException.ThrowIfNull(posts);
 
-            ArgumentNullException.ThrowIfNull(tagUrl, nameof(tagUrl));
+            ArgumentNullException.ThrowIfNull(tagUrl);
+
+            ArgumentNullException.ThrowIfNull(tagName);
 
             // resolve to array so it doesn't double lookup
             Posts = posts.ToArray();
-            TagName = tagName ?? throw new ArgumentNullException(nameof(tagName));
+            TagName = tagName;
             var safeEncoded = tagUrl.SafeEncodeUrlSegments();
             TagUrl = safeEncoded.Contains("//") ? safeEncoded : safeEncoded.EnsureStartsWith('/');
             if (count > -1)
@@ -37,7 +39,7 @@ namespace Articulate.Models
         {
             get
             {
-                if (_count.HasValue == false)
+                if (!_count.HasValue)
                 {
                     _count = (Posts ?? []).Count();
                 }

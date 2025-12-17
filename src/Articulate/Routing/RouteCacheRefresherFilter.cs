@@ -21,8 +21,10 @@ namespace Articulate.Routing
         IDocumentCacheService documentCacheService)
         : IActionFilter
     {
+        /// <inheritdoc/>
         public void OnActionExecuted(ActionExecutedContext context) => PerformRefresh(context.HttpContext);
 
+        /// <inheritdoc/>
         public void OnActionExecuting(ActionExecutingContext context)
         {
         }

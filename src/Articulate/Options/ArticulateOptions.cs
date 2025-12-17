@@ -26,5 +26,9 @@ namespace Articulate.Options
         /// The default generator will truncate the post content with 200 chars
         /// </summary>
         public Func<string, string> GenerateExcerpt { get; set; }
+        /// <summary>
+        /// When true, Articulate content created during the installer is published automatically.
+        /// </summary>
+        public bool AutoPublishOnStartup { get; set; } = false;
     }
 }

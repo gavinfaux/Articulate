@@ -15,10 +15,13 @@ namespace Articulate.Routing
 
         public static bool operator !=(ArticulateRouteTemplate left, ArticulateRouteTemplate right) => !(left == right);
 
+        /// <inheritdoc/>
         public override bool Equals(object obj) => obj is ArticulateRouteTemplate template && Equals(template);
 
+        /// <inheritdoc/>
         public bool Equals(ArticulateRouteTemplate other) => _template == other._template;
 
+        /// <inheritdoc/>
         public override int GetHashCode() => HashCode.Combine(_template);
     }
 }

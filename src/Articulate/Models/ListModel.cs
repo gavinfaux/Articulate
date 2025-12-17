@@ -10,7 +10,7 @@ namespace Articulate.Models
     public class ListModel : MasterModel
     {
         private readonly IEnumerable<IPublishedContent>? _listItems;
-        private IEnumerable<PostModel>? _resolvedList;
+        private readonly Lazy<PostModel[]> _posts;
 
         /// <summary>
         /// Accepts an explicit list of child items
@@ -30,7 +30,7 @@ namespace Articulate.Models
             IPublishedValueFallback publishedValueFallback)
             : base(content, publishedValueFallback)
         {
-            ArgumentNullException.ThrowIfNull(content, nameof(content));
+            ArgumentNullException.ThrowIfNull(content);
 
             Pages = pager ?? throw new ArgumentNullException(nameof(pager));
             _listItems = listItems ?? throw new ArgumentNullException(nameof(listItems));
@@ -42,6 +42,8 @@ namespace Articulate.Models
             {
                 PageTags = Name;
             }
+
+            _posts = new Lazy<PostModel[]>(BuildPosts, LazyThreadSafetyMode.ExecutionAndPublication);
         }
 
         [Obsolete("Use ListModel(IPublishedContent? content, PagerModel? pager, IEnumerable<IPublishedContent>? listItems, IPublishedValueFallback publishedValueFallback)")]
@@ -52,12 +54,15 @@ namespace Articulate.Models
             IPublishedValueFallback publishedValueFallback,
             IVariationContextAccessor variationContextAccessor)
             : this(content, pager, listItems, publishedValueFallback)
-        { }
+        {
+        }
 
-
+        [Obsolete("Prefer ListModel(IPublishedContent? content, PagerModel? pager, IEnumerable<IPublishedContent>? listItems, IPublishedValueFallback publishedValueFallback). This overload falls back to content children which are obsolete in Umbraco v16+.", false)]
         public ListModel(IPublishedContent content, IPublishedValueFallback publishedValueFallback)
             : base(content, publishedValueFallback)
         {
+            ArgumentNullException.ThrowIfNull(content);
+            _posts = new Lazy<PostModel[]>(BuildPosts, LazyThreadSafetyMode.ExecutionAndPublication);
         }
 
         [Obsolete("Use ListModel(IPublishedContent content, IPublishedValueFallback publishedValueFallback)")]
@@ -65,7 +70,7 @@ namespace Articulate.Models
         {
         }
 
-        [Obsolete]
+        [Obsolete("No longer used or supported", true)]
         public IImageUrlGenerator? ImageUrlGenerator => null;
 
         /// <summary>
@@ -76,38 +81,7 @@ namespace Articulate.Models
         /// <summary>
         /// Gets a strongly typed access to the list of blog posts
         /// </summary>
-        public IEnumerable<PostModel> Posts
-        {
-            get
-            {
-                if (_resolvedList is not null)
-                {
-                    return _resolvedList;
-                }
-
-                if (_listItems is null)
-                {
-                    _resolvedList = ChildrenForAllCultures.Select(x => new PostModel(x, PublishedValueFallback)).ToArray();
-                    return _resolvedList;
-                }
-
-                if (_listItems is not null && Pages is not null)
-                {
-                    _resolvedList = _listItems
-
-                        // Skip will already be done in this case, but we'll take again anyways just to be safe
-                        .Take(Pages.PageSize)
-                        .Select(x => new PostModel(x, PublishedValueFallback))
-                        .ToArray();
-                }
-                else
-                {
-                    _resolvedList = [];
-                }
-
-                return _resolvedList;
-            }
-        }
+        public IEnumerable<PostModel> Posts => _posts.Value;
 
         /// <summary>
         /// Gets the list of blog posts
@@ -115,6 +89,27 @@ namespace Articulate.Models
         [Obsolete("Please use TryGetChildrenKeys() on IDocumentNavigationQueryService or IMediaNavigationQueryService instead. Scheduled for removal in V16.", false)]
         public override IEnumerable<IPublishedContent> Children => Posts;
 
-        public IEnumerable<IPublishedContent> ChildrenForAllCultures => Posts;
+        [Obsolete("PublishedContentWrapped.Children' is obsolete: 'Please use TryGetChildrenKeys() on IDocumentNavigationQueryService or IMediaNavigationQueryService instead. Scheduled for removal in V16.'")]
+        public IEnumerable<IPublishedContent> ChildrenForAllCultures => base.Children;
+
+        private PostModel[] BuildPosts()
+        {
+            if (_listItems is null)
+            {
+                // TODO: PublishedContentWrapped.Children' is obsolete: 'Please use TryGetChildrenKeys() on IDocumentNavigationQueryService or IMediaNavigationQueryService instead. Scheduled for removal in V16.'
+                return base.Children.Select(x => new PostModel(x, PublishedValueFallback)).ToArray();
+            }
+
+            IEnumerable<IPublishedContent> items = _listItems;
+            if (Pages is not null)
+            {
+                // Apply page size limit to the pre-filtered list items
+                items = items.Take(Pages.PageSize);
+            }
+
+            return items
+                .Select(x => new PostModel(x, PublishedValueFallback))
+                .ToArray();
+        }
     }
 }

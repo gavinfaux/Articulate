@@ -10,7 +10,7 @@ using Umbraco.Cms.Core.Web;
 
 namespace Articulate.Routing
 {
-    [Obsolete("'DateFormattedUrlProvider' is obsolete: 'Scheduled for removal in V18.'", false)]
+    [Obsolete("'DefaultUrlProvider' is obsolete, use 'NewDefaultUrlProvider' instead. Scheduled for removal in V18", false)]
     public class DateFormattedUrlProvider : DefaultUrlProvider
     {
 #if NET10_0_OR_GREATER
@@ -78,13 +78,22 @@ namespace Articulate.Routing
             }
 #if NET10_0_OR_GREATER
             UrlInfo? parentPath = base.GetUrl(parent, mode, culture, current);
-            var parentUrl = parentPath?.Url?.ToString()?.EnsureEndsWith("/") ?? string.Empty;
+            var parentUrl = parentPath?.Url?.ToString()?.EnsureEndsWith("/");
+            if (string.IsNullOrWhiteSpace(parentUrl))
+            {
+                return null;
+            }
             var newUrl = parentUrl + urlFolder + "/" + content.UrlSegment?.EnsureEndsWith("/");
             return UrlInfo.AsUrl(newUrl, "Articulate.Routing.DateFormattedUrlProvider", culture);
 
 #else
             UrlInfo? parentPath = base.GetUrl(parent, mode, culture, current);
-            var newUrl = parentPath?.Text?.EnsureEndsWith("/") + urlFolder + "/" + content.UrlSegment?.EnsureEndsWith("/");
+            var parentUrl = parentPath?.Text.EnsureEndsWith("/");
+            if (string.IsNullOrWhiteSpace(parentUrl))
+            {
+                return null;
+            }
+            var newUrl = parentUrl + urlFolder + "/" + content.UrlSegment?.EnsureEndsWith("/");
             return UrlInfo.Url(newUrl, culture);
 
 #endif

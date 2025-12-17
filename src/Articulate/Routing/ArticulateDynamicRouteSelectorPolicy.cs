@@ -9,8 +9,7 @@ using Umbraco.Cms.Web.Common.Routing;
 namespace Articulate.Routing
 {
     /// <summary>
-    /// Used when their is ambiguous route candidates due to multiple dynamic routes being assigned.
-    /// </summary>
+    /// Used when there is ambiguous route candidates due to multiple dynamic routes being assigned.    /// </summary>
     /// <remarks>
     /// Ambiguous dynamic routes can occur if Umbraco detects a 404 and assigns a route, but sometimes its not
     /// actually a 404 because the articulate router occurs after the Umbraco router which handles 404 eagerly.
@@ -21,8 +20,10 @@ namespace Articulate.Routing
     /// </remarks>
     internal class ArticulateDynamicRouteSelectorPolicy : MatcherPolicy, IEndpointSelectorPolicy
     {
+        /// <inheritdoc/>
         public override int Order => 100;
 
+        /// <inheritdoc/>
         public bool AppliesToEndpoints(IReadOnlyList<Endpoint> endpoints) =>
 
             // Don't apply this filter to any endpoint group that is a controller route i.e. only dynamic routes.
@@ -31,6 +32,7 @@ namespace Articulate.Routing
             // then ensure this is only applied if all endpoints are IDynamicEndpointMetadata
             endpoints.All(x => x.Metadata.GetMetadata<IDynamicEndpointMetadata>() is not null);
 
+        /// <inheritdoc/>
         public Task ApplyAsync(HttpContext httpContext, CandidateSet candidates)
         {
             UmbracoRouteValues? umbracoRouteValues = httpContext.Features.Get<UmbracoRouteValues>();
@@ -48,7 +50,7 @@ namespace Articulate.Routing
             for (var i = 0; i < candidates.Count; i++)
             {
                 // If the candidate is an Articulate dynamic controller, set valid
-                candidates.SetValidity(i, candidates[i].Endpoint?.Metadata.GetMetadata<ArticulateDynamicRouteAttribute>() is not null);
+                candidates.SetValidity(i, candidates[i].Endpoint.Metadata.GetMetadata<ArticulateDynamicRouteAttribute>() is not null);
 
                 // else it is invalid
             }

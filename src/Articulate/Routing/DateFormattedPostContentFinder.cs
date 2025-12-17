@@ -7,11 +7,13 @@ using Umbraco.Cms.Core.Web;
 
 namespace Articulate.Routing
 {
+    [Obsolete("'DateFormattedPostContentFinder' is obsolete: 'ContentFinderByUrl Scheduled for removal in Umbraco 18'", false)]
     public class DateFormattedPostContentFinder(
         ILogger<DateFormattedPostContentFinder> logger,
         IUmbracoContextAccessor umbracoContextAccessor)
         : ContentFinderByUrl(logger, umbracoContextAccessor)
     {
+        /// <inheritdoc/>
         public override async Task<bool> TryFindContent(IPublishedRequestBuilder contentRequest)
         {
             await Task.CompletedTask.ConfigureAwait(false);
@@ -61,17 +63,16 @@ namespace Articulate.Routing
                 return false;
             }
 
-            if (!node.Parent()?.Parent()?.Value<bool>("useDateFormatForUrl") == false)
+            if (node.Parent()?.Parent()?.Value<bool>("useDateFormatForUrl") != true)
             {
                 return false;
             }
-
             if (node.Value<DateTime>("publishedDate").Date != postDate.Date)
             {
                 return false;
             }
 
-            contentRequest.SetPublishedContent(node);
+            _ = contentRequest.SetPublishedContent(node);
             return true;
         }
     }

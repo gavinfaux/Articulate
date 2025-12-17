@@ -110,8 +110,7 @@ namespace Articulate.Routing
                         {
                             MapRssRoute(httpContext, rootNodePath, articulateRootNode, domains);
 
-                            // TODO: Enable when Editor refactor to Alpine.js completed
-                            // MapMarkdownEditorRoute(httpContext, rootNodePath, articulateRootNode, domains);
+                            MapMarkdownEditorRoute(httpContext, rootNodePath, articulateRootNode, domains);
                             MapAuthorsRssRoute(httpContext, rootNodePath, articulateRootNode, domains);
 
                             MapSearchRoute(httpContext, rootNodePath, articulateRootNode, domains);
@@ -132,7 +131,7 @@ namespace Articulate.Routing
         {
             var nodePaths = new HashSet<int>(content.Path.Split(',').Select(int.Parse).ToList());
 
-            return domains.Where(domain => nodePaths.Contains(domain.ContentId)).ToList();
+            return [.. domains.Where(domain => nodePaths.Contains(domain.ContentId))];
         }
 
         /// <summary>
@@ -149,7 +148,7 @@ namespace Articulate.Routing
             var art = new ArticulateRouteTemplate(routeTemplate);
             if (!_routeCache.TryGetValue(art, out ArticulateRootNodeCache? dynamicRouteValues))
             {
-                ControllerActionDescriptor? controllerActionDescriptor =
+                ControllerActionDescriptor controllerActionDescriptor =
                     _controllerActionSearcher.Find<IRenderController>(
                         httpContext,
                         controllerName,
@@ -253,11 +252,49 @@ namespace Articulate.Routing
 
         private void MapMarkdownEditorRoute(HttpContext httpContext, string rootNodePath, IPublishedContent articulateRootNode, IReadOnlyList<Domain> domains)
         {
-            RouteTemplate template = TemplateParser.Parse($"{rootNodePath}a-new");
+            // Primary template derived from the routed path (handles domains)
+            MapMarkdownEditorTemplates($"{rootNodePath}a-new", httpContext, articulateRootNode, domains);
+
+            // Secondary template derived from the content URL (guards against cases where
+            // RoutePathFromNodeUrl() collapses to '/' but the actual URL includes a segment like '/articles/').
+            var contentUrl = articulateRootNode.Url();
+            if (!string.IsNullOrWhiteSpace(contentUrl))
+            {
+                string pathOnly;
+                if (Uri.TryCreate(contentUrl, UriKind.Absolute, out Uri? absolute))
+                {
+                    pathOnly = absolute.AbsolutePath;
+                }
+                else
+                {
+                    pathOnly = contentUrl;
+                }
+
+                pathOnly = pathOnly.EnsureEndsWith('/');
+                if (!pathOnly.Equals(rootNodePath, StringComparison.OrdinalIgnoreCase))
+                {
+                    MapMarkdownEditorTemplates($"{pathOnly}a-new", httpContext, articulateRootNode, domains);
+                }
+            }
+        }
+
+        private void MapMarkdownEditorTemplates(string basePath, HttpContext httpContext, IPublishedContent articulateRootNode, IReadOnlyList<Domain> domains)
+        {
+            // Allow both with and without trailing slash.
+            RouteTemplate templateNoSlash = TemplateParser.Parse(basePath.TrimEnd('/'));
             MapRoute(
                 MarkdownEditorControllerName,
                 "NewPost",
-                template,
+                templateNoSlash,
+                httpContext,
+                articulateRootNode,
+                domains);
+
+            RouteTemplate templateWithSlash = TemplateParser.Parse(basePath.EnsureEndsWith('/'));
+            MapRoute(
+                MarkdownEditorControllerName,
+                "NewPost",
+                templateWithSlash,
                 httpContext,
                 articulateRootNode,
                 domains);
@@ -266,6 +303,10 @@ namespace Articulate.Routing
         private void MapSearchRoute(HttpContext httpContext, string rootNodePath, IPublishedContent articulateRootNode, IReadOnlyList<Domain> domains)
         {
             var searchUrlName = articulateRootNode.Value<string>("searchUrlName");
+            if (string.IsNullOrEmpty(searchUrlName))
+            {
+                return; // Skip route if not configured
+            }
             RouteTemplate template = TemplateParser.Parse($"{rootNodePath}{searchUrlName}");
             MapRoute(
                 _sSearchControllerName,
@@ -279,6 +320,10 @@ namespace Articulate.Routing
         private void MapTagsAndCategoriesRoute(HttpContext httpContext, string rootNodePath, IPublishedContent articulateRootNode, IReadOnlyList<Domain> domains)
         {
             var categoriesUrlName = articulateRootNode.Value<string>("categoriesUrlName");
+            if (string.IsNullOrEmpty(categoriesUrlName))
+            {
+                return;
+            }
             RouteTemplate categoriesTemplate = TemplateParser.Parse($"{rootNodePath}{categoriesUrlName}/{{tag?}}");
             MapRoute(
                 _sTagsControllerName,
@@ -297,6 +342,10 @@ namespace Articulate.Routing
                 domains);
 
             var tagsUrlName = articulateRootNode.Value<string>("tagsUrlName");
+            if (string.IsNullOrEmpty(tagsUrlName))
+            {
+                return;
+            }
             RouteTemplate tagsTemplate = TemplateParser.Parse($"{rootNodePath}{tagsUrlName}/{{tag?}}");
             MapRoute(
                 _sTagsControllerName,

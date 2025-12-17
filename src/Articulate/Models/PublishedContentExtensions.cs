@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
+using Microsoft.Extensions.Primitives;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Models.PublishedContent;
 
@@ -16,8 +17,8 @@ namespace Articulate.Models
         [Obsolete("Prefer an extension method from Umbraco.Extensions.FriendlyImageCropperTemplateExtensions.GetCropUrl()")]
         public static string GetArticulateCropUrl(this IPublishedContent content, string propertyAlias, VariationContext variationContext)
         {
-            ArgumentNullException.ThrowIfNull(content, nameof(content));
-            ArgumentNullException.ThrowIfNull(propertyAlias, nameof(propertyAlias));
+            ArgumentNullException.ThrowIfNull(content);
+            ArgumentNullException.ThrowIfNull(propertyAlias);
 
             var cropUrl = string.Empty;
 
@@ -95,12 +96,6 @@ namespace Articulate.Models
         }
 
         /// <summary>
-        /// Returns true if there is more than x items
-        /// </summary>
-        /// <param name="source"></param>
-        /// <param name="count"></param>
-        /// <returns></returns>
-        /// <summary>
         /// Returns true if source has at least <paramref name="count"/> elements efficiently.
         /// </summary>
         /// <remarks>Based on int Enumerable.Count() method.</remarks>
@@ -138,7 +133,7 @@ namespace Articulate.Models
         /// </summary>
         public static List<T> InRandomOrder<T>(this IEnumerable<T> source)
         {
-            ArgumentNullException.ThrowIfNull(source, nameof(source));
+            ArgumentNullException.ThrowIfNull(source);
 
             var list = source.ToList();
             list.Shuffle();
@@ -182,6 +177,37 @@ namespace Articulate.Models
                 ? model.RootBlogNode.Url(mode: UrlMode.Absolute).EnsureEndsWith('/')
                 : model.RootBlogNode.Url().EnsureEndsWith('/')) +
             model.RootBlogNode.Value<string>("searchUrlName");
+
+        /// <summary>
+        /// Returns true when the current request is the blog's search route.
+        /// </summary>
+        public static bool IsSearchRoute(this IMasterModel model, HttpContext httpContext)
+        {
+            if (model == null || httpContext?.Request.Path.HasValue != true)
+            {
+                return false;
+            }
+
+            var searchPath = model.ArticulateSearchUrl()?.TrimEnd('/');
+            var currentPath = httpContext.Request.Path.Value?.TrimEnd('/');
+
+            return !string.IsNullOrWhiteSpace(searchPath)
+                   && currentPath != null
+                   && currentPath.Equals(searchPath, StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>
+        /// Retrieves the search term from the current request querystring (\"term\").
+        /// </summary>
+        public static string GetSearchTerm(this HttpContext httpContext)
+        {
+            if (httpContext?.Request.Query.TryGetValue("term", out StringValues term) == true)
+            {
+                return term.ToString();
+            }
+
+            return string.Empty;
+        }
 
         /// <summary>
         /// The Home Blog Url
@@ -239,22 +265,22 @@ namespace Articulate.Models
         public static IHtmlContent AuthorCitation(this PostModel model)
         {
             var builder = new HtmlContentBuilder();
-            builder.AppendHtml("<span>");
-            builder.Append("By ");
+            _ = builder.AppendHtml("<span>");
+            _ = builder.Append("By ");
 
             // TODO: Check if the current theme has an Author.cshtml theme file otherwise don't render a link!
             // In that case we should have a 'ThemeSupport' class that will check to see what a theme supports.
             if (model.Author.BlogUrl.IsNullOrWhiteSpace())
             {
-                builder.Append(model.Author.Name);
+                _ = builder.Append(model.Author.Name);
             }
             else
             {
-                builder.AppendHtml($"""<a href="{model.Author.BlogUrl}">{model.Author.Name}</a>""");
+                _ = builder.AppendHtml($"""<a href="{model.Author.BlogUrl}">{model.Author.Name}</a>""");
             }
 
-            builder.AppendHtml("&nbsp;on&nbsp;");
-            builder.AppendHtml("</span>");
+            _ = builder.AppendHtml("&nbsp;on&nbsp;");
+            _ = builder.AppendHtml("</span>");
 
             return builder;
         }
@@ -304,9 +330,9 @@ namespace Articulate.Models
             var metaDescriptionTag = new TagBuilder("meta")
             {
                 TagRenderMode = TagRenderMode.SelfClosing,
-                Attributes = { ["name"] = "description", ["content"] = model.PageDescription }
+                Attributes = { ["name"] = "description", ["content"] = model.PageDescription },
             };
-            htmlContent.AppendHtml(metaDescriptionTag);
+            _ = htmlContent.AppendHtml(metaDescriptionTag);
 
             if (string.IsNullOrWhiteSpace(model.PageTags))
             {
@@ -316,9 +342,9 @@ namespace Articulate.Models
             var tagsTag = new TagBuilder("meta")
             {
                 TagRenderMode = TagRenderMode.SelfClosing,
-                Attributes = { ["name"] = "tags", ["content"] = model.PageTags }
+                Attributes = { ["name"] = "tags", ["content"] = model.PageTags },
             };
-            htmlContent.AppendHtml(tagsTag);
+            _ = htmlContent.AppendHtml(tagsTag);
 
             return htmlContent;
         }
@@ -326,7 +352,7 @@ namespace Articulate.Models
         public static IHtmlContent GoogleAnalyticsTracking(this IMasterModel model)
         {
             var tag = model.RootBlogNode.Value<string>("googleAnalyticsId") ?? string.Empty;
-            if (tag.IsNullOrWhiteSpace() == false)
+            if (!tag.IsNullOrWhiteSpace())
             {
                 return new HtmlString(
                     $$"""
@@ -346,7 +372,7 @@ namespace Articulate.Models
         public static IHtmlContent GoogleAnalyticsNoScript(this IMasterModel model)
         {
             var tag = model.RootBlogNode.Value<string>("googleAnalyticsId") ?? string.Empty;
-            if (tag.IsNullOrWhiteSpace() == false)
+            if (!tag.IsNullOrWhiteSpace())
             {
                 return new HtmlString(
                     $"""
@@ -373,13 +399,13 @@ namespace Articulate.Models
                 var a = new TagBuilder("a");
                 a.MergeAttribute("href", tag.tag.TagUrl);
                 a.MergeAttribute("title", tag.tag.TagName);
-                a.InnerHtml.SetContent(tag.tag.TagName);
+                _ = a.InnerHtml.SetContent(tag.tag.TagName);
 
                 var li = new TagBuilder("li");
                 li.AddCssClass("tag-cloud-" + tag.weight);
-                li.InnerHtml.AppendHtml(a);
+                _ = li.InnerHtml.AppendHtml(a);
 
-                ul.InnerHtml.AppendHtml(li);
+                _ = ul.InnerHtml.AppendHtml(li);
             }
 
             return ul;
@@ -399,9 +425,9 @@ namespace Articulate.Models
                     var li = new TagBuilder("li");
                     li.AddCssClass("tag-cloud-" + tag.weight);
 
-                    li.InnerHtml.AppendHtml(tagLink(tag.tag));
+                    _ = li.InnerHtml.AppendHtml(tagLink(tag.tag));
 
-                    ul.InnerHtml.AppendHtml(li);
+                    _ = ul.InnerHtml.AppendHtml(li);
                 }
 
                 ul.WriteTo(writer, HtmlEncoder.Default);
@@ -409,9 +435,9 @@ namespace Articulate.Models
                 return Task.CompletedTask;
             });
 
-        public static IHtmlContent ListTags(this PostModel model, Func<string, HelperResult> tagLink, string delimiter = ", ") => ListCategoriesOrTags(model.Tags.ToArray(), tagLink, delimiter);
+        public static IHtmlContent ListTags(this PostModel model, Func<string, HelperResult> tagLink, string delimiter = ", ") => ListCategoriesOrTags([.. model.Tags], tagLink, delimiter);
 
-        public static IHtmlContent ListCategories(this PostModel model, Func<string, HelperResult> tagLink, string delimiter = ", ") => ListCategoriesOrTags(model.Categories.ToArray(), tagLink, delimiter);
+        public static IHtmlContent ListCategories(this PostModel model, Func<string, HelperResult> tagLink, string delimiter = ", ") => ListCategoriesOrTags([.. model.Categories], tagLink, delimiter);
 
         public static void SocialMetaTags(this IPublishedContent model, IHtmlContentBuilder builder)
         {
@@ -421,30 +447,30 @@ namespace Articulate.Models
                 Attributes =
                 {
                     ["name"] = "twitter:card", ["content"] = "summary"
-                } // non-closing since that's just the way it is
+                }, // non-closing since that's just the way it is
             };
-            builder.AppendHtml(twitterTag);
+            _ = builder.AppendHtml(twitterTag);
 
             var openGraphTitle = new TagBuilder("meta")
             {
                 TagRenderMode = TagRenderMode.SelfClosing,
-                Attributes = { ["property"] = "og:title", ["content"] = model.Name }
+                Attributes = { ["property"] = "og:title", ["content"] = model.Name },
             };
-            builder.AppendHtml(openGraphTitle);
+            _ = builder.AppendHtml(openGraphTitle);
 
             var openGraphType = new TagBuilder("meta")
             {
                 TagRenderMode = TagRenderMode.SelfClosing,
-                Attributes = { ["property"] = "og:type", ["content"] = "article" }
+                Attributes = { ["property"] = "og:type", ["content"] = "article" },
             };
-            builder.AppendHtml(openGraphType);
+            _ = builder.AppendHtml(openGraphType);
 
             var openGraphUrl = new TagBuilder("meta")
             {
                 TagRenderMode = TagRenderMode.SelfClosing,
-                Attributes = { ["property"] = "og:url", ["content"] = model.Url(mode: UrlMode.Absolute) }
+                Attributes = { ["property"] = "og:url", ["content"] = model.Url(mode: UrlMode.Absolute) },
             };
-            builder.AppendHtml(openGraphUrl);
+            _ = builder.AppendHtml(openGraphUrl);
         }
 
         public static void PostSocialMetaTags(PostModel model, HttpRequest request)
@@ -463,10 +489,10 @@ namespace Articulate.Models
                     Attributes =
                     {
                         ["property"] = "og:image", ["content"] = GetDomain(request) + model.CroppedPostImageUrl
-                    }
+                    },
                 };
 
-                builder.AppendHtml(openGraphImage);
+                _ = builder.AppendHtml(openGraphImage);
             }
 
             if (model.SocialMetaDescription.IsNullOrWhiteSpace() && model.Excerpt.IsNullOrWhiteSpace())
@@ -480,30 +506,10 @@ namespace Articulate.Models
                 Attributes =
                 {
                     ["property"] = "og:description", ["content"] = model.SocialMetaDescription.IsNullOrWhiteSpace() ? model.Excerpt : model.SocialMetaDescription
-                }
+                },
             };
 
-            builder.AppendHtml(openGraphDesc);
-        }
-
-        /// <summary>
-        ///     Shuffles a List&lt;T&gt; in-place.
-        /// </summary>
-        private static void Shuffle<T>(this List<T> list)
-        {
-            if (list is not null)
-            {
-                Random rng = Random.Shared;
-                for (var i = list.Count - 1; i >= 1; i--)
-                {
-                    var j = rng.Next(i + 1);
-                    (list[i], list[j]) = (list[j], list[i]);
-                }
-            }
-            else
-            {
-                throw new ArgumentNullException(nameof(list));
-            }
+            _ = builder.AppendHtml(openGraphDesc);
         }
 
         public static IPublishedContent[] GetListNodes(IMasterModel masterModel)
@@ -553,7 +559,7 @@ namespace Articulate.Models
             where T : class
             => new HelperResult(writer =>
             {
-                T[] items = collection.ToArray();
+                T[] items = [.. collection];
                 var rows = items.Length;
                 var cols = headers.Length;
                 if (cellTemplates.Length != cols)
@@ -578,13 +584,13 @@ namespace Articulate.Models
                 {
                     var th = new TagBuilder("th");
                     th.AddCssClass(cssClasses.Length - 1 >= 1 ? cssClasses[i] : string.Empty);
-                    th.InnerHtml.SetContent(headers[i]);
-                    tr.InnerHtml.AppendHtml(th);
+                    _ = th.InnerHtml.SetContent(headers[i]);
+                    _ = tr.InnerHtml.AppendHtml(th);
                 }
 
-                thead.InnerHtml.AppendHtml(tr);
+                _ = thead.InnerHtml.AppendHtml(tr);
 
-                table.InnerHtml.AppendHtml(thead);
+                _ = table.InnerHtml.AppendHtml(thead);
 
                 var tbody = new TagBuilder("tbody");
                 for (var rowIndex = 0; rowIndex < rows; rowIndex++)
@@ -600,18 +606,18 @@ namespace Articulate.Models
                         if (item != null)
                         {
                             // if there's an item at that grid location, call its template
-                            tdContent.InnerHtml.SetHtmlContent(cellTemplates[colIndex](item));
+                            _ = tdContent.InnerHtml.SetHtmlContent(cellTemplates[colIndex](item));
 
                             // cellTemplates[colIndex](item).WriteTo(writer, HtmlEncoder.Default);
                         }
 
-                        trContent.InnerHtml.AppendHtml(tdContent);
+                        _ = trContent.InnerHtml.AppendHtml(tdContent);
                     }
 
-                    tbody.InnerHtml.AppendHtml(trContent);
+                    _ = tbody.InnerHtml.AppendHtml(trContent);
                 }
 
-                table.InnerHtml.AppendHtml(tbody);
+                _ = table.InnerHtml.AppendHtml(tbody);
 
                 table.WriteTo(writer, HtmlEncoder.Default);
                 return Task.CompletedTask;
@@ -621,5 +627,25 @@ namespace Articulate.Models
         /// Get the full domain of the current page.
         /// </summary>
         private static string GetDomain(this HttpRequest request) => $"{request.Scheme}{Uri.SchemeDelimiter}{request.Host.Value}";
+
+        /// <summary>
+        ///     Shuffles a List&lt;T&gt; in-place.
+        /// </summary>
+        private static void Shuffle<T>(this List<T> list)
+        {
+            if (list is not null)
+            {
+                Random rng = Random.Shared;
+                for (var i = list.Count - 1; i >= 1; i--)
+                {
+                    var j = rng.Next(i + 1);
+                    (list[i], list[j]) = (list[j], list[i]);
+                }
+            }
+            else
+            {
+                throw new ArgumentNullException(nameof(list));
+            }
+        }
     }
 }

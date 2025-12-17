@@ -20,6 +20,9 @@ namespace Articulate.Components
         IScopeProvider scopeProvider)
         : INotificationHandler<ContentCacheRefresherNotification>
     {
+        private void EnsureRoutesRefreshQueued() =>
+            _ = appCaches.RequestCache.GetCacheItem(ArticulateConstants.RefreshRoutesToken, () => true);
+
         /// <summary>
         /// When the page/content cache is refreshed, we'll check if any articulate root nodes were included in the refresh, if so we'll set a flag
         /// on the current request to rebuild the routes at the end of the request
@@ -56,7 +59,7 @@ namespace Articulate.Components
                     if (content.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.Articulate))
                     {
                         // ensure routes are rebuilt
-                        appCaches.RequestCache.GetCacheItem(ArticulateConstants.RefreshRoutesToken, () => true);
+                        EnsureRoutesRefreshQueued();
                     }
 
                     break;
@@ -82,7 +85,7 @@ namespace Articulate.Components
                 if (item is not null && item.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.Articulate))
                 {
                     // ensure routes are rebuilt
-                    appCaches.RequestCache.GetCacheItem(ArticulateConstants.RefreshRoutesToken, () => true);
+                    EnsureRoutesRefreshQueued();
                     return;
                 }
 
@@ -97,7 +100,7 @@ namespace Articulate.Components
                     // For now we have no choice, rebuild routes on each delete :/
                     if (item is null)
                     {
-                        appCaches.RequestCache.GetCacheItem(ArticulateConstants.RefreshRoutesToken, () => true);
+                        EnsureRoutesRefreshQueued();
                         return;
                     }
                 }
@@ -110,7 +113,7 @@ namespace Articulate.Components
                     return;
                 }
 
-                appCaches.RequestCache.GetCacheItem(ArticulateConstants.RefreshRoutesToken, () => true);
+                EnsureRoutesRefreshQueued();
             }
         }
     }

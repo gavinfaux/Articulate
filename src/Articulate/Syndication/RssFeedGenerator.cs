@@ -10,6 +10,7 @@ namespace Articulate.Syndication
     public class RssFeedGenerator(ILogger<RssFeedGenerator> logger, IHostingEnvironment hostingEnvironment)
         : IRssFeedGenerator
     {
+        /// <inheritdoc/>
         public SyndicationFeed GetFeed(IMasterModel rootPageModel, IEnumerable<PostModel> posts)
         {
             var feed = new SyndicationFeed(
@@ -19,7 +20,7 @@ namespace Articulate.Syndication
                 GetFeedItems(rootPageModel, posts))
             {
                 Generator = "Articulate, blogging built on Umbraco",
-                ImageUrl = GetBlogImage(rootPageModel)
+                ImageUrl = GetBlogImage(rootPageModel),
             };
 
             // TODO: attempting to add media:thumbnail...
@@ -43,8 +44,8 @@ namespace Articulate.Syndication
             var rootUri = new Uri(rootUrl);
             var mediaRoot = rootUri.GetLeftPart(UriPartial.Authority) + appPath.EnsureStartsWith('/').TrimEnd('/');
 
-            var content = RssFeedGeneratorRegexes.RelativeMediaHrefRegex().Replace(GetPostContent(post), match => match.Groups.Count == 2 ? $" href=\"{rootUrl.TrimEnd('/')}{match.Groups[1].Value.EnsureStartsWith('/')}\"" : string.Empty);
-            content = RssFeedGeneratorRegexes.RelativeMediaSrcRegex().Replace(content, match => match.Groups.Count == 2 ? $" src=\"{mediaRoot}{match.Groups[1].Value.EnsureStartsWith('/')}\"" : string.Empty);
+            var content = RssFeedGeneratorRegexes.RelativeMediaHrefRegex().Replace(GetPostContent(post), match => match.Groups.Count == 2 ? $" href=\"{rootUrl.TrimEnd('/')}{match.Groups[1].Value.EnsureStartsWith('/')}\"" : match.Value);
+            content = RssFeedGeneratorRegexes.RelativeMediaSrcRegex().Replace(content, match => match.Groups.Count == 2 ? $" src=\"{mediaRoot}{match.Groups[1].Value.EnsureStartsWith('/')}\"" : match.Value);
 
             var item = new SyndicationItem(
                 post.Name,
@@ -53,7 +54,7 @@ namespace Articulate.Syndication
                 post.Id.ToString(CultureInfo.InvariantCulture),
                 post.PublishedDate)
             {
-                PublishDate = post.PublishedDate
+                PublishDate = post.PublishedDate,
 
                 // don't include this as it will override the main content bits
                 // Summary = new TextSyndicationContent(post.Excerpt)
@@ -89,8 +90,8 @@ namespace Articulate.Syndication
         private List<SyndicationItem> GetFeedItems(IMasterModel model, IEnumerable<PostModel> posts)
         {
             var rootUrl = model.RootBlogNode.Url(mode: UrlMode.Absolute);
-            IEnumerable<PostModel> postModels = posts as PostModel[] ?? posts.ToArray();
-            return !postModels.Any() ? [] : postModels.Select(post => GetFeedItem(post, rootUrl)).WhereNotNull().ToList();
+            IEnumerable<PostModel> postModels = posts as PostModel[] ?? [.. posts];
+            return !postModels.Any() ? [] : [.. postModels.Select(post => GetFeedItem(post, rootUrl)).WhereNotNull()];
         }
     }
 }

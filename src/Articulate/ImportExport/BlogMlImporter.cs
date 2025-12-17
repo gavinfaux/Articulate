@@ -2,6 +2,7 @@
 using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Xml;
 using System.Xml.Linq;
 using Argotic.Syndication.Specialized;
 using Microsoft.AspNetCore.Html;
@@ -22,6 +23,8 @@ namespace Articulate.ImportExport
 {
     public class BlogMlImporter
     {
+        private const long MaxXmlCharacters = 10_000_000;
+
         private readonly DisqusXmlExporter _disqusXmlExporter;
         private readonly IContentTypeBaseServiceProvider _contentTypeBaseServiceProvider;
         private readonly IContentService _contentService;
@@ -40,6 +43,7 @@ namespace Articulate.ImportExport
         private readonly IJsonSerializer _jsonSerializer;
         private readonly ArticulateTempFileSystem _articulateTempFileSystem;
         private readonly Lazy<IMedia> _articulateRootMediaFolder;
+        private readonly IHttpClientFactory _httpClientFactory;
 
         public BlogMlImporter(
             DisqusXmlExporter disqusXmlExporter,
@@ -49,6 +53,7 @@ namespace Articulate.ImportExport
             IContentTypeService contentTypeService,
             IUserService userService,
             ILogger<BlogMlImporter> logger,
+            IHttpClientFactory httpClientFactory,
             IDataTypeService dataTypeService,
             ISqlContext sqlContext,
             IScopeProvider scopeProvider,
@@ -67,6 +72,7 @@ namespace Articulate.ImportExport
             _contentTypeService = contentTypeService;
             _userService = userService;
             _logger = logger;
+            _httpClientFactory = httpClientFactory;
             _dataTypeService = dataTypeService;
             _sqlContext = sqlContext;
             _scopeProvider = scopeProvider;
@@ -84,11 +90,7 @@ namespace Articulate.ImportExport
             });
         }
 
-        internal int GetPostCount(string fileName)
-        {
-            BlogMLDocument doc = GetDocument(fileName);
-            return doc.Posts.Count();
-        }
+        internal int GetPostCount(string fileName) => GetDocument(fileName).Posts.Count();
 
         /// <summary>
         /// Imports the blogml file to articulate
@@ -130,53 +132,47 @@ namespace Articulate.ImportExport
 
             try
             {
-                await using (Stream stream = _articulateTempFileSystem.OpenFile(fileName))
+                BlogMLDocument document = GetDocument(fileName);
+                XDocument xdoc = LoadBlogMlXDocument(fileName);
+
+                Dictionary<string, string> authorIdsToName = ImportAuthors(userId, root, document.Authors);
+                returnModel.AuthorCount = authorIdsToName.Count;
+
+                IEnumerable<IContent> imported = await ImportPostsAsync(
+                    userId,
+                    xdoc,
+                    root,
+                    document.Posts,
+                    [.. document.Authors],
+                    [.. document.Categories],
+                    authorIdsToName,
+                    overwrite,
+                    regexMatch,
+                    regexReplace,
+                    publishAll,
+                    importFirstImage).ConfigureAwait(false);
+                IContent[] enumerable = imported as IContent[] ?? [.. imported];
+                returnModel.PostCount = enumerable.Length;
+
+                if (exportDisqusXml)
                 {
-                    var document = new BlogMLDocument();
-                    document.Load(stream);
-
-                    stream.Position = 0;
-                    var xdoc = XDocument.Load(stream);
-
-                    Dictionary<string, string> authorIdsToName = ImportAuthors(userId, root, document.Authors);
-                    returnModel.AuthorCount = authorIdsToName.Count;
-                    IEnumerable<IContent> imported = await ImportPostsAsync(
-                        userId,
-                        xdoc,
-                        root,
-                        document.Posts,
-                        document.Authors.ToArray(),
-                        document.Categories.ToArray(),
-                        authorIdsToName,
-                        overwrite,
-                        regexMatch,
-                        regexReplace,
-                        publishAll,
-                        importFirstImage).ConfigureAwait(false);
-                    IContent[] enumerable = imported as IContent[] ?? imported.ToArray();
-                    returnModel.PostCount = enumerable.Length;
-
-                    if (exportDisqusXml)
-                    {
-                        XDocument xDoc = _disqusXmlExporter.Export(enumerable, document);
-                        const string nsWp = "http://wordpress.org/export/1.0/";
-                        returnModel.CommentCount = xDoc.Descendants(XName.Get("comment", nsWp)).Count();
-                        using var memStream = new MemoryStream();
-                        xDoc.Save(memStream);
-                        _articulateTempFileSystem.AddFile("DisqusXmlExport.xml", memStream, true);
-                    }
+                    XDocument xDoc = _disqusXmlExporter.Export(enumerable, document);
+                    const string nsWp = "http://wordpress.org/export/1.0/";
+                    returnModel.CommentCount = xDoc.Descendants(XName.Get("comment", nsWp)).Count();
+                    using var memStream = new MemoryStream();
+                    xDoc.Save(memStream);
+                    _articulateTempFileSystem.AddFile("DisqusXmlExport.xml", memStream, true);
                 }
 
                 // commit
-                scope.Complete();
+                _ = scope.Complete();
                 returnModel.Completed = true;
                 return returnModel;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                _logger.LogError(ex, "Importing failed with errors");
                 returnModel.Completed = false;
-                return returnModel;
+                throw;
             }
         }
 
@@ -188,9 +184,44 @@ namespace Articulate.ImportExport
             }
 
             using Stream stream = _articulateTempFileSystem.OpenFile(fileName);
-            var document = new BlogMLDocument();
-            document.Load(stream);
-            return document;
+            try
+            {
+                using XmlReader reader = CreateSecureXmlReader(stream);
+                var document = new BlogMLDocument();
+                document.Load(reader);
+                return document;
+            }
+            catch (XmlException ex)
+            {
+                throw new InvalidDataException("The BlogML file contains invalid XML.", ex);
+            }
+        }
+
+        private XDocument LoadBlogMlXDocument(string fileName)
+        {
+            using Stream stream = _articulateTempFileSystem.OpenFile(fileName);
+            try
+            {
+                using XmlReader reader = CreateSecureXmlReader(stream);
+                return XDocument.Load(reader, LoadOptions.None);
+            }
+            catch (XmlException ex)
+            {
+                throw new InvalidDataException("The BlogML file contains invalid XML.", ex);
+            }
+        }
+
+        private static XmlReader CreateSecureXmlReader(Stream stream)
+        {
+            var settings = new XmlReaderSettings
+            {
+                DtdProcessing = DtdProcessing.Prohibit,
+                XmlResolver = null,
+                MaxCharactersInDocument = MaxXmlCharacters,
+                MaxCharactersFromEntities = 1024,
+            };
+
+            return XmlReader.Create(stream, settings);
         }
 
         // TODO: Review
@@ -218,8 +249,11 @@ namespace Articulate.ImportExport
                 // create the authors node
                 authorsNode = _contentService.CreateWithInvariantOrDefaultCultureName(ArticulateConstants.Convention.AuthorsDocument, rootNode, authorsType, _languageService);
 
-                _contentService.Save(authorsNode, userId: userId);
-                _contentService.Publish(authorsNode, ["*"], userId: userId);
+                OperationResult authorsSaveResult = _contentService.Save(authorsNode, userId: userId);
+                authorsSaveResult.EnsureSuccess(_logger, $"save authors container {authorsNode.Id}");
+
+                PublishResult authorsPublishResult = _contentService.Publish(authorsNode, ["*"], userId: userId);
+                authorsPublishResult.EnsureSuccess(_logger, $"publish authors container {authorsNode.Id}");
             }
 
             // get the authors nodes for this authors container
@@ -240,7 +274,7 @@ namespace Articulate.ImportExport
                 {
                     // first check if a user exists by email
                     IUser? found = _userService.GetByEmail(author.EmailAddress);
-                    IEnumerable<IContent>? authorNodes = allAuthorNodes as IContent[] ?? allAuthorNodes.ToArray();
+                    IEnumerable<IContent> authorNodes = allAuthorNodes as IContent[] ?? [.. allAuthorNodes];
                     if (found is not null)
                     {
                         // check if an author node exists for this user
@@ -257,8 +291,11 @@ namespace Articulate.ImportExport
                                 authorType,
                                 _languageService);
 
-                            _contentService.Save(authorNode, userId: userId);
-                            _contentService.Publish(authorNode, ["*"], userId: userId);
+                            OperationResult authorSaveResult = _contentService.Save(authorNode, userId: userId);
+                            authorSaveResult.EnsureSuccess(_logger, $"save author {authorNode.Name}");
+
+                            PublishResult authorPublishResult = _contentService.Publish(authorNode, ["*"], userId: userId);
+                            authorPublishResult.EnsureSuccess(_logger, $"publish author {authorNode.Name}");
                         }
 
                         result.Add(author.Id, authorNode.Name!);
@@ -279,8 +316,11 @@ namespace Articulate.ImportExport
                                 authorType,
                                 _languageService);
 
-                            _contentService.Save(authorNode, userId: userId);
-                            _contentService.Publish(authorNode, ["*"], userId: userId);
+                            OperationResult authorSaveResult = _contentService.Save(authorNode, userId: userId);
+                            authorSaveResult.EnsureSuccess(_logger, $"save author {authorNode.Name}");
+
+                            PublishResult authorPublishResult = _contentService.Publish(authorNode, ["*"], userId: userId);
+                            authorPublishResult.EnsureSuccess(_logger, $"publish author {authorNode.Name}");
                         }
 
                         result.Add(author.Id, authorNode.Name!);
@@ -316,7 +356,8 @@ namespace Articulate.ImportExport
                 // create the authors node
                 archiveNode = _contentService.CreateWithInvariantOrDefaultCultureName(ArticulateConstants.Convention.AuthorsDocument, rootNode, archiveDocType, _languageService);
 
-                _contentService.Save(archiveNode);
+                OperationResult archiveSaveResult = _contentService.Save(archiveNode);
+                archiveSaveResult.EnsureSuccess(_logger, $"save archive container {archiveNode.Id}");
             }
 
             // get the posts for this archive container
@@ -333,7 +374,7 @@ namespace Articulate.ImportExport
                 IContent? postNode;
 
                 // Use post.id if it's there
-                IEnumerable<IContent> postNodes = allPostNodes as IContent[] ?? allPostNodes.ToArray();
+                IEnumerable<IContent> postNodes = allPostNodes as IContent[] ?? [.. allPostNodes];
                 if (!string.IsNullOrWhiteSpace(post.Id))
                 {
                     postNode = postNodes.FirstOrDefault(x => x.GetValue<string>("importId") == post.Id);
@@ -363,7 +404,7 @@ namespace Articulate.ImportExport
 
                 postNode.SetInvariantOrDefaultCultureValue("publishedDate", post.CreatedOn, postType, _languageService);
 
-                if (post.Excerpt is not null && post.Excerpt.Content.IsNullOrWhiteSpace() == false)
+                if (post.Excerpt is not null && !post.Excerpt.Content.IsNullOrWhiteSpace())
                 {
                     var excerpt = post.Excerpt.Content;
 
@@ -441,12 +482,16 @@ namespace Articulate.ImportExport
 
                 if (publishAll)
                 {
-                    _contentService.Save(postNode, userId: userId);
-                    _contentService.Publish(postNode, ["*"], userId);
+                    OperationResult saveResult = _contentService.Save(postNode, userId: userId);
+                    saveResult.EnsureSuccess(_logger, $"save post {postNode.Id}");
+
+                    PublishResult publishResult = _contentService.Publish(postNode, ["*"], userId);
+                    publishResult.EnsureSuccess(_logger, $"publish post {postNode.Id}");
                 }
                 else
                 {
-                    _contentService.Save(postNode, userId);
+                    OperationResult saveResult = _contentService.Save(postNode, userId);
+                    saveResult.EnsureSuccess(_logger, $"save post {postNode.Id}");
                 }
 
                 result.Add(postNode);
@@ -477,12 +522,13 @@ namespace Articulate.ImportExport
             {
                 try
                 {
-                    using var client = new HttpClient();
-                    stream = await client.GetStreamAsync(attachment.ExternalUri).ConfigureAwait(false);
+                    HttpClient client = _httpClientFactory.CreateClient();
+                    var bytes = await client.GetByteArrayAsync(attachment.ExternalUri).ConfigureAwait(false);
+                    stream = new MemoryStream(bytes);
                 }
                 catch (Exception exception)
                 {
-                    _logger.LogError(exception, "Exception retrieving {AttachmentUrl}; post {PostId}", attachment.Url, post.Id);
+                    _logger.LogWarning(exception, "Exception retrieving {AttachmentUrl}; post {PostId}", attachment.Url, post.Id);
                 }
             }
 

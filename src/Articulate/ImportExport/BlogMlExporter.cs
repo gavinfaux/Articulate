@@ -10,6 +10,7 @@ using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.IO;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Models.PublishedContent;
+using Umbraco.Cms.Core.Persistence.Querying;
 using Umbraco.Cms.Core.PropertyEditors;
 using Umbraco.Cms.Core.Routing;
 using Umbraco.Cms.Core.Services;
@@ -67,15 +68,10 @@ namespace Articulate.ImportExport
                 IContentType authorsContentType = contentTypeService.Get(ArticulateConstants.ContentType.ArticulateAuthors)
                                                   ?? throw new InvalidOperationException("Articulate is not installed properly, the 'ArticulateAuthors' doc type could not be found");
 
-                IEnumerable<IContent> authorsNodes = contentService.GetPagedDescendants(
-                    root.Id,
-                    0,
-                    int.MaxValue,
-                    out var total,
-                    sqlContext.Query<IContent>().Where(x => x.ContentTypeId == authorsContentType.Id),
-                    Ordering.By("CreateDate", Direction.Descending));
-
-                foreach (IContent authorsNode in authorsNodes)
+                foreach (IContent authorsNode in EnumerateDescendants(
+                             root.Id,
+                             sqlContext.Query<IContent>().Where(x => x.ContentTypeId == authorsContentType.Id),
+                             Ordering.By("CreateDate", Direction.Descending)))
                 {
                     AddBlogAuthors(authorsNode, blogMlDoc);
                 }
@@ -85,15 +81,10 @@ namespace Articulate.ImportExport
                 IContentType archiveContentType = contentTypeService.Get(ArticulateConstants.ContentType.ArticulateArchive)
                                                   ?? throw new InvalidOperationException("Articulate is not installed properly, the 'ArticulateArchive' doc type could not be found");
 
-                IEnumerable<IContent> archiveNodes = contentService.GetPagedDescendants(
-                    root.Id,
-                    0,
-                    int.MaxValue,
-                    out total,
-                    sqlContext.Query<IContent>().Where(x => x.ContentTypeId == archiveContentType.Id),
-                    Ordering.By("CreateDate", Direction.Descending));
-
-                foreach (IContent archiveNode in archiveNodes)
+                foreach (IContent archiveNode in EnumerateDescendants(
+                             root.Id,
+                             sqlContext.Query<IContent>().Where(x => x.ContentTypeId == archiveContentType.Id),
+                             Ordering.By("CreateDate", Direction.Descending)))
                 {
                     AddBlogPosts(archiveNode, blogMlDoc, categoryGroup, tagGroup, exportImagesAsBase64);
                 }
@@ -108,13 +99,8 @@ namespace Articulate.ImportExport
             return ext switch
             {
                 "jpg" => "image/jpeg",
-                "svg" => "image/svg+xml",
                 "png" => "image/png",
                 "gif" => "image/gif",
-                "webp" => "image/webp",
-                "avif" => "image/avif",
-                "bmp" => "image/bmp",
-                "tiff" => "image/tiff",
                 _ when !string.IsNullOrWhiteSpace(ext) => $"image/{ext}",
                 _ => string.Empty
             };
@@ -129,6 +115,37 @@ namespace Articulate.ImportExport
             });
             stream.Position = 0;
             articulateTempFileSystem.AddFile(fileName, stream, true);
+        }
+
+        private IEnumerable<IContent> EnumerateDescendants(
+            int rootId,
+            IQuery<IContent>? filter,
+            Ordering? ordering,
+            int pageSize = 500)
+        {
+            var pageIndex = 0;
+
+            while (true)
+            {
+                IContent[] page = contentService
+                    .GetPagedDescendants(rootId, pageIndex++, pageSize, out _, filter, ordering)
+                    .ToArray();
+
+                if (page.Length == 0)
+                {
+                    yield break;
+                }
+
+                foreach (IContent item in page)
+                {
+                    yield return item;
+                }
+
+                if (page.Length < pageSize)
+                {
+                    yield break;
+                }
+            }
         }
 
         private void AddBlogCategories(BlogMLDocument blogMlDoc, string? tagGroup)
@@ -272,7 +289,7 @@ namespace Articulate.ImportExport
                             media.Key,
                             media.Properties[Constants.Conventions.Media.File]!.PropertyType.Key);
 
-                        var mime = BlogMlExporter.ImageMimeType(mediaPath);
+                        var mime = ImageMimeType(mediaPath);
 
                         if (!mime.IsNullOrWhiteSpace())
                         {

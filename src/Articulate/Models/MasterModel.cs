@@ -4,26 +4,12 @@ using Umbraco.Cms.Core.Models.PublishedContent;
 // TODO: #nullable enable
 namespace Articulate.Models
 {
-
     /// <summary>
     /// The basic model for all articulate objects
     /// </summary>
     public class MasterModel : PublishedContentWrapped, IMasterModel
     {
-        private IPublishedContent _rootBlogNode;
-        private string _theme;
-        private IPublishedContent _blogListNode;
-        private IPublishedContent _blogAuthorsNode;
         private int? _pageSize;
-        private string _blogTitle;
-        private string _blogDescription;
-        private string _blogBanner;
-        private string _blogLogo;
-        private string _disqusShortName;
-        private string _customRssFeed;
-
-        private string _pageTitle;
-        private string _pageDescription;
 
         /// <summary>
         /// The basic model for all articulate objects
@@ -41,94 +27,111 @@ namespace Articulate.Models
         /// </summary>
         public string Theme
         {
-            get => _theme ??= Unwrap().Value<string>("theme", fallback: Fallback.ToAncestors);
-            protected set => _theme = value;
+            get => field ??= Unwrap().Value<string>("theme", fallback: Fallback.ToAncestors);
+            protected set;
         }
 
+        /// <inheritdoc/>
         public IPublishedContent RootBlogNode
         {
             get
             {
+                if (field is not null)
+                {
+                    return field;
+                }
+
                 IPublishedContent root = Unwrap().AncestorOrSelf(ArticulateConstants.ContentType.Articulate);
-                _rootBlogNode = root ?? throw new InvalidOperationException("Could not find the Articulate root document for the current rendered page");
-                return _rootBlogNode;
+                field = root ?? throw new InvalidOperationException("Could not find the Articulate root document for the current rendered page");
+                return field;
             }
-            protected set => _rootBlogNode = value;
+            protected set;
         }
 
         /// <summary>
         /// This will return the first archive node found under the blog root
         /// </summary>
-        /// <remarks>
-        /// We can support multiple archive nodes - TODO: Should we change this method to return an array of archive nodes?
-        /// </remarks>
         public IPublishedContent BlogArchiveNode
         {
             get
             {
-                IPublishedContent list = RootBlogNode.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive)?.FirstOrDefault();
-                _blogListNode = list ?? throw new InvalidOperationException("Could not find the ArticulateArchive document for the current rendered page");
+                if (field is not null)
+                {
+                    return field;
+                }
 
-                return _blogListNode;
+                IPublishedContent list = RootBlogNode.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive)?.FirstOrDefault();
+                field = list ?? throw new InvalidOperationException("Could not find the ArticulateArchive document for the current rendered page");
+                return field;
             }
-            protected set => _blogListNode = value;
+            protected set;
         }
 
-        /// <summary>
-        /// This will return the first archive node found under the blog root
-        /// </summary>
+        /// <inheritdoc/>
         public IPublishedContent BlogAuthorsNode
         {
             get
             {
+                if (field is not null)
+                {
+                    return field;
+                }
+
                 IPublishedContent authors = RootBlogNode.ChildrenOfType(ArticulateConstants.ContentType.ArticulateAuthors)?.FirstOrDefault();
-                _blogAuthorsNode = authors ?? throw new InvalidOperationException("Could not find the ArticulateAuthors document for the current rendered page");
-                return _blogAuthorsNode;
+                field = authors ?? throw new InvalidOperationException("Could not find the ArticulateAuthors document for the current rendered page");
+                return field;
             }
-            protected set => _blogListNode = value;
+            protected set;
         }
 
+        /// <inheritdoc/>
         public string DisqusShortName
         {
-            get => _disqusShortName ??= Unwrap().Value<string>("disqusShortname", fallback: Fallback.ToAncestors);
-            protected set => _disqusShortName = value;
+            get => field ??= Unwrap().Value<string>("disqusShortname", fallback: Fallback.ToAncestors);
+            protected set;
         }
 
+        /// <inheritdoc/>
         public string CustomRssFeed
         {
-            get => _customRssFeed ??= RootBlogNode.Value<string>("customRssFeedUrl");
-            protected set => _customRssFeed = value;
+            get => field ??= RootBlogNode.Value<string>("customRssFeedUrl");
+            protected set;
         }
 
+        /// <inheritdoc/>
         public string BlogLogo
         {
-            get => _blogLogo ??= RootBlogNode.Value<MediaWithCrops>("blogLogo")?.GetCropUrl("square") ?? string.Empty;
-            protected set => _blogLogo = value;
+            get => field ??= RootBlogNode.Value<MediaWithCrops>("blogLogo")?.GetCropUrl("square") ?? string.Empty;
+            protected set;
         }
 
+        /// <inheritdoc/>
         public string BlogBanner
         {
-            get => _blogBanner ??= RootBlogNode.Value<MediaWithCrops>("blogBanner")?.GetCropUrl("wide") ?? string.Empty;
-            protected set => _blogBanner = value;
+            get => field ??= RootBlogNode.Value<MediaWithCrops>("blogBanner")?.GetCropUrl("wide") ?? string.Empty;
+            protected set;
         }
 
+        /// <inheritdoc/>
         public string BlogTitle
         {
-            get => _blogTitle ??= Unwrap().Value<string>("blogTitle", fallback: Fallback.ToAncestors);
-            protected set => _blogTitle = value;
+            get => field ??= Unwrap().Value<string>("blogTitle", fallback: Fallback.ToAncestors);
+            protected set;
         }
 
+        /// <inheritdoc/>
         public string BlogDescription
         {
-            get => _blogDescription ??= Unwrap().Value<string>("blogDescription", fallback: Fallback.ToAncestors);
-            protected set => _blogDescription = value;
+            get => field ??= Unwrap().Value<string>("blogDescription", fallback: Fallback.ToAncestors);
+            protected set;
         }
 
+        /// <inheritdoc/>
         public int PageSize
         {
             get
             {
-                if (_pageSize.HasValue == false)
+                if (!_pageSize.HasValue)
                 {
                     _pageSize = Unwrap().Value("pageSize", fallback: Fallback.To(Fallback.Ancestors, Fallback.DefaultValue), defaultValue: 10);
                 }
@@ -138,23 +141,26 @@ namespace Articulate.Models
             protected set => _pageSize = value;
         }
 
+        /// <inheritdoc/>
         public string PageTitle
         {
-            get => _pageTitle ??= Name + " - " + BlogTitle;
-            protected set => _pageTitle = value;
+            get => field ??= Name + " - " + BlogTitle;
+            protected set;
         }
 
+        /// <inheritdoc/>
         public string PageDescription
         {
-            get => _pageDescription ??= BlogDescription;
-            protected set => _pageDescription = value;
+            get => field ??= BlogDescription;
+            protected set;
         }
 
+        /// <inheritdoc/>
         public string PageTags { get; protected set; }
 
-        protected IPublishedValueFallback PublishedValueFallback { get; }
-
-        [Obsolete]
+        [Obsolete("No longer used or supported", true)]
         public IVariationContextAccessor VariationContextAccessor => null;
+
+        protected IPublishedValueFallback PublishedValueFallback { get; }
     }
 }
