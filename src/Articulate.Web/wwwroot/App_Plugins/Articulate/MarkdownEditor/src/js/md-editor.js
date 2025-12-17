@@ -28,6 +28,7 @@ document.addEventListener("alpine:init", () => {
   alpine.data("markdownEditor", () => ({
     isLoading: true,
     errorDetails: null,
+    titleTouched: false,
     post: {
       articulateBlogNode: null,
       title: "",
@@ -99,13 +100,18 @@ document.addEventListener("alpine:init", () => {
     },
 
     get titleErrorClass() {
-      return this.post.title.trim().length ? "" : "is-invalid";
+      const hasTitle = this.post.title.trim().length > 0;
+      return !hasTitle && this.titleTouched ? "is-invalid" : "";
     },
 
     get titleCssClass() {
       const classes = [];
       if ((this.post.title ?? "").trim().length > 0) {
         classes.push("is-dirty");
+      }
+
+      if (this.titleTouched) {
+        classes.push("is-touched");
       }
 
       const errorClass = this.titleErrorClass;
@@ -234,6 +240,13 @@ document.addEventListener("alpine:init", () => {
     setStep(step) {
       const previousStep = this.currentStep;
       this.currentStep = step;
+
+      this.$nextTick(() => {
+        const componentHandler = window.componentHandler;
+        if (componentHandler && typeof componentHandler.upgradeDom === "function") {
+          componentHandler.upgradeDom();
+        }
+      });
 
       const shouldResetBanner =
         previousStep !== step &&
@@ -586,6 +599,7 @@ document.addEventListener("alpine:init", () => {
         categories: "",
         slug: "",
       };
+      this.titleTouched = false;
       this.fileMap.clear();
       this.successUrl = null;
       this.errorDetails = null;
@@ -594,6 +608,10 @@ document.addEventListener("alpine:init", () => {
 
     updatePostTitle(event) {
       this.post.title = event?.target?.value ?? "";
+    },
+
+    markTitleTouched(event) {
+      this.titleTouched = true;
     },
 
     updatePostField(event) {

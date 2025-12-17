@@ -13,7 +13,7 @@
     <title>Articulate: Create New Post</title>
     <environment include="Development">
         <link href="~/App_Plugins/Articulate/MarkdownEditor/src/css/md-editor.css" rel="stylesheet"
-            fetchpriority="high">
+            fetchpriority="high" asp-append-version="true">
     </environment>
     <environment exclude="Development">
         <link href="~/App_Plugins/Articulate/MarkdownEditor/dist/css/md-editor.css" rel="stylesheet"
@@ -96,8 +96,8 @@
                             <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label md-editor__title md-editor__title--editor"
                                 :class="titleCssClass">
                                 <input class="mdl-textfield__input" type="text" id="title" :value="postTitle"
-                                    x-ref="titleInput" @@input="updatePostTitle" required>
-                                <label class="mdl-textfield__label" for="title"># H1 Title</label>
+                                    x-ref="titleInput" @@input="updatePostTitle" @@blur="markTitleTouched" required>
+                                <label class="mdl-textfield__label" for="title">Title</label>
                             </div>
                             <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label md-editor__body">
                                 <textarea x-ref="editor" id="editor" class="mdl-textfield__input" rows="12"></textarea>
@@ -225,7 +225,7 @@
 
     <!-- Load entry module only; it imports dependencies -->
     <environment include="Development">
-        <script defer src="~/App_Plugins/Articulate/MarkdownEditor/src/js/md-editor.js" type="module"></script>
+        <script defer src="~/App_Plugins/Articulate/MarkdownEditor/src/js/md-editor.js" type="module" asp-append-version="true"></script>
     </environment>
     <environment exclude="Development">
         <script defer src="~/App_Plugins/Articulate/MarkdownEditor/dist/js/md-editor.js" type="module"
