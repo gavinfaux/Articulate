@@ -20,6 +20,7 @@ namespace Articulate.Controllers
         IPublishedValueFallback publishedValueFallback)
         : RenderController(logger, compositeViewEngine, umbracoContextAccessor)
     {
+        /// <inheritdoc/>
         public override IActionResult Index()
         {
             if (CurrentPage is null)
@@ -40,7 +41,11 @@ namespace Articulate.Controllers
 
             // default
             var action = ControllerContext.RouteData.Values["action"]?.ToString();
+#if NET10_0_OR_GREATER
+            if (!EnsurePhysicalViewExists(action))
+#else
             if (!EnsurePhsyicalViewExists(action))
+#endif
             {
                 return new PublishedContentNotFoundResult(UmbracoContext);
             }
