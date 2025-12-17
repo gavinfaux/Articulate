@@ -56,6 +56,35 @@ Articulate 6 is a major upgrade: modern .NET/Umbraco targets, a rewritten backof
 - Vite plugins of note (see `src/Articulate.Api.Management/Client/vite.config.ts`): `staticAssetsPlugin()` rebuilds theme/Markdown bundles; `versioningPlugin()` stamps package versions; `umbracoPackagePlugin()` moves `umbraco-package.json` for discovery.
 - Backoffice client HMR (Vite): from `src/Articulate.Api.Management/Client` run `pnpm install`, then `pnpm run dev`; use alongside the test website for HMR of the backoffice extension.
 
+### Developer workflow notes (reload + debugging)
+
+The package uses **ASP.NET Core Static Web Assets** across multiple projects (notably `Articulate.Web` and `Articulate.StaticAssets`). Depending on how you launch the demo site (IIS Express vs `dotnet run`), you may see different rebuild/reload behavior.
+
+- **IIS Express (Visual Studio “Start Debugging”)**
+  - **Pros**: best F5 debugging experience.
+  - **Cons/limitations**: static web assets and Razor changes often require a build; browser caching (ETag/304) can mask changes.
+  - **Tips**:
+    - In DevTools: enable **Disable cache** while DevTools is open.
+    - Prefer `asp-append-version="true"` on development `<link>`/`<script>` tags when iterating on `wwwroot` assets.
+
+- **Chrome/Edge DevTools “Local Overrides” (CSS/JS)**
+  - **Pros**: fastest iteration loop; instant visual feedback without rebuilding/restarting.
+  - **Cons/limitations**: overrides are local to your browser profile; you must copy changes back into the repo.
+
+- **`dotnet watch` (recommended for Razor + static asset iteration)**
+  - **Pros**: automatic rebuild/restart on changes; works well with RCL + static web assets.
+  - **Cons/limitations**: watch/restart is not a full replacement for Vite HMR; if you are not using browser refresh middleware (BrowserLink / `aspnetcore-browser-refresh`), you still need a manual browser refresh (`Ctrl+R` / `Ctrl+F5`) to see updated CSS/JS.
+  - **Common net9 loop**:
+
+    ```powershell
+    $env:DOTNET_USE_POLLING_FILE_WATCHER='1' # avoids "too many files to watch" on some systems
+    dotnet watch --project src/Articulate.Tests.Website/Articulate.Tests.Website.csproj --framework net9.0 run
+    ```
+
+  - **Debugger attach (Visual Studio)**: Debug → Attach to Process… and attach to the `dotnet`/`Articulate.Tests.Website` process started by `dotnet watch`.
+  - **Restarting watch (only sometimes)**: if `dotnet watch` misses a change (most commonly after adding new files), stop and restart it to refresh the watch set.
+  - **Reducing watch load**: add `\<Watch Remove=...\>` patterns for large folders (for example `**/node_modules/**`, `**/dist/**`, `**/bin/**`, `**/obj/**`) in the watch root project if needed.
+
 ### Client dev quickstart
 
 From `src/Articulate.Api.Management/Client`:
@@ -96,12 +125,12 @@ If you change Umbraco schema/content/media (doc types, data types, etc.), re-cre
 
 ## Migration notes (from 5.x)
 
-1.  Backup your Umbraco instance (DB + media).
-2.  Upgrade Umbraco to 15.4.4+ (or 16/17).
-3.  Install/update to `Articulate` 6.0.0-beta via NuGet (brings dependencies).
-4.  Re-run Articulate package migrations if prompted; verify post-install checks in README.
-5.  Export BlogML from Articulate 5 and import into Articulate 6; media in `media/articulate` is not auto-migrated.
-6.  Re-test custom themes and API consumers against new asset locations and endpoints.
+1. Backup your Umbraco instance (DB + media).
+2. Upgrade Umbraco to 15.4.4+ (or 16/17).
+3. Install/update to `Articulate` 6.0.0-beta via NuGet (brings dependencies).
+4. Re-run Articulate package migrations if prompted; verify post-install checks in README.
+5. Export BlogML from Articulate 5 and import into Articulate 6; media in `media/articulate` is not auto-migrated.
+6. Re-test custom themes and API consumers against new asset locations and endpoints.
 
 Media migration notes:
 
