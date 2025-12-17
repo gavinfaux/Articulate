@@ -12,7 +12,7 @@
                                                                                         
 
 == Requirements ==
-* Node LTS Version 22+
+* Node LTS Version 24+
 * Use a tool such as NVM (Node Version Manager) for your OS to help manage multiple versions of Node
 
 == Node Version Manager tools ==
@@ -22,13 +22,13 @@
 
 == Steps ==
 * Open a terminal inside the `Client` folder
-* Run `npm install` to install all the dependencies
-* Run `npm run build` to build the project
+* Run `pnpm install` to install all the dependencies
+* Run `pnpm run build` to build the project
 * The build output is copied to `wwwroot/App_Plugins/Articulate/BackOffice/articulate.js`
 
 == File Watching ==
 * Add this Class Library Project as a project reference to an Umbraco Website project
-* From the `Client` folder run the command `npm run watch` this will monitor the changes to the *.ts files and rebuild the project
+* From the `Client` folder run the command `pnpm run watch` this will monitor the changes to the *.ts files and rebuild the project
 * With the Umbraco website project running the Class Library Project *should* refresh the browser when the build is complete
 * If the browser does not refresh, you can run the website with `dotnet watch --no-hot-reload` and manually refresh the browser. `no-hot-reload` is only required to avoid refreshes due to token authentication requests by the backoffice when signed in.
 
@@ -37,3 +37,4 @@
 
 == Other Resources ==
 * Umbraco Docs - https://docs.umbraco.com/umbraco-cms/customizing/overview
+

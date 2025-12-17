@@ -1,10 +1,416 @@
 import { execSync } from "child_process";
-import fs from "fs";
+import { build as esbuildBuild, transform as esbuildTransform } from "esbuild";
+import fs, { promises as fsp } from "fs";
+
 import path from "path";
+import type { PluginContext } from "rollup";
+import { fileURLToPath } from "url";
 import { defineConfig, Plugin } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 
-const outputPath = "../wwwroot/App_Plugins/Articulate/BackOffice";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+type LightningWarning = import("lightningcss").Warning;
+type EsbuildMessage = import("esbuild").Message;
+
+const projectRoot = path.resolve(__dirname, "..");
+const repoRoot = path.resolve(projectRoot, "..", "..");
+const webProjectRoot = path.resolve(projectRoot, "..", "Articulate.Web");
+const staticAssetsProjectRoot = path.resolve(projectRoot, "..", "Articulate.StaticAssets");
+
+const resolveStaticAsset = (relativePath: string) => path.resolve(staticAssetsProjectRoot, relativePath);
+const resolveWebSource = (relativePath: string) => path.resolve(webProjectRoot, relativePath);
+const outputPath = resolveStaticAsset("wwwroot/App_Plugins/Articulate/BackOffice");
+const relativeToRepo = (absolutePath: string) => path.relative(repoRoot, absolutePath);
+
+type BundleMode = "concat" | "bundle";
+
+type BundleDefinition = {
+  name: string;
+  loader: "css" | "js";
+  output: string;
+  mode: BundleMode;
+  inputs: string[];
+  entry?: string;
+};
+
+const themesSourceRoot = resolveWebSource("wwwroot/App_Plugins/Articulate/Themes");
+// Emit theme bundles into the Razor Class Library so MSBuild can sync them into Articulate.StaticAssets.
+const themesOutputRoot = resolveWebSource("wwwroot/App_Plugins/Articulate/Themes");
+const markdownEditorSourceRoot = resolveWebSource("wwwroot/App_Plugins/Articulate/MarkdownEditor");
+// Same principle for the Markdown editor: build into Articulate.Web and let MSBuild mirror to StaticAssets.
+const markdownEditorOutputRoot = resolveWebSource("wwwroot/App_Plugins/Articulate/MarkdownEditor");
+
+const isCssFile = (filePath: string) => path.extname(filePath).toLowerCase() === ".css";
+const isJsFile = (filePath: string) => path.extname(filePath).toLowerCase() === ".js";
+
+const collectFiles = (dir: string, predicate: (file: string) => boolean): string[] => {
+  if (!fs.existsSync(dir)) {
+    return [];
+  }
+
+  const entries = fs.readdirSync(dir, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name));
+  const results: string[] = [];
+
+  for (const entry of entries) {
+    if (entry.name.startsWith(".")) {
+      continue;
+    }
+
+    const fullPath = path.join(dir, entry.name);
+
+    if (entry.isDirectory()) {
+      if (entry.name === "dist") {
+        continue;
+      }
+      results.push(...collectFiles(fullPath, predicate));
+    } else if (predicate(fullPath)) {
+      results.push(fullPath);
+    }
+  }
+
+  return results;
+};
+
+const getThemeBundles = (): BundleDefinition[] => {
+  if (!fs.existsSync(themesSourceRoot)) {
+    return [];
+  }
+
+  const bundles: BundleDefinition[] = [];
+  const themeDirs = fs
+    .readdirSync(themesSourceRoot, { withFileTypes: true })
+    .filter((dirent) => dirent.isDirectory() && !dirent.name.startsWith("."));
+
+  for (const dirent of themeDirs) {
+    const themeSourcePath = path.join(themesSourceRoot, dirent.name);
+    const themeOutputPath = path.join(themesOutputRoot, dirent.name);
+    const themeKey = dirent.name.toLowerCase();
+
+    const cssFromSrc = collectFiles(path.join(themeSourcePath, "src"), isCssFile);
+    const cssFromAssets = collectFiles(path.join(themeSourcePath, "assets", "css"), isCssFile);
+    const cssInputs = cssFromSrc.length > 0 ? cssFromSrc : cssFromAssets;
+
+    if (cssInputs.length > 0) {
+      bundles.push({
+        name: `${dirent.name} CSS`,
+        loader: "css",
+        output: path.join(themeOutputPath, "dist/css", `${themeKey}.css`),
+        mode: "concat",
+        inputs: cssInputs,
+      });
+    }
+
+    const jsFromSrc = collectFiles(path.join(themeSourcePath, "src"), isJsFile);
+    const jsFromAssets = collectFiles(path.join(themeSourcePath, "assets", "js"), isJsFile);
+    const jsInputs = jsFromSrc.length > 0 ? jsFromSrc : jsFromAssets;
+
+    if (jsInputs.length > 0) {
+      bundles.push({
+        name: `${dirent.name} JS`,
+        loader: "js",
+        output: path.join(themeOutputPath, "dist/js", `${themeKey}.js`),
+        mode: "concat",
+        inputs: jsInputs,
+      });
+    }
+  }
+
+  return bundles;
+};
+
+const getMarkdownEditorBundles = (): BundleDefinition[] => {
+  if (!fs.existsSync(markdownEditorSourceRoot)) {
+    return [];
+  }
+
+  const bundles: BundleDefinition[] = [];
+  const markdownCssFromSrc = collectFiles(path.join(markdownEditorSourceRoot, "src"), isCssFile);
+  const markdownCssFromAssets = collectFiles(path.join(markdownEditorSourceRoot, "assets", "css"), isCssFile);
+  const cssInputs = markdownCssFromSrc.length > 0 ? markdownCssFromSrc : markdownCssFromAssets;
+
+  if (cssInputs.length > 0) {
+    bundles.push({
+      name: "Markdown editor CSS",
+      loader: "css",
+      output: path.join(markdownEditorOutputRoot, "dist/css/md-editor.css"),
+      mode: "concat",
+      inputs: cssInputs,
+    });
+  }
+
+  const jsSourceDir = fs.existsSync(path.join(markdownEditorSourceRoot, "src"))
+    ? path.join(markdownEditorSourceRoot, "src")
+    : path.join(markdownEditorSourceRoot, "assets", "js");
+  const jsInputs = collectFiles(jsSourceDir, isJsFile);
+
+  const entryCandidates = [
+    path.join(markdownEditorSourceRoot, "src", "md-editor.ts"),
+    path.join(markdownEditorSourceRoot, "src", "md-editor.js"),
+    path.join(markdownEditorSourceRoot, "src", "js", "md-editor.ts"),
+    path.join(markdownEditorSourceRoot, "src", "js", "md-editor.js"),
+    path.join(markdownEditorSourceRoot, "assets", "js", "md-editor.js"),
+  ];
+  const entryPoint = entryCandidates.find((entry) => fs.existsSync(entry));
+
+  if (entryPoint) {
+    const watchFiles = new Set(jsInputs.length > 0 ? jsInputs : [entryPoint]);
+    watchFiles.add(entryPoint);
+
+    bundles.push({
+      name: "Markdown editor JS",
+      loader: "js",
+      output: path.join(markdownEditorOutputRoot, "dist/js/md-editor.js"),
+      mode: "bundle",
+      inputs: Array.from(watchFiles),
+      entry: entryPoint,
+    });
+  }
+
+  return bundles;
+};
+
+const gatherBundleDefinitions = (): BundleDefinition[] => [...getThemeBundles(), ...getMarkdownEditorBundles()];
+
+let lightningCssModule: Awaited<typeof import("lightningcss")> | undefined;
+
+try {
+  lightningCssModule = await import("lightningcss");
+  console.log("[articulate-static-assets] Lightning CSS detected; CSS bundles will use lightningcss.");
+} catch (error) {
+  const err = error as NodeJS.ErrnoException | undefined;
+  if (err?.code === "ERR_MODULE_NOT_FOUND") {
+    console.log(
+      "[articulate-static-assets] lightningcss is not installed. Install it to enable Lightning CSS minification. Falling back to esbuild for CSS minification."
+    );
+  } else if (err) {
+    console.log(
+      `[articulate-static-assets] Failed to load lightningcss (${err.message}). Falling back to esbuild for CSS minification.`
+    );
+  } else {
+    console.log(
+      "[articulate-static-assets] Failed to load lightningcss (unknown error). Falling back to esbuild for CSS minification."
+    );
+  }
+}
+
+const staticAssetsPlugin = (): Plugin => {
+  type ResolvedBundle = BundleDefinition & {
+    output: string;
+    inputs: string[];
+    entry?: string;
+  };
+
+  let command: "build" | "serve" = "build";
+  let bundles: ResolvedBundle[] = [];
+  let bundleFiles = new Set<string>();
+
+  const refreshBundles = () => {
+    const definitions = gatherBundleDefinitions();
+    bundles = definitions.map((bundle) => ({
+      ...bundle,
+      output: path.normalize(bundle.output),
+      inputs: bundle.inputs.map((input) => path.normalize(input)),
+      entry: bundle.entry ? path.normalize(bundle.entry) : undefined,
+    }));
+
+    bundleFiles = new Set(
+      bundles.flatMap((bundle) => [...bundle.inputs, ...(bundle.entry ? [bundle.entry] : [])])
+    );
+  };
+
+  const processBundle = async (bundle: ResolvedBundle) => {
+    if (bundle.mode === "bundle") {
+      if (!bundle.entry) {
+        throw new Error(`Bundle "${bundle.name}" requires an entry point.`);
+      }
+
+      const result = await esbuildBuild({
+        entryPoints: [bundle.entry],
+        absWorkingDir: path.dirname(bundle.entry),
+        bundle: true,
+        minify: true,
+        write: false,
+        format: "esm",
+        target: "es2020",
+        legalComments: "inline",
+        logLevel: "silent",
+      });
+
+      const outputFile = result.outputFiles?.[0];
+
+      if (!outputFile) {
+        throw new Error(`Bundle "${bundle.name}" did not produce any output.`);
+      }
+
+      await fsp.mkdir(path.dirname(bundle.output), { recursive: true });
+      await fsp.writeFile(bundle.output, outputFile.text, "utf8");
+
+      console.log(`[articulate-static-assets] wrote ${relativeToRepo(bundle.output)}`);
+
+      result.warnings.forEach((warning) =>
+        console.warn(`[articulate-static-assets] ${formatEsbuildWarning(warning)}`)
+      );
+
+      return;
+    }
+
+    const source = await Promise.all(
+      bundle.inputs.map(async (inputPath) => {
+        try {
+          return await fsp.readFile(inputPath, "utf8");
+        } catch (error) {
+          throw new Error(
+            `Failed to read static asset "${relativeToRepo(inputPath)}": ${(error as Error).message}`
+          );
+        }
+      })
+    );
+
+    const combinedSource = source.join("\n");
+    const { code, warnings } = await minifySource(combinedSource, bundle.loader, bundle.output);
+
+    await fsp.mkdir(path.dirname(bundle.output), { recursive: true });
+    await fsp.writeFile(bundle.output, code, "utf8");
+
+    console.log(`[articulate-static-assets] wrote ${relativeToRepo(bundle.output)}`);
+
+    warnings.forEach((warning) => console.warn(`[articulate-static-assets] ${warning}`));
+  };
+
+  const rebuildBundles = async (changedFile?: string) => {
+    const normalizedChangedFile = changedFile ? path.normalize(changedFile) : undefined;
+    const targets = 
+      normalizedChangedFile === undefined
+        ? bundles
+        : bundles.filter((bundle) =>
+          [...bundle.inputs, ...(bundle.entry ? [bundle.entry] : [])].includes(normalizedChangedFile ?? "")
+        );
+
+    if (targets.length === 0) {
+      return;
+    }
+
+    for (const bundle of targets) {
+      await processBundle(bundle);
+    }
+  };
+
+  const rebuildWithHandling = async (changedFile: string | undefined, failOnError: boolean) => {
+    try {
+      await rebuildBundles(changedFile);
+    } catch (error) {
+      console.error("[articulate-static-assets] bundle generation failed", error);
+      if (failOnError) {
+        throw error;
+      }
+    }
+  };
+
+  return {
+    name: "articulate-static-assets",
+    configResolved(resolved) {
+      command = resolved.command;
+    },
+    async buildStart() {
+      refreshBundles();
+      for (const bundle of bundles) {
+        for (const input of [...bundle.inputs, ...(bundle.entry ? [bundle.entry] : [])]) {
+          (this as PluginContext).addWatchFile?.(input);
+        }
+      }
+
+      if (command === "serve") {
+        await rebuildWithHandling(undefined, false);
+      }
+    },
+    async handleHotUpdate({ file }) {
+      if (command !== "serve") {
+        return;
+      }
+
+      const normalized = path.normalize(file);
+
+      // Refresh bundles first so newly added files (previously unseen) are picked up without restarting Vite.
+      refreshBundles();
+      for (const bundle of bundles) {
+        for (const input of [...bundle.inputs, ...(bundle.entry ? [bundle.entry] : [])]) {
+          (this as PluginContext).addWatchFile?.(input);
+        }
+      }
+
+      if (!bundleFiles.has(normalized)) {
+        return;
+      }
+
+      await rebuildWithHandling(normalized, false);
+    },
+    async closeBundle() {
+      if (command === "build") {
+        refreshBundles();
+        await rebuildWithHandling(undefined, true);
+      }
+    },
+  };
+};
+
+const formatEsbuildWarning = (warning: EsbuildMessage) =>
+  `${warning.text}${warning.location?.file ? ` (${warning.location.file})` : ""}`;
+
+const formatLightningWarning = (warning: LightningWarning) => {
+  if (warning.type === "warning" && warning.loc) {
+    const { line, column } = warning.loc;
+    const source = (warning.loc as { source?: string }).source;
+    const from = source ? `${source}:${line}:${column}` : `${line}:${column}`;
+    return `${warning.message} (${from})`;
+  }
+
+  return warning.message;
+};
+
+const stripBom = (content: string) => content.replace(/^\uFEFF/, "");
+const stripCssCharset = (content: string) =>
+  content.replace(/@charset\s+(['"]).*?\1\s*;/gi, "");
+
+const minifySource = async (
+  source: string,
+  loader: "css" | "js",
+  outputFile: string
+): Promise<{ code: string; warnings: string[] }> => {
+  let preparedSource = stripBom(source);
+
+  if (loader === "css") {
+    preparedSource = stripCssCharset(preparedSource);
+  }
+
+  if (loader === "css" && lightningCssModule) {
+    const result = lightningCssModule.transform({
+      filename: path.basename(outputFile),
+      code: Buffer.from(preparedSource, "utf8"),
+      minify: true,
+    });
+
+    const warnings = result.warnings?.map((warning) => formatLightningWarning(warning)) ?? [];
+
+    return {
+      code: Buffer.from(result.code).toString("utf8"),
+      warnings,
+    };
+  }
+
+  const result = await esbuildTransform(preparedSource, {
+    loader,
+    minify: true,
+    legalComments: "inline",
+    target: loader === "js" ? ["es2020"] : undefined,
+  });
+
+  return {
+    code: result.code,
+    warnings: result.warnings.map((warning) => formatEsbuildWarning(warning)),
+  };
+};
 
 // Get version from nbgv, running from the solution root
 const getVersion = (command: string, mode: string): string | undefined => {
@@ -45,13 +451,12 @@ const umbracoPackagePlugin = (): Plugin => {
         return;
       }
 
-       const newPath = path.resolve(outputPath, "..", umbracoPackageJson);
+      const newPath = path.resolve(outputPath, "..", umbracoPackageJson);
       fs.renameSync(packageJsonPath, newPath);
       console.log(`Moved ${packageJsonPath} to ${newPath}`);
     },
   };
-
-}
+};
 
 // Stamp umbraco-package.json and package.json with the version on release
 const versioningPlugin = (): Plugin => {
@@ -95,14 +500,14 @@ const versioningPlugin = (): Plugin => {
 
       // update package version for local NuGet package feed/tests
       console.log(`Updating package.json version to ${version}`);
-      const npmCommand = `npm version ${version} --allow-same-version --no-git-tag-version`;
-      execSync(npmCommand, { encoding: "utf8" });
+      const pnpmCommand = `pnpm version ${version} --allow-same-version --no-git-tag-version`;
+      execSync(pnpmCommand, { encoding: "utf8" });
     },
   };
 };
 
 // https://vitejs.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   build: {
     lib: {
       entry: "src/bundle.manifests.ts",
@@ -112,9 +517,32 @@ export default defineConfig({
     outDir: outputPath,
     emptyOutDir: true,
     sourcemap: true,
+    ...(mode === "production"
+      ? {
+        minify: "terser" as const,
+        terserOptions: {
+          compress: {
+            ecma: 2020,
+            passes: 2,
+            drop_console: true,
+            drop_debugger: true,
+          },
+          format: {
+            comments: false,
+          },
+        },
+      }
+      : {
+        minify: "esbuild" as const,
+      }),
     rollupOptions: {
       external: [/^@umbraco/],
     },
   },
-  plugins: [tsconfigPaths(), versioningPlugin(), umbracoPackagePlugin()],
-});
+  plugins: [
+    tsconfigPaths(),
+    staticAssetsPlugin(),
+    versioningPlugin(),
+    umbracoPackagePlugin(),
+  ],
+}));
