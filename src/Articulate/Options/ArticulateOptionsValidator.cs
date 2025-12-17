@@ -5,7 +5,7 @@ namespace Articulate.Options
 {
     internal sealed class ArticulateOptionsValidator : IValidateOptions<ArticulateOptions>
     {
-        private static readonly HashSet<string> SupportedProviders = new(StringComparer.OrdinalIgnoreCase)
+        private static readonly HashSet<string> _supportedProviders = new(StringComparer.OrdinalIgnoreCase)
         {
             "disqus",
             "giscus",
@@ -37,7 +37,7 @@ namespace Articulate.Options
         {
             string normalized = provider.Trim().ToLowerInvariant();
 
-            if (!SupportedProviders.Contains(normalized))
+            if (!_supportedProviders.Contains(normalized))
             {
                 errors.Add("Articulate:DefaultCommentsProvider must be one of 'disqus','giscus'.");
                 return;
