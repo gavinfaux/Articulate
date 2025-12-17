@@ -1,0 +1,164 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <PropertyGroup>
+    <TargetFrameworks>net9.0;net10.0</TargetFrameworks>
+    <Nullable>enable</Nullable>
+    <PackageId>Articulate.StaticAssets</PackageId>
+    <Title>Articulate Static Web Assets</Title>
+    <ArticulateWebAssetsRoot>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/../Articulate.Web/wwwroot/App_Plugins/Articulate'))</ArticulateWebAssetsRoot>
+    <ClientProjectDirectory>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/../Articulate.Api.Management/Client'))</ClientProjectDirectory>
+    <ClientBuildTargetFramework Condition="'$(ClientBuildTargetFramework)'==''">net9.0</ClientBuildTargetFramework>
+    <ClientAssetsCacheDir>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/../../build/ClientAssets'))</ClientAssetsCacheDir>
+    <ClientBuildStamp>$(ClientAssetsCacheDir)/BackofficeClient.stamp</ClientBuildStamp>
+    <!-- Default client build command: favor debug-friendly build locally, production build for CI/Release -->
+    <AppPluginsRoot>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/wwwroot/App_Plugins/Articulate'))</AppPluginsRoot>
+    <BackofficeOutputDir>$(AppPluginsRoot)/BackOffice</BackofficeOutputDir>
+    <MarkdownEditorOutputDir>$(AppPluginsRoot)/MarkdownEditor</MarkdownEditorOutputDir>
+    <ThemesOutputDir>$(AppPluginsRoot)/Themes</ThemesOutputDir>
+    <BackofficeAssetsManifest>$(ClientAssetsCacheDir)/BackofficeClient.assets.cache</BackofficeAssetsManifest>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Remove the global usings we don’t want in this project -->
+    <Using Remove="Umbraco.Cms.Core.DependencyInjection" />
+    <Using Remove="Umbraco.Extensions" />
+    <Using Remove="Articulate" />
+    <Using Remove="Articulate.Models" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <SupportedPlatform Include="browser" />
+    <Folder Include="wwwroot/App_Plugins/Articulate/" />
+  </ItemGroup>
+
+  <ItemGroup Condition="Exists('$(ArticulateWebAssetsRoot)')">
+    <!-- Define items for initial project evaluation (if files exist) -->
+    <MarkdownEditorAssets Include="$(ArticulateWebAssetsRoot)/MarkdownEditor/**/*.*" Exclude="$(ArticulateWebAssetsRoot)/MarkdownEditor/**/*.cshtml" />
+    <ThemeAssets Include="$(ArticulateWebAssetsRoot)/Themes/**/*.*" Exclude="$(ArticulateWebAssetsRoot)/Themes/**/*.cshtml" />
+  </ItemGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(EnableClientBuild)'=='true' and '$(TargetFramework)'=='$(ClientBuildTargetFramework)'">
+    <ClientBuildInput Include="$(ClientProjectDirectory)/pnpm-lock.yaml" />
+    <ClientBuildInput Include="$(ClientProjectDirectory)/package.json" />
+    <ClientBuildInput Include="$(ClientProjectDirectory)/tsconfig*.json" />
+    <ClientBuildInput Include="$(ClientProjectDirectory)/vite.config.*" />
+    <ClientBuildInput Include="$(ClientProjectDirectory)/src/**/*" />
+  </ItemGroup>
+
+  <Target Name="BuildBackofficeClient"
+          Condition="'$(EnableClientBuild)'=='true' and '$(TargetFramework)'=='$(ClientBuildTargetFramework)' and Exists('$(ClientProjectDirectory)')"
+          BeforeTargets="ResolveStaticWebAssetsInputs"
+          Inputs="@(ClientBuildInput)"
+          Outputs="$(ClientBuildStamp);$(BackofficeAssetsManifest)">
+    <Message Text="Building Articulate backoffice client (EnableClientBuild=true)" Importance="High" />
+    <MakeDir Directories="$(ClientAssetsCacheDir)" />
+    <RemoveDir Condition="Exists('$(BackofficeOutputDir)')"
+              Directories="$(BackofficeOutputDir)"
+              ContinueOnError="WarnAndContinue" />
+    <Exec Command="pnpm install --frozen-lockfile --prefer-offline"
+          WorkingDirectory="$(ClientProjectDirectory)"
+          IgnoreExitCode="true">
+      <Output TaskParameter="ExitCode" PropertyName="PnpmFrozenExitCode" />
+    </Exec>
+    <Exec Command="pnpm install"
+          WorkingDirectory="$(ClientProjectDirectory)"
+          Condition="'$(PnpmFrozenExitCode)' != '0'" />
+    <Warning Text="Frozen lockfile install failed, falling back to standard install. Consider updating pnpm-lock.yaml."
+             Condition="'$(PnpmFrozenExitCode)' != '0'" />
+    <!-- Run the actual client build after restores so pack gets real assets. Keep failure fatal for CI; devs can disable via EnableClientBuild=false. -->
+    <Exec Command="$(ClientBuildCommand)"
+          WorkingDirectory="$(ClientProjectDirectory)" />
+    <WriteLinesToFile File="$(ClientBuildStamp)" Lines="$([System.DateTime]::UtcNow.ToString('o'))" Overwrite="true" />
+    <ItemGroup>
+      <_BackofficeAsset Include="$(BackofficeOutputDir)\**\*.*" />
+    </ItemGroup>
+    <WriteLinesToFile File="$(BackofficeAssetsManifest)"
+                      Lines="@(_BackofficeAsset->'%(FullPath)|%(ModifiedTime)')"
+                      Overwrite="true"
+                      WriteOnlyWhenDifferent="true" />
+  </Target>
+
+  <Target Name="EnsureClientAssets"
+          Condition="'$(EnableClientBuild)'=='true' and '$(TargetFramework)'!='$(ClientBuildTargetFramework)' and !Exists('$(ClientBuildStamp)')"
+          BeforeTargets="ResolveStaticWebAssetsInputs">
+    <Message Text="Client assets missing; triggering BuildBackofficeClient for $(ClientBuildTargetFramework)" Importance="High" />
+    <MSBuild Projects="$(MSBuildProjectFullPath)"
+             Targets="BuildBackofficeClient"
+             Properties="TargetFramework=$(ClientBuildTargetFramework);Configuration=$(Configuration)" />
+  </Target>
+
+  <Target Name="SyncArticulateWebAssets" Condition="Exists('$(ArticulateWebAssetsRoot)')" AfterTargets="BuildBackofficeClient" BeforeTargets="ResolveStaticWebAssetsInputs">
+    <Message Text="Synchronizing Articulate.Web static assets into Articulate.StaticAssets" Importance="Low" />
+    
+    <!-- Dynamic re-scan to catch assets generated during the build -->
+    <ItemGroup>
+      <MarkdownEditorAssets Include="$(ArticulateWebAssetsRoot)/MarkdownEditor/**/*.*" Exclude="$(ArticulateWebAssetsRoot)/MarkdownEditor/**/*.cshtml" />
+      <ThemeAssets Include="$(ArticulateWebAssetsRoot)/Themes/**/*.*" Exclude="$(ArticulateWebAssetsRoot)/Themes/**/*.cshtml" />
+    </ItemGroup>
+
+    <!-- Copy Markdown Editor Assets -->
+    <Copy SourceFiles="@(MarkdownEditorAssets)" 
+          DestinationFiles="@(MarkdownEditorAssets->'$(MSBuildProjectDirectory)/wwwroot/App_Plugins/Articulate/MarkdownEditor/%(RecursiveDir)%(Filename)%(Extension)')" 
+          SkipUnchangedFiles="true" Retries="3" RetryDelayMilliseconds="200" />
+
+    <!-- Copy Theme Assets -->
+    <Copy SourceFiles="@(ThemeAssets)" 
+          DestinationFiles="@(ThemeAssets->'$(MSBuildProjectDirectory)/wwwroot/App_Plugins/Articulate/Themes/%(RecursiveDir)%(Filename)%(Extension)')" 
+          SkipUnchangedFiles="true" Retries="3" RetryDelayMilliseconds="200" />
+    
+    <!-- Force update Content items to include what we just copied, handling clean build scenarios -->
+    <ItemGroup>
+       <Content Remove="$(MarkdownEditorOutputDir)\**\*.*" />
+       <Content Remove="$(ThemesOutputDir)\**\*.*" />
+       <Content Include="$(MarkdownEditorOutputDir)\**\*.*" />
+       <Content Include="$(ThemesOutputDir)\**\*.*" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="CleanMirroredStaticAssets" BeforeTargets="SyncArticulateWebAssets">
+    <Message Text="Cleaning mirrored Markdown editor and theme assets before sync" Importance="Low" />
+    <RemoveDir Condition="Exists('$(MarkdownEditorOutputDir)')"
+              Directories="$(MarkdownEditorOutputDir)"
+              ContinueOnError="WarnAndContinue" />
+    <RemoveDir Condition="Exists('$(ThemesOutputDir)')"
+              Directories="$(ThemesOutputDir)"
+              ContinueOnError="WarnAndContinue" />
+    <RemoveDir Condition="Exists('$(MarkdownEditorOutputDir)')" Directories="$(MarkdownEditorOutputDir)" ContinueOnError="true"  />
+    <RemoveDir Condition="Exists('$(ThemesOutputDir)')" Directories="$(ThemesOutputDir)" ContinueOnError="true"  />
+  </Target>
+
+  <Target Name="RefreshBackofficeStaticWebAssetItems"
+          AfterTargets="BuildBackofficeClient"
+          BeforeTargets="ResolveStaticWebAssetsInputs"
+          Condition="'$(EnableClientBuild)'=='true' and Exists('$(BackofficeOutputDir)')">
+    <Message Text="Refreshing BackOffice Content/StaticWebAsset items to match regenerated bundles" Importance="Low" />
+    <ItemGroup>
+      <Content Remove="$(BackofficeOutputDir)\**\*.*" />
+    </ItemGroup>
+    <ItemGroup>
+      <Content Include="$(BackofficeOutputDir)\**\*.*">
+        <RelativePath>$([MSBuild]::MakeRelative('$(MSBuildProjectDirectory)', '%(FullPath)'))</RelativePath>
+      </Content>
+    </ItemGroup>
+  </Target>
+
+  <Target Name="CleanClientAssets" AfterTargets="Clean" Condition="'$(EnableClientBuild)'=='true'">
+    <Delete Condition="Exists('$(ClientBuildStamp)')" Files="$(ClientBuildStamp)" />
+    <RemoveDir Condition="Exists('$(ClientAssetsCacheDir)')"
+              Directories="$(ClientAssetsCacheDir)"
+              ContinueOnError="WarnAndContinue" />
+    <RemoveDir Condition="Exists('$(BackofficeOutputDir)')"
+              Directories="$(BackofficeOutputDir)"
+              ContinueOnError="WarnAndContinue" />
+    <RemoveDir Condition="Exists('$(MarkdownEditorOutputDir)')"
+              Directories="$(MarkdownEditorOutputDir)"
+              ContinueOnError="WarnAndContinue" />
+    <RemoveDir Condition="Exists('$(ThemesOutputDir)')"
+              Directories="$(ThemesOutputDir)"
+              ContinueOnError="WarnAndContinue" />
+  </Target>
+
+</Project>
