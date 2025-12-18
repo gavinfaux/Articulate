@@ -91,7 +91,7 @@ namespace Articulate.Controllers
         {
             IPublishedContent? author = umbracoHelper.Content(authorId);
 
-            ArgumentNullException.ThrowIfNull(author);
+            ArgumentNullException.ThrowIfNull(author, nameof(author));
 
             maxItems ??= 25;
 
@@ -117,7 +117,7 @@ namespace Articulate.Controllers
 
         public IActionResult Categories(string tag, int? maxItems)
         {
-            ArgumentNullException.ThrowIfNull(tag);
+            ArgumentNullException.ThrowIfNull(tag, nameof(tag));
 
             maxItems ??= 25;
 
@@ -126,7 +126,7 @@ namespace Articulate.Controllers
 
         public IActionResult Tags(string tag, int? maxItems)
         {
-            ArgumentNullException.ThrowIfNull(tag);
+            ArgumentNullException.ThrowIfNull(tag, nameof(tag));
 
             maxItems ??= 25;
 

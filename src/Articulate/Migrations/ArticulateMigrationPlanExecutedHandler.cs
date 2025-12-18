@@ -76,8 +76,16 @@ public class ArticulateMigrationPlanExecutedHandler(
             try
             {
                 logger.LogInformation("Attempting to publish Articulate branch for root node ID {NodeId} and trigger {Trigger}", contentHome.Id, trigger);
-                contentService.PublishBranch(contentHome, PublishBranchFilter.IncludeUnpublished, []);
-                logger.LogInformation("Published Articulate Home page and descendants after {Trigger}", trigger);
+                IEnumerable<PublishResult> result = contentService.PublishBranch(contentHome, PublishBranchFilter.IncludeUnpublished, []);
+                if (result.All(r => r.Success))
+                {
+                    logger.LogInformation("Published Articulate Home page and descendants after {Trigger}", trigger);
+                }
+                else
+                {
+                    var failures = result.Where(r => !r.Success).ToList();
+                    logger.LogWarning("Partial publish failure: {FailureCount} items failed for trigger {Trigger}", failures.Count, trigger);
+                }
             }
             catch (Exception ex)
             {

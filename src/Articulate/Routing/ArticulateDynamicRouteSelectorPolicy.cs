@@ -9,7 +9,8 @@ using Umbraco.Cms.Web.Common.Routing;
 namespace Articulate.Routing
 {
     /// <summary>
-    /// Used when there is ambiguous route candidates due to multiple dynamic routes being assigned.    /// </summary>
+    /// Used when there is ambiguous route candidates due to multiple dynamic routes being assigned.
+    /// </summary>
     /// <remarks>
     /// Ambiguous dynamic routes can occur if Umbraco detects a 404 and assigns a route, but sometimes its not
     /// actually a 404 because the articulate router occurs after the Umbraco router which handles 404 eagerly.
@@ -50,8 +51,7 @@ namespace Articulate.Routing
             for (var i = 0; i < candidates.Count; i++)
             {
                 // If the candidate is an Articulate dynamic controller, set valid
-                candidates.SetValidity(i, candidates[i].Endpoint.Metadata.GetMetadata<ArticulateDynamicRouteAttribute>() is not null);
-
+                candidates.SetValidity(i, candidates[i].Endpoint?.Metadata.GetMetadata<ArticulateDynamicRouteAttribute>() is not null);
                 // else it is invalid
             }
 

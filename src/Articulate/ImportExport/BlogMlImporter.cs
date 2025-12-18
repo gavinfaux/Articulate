@@ -85,8 +85,8 @@ namespace Articulate.ImportExport
             _articulateTempFileSystem = articulateTempFileSystem;
             _articulateRootMediaFolder = new Lazy<IMedia>(() =>
             {
-                IMedia? root = _mediaService.GetRootMedia().FirstOrDefault(x => x.Name == ArticulateConstants.Convention.Articulate && x.ContentType.Alias.InvariantEquals(Constants.Conventions.MediaTypes.Folder));
-                return root ?? _mediaService.CreateMediaWithIdentity(ArticulateConstants.Convention.Articulate, Constants.System.Root, Constants.Conventions.MediaTypes.Folder);
+                IMedia? root = _mediaService.GetRootMedia().FirstOrDefault(x => x.Name == ArticulateConstants.Convention.ArticulateMediaFolder && x.ContentType.Alias.InvariantEquals(Constants.Conventions.MediaTypes.Folder));
+                return root ?? _mediaService.CreateMediaWithIdentity(ArticulateConstants.Convention.ArticulateMediaFolder, Constants.System.Root, Constants.Conventions.MediaTypes.Folder);
             });
         }
 
@@ -224,7 +224,6 @@ namespace Articulate.ImportExport
             return XmlReader.Create(stream, settings);
         }
 
-        // TODO: Review
         private Dictionary<string, string> ImportAuthors(int userId, IContent rootNode, IEnumerable<BlogMLAuthor>? authors)
         {
             var result = new Dictionary<string, string>();
@@ -270,11 +269,12 @@ namespace Articulate.ImportExport
             }
 
             {
+                IContent[] authorNodesArray = allAuthorNodes as IContent[] ?? [.. allAuthorNodes];
                 foreach (BlogMLAuthor author in authors)
                 {
                     // first check if a user exists by email
                     IUser? found = _userService.GetByEmail(author.EmailAddress);
-                    IEnumerable<IContent> authorNodes = allAuthorNodes as IContent[] ?? [.. allAuthorNodes];
+                    IEnumerable<IContent> authorNodes = authorNodesArray;
                     if (found is not null)
                     {
                         // check if an author node exists for this user
@@ -331,7 +331,6 @@ namespace Articulate.ImportExport
             return result;
         }
 
-        // TODO: Review
         private async Task<IEnumerable<IContent>> ImportPostsAsync(int userId, XDocument xdoc, IContent rootNode, IEnumerable<BlogMLPost> posts, BlogMLAuthor[] authors, BlogMLCategory[] categories, Dictionary<string, string> authorIdsToName, bool overwrite, string? regexMatch, string? regexReplace, bool publishAll, bool importFirstImage = false)
         {
             var result = new List<IContent>();
@@ -368,13 +367,14 @@ namespace Articulate.ImportExport
                 out var totalPostNodes,
                 _sqlContext.Query<IContent>().Where(x => x.ParentId == archiveNode.Id && x.Trashed == false));
 
+            IContent[] postNodesArray = allPostNodes as IContent[] ?? [.. allPostNodes];
             foreach (BlogMLPost post in posts)
             {
                 // check if one exists
                 IContent? postNode;
 
                 // Use post.id if it's there
-                IEnumerable<IContent> postNodes = allPostNodes as IContent[] ?? [.. allPostNodes];
+                IEnumerable<IContent> postNodes = postNodesArray;
                 if (!string.IsNullOrWhiteSpace(post.Id))
                 {
                     postNode = postNodes.FirstOrDefault(x => x.GetValue<string>("importId") == post.Id);
@@ -502,7 +502,7 @@ namespace Articulate.ImportExport
 
         private async Task ImportFirstImageAsync(IContentBase postNode, IContentType postType, BlogMLPost post)
         {
-            // TODO: File validation
+            // TODO: Consider magic-byte validation to prevent extension spoofing, e.g. https://github.com/neilharvey/FileSignatures
             var imageMimeTypes = new List<string> { "image/jpeg", "image/gif", "image/png" };
 
             BlogMLAttachment? attachment = post.Attachments.FirstOrDefault(p => imageMimeTypes.Contains(p.MimeType));

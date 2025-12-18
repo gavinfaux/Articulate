@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Models.Membership;
@@ -13,11 +14,13 @@ namespace Articulate.Services
     public class BackOfficeAuthService(
         IOptionsMonitor<CookieAuthenticationOptions> options,
         IBackOfficeSecurityAccessor backOfficeSecurityAccessor,
-        IUserService userService)
+        IUserService userService,
+        ILogger<BackOfficeAuthService> logger)
     {
         private readonly IOptionsMonitor<CookieAuthenticationOptions> _options = options;
         private readonly IBackOfficeSecurityAccessor _backOfficeSecurityAccessor = backOfficeSecurityAccessor;
         private readonly IUserService _userService = userService;
+        private readonly ILogger<BackOfficeAuthService> _logger = logger;
 
         public bool IsBackOfficeLoggedIn(HttpContext context, string authenticationType)
         {
@@ -39,12 +42,14 @@ namespace Articulate.Services
                 AuthenticationTicket? unprotected = cookieOptions.TicketDataFormat.Unprotect(cookie);
                 return unprotected is not null && unprotected.AuthenticationScheme == authenticationType;
             }
-            catch
+            catch (Exception ex)
             {
                 // Cookie is invalid/corrupted
+                _logger.LogDebug(ex, "Cookie unprotect failed for {AuthType}", authenticationType);
                 return false;
             }
         }
+
         public IUser? GetCurrentUser() => _backOfficeSecurityAccessor.BackOfficeSecurity?.CurrentUser;
 
         public bool HasCurrentUser() => GetCurrentUser() is not null;
@@ -55,9 +60,9 @@ namespace Articulate.Services
             return currentUser is not null && HasPermissions(currentUser, contentItem, permissionsToCheck);
         }
 
-        public bool HasPermissions(IUser user, IContent contentItem, IEnumerable<string> permissionsToCheck)
+        public bool HasPermissions(IUser user, IContent contentItem, IEnumerable<string>? permissionsToCheck)
         {
-            if (!permissionsToCheck.Any())
+            if (permissionsToCheck is null || !permissionsToCheck.Any())
             {
                 return true;
             }

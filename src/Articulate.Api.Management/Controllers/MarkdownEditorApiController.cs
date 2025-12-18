@@ -2,6 +2,7 @@
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Articulate.Api.Management.Attributes;
+using Articulate.Api.Management.Extensions;
 using Articulate.Api.Management.Models;
 using Articulate.Services;
 using Asp.Versioning;
@@ -11,6 +12,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Api.Common.Attributes;
 using Umbraco.Cms.Api.Management.Controllers;
+using Umbraco.Cms.Api.Management.Routing;
 using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.Actions;
 using Umbraco.Cms.Core.IO;
@@ -39,8 +41,6 @@ namespace Articulate.Api.Management.Controllers
        Risk: An attacker could upload a malicious file (e.g., a file named my-image.jpg that is actually an HTML file containing scripts).
        Mitigation: As before, only authorized back office users may post and must log in first.
        Actions: Review file validation, e.g. [FileSignatures](https://github.com/neilharvey/FileSignatures/) could be used to inspect the file's actual content (magic bytes), trusting the Content-Type header sent by the browser or file extension is not sufficient.
-       Enforce Limits: Enforce file size limits.
-       Sanitize Filename: Avoid using the user-provided filename for storage on the server. Generate a new, random, and safe filename.
 
        3) Token Storage (localStorage):
        Risk: We store the JWT in localStorage. If an XSS vulnerability were to be found on the site, an attacker could steal this token.
@@ -72,6 +72,8 @@ namespace Articulate.Api.Management.Controllers
         private readonly IShortStringHelper _shortStringHelper;
         private readonly UmbracoHelper _umbracoHelper;
         private readonly BackOfficeAuthService _backOfficeAuthService;
+        private readonly IAbsoluteUrlBuilder _absoluteUrlBuilder;
+        private const long MaxMarkdownImageBytes = 10 * 1024 * 1024;
 
         public MarkdownEditorApiController(
             BackOfficeAuthService backOfficeAuthService,
@@ -87,7 +89,8 @@ namespace Articulate.Api.Management.Controllers
             IContentService contentService,
             IContentTypeService contentTypeService,
             IDataTypeService dataTypeService,
-            ILogger<MarkdownEditorApiController> logger)
+            ILogger<MarkdownEditorApiController> logger,
+            IAbsoluteUrlBuilder absoluteUrlBuilder)
         {
             _backOfficeAuthService = backOfficeAuthService;
             _umbracoHelper = umbracoHelper;
@@ -103,6 +106,7 @@ namespace Articulate.Api.Management.Controllers
             _contentTypeService = contentTypeService;
             _dataTypeService = dataTypeService;
             _logger = logger;
+            _absoluteUrlBuilder = absoluteUrlBuilder;
             _articulateRootMediaFolder = new Lazy<IMedia>(() =>
             {
                 IMedia? root = _mediaService.GetRootMedia().FirstOrDefault(x =>
@@ -130,7 +134,6 @@ namespace Articulate.Api.Management.Controllers
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status422UnprocessableEntity)]
 
-        // TODO: Review along with ParseImages
         public async Task<ActionResult<CreatePostResponse>> CreatePost(
             [FromForm(Name = "json")] string jsonModel)
         {
@@ -209,8 +212,19 @@ namespace Articulate.Api.Management.Controllers
                 return Forbid();
             }
 
-            ParseImageResponse parsedImageResponse =
-                await ParseImages(model.Body, Request.Form.Files, extractFirstImageAsProperty).ConfigureAwait(false);
+            ParseImageResponse parsedImageResponse;
+            try
+            {
+                parsedImageResponse =
+                    await ParseImages(model.Body, Request.Form.Files, extractFirstImageAsProperty).ConfigureAwait(false);
+            }
+            catch (InvalidDataException)
+            {
+                return Problem(
+                    title: "File Too Large",
+                    detail: $"Markdown image uploads must not exceed {MaxMarkdownImageBytes / (1024d * 1024d):F1} MB.",
+                    statusCode: StatusCodes.Status413PayloadTooLarge);
+            }
 
             model.Body = parsedImageResponse.BodyText;
 
@@ -315,16 +329,14 @@ namespace Articulate.Api.Management.Controllers
         private async Task<ParseImageResponse> ParseImages(string? body, IFormFileCollection formFiles, bool extractFirstImageAsProperty)
         {
             // TODO: Validate the ![alt] user label used for the media name/markdown replacement.
-            // TODO: Generate a safe filename instead of relying on user supplied filename
-            // TODO: Better file validation file sizes, mimetypes, file signatures etc, extract to use elsewhere (MetaWeblog, BlogML import), plus return validation results for UX
             // TODO: UX Validation results (invalid or missing files etc), extract to reuse elsewhere.
+            // TODO: Consider magic-byte validation to prevent extension spoofing, e.g. https://github.com/neilharvey/FileSignatures
             if (body is null)
             {
                 return new ParseImageResponse();
             }
 
             var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" };
-            const long maxFileSize = 10 * 1024 * 1024;
             var firstImage = string.Empty;
             var bodyText = body; // Start with the original body text
 
@@ -364,7 +376,7 @@ namespace Articulate.Api.Management.Controllers
                     continue;
                 }
 
-                if (file.Length <= 0 || file.Length > maxFileSize)
+                if (file.Length <= 0 || file.Length > MaxMarkdownImageBytes)
                 {
                     // Invalid file size. Strip from markdown.
                     replacementMap[match.Value] = string.Empty;
@@ -380,13 +392,14 @@ namespace Articulate.Api.Management.Controllers
                 // validation passed, save the file
                 var altText = !string.IsNullOrWhiteSpace(userLabel)
                     ? userLabel
-                    : (safeAltFallback.IsNullOrWhiteSpace() ? "image" : safeAltFallback);
+                    : safeAltFallback.IsNullOrWhiteSpace() ? "image" : safeAltFallback;
 
                 var rndId = Guid.NewGuid().ToString("N");
                 var safeFileName = $"{rndId}{extension}".ToSafeFileName(_shortStringHelper);
 
-                using var stream = new MemoryStream();
-                await file.CopyToAsync(stream).ConfigureAwait(false);
+                using var stream = new MemoryStream(capacity: (int)Math.Min(file.Length, Math.Min(MaxMarkdownImageBytes, int.MaxValue)));
+                await using Stream uploadStream = file.OpenReadStream();
+                await uploadStream.CopyWithLimitAsync(stream, MaxMarkdownImageBytes, HttpContext.RequestAborted).ConfigureAwait(false);
                 stream.Position = 0;
 
                 var shouldExtractFirstImage = extractFirstImageAsProperty && !firstImageCaptured;
@@ -402,7 +415,14 @@ namespace Articulate.Api.Management.Controllers
                         Umbraco.Cms.Core.Constants.Conventions.Media.File,
                         safeFileName,
                         stream);
-                    _ = _mediaService.Save(mediaItem);
+                    Attempt<OperationResult?> saveResult = _mediaService.Save(mediaItem);
+                    if (saveResult.Success == false)
+                    {
+                        _logger.LogWarning("Failed to save media item: {MediaName}", mediaItem.Name);
+                        replacementMap[match.Value] = string.Empty;
+                        continue;
+                    }
+
                     IPublishedContent? media = _umbracoHelper.Media(mediaItem.Key);
 
                     if (media is null)
@@ -422,7 +442,7 @@ namespace Articulate.Api.Management.Controllers
                 var fileUrl = $"articulate/{rndId}/{safeFileName}";
                 _mediaFileManager.FileSystem.AddFile(fileUrl, stream);
                 var fileSystemUrl = _mediaFileManager.FileSystem.GetUrl(fileUrl);
-                var absoluteUrl = fileSystemUrl.EnsureAbsoluteUrl(Request);
+                var absoluteUrl = _absoluteUrlBuilder.ToAbsoluteUrl(fileSystemUrl).ToString();
 
                 // Replace its tag with the final URL.
                 replacementMap[match.Value] = $"![{altText}]({absoluteUrl})";

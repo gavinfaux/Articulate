@@ -1,13 +1,15 @@
 #nullable enable
+using System.Text.RegularExpressions;
 using System.Web;
-using Microsoft.AspNetCore.Http;
 
 namespace Articulate
 {
     public static class StringExtensions
     {
-        public static string NewLinesToSpaces(this string input) => input.Replace("\r", " ").Replace("\n", " ").Replace("  ", string.Empty);
+        private static readonly Regex NewlineRegex = new(@"[\r\n]+", RegexOptions.Compiled);
 
+        public static string NewLinesToSpaces(this string input) =>
+            NewlineRegex.Replace(input, " ");
         public static string DecodeHtml(this string text) => HttpUtility.HtmlDecode(text);
 
         public static string TruncateAtWord(this string? text, int maxCharacters, string trailingStringIfTextCut = "&hellip;")
@@ -48,34 +50,6 @@ namespace Articulate
             }
 
             return EncodePath(urlPath);
-        }
-
-        public static string EnsureAbsoluteUrl(this string? url, HttpRequest? request, string fallbackScheme = "https")
-        {
-            if (string.IsNullOrWhiteSpace(url))
-            {
-                return string.Empty;
-            }
-
-            if (Uri.TryCreate(url, UriKind.Absolute, out Uri? absoluteUri))
-            {
-                return absoluteUri.ToString();
-            }
-
-            if (url.StartsWith("//", StringComparison.Ordinal))
-            {
-                var scheme = request?.Scheme ?? fallbackScheme;
-                return $"{scheme}:{url}";
-            }
-
-            if (request is null)
-            {
-                return url;
-            }
-
-            var path = url.StartsWith("/", StringComparison.Ordinal) ? url : "/" + url;
-            var baseUri = $"{request.Scheme}://{request.Host}{request.PathBase}";
-            return baseUri.TrimEnd('/') + path;
         }
 
         private static string EncodePath(string urlPath) =>

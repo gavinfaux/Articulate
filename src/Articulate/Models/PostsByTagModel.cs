@@ -7,12 +7,11 @@ namespace Articulate.Models
 
         public PostsByTagModel(IEnumerable<PostModel> posts, string tagName, string tagUrl, int count = -1)
         {
-            ArgumentNullException.ThrowIfNull(posts);
+            ArgumentNullException.ThrowIfNull(posts, nameof(posts));
 
-            ArgumentNullException.ThrowIfNull(tagUrl);
+            ArgumentNullException.ThrowIfNull(tagUrl, nameof(tagUrl));
 
-            ArgumentNullException.ThrowIfNull(tagName);
-
+            ArgumentNullException.ThrowIfNull(tagName, nameof(tagName));
             // resolve to array so it doesn't double lookup
             Posts = posts.ToArray();
             TagName = tagName;

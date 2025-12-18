@@ -1,5 +1,6 @@
 #nullable enable
 using Articulate.Api.Management.Attributes;
+using Articulate.Api.Management.Extensions;
 using Articulate.Api.Management.Models;
 using Articulate.ImportExport;
 using Asp.Versioning;
@@ -81,7 +82,7 @@ namespace Articulate.Api.Management.Controllers
             {
                 return Problem(
                     title: "File Too Large",
-                    detail: $"BlogML imports must be between 1 byte and {maxImportFileBytes / (1024 * 1024)} MB.",
+                    detail: $"BlogML imports must be between 1 byte and {maxImportFileBytes / (1024d * 1024d):F1} MB.",
                     statusCode: StatusCodes.Status413PayloadTooLarge);
             }
             try
@@ -89,19 +90,18 @@ namespace Articulate.Api.Management.Controllers
                 var fileName = Path.GetRandomFileName();
                 await using Stream sourceStream = importFile.OpenReadStream();
                 using var buffer = new MemoryStream(capacity: (int)Math.Min(importFile.Length, Math.Min(maxImportFileBytes, int.MaxValue)));
-                await sourceStream.CopyToAsync(buffer).ConfigureAwait(false);
+                await sourceStream.CopyWithLimitAsync(buffer, maxImportFileBytes, HttpContext.RequestAborted).ConfigureAwait(false);
                 buffer.Position = 0;
                 articulateTempFileSystem.AddFile(fileName, buffer);
 
                 var count = blogMlImporter.GetPostCount(fileName);
                 return Ok(new ImportFileResponse { PostCount = count, TemporaryFileName = fileName });
             }
-            catch (InvalidDataException ex)
+            catch (InvalidDataException)
             {
-                logger.LogWarning(ex, "BlogML import file exceeded the configured size limit.");
                 return Problem(
                     title: "File Too Large",
-                    detail: $"The BlogML file exceeds the maximum allowed size of {maxImportFileBytes / (1024 * 1024)} MB.",
+                    detail: $"BlogML imports must not exceed {maxImportFileBytes / (1024d * 1024d):F1} MB.",
                     statusCode: StatusCodes.Status413PayloadTooLarge);
             }
             catch (Exception ex)
@@ -264,7 +264,7 @@ namespace Articulate.Api.Management.Controllers
             }
             catch (OverflowException)
             {
-                return long.MaxValue;
+                return DefaultMaxImportFileBytes;
             }
         }
     }

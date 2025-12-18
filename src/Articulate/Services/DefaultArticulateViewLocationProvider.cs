@@ -9,6 +9,11 @@ namespace Articulate.Services
 
         public IEnumerable<string> GetLocations(string themeName)
         {
+            if (string.IsNullOrWhiteSpace(themeName))
+            {
+                return Enumerable.Empty<string>();
+            }
+
             var searchRoots = new[]
             {
                 Paths.ArticulateRoot,
@@ -31,7 +36,6 @@ namespace Articulate.Services
 
             return locations.Where(x => !string.IsNullOrWhiteSpace(x)).Distinct();
         }
-
         /// <summary>
         /// Combines path segments and forces Forward Slashes for Razor View Engine compatibility.
         /// Ensure the result starts with "/" to denote application root relative.

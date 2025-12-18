@@ -19,26 +19,16 @@ namespace Articulate.Api.Management.Services
         IOptions<ArticulateOpenIdClientOptions> options,
         IRuntimeState runtimeState,
         ILogger<ArticulateApplicationManager> logger) :
-#if NET10_0_OR_GREATER
         INotificationAsyncHandler<UmbracoApplicationStartedNotification>
-#else
-        INotificationHandler<UmbracoApplicationStartedNotification>
-#endif
     {
         private readonly IServiceScopeFactory _scopeFactory = scopeFactory;
         private readonly IOptions<ArticulateOpenIdClientOptions> _options = options;
         private readonly ILogger<ArticulateApplicationManager> _logger = logger;
         private readonly IRuntimeState _runtimeState = runtimeState;
 
-#if NET10_0_OR_GREATER
         /// <inheritdoc />
         public Task HandleAsync(UmbracoApplicationStartedNotification notification, CancellationToken cancellationToken) =>
             EnsureOpenIdClientAsync(cancellationToken);
-#else
-        /// <inheritdoc />
-        public void Handle(UmbracoApplicationStartedNotification notification) =>
-            Task.Run(() => EnsureOpenIdClientAsync(CancellationToken.None)).GetAwaiter().GetResult();
-#endif
         private async Task EnsureOpenIdClientAsync(CancellationToken cancellationToken)
         {
             ArticulateOpenIdClientOptions settings = _options.Value;
@@ -79,16 +69,16 @@ namespace Articulate.Api.Management.Services
                 return;
             }
 
-            object? existing = await applications.FindByClientIdAsync(settings.ClientId, cancellationToken);
+            object? existing = await applications.FindByClientIdAsync(settings.ClientId, cancellationToken).ConfigureAwait(false);
 
             if (existing is null)
             {
-                _ = await applications.CreateAsync(descriptor, cancellationToken);
+                _ = await applications.CreateAsync(descriptor, cancellationToken).ConfigureAwait(false);
                 _logger.LogInformation("Registered OpenIddict client '{ClientId}' for Articulate.", settings.ClientId);
             }
             else
             {
-                await applications.UpdateAsync(existing, descriptor, cancellationToken);
+                await applications.UpdateAsync(existing, descriptor, cancellationToken).ConfigureAwait(false);
                 _logger.LogInformation("Updated OpenIddict client '{ClientId}' for Articulate.", settings.ClientId);
             }
         }

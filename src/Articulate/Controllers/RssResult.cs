@@ -18,7 +18,7 @@ namespace Articulate.Controllers
             await using var txtWriter = new Utf8StringWriter();
             await using var xmlWriter = XmlWriter.Create(
                 txtWriter,
-                new XmlWriterSettings { Encoding = Encoding.UTF8, Indent = true, OmitXmlDeclaration = false, Async = true });
+                new XmlWriterSettings { Indent = true, Async = true, Encoding = Encoding.UTF8 });
 
             // Write the Processing Instruction node.
             var xsltHeader =

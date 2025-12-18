@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using static Articulate.ArticulateConstants;
 
 namespace Articulate
 {
@@ -13,12 +12,8 @@ namespace Articulate
         /// <param name="model"></param>
         /// <param name="relativeAssetPath"></param>
         /// <returns></returns>
-        [Obsolete("No longer used or supported", false)]
-        public static string ThemedAsset(this IUrlHelper url, IMasterModel model, string relativeAssetPath)
-        {
-            var path = $"~/{Paths.UserThemesRoot}/{model.Theme}/assets/{relativeAssetPath}";
-            return url.Content(path);
-        }
+        [Obsolete("Use your custom themes asset URLs instead.", error: true)]
+        public static string ThemedAsset(this IUrlHelper url, IMasterModel model, string relativeAssetPath) => throw new NotSupportedException("ThemedAsset is no longer supported.");
 
         /// <summary>
         /// Returns the main rss feed url for this blog

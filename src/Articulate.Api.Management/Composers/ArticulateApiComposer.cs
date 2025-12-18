@@ -22,17 +22,13 @@ namespace Articulate.Api.Management.Composers
         /// <param name="builder">The Umbraco builder used for service registration.</param>
         public void Compose(IUmbracoBuilder builder)
         {
-            _ = builder.Services.AddSingleton<IOperationIdHandler, ArticulateOperationIdHandler>();
-            _ = builder.Services.ConfigureOptions<ArticulateSwaggerOptions>();
             IServiceCollection services = builder.Services;
+            _ = services.AddSingleton<IOperationIdHandler, ArticulateOperationIdHandler>();
+            _ = services.ConfigureOptions<ArticulateSwaggerOptions>();
             _ = services.Configure<ArticulateOpenIdClientOptions>(
                 builder.Config.GetSection(ArticulateOpenIdClientOptions.SectionName));
             _ = services.AddSingleton<IValidateOptions<ArticulateOpenIdClientOptions>, ArticulateOpenIdClientOptionsValidator>();
-#if NET10_0_OR_GREATER
             _ = builder.AddNotificationAsyncHandler<UmbracoApplicationStartedNotification, ArticulateApplicationManager>();
-#else
-            _ = builder.AddNotificationHandler<UmbracoApplicationStartedNotification, ArticulateApplicationManager>();
-#endif
         }
     }
 }

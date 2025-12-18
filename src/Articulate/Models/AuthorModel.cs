@@ -19,10 +19,13 @@ namespace Articulate.Models
         {
             PostCount = postCount;
             _image = new Lazy<MediaWithCrops?>(() => Unwrap().Value<MediaWithCrops>("authorImage"), true);
+
+            // TODO: Replace Children access with IDocumentNavigationQueryService.TryGetChildrenKeys() once available
+            // to avoid relying on the obsolete PublishedContentWrapped API slated for removal in Umbraco v16.
             _lastPostDate = new Lazy<DateTime?>(() => Children.FirstOrDefault()?.Value<DateTime>("publishedDate"), true);
         }
 
-        [Obsolete("Use AuthorModel(IEnumerable<IPublishedContent>? listItems,PagerModel? pager, int postCount,  IPublishedValueFallback publishedValueFallback)")]
+        [Obsolete("Use AuthorModel(IPublishedContent? content, IEnumerable<IPublishedContent>? listItems, PagerModel? pager, int postCount, IPublishedValueFallback publishedValueFallback)")]
         public AuthorModel(
             IPublishedContent? content,
             IEnumerable<IPublishedContent>? listItems,
@@ -45,8 +48,7 @@ namespace Articulate.Models
 
         // We know the list of posts passed in is already ordered descending so get the first
         [Obsolete("Please use TryGetChildrenKeys() on IDocumentNavigationQueryService or IMediaNavigationQueryService instead. Scheduled for removal in V16.", false)]
-        public DateTime? LastPostDate { get => _lastPostDate.Value; private set { } }
-
+        public DateTime? LastPostDate => _lastPostDate.Value;
         /// <inheritdoc/>
         string IImageModel.Url => this.Url();
     }

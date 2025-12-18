@@ -1,5 +1,6 @@
 #nullable enable
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.Models;
@@ -10,7 +11,7 @@ using Umbraco.Cms.Infrastructure.Scoping;
 namespace Articulate.Migrations.Upgrade
 {
     /// <inheritdoc />
-    [Obsolete("'MigrationBase' is obsolete: Use 'AsyncMigrationBase' instead. Scheduled for removal in Umbraco 18", false)]
+    [Obsolete("This class and its base 'MigrationBase' are obsolete: Use 'AsyncMigrationBase' instead. Scheduled for removal in Umbraco 18", false)]
     public abstract class MigrateDataTypeConfigurationBase(
         IMigrationContext context,
         IScopeProvider scopeProvider,
@@ -87,19 +88,36 @@ namespace Articulate.Migrations.Upgrade
             }
         }
 
+        private static readonly JsonSerializerOptions SerializerOptions = new()
+        {
+            WriteIndented = false
+        };
+
         private static bool EqualsConfig(object? a, object? b, ILogger logger)
         {
             try
             {
-                var sa = JsonSerializer.Serialize(a ?? new Dictionary<string, object?>());
-                var sb = JsonSerializer.Serialize(b ?? new Dictionary<string, object?>());
-                return string.Equals(sa, sb, StringComparison.Ordinal);
+                JsonNode nodeA = ConvertToNode(a);
+                JsonNode nodeB = ConvertToNode(b);
+                return JsonNode.DeepEquals(nodeA, nodeB);
             }
             catch (Exception ex)
             {
-                logger.LogWarning(ex, "Failed to compare configuration JSON, using default comparison");
-                return Equals(a, b);
+                logger.LogWarning(ex, "Failed to compare configuration JSON, assuming difference to force update.");
+                return false;
             }
+        }
+
+        private static JsonNode ConvertToNode(object? value)
+        {
+            if (value is JsonNode node)
+            {
+                return node;
+            }
+
+            string json = JsonSerializer.Serialize(value ?? new Dictionary<string, object?>(), SerializerOptions);
+            var parsed = JsonNode.Parse(json);
+            return parsed ?? JsonNode.Parse("{}")!;
         }
     }
 }

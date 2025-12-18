@@ -9,6 +9,7 @@ namespace Articulate.Components
     internal class ArticulateViewLocationExpander : IViewLocationExpander
     {
         private const string ThemeKey = "articulate-theme";
+        private const string ThemeItemsKey = "ThemeName";
 
         /// <inheritdoc/>
         public IEnumerable<string> ExpandViewLocations(ViewLocationExpanderContext context, IEnumerable<string> viewLocations)
@@ -20,11 +21,10 @@ namespace Articulate.Components
             if (string.IsNullOrEmpty(themeName))
             {
                 // Fallback: try HttpContext.Items when Values is unavailable (e.g., in unit tests)
-                HttpContext? httpContextForItems = context.ActionContext.HttpContext;
-                if (httpContextForItems.Items["ThemeName"] is string fromItems &&
-                    !string.IsNullOrWhiteSpace(fromItems))
+                HttpContext? httpContextForItems = context.ActionContext?.HttpContext;
+                if (themeName is null && httpContextForItems?.Items[ThemeItemsKey] is string detectedThemeName)
                 {
-                    themeName = fromItems;
+                    themeName = detectedThemeName;
                 }
             }
 
@@ -53,7 +53,7 @@ namespace Articulate.Components
         /// <inheritdoc/>
         public void PopulateValues(ViewLocationExpanderContext context)
         {
-            HttpContext? httpContext = context.ActionContext.HttpContext;
+            HttpContext? httpContext = context.ActionContext?.HttpContext;
             if (httpContext is null)
             {
                 return;
@@ -69,11 +69,11 @@ namespace Articulate.Components
 
             if (string.IsNullOrWhiteSpace(themeName))
             {
-                _ = httpContext.Items.Remove("ThemeName");
+                _ = httpContext.Items.Remove(ThemeItemsKey);
             }
             else
             {
-                httpContext.Items["ThemeName"] = themeName;
+                httpContext.Items[ThemeItemsKey] = themeName;
             }
         }
     }

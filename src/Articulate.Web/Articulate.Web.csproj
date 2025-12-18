@@ -31,7 +31,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!--Copy Api package XML documentation for Swagger docs, transative install-->
+    <!--Copy Api package XML documentation for Swagger docs, transitive install-->
     <Content Include="build\Articulate.targets" Pack="true" PackagePath="build\" />
   </ItemGroup>
 

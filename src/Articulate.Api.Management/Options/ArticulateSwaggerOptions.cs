@@ -4,8 +4,9 @@ using Articulate.Api.Management.Swagger;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+#if NET10_0_OR_GREATER
 using Microsoft.OpenApi;
-#if NET9_0
+#else
 using Microsoft.OpenApi.Models;
 #endif
 using Swashbuckle.AspNetCore.SwaggerGen;

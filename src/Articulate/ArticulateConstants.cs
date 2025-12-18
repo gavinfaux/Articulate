@@ -19,7 +19,7 @@ namespace Articulate
         public static class Convention
         {
             public const string ArticlesDocument = "Articles";
-            public const string Articulate = "Articulate";
+            public const string ArticulateMediaFolder = "Articulate";
             public const string AuthorsDocument = "Authors";
         }
 

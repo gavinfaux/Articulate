@@ -14,9 +14,6 @@ using Umbraco.Cms.Web.Common.Authorization;
 namespace Articulate.Api.Management.Controllers
 {
     /// <summary>
-    /// Provides API endpoints for managing Articulate themes, including copying a theme and retrieving default themes.
-    /// </summary>
-    /// <summary>
     /// Provides API endpoints for managing Articulate themes, including operations for copying a theme to a new name and retrieving default themes.
     /// </summary>
     [ManagementApi(Constants.ManagementApi.ThemeOptions)]

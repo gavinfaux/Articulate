@@ -78,7 +78,14 @@ namespace Articulate.ImportExport
 
                     if (comment.Content?.ContentType == BlogMLContentType.Base64 && !string.IsNullOrEmpty(comment.Content.Content))
                     {
-                        commentText = Encoding.UTF8.GetString(Convert.FromBase64String(comment.Content.Content));
+                        try
+                        {
+                            commentText = Encoding.UTF8.GetString(Convert.FromBase64String(comment.Content.Content));
+                        }
+                        catch (FormatException ex)
+                        {
+                            logger.LogWarning(ex, "Failed to decode Base64 comment content for comment {CommentId}", comment.Id);
+                        }
                     }
                     var xComment = new XElement(
                         nsWp + "comment",

@@ -7,18 +7,18 @@ using Umbraco.Cms.Core.Services;
 
 namespace Articulate.Components
 {
-    public class ContentSavedHandler : INotificationAsyncHandler<ContentSavedNotification>
+    public class ContentSavedAsyncHandler : INotificationAsyncHandler<ContentSavedNotification>
     {
         private readonly IContentTypeService _contentTypeService;
         private readonly IContentService _contentService;
         private readonly ILanguageService _languageService;
-        private readonly ILogger<ContentSavedHandler> _logger;
+        private readonly ILogger<ContentSavedAsyncHandler> _logger;
 
-        public ContentSavedHandler(
+        public ContentSavedAsyncHandler(
             IContentTypeService contentTypeService,
             IContentService contentService,
             ILanguageService languageService,
-            ILogger<ContentSavedHandler> logger)
+            ILogger<ContentSavedAsyncHandler> logger)
         {
             _contentTypeService = contentTypeService;
             _contentService = contentService;
@@ -26,7 +26,7 @@ namespace Articulate.Components
             _logger = logger;
         }
 
-        // TODO: Review
+
         /// <inheritdoc/>
         public async Task HandleAsync(ContentSavedNotification notification, CancellationToken cancellationToken)
         {
@@ -39,9 +39,11 @@ namespace Articulate.Components
 
                 // it's a root blog node, set up the required sub nodes (archive , authors) if they don't exist
                 var defaultLang = await _languageService.GetDefaultIsoCodeAsync().ConfigureAwait(false);
-                var children = _contentService.GetPagedChildren(c.Id, 0, 10, out var total).ToList();
+                cancellationToken.ThrowIfCancellationRequested();
 
-                if (total == 0 || children.All(x => x.ContentType.Alias != ArticulateConstants.ContentType.ArticulateArchive))
+                bool hasArchive = ChildExists(c.Id, ArticulateConstants.ContentType.ArticulateArchive, cancellationToken);
+
+                if (!hasArchive)
                 {
                     IContentType? archiveContentType = _contentTypeService.Get(ArticulateConstants.ContentType.ArticulateArchive);
                     if (archiveContentType is not null)
@@ -65,7 +67,10 @@ namespace Articulate.Components
                     }
                 }
 
-                if (total != 0 && children.Any(x => x.ContentType.Alias == ArticulateConstants.ContentType.ArticulateAuthors))
+                cancellationToken.ThrowIfCancellationRequested();
+
+                bool hasAuthors = ChildExists(c.Id, ArticulateConstants.ContentType.ArticulateAuthors, cancellationToken);
+                if (hasAuthors)
                 {
                     continue;
                 }
@@ -92,6 +97,32 @@ namespace Articulate.Components
                     _logger.LogError("Failed to save authors node: {SaveResult}", authorSaveResult);
                     throw new InvalidOperationException($"Failed to save authors node: {authorSaveResult}");
                 }
+            }
+        }
+
+        private bool ChildExists(int parentId, string contentTypeAlias, CancellationToken cancellationToken)
+        {
+            const int pageSize = 50;
+            var pageIndex = 0;
+
+            while (true)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                IEnumerable<IContent> page = _contentService.GetPagedChildren(parentId, pageIndex, pageSize, out var total);
+                List<IContent> items = page?.ToList() ?? [];
+
+                if (items.Any(x => x.ContentType.Alias == contentTypeAlias))
+                {
+                    return true;
+                }
+
+                if (items.Count == 0 || (pageIndex + 1) * pageSize >= total)
+                {
+                    return false;
+                }
+
+                pageIndex++;
             }
         }
     }

@@ -17,7 +17,7 @@ namespace Articulate.Models
         {
             if (!_maxCount.HasValue)
             {
-                _maxCount = this.Max(x => x.PostCount);
+                _maxCount = this.DefaultIfEmpty().Max(x => x?.PostCount ?? 0);
             }
 
             if (_maxCount.Value == 0)

@@ -17,13 +17,14 @@ namespace Articulate.Components
         : IAsyncComponent
     {
         /// <inheritdoc/>
-        public Task InitializeAsync(bool isRestarting, CancellationToken cancellationToken) => Task.Run(Initialize, cancellationToken);
-
-        /// <inheritdoc/>
-        public Task TerminateAsync(bool isRestarting, CancellationToken cancellationToken)
+        public Task InitializeAsync(bool isRestarting, CancellationToken cancellationToken)
         {
+            Initialize();
             return Task.CompletedTask;
         }
+
+        /// <inheritdoc/>
+        public Task TerminateAsync(bool isRestarting, CancellationToken cancellationToken) => Task.CompletedTask;
 
         private void Initialize()
         {

@@ -97,8 +97,7 @@ namespace Articulate.Services
                 TimeSpan.FromSeconds(30)).ConfigureAwait(false);
 
         /// <inheritdoc/>
-        public Task<IEnumerable<string>> GetDefaultThemesAsync() => Task.Run(() => DefaultThemes.AllThemeNames);
-
+        public Task<IEnumerable<string>> GetDefaultThemesAsync() => Task.FromResult<IEnumerable<string>>(DefaultThemes.AllThemeNames);
         private static Task<IEnumerable<string>> GetThemesFromPhysicalPathAsync(string physicalPath) =>
             Task.Run(() => Directory.Exists(physicalPath)
                 ? new DirectoryInfo(physicalPath).GetDirectories().Select(d => d.Name)

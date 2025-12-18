@@ -61,7 +61,7 @@ namespace Articulate.Models
         public ListModel(IPublishedContent content, IPublishedValueFallback publishedValueFallback)
             : base(content, publishedValueFallback)
         {
-            ArgumentNullException.ThrowIfNull(content);
+            ArgumentNullException.ThrowIfNull(content, nameof(content));
             _posts = new Lazy<PostModel[]>(BuildPosts, LazyThreadSafetyMode.ExecutionAndPublication);
         }
 

@@ -114,9 +114,12 @@ namespace Articulate.Syndication.BlogML
             hash.Add(Version);
             hash.Add(XmlNamespace);
             hash.Add(XmlPrefix);
-            foreach (var tag in Context.Tags)
+            if (Context.Tags is not null)
             {
-                hash.Add(tag);
+                foreach (var tag in Context.Tags)
+                {
+                    hash.Add(tag);
+                }
             }
             return hash.ToHashCode();
         }

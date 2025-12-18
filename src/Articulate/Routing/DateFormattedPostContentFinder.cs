@@ -63,10 +63,12 @@ namespace Articulate.Routing
                 return false;
             }
 
-            if (node.Parent()?.Parent()?.Value<bool>("useDateFormatForUrl") != true)
+            bool? useDateFormat = node.Parent()?.Parent()?.Value<bool?>("useDateFormatForUrl");
+            if (useDateFormat != true)
             {
                 return false;
             }
+
             if (node.Value<DateTime>("publishedDate").Date != postDate.Date)
             {
                 return false;

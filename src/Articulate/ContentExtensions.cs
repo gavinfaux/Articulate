@@ -40,11 +40,11 @@ namespace Articulate
             IContentTypeComposition contentType,
             ILanguageService languageService)
         {
-            ArgumentNullException.ThrowIfNull(contentType);
+            ArgumentNullException.ThrowIfNull(contentType, nameof(contentType));
 
-            var variesByCulure = contentType.VariesByCulture();
+            var variesByCulture = contentType.VariesByCulture();
 
-            if (variesByCulure)
+            if (variesByCulture)
             {
                 content.SetCultureName(name, Task.Run(languageService.GetDefaultIsoCodeAsync).GetAwaiter().GetResult());
             }
@@ -69,7 +69,7 @@ namespace Articulate
             IContentTypeComposition contentType,
             ILanguageService languageService)
         {
-            ArgumentNullException.ThrowIfNull(contentType);
+            ArgumentNullException.ThrowIfNull(contentType, nameof(contentType));
 
             var variesByCulture = VariesByCulture(propertyTypeAlias, contentType);
 
@@ -98,7 +98,7 @@ namespace Articulate
             IJsonSerializer jsonSerializer,
             bool merge = false)
         {
-            ArgumentNullException.ThrowIfNull(contentType);
+            ArgumentNullException.ThrowIfNull(contentType, nameof(contentType));
 
             var variesByCulture = VariesByCulture(propertyTypeAlias, contentType);
 
@@ -129,7 +129,7 @@ namespace Articulate
             IContentTypeComposition contentType,
             Func<IContentBase, IContentTypeComposition, ContentCultureInfos, object> propertyValueGetter)
         {
-            ArgumentNullException.ThrowIfNull(contentType);
+            ArgumentNullException.ThrowIfNull(contentType, nameof(contentType));
 
             if (content.ContentType.VariesByCulture() && content.CultureInfos is not null)
             {

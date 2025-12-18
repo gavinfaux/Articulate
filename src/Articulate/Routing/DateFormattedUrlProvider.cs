@@ -79,7 +79,7 @@ namespace Articulate.Routing
 #if NET10_0_OR_GREATER
             UrlInfo? parentPath = base.GetUrl(parent, mode, culture, current);
             var parentUrl = parentPath?.Url?.ToString()?.EnsureEndsWith("/");
-            if (string.IsNullOrWhiteSpace(parentUrl))
+            if (string.IsNullOrWhiteSpace(parentUrl) || string.IsNullOrWhiteSpace(content.UrlSegment))
             {
                 return null;
             }
@@ -88,14 +88,13 @@ namespace Articulate.Routing
 
 #else
             UrlInfo? parentPath = base.GetUrl(parent, mode, culture, current);
-            var parentUrl = parentPath?.Text.EnsureEndsWith("/");
-            if (string.IsNullOrWhiteSpace(parentUrl))
+            var parentUrl = parentPath?.Text?.EnsureEndsWith("/");
+            if (string.IsNullOrWhiteSpace(parentUrl) || string.IsNullOrWhiteSpace(content.UrlSegment))
             {
                 return null;
             }
             var newUrl = parentUrl + urlFolder + "/" + content.UrlSegment?.EnsureEndsWith("/");
             return UrlInfo.Url(newUrl, culture);
-
 #endif
 
         }

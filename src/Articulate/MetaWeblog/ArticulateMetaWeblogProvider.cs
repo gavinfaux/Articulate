@@ -4,6 +4,7 @@ using System.Security.Authentication;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using Umbraco.Cms.Api.Management.Routing;
 using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.IO;
 using Umbraco.Cms.Core.Models;
@@ -43,6 +44,7 @@ namespace Articulate.MetaWeblog
         private readonly IUmbracoContextAccessor _umbracoContextAccessor;
         private readonly IUserService _userService;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IAbsoluteUrlBuilder _absoluteUrlBuilder;
 
         public ArticulateMetaWeblogProvider(
             IHttpContextAccessor httpContextAccessor,
@@ -63,7 +65,8 @@ namespace Articulate.MetaWeblog
             ILogger<ArticulateMetaWeblogProvider> logger,
             IMediaService mediaService,
             MediaUrlGeneratorCollection mediaUrlGenerators,
-            int articulateBlogRootNodeId)
+            int articulateBlogRootNodeId,
+            IAbsoluteUrlBuilder absoluteUrlBuilder)
         {
             _httpContextAccessor = httpContextAccessor;
             _umbracoContextAccessor = umbracoContextAccessor;
@@ -84,13 +87,14 @@ namespace Articulate.MetaWeblog
             _logger = logger;
             _mediaService = mediaService;
             _mediaUrlGenerators = mediaUrlGenerators;
+            _absoluteUrlBuilder = absoluteUrlBuilder;
             _articulateRootMediaFolder = new Lazy<IMedia>(() =>
             {
                 IMedia? root = _mediaService.GetRootMedia().FirstOrDefault(x =>
-                    x.Name == ArticulateConstants.Convention.Articulate && x.ContentType.Alias.InvariantEquals(
+                    x.Name == ArticulateConstants.Convention.ArticulateMediaFolder && x.ContentType.Alias.InvariantEquals(
                         Constants.Conventions.MediaTypes.Folder));
                 return root ?? _mediaService.CreateMediaWithIdentity(
-                    ArticulateConstants.Convention.Articulate,
+                    ArticulateConstants.Convention.ArticulateMediaFolder,
                     Constants.System.Root,
                     Constants.Conventions.MediaTypes.Folder);
             });
@@ -99,12 +103,12 @@ namespace Articulate.MetaWeblog
         // Seems these are not used/supported
         /// <inheritdoc/>
         public Task<int> AddCategoryAsync(string key, string username, string password, NewCategory category) =>
-            throw new NotImplementedException();
+            throw new NotSupportedException();
 
         // Not supporting pages from the WordPress implementation
         /// <inheritdoc/>
         public Task<string> AddPageAsync(string blogid, string username, string password, Page page, bool publish) =>
-            throw new NotImplementedException();
+            throw new NotSupportedException();
 
         /// <inheritdoc/>
         public async Task<string> AddPostAsync(string blogid, string username, string password, Post post, bool publish)
@@ -137,7 +141,7 @@ namespace Articulate.MetaWeblog
 
         /// <inheritdoc/>
         public Task<bool> DeletePageAsync(string blogid, string username, string password, string pageid) =>
-            throw new NotImplementedException();
+            throw new NotSupportedException();
 
         /// <inheritdoc/>
         public async Task<bool> DeletePostAsync(string key, string postid, string username, string password, bool publish)
@@ -160,12 +164,16 @@ namespace Articulate.MetaWeblog
 
             // Put in recycle bin - rather than unpublish
             OperationResult recycleResult = _contentService.MoveToRecycleBin(content, userId);
-            recycleResult.EnsureSuccess(_logger, $"move content {content.Id} to recycle bin");
+            if (!recycleResult.Success)
+            {
+                _logger.LogWarning("Failed to move content {ContentId} to recycle bin", content.Id);
+                return false;
+            }
             return true;
         }
 
         /// <inheritdoc/>
-        public Task<bool> EditPageAsync(string blogid, string pageid, string username, string password, Page page, bool publish) => throw new NotImplementedException();
+        public Task<bool> EditPageAsync(string blogid, string pageid, string username, string password, Page page, bool publish) => throw new NotSupportedException();
 
         /// <inheritdoc/>
         public async Task<bool> EditPostAsync(string postid, string username, string password, Post post, bool publish)
@@ -202,7 +210,7 @@ namespace Articulate.MetaWeblog
 
         /// <inheritdoc/>
         public Task<Author[]> GetAuthorsAsync(string blogid, string username, string password) =>
-            throw new NotImplementedException();
+            throw new NotSupportedException();
 
         /// <inheritdoc/>
         public async Task<CategoryInfo[]> GetCategoriesAsync(string blogid, string username, string password)
@@ -225,11 +233,11 @@ namespace Articulate.MetaWeblog
 
         /// <inheritdoc/>
         public Task<Page> GetPageAsync(string blogid, string pageid, string username, string password) =>
-            throw new NotImplementedException();
+            throw new NotSupportedException();
 
         /// <inheritdoc/>
         public Task<Page[]> GetPagesAsync(string blogid, string username, string password, int numPages) =>
-            throw new NotImplementedException();
+            throw new NotSupportedException();
 
         /// <inheritdoc/>
         public async Task<Post> GetPostAsync(string postid, string username, string password)
@@ -296,7 +304,7 @@ namespace Articulate.MetaWeblog
 
         /// <inheritdoc/>
         public Task<UserInfo> GetUserInfoAsync(string key, string username, string password) =>
-            throw new NotImplementedException();
+            throw new NotSupportedException();
 
         /// <inheritdoc/>
         public async Task<BlogInfo[]> GetUsersBlogsAsync(string key, string username, string password)
@@ -360,14 +368,13 @@ namespace Articulate.MetaWeblog
                 return new MediaObjectInfo { url = fileSystemUrl };
             }
 
-            var absUrl = fileSystemUrl.EnsureAbsoluteUrl(request);
+            var absUrl = _absoluteUrlBuilder.ToAbsoluteUrl(fileSystemUrl).ToString();
 
             var result = new MediaObjectInfo { url = absUrl };
 
             return result;
         }
 
-        // TODO: Review
         private void AddOrUpdateContent(IContent content, IContentType contentType, Post post, IUser user, bool publish, bool extractFirstImageAsProperty)
         {
             content.SetInvariantOrDefaultCultureName(post.title, contentType, _languageService);

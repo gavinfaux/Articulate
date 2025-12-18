@@ -187,7 +187,6 @@ namespace Articulate.ImportExport
             }
         }
 
-        // TODO: Review
         private void AddBlogPosts(IContent archiveNode, BlogMLDocument blogMlDoc, string? categoryGroup, string? tagGroup, bool exportImagesAsBase64)
         {
             const int pageSize = 1000;
