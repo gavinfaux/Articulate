@@ -7,9 +7,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Umbraco.Cms.Api.Common.Attributes;
 using Umbraco.Cms.Api.Management.Controllers;
-using Umbraco.Cms.Api.Management.Routing;
+using Umbraco.Cms.Core.Configuration.Models;
 using Umbraco.Cms.Core.Models.Membership;
 using Umbraco.Cms.Core.Security;
 using Umbraco.Cms.Web.Common.Authorization;
@@ -29,9 +30,12 @@ namespace Articulate.Api.Management.Controllers
         BlogMlImporter blogMlImporter,
         IBackOfficeSecurityAccessor backOfficeSecurityAccessor,
         ArticulateTempFileSystem articulateTempFileSystem,
-        ILogger<BlogMlApiController> logger)
+        ILogger<BlogMlApiController> logger,
+        IOptionsMonitor<RuntimeSettings> runtimeSettings)
         : ManagementApiControllerBase
     {
+        private const long DefaultMaxImportFileBytes = 50 * 1024 * 1024; // 50 MB safety fallback
+
         /// <summary>
         /// Begins the BlogML import process by accepting an uploaded XML file.
         /// </summary>
@@ -47,26 +51,58 @@ namespace Articulate.Api.Management.Controllers
         [Consumes("multipart/form-data")]
         public async Task<IActionResult> PostInitialize(IFormFile? importFile)
         {
-            if (importFile is null || !Path.GetExtension(importFile.FileName.Trim('\"')).InvariantEquals(".xml"))
+            if (importFile is null)
             {
                 return Problem(
                     title: "Invalid File",
-                    detail: "The request must contain a valid XML file.",
+                    detail: "The request must include a BlogML XML file.",
                     statusCode: StatusCodes.Status415UnsupportedMediaType);
             }
 
+            if (!Path.GetExtension(importFile.FileName.Trim('\"')).InvariantEquals(".xml"))
+            {
+                return Problem(
+                    title: "Invalid File",
+                    detail: "Only BlogML .xml files are accepted.",
+                    statusCode: StatusCodes.Status415UnsupportedMediaType);
+            }
+
+            long maxImportFileBytes = GetMaxImportFileBytes();
+
+            if (importFile.Length <= 0)
+            {
+                return Problem(
+                    title: "File Size Invalid",
+                    detail: "The uploaded file is empty or invalid.",
+                    statusCode: StatusCodes.Status400BadRequest);
+            }
+
+            if (importFile.Length > maxImportFileBytes)
+            {
+                return Problem(
+                    title: "File Too Large",
+                    detail: $"BlogML imports must be between 1 byte and {maxImportFileBytes / (1024 * 1024)} MB.",
+                    statusCode: StatusCodes.Status413PayloadTooLarge);
+            }
             try
             {
                 var fileName = Path.GetRandomFileName();
-                var stream = new MemoryStream();
-                await using (stream.ConfigureAwait(false))
-                {
-                    await importFile.CopyToAsync(stream).ConfigureAwait(false);
-                    articulateTempFileSystem.AddFile(fileName, stream);
-                }
+                await using Stream sourceStream = importFile.OpenReadStream();
+                using var buffer = new MemoryStream(capacity: (int)Math.Min(importFile.Length, Math.Min(maxImportFileBytes, int.MaxValue)));
+                await sourceStream.CopyToAsync(buffer).ConfigureAwait(false);
+                buffer.Position = 0;
+                articulateTempFileSystem.AddFile(fileName, buffer);
 
                 var count = blogMlImporter.GetPostCount(fileName);
                 return Ok(new ImportFileResponse { PostCount = count, TemporaryFileName = fileName });
+            }
+            catch (InvalidDataException ex)
+            {
+                logger.LogWarning(ex, "BlogML import file exceeded the configured size limit.");
+                return Problem(
+                    title: "File Too Large",
+                    detail: $"The BlogML file exceeds the maximum allowed size of {maxImportFileBytes / (1024 * 1024)} MB.",
+                    statusCode: StatusCodes.Status413PayloadTooLarge);
             }
             catch (Exception ex)
             {
@@ -209,6 +245,27 @@ namespace Articulate.Api.Management.Controllers
 
             Response.Headers.Append("Content-Disposition", $"attachment; filename*=UTF-8''{downloadFileName}");
             return File(fileStream, "application/octet-stream");
+        }
+
+        private long GetMaxImportFileBytes()
+        {
+            long? maxRequestLengthKb = runtimeSettings.CurrentValue.MaxRequestLength;
+            if (maxRequestLengthKb is null or <= 0)
+            {
+                return DefaultMaxImportFileBytes;
+            }
+
+            try
+            {
+                checked
+                {
+                    return maxRequestLengthKb.Value * 1024L;
+                }
+            }
+            catch (OverflowException)
+            {
+                return long.MaxValue;
+            }
         }
     }
 }
