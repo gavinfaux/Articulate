@@ -285,7 +285,7 @@ const staticAssetsPlugin = (): Plugin => {
       normalizedChangedFile === undefined
         ? bundles
         : bundles.filter((bundle) =>
-          [...bundle.inputs, ...(bundle.entry ? [bundle.entry] : [])].includes(normalizedChangedFile ?? "")
+          [...bundle.inputs, ...(bundle.entry ? [bundle.entry] : [])].includes(normalizedChangedFile)
         );
 
     if (targets.length === 0) {
@@ -296,7 +296,6 @@ const staticAssetsPlugin = (): Plugin => {
       await processBundle(bundle);
     }
   };
-
   const rebuildWithHandling = async (changedFile: string | undefined, failOnError: boolean) => {
     try {
       await rebuildBundles(changedFile);
@@ -500,8 +499,13 @@ const versioningPlugin = (): Plugin => {
 
       // update package version for local NuGet package feed/tests
       console.log(`Updating package.json version to ${version}`);
-      const pnpmCommand = `pnpm version ${version} --allow-same-version --no-git-tag-version`;
-      execSync(pnpmCommand, { encoding: "utf8" });
+      try {
+        const pnpmCommand = `pnpm version ${version} --allow-same-version --no-git-tag-version`;
+        execSync(pnpmCommand, { encoding: "utf8" });
+      } catch (e) {
+        console.error(`Failed to update package.json version: ${(e as Error).message}`);
+        console.error("Make sure pnpm is installed and accessible in PATH");
+      }
     },
   };
 };
