@@ -1,0 +1,89 @@
+@model IMasterModel
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    @Model.GoogleAnalyticsTracking()
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+
+    <title>@Model.PageTitle</title>
+    @Model.MetaTags()
+    @Html.SocialMetaTags(Model)
+    @Model.AdvertiseWeblogApi()
+    @Model.RssFeed()
+    @Model.RenderOpenSearch()
+
+    <environment include="Development">
+        <link href="~/App_Plugins/Articulate/Themes/VAPOR/src/css/normalize.css" rel="stylesheet" fetchpriority="high" asp-append-version="true">
+        <link href="~/App_Plugins/Articulate/Themes/VAPOR/src/css/screen.css" rel="stylesheet" asp-append-version="true">
+    </environment>
+    <environment exclude="Development">
+        <link href="~/App_Plugins/Articulate/Themes/VAPOR/dist/css/vapor.css" rel="stylesheet" fetchpriority="high" asp-append-version="true">
+    </environment>
+
+    <!-- Google Fonts -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?subset=latin,cyrillic-ext,latin-ext,cyrillic&family=Open+Sans+Condensed:300|Open+Sans:400,600,400italic,600italic|Merriweather:400,300,300italic,400italic,700,700italic|Roboto+Slab:400,300&display=swap">
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@@fortawesome/fontawesome-free@6.7.2/css/fontawesome.min.css" integrity="sha256-TBe0l9PhFaVR3DwHmA2jQbUf1y6yQ22RBgJKKkNkC50=" crossorigin="anonymous" media="all">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@@fortawesome/fontawesome-free@6.7.2/css/brands.min.css" integrity="sha256-lvqQzfgRxG8QBB5QMqpZGrljg5T/hNmC3vC7i3zntlI=" crossorigin="anonymous" media="all">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@@fortawesome/fontawesome-free@6.7.2/css/solid.min.css" integrity="sha256-ETbOOM9U8WfaXg2AkW2t+QbdpWYFRAO+HEXOth8EQbY=" crossorigin="anonymous" media="all">
+
+    @await RenderSectionAsync("Header", false)
+</head>
+<body class="@ViewBag.CssBodyClass">
+    @Model.GoogleAnalyticsNoScript()
+    <a href="#main-content" class="skip-link" title="Skip to main content">Skip to main content</a>
+
+    <header id="site-head" role="banner">
+
+        @if (!Model.BlogLogo.IsNullOrWhiteSpace())
+        {
+            <a id="blog-logo" href="@Model.ArticulateRootUrl()" title="Blog Home">
+                <div class="bloglogo" style="background: url(@Model.BlogLogo)"></div>
+            </a>
+        }
+
+        <h1 class="blog-title">
+            <a href="@Model.ArticulateRootUrl()" title="Blog Home">
+                @Model.BlogTitle
+            </a>
+        </h1>
+
+        @await Html.PartialAsync("HeaderDescription", Model)
+        @await Html.PartialAsync("Menu", Model)
+
+    </header>
+
+    <main id="main-content" role="main" tabindex="-1">
+        @RenderBody()
+    </main>
+
+
+    <footer class="site-footer">
+        <div class="inner">
+
+            @await Html.PartialAsync("FooterDescription", Model)
+
+            <section class="copyright">
+                &copy; @DateTime.Now.ToString("yyyy")
+                <a href="/" title="Blog Home">@Model.BlogTitle</a>. All rights reserved.
+            </section>
+            <section>Vapor theme by <a href="https://sethlilly.com/" title="Theme Author Website">Seth Lilly</a></section>
+
+        </div>
+    </footer>
+
+    <environment include="Development">
+        <script defer src="~/App_Plugins/Articulate/Themes/VAPOR/src/js/a11y.js" type="text/javascript" asp-append-version="true"></script>
+    </environment>
+    <environment exclude="Development">
+        <script defer src="~/App_Plugins/Articulate/Themes/VAPOR/dist/js/vapor.js" type="text/javascript" asp-append-version="true"></script>
+    </environment>
+
+</body>
+</html>

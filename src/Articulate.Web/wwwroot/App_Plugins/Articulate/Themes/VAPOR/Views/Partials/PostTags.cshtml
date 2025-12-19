@@ -1,0 +1,43 @@
+@model PostModel
+
+@if (Model.Tags.Any() || Model.Categories.Any())
+{
+    <div class="post-meta tags">
+
+        @if (Model.Categories.Any())
+        {
+            var categories = Model.Categories.ToList();
+            <div>
+                Categories
+
+                @for (int i = 0; i < categories.Count; i++)
+                {
+                    var category = categories[i];
+                    <a href="@Model.ArticulateCategoryUrl(category)" title="View Posts in the category @category">@category</a>
+                    if (i < categories.Count - 1)
+                    {
+                        <span>, </span>
+                    }
+                }
+            </div>
+        }
+
+        @if (Model.Tags.Any())
+        {
+            var tags = Model.Tags.ToList();
+            <div>
+                Posted in
+
+                @for (int i = 0; i < tags.Count; i++)
+                {
+                    var tag = tags[i];
+                    <a href="@Model.ArticulateTagUrl(tag)" title="View Posts with the tag @tag">@tag</a>
+                    if (i < tags.Count - 1)
+                    {
+                        <span>, </span>
+                    }
+                }
+            </div>
+        }
+    </div>
+}

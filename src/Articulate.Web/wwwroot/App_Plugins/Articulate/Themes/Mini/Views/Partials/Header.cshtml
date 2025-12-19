@@ -1,0 +1,38 @@
+@model IMasterModel
+
+<div class="header-placeholder">&nbsp;</div>
+
+@{
+    string backgroundStyle = "";
+    if (!string.IsNullOrWhiteSpace(Model.BlogBanner))
+    {
+        // Validate URL and encode for CSS context
+        var encodedUrl = System.Web.HttpUtility.UrlPathEncode(Model.BlogBanner);
+        if (Uri.TryCreate(encodedUrl, UriKind.RelativeOrAbsolute, out var uri))
+        {
+            backgroundStyle = $"background-image: url('{encodedUrl.Replace("'", "\\'")}');";
+        }
+    }
+}
+
+<div class="header-content" style="@backgroundStyle">
+
+    @if (!string.IsNullOrWhiteSpace(Model.BlogLogo))
+    {
+        <a class="logo" href="@Model.ArticulateRootUrl()"><img src="@Model.BlogLogo" alt="Blog Logo" class="blog-logo" /></a>
+    }
+
+    <!--- Title --->
+    <div class="header-title">
+
+        <a href="@Model.ArticulateRootUrl()">
+            <h1 class="blog-title">@Model.BlogTitle</h1>
+        </a>
+        <h2 class="blog-description">@Model.BlogDescription</h2>
+    </div>
+
+    <!--- Header Menu --->
+    @await Html.PartialAsync("Menu", Model)
+
+</div>
+
