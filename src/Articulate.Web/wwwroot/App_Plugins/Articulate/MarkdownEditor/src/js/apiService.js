@@ -8,32 +8,45 @@ import { authService } from './authService.js';
  * @returns {Promise<object>} The JSON response from the server.
  */
 async function createPost(postData, fileMap) {
-    const token = authService.getAccessToken();
+    const token = await authService.getAccessToken();
     if (!token) {
-        // Create a specific error type for session issues
         const error = new Error('Session expired. Please log in again.');
         error.isAuthError = true;
         throw error;
     }
-
     const formData = new FormData();
     formData.append('json', JSON.stringify(postData));
+
+    const fileEntries = Array.from(fileMap.entries()).map(([key, file]) => ({
+        key,
+        name: file?.name ?? '<unnamed>',
+        size: file?.size ?? 0,
+        type: file?.type ?? '<unknown>',
+    }));
+    console.debug('[apiService] createPost: appending files', fileEntries);
+
     for (const [key, file] of fileMap.entries()) {
         formData.append(key, file);
     }
 
-    const response = await fetch(config.editorPostUrl, {
+    console.debug('[apiService] createPost: form keys', Array.from(formData.keys()));
+
+    const requestOptions = {
         method: 'POST',
-        headers: {
-            'Authorization': `Bearer ${token}`,
-            // 'Content-Type' is not needed; the browser sets it for FormData
-        },
+        credentials: 'include',
         body: formData,
-    });
+    };
+
+    if (token) {
+        requestOptions.headers = {
+            'Authorization': `Bearer ${token}`,
+        };
+    }
+
+    const response = await fetch(config.editorPostUrl, requestOptions);
 
     if (!response.ok) {
-        // Let the caller handle the non-ok response by throwing the response object itself
-        // This allows access to status code and body for detailed error formatting.
+        // Defer parsing/normalisation to error-formatter
         throw response;
     }
 
@@ -43,25 +56,28 @@ async function createPost(postData, fileMap) {
 async function getCurrentUser() {
     const token = await authService.getAccessToken();
     if (!token) {
-        throw new Error('User not authenticated');
+        const error = new Error('User not authenticated');
+        error.isAuthError = true;
+        throw error;
     }
 
-    const response = await fetch(config.currentUserUrl, {
+    const requestOptions = {
         method: 'GET',
+        credentials: 'include',
         headers: {
             'Accept': 'application/json',
-            'Authorization': `Bearer ${token}`
-        }
-    });
+        },
+    };
+
+    if (token) {
+        requestOptions.headers.Authorization = `Bearer ${token}`;
+    }
+
+    const response = await fetch(config.currentUserUrl, requestOptions);
 
     if (!response.ok) {
-        const errorData = await response.json().catch(() => null);
-        const error = new Error('Failed to fetch user data');
-        error.details = errorData;
-        if (response.status === 401) {
-            error.isAuthError = true;
-        }
-        throw error;
+        // Defer parsing/normalisation to error-formatter
+        throw response;
     }
 
     return response.json();
