@@ -21,7 +21,7 @@
 	</PropertyGroup>
 	<PropertyGroup Condition="'$(TargetFramework)' == 'net10.0'">
 		<!-- Support Umbraco 17.x (including pre-release) on .NET 10 -->
-		<UmbracoCmsPackageVersion>[17.0.1,18.0.0)</UmbracoCmsPackageVersion>
+		<UmbracoCmsPackageVersion>[17.0.2,18.0.0)</UmbracoCmsPackageVersion>
 		<MicrosoftOpenApiPackageVersion>[2.3.0,3.0.0)</MicrosoftOpenApiPackageVersion>
 		<MicrosoftCodeAnalysisPackageVersion>[5.0.0,6.0.0)</MicrosoftCodeAnalysisPackageVersion>
 		<SystemServiceModelSyndicationPackageVersion>[10.0.0,11.0.0)</SystemServiceModelSyndicationPackageVersion>
