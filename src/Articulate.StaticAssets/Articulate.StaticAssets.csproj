@@ -63,11 +63,11 @@
           IgnoreExitCode="true">
       <Output TaskParameter="ExitCode" PropertyName="PnpmFrozenExitCode" />
     </Exec>
+    <Error Text="Frozen lockfile install failed in CI. Update pnpm-lock.yaml locally."
+          Condition="'$(PnpmFrozenExitCode)' != '0' and '$(CI)' == 'true'" />
     <Exec Command="pnpm install"
           WorkingDirectory="$(ClientProjectDirectory)"
-          Condition="'$(PnpmFrozenExitCode)' != '0'" />
-    <Warning Text="Frozen lockfile install failed, falling back to standard install. Consider updating pnpm-lock.yaml."
-             Condition="'$(PnpmFrozenExitCode)' != '0'" />
+          Condition="'$(PnpmFrozenExitCode)' != '0' and '$(CI)' != 'true'" />
     <!-- Run the actual client build after restores so pack gets real assets. Keep failure fatal for CI; devs can disable via EnableClientBuild=false. -->
     <Exec Command="$(ClientBuildCommand)"
           WorkingDirectory="$(ClientProjectDirectory)" />
@@ -90,7 +90,7 @@
              Properties="TargetFramework=$(ClientBuildTargetFramework);Configuration=$(Configuration)" />
   </Target>
 
-  <Target Name="SyncArticulateWebAssets" Condition="Exists('$(ArticulateWebAssetsRoot)')" AfterTargets="BuildBackofficeClient" BeforeTargets="ResolveStaticWebAssetsInputs">
+  <Target Name="SyncArticulateWebAssets" Condition="Exists('$(ArticulateWebAssetsRoot)')" BeforeTargets="ResolveStaticWebAssetsInputs">
     <Message Text="Synchronizing Articulate.Web static assets into Articulate.StaticAssets" Importance="Low" />
     
     <!-- Dynamic re-scan to catch assets generated during the build -->
@@ -118,7 +118,7 @@
     </ItemGroup>
   </Target>
 
-  <Target Name="CleanMirroredStaticAssets" BeforeTargets="SyncArticulateWebAssets">
+  <Target Name="CleanMirroredStaticAssets" AfterTargets="Clean" Condition="'$(BuildingInsideVisualStudio)'!='true'">
     <Message Text="Cleaning mirrored Markdown editor and theme assets before sync" Importance="Low" />
     <RemoveDir Condition="Exists('$(MarkdownEditorOutputDir)')"
               Directories="$(MarkdownEditorOutputDir)"
@@ -126,10 +126,7 @@
     <RemoveDir Condition="Exists('$(ThemesOutputDir)')"
               Directories="$(ThemesOutputDir)"
               ContinueOnError="WarnAndContinue" />
-    <RemoveDir Condition="Exists('$(MarkdownEditorOutputDir)')" Directories="$(MarkdownEditorOutputDir)" ContinueOnError="true"  />
-    <RemoveDir Condition="Exists('$(ThemesOutputDir)')" Directories="$(ThemesOutputDir)" ContinueOnError="true"  />
   </Target>
-
   <Target Name="RefreshBackofficeStaticWebAssetItems"
           AfterTargets="BuildBackofficeClient"
           BeforeTargets="ResolveStaticWebAssetsInputs"
