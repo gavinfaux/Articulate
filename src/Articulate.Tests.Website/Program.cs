@@ -13,7 +13,6 @@ if (builder.Environment.IsProduction())
     // Do not use in development mode or published releases, Umbraco will not start with a circular reference exception
     // builder.WebHost.UseStaticWebAssets();
 }
-
 WebApplication app = builder.Build();
 
 await app.BootUmbracoAsync().ConfigureAwait(false);
