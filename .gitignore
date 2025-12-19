@@ -493,26 +493,22 @@ gitleaks-report.json
 # Uncomment if necessary however generally it will be regenerated when needed
 #!**/[Pp]ackages/repositories.config
 # except monaco editor package used for now by Articulate's Markdown property editor
-!src/Articulate.Api.Management/Client/src/packages/
-!src/Articulate.Api.Management/Client/src/packages/**
+!/src/Articulate.Api.Management/Client/src/packages/
+!/src/Articulate.Api.Management/Client/src/packages/**
 
 # theme build artifacts
 /src/Articulate.Web/wwwroot/App_Plugins/Articulate/Themes/**/dist/
 /src/Articulate.Web/wwwroot/App_Plugins/Articulate/MarkdownEditor/dist/
 /src/Articulate.StaticAssets/wwwroot/App_Plugins/Articulate/
 /build/tmp
-build/ClientAssets/BackofficeClient.stamp
-
+/build/ClientAssets/BackofficeClient.stamp
 # test website junk
 /src/Articulate.Tests.Website/Articulate/Temp
 /src/Articulate.Tests.Website/umbraco/**
-/src/Articulate.Tests.Website/wwwroot/media
+/src/Articulate.Tests.Website/wwwroot/media/*
 !/src/Articulate.Tests.Website/wwwroot/media/.gitignore
 /src/Articulate.Tests.Website/Views/Articulate
 /src/Articulate.Tests.Website/Views/ArticulateThemes
-src/Articulate.Tests.Website/appsettings-schema.Umbraco.Cms.json
-src/Articulate.Tests.Website/umbraco-package-schema.json
-src/Articulate.Tests.Website/appsettings-schema.json
-src/Articulate.Api.Management/Client/pnpm-workspace.yaml
-
-
+/src/Articulate.Tests.Website/appsettings-schema.Umbraco.Cms.json
+/src/Articulate.Tests.Website/umbraco-package-schema.json
+/src/Articulate.Tests.Website/appsettings-schema.json

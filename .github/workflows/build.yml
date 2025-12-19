@@ -1,8 +1,6 @@
 name: Articulate Build
 
 on:
-  push:
-  pull_request:
   workflow_dispatch:
 
 jobs:
@@ -19,7 +17,7 @@ jobs:
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         fetch-depth: 0
     - uses: dotnet/nbgv@master
@@ -45,30 +43,44 @@ jobs:
             echo "Git tag missing, release build may not be traceable."
         }
 
-    - name: Add MSBuild to PATH
-      uses: microsoft/setup-msbuild@v2
-
-    - uses: nuget/setup-nuget@v2.0.1
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v4
       with:
-        nuget-version: 'latest'
+        version: 10.20.0
+        run_install: false
 
-    - uses: actions/setup-node@v4
+    - name: Setup NodeJS
+      uses: actions/setup-node@v5
       with:
         node-version-file: 'src/Articulate.Api.Management/Client/.nvmrc'
-        cache: 'npm'
-        cache-dependency-path: 'src/Articulate.Api.Management/Client/package-lock.json'
+        cache: 'pnpm'
+        cache-dependency-path: 'src/Articulate.Api.Management/Client/pnpm-lock.yaml'
 
-    - name: Nuget Restore
-      run: nuget restore $env:Solution_File
+    - name: Resolve pnpm store path
+      id: pnpm-cache
+      shell: pwsh
+      run: |
+        $path = pnpm store path
+        echo "path=$path" >> $env:GITHUB_OUTPUT
 
-    - name: MSBuild Clean
-      run: msbuild $env:Solution_File /p:Configuration=${{ env.Configuration }} /t:Clean
+    - name: Cache pnpm store
+      uses: actions/cache@v4
+      with:
+        path: ${{ steps.pnpm-cache.outputs.path }}
+        key: ${{ runner.os }}-pnpm-store-${{ hashFiles('src/Articulate.Api.Management/Client/pnpm-lock.yaml') }}
+        restore-keys: |
+          ${{ runner.os }}-pnpm-store-
 
-    - name: MSBuild Build
-      run: msbuild $env:Solution_File /p:Configuration=${{ env.Configuration }}
+    - name: Setup .NET SDKs
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: |
+          9.0.308
+          10.0.101
 
-    - name: Dotnet Pack
-      run: dotnet pack $env:Solution_File --output ${{ env.Release_Folder }} --configuration ${{ env.Configuration }}
+    - name: Run build pipeline script
+      shell: pwsh
+      run: ./build/build.ps1
 
     - uses: actions/upload-artifact@v4
       with:
