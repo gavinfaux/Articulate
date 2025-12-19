@@ -5,9 +5,11 @@ using Articulate.Attributes;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
+using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Umbraco.Cms.Core;
+using Umbraco.Cms.Core.Configuration.Models;
 using Umbraco.Cms.Core.Web;
 using Umbraco.Cms.Web.Common.Controllers;
 using ManagementConstants = Articulate.Api.Management.Constants;
@@ -20,7 +22,8 @@ namespace Articulate.Web.Controllers
         ICompositeViewEngine compositeViewEngine,
         IUmbracoContextAccessor umbracoContextAccessor,
         IApiDescriptionGroupCollectionProvider apiDescriptionProvider,
-        IOptions<ArticulateOpenIdClientOptions> artClientOptions)
+        IOptions<ArticulateOpenIdClientOptions> artClientOptions,
+        IOptions<WebRoutingSettings> webRoutingSettings)
         : RenderController(logger, compositeViewEngine, umbracoContextAccessor)
     {
         [HttpGet]
@@ -44,12 +47,23 @@ namespace Articulate.Web.Controllers
                 editorUrl = urlFromMap;
             }
 
-            if (string.IsNullOrEmpty(editorUrl))
+            if (string.IsNullOrWhiteSpace(editorUrl))
             {
                 throw new InvalidOperationException(
                     $"Could not find the Management API URL for '{key}'. " +
                     "Check if the Articulate API routes are registered correctly at startup.");
             }
+
+            string baseUrl = !string.IsNullOrWhiteSpace(webRoutingSettings.Value.UmbracoApplicationUrl)
+                ? webRoutingSettings.Value.UmbracoApplicationUrl
+                : UriHelper.BuildAbsolute(Request.Scheme, Request.Host, Request.PathBase);
+
+            if (!Uri.TryCreate(baseUrl, UriKind.Absolute, out Uri? baseUri))
+            {
+                throw new InvalidOperationException($"The Umbraco application base URL '{baseUrl}' is not a valid absolute URI.");
+            }
+
+            editorUrl = new Uri(baseUri, editorUrl).ToString();
 
             ArticulateOpenIdClientOptions openIdClientOptions = artClientOptions.Value;
             string clientId = openIdClientOptions.ClientId ?? string.Empty;
@@ -152,6 +166,7 @@ namespace Articulate.Web.Controllers
             static string GetUmbracoPathFromManagementApiUrl(Uri managementApiUri)
             {
                 const string defaultUmbracoPath = Constants.System.DefaultUmbracoPath;
+                string defaultNormalized = Normalize(defaultUmbracoPath);
 
                 string path = managementApiUri.AbsolutePath;
 
@@ -159,22 +174,23 @@ namespace Articulate.Web.Controllers
                 int markerIndex = path.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
                 if (markerIndex <= 0)
                 {
-                    return defaultUmbracoPath;
+                    return defaultNormalized;
                 }
 
                 string prefix = path[..markerIndex];
-                if (string.IsNullOrWhiteSpace(prefix))
-                {
-                    return defaultUmbracoPath;
-                }
+                prefix = string.IsNullOrWhiteSpace(prefix) ? defaultUmbracoPath : prefix;
 
-                if (!prefix.StartsWith('/'))
-                {
-                    prefix = "/" + prefix;
-                }
+                prefix = Normalize(prefix);
+                return string.IsNullOrWhiteSpace(prefix) ? defaultNormalized : prefix;
 
-                prefix = prefix.TrimEnd('/');
-                return string.IsNullOrWhiteSpace(prefix) ? defaultUmbracoPath : prefix;
+                static string Normalize(string value)
+                {
+                    string normalized = value ?? string.Empty;
+                    normalized = normalized.TrimStart('~');
+                    normalized = normalized.EnsureStartsWith('/');
+                    normalized = normalized.TrimEnd('/');
+                    return normalized;
+                }
             }
         }
     }
