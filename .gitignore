@@ -512,3 +512,4 @@ gitleaks-report.json
 /src/Articulate.Tests.Website/appsettings-schema.Umbraco.Cms.json
 /src/Articulate.Tests.Website/umbraco-package-schema.json
 /src/Articulate.Tests.Website/appsettings-schema.json
+/RELEASE_NOTES_v6.0.0.md
