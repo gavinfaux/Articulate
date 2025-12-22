@@ -28,6 +28,7 @@ namespace Articulate.Components
 
             _ = services.AddSingleton<IArticulateTagRepository, ArticulateTagRepository>();
             _ = services.AddSingleton<ArticulateTagService>();
+            //_ = services.AddSingleton<IArticulateImageService, ArticulateImageService>();
 
             _ = services.AddSingleton<DisqusXmlExporter>();
             _ = services.AddSingleton<BlogMlImporter>();

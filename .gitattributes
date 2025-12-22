@@ -47,11 +47,11 @@
 *.resx text=auto
 *.yml text eol=lf core.whitespace whitespace=tab-in-indent,trailing-space,tabwidth=2
 *.yaml text eol=lf core.whitespace whitespace=tab-in-indent,trailing-space,tabwidth=2
-*.sh eol=lf
 *.ts text eol=lf
-*.tsx text eol=lf*.vbproj text=auto merge=union
+*.tsx text eol=lf
+*.vbproj text=auto merge=union
 *.fsproj text=auto merge=union
 *.dbproj text=auto merge=union
 *.sln text=auto eol=crlf merge=union
-
+*.sh text eol=lf
 *.gitattributes text=auto

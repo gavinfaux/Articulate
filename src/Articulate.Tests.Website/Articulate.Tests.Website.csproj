@@ -2,6 +2,7 @@
   <PropertyGroup>
     <TargetFrameworks>net9.0;net10.0</TargetFrameworks>
     <IsPackable>false</IsPackable>
+    <UseArticulateUsings>false</UseArticulateUsings>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Umbraco.Cms" Version="$(UmbracoCmsPackageVersion)" />
@@ -16,7 +17,7 @@
   </ItemGroup>
   <!-- Reference the Articulate project, static web assets for the backoffice for **development mode** -->
   <ItemGroup>
-    <ProjectReference Include="..\Articulate.StaticAssets\Articulate.StaticAssets.csproj">
+    <ProjectReference Include="..\Articulate.BackOffice.UI\Articulate.BackOffice.UI.csproj">
       <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
       <CopyStaticWebAssetsToPublish>true</CopyStaticWebAssetsToPublish>
     </ProjectReference>

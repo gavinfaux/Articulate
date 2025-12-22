@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Text.Encodings.Web;
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Html;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Razor;
@@ -645,5 +646,56 @@ namespace Articulate.Models
                 (list[i], list[j]) = (list[j], list[i]);
             }
         }
+
+        /// <summary>
+        /// Determines if the first markdown image should be hidden because it was extracted to postImage.
+        /// Compares URLs to detect if extraction occurred (both are guaranteed absolute by ContentSavingHandler).
+        /// </summary>
+        /// <param name="model">The post model</param>
+        /// <returns>True if the first markdown image was extracted to postImage and should be hidden</returns>
+        public static bool IsFirstImageExtracted(this PostModel model)
+        {
+            if (model.PostImage == null)
+            {
+                return false;
+            }
+
+            string firstMdImageUrl = model.GetFirstMarkdownImageUrl();
+            if (firstMdImageUrl == null)
+            {
+                return false;
+            }
+
+            string postImageUrl = model.PostImage.Url();
+            if (string.IsNullOrEmpty(postImageUrl))
+            {
+                return false;
+            }
+
+            return string.Equals(firstMdImageUrl, postImageUrl, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static readonly Regex s_markdownImageRegex = new(
+            @"!\[.*?\]\((.*?)\)",
+            RegexOptions.Compiled,
+            TimeSpan.FromMilliseconds(250));
+
+        /// <summary>
+        /// Extracts the first image URL from markdown content.
+        /// </summary>
+        /// <param name="model">The post model</param>
+        /// <returns>The URL of the first markdown image, or null if no images found</returns>
+        public static string GetFirstMarkdownImageUrl(this PostModel model)
+        {
+            string markdown = model.GetProperty("markdown")?.GetValue() as string;
+            if (string.IsNullOrWhiteSpace(markdown))
+            {
+                return null;
+            }
+
+            Match match = s_markdownImageRegex.Match(markdown);
+            return match.Success ? match.Groups[1].Value : null;
+        }
     }
 }
+

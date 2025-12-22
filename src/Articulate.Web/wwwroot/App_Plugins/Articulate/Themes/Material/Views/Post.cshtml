@@ -2,6 +2,9 @@
 @{
     Layout = "Master.cshtml";
     ViewBag.CssWrapperClass = "demo-blog--blogpost";
+
+    // Determine if first markdown image should be hidden (extracted to postImage)
+    var shouldHideFirstImage = Model.IsFirstImageExtracted();
 }
 
 @section header
@@ -29,7 +32,7 @@
             </div>
 
         </div>
-        <div class="mdl-color-text--grey-700 mdl-card__supporting-text">
+        <div class="mdl-color-text--grey-700 mdl-card__supporting-text post-content @(shouldHideFirstImage ? "hide-first-md-image" : "")">
             @Model.Body
         </div>
         <div class="mdl-color-text--grey-700 mdl-card__supporting-text meta">

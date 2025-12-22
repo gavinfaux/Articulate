@@ -1,12 +1,9 @@
 @model IMasterModel
 
 @{
-    var backgroundStyle = string.Empty;
-    if (!Model.BlogBanner.IsNullOrWhiteSpace())
-    {
-        var encodedUrl = System.Web.HttpUtility.UrlPathEncode(Model.BlogBanner);
-        backgroundStyle = $"background-image: url('{encodedUrl}');";
-    }
+    var backgroundStyle = Model.BlogBannerCss is not null
+        ? $"background-image: url('{Model.BlogBannerCss}');"
+        : string.Empty;
 }
 <div class="sidebar" role="heading" style="@backgroundStyle">
     <header class="header">

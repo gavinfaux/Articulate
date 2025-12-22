@@ -30,5 +30,9 @@ namespace Articulate.Options
         /// When true, Articulate content created during the installer is published automatically.
         /// </summary>
         public bool AutoPublishOnStartup { get; set; } = false;
+
+        public string[] AllowedImageExtensions{ get; set; } = ["jpg", "jpeg", "png", "gif", "bmp", "webp"];
+
+        public long MaxImageLength { get; set; } = 20000; // 20 MB
     }
 }

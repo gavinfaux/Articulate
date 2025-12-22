@@ -35,7 +35,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Articulate.Api.Management",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Articulate.Web", "Articulate.Web\Articulate.Web.csproj", "{151A74D4-597F-42B4-BFDC-11635E44144C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Articulate.StaticAssets", "Articulate.StaticAssets\Articulate.StaticAssets.csproj", "{83EBC079-D5F1-4697-B342-9BD4129CBDE5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Articulate.BackOffice.UI", "Articulate.BackOffice.UI\Articulate.BackOffice.UI.csproj", "{83EBC079-D5F1-4697-B342-9BD4129CBDE5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

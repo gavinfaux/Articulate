@@ -1,7 +1,11 @@
 @model PostModel
 @{
     Layout = "Master.cshtml";
-    ViewBag.CssBodyClass = $"post-template {string.Join(" ", Model.Tags.Select(t => $"tag-{t.ToLowerInvariant()}"))}";}
+    ViewBag.CssBodyClass = $"post-template {string.Join(" ", Model.Tags.Select(t => $"tag-{t.ToLowerInvariant()}"))}";
+
+    // Determine if first markdown image should be hidden (extracted to postImage)
+    var shouldHideFirstImage = Model.IsFirstImageExtracted();
+}
 
 @section header
 {
@@ -18,8 +22,10 @@
 
     <h1 class="post-title">@Model.Name</h1>
 
-    <section class="post-content">
-        @if (!string.IsNullOrWhiteSpace(Model.CroppedPostImageUrl))
+    <section class="post-content @(shouldHideFirstImage ? "hide-first-md-image" : "")">
+        @if (!string.IsNullOrWhiteSpace(Model.CroppedPostImageUrl)
+            && Uri.TryCreate(Model.CroppedPostImageUrl, UriKind.RelativeOrAbsolute, out var imgUri)
+            && (!imgUri.IsAbsoluteUri || (imgUri.Scheme == Uri.UriSchemeHttp || imgUri.Scheme == Uri.UriSchemeHttps)))
         {
             <img class="postImage" alt="@Model.Name" src="@Model.CroppedPostImageUrl" />
         }

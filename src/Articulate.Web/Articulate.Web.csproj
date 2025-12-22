@@ -1,42 +1,30 @@
-<Project Sdk="Microsoft.NET.Sdk.Razor">
-  <PropertyGroup>
-    <TargetFrameworks>net9.0;net10.0</TargetFrameworks>
-    <EnableDefaultStaticWebAssets>false</EnableDefaultStaticWebAssets>
-    <DisableImplicitStaticWebAssets>true</DisableImplicitStaticWebAssets>
-    <StaticWebAssetProjectMode>Disable</StaticWebAssetProjectMode>
-    <nullable>enable</nullable>
-  </PropertyGroup>
+﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
 
   <PropertyGroup>
+    <TargetFrameworks>net9.0;net10.0</TargetFrameworks>
     <PackageId>Articulate</PackageId>
     <Title>Articulate</Title>
+    <nullable>enable</nullable>
+    <UseArticulateUsings>true</UseArticulateUsings>
+    <!-- ENABLE Modern Web Assets (Replaces the need for targets files) -->
+    <StaticWebAssetsEnabled>true</StaticWebAssetsEnabled>
+    <!-- Allow Hybrid Mode (Serve as StaticContent, Embed as Resource) -->
+    <GenerateEmbeddedFilesManifest>true</GenerateEmbeddedFilesManifest>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Articulate\Articulate.csproj" />
-    <ProjectReference Include="..\Articulate.StaticAssets\Articulate.StaticAssets.csproj" />
     <ProjectReference Include="..\Articulate.Api.Management\Articulate.Api.Management.csproj" />
-
-
-  </ItemGroup>
-
-  <!-- Keep the wwwroot/App_Plugins tree on disk for development, but stop the SDK from treating it as static web assets.
-       Articulate.StaticAssets is the authoritative RCL that ships those files. -->
-  <ItemGroup>
-    <Content Remove="wwwroot\App_Plugins\**\*.*" />
-    <StaticWebAsset Remove="wwwroot\App_Plugins\**\*.*" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="wwwroot\App_Plugins\**\*.cshtml" />
+    <!-- Reference the UI project so it gets packed into this NuGet automatically -->
+    <ProjectReference Include="..\Articulate.BackOffice.UI\Articulate.BackOffice.UI.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <!--Copy Api package XML documentation for Swagger docs, transitive install-->
-    <Content Include="build\Articulate.targets" Pack="true" PackagePath="build\" />
-  </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="wwwroot" />
+    <EmbeddedResource Include="wwwroot\App_Plugins\Articulate\Themes\**">
+      <LogicalName>Articulate.Theme://%(RecursiveDir)%(Filename)%(Extension)</LogicalName>
+    </EmbeddedResource>
+
   </ItemGroup>
 
 </Project>

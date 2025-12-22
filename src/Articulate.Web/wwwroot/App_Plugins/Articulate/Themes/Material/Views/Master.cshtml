@@ -37,33 +37,29 @@
     @Model.RenderOpenSearch()
 
     <environment include="Development">
-        <link href="~/App_Plugins/Articulate/Themes/Material/src/css/material.pink-blue.min.css" rel="stylesheet" fetchpriority="high" asp-append-version="true">
-        <link href="~/App_Plugins/Articulate/Themes/Material/src/css/styles.css" rel="stylesheet" fetchpriority="high" asp-append-version="true">
-        <link href="~/App_Plugins/Articulate/Themes/Material/src/css/styles_custom.css" rel="stylesheet" asp-append-version="true">
+        <link href="~/App_Plugins/Articulate/Themes/Material/assets/vendor/mdl/material.pink-blue.min.css" rel="stylesheet" fetchpriority="high" asp-append-version="true">
+        <link href="~/App_Plugins/Articulate/Themes/Material/assets/src/css/styles.css" rel="stylesheet" fetchpriority="high" asp-append-version="true">
+        <link href="~/App_Plugins/Articulate/Themes/Material/assets/src/css/styles_custom.css" rel="stylesheet" asp-append-version="true">
     </environment>
     <environment exclude="Development">
-        <link href="~/App_Plugins/Articulate/Themes/Material/dist/css/material.css" rel="stylesheet" fetchpriority="high" asp-append-version="true">
+        <link href="~/App_Plugins/Articulate/Themes/Material/assets/dist/css/material.min.css" rel="stylesheet" fetchpriority="high" asp-append-version="true">
     </environment>
 
-    <link href="https://fonts.googleapis.com/css?family=Roboto:regular,bold,italic,thin,light,bolditalic,black,medium&lang=en&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Roboto:regular,italic&lang=en&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" media="all">
 
     @await RenderSectionAsync("Header", false)
 
-    @{
-        var blogBanner = Model.BlogBanner;
-    }
-    @if (!blogBanner.IsNullOrWhiteSpace())
+    @if (Model.BlogBannerCss is not null)
     {
         <style>
             body::before {
-                background-image: url('@Html.Raw(Model.BlogBanner)');
+                background-image: url('@Model.BlogBannerCss');
                 background-size: cover;
                 background-attachment: fixed;
             }
         </style>
     }
-
 </head>
 <body>
     @Model.GoogleAnalyticsNoScript()
@@ -76,13 +72,7 @@
         <div class="mdl-layout__obfuscator"></div>
     </div>
 
-    <environment include="Development">
-        <script defer src="~/App_Plugins/Articulate/Themes/Material/src/js/material.min.js" type="text/javascript" asp-append-version="true"></script>
-    </environment>
-    <environment exclude="Development">
-        <script defer src="~/App_Plugins/Articulate/Themes/Material/src/dist/material.min.js" type="text/javascript" asp-append-version="true"></script>
-    </environment>
-
+    <script defer src="~/App_Plugins/Articulate/Themes/Material/assets/vendor/mdl/material.min.js" type="text/javascript" asp-append-version="true"></script>
 
     @*This is kinda dumb but it's how google made the material design, this ensures media cards are clickable if they contain a link*@
     <script type="text/javascript">
@@ -95,9 +85,12 @@
           if(!target) {
             return;
           }
-          el.addEventListener('click', function() {
-            location.href = target;
-          });
+          // Validate URL scheme to prevent javascript: protocol XSS
+          if(target.startsWith('http://') || target.startsWith('https://') || target.startsWith('/')) {
+            el.addEventListener('click', function() {
+              location.href = target;
+            });
+          }
         });
     </script>
 

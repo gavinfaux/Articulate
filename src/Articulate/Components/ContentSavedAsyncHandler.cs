@@ -41,63 +41,67 @@ namespace Articulate.Components
                 var defaultLang = await _languageService.GetDefaultIsoCodeAsync().ConfigureAwait(false);
                 cancellationToken.ThrowIfCancellationRequested();
 
-                bool hasArchive = ChildExists(c.Id, ArticulateConstants.ContentType.ArticulateArchive, cancellationToken);
-
-                if (!hasArchive)
-                {
-                    IContentType? archiveContentType = _contentTypeService.Get(ArticulateConstants.ContentType.ArticulateArchive);
-                    if (archiveContentType is not null)
-                    {
-                        IContent articles = _contentService.Create(string.Empty, c, ArticulateConstants.ContentType.ArticulateArchive);
-                        if (archiveContentType.VariesByCulture())
-                        {
-                            articles.SetCultureName(ArticulateConstants.Convention.ArticlesDocument, defaultLang);
-                        }
-                        else
-                        {
-                            articles.Name = ArticulateConstants.Convention.ArticlesDocument;
-                        }
-
-                        OperationResult saveResult = _contentService.Save(articles);
-                        if (!saveResult.Success)
-                        {
-                            _logger.LogError("Failed to save articles node: {SaveResult}", saveResult);
-                            throw new InvalidOperationException($"Failed to save articles node: {saveResult}");
-                        }
-                    }
-                }
+                await EnsureChildNodeExistsAsync(
+                    c,
+                    ArticulateConstants.ContentType.ArticulateArchive,
+                    ArticulateConstants.Convention.ArticlesDocument,
+                    defaultLang,
+                    cancellationToken).ConfigureAwait(false);
 
                 cancellationToken.ThrowIfCancellationRequested();
 
-                bool hasAuthors = ChildExists(c.Id, ArticulateConstants.ContentType.ArticulateAuthors, cancellationToken);
-                if (hasAuthors)
-                {
-                    continue;
-                }
-
-                IContentType? authorContentType = _contentTypeService.Get(ArticulateConstants.ContentType.ArticulateAuthors);
-                if (authorContentType is null)
-                {
-                    continue;
-                }
-
-                IContent authors = _contentService.Create(string.Empty, c, ArticulateConstants.ContentType.ArticulateAuthors);
-                if (authorContentType.VariesByCulture())
-                {
-                    authors.SetCultureName(ArticulateConstants.Convention.AuthorsDocument, defaultLang);
-                }
-                else
-                {
-                    authors.Name = ArticulateConstants.Convention.AuthorsDocument;
-                }
-
-                OperationResult authorSaveResult = _contentService.Save(authors);
-                if (!authorSaveResult.Success)
-                {
-                    _logger.LogError("Failed to save authors node: {SaveResult}", authorSaveResult);
-                    throw new InvalidOperationException($"Failed to save authors node: {authorSaveResult}");
-                }
+                await EnsureChildNodeExistsAsync(
+                    c,
+                    ArticulateConstants.ContentType.ArticulateAuthors,
+                    ArticulateConstants.Convention.AuthorsDocument,
+                    defaultLang,
+                    cancellationToken).ConfigureAwait(false);
             }
+        }
+
+        private Task<bool> EnsureChildNodeExistsAsync(
+            IContent parent,
+            string contentTypeAlias,
+            string documentName,
+            string defaultLang,
+            CancellationToken cancellationToken)
+        {
+            if (ChildExists(parent.Id, contentTypeAlias, cancellationToken))
+            {
+                return Task.FromResult(true);
+            }
+
+            IContentType? contentType = _contentTypeService.Get(contentTypeAlias);
+            if (contentType is null)
+            {
+                _logger.LogWarning("Content type {ContentTypeAlias} not found when ensuring child for parent {ParentId}", contentTypeAlias, parent.Id);
+                return Task.FromResult(false);
+            }
+
+            IContent child = _contentService.Create(string.Empty, parent, contentTypeAlias);
+            if (contentType.VariesByCulture())
+            {
+                child.SetCultureName(documentName, defaultLang);
+            }
+            else
+            {
+                child.Name = documentName;
+            }
+
+            OperationResult saveResult = _contentService.Save(child);
+            if (!saveResult.Success)
+            {
+                // Mitigate race: if another request created it after our initial check, skip without error.
+                if (ChildExists(parent.Id, contentTypeAlias, cancellationToken))
+                {
+                    return Task.FromResult(true);
+                }
+
+                _logger.LogError("Failed to save {ContentType} node for parent {ParentId}: {SaveResult}", contentTypeAlias, parent.Id, saveResult);
+                return Task.FromResult(false);
+            }
+
+            return Task.FromResult(true);
         }
 
         private bool ChildExists(int parentId, string contentTypeAlias, CancellationToken cancellationToken)
@@ -105,24 +109,38 @@ namespace Articulate.Components
             const int pageSize = 50;
             var pageIndex = 0;
 
+            var contentTypeId = _contentTypeService.Get(contentTypeAlias)?.Id;
+            if (contentTypeId is null)
+            {
+                return false;
+            }
+
             while (true)
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                IEnumerable<IContent> page = _contentService.GetPagedChildren(parentId, pageIndex, pageSize, out var total);
-                List<IContent> items = page?.ToList() ?? [];
-
-                if (items.Any(x => x.ContentType.Alias == contentTypeAlias))
+                try
                 {
-                    return true;
-                }
+                    IEnumerable<IContent> page = _contentService.GetPagedChildren(parentId, pageIndex, pageSize, out var total);
+                    List<IContent> items = page?.ToList() ?? [];
 
-                if (items.Count == 0 || (pageIndex + 1) * pageSize >= total)
+                    if (items.Any(x => x.ContentTypeId == contentTypeId))
+                    {
+                        return true;
+                    }
+
+                    if (items.Count == 0 || (pageIndex + 1) * pageSize >= total)
+                    {
+                        return false;
+                    }
+
+                    pageIndex++;
+                }
+                catch (Exception ex)
                 {
-                    return false;
+                    _logger.LogError(ex, "Error checking if child exists for parent {ParentId} with type {ContentTypeAlias}", parentId, contentTypeAlias);
+                    return false; // Assume doesn't exist to allow creation attempt
                 }
-
-                pageIndex++;
             }
         }
     }

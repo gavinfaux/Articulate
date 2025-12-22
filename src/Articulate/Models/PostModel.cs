@@ -52,9 +52,9 @@ namespace Articulate.Models
                 }
 
                 field.Bio = authorNode.Value<string>("authorBio");
-                field.Url = authorNode.Value<string>("authorUrl");
+                field.Url = authorNode.Value<string>("authorUrl").ToSafeHrefUrl();
                 field.Image = authorNode.Value<MediaWithCrops>("authorImage");
-                field.BlogUrl = authorNode.Url();
+                field.BlogUrl = authorNode.Url().ToSafeHrefUrl();
 
                 return field;
             }

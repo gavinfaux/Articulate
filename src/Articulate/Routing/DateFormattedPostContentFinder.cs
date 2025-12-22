@@ -18,25 +18,46 @@ namespace Articulate.Routing
         {
             await Task.CompletedTask.ConfigureAwait(false);
 
-            // This simple logic should do the trick: basically if I find an url with more than 4 segments (the 3 date parts and the slug)
-            // I leave the last segment (the slug), remove the 3 date parts, and keep all the rest.
             var segmentLength = contentRequest.Uri.Segments.Length;
             if (segmentLength <= 4)
             {
                 return false;
             }
 
-            var stringDate = contentRequest.Uri.Segments[segmentLength - 4] + contentRequest.Uri.Segments[segmentLength - 3] + contentRequest.Uri.Segments[segmentLength - 2].TrimEnd('/');
-            DateTime postDate;
-            try
-            {
-                postDate = DateTime.ParseExact(stringDate, "yyyy/MM/dd", CultureInfo.InvariantCulture);
-            }
-            catch (FormatException)
+            if (!TryParseDateFromSegments(contentRequest.Uri.Segments, segmentLength, out DateTime postDate))
             {
                 return false;
             }
 
+            var newRoute = BuildRouteWithoutDateSegments(contentRequest, segmentLength);
+            IPublishedContent? node = FindContent(contentRequest, newRoute);
+
+            if (!ValidateArticulatePost(node, postDate))
+            {
+                return false;
+            }
+
+            _ = contentRequest.SetPublishedContent(node!);
+            return true;
+        }
+
+        private static bool TryParseDateFromSegments(string[] segments, int segmentLength, out DateTime postDate)
+        {
+            var stringDate = segments[segmentLength - 4] + segments[segmentLength - 3] + segments[segmentLength - 2].TrimEnd('/');
+            try
+            {
+                postDate = DateTime.ParseExact(stringDate, "yyyy/MM/dd", CultureInfo.InvariantCulture);
+                return true;
+            }
+            catch (FormatException)
+            {
+                postDate = default;
+                return false;
+            }
+        }
+
+        private static string BuildRouteWithoutDateSegments(IPublishedRequestBuilder contentRequest, int segmentLength)
+        {
             var newRoute = string.Empty;
             for (var i = 0; i < segmentLength; i++)
             {
@@ -55,10 +76,18 @@ namespace Articulate.Routing
                 newRoute = domain.ContentId + DomainUtilities.PathRelativeToDomain(uri, newRoute);
             }
 
-            IPublishedContent? node = FindContent(contentRequest, newRoute);
+            return newRoute;
+        }
 
-            // If by chance something matches the format pattern I check again if there is sucn a node and if it's an articulate post
-            if (node is null || (node.ContentType.Alias != ArticulateConstants.ContentType.ArticulateRichText && node.ContentType.Alias != ArticulateConstants.ContentType.ArticulateMarkdown))
+        private static bool ValidateArticulatePost(IPublishedContent? node, DateTime postDate)
+        {
+            if (node is null)
+            {
+                return false;
+            }
+
+            if (node.ContentType.Alias != ArticulateConstants.ContentType.ArticulateRichText
+                && node.ContentType.Alias != ArticulateConstants.ContentType.ArticulateMarkdown)
             {
                 return false;
             }
@@ -69,13 +98,7 @@ namespace Articulate.Routing
                 return false;
             }
 
-            if (node.Value<DateTime>("publishedDate").Date != postDate.Date)
-            {
-                return false;
-            }
-
-            _ = contentRequest.SetPublishedContent(node);
-            return true;
+            return node.Value<DateTime>("publishedDate").Date == postDate.Date;
         }
     }
 }

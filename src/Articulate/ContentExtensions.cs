@@ -34,7 +34,7 @@ namespace Articulate
             return content;
         }
 
-        internal static void SetInvariantOrDefaultCultureName(
+        internal static async void SetInvariantOrDefaultCultureName(
             this IContentBase content,
             string name,
             IContentTypeComposition contentType,
@@ -46,7 +46,7 @@ namespace Articulate
 
             if (variesByCulture)
             {
-                content.SetCultureName(name, Task.Run(languageService.GetDefaultIsoCodeAsync).GetAwaiter().GetResult());
+                content.SetCultureName(name, await languageService.GetDefaultIsoCodeAsync());
             }
             else
             {
@@ -62,7 +62,7 @@ namespace Articulate
         /// If varying by culture it will assign the value to the default language only.
         /// If varying by segment it will assign the value to no segment.
         /// </remarks>
-        internal static void SetInvariantOrDefaultCultureValue(
+        internal static async void SetInvariantOrDefaultCultureValue(
             this IContentBase content,
             string propertyTypeAlias,
             object value,
@@ -76,7 +76,7 @@ namespace Articulate
             content.SetValue(
                 propertyTypeAlias,
                 value,
-                variesByCulture ? Task.Run(languageService.GetDefaultIsoCodeAsync).GetAwaiter().GetResult() : null);
+                variesByCulture ? await languageService.GetDefaultIsoCodeAsync() : null);
         }
 
         /// <summary>
@@ -87,7 +87,7 @@ namespace Articulate
         /// If varying by culture it will assign the value to the default language only.
         /// If varying by segment it will assign the value to no segment.
         /// </remarks>
-        internal static void AssignInvariantOrDefaultCultureTags(
+        internal static async void AssignInvariantOrDefaultCultureTags(
             this IContentBase content,
             string propertyTypeAlias,
             IEnumerable<string> tags,
@@ -109,7 +109,7 @@ namespace Articulate
                 propertyTypeAlias,
                 tags,
                 merge,
-                variesByCulture ? Task.Run(languageService.GetDefaultIsoCodeAsync).GetAwaiter().GetResult() : null);
+                variesByCulture ? await languageService.GetDefaultIsoCodeAsync() : null);
         }
 
         /// <summary>
@@ -133,30 +133,53 @@ namespace Articulate
 
             if (content.ContentType.VariesByCulture() && content.CultureInfos is not null)
             {
-                // iterate over any existing cultures defined on the content item
-                foreach (ContentCultureInfos c in content.CultureInfos)
-                {
-                    IPropertyType propertyType = contentType.CompositionPropertyTypes.FirstOrDefault(x => x.Alias == propertyAlias) ?? throw new InvalidOperationException($"No property type found by alias {propertyAlias}");
-
-                    var valueToSet = propertyValueGetter(content, contentType, c);
-                    if (valueToSet is null || (valueToSet is string propValAsString && string.IsNullOrWhiteSpace(propValAsString)))
-                    {
-                        continue;
-                    }
-
-                    content.SetValue(propertyAlias, valueToSet, propertyType.VariesByCulture() ? c.Culture : null);
-                }
+                SetCultureVariantPropertyValues(content, propertyAlias, contentType, propertyValueGetter);
             }
             else
             {
-                var propertyValue = propertyValueGetter(content, contentType, null);
-                if (propertyValue is null || (propertyValue is string propValAsString && string.IsNullOrWhiteSpace(propValAsString)))
+                SetInvariantPropertyValue(content, propertyAlias, contentType, propertyValueGetter);
+            }
+        }
+
+        private static void SetCultureVariantPropertyValues(
+            IContentBase content,
+            string propertyAlias,
+            IContentTypeComposition contentType,
+            Func<IContentBase, IContentTypeComposition, ContentCultureInfos, object> propertyValueGetter)
+        {
+            IPropertyType propertyType = contentType.CompositionPropertyTypes.FirstOrDefault(x => x.Alias == propertyAlias)
+                ?? throw new InvalidOperationException($"No property type found by alias {propertyAlias}");
+            foreach (ContentCultureInfos c in content.CultureInfos!)
+            {
+
+                var valueToSet = propertyValueGetter(content, contentType, c);
+                if (IsNullOrEmptyValue(valueToSet))
                 {
-                    return;
+                    continue;
                 }
 
-                content.SetValue(propertyAlias, propertyValue);
+                content.SetValue(propertyAlias, valueToSet, propertyType.VariesByCulture() ? c.Culture : null);
             }
+        }
+
+        private static void SetInvariantPropertyValue(
+            IContentBase content,
+            string propertyAlias,
+            IContentTypeComposition contentType,
+            Func<IContentBase, IContentTypeComposition, ContentCultureInfos, object> propertyValueGetter)
+        {
+            var propertyValue = propertyValueGetter(content, contentType, null);
+            if (IsNullOrEmptyValue(propertyValue))
+            {
+                return;
+            }
+
+            content.SetValue(propertyAlias, propertyValue);
+        }
+
+        private static bool IsNullOrEmptyValue(object value)
+        {
+            return value is null || (value is string propValAsString && string.IsNullOrWhiteSpace(propValAsString));
         }
 
         private static bool VariesByCulture(string propertyTypeAlias, IContentTypeComposition contentType)

@@ -1,7 +1,7 @@
 #nullable enable
 using Articulate.Api.Management.Attributes;
-using Articulate.Api.Management.Extensions;
 using Articulate.Api.Management.Models;
+using Articulate.Extensions;
 using Articulate.ImportExport;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;

@@ -18,7 +18,8 @@ namespace Articulate.Syndication.BlogML
                 Guard.ArgumentNotNull(value, "value");
                 field = value;
             }
-        } = new();
+        }
+        = new();
 
         /// <inheritdoc/>
         public int CompareTo(object obj) =>

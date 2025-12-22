@@ -4,20 +4,22 @@
 {
     if (Model.Author.Image is not null)
     {
-        var thumbnail = Model.Author.Image.GetCropUrl("thumbnail");
-        <div class="minilogo" style="background: url(@thumbnail)"></div>
+        var thumbnail = Model.Author.Image.GetCropUrl("thumbnail").ToSafeCssUrl();
+        if (thumbnail is not null)
+        {
+            <div class="minilogo" style="background: url('@thumbnail')"></div>
+        }
     }
     <div>
         <strong>
-            @if (Model.Author.BlogUrl.IsNullOrWhiteSpace())
+            @if (Model.Author.BlogUrl is not null)
             {
-                @Model.Author.Name
+                <a href="@Model.Author.BlogUrl" rel="noopener noreferrer">@Model.Author.Name</a>
             }
             else
             {
-                <a href="@Model.Author.BlogUrl">@Model.Author.Name</a>
+                @Model.Author.Name
             }
         </strong>
-            <span>@(Model.PublishedDate.ToString("MMMM dd, yyyy") ?? "Date unavailable")</span>
-    </div>
+            <span>@(Model.PublishedDate.ToString("MMMM dd, yyyy"))</span>    </div>
 }

@@ -11,32 +11,33 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Articulate: Create New Post</title>
+
     <environment include="Development">
-        <link href="~/App_Plugins/Articulate/MarkdownEditor/src/css/md-editor.css" rel="stylesheet"
-            fetchpriority="high" asp-append-version="true">
+      <link rel="stylesheet" href="~/App_Plugins/Articulate/MarkdownEditor/assets/src/vendor/mdl/material.pink-blue.min.css">
+      <link rel="stylesheet" href="~/App_Plugins/Articulate/MarkdownEditor/assets/fonts/material-icons/material-icons.css">
+      <link rel="stylesheet" href="~/App_Plugins/Articulate/MarkdownEditor/assets/src/css/md-editor.css" asp-append-version="true">
+      <link rel="stylesheet" href="~/App_Plugins/Articulate/MarkdownEditor/assets/src/vendor/tiny-mde/tiny-mde.min.css">
     </environment>
     <environment exclude="Development">
-        <link href="~/App_Plugins/Articulate/MarkdownEditor/dist/css/md-editor.css" rel="stylesheet"
-            fetchpriority="high" asp-append-version="true">
+      <link rel="stylesheet" href="~/App_Plugins/Articulate/MarkdownEditor/assets/dist/css/md-editor.min.css" asp-append-version="true" fetchpriority="high" >
     </environment>
-    <link rel="stylesheet" href="~/App_Plugins/Articulate/MarkdownEditor/vendor/mdl/material.pink-blue.min.css" media="all" />
-    <noscript>
-        <link rel="stylesheet" href="~/App_Plugins/Articulate/MarkdownEditor/vendor/mdl/material.pink-blue.min.css" media="all">
-    </noscript>
-    <link rel="stylesheet" href="~/App_Plugins/Articulate/MarkdownEditor/vendor/fonts/material-icons/material-icons.css" media="all">
 
-
-    <link rel="stylesheet" href="~/App_Plugins/Articulate/MarkdownEditor/vendor/tiny-mde/tiny-mde.min.css" media="all">
     <link rel="preload" as="image" href="@Model.LoginLogoUrl" fetchpriority="high">
 
 </head>
 
+@* Security: Explicit encoding for defense-in-depth. Razor auto-encodes @Model.Property in attributes,
+   but explicit encoding makes security intent clear for URL and sensitive configuration values. *@
 <body x-data="markdownEditor" x-init="init" x-cloak x-bind:class="loginBodyClass" x-bind:aria-busy="isLoading"
-    data-articulate-blog-node="@Model.ArticulateBlogNode" data-auth-url="@Model.AuthorizeUrl"
-    data-auth-end-url="@Model.EndSessionUrl" data-token-url="@Model.TokenUrl"
-    data-current-user-url="@Model.CurrentUserUrl" data-editor-post-url="@Model.EditorPostUrl"
-    data-oauth-client-id="@Model.BackOfficeClientId" data-post-logout-redirect="@Model.PostLogoutRedirectUrl"
-    data-revocation-url="@Model.RevocationUrl">
+    data-articulate-blog-node="@Html.Encode(Model.ArticulateBlogNode)"
+    data-auth-url="@Html.Encode(Model.AuthorizeUrl)"
+    data-auth-end-url="@Html.Encode(Model.EndSessionUrl)"
+    data-token-url="@Html.Encode(Model.TokenUrl)"
+    data-current-user-url="@Html.Encode(Model.CurrentUserUrl)"
+    data-editor-post-url="@Html.Encode(Model.EditorPostUrl)"
+    data-oauth-client-id="@Html.Encode(Model.BackOfficeClientId)"
+    data-post-logout-redirect="@Html.Encode(Model.PostLogoutRedirectUrl ?? string.Empty)"
+    data-revocation-url="@Html.Encode(Model.RevocationUrl ?? string.Empty)">
     <div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
         <header class="mdl-layout__header" x-cloak x-show="showHeader">
             <div class="mdl-layout__header-row md-editor__container">
@@ -215,24 +216,23 @@
 
     <!-- Hidden file inputs -->
     <div class="hidden-insert-file">
-        <input x-ref="imageUpload" type="file" accept="image/jpeg,image/png,image/gif" @@change="handleImageUpload">
-        <input x-ref="cameraUpload" type="file" accept="image/jpeg,image/png,image/gif" capture="user"
+        <input x-ref="imageUpload" type="file" accept="image/*" @@change="handleImageUpload">
+        <input x-ref="cameraUpload" type="file" accept="image/*" capture="user"
             @@change="handleImageUpload">
     </div>
 
-    <script defer src="~/App_Plugins/Articulate/MarkdownEditor/vendor/mdl/material.min.js"></script>
-    <script defer src="~/App_Plugins/Articulate/MarkdownEditor/vendor/tiny-mde/tiny-mde.min.js"></script>
+    <script defer src="~/App_Plugins/Articulate/MarkdownEditor/assets/vendor/mdl/material.min.js"></script>
+    <script defer src="~/App_Plugins/Articulate/MarkdownEditor/assets/vendor/tiny-mde/tiny-mde.min.js"></script>
 
-    <!-- Load entry module only; it imports dependencies -->
+    <!-- Load entry module only; it imports dependencies, load before alpine -->
     <environment include="Development">
-        <script defer src="~/App_Plugins/Articulate/MarkdownEditor/src/js/md-editor.js" type="module" asp-append-version="true"></script>
+        <script defer src="~/App_Plugins/Articulate/MarkdownEditor/assets/src/js/md-editor.js" type="module" asp-append-version="true"></script>
     </environment>
     <environment exclude="Development">
-        <script defer src="~/App_Plugins/Articulate/MarkdownEditor/dist/js/md-editor.js" type="module"
-            asp-append-version="true"></script>
+        <script defer src="~/App_Plugins/Articulate/MarkdownEditor/assets/dist/js/md-editor.min.js" type="module" asp-append-version="true"></script>
     </environment>
 
-    <script defer src="~/App_Plugins/Articulate/MarkdownEditor/vendor/alpine/alpine-csp.min.js"></script>
+    <script defer src="~/App_Plugins/Articulate/MarkdownEditor/assets/vendor/alpine/alpine-csp.min.js"></script>
 
 </body>
 

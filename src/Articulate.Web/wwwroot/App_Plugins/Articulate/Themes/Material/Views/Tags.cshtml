@@ -2,20 +2,22 @@
 @{
     Layout = "Master.cshtml";
     ViewBag.CssWrapperClass = "demo-blog--blogpost";
-    var asArray = Model.Tags.ToArray();
+    var asArray = Model?.Tags?.ToArray() ?? Array.Empty<PostsByTagModel>();
 }
-
-<div class="demo-back">
+@if (!string.IsNullOrEmpty(Model?.RootBlogNode?.Url()))
+{
+  <div class="demo-back">
     <a class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon" href="@Model.RootBlogNode.Url()" title="go back" role="button">
         <i class="material-icons" role="presentation">arrow_back</i>
     </a>
-</div>
+  </div>
+}
 
 <div class="demo-blog__posts mdl-grid">
 
     <div class="mdl-card mdl-cell mdl-cell--8-col">
         <div class="mdl-card__title mdl-color-text--grey-50">
-            <h1 class="mdl-card__title-text">@Model.Name</h1>
+            <h1 class="mdl-card__title-text">@((Model?.Name) ?? string.Empty)</h1>
         </div>
         <div class="mdl-card__supporting-text">
 
@@ -25,7 +27,9 @@
             @if (isTagsAction)
             {
                 <div class="tag-cloud-large">
-                    @Model.Tags.TagCloud(@<a href="#tag-@item.HtmlId">@item.TagName</a>, 5, 50)
+                    @((Model?.Tags is not null)
+                        ? Model.Tags.TagCloud(@<a href="#tag-@item.HtmlId">@item.TagName</a>, 5, 50)
+                        : Html.Raw(string.Empty))
                 </div>
             }
             else

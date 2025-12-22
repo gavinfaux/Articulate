@@ -2,9 +2,10 @@
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Articulate.Api.Management.Attributes;
-using Articulate.Api.Management.Extensions;
 using Articulate.Api.Management.Models;
+using Articulate.Extensions;
 using Articulate.Services;
+using Articulate.Validators;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -73,6 +74,7 @@ namespace Articulate.Api.Management.Controllers
         private readonly UmbracoHelper _umbracoHelper;
         private readonly BackOfficeAuthService _backOfficeAuthService;
         private readonly IAbsoluteUrlBuilder _absoluteUrlBuilder;
+        private readonly IArticulateImageService _imageService;
         private const long MaxMarkdownImageBytes = 10 * 1024 * 1024;
 
         public MarkdownEditorApiController(
@@ -90,7 +92,8 @@ namespace Articulate.Api.Management.Controllers
             IContentTypeService contentTypeService,
             IDataTypeService dataTypeService,
             ILogger<MarkdownEditorApiController> logger,
-            IAbsoluteUrlBuilder absoluteUrlBuilder)
+            IAbsoluteUrlBuilder absoluteUrlBuilder,
+            IArticulateImageService imageService)
         {
             _backOfficeAuthService = backOfficeAuthService;
             _umbracoHelper = umbracoHelper;
@@ -107,6 +110,7 @@ namespace Articulate.Api.Management.Controllers
             _dataTypeService = dataTypeService;
             _logger = logger;
             _absoluteUrlBuilder = absoluteUrlBuilder;
+            _imageService = imageService;
             _articulateRootMediaFolder = new Lazy<IMedia>(() =>
             {
                 IMedia? root = _mediaService.GetRootMedia().FirstOrDefault(x =>
@@ -133,7 +137,6 @@ namespace Articulate.Api.Management.Controllers
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status422UnprocessableEntity)]
-
         public async Task<ActionResult<CreatePostResponse>> CreatePost(
             [FromForm(Name = "json")] string jsonModel)
         {
@@ -252,11 +255,253 @@ namespace Articulate.Api.Management.Controllers
                     statusCode: StatusCodes.Status500InternalServerError);
             }
 
+            PopulateContentProperties(content, contentType, model, parsedImageResponse.FirstImage, currentUser);
+
+            ActionResult? saveAndPublishResult = SaveAndPublishContent(content, currentUser.Id);
+            if (saveAndPublishResult is not null)
+            {
+                return saveAndPublishResult;
+            }
+
+            IPublishedContent? published = _umbracoHelper.Content(content.Id);
+            return Ok(new CreatePostResponse { Url = published?.Url() ?? string.Empty });
+        }
+
+        private async Task<ParseImageResponse> ParseImages(string? body, IFormFileCollection formFiles, bool extractFirstImageAsProperty)
+        {
+            if (body is null)
+            {
+                return new ParseImageResponse();
+            }
+
+            var firstImage = string.Empty;
+            var bodyText = body;
+            var replacementMap = new Dictionary<string, string>();
+            var firstImageCaptured = false;
+
+            MatchCollection matches = ArticulateMarkdownEditorRegexes.ImageTagPlaceholderRegex().Matches(body);
+
+            foreach (Match match in matches)
+            {
+                ImageProcessResult result = await ProcessImageMatchAsync(
+                    match,
+                    formFiles,
+                    extractFirstImageAsProperty && !firstImageCaptured).ConfigureAwait(false);
+
+                if (result.IsFirstImage && !string.IsNullOrEmpty(result.FirstImageUdi))
+                {
+                    firstImage = result.FirstImageUdi;
+                    firstImageCaptured = true;
+                }
+
+                replacementMap[match.Value] = result.ReplacementMarkdown;
+            }
+
+            // STEP 3: Apply markdown replacements
+            if (replacementMap.Count > 0)
+            {
+                bodyText = ArticulateMarkdownEditorRegexes.ImageTagPlaceholderRegex().Replace(
+                    body,
+                    m => replacementMap.TryGetValue(m.Value, out var replacement) ? replacement : m.Value);
+            }
+
+            return new ParseImageResponse { BodyText = bodyText, FirstImage = firstImage };
+        }
+
+        private async Task<ImageProcessResult> ProcessImageMatchAsync(
+            Match match,
+            IFormFileCollection formFiles,
+            bool saveAsFirstImage)
+        {
+            var userLabel = match.Groups[1].Value;
+            var tempUrl = match.Groups[2].Value;
+
+            IFormFile? file = formFiles.FirstOrDefault(f => f.Name == tempUrl);
+            if (file is null)
+            {
+                _logger.LogWarning("Markdown image placeholder for {TempUrl} found, but no corresponding file was uploaded.", tempUrl);
+                return ImageProcessResult.Removed();
+            }
+
+            // Validate the uploaded file
+            ImageValidationResult validationResult = await ValidateAndPrepareImageAsync(file, userLabel).ConfigureAwait(false);
+            if (!validationResult.IsValid)
+            {
+                return ImageProcessResult.Removed();
+            }
+
+            // Save to media library or file system
+            if (saveAsFirstImage)
+            {
+                return await SaveImageToMediaLibraryAsync(
+                    validationResult.Stream!,
+                    validationResult.AltText!,
+                    validationResult.SafeFileName!).ConfigureAwait(false);
+            }
+
+            return SaveImageToFileSystem(
+                validationResult.Stream!,
+                validationResult.AltText!,
+                validationResult.SafeFileName!);
+        }
+
+        private async Task<ImageValidationResult> ValidateAndPrepareImageAsync(IFormFile file, string userLabel)
+        {
+            var originalFileName = Path.GetFileName(file.FileName);
+            var extension = Path.GetExtension(originalFileName).ToLowerInvariant();
+
+            // Size pre-check
+            if (file.Length <= 0 || file.Length > MaxMarkdownImageBytes)
+            {
+                _logger.LogWarning("Markdown image {FileName} rejected: invalid size {Size} (max {Max})", originalFileName, file.Length, MaxMarkdownImageBytes);
+                return ImageValidationResult.Invalid();
+            }
+
+            // Copy to memory stream with size limit enforcement
+            var stream = new MemoryStream(capacity: (int)Math.Min(file.Length, Math.Min(MaxMarkdownImageBytes, int.MaxValue)));
+            await using Stream uploadStream = file.OpenReadStream();
+            try
+            {
+                await uploadStream.CopyWithLimitAsync(stream, MaxMarkdownImageBytes, HttpContext.RequestAborted).ConfigureAwait(false);
+            }
+            catch (InvalidDataException ex)
+            {
+                _logger.LogWarning(ex, "Markdown image {FileName} exceeded size during copy", originalFileName);
+                await stream.DisposeAsync().ConfigureAwait(false);
+                return ImageValidationResult.Invalid();
+            }
+
+            stream.Position = 0;
+
+            // Use shared service for validation (extension, size, magic bytes, content matching)
+            Articulate.Services.ImageValidationResult validationResult = await _imageService.ValidateImageAsync(
+                stream,
+                extension,
+                MaxMarkdownImageBytes).ConfigureAwait(false);
+
+            if (!validationResult.IsValid)
+            {
+                _logger.LogWarning("Markdown image {FileName} rejected: {ErrorMessage}", originalFileName, validationResult.ErrorMessage);
+                await stream.DisposeAsync().ConfigureAwait(false);
+                return ImageValidationResult.Invalid();
+            }
+
+            // Sanitize alt text for markdown
+            var safeAltFallback = string.Join('_', originalFileName.Split(Path.GetInvalidFileNameChars()));
+            if (safeAltFallback.Length > 100)
+            {
+                safeAltFallback = safeAltFallback[..100];
+            }
+            var altText = AltTextSanitizer.Sanitize(userLabel, safeAltFallback);
+
+            // Create safe filename using validated extension
+            var rndId = Guid.NewGuid().ToString("N");
+            var safeFileName = $"{rndId}{validationResult.CorrectExtension}".ToSafeFileName(_shortStringHelper);
+
+            validationResult.ValidatedStream!.Position = 0;
+            return ImageValidationResult.Valid(validationResult.ValidatedStream, altText, safeFileName);
+        }
+
+        private Task<ImageProcessResult> SaveImageToMediaLibraryAsync(Stream stream, string altText, string safeFileName)
+        {
+            IMedia mediaItem = _mediaService.CreateMedia(altText, _articulateRootMediaFolder.Value, Umbraco.Cms.Core.Constants.Conventions.MediaTypes.Image);
+            mediaItem.SetValue(
+                _mediaFileManager,
+                _mediaUrlGenerators,
+                _shortStringHelper,
+                _contentTypeBaseServiceProvider,
+                Umbraco.Cms.Core.Constants.Conventions.Media.File,
+                safeFileName,
+                stream);
+
+            Attempt<OperationResult?> saveResult = _mediaService.Save(mediaItem);
+            if (saveResult.Success == false)
+            {
+                _logger.LogWarning("Failed to save media item for first image: {MediaName}", mediaItem.Name);
+                return Task.FromResult(ImageProcessResult.Removed());
+            }
+
+            IPublishedContent? media = _umbracoHelper.Media(mediaItem.Key);
+            if (media is null)
+            {
+                _logger.LogWarning("Failed to retrieve published media for first image: {MediaKey}", mediaItem.Key);
+                return Task.FromResult(ImageProcessResult.Removed());
+            }
+
+            var mediaUrl = media.Url();
+            if (string.IsNullOrEmpty(mediaUrl))
+            {
+                _logger.LogWarning("Media URL is empty for first image: {MediaKey}", mediaItem.Key);
+                return Task.FromResult(ImageProcessResult.Removed());
+            }
+
+            var absoluteMediaUrl = _absoluteUrlBuilder.ToAbsoluteUrl(mediaUrl).ToString();
+            var udi = Udi.Create(Umbraco.Cms.Core.Constants.UdiEntityType.Media, media.Key).ToString();
+
+            // KEEP first image in markdown with absolute URL (consistent with MetaWeblog behavior)
+            return Task.FromResult(ImageProcessResult.FirstImage(udi, $"![{altText}]({absoluteMediaUrl})"));
+        }
+
+        private ImageProcessResult SaveImageToFileSystem(Stream stream, string altText, string safeFileName)
+        {
+            var rndId = Guid.NewGuid().ToString("N");
+            var fileUrl = $"articulate/{rndId}/{safeFileName}";
+            _mediaFileManager.FileSystem.AddFile(fileUrl, stream);
+            var fileSystemUrl = _mediaFileManager.FileSystem.GetUrl(fileUrl);
+            var absoluteUrl = _absoluteUrlBuilder.ToAbsoluteUrl(fileSystemUrl).ToString();
+
+            return ImageProcessResult.RegularImage($"![{altText}]({absoluteUrl})");
+        }
+
+        private class ImageValidationResult
+        {
+            public bool IsValid { get; init; }
+            public Stream? Stream { get; init; }
+            public string? AltText { get; init; }
+            public string? SafeFileName { get; init; }
+
+            public static ImageValidationResult Valid(Stream stream, string altText, string safeFileName) =>
+                new() { IsValid = true, Stream = stream, AltText = altText, SafeFileName = safeFileName };
+
+            public static ImageValidationResult Invalid() =>
+                new() { IsValid = false };
+        }
+
+        private class ImageProcessResult
+        {
+            public bool IsFirstImage { get; init; }
+            public string? FirstImageUdi { get; init; }
+            public string ReplacementMarkdown { get; init; } = string.Empty;
+
+            public static ImageProcessResult FirstImage(string udi, string markdown) =>
+                new() { IsFirstImage = true, FirstImageUdi = udi, ReplacementMarkdown = markdown };
+
+            public static ImageProcessResult RegularImage(string markdown) =>
+                new() { IsFirstImage = false, ReplacementMarkdown = markdown };
+
+            public static ImageProcessResult Removed() =>
+                new() { IsFirstImage = false, ReplacementMarkdown = string.Empty };
+        }
+
+        private class ParseImageResponse
+        {
+            public string BodyText { get; init; } = string.Empty;
+
+            public string FirstImage { get; init; } = string.Empty;
+        }
+
+        private void PopulateContentProperties(
+            IContent content,
+            IContentType contentType,
+            MarkdownEditorModel model,
+            string? firstImageUdi,
+            IUser currentUser)
+        {
             content.SetInvariantOrDefaultCultureValue("markdown", model.Body, contentType, _languageService);
 
-            if (!string.IsNullOrEmpty(parsedImageResponse.FirstImage))
+            if (!string.IsNullOrEmpty(firstImageUdi))
             {
-                content.SetInvariantOrDefaultCultureValue("postImage", parsedImageResponse.FirstImage, contentType, _languageService);
+                content.SetInvariantOrDefaultCultureValue("postImage", firstImageUdi, contentType, _languageService);
             }
 
             if (!model.Excerpt.IsNullOrWhiteSpace())
@@ -294,19 +539,22 @@ namespace Articulate.Api.Management.Controllers
 
             if (!model.Slug.IsNullOrWhiteSpace())
             {
-                content.SetInvariantOrDefaultCultureValue(Umbraco.Cms.Core.Constants.Conventions.Content.UrlName, model.Slug, contentType, _languageService);
+                content.SetInvariantOrDefaultCultureValue(
+                    Umbraco.Cms.Core.Constants.Conventions.Content.UrlName,
+                    model.Slug,
+                    contentType,
+                    _languageService);
             }
 
-            string authorName = currentUser.Name ?? "Unknown";
-            int authorId = currentUser.Id;
-
-            // author is required
             content.SetInvariantOrDefaultCultureValue(
                 "author",
-                authorName,
+                currentUser.Name ?? "Unknown",
                 contentType,
                 _languageService);
+        }
 
+        private ActionResult? SaveAndPublishContent(IContent content, int authorId)
+        {
             OperationResult saveStatus = _contentService.Save(content, authorId);
             if (!saveStatus.Success)
             {
@@ -321,149 +569,7 @@ namespace Articulate.Api.Management.Controllers
                 return ValidationProblem(ModelState);
             }
 
-            IPublishedContent? published = _umbracoHelper.Content(publishStatus.Content.Id);
-            return Ok(new CreatePostResponse { Url = published?.Url() ?? string.Empty });
-        }
-
-        // TODO: Review
-        private async Task<ParseImageResponse> ParseImages(string? body, IFormFileCollection formFiles, bool extractFirstImageAsProperty)
-        {
-            // TODO: Validate the ![alt] user label used for the media name/markdown replacement.
-            // TODO: UX Validation results (invalid or missing files etc), extract to reuse elsewhere.
-            // TODO: Consider magic-byte validation to prevent extension spoofing, e.g. https://github.com/neilharvey/FileSignatures
-            if (body is null)
-            {
-                return new ParseImageResponse();
-            }
-
-            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" };
-            var firstImage = string.Empty;
-            var bodyText = body; // Start with the original body text
-
-            // Key: The original markdown tag, e.g., "![alt](tmp:0:image.png)"
-            // Value: The final URL or an empty string to remove it.
-            var replacementMap = new Dictionary<string, string>();
-            var firstImageCaptured = false;
-
-            // STEP 1: Find all potential image tags and gather the info needed for processing. ---
-            MatchCollection matches = ArticulateMarkdownEditorRegexes.ImageTagPlaceholderRegex().Matches(body);
-
-            foreach (Match match in matches)
-            {
-                var userLabel = match.Groups[1].Value;
-                var tempUrl = match.Groups[2].Value;
-
-                IFormFile? file = formFiles.FirstOrDefault(f => f.Name == tempUrl);
-
-                // STEP 2: For each match, VALIDATE and PROCESS it asynchronously.
-                if (file is null)
-                {
-                    _logger.LogWarning(
-                        "Markdown image placeholder for {TempUrl} found, but no corresponding file was uploaded.",
-                        tempUrl);
-
-                    // The file is missing. We will replace its tag with nothing.
-                    replacementMap[match.Value] = string.Empty;
-                    continue; // Move to the next match
-                }
-
-                var originalFileName = Path.GetFileName(file.FileName);
-                var extension = Path.GetExtension(originalFileName).ToLowerInvariant();
-                if (!allowedExtensions.Contains(extension))
-                {
-                    // Invalid file type. Strip from markdown.
-                    replacementMap[match.Value] = string.Empty;
-                    continue;
-                }
-
-                if (file.Length <= 0 || file.Length > MaxMarkdownImageBytes)
-                {
-                    // Invalid file size. Strip from markdown.
-                    replacementMap[match.Value] = string.Empty;
-                    continue;
-                }
-
-                var safeAltFallback = string.Join('_', originalFileName.Split(Path.GetInvalidFileNameChars()));
-                if (safeAltFallback.Length > 100)
-                {
-                    safeAltFallback = safeAltFallback[..100];
-                }
-
-                // validation passed, save the file
-                var altText = !string.IsNullOrWhiteSpace(userLabel)
-                    ? userLabel
-                    : safeAltFallback.IsNullOrWhiteSpace() ? "image" : safeAltFallback;
-
-                var rndId = Guid.NewGuid().ToString("N");
-                var safeFileName = $"{rndId}{extension}".ToSafeFileName(_shortStringHelper);
-
-                using var stream = new MemoryStream(capacity: (int)Math.Min(file.Length, Math.Min(MaxMarkdownImageBytes, int.MaxValue)));
-                await using Stream uploadStream = file.OpenReadStream();
-                await uploadStream.CopyWithLimitAsync(stream, MaxMarkdownImageBytes, HttpContext.RequestAborted).ConfigureAwait(false);
-                stream.Position = 0;
-
-                var shouldExtractFirstImage = extractFirstImageAsProperty && !firstImageCaptured;
-
-                if (shouldExtractFirstImage)
-                {
-                    IMedia mediaItem = _mediaService.CreateMedia(altText, _articulateRootMediaFolder.Value, Umbraco.Cms.Core.Constants.Conventions.MediaTypes.Image);
-                    mediaItem.SetValue(
-                        _mediaFileManager,
-                        _mediaUrlGenerators,
-                        _shortStringHelper,
-                        _contentTypeBaseServiceProvider,
-                        Umbraco.Cms.Core.Constants.Conventions.Media.File,
-                        safeFileName,
-                        stream);
-                    Attempt<OperationResult?> saveResult = _mediaService.Save(mediaItem);
-                    if (saveResult.Success == false)
-                    {
-                        _logger.LogWarning("Failed to save media item: {MediaName}", mediaItem.Name);
-                        replacementMap[match.Value] = string.Empty;
-                        continue;
-                    }
-
-                    IPublishedContent? media = _umbracoHelper.Media(mediaItem.Key);
-
-                    if (media is null)
-                    {
-                        continue;
-                    }
-
-                    firstImage = Udi.Create(Umbraco.Cms.Core.Constants.UdiEntityType.Media, media.Key).ToString();
-                    firstImageCaptured = true;
-
-                    // The first image was extracted. Strip its tag from the body.
-                    replacementMap[match.Value] = string.Empty;
-                    continue;
-                }
-
-                stream.Position = 0;
-                var fileUrl = $"articulate/{rndId}/{safeFileName}";
-                _mediaFileManager.FileSystem.AddFile(fileUrl, stream);
-                var fileSystemUrl = _mediaFileManager.FileSystem.GetUrl(fileUrl);
-                var absoluteUrl = _absoluteUrlBuilder.ToAbsoluteUrl(fileSystemUrl).ToString();
-
-                // Replace its tag with the final URL.
-                replacementMap[match.Value] = $"![{altText}]({absoluteUrl})";
-            }
-
-            // STEP 3: Apply markdown replacements
-            if (replacementMap.Count > 0)
-            {
-                bodyText = ArticulateMarkdownEditorRegexes.ImageTagPlaceholderRegex().Replace(
-                    body,
-                    m => replacementMap.TryGetValue(m.Value, out var replacement) ? replacement : m.Value);
-            }
-
-            return new ParseImageResponse { BodyText = bodyText, FirstImage = firstImage };
-        }
-
-        private class ParseImageResponse
-        {
-            public string BodyText { get; init; } = string.Empty;
-
-            public string FirstImage { get; init; } = string.Empty;
+            return null; // Success - no error result
         }
     }
 }

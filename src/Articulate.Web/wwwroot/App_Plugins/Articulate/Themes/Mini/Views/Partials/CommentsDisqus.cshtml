@@ -2,12 +2,11 @@
 
 <div class="post-comment">
 
-    @if (Model.DisqusShortName.IsNullOrWhiteSpace())
+    @if (!Model.IsDisqusEnabled)
     {
         <p>
             <em>
-                To enable comments sign up for a <a href="https://disqus.com" target="_blank">Disqus</a> account and
-                enter your Disqus shortname in the Articulate node settings.
+                To enable comments, configure a valid Disqus shortname (alphanumeric and hyphens only).
             </em>
         </p>
     }
@@ -16,23 +15,23 @@
         <div id="disqus_thread">
             <script type="text/javascript">
                 var disqus_config = function () {
-                    // Replace PAGE_URL with your page's canonical URL variable
-                    this.page.url =  '@Model.Url(mode: UrlMode.Absolute)';
-                    // Replace PAGE_IDENTIFIER with your page's unique identifier variable
-                    this.page.identifier = '@Model.Key';
+                    // Use JSON serialization for safe JS values
+                    this.page.url = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Url(mode: UrlMode.Absolute)));
+                    this.page.identifier = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Key));
                 };
                 (function() {
                     var d = document, s = d.createElement('script');
                     /** ENTER DISQUS SHORTNAME HERE **/
-                    s.src = 'https://@(Model.DisqusShortName).disqus.com/embed.js';
+                    const disqusShortName = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.DisqusShortName));
+                    s.src = 'https://' + disqusShortName + '.disqus.com/embed.js';
                     s.setAttribute('data-timestamp', +new Date());
                     (d.head || d.body).appendChild(s);
                 })();
             </script>
             <noscript>
-                Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+                Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" target="_blank" rel="noopener noreferrer">comments powered by Disqus.</a>
             </noscript>
-            <a href="https://disqus.com" class="dsq-brlink">
+            <a href="https://disqus.com" class="dsq-brlink" target="_blank" rel="noopener noreferrer">
                 comments powered by <span class="logo-disqus">Disqus</span>
             </a>
         </div>

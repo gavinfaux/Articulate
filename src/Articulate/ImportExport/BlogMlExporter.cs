@@ -203,58 +203,7 @@ namespace Articulate.ImportExport
                         continue;
                     }
 
-                    var content = string.Empty;
-                    if (child.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateRichText))
-                    {
-                        // TODO: this would also need to handle RTE extensions e.g Blocks
-                        content = child.GetValue<string>("richText");
-                    }
-                    else if (child.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateMarkdown))
-                    {
-                        // TODO: this would also need to handle Markdown extensions if supported e.g MDX
-                        content = MarkdownHelper.ToHtml(child.GetValue<string>("markdown"));
-                    }
-
-                    var postUrl = new Uri(urlProvider.GetUrl(child.Id), UriKind.RelativeOrAbsolute);
-                    var postAbsoluteUrl = new Uri(urlProvider.GetUrl(child.Id, UrlMode.Absolute), UriKind.Absolute);
-                    var blogMlPost = new BlogMLPost
-                    {
-                        Id = child.Key.ToString(),
-                        Name = new BlogMLTextConstruct(child.Name),
-                        Title = new BlogMLTextConstruct(child.Name),
-                        ApprovalStatus = BlogMLApprovalStatus.Approved,
-                        PostType = BlogMLPostType.Normal,
-                        CreatedOn = child.CreateDate,
-                        LastModifiedOn = child.UpdateDate,
-                        Content = new BlogMLTextConstruct(content, BlogMLContentType.Html),
-                        Excerpt = new BlogMLTextConstruct(child.GetValue<string>("excerpt")),
-                        Url = postUrl
-                    };
-
-                    BlogMLAuthor? author = blogMlDoc.Authors?.FirstOrDefault(x => x.Title is not null && x.Title.Content.InvariantEquals(child.GetValue<string>("author")));
-                    if (author is not null)
-                    {
-                        blogMlPost.Authors.Add(author.Id);
-                    }
-
-                    IEnumerable<ITag> categories = tagService.GetTagsForEntity(child.Id, categoryGroup);
-                    foreach (ITag category in categories)
-                    {
-                        blogMlPost.Categories.Add(category.Id.ToString());
-                    }
-
-                    var tags = tagService.GetTagsForEntity(child.Id, tagGroup).Select(t => t.Text).ToList();
-                    if (tags.Count > 0)
-                    {
-                        _ = blogMlPost.AddExtension(new TagsSyndicationExtension { Context = { Tags = new Collection<string>(tags) } });
-                    }
-
-                    if (!TryExtractImageV3(exportImagesAsBase64, child, postAbsoluteUrl, blogMlPost))
-                    {
-                        _ = TryExtractImageV1(exportImagesAsBase64, child, postAbsoluteUrl, blogMlPost);
-                    }
-
-                    _ = blogMlDoc.AddPost(blogMlPost);
+                    ProcessSinglePost(child, blogMlDoc, categoryGroup, tagGroup, exportImagesAsBase64);
                 }
 
                 pageIndex++;
@@ -262,151 +211,275 @@ namespace Articulate.ImportExport
             while (posts.Length == pageSize);
         }
 
-        private bool TryExtractImageV1(bool exportImagesAsBase64, IContent child, Uri postAbsoluteUrl, BlogMLPost blogMlPost)
+        private void ProcessSinglePost(IContent child, BlogMLDocument blogMlDoc, string? categoryGroup, string? tagGroup, bool exportImagesAsBase64)
         {
-            // add the image attached if there is one
-            if (child.HasProperty("postImage"))
+            var content = GetPostContent(child);
+            var postUrl = new Uri(urlProvider.GetUrl(child.Id), UriKind.RelativeOrAbsolute);
+            var postAbsoluteUrl = new Uri(urlProvider.GetUrl(child.Id, UrlMode.Absolute), UriKind.Absolute);
+
+            BlogMLPost blogMlPost = CreateBlogMlPost(child, content, postUrl);
+
+            AssignAuthorToPost(blogMlPost, blogMlDoc, child.GetValue<string>("author"));
+            AssignCategoriesToPost(blogMlPost, child, categoryGroup);
+            AssignTagsToPost(blogMlPost, child, tagGroup);
+            AttachPostImage(blogMlPost, child, postAbsoluteUrl, exportImagesAsBase64);
+
+            _ = blogMlDoc.AddPost(blogMlPost);
+        }
+
+        private static string GetPostContent(IContent child)
+        {
+            if (child.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateRichText))
             {
-                try
-                {
-                    var mediaUdi = child.GetValue<string>("postImage");
-
-                    if (!string.IsNullOrWhiteSpace(mediaUdi))
-                    {
-                        var udi = (GuidUdi)UdiParser.Parse(mediaUdi);
-                        IMedia media = mediaService.GetById(udi.Guid)
-                            ?? throw new InvalidOperationException("No media found by id " + udi);
-
-                        string? filename = media.GetValue(Constants.Conventions.Media.File)?.ToString();
-                        if (filename is null)
-                        {
-                            return false;
-                        }
-
-                        var mediaPath = mediaFileManager.GetMediaPath(
-                            filename,
-                            media.Key,
-                            media.Properties[Constants.Conventions.Media.File]!.PropertyType.Key);
-
-                        var mime = ImageMimeType(mediaPath);
-
-                        if (!mime.IsNullOrWhiteSpace())
-                        {
-                            var imageUrl = new Uri(postAbsoluteUrl.GetLeftPart(UriPartial.Authority) + mediaPath.EnsureStartsWith('/'), UriKind.Absolute);
-
-                            if (exportImagesAsBase64)
-                            {
-                                using Stream mediaFileStream = mediaFileManager.GetFile(media, out _);
-                                byte[] bytes;
-                                using (var memoryStream = new MemoryStream())
-                                {
-                                    mediaFileStream.CopyTo(memoryStream);
-                                    bytes = memoryStream.ToArray();
-                                }
-
-                                blogMlPost.Attachments.Add(new BlogMLAttachment
-                                {
-                                    Content = Convert.ToBase64String(bytes),
-                                    Url = imageUrl,
-                                    ExternalUri = imageUrl,
-                                    IsEmbedded = true,
-                                    MimeType = mime
-                                });
-
-                                return true;
-                            }
-                            else
-                            {
-                                blogMlPost.Attachments.Add(new BlogMLAttachment
-                                {
-                                    Content = string.Empty,
-                                    Url = imageUrl,
-                                    ExternalUri = imageUrl,
-                                    IsEmbedded = false,
-                                    MimeType = mime
-                                });
-
-                                return true;
-                            }
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    logger.LogError(ex, "Could not add the file to the blogML post attachments");
-                }
+                // TODO: this would also need to handle RTE extensions e.g Blocks
+                return child.GetValue<string>("richText") ?? string.Empty;
             }
 
-            return false;
+            if (child.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateMarkdown))
+            {
+                // TODO: this would also need to handle Markdown extensions if supported e.g MDX
+                var markdown = child.GetValue<string>("markdown");
+                return markdown is not null ? MarkdownHelper.ToHtml(markdown) : string.Empty;
+            }
+
+            return string.Empty;
+        }
+
+        private static BlogMLPost CreateBlogMlPost(IContent child, string content, Uri postUrl)
+        {
+            return new BlogMLPost
+            {
+                Id = child.Key.ToString(),
+                Name = new BlogMLTextConstruct(child.Name),
+                Title = new BlogMLTextConstruct(child.Name),
+                ApprovalStatus = BlogMLApprovalStatus.Approved,
+                PostType = BlogMLPostType.Normal,
+                CreatedOn = child.CreateDate,
+                LastModifiedOn = child.UpdateDate,
+                Content = new BlogMLTextConstruct(content, BlogMLContentType.Html),
+                Excerpt = new BlogMLTextConstruct(child.GetValue<string>("excerpt")),
+                Url = postUrl
+            };
+        }
+
+        private static void AssignAuthorToPost(BlogMLPost blogMlPost, BlogMLDocument blogMlDoc, string? authorName)
+        {
+            BlogMLAuthor? author = blogMlDoc.Authors?.FirstOrDefault(x =>
+                x.Title is not null && x.Title.Content.InvariantEquals(authorName));
+
+            if (author is not null)
+            {
+                blogMlPost.Authors.Add(author.Id);
+            }
+        }
+
+        private void AssignCategoriesToPost(BlogMLPost blogMlPost, IContent child, string? categoryGroup)
+        {
+            IEnumerable<ITag> categories = tagService.GetTagsForEntity(child.Id, categoryGroup);
+            foreach (ITag category in categories)
+            {
+                blogMlPost.Categories.Add(category.Id.ToString());
+            }
+        }
+
+        private void AssignTagsToPost(BlogMLPost blogMlPost, IContent child, string? tagGroup)
+        {
+            var tags = tagService.GetTagsForEntity(child.Id, tagGroup).Select(t => t.Text).ToList();
+            if (tags.Count > 0)
+            {
+                _ = blogMlPost.AddExtension(new TagsSyndicationExtension { Context = { Tags = new Collection<string>(tags) } });
+            }
+        }
+
+        private void AttachPostImage(BlogMLPost blogMlPost, IContent child, Uri postAbsoluteUrl, bool exportImagesAsBase64)
+        {
+            if (!TryExtractImageV3(exportImagesAsBase64, child, postAbsoluteUrl, blogMlPost))
+            {
+                _ = TryExtractImageV1(exportImagesAsBase64, child, postAbsoluteUrl, blogMlPost);
+            }
+        }
+
+        private bool TryExtractImageV1(bool exportImagesAsBase64, IContent child, Uri postAbsoluteUrl, BlogMLPost blogMlPost)
+        {
+            if (!child.HasProperty("postImage"))
+            {
+                return false;
+            }
+
+            try
+            {
+                if (!TryParseMediaUdi(child, out Guid mediaGuid))
+                {
+                    return false;
+                }
+
+                IMedia? media = mediaService.GetById(mediaGuid);
+                if (media is null)
+                {
+                    return false;
+                }
+
+                if (!TryGetMediaPathV1(media, out string? mediaPath))
+                {
+                    return false;
+                }
+
+                var mime = ImageMimeType(mediaPath!);
+                if (string.IsNullOrWhiteSpace(mime))
+                {
+                    return false;
+                }
+
+                BlogMLAttachment attachment = CreateAttachmentFromMedia(exportImagesAsBase64, media, mediaPath!, mime, postAbsoluteUrl);
+                blogMlPost.Attachments.Add(attachment);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Could not add the file to the blogML post attachments");
+                return false;
+            }
+        }
+
+        private static bool TryParseMediaUdi(IContent child, out Guid mediaGuid)
+        {
+            mediaGuid = Guid.Empty;
+            var mediaUdi = child.GetValue<string>("postImage");
+
+            if (string.IsNullOrWhiteSpace(mediaUdi))
+            {
+                return false;
+            }
+
+            try
+            {
+                var udi = (GuidUdi)UdiParser.Parse(mediaUdi);
+                mediaGuid = udi.Guid;
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private bool TryGetMediaPathV1(IMedia media, out string? mediaPath)
+        {
+            mediaPath = null;
+            string? filename = media.GetValue(Constants.Conventions.Media.File)?.ToString();
+
+            if (filename is null)
+            {
+                return false;
+            }
+
+            mediaPath = mediaFileManager.GetMediaPath(
+                filename,
+                media.Key,
+                media.Properties[Constants.Conventions.Media.File]!.PropertyType.Key);
+
+            return true;
         }
 
         private bool TryExtractImageV3(bool exportImagesAsBase64, IContent child, Uri postAbsoluteUrl, BlogMLPost blogMlPost)
         {
-            if (child.HasProperty("postImage") && child.GetValue<string>("postImage") is { } mediaItemJson &&
-                mediaItemJson.DetectIsJson())
+            if (!child.HasProperty("postImage"))
             {
-                try
+                return false;
+            }
+
+            string? mediaItemJson = child.GetValue<string>("postImage");
+            if (string.IsNullOrWhiteSpace(mediaItemJson) || !mediaItemJson.DetectIsJson())
+            {
+                return false;
+            }
+
+            try
+            {
+                if (!TryParseMediaKey(mediaItemJson, out Guid mediaKey))
                 {
-                    using var doc = JsonDocument.Parse(mediaItemJson);
-                    var mediaKeyStr = doc.RootElement.EnumerateArray().FirstOrDefault().GetProperty("mediaKey").GetString();
-
-                    if (Guid.TryParse(mediaKeyStr, out Guid mediaKey))
-                    {
-                        IMedia? media = mediaService.GetById(mediaKey);
-                        if (media?.GetValue<string>(Constants.Conventions.Media.File) is { } mediaFilePath)
-                        {
-                            if (mediaFilePath.DetectIsJson())
-                            {
-                                using var mediaJson = JsonDocument.Parse(mediaFilePath);
-                                if (mediaJson.RootElement.TryGetProperty("src", out JsonElement mediaSrc))
-                                {
-                                    mediaFilePath = mediaSrc.GetString();
-                                }
-                            }
-
-                            if (mediaFilePath is null)
-                            {
-                                return false;
-                            }
-
-                            var mime = ImageMimeType(mediaFilePath);
-                            if (!string.IsNullOrWhiteSpace(mime))
-                            {
-                                var imageUrl = new Uri(postAbsoluteUrl.GetLeftPart(UriPartial.Authority) + mediaFilePath.EnsureStartsWith('/'), UriKind.Absolute);
-                                var attachment = new BlogMLAttachment
-                                {
-                                    Url = imageUrl,
-                                    ExternalUri = imageUrl,
-                                    IsEmbedded = exportImagesAsBase64,
-                                    MimeType = mime
-                                };
-
-                                if (exportImagesAsBase64)
-                                {
-                                    using Stream mediaFileStream = mediaFileManager.GetFile(media, out _);
-                                    using var memoryStream = new MemoryStream();
-                                    mediaFileStream.CopyTo(memoryStream);
-                                    attachment.Content = Convert.ToBase64String(memoryStream.ToArray());
-                                }
-                                else
-                                {
-                                    attachment.Content = string.Empty;
-                                }
-
-                                blogMlPost.Attachments.Add(attachment);
-
-                                return true;
-                            }
-                        }
-                    }
+                    return false;
                 }
-                catch (Exception ex)
+
+                IMedia? media = mediaService.GetById(mediaKey);
+                if (media is null)
                 {
-                    logger.LogError(ex, "Could not add the file to the blogML post attachments for post {PostId}", child.Id);
+                    return false;
+                }
+
+                if (!TryGetMediaFilePath(media, out string? mediaFilePath))
+                {
+                    return false;
+                }
+
+                var mime = ImageMimeType(mediaFilePath!);
+                if (string.IsNullOrWhiteSpace(mime))
+                {
+                    return false;
+                }
+
+                BlogMLAttachment attachment = CreateAttachmentFromMedia(exportImagesAsBase64, media, mediaFilePath!, mime, postAbsoluteUrl);
+                blogMlPost.Attachments.Add(attachment);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Could not add the file to the blogML post attachments for post {PostId}", child.Id);
+                return false;
+            }
+        }
+
+        private static bool TryParseMediaKey(string mediaItemJson, out Guid mediaKey)
+        {
+            using var doc = JsonDocument.Parse(mediaItemJson);
+            var mediaKeyStr = doc.RootElement.EnumerateArray().FirstOrDefault().GetProperty("mediaKey").GetString();
+            return Guid.TryParse(mediaKeyStr, out mediaKey);
+        }
+
+        private static bool TryGetMediaFilePath(IMedia media, out string? mediaFilePath)
+        {
+            mediaFilePath = media.GetValue<string>(Constants.Conventions.Media.File);
+            if (mediaFilePath is null)
+            {
+                return false;
+            }
+
+            if (mediaFilePath.DetectIsJson())
+            {
+                using var mediaJson = JsonDocument.Parse(mediaFilePath);
+                if (mediaJson.RootElement.TryGetProperty("src", out JsonElement mediaSrc))
+                {
+                    mediaFilePath = mediaSrc.GetString();
                 }
             }
 
-            return false;
+            return mediaFilePath is not null;
+        }
+
+        private BlogMLAttachment CreateAttachmentFromMedia(bool exportImagesAsBase64, IMedia media, string mediaFilePath, string mimeType, Uri postAbsoluteUrl)
+        {
+            var imageUrl = new Uri(postAbsoluteUrl.GetLeftPart(UriPartial.Authority) + mediaFilePath.EnsureStartsWith('/'), UriKind.Absolute);
+            var attachment = new BlogMLAttachment
+            {
+                Url = imageUrl,
+                ExternalUri = imageUrl,
+                IsEmbedded = exportImagesAsBase64,
+                MimeType = mimeType
+            };
+
+            if (exportImagesAsBase64)
+            {
+                using Stream mediaFileStream = mediaFileManager.GetFile(media, out _);
+                using var memoryStream = new MemoryStream();
+                mediaFileStream.CopyTo(memoryStream);
+                attachment.Content = Convert.ToBase64String(memoryStream.ToArray());
+            }
+            else
+            {
+                attachment.Content = string.Empty;
+            }
+
+            return attachment;
         }
     }
 }

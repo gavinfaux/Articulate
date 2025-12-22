@@ -34,13 +34,15 @@ namespace Articulate.Models
 
             Pages = pager ?? throw new ArgumentNullException(nameof(pager));
             _listItems = listItems ?? throw new ArgumentNullException(nameof(listItems));
+
+            var contentName = content.Name;
             if (content.ContentType.Alias.Equals(ArticulateConstants.ContentType.ArticulateArchive))
             {
                 PageTitle = BlogTitle + " - " + BlogDescription;
             }
             else
             {
-                PageTags = Name;
+                PageTags = contentName;
             }
 
             _posts = new Lazy<PostModel[]>(BuildPosts, LazyThreadSafetyMode.ExecutionAndPublication);

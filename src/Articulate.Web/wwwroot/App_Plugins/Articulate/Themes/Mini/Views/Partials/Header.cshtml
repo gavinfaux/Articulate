@@ -3,21 +3,15 @@
 <div class="header-placeholder">&nbsp;</div>
 
 @{
-    string backgroundStyle = "";
-    if (!string.IsNullOrWhiteSpace(Model.BlogBanner))
-    {
-        // Validate URL and encode for CSS context
-        var encodedUrl = System.Web.HttpUtility.UrlPathEncode(Model.BlogBanner);
-        if (Uri.TryCreate(encodedUrl, UriKind.RelativeOrAbsolute, out var uri))
-        {
-            backgroundStyle = $"background-image: url('{encodedUrl.Replace("'", "\\'")}');";
-        }
-    }
+    string backgroundStyle = Model.BlogBannerCss is not null
+        ? $"background-image: url('{Model.BlogBannerCss}');"
+        : "";
 }
-
 <div class="header-content" style="@backgroundStyle">
 
-    @if (!string.IsNullOrWhiteSpace(Model.BlogLogo))
+    @if (!string.IsNullOrWhiteSpace(Model.BlogLogo)
+        && Uri.TryCreate(Model.BlogLogo, UriKind.RelativeOrAbsolute, out var logoUri)
+        && (!logoUri.IsAbsoluteUri || (logoUri.Scheme == Uri.UriSchemeHttp || logoUri.Scheme == Uri.UriSchemeHttps)))
     {
         <a class="logo" href="@Model.ArticulateRootUrl()"><img src="@Model.BlogLogo" alt="Blog Logo" class="blog-logo" /></a>
     }

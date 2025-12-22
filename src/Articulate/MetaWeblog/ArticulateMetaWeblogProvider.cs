@@ -2,6 +2,7 @@
 using System.Globalization;
 using System.Security.Authentication;
 using System.Text.RegularExpressions;
+using Articulate.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Api.Management.Routing;
@@ -45,6 +46,7 @@ namespace Articulate.MetaWeblog
         private readonly IUserService _userService;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IAbsoluteUrlBuilder _absoluteUrlBuilder;
+        private readonly IArticulateImageService _imageService;
 
         public ArticulateMetaWeblogProvider(
             IHttpContextAccessor httpContextAccessor,
@@ -66,7 +68,8 @@ namespace Articulate.MetaWeblog
             IMediaService mediaService,
             MediaUrlGeneratorCollection mediaUrlGenerators,
             int articulateBlogRootNodeId,
-            IAbsoluteUrlBuilder absoluteUrlBuilder)
+            IAbsoluteUrlBuilder absoluteUrlBuilder,
+            IArticulateImageService imageService)
         {
             _httpContextAccessor = httpContextAccessor;
             _umbracoContextAccessor = umbracoContextAccessor;
@@ -88,6 +91,7 @@ namespace Articulate.MetaWeblog
             _mediaService = mediaService;
             _mediaUrlGenerators = mediaUrlGenerators;
             _absoluteUrlBuilder = absoluteUrlBuilder;
+            _imageService = imageService;
             _articulateRootMediaFolder = new Lazy<IMedia>(() =>
             {
                 IMedia? root = _mediaService.GetRootMedia().FirstOrDefault(x =>
@@ -320,6 +324,9 @@ namespace Articulate.MetaWeblog
             return blogs;
         }
 
+        // IOptions<GlobalSettings> globalSettings MaxRequestLength
+        private const long DefaultMaxSizeBytes = 10 * 1024 * 1024; // 10MB
+
         /// <inheritdoc/>
         public async Task<MediaObjectInfo> NewMediaObjectAsync(string blogid, string username, string password, MediaObject mediaObject)
         {
@@ -330,147 +337,44 @@ namespace Articulate.MetaWeblog
                 throw new ArgumentException("Invalid file", nameof(mediaObject));
             }
 
-            // Validate file type
-            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", };
-            var extension = Path.GetExtension(Path.GetFileName(mediaObject.name)).ToLowerInvariant();
-            if (!allowedExtensions.Contains(extension))
+            // Decode and validate the image using shared service
+            var fileName = Path.GetFileName(mediaObject.name);
+            ImageValidationResult validationResult = await _imageService.DecodeAndValidateBase64ImageAsync(
+                mediaObject.bits,
+                fileName,
+                DefaultMaxSizeBytes).ConfigureAwait(false);
+
+            if (!validationResult.IsValid)
             {
-                throw new ArgumentException($"File type {extension} not allowed", nameof(mediaObject));
+                throw new ArgumentException($"Image validation failed: {validationResult.ErrorMessage}", nameof(mediaObject));
             }
 
-            // Validate file size (e.g., max 10MB)
-            const int maxFileSize = 10 * 1024 * 1024;
-            byte[] bytes;
             try
             {
-                bytes = Convert.FromBase64String(mediaObject.bits);
-                if (bytes.Length > maxFileSize)
+                // Save to file system using shared service
+                var absoluteUrl = await _imageService.SaveToFileSystemAsync(
+                    validationResult.ValidatedStream!,
+                    validationResult.CorrectExtension!).ConfigureAwait(false);
+
+                return new MediaObjectInfo { url = absoluteUrl };
+            }
+            finally
+            {
+                if (validationResult.ValidatedStream is not null)
                 {
-                    throw new ArgumentException($"File size {bytes.Length} exceeds maximum {maxFileSize} bytes", nameof(mediaObject));
+                    await validationResult.ValidatedStream.DisposeAsync().ConfigureAwait(false);
                 }
             }
-            catch (FormatException)
-            {
-                throw new ArgumentException("Invalid base64 content", nameof(mediaObject));
-            }
-
-            // Save File
-            var rndId = Guid.NewGuid().ToString("N");
-            var safeFileName = $"{rndId}{extension}".ToSafeFileName(_shortStringHelper);
-            var fileUrl = $"articulate/{rndId}/{safeFileName}";
-            using var ms = new MemoryStream(bytes);
-            _mediaFileManager.FileSystem.AddFile(fileUrl, ms);
-            var fileSystemUrl = _mediaFileManager.FileSystem.GetUrl(fileUrl);
-            HttpRequest? request = _httpContextAccessor.HttpContext?.Request;
-            if (request is null)
-            {
-                _logger.LogWarning("No HttpContext available while generating media URL for MetaWeblog upload. Returning URL as-is: {FileSystemUrl}", fileSystemUrl);
-                return new MediaObjectInfo { url = fileSystemUrl };
-            }
-
-            var absUrl = _absoluteUrlBuilder.ToAbsoluteUrl(fileSystemUrl).ToString();
-
-            var result = new MediaObjectInfo { url = absUrl };
-
-            return result;
         }
 
         private void AddOrUpdateContent(IContent content, IContentType contentType, Post post, IUser user, bool publish, bool extractFirstImageAsProperty)
         {
             content.SetInvariantOrDefaultCultureName(post.title, contentType, _languageService);
-
             content.SetInvariantOrDefaultCultureValue("author", user.Name, contentType, _languageService);
+
             if (content.HasProperty("richText"))
             {
-                Match firstImageMatch = ArticulateMetaWeblogRegexes.MediaSourceRegex().Match(post.description);
-                var firstImageRelativePath = string.Empty;
-                if (firstImageMatch is { Success: true, Groups.Count: 2 })
-                {
-                    firstImageRelativePath = firstImageMatch.Groups[1].Value;
-                }
-
-                // Extract the articulate firstImage.
-                // Re-update the URL to be the one from the media file system.
-                // Live writer will always make the urls absolute even if we return a relative path from NewMediaObject
-                // so we will re-update it. If it's the default media file system then this will become a relative path
-                // which is what we want, if it's a custom file system it will update it to it's absolute path.
-                var contentToSave = ArticulateMetaWeblogRegexes.MediaSourceRegex().Replace(post.description, match =>
-                {
-                    if (match.Groups.Count != 2)
-                    {
-                        return string.Empty;
-                    }
-
-                    var relativePath = match.Groups[1].Value;
-                    var mediaFileSystemPath = _mediaFileManager.FileSystem.GetUrl(relativePath);
-
-                    return " src=\"" + mediaFileSystemPath + "\"";
-                });
-
-                var imagesProcessed = 0;
-
-                // Now ensure all anchors have the custom class
-                // and the media file system path is re-updated as per above
-                contentToSave = ArticulateMetaWeblogRegexes.MediaHrefRegex().Replace(contentToSave, match =>
-                {
-                    if (match.Groups.Count != 2)
-                    {
-                        return string.Empty;
-                    }
-
-                    var relativePath = match.Groups[1].Value;
-                    var mediaFileSystemPath = _mediaFileManager.FileSystem.GetUrl(relativePath);
-
-                    var href = " href=\"" +
-                               mediaFileSystemPath +
-                               "\" class=\"a-image-" + imagesProcessed + "\" ";
-
-                    imagesProcessed++;
-
-                    return href;
-                });
-
-                content.SetInvariantOrDefaultCultureValue("richText", contentToSave, contentType, _languageService);
-                if (extractFirstImageAsProperty
-                    && content.HasProperty("postImage")
-                    && !firstImageRelativePath.IsNullOrWhiteSpace())
-                {
-                    if (!string.IsNullOrWhiteSpace(firstImageRelativePath) &&
-                        _mediaFileManager.FileSystem.FileExists(firstImageRelativePath))
-                    {
-                        try
-                        {
-                            using Stream fileStream = _mediaFileManager.FileSystem.OpenFile(firstImageRelativePath);
-                            var fileName = Path.GetFileName(firstImageRelativePath);
-
-                            IMedia mediaItem = _mediaService.CreateMedia(fileName, _articulateRootMediaFolder.Value, Constants.Conventions.MediaTypes.Image);
-                            mediaItem.SetValue(
-                                _mediaFileManager,
-                                _mediaUrlGenerators,
-                                _shortStringHelper,
-                                _contentTypeBaseServiceProvider,
-                                Constants.Conventions.Media.File,
-                                fileName,
-                                fileStream);
-
-                            Attempt<OperationResult?> mediaSaveAttempt = _mediaService.Save(mediaItem);
-                            mediaSaveAttempt.EnsureSuccess(_logger, $"save media '{fileName}' for featured image");
-
-                            var udi = Udi.Create(Constants.UdiEntityType.Media, mediaItem.Key);
-
-                            content.SetInvariantOrDefaultCultureValue(
-                                "postImage",
-                                udi.ToString(),
-                                contentType,
-                                _languageService);
-                        }
-                        catch (Exception ex)
-                        {
-                            // Catch any exception and log it, post will still be saved
-                            _logger.LogError(ex, "Could not create media item for featured image {FileName}", firstImageRelativePath);
-                        }
-                    }
-                }
+                ProcessRichTextContent(content, contentType, post, extractFirstImageAsProperty);
             }
 
             if (!post.link.IsNullOrWhiteSpace())
@@ -483,17 +387,10 @@ namespace Articulate.MetaWeblog
                 content.SetInvariantOrDefaultCultureValue("excerpt", post.mt_excerpt, contentType, _languageService);
             }
 
-            switch (post.mt_allow_comments)
-            {
-                case 1:
-                    content.SetInvariantOrDefaultCultureValue("enableComments", 1, contentType, _languageService);
-                    break;
-                case 2:
-                    content.SetInvariantOrDefaultCultureValue("enableComments", 0, contentType, _languageService);
-                    break;
-            }
+            SetCommentSettings(content, contentType, post.mt_allow_comments);
 
             content.AssignInvariantOrDefaultCultureTags("categories", post.categories, contentType, _languageService, _dataTypeService, _propertyEditors, _jsonSerializer);
+
             var tags = post.mt_keywords
                 .Split(_commaSeparator, StringSplitOptions.RemoveEmptyEntries)
                 .Select(x => x.Trim())
@@ -502,11 +399,129 @@ namespace Articulate.MetaWeblog
 
             content.AssignInvariantOrDefaultCultureTags("tags", tags, contentType, _languageService, _dataTypeService, _propertyEditors, _jsonSerializer);
 
+            SaveAndPublishIfNeeded(content, user, post, publish);
+        }
+
+        private void ProcessRichTextContent(IContent content, IContentType contentType, Post post, bool extractFirstImageAsProperty)
+        {
+            Match firstImageMatch = ArticulateMetaWeblogRegexes.MediaSourceRegex().Match(post.description);
+            var firstImageRelativePath = firstImageMatch is { Success: true, Groups.Count: 2 }
+                ? firstImageMatch.Groups[1].Value
+                : string.Empty;
+
+            var contentToSave = UpdateMediaSourceUrls(post.description);
+            contentToSave = UpdateMediaHrefUrls(contentToSave);
+
+            content.SetInvariantOrDefaultCultureValue("richText", contentToSave, contentType, _languageService);
+
+            if (extractFirstImageAsProperty && content.HasProperty("postImage") && !firstImageRelativePath.IsNullOrWhiteSpace())
+            {
+                ExtractAndSaveFirstImage(content, contentType, firstImageRelativePath);
+            }
+        }
+
+        private string UpdateMediaSourceUrls(string description)
+        {
+            return ArticulateMetaWeblogRegexes.MediaSourceRegex().Replace(description, match =>
+            {
+                if (match.Groups.Count != 2)
+                {
+                    return match.Value;
+                }
+
+                var relativePath = match.Groups[1].Value;
+                var mediaFileSystemPath = _mediaFileManager.FileSystem.GetUrl(relativePath);
+
+                return " src=\"" + mediaFileSystemPath + "\"";
+            });
+        }
+
+        private string UpdateMediaHrefUrls(string content)
+        {
+            var imagesProcessed = 0;
+            return ArticulateMetaWeblogRegexes.MediaHrefRegex().Replace(content, match =>
+            {
+                if (match.Groups.Count != 2)
+                {
+                    return match.Value;
+                }
+
+                var relativePath = match.Groups[1].Value;
+                var mediaFileSystemPath = _mediaFileManager.FileSystem.GetUrl(relativePath);
+
+                var href = " href=\"" +
+                           mediaFileSystemPath +
+                           "\" class=\"a-image-" + imagesProcessed + "\" ";
+
+                imagesProcessed++;
+
+                return href;
+            });
+        }
+
+        private void ExtractAndSaveFirstImage(IContent content, IContentType contentType, string firstImageRelativePath)
+        {
+            if (!_mediaFileManager.FileSystem.FileExists(firstImageRelativePath))
+            {
+                return;
+            }
+
+            try
+            {
+                using Stream fileStream = _mediaFileManager.FileSystem.OpenFile(firstImageRelativePath);
+                var fileName = Path.GetFileName(firstImageRelativePath);
+
+                IMedia mediaItem = _mediaService.CreateMedia(fileName, _articulateRootMediaFolder.Value, Constants.Conventions.MediaTypes.Image);
+                mediaItem.SetValue(
+                    _mediaFileManager,
+                    _mediaUrlGenerators,
+                    _shortStringHelper,
+                    _contentTypeBaseServiceProvider,
+                    Constants.Conventions.Media.File,
+                    fileName,
+                    fileStream);
+
+                Attempt<OperationResult?> mediaSaveAttempt = _mediaService.Save(mediaItem);
+                mediaSaveAttempt.EnsureSuccess(_logger, $"save media '{fileName}' for featured image");
+
+                var udi = Udi.Create(Constants.UdiEntityType.Media, mediaItem.Key);
+
+                content.SetInvariantOrDefaultCultureValue(
+                    "postImage",
+                    udi.ToString(),
+                    contentType,
+                    _languageService);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Could not create media item for featured image {FileName}", firstImageRelativePath);
+            }
+        }
+
+        private void SetCommentSettings(IContent content, IContentType contentType, int allowComments)
+        {
+            switch (allowComments)
+            {
+                case 1:
+                    content.SetInvariantOrDefaultCultureValue("enableComments", 1, contentType, _languageService);
+                    break;
+                case 2:
+                    content.SetInvariantOrDefaultCultureValue("enableComments", 0, contentType, _languageService);
+                    break;
+            }
+        }
+
+        private void SaveAndPublishIfNeeded(IContent content, IUser user, Post post, bool publish)
+        {
             if (publish)
             {
                 if (post.dateCreated != DateTime.MinValue)
                 {
-                    content.SetInvariantOrDefaultCultureValue("publishedDate", post.dateCreated, contentType, _languageService);
+                    IContentType? contentType = _contentTypeService.Get(content.ContentTypeId);
+                    if (contentType is not null)
+                    {
+                        content.SetInvariantOrDefaultCultureValue("publishedDate", post.dateCreated, contentType, _languageService);
+                    }
                 }
 
                 OperationResult saveAndPublishSaveResult = _contentService.Save(content, user.Id);

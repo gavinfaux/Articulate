@@ -35,15 +35,7 @@ namespace Articulate.Components
             switch (notification.MessageType)
             {
                 case MessageType.RefreshByPayload:
-                    // This is the standard case for content cache refresher
-                    foreach (ContentCacheRefresher.JsonPayload payload in (ContentCacheRefresher.JsonPayload[])notification.MessageObject)
-                    {
-                        if (payload.ChangeTypes.HasTypesAny(TreeChangeTypes.Remove | TreeChangeTypes.RefreshBranch | TreeChangeTypes.RefreshNode))
-                        {
-                            RefreshById(payload.Id);
-                        }
-                    }
-
+                    HandleRefreshByPayload((ContentCacheRefresher.JsonPayload[])notification.MessageObject);
                     break;
                 case MessageType.RefreshById:
                 case MessageType.RemoveById:
@@ -51,22 +43,36 @@ namespace Articulate.Components
                     break;
                 case MessageType.RefreshByInstance:
                 case MessageType.RemoveByInstance:
-                    if (notification.MessageObject is not IContent content)
-                    {
-                        return;
-                    }
-
-                    if (content.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.Articulate))
-                    {
-                        // ensure routes are rebuilt
-                        EnsureRoutesRefreshQueued();
-                    }
-
+                    HandleRefreshByInstance(notification.MessageObject);
                     break;
                 case MessageType.RefreshAll:
                 case MessageType.RefreshByJson:
                 default:
                     break;
+            }
+        }
+
+        private void HandleRefreshByPayload(ContentCacheRefresher.JsonPayload[] payloads)
+        {
+            foreach (ContentCacheRefresher.JsonPayload payload in payloads)
+            {
+                if (payload.ChangeTypes.HasTypesAny(TreeChangeTypes.Remove | TreeChangeTypes.RefreshBranch | TreeChangeTypes.RefreshNode))
+                {
+                    RefreshById(payload.Id);
+                }
+            }
+        }
+
+        private void HandleRefreshByInstance(object messageObject)
+        {
+            if (messageObject is not IContent content)
+            {
+                return;
+            }
+
+            if (content.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.Articulate))
+            {
+                EnsureRoutesRefreshQueued();
             }
         }
 

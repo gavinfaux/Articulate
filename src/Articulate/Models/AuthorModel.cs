@@ -39,7 +39,7 @@ namespace Articulate.Models
 
         public string Bio => this.Value<string>("authorBio") ?? string.Empty;
 
-        public string AuthorUrl => this.Value<string>("authorUrl") ?? string.Empty;
+        public string? AuthorUrl => this.Value<string>("authorUrl").ToSafeHrefUrl();
 
         /// <inheritdoc/>
         public MediaWithCrops? Image => _image.Value;

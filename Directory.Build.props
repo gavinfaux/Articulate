@@ -41,8 +41,8 @@
 	<PropertyGroup>
 		<EnableClientBuild Condition="'$(EnableClientBuild)'=='' and '$(ENABLE_CLIENT_BUILD)'!=''">$(ENABLE_CLIENT_BUILD)</EnableClientBuild>
 		<EnableClientBuild Condition="'$(EnableClientBuild)'==''">false</EnableClientBuild>
-		<ClientBuildCommand Condition="'$(ClientBuildCommand)'=='' and ('$(CI)'=='true' or '$(GITHUB_ACTIONS)'=='true' or '$(Configuration)'=='Release')">pnpm run build:release</ClientBuildCommand>
-		<ClientBuildCommand Condition="'$(ClientBuildCommand)'==''">pnpm run build</ClientBuildCommand>
+		<ClientBuildCommand Condition="'$(ClientBuildCommand)'=='' and ('$(CI)'=='true' or '$(GITHUB_ACTIONS)'=='true' or '$(Configuration)'=='Release')">pnpm run build</ClientBuildCommand>
+		<ClientBuildCommand Condition="'$(ClientBuildCommand)'==''">pnpm run build:dev</ClientBuildCommand>
 	</PropertyGroup>
 	<PropertyGroup>
 		<StaticWebAssetBasePath Condition="'$(StaticWebAssetBasePath)' == ''">/</StaticWebAssetBasePath>
@@ -62,7 +62,7 @@
 		</PackageReference>
 		<PackageReference Include="Microsoft.CodeAnalysis" Version="$(MicrosoftCodeAnalysisPackageVersion)" PrivateAssets="All" />
 	</ItemGroup>
-	<ItemGroup Condition="'$(UsingMicrosoftNETSdkRazor)' == 'true'">
+	<ItemGroup Condition="'$(UseArticulateUsings)' == 'true'">
 		<Using Include="Umbraco.Cms.Core.DependencyInjection" />
 		<Using Include="Umbraco.Extensions" />
 		<Using Include="Articulate" />

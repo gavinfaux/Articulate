@@ -41,10 +41,10 @@
 
     <header id="site-head" role="banner">
 
-        @if (!Model.BlogLogo.IsNullOrWhiteSpace())
+        @if (Model.BlogLogoCss is not null)
         {
             <a id="blog-logo" href="@Model.ArticulateRootUrl()" title="Blog Home">
-                <div class="bloglogo" style="background: url(@Model.BlogLogo)"></div>
+                <div class="bloglogo" style="background: url('@Model.BlogLogoCss')"></div>
             </a>
         }
 

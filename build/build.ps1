@@ -75,37 +75,37 @@ dotnet --version
 Write-Host "Starting clean and restore process for solution: $SolutionPath"
 
 # Best-effort pre-clean to avoid locked files during dotnet clean (MarkdownEditor assets)
-$preCleanTargets = @(
-    Join-Path $SolutionRoot "Articulate.StaticAssets/wwwroot/App_Plugins/Articulate/MarkdownEditor"
-)
-function Remove-WithRetry {
-    param(
-        [string] $Path,
-        [int] $Retries = 3,
-        [int] $DelayMs = 250
-    )
-    for ($i = 0; $i -lt $Retries; $i++) {
-        try {
-            if (Test-Path $Path) {
-                Remove-Item -Recurse -Force -ErrorAction Stop $Path
-            }
-            return
-        }
-        catch {
-            if ($i -eq $Retries - 1) {
-                Write-Warning "Failed to delete $Path after $Retries attempts: $($_.Exception.Message)"
-                return
-            }
-            Start-Sleep -Milliseconds $DelayMs
-        }
-    }
-}
-$preCleanTargets | ForEach-Object { Remove-WithRetry $_ }
+#$preCleanTargets = @(
+#    Join-Path $SolutionRoot "Articulate.StaticAssets/wwwroot/App_Plugins/Articulate/MarkdownEditor"
+#)
+#function Remove-WithRetry {
+#    param(
+#        [string] $Path,
+#        [int] $Retries = 3,
+#        [int] $DelayMs = 250
+#    )
+#    for ($i = 0; $i -lt $Retries; $i++) {
+#        try {
+#            if (Test-Path $Path) {
+#                Remove-Item -Recurse -Force -ErrorAction Stop $Path
+#            }
+#            return
+#        }
+#        catch {
+#            if ($i -eq $Retries - 1) {
+#                Write-Warning "Failed to delete $Path after $Retries attempts: $($_.Exception.Message)"
+#                return
+#            }
+#            Start-Sleep -Milliseconds $DelayMs
+#        }
+#    }
+#}
+#$preCleanTargets | ForEach-Object { Remove-WithRetry $_ }
 
-# 0) Clean the solution to ensure release/CI builds start from a fresh slate
+# 1) Clean the solution to ensure release/CI builds start from a fresh slate
 Write-Host "1. Cleaning solution outputs..."
 & dotnet clean $SolutionPath -c $Configuration @dotnetCommon $clientBuildProperty
-if (-not $?) { throw "dotnet clean failed" }
+if (-not $?) { Write-Host "Warning dotnet clean failed" }
 
 # 2) Restore (solution-level) with static graph + parallelism
 Write-Host "2. Restoring solution packages in parallel..."
@@ -129,10 +129,10 @@ Write-Host "4. Packing projects..."
 $articulateProject = (Join-Path $SolutionRoot 'Articulate/Articulate.csproj')
 $articulateWebProject = (Join-Path $SolutionRoot 'Articulate.Web/Articulate.Web.csproj')
 $articulateApiProject = (Join-Path $SolutionRoot 'Articulate.Api.Management/Articulate.Api.Management.csproj')
-$articulateStaticAssetsProject = (Join-Path $SolutionRoot 'Articulate.StaticAssets/Articulate.StaticAssets.csproj')
+$articulateBackOfficeUIProject = (Join-Path $SolutionRoot 'Articulate.BackOffice.UI/Articulate.BackOffice.UI.csproj')
 
 $projectsToPack = @(
-    $articulateStaticAssetsProject,
+    $articulateBackOfficeUIProject,
     $articulateProject,
     $articulateWebProject,
     $articulateApiProject

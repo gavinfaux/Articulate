@@ -40,10 +40,10 @@
                         <p>
                             @Model.Bio
                         </p>
-                        @if (!Model.AuthorUrl.IsNullOrWhiteSpace())
+                        @if (Model.AuthorUrl is not null)
                         {
                             <p>
-                                Website: <a href="@Model.AuthorUrl">@Model.AuthorUrl</a>
+                                Website: <a href="@Model.AuthorUrl" rel="nofollow noopener noreferrer" target="_blank">@Model.AuthorUrl</a>
                             </p>
                         }
                     </div>

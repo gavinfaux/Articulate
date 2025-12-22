@@ -1,16 +1,27 @@
 @model IImageModel
 @{
-    var postBg = "none";
+    string? bgUrl = Url.GetCropUrl(Model.Image, "wide")?.ToString();
+    string? safeBgUrl = null;
 
-    if (Model.Image is not null)
+    if (!string.IsNullOrEmpty(bgUrl)
+        && Uri.TryCreate(bgUrl, UriKind.RelativeOrAbsolute, out var bgUri)
+        && (!bgUri.IsAbsoluteUri || bgUri.Scheme == Uri.UriSchemeHttp || bgUri.Scheme == Uri.UriSchemeHttps))
     {
-        var bgUrl = Model.Image.GetCropUrl("wide");
-        if (bgUrl is not null)
-        {
-            postBg = $"url('{bgUrl.Replace("'", "\\'")}')";
-        }
-        <div class="mdl-card__media mdl-color-text--grey-50" style="background-image: @(postBg);">
+        // CSS escape: replace backslash, quotes, newline, and parentheses
+        safeBgUrl = bgUrl
+            .Replace("\\", "\\\\")
+            .Replace("'", "\\'")
+            .Replace("\"", "\\\"")
+            .Replace("\n", "\\n")
+            .Replace("\r", "\\r")
+            .Replace("\0", string.Empty)
+            .Replace("(", "\\(")
+            .Replace(")", "\\)");
+    }
 
+    if (safeBgUrl is not null)
+    {
+        <div class="mdl-card__media mdl-color-text--grey-50" style="background-image: url('@safeBgUrl');">
             <h3>
                 <a href="@Model.Url">@Model.Name</a>
             </h3>

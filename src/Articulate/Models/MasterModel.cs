@@ -91,6 +91,13 @@ namespace Articulate.Models
             protected set;
         }
 
+        /// <summary>
+        /// Gets whether Disqus comments are enabled and configured with a valid shortname.
+        /// Validates that the DisqusShortName is not empty and contains only valid characters (alphanumeric and hyphens).
+        /// </summary>
+        public bool IsDisqusEnabled => !string.IsNullOrWhiteSpace(DisqusShortName)
+                   && System.Text.RegularExpressions.Regex.IsMatch(DisqusShortName, @"^[a-zA-Z0-9\-]+$");
+
         /// <inheritdoc/>
         public string CustomRssFeed
         {
@@ -105,10 +112,30 @@ namespace Articulate.Models
             protected set;
         }
 
+        /// <summary>
+        /// Gets the blog logo URL with CSS escaping for safe use in inline style attributes.
+        /// Use this for style="background: url(...)" contexts instead of BlogLogo.
+        /// </summary>
+        public string BlogLogoCss
+        {
+            get => field ??= BlogLogo.ToSafeCssUrl();
+            protected set;
+        }
+
         /// <inheritdoc/>
         public string BlogBanner
         {
             get => field ??= RootBlogNode.Value<MediaWithCrops>("blogBanner")?.GetCropUrl("wide") ?? string.Empty;
+            protected set;
+        }
+
+        /// <summary>
+        /// Gets the blog banner URL with CSS escaping for safe use in inline style attributes.
+        /// Use this for style="background-image: url(...)" contexts instead of BlogBanner.
+        /// </summary>
+        public string BlogBannerCss
+        {
+            get => field ??= BlogBanner.ToSafeCssUrl();
             protected set;
         }
 
