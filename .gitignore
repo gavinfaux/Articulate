@@ -487,9 +487,10 @@ gitleaks-report.json
 ##
 
 # The packages folder can be ignored because of Package Restore
-**/[Pp]ackages/*
 # except build/, which is used as an MSBuild target.
+**/[Pp]ackages/*
 !**/[Pp]ackages/build/
+
 # Uncomment if necessary however generally it will be regenerated when needed
 #!**/[Pp]ackages/repositories.config
 # except monaco editor package used for now by Articulate's Markdown property editor
@@ -497,11 +498,13 @@ gitleaks-report.json
 !/src/Articulate.Api.Management/Client/src/packages/**
 
 # theme build artifacts
+/src/Articulate.BackOffice.UI/wwwroot
 /src/Articulate.Web/wwwroot/App_Plugins/Articulate/Themes/**/dist/
-/src/Articulate.Web/wwwroot/App_Plugins/Articulate/MarkdownEditor/dist/
-/src/Articulate.StaticAssets/wwwroot/App_Plugins/Articulate/
+/src/Articulate.Web/wwwroot/App_Plugins/Articulate/MarkdownEditor/**/dist/
+/src/Articulate.BackOffice.UI/wwwroot/App_Plugins/Articulate/
 /build/tmp
 /build/ClientAssets/BackofficeClient.stamp
+
 # test website junk
 /src/Articulate.Tests.Website/Articulate/Temp
 /src/Articulate.Tests.Website/umbraco/**
@@ -512,4 +515,4 @@ gitleaks-report.json
 /src/Articulate.Tests.Website/appsettings-schema.Umbraco.Cms.json
 /src/Articulate.Tests.Website/umbraco-package-schema.json
 /src/Articulate.Tests.Website/appsettings-schema.json
-/RELEASE_NOTES_v6.0.0.md
+
