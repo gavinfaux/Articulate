@@ -5,7 +5,6 @@ using Articulate.Api.Management.Attributes;
 using Articulate.Api.Management.Models;
 using Articulate.Extensions;
 using Articulate.Services;
-using Articulate.Validators;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -29,25 +28,6 @@ using Umbraco.Cms.Web.Common.Authorization;
 
 namespace Articulate.Api.Management.Controllers
 {
-    // NOTE: ManagementApiControllerBase [ApiController] attribute will automatically validate the model
-    // [ApiController] attribute also infers [FromBody] for model binding
-
-    /* TODO: Review security
-     * 1) Stored XSS via Markdown
-       Risk: An attacker saving a post with malicious markdown (e.g., <script>alert('pwned')</script> or [click me](javascript:alert('pwned'))).
-       Mitigation: Only authorized back office users may post and must log in first. Once logged in, any XSS concerns must be handled by the backend. The backend, before ever rendering this content as HTML on the public-facing blog, must process it through a robust HTML sanitization library. This library should strip all dangerous tags (<script>, <iframe>) and attributes (onclick, onerror).
-       Actions: Review if an HTML sanitization library should be used, or if Umbraco provides appropriate mitigations. MarkdownHelper could be adapted to provide this, or DI services (Markdown parser, HTML sanitizer) could be added.
-
-       2) File Upload Security
-       Risk: An attacker could upload a malicious file (e.g., a file named my-image.jpg that is actually an HTML file containing scripts).
-       Mitigation: As before, only authorized back office users may post and must log in first.
-       Actions: Review file validation, e.g. [FileSignatures](https://github.com/neilharvey/FileSignatures/) could be used to inspect the file's actual content (magic bytes), trusting the Content-Type header sent by the browser or file extension is not sufficient.
-
-       3) Token Storage (localStorage):
-       Risk: We store the JWT in localStorage. If an XSS vulnerability were to be found on the site, an attacker could steal this token.
-       Mitigation & Context: This is a well-known and widely accepted trade-off for SPAs. The primary mitigation is a strong XSS defense (implemented by CSP). The alternative, storing tokens in memory, would require a re-login on every page refresh, which is a poor user experience. Given the context, this is a reasonable and standard approach, but it highlights the absolute importance of the backend sanitization mentioned in point #1.
-       */
-
     /// <summary>
     ///     Controller for handling the a-new markdown editor endpoint for creating blog posts.
     /// </summary>
@@ -163,24 +143,6 @@ namespace Articulate.Api.Management.Controllers
                     statusCode: StatusCodes.Status400BadRequest);
             }
 
-            /* Duplicates implicit validation from [ApiController] */
-            /*
-            if (model.ArticulateBlogNode == 0 || string.IsNullOrWhiteSpace(model.Title))
-            {
-                if (model.ArticulateBlogNode == 0)
-                {
-                 ModelState.AddModelError(nameof(model.ArticulateBlogNode), "The ArticulateBlogNode field is required.");
-                }
-
-                if (string.IsNullOrWhiteSpace(model.Title))
-                {
-                    ModelState.AddModelError(nameof(model.Title), "The Title field is required.");
-                }
-
-                return ValidationProblem(ModelState);
-            }
-            */
-
             IContent? articulateNode = _contentService.GetById(model.ArticulateBlogNode);
             if (articulateNode is null)
             {
@@ -205,7 +167,6 @@ namespace Articulate.Api.Management.Controllers
             IUser? currentUser = _backOfficeAuthService.GetCurrentUser();
             if (currentUser is null)
             {
-                // This shouldn't happen due to the [Authorize] attribute, but it's a good safeguard.
                 return Unauthorized();
             }
 
@@ -297,7 +258,6 @@ namespace Articulate.Api.Management.Controllers
                 replacementMap[match.Value] = result.ReplacementMarkdown;
             }
 
-            // STEP 3: Apply markdown replacements
             if (replacementMap.Count > 0)
             {
                 bodyText = ArticulateMarkdownEditorRegexes.ImageTagPlaceholderRegex().Replace(
@@ -323,148 +283,69 @@ namespace Articulate.Api.Management.Controllers
                 return ImageProcessResult.Removed();
             }
 
-            // Validate the uploaded file
-            ImageValidationResult validationResult = await ValidateAndPrepareImageAsync(file, userLabel).ConfigureAwait(false);
-            if (!validationResult.IsValid)
-            {
-                return ImageProcessResult.Removed();
-            }
-
-            // Save to media library or file system
-            if (saveAsFirstImage)
-            {
-                return await SaveImageToMediaLibraryAsync(
-                    validationResult.Stream!,
-                    validationResult.AltText!,
-                    validationResult.SafeFileName!).ConfigureAwait(false);
-            }
-
-            return SaveImageToFileSystem(
-                validationResult.Stream!,
-                validationResult.AltText!,
-                validationResult.SafeFileName!);
-        }
-
-        private async Task<ImageValidationResult> ValidateAndPrepareImageAsync(IFormFile file, string userLabel)
-        {
             var originalFileName = Path.GetFileName(file.FileName);
             var extension = Path.GetExtension(originalFileName).ToLowerInvariant();
 
-            // Size pre-check
-            if (file.Length <= 0 || file.Length > MaxMarkdownImageBytes)
-            {
-                _logger.LogWarning("Markdown image {FileName} rejected: invalid size {Size} (max {Max})", originalFileName, file.Length, MaxMarkdownImageBytes);
-                return ImageValidationResult.Invalid();
-            }
-
-            // Copy to memory stream with size limit enforcement
-            var stream = new MemoryStream(capacity: (int)Math.Min(file.Length, Math.Min(MaxMarkdownImageBytes, int.MaxValue)));
             await using Stream uploadStream = file.OpenReadStream();
-            try
-            {
-                await uploadStream.CopyWithLimitAsync(stream, MaxMarkdownImageBytes, HttpContext.RequestAborted).ConfigureAwait(false);
-            }
-            catch (InvalidDataException ex)
-            {
-                _logger.LogWarning(ex, "Markdown image {FileName} exceeded size during copy", originalFileName);
-                await stream.DisposeAsync().ConfigureAwait(false);
-                return ImageValidationResult.Invalid();
-            }
-
-            stream.Position = 0;
-
-            // Use shared service for validation (extension, size, magic bytes, content matching)
             Articulate.Services.ImageValidationResult validationResult = await _imageService.ValidateImageAsync(
-                stream,
+                uploadStream,
                 extension,
                 MaxMarkdownImageBytes).ConfigureAwait(false);
 
             if (!validationResult.IsValid)
             {
                 _logger.LogWarning("Markdown image {FileName} rejected: {ErrorMessage}", originalFileName, validationResult.ErrorMessage);
-                await stream.DisposeAsync().ConfigureAwait(false);
-                return ImageValidationResult.Invalid();
+                return ImageProcessResult.Removed();
             }
 
-            // Sanitize alt text for markdown
-            var safeAltFallback = string.Join('_', originalFileName.Split(Path.GetInvalidFileNameChars()));
-            if (safeAltFallback.Length > 100)
+            var altText = _imageService.SanitizeAltText(userLabel, originalFileName);
+
+            if (saveAsFirstImage)
             {
-                safeAltFallback = safeAltFallback[..100];
+                return await SaveImageToMediaLibraryAsync(
+                    validationResult.ValidatedStream!,
+                    altText,
+                    validationResult.CorrectExtension!).ConfigureAwait(false);
             }
-            var altText = AltTextSanitizer.Sanitize(userLabel, safeAltFallback);
 
-            // Create safe filename using validated extension
-            var rndId = Guid.NewGuid().ToString("N");
-            var safeFileName = $"{rndId}{validationResult.CorrectExtension}".ToSafeFileName(_shortStringHelper);
+            var absoluteUrl = await _imageService.SaveToFileSystemAsync(
+                validationResult.ValidatedStream!,
+                validationResult.CorrectExtension!).ConfigureAwait(false);
 
-            validationResult.ValidatedStream!.Position = 0;
-            return ImageValidationResult.Valid(validationResult.ValidatedStream, altText, safeFileName);
+            return ImageProcessResult.RegularImage($"![{altText}]({absoluteUrl})");
         }
 
-        private Task<ImageProcessResult> SaveImageToMediaLibraryAsync(Stream stream, string altText, string safeFileName)
+        private async Task<ImageProcessResult> SaveImageToMediaLibraryAsync(Stream stream, string altText, string extension)
         {
-            IMedia mediaItem = _mediaService.CreateMedia(altText, _articulateRootMediaFolder.Value, Umbraco.Cms.Core.Constants.Conventions.MediaTypes.Image);
-            mediaItem.SetValue(
-                _mediaFileManager,
-                _mediaUrlGenerators,
-                _shortStringHelper,
-                _contentTypeBaseServiceProvider,
-                Umbraco.Cms.Core.Constants.Conventions.Media.File,
-                safeFileName,
-                stream);
+            MediaSaveResult saveResult = await _imageService.SaveToMediaLibraryAsync(
+                stream,
+                altText,
+                extension,
+                _articulateRootMediaFolder.Value).ConfigureAwait(false);
 
-            Attempt<OperationResult?> saveResult = _mediaService.Save(mediaItem);
-            if (saveResult.Success == false)
+            if (!saveResult.Success || saveResult.Media is null)
             {
-                _logger.LogWarning("Failed to save media item for first image: {MediaName}", mediaItem.Name);
-                return Task.FromResult(ImageProcessResult.Removed());
+                _logger.LogWarning("Failed to save media item for first image: {ErrorMessage}", saveResult.ErrorMessage);
+                return ImageProcessResult.Removed();
             }
 
-            IPublishedContent? media = _umbracoHelper.Media(mediaItem.Key);
+            IPublishedContent? media = _umbracoHelper.Media(saveResult.Media.Key);
             if (media is null)
             {
-                _logger.LogWarning("Failed to retrieve published media for first image: {MediaKey}", mediaItem.Key);
-                return Task.FromResult(ImageProcessResult.Removed());
+                _logger.LogWarning("Failed to retrieve published media for first image: {MediaKey}", saveResult.Media.Key);
+                return ImageProcessResult.Removed();
             }
 
             var mediaUrl = media.Url();
             if (string.IsNullOrEmpty(mediaUrl))
             {
-                _logger.LogWarning("Media URL is empty for first image: {MediaKey}", mediaItem.Key);
-                return Task.FromResult(ImageProcessResult.Removed());
+                _logger.LogWarning("Media URL is empty for first image: {MediaKey}", saveResult.Media.Key);
+                return ImageProcessResult.Removed();
             }
 
             var absoluteMediaUrl = _absoluteUrlBuilder.ToAbsoluteUrl(mediaUrl).ToString();
-            var udi = Udi.Create(Umbraco.Cms.Core.Constants.UdiEntityType.Media, media.Key).ToString();
 
-            // KEEP first image in markdown with absolute URL (consistent with MetaWeblog behavior)
-            return Task.FromResult(ImageProcessResult.FirstImage(udi, $"![{altText}]({absoluteMediaUrl})"));
-        }
-
-        private ImageProcessResult SaveImageToFileSystem(Stream stream, string altText, string safeFileName)
-        {
-            var rndId = Guid.NewGuid().ToString("N");
-            var fileUrl = $"articulate/{rndId}/{safeFileName}";
-            _mediaFileManager.FileSystem.AddFile(fileUrl, stream);
-            var fileSystemUrl = _mediaFileManager.FileSystem.GetUrl(fileUrl);
-            var absoluteUrl = _absoluteUrlBuilder.ToAbsoluteUrl(fileSystemUrl).ToString();
-
-            return ImageProcessResult.RegularImage($"![{altText}]({absoluteUrl})");
-        }
-
-        private class ImageValidationResult
-        {
-            public bool IsValid { get; init; }
-            public Stream? Stream { get; init; }
-            public string? AltText { get; init; }
-            public string? SafeFileName { get; init; }
-
-            public static ImageValidationResult Valid(Stream stream, string altText, string safeFileName) =>
-                new() { IsValid = true, Stream = stream, AltText = altText, SafeFileName = safeFileName };
-
-            public static ImageValidationResult Invalid() =>
-                new() { IsValid = false };
+            return ImageProcessResult.FirstImage(saveResult.MediaUdi!, $"![{altText}]({absoluteMediaUrl})");
         }
 
         private class ImageProcessResult
@@ -569,12 +450,7 @@ namespace Articulate.Api.Management.Controllers
                 return ValidationProblem(ModelState);
             }
 
-            return null; // Success - no error result
+            return null;
         }
     }
 }
-
-
-
-
-

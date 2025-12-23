@@ -138,7 +138,7 @@ namespace Articulate.MetaWeblog
                 extractFirstImageAsProperty = root.Value<bool>("extractFirstImage");
             }
 
-            AddOrUpdateContent(content, contentType, post, user, publish, extractFirstImageAsProperty);
+            await AddOrUpdateContentAsync(content, contentType, post, user, publish, extractFirstImageAsProperty).ConfigureAwait(false);
 
             return content.Id.ToString(CultureInfo.InvariantCulture);
         }
@@ -206,7 +206,7 @@ namespace Articulate.MetaWeblog
                 extractFirstImageAsProperty = root.Value<bool>("extractFirstImage");
             }
 
-            AddOrUpdateContent(umbracoContent, contentType, post, user, publish, extractFirstImageAsProperty);
+            await AddOrUpdateContentAsync(umbracoContent, contentType, post, user, publish, extractFirstImageAsProperty).ConfigureAwait(false);
 
             // Bool - assume to notify if published with new updates
             return true;
@@ -324,8 +324,6 @@ namespace Articulate.MetaWeblog
             return blogs;
         }
 
-        // IOptions<GlobalSettings> globalSettings MaxRequestLength
-        private const long DefaultMaxSizeBytes = 10 * 1024 * 1024; // 10MB
 
         /// <inheritdoc/>
         public async Task<MediaObjectInfo> NewMediaObjectAsync(string blogid, string username, string password, MediaObject mediaObject)
@@ -342,7 +340,7 @@ namespace Articulate.MetaWeblog
             ImageValidationResult validationResult = await _imageService.DecodeAndValidateBase64ImageAsync(
                 mediaObject.bits,
                 fileName,
-                DefaultMaxSizeBytes).ConfigureAwait(false);
+                0).ConfigureAwait(false);
 
             if (!validationResult.IsValid)
             {
@@ -367,14 +365,14 @@ namespace Articulate.MetaWeblog
             }
         }
 
-        private void AddOrUpdateContent(IContent content, IContentType contentType, Post post, IUser user, bool publish, bool extractFirstImageAsProperty)
+        private async Task AddOrUpdateContentAsync(IContent content, IContentType contentType, Post post, IUser user, bool publish, bool extractFirstImageAsProperty)
         {
             content.SetInvariantOrDefaultCultureName(post.title, contentType, _languageService);
             content.SetInvariantOrDefaultCultureValue("author", user.Name, contentType, _languageService);
 
             if (content.HasProperty("richText"))
             {
-                ProcessRichTextContent(content, contentType, post, extractFirstImageAsProperty);
+                await ProcessRichTextContentAsync(content, contentType, post, extractFirstImageAsProperty).ConfigureAwait(false);
             }
 
             if (!post.link.IsNullOrWhiteSpace())
@@ -402,7 +400,7 @@ namespace Articulate.MetaWeblog
             SaveAndPublishIfNeeded(content, user, post, publish);
         }
 
-        private void ProcessRichTextContent(IContent content, IContentType contentType, Post post, bool extractFirstImageAsProperty)
+        private async Task ProcessRichTextContentAsync(IContent content, IContentType contentType, Post post, bool extractFirstImageAsProperty)
         {
             Match firstImageMatch = ArticulateMetaWeblogRegexes.MediaSourceRegex().Match(post.description);
             var firstImageRelativePath = firstImageMatch is { Success: true, Groups.Count: 2 }
@@ -416,7 +414,7 @@ namespace Articulate.MetaWeblog
 
             if (extractFirstImageAsProperty && content.HasProperty("postImage") && !firstImageRelativePath.IsNullOrWhiteSpace())
             {
-                ExtractAndSaveFirstImage(content, contentType, firstImageRelativePath);
+                await ExtractAndSaveFirstImageAsync(content, contentType, firstImageRelativePath).ConfigureAwait(false);
             }
         }
 
@@ -459,7 +457,7 @@ namespace Articulate.MetaWeblog
             });
         }
 
-        private void ExtractAndSaveFirstImage(IContent content, IContentType contentType, string firstImageRelativePath)
+        private async Task ExtractAndSaveFirstImageAsync(IContent content, IContentType contentType, string firstImageRelativePath)
         {
             if (!_mediaFileManager.FileSystem.FileExists(firstImageRelativePath))
             {
@@ -468,29 +466,28 @@ namespace Articulate.MetaWeblog
 
             try
             {
-                using Stream fileStream = _mediaFileManager.FileSystem.OpenFile(firstImageRelativePath);
+                await using Stream fileStream = _mediaFileManager.FileSystem.OpenFile(firstImageRelativePath);
                 var fileName = Path.GetFileName(firstImageRelativePath);
+                var extension = Path.GetExtension(fileName);
 
-                IMedia mediaItem = _mediaService.CreateMedia(fileName, _articulateRootMediaFolder.Value, Constants.Conventions.MediaTypes.Image);
-                mediaItem.SetValue(
-                    _mediaFileManager,
-                    _mediaUrlGenerators,
-                    _shortStringHelper,
-                    _contentTypeBaseServiceProvider,
-                    Constants.Conventions.Media.File,
+                MediaSaveResult saveResult = await _imageService.SaveToMediaLibraryAsync(
+                    fileStream,
                     fileName,
-                    fileStream);
+                    extension,
+                    _articulateRootMediaFolder.Value).ConfigureAwait(false);
 
-                Attempt<OperationResult?> mediaSaveAttempt = _mediaService.Save(mediaItem);
-                mediaSaveAttempt.EnsureSuccess(_logger, $"save media '{fileName}' for featured image");
-
-                var udi = Udi.Create(Constants.UdiEntityType.Media, mediaItem.Key);
-
-                content.SetInvariantOrDefaultCultureValue(
-                    "postImage",
-                    udi.ToString(),
-                    contentType,
-                    _languageService);
+                if (saveResult.Success && !string.IsNullOrEmpty(saveResult.MediaUdi))
+                {
+                    content.SetInvariantOrDefaultCultureValue(
+                        "postImage",
+                        saveResult.MediaUdi,
+                        contentType,
+                        _languageService);
+                }
+                else
+                {
+                    _logger.LogWarning("Failed to save featured image {FileName}: {ErrorMessage}", fileName, saveResult.ErrorMessage);
+                }
             }
             catch (Exception ex)
             {
@@ -608,4 +605,3 @@ namespace Articulate.MetaWeblog
 
     }
 }
-

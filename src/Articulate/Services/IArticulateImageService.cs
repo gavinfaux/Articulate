@@ -33,9 +33,8 @@ namespace Articulate.Services
         /// Saves a validated image to the Articulate file system (articulate/{guid}/{filename}).
         /// </summary>
         /// <returns>
-        /// Returns the relative path to the saved image.
+        /// Returns the absolute URL to the saved image.
         /// </returns>
-        // TODO: MediaSaveResult
         public Task<string> SaveToFileSystemAsync(Stream imageStream, string extension);
 
         /// <summary>
@@ -66,11 +65,10 @@ namespace Articulate.Services
         public bool Success { get; init; }
         public IMedia? Media { get; init; }
         public string? MediaUdi { get; init; }
-        public string? AbsoluteUrl { get; init; }
         public string? ErrorMessage { get; init; }
 
-        public static MediaSaveResult Succeeded(IMedia media, string mediaUdi, string absoluteUrl) =>
-            new() { Success = true, Media = media, MediaUdi = mediaUdi, AbsoluteUrl = absoluteUrl };
+        public static MediaSaveResult Succeeded(IMedia media, string mediaUdi) =>
+            new() { Success = true, Media = media, MediaUdi = mediaUdi };
 
         public static MediaSaveResult Failed(string errorMessage) =>
             new() { Success = false, ErrorMessage = errorMessage };
