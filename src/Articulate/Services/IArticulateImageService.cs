@@ -41,6 +41,11 @@ namespace Articulate.Services
         /// Creates a safe, unique filename with the given extension.
         /// </summary>
         public string CreateSafeFileName(string extension);
+
+        /// <summary>
+        /// Sanitizes alt text for safe use in filenames and media names, preventing XSS and path traversal.
+        /// </summary>
+        public string SanitizeAltText(string? altText, string fallback = "image", int maxLength = 200);
     }
 
     public class ImageValidationResult

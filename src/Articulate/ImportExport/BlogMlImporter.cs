@@ -6,7 +6,6 @@ using System.Xml;
 using System.Xml.Linq;
 using Argotic.Syndication.Specialized;
 using Articulate.Services;
-using Articulate.Validators;
 using Microsoft.AspNetCore.Html;
 using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Core;
@@ -367,8 +366,6 @@ namespace Articulate.ImportExport
 
             return await Task.FromResult(result).ConfigureAwait(false);
         }
-        // IOptions<GlobalSettings> globalSettings MaxRequestLength
-        private const long DefaultMaxSizeBytes = 10 * 1024 * 1024; // 10MB
 
         private async Task ImportFirstImageAsync(IContentBase postNode, IContentType postType, BlogMLPost post)
         {
@@ -387,12 +384,12 @@ namespace Articulate.ImportExport
             {
                 // Base64 content
                 var fileName = Path.GetFileName(attachment.Url.OriginalString);
-                validationResult = await _imageService.DecodeAndValidateBase64ImageAsync(attachment.Content, fileName, DefaultMaxSizeBytes).ConfigureAwait(false);
+                validationResult = await _imageService.DecodeAndValidateBase64ImageAsync(attachment.Content, fileName, 0).ConfigureAwait(false);
             }
             else if (attachment.ExternalUri is not null && attachment.ExternalUri.IsAbsoluteUri)
             {
                 // External URL
-                validationResult = await _imageService.DownloadAndValidateImageAsync(attachment.ExternalUri, DefaultMaxSizeBytes).ConfigureAwait(false);
+                validationResult = await _imageService.DownloadAndValidateImageAsync(attachment.ExternalUri, 0).ConfigureAwait(false);
             }
             else
             {
@@ -409,7 +406,7 @@ namespace Articulate.ImportExport
             try
             {
                 // Sanitize media name (use post name or fallback)
-                var mediaName = AltTextSanitizer.Sanitize(postNode.Name, $"Post-{post.Id}-image", maxLength: 100);
+                var mediaName = _imageService.SanitizeAltText(postNode.Name, $"Post-{post.Id}-image", maxLength: 100);
 
                 // Save to media library
                 MediaSaveResult saveResult = await _imageService.SaveToMediaLibraryAsync(
