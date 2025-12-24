@@ -493,9 +493,9 @@ gitleaks-report.json
 
 # Uncomment if necessary however generally it will be regenerated when needed
 #!**/[Pp]ackages/repositories.config
-# except monaco editor package used for now by Articulate's Markdown property editor
-!/src/Articulate.Api.Management/Client/src/packages/
-!/src/Articulate.Api.Management/Client/src/packages/**
+# except monaco markdown editor package used by Articulate's BackOffice UI
+!/src/Articulate.BackOffice.UI/Client/src/packages/
+!/src/Articulate.BackOffice.UI/Client/src/packages/**
 
 # theme build artifacts
 /src/Articulate.BackOffice.UI/wwwroot
