@@ -30,7 +30,7 @@ namespace Articulate
             public const string ArticulateTags = "ArticulateTags";
             public const string ArticulateThemePicker = "ArticulateThemePicker";
 
-            internal static readonly Guid _articulateRichTextKey = new("DBCB0707-021D-4CD4-BA8B-5CC891516C28");
+            internal static readonly Guid ArticulateRichTextKey = new("DBCB0707-021D-4CD4-BA8B-5CC891516C28");
         }
 
         public static class DefaultThemes
