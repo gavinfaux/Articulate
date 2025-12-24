@@ -37,7 +37,7 @@ namespace Articulate.Components
 
             var upgrader = new Upgrader(migrationPlan);
 
-            // TODO: "Use ExecuteAsync instead. Scheduled for removal in Umbraco 18."
+            // TODO: Future: "Use ExecuteAsync instead. Scheduled for removal in Umbraco 18."
             ExecutedMigrationPlan result = upgrader.Execute(migrationPlanExecutor, scopeProvider, keyValueService);
             if (!result.Successful)
             {
