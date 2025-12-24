@@ -13,8 +13,7 @@ $SolutionPath = Join-Path -Path $SolutionRoot -ChildPath "Articulate.sln"
 $TargetFrameworks = @("net9.0", "net10.0")
 $PSMajorVersion = $PSVersionTable.PSVersion.Major
 $SupportsParallel = $PSMajorVersion -ge 7
-if (-not $SupportsParallel)
-{
+if (-not $SupportsParallel) {
     Write-Warning "PowerShell $PSMajorVersion detected; ForEach-Object -Parallel isn't available so build + pack will run sequentially."
 }
 
@@ -44,12 +43,10 @@ if ($env:MAXCPU -and ($env:MAXCPU -as [int]) -gt 0) {
 }
 $msbuildArgs = @("-m", "-maxcpucount:$cpu", "-p:BuildInParallel=true", "-p:RestoreUseStaticGraphEvaluation=true")
 $runningInCi = ($env:CI -eq 'true') -or ($env:GITHUB_ACTIONS -eq 'true')
-if ([string]::IsNullOrEmpty($env:ENABLE_CLIENT_BUILD))
-{
+if ([string]::IsNullOrEmpty($env:ENABLE_CLIENT_BUILD)) {
     $clientBuildValue = if ($runningInCi) { 'true' } else { 'false' }
 }
-else
-{
+else {
     $clientBuildValue = $env:ENABLE_CLIENT_BUILD
 }
 $clientBuildProperty = "-p:EnableClientBuild=$clientBuildValue"
@@ -84,11 +81,10 @@ if (-not $?) { throw "dotnet restore failed" }
 
 # 3) Build TFMs sequentially to ensure net9.0 (client build) runs before net10.0
 Write-Host "3. Building solution for: $($TargetFrameworks -join ', ')"
-foreach ($tfm in $TargetFrameworks)
-{
+foreach ($tfm in $TargetFrameworks) {
     Write-Host "[build] -> $tfm"
     $sw = [System.Diagnostics.Stopwatch]::StartNew()
-& dotnet build $SolutionPath -c $Configuration -f $tfm --no-restore @dotnetCommon @msbuildArgs $clientBuildProperty
+    & dotnet build $SolutionPath -c $Configuration -f $tfm --no-restore @dotnetCommon @msbuildArgs $clientBuildProperty
     if ($LASTEXITCODE -ne 0) { throw "dotnet build failed for $tfm" }
     $sw.Stop()
     Write-Host "[build] <- $tfm done in $([int]$sw.Elapsed.TotalSeconds)s"
@@ -108,8 +104,7 @@ $projectsToPack = @(
     $articulateApiProject
 )
 $packThrottle = 1
-if ($SupportsParallel)
-{
+if ($SupportsParallel) {
     $projectsToPack | ForEach-Object -Parallel {
         $project = $PSItem
         Write-Host "[pack] -> $([IO.Path]::GetFileName($project))"
@@ -120,11 +115,10 @@ if ($SupportsParallel)
         if ($LASTEXITCODE -ne 0) { throw "dotnet pack failed for $project" }
     } -ThrottleLimit $packThrottle -ErrorVariable packErrors
 
-if ($packErrors) { throw "One or more pack operations failed: $($packErrors | Out-String)" }}
-else
-{
-    foreach ($project in $projectsToPack)
-    {
+    if ($packErrors) { throw "One or more pack operations failed: $($packErrors | Out-String)" }
+}
+else {
+    foreach ($project in $projectsToPack) {
         Write-Host "[pack] -> $([IO.Path]::GetFileName($project))"
         & dotnet pack -c $Configuration $project --no-restore -o $ReleaseFolder @dotnetCommon "-p:BuildInParallel=false" $clientBuildProperty
         if ($LASTEXITCODE -ne 0) { throw "dotnet pack failed for $project" }

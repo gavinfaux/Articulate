@@ -32,7 +32,7 @@ jobs:
       - name: Validate Git Tag
         continue-on-error: true
         run: |
-          git describe --tags --exact-match *>$null
+          git describe --tags --exact-match 2>&1 | Out-Null
 
           if ($?) {
               echo "Git tag found."

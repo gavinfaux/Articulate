@@ -71,17 +71,17 @@ export RestoreFallbackFolders=
 
 # --- 1) Clean the solution so Release/CI builds start fresh ---
 echo "1. Cleaning solution outputs..."
- if ! dotnet clean "$SOLUTION_PATH" -c "$CONFIGURATION" "${DOTNET_COMMON[@]}" "$CLIENT_BUILD_PROPERTY"
-    echo "Warning: dotnet clean failed for $tfm" >&2
- fi
+if ! dotnet clean "$SOLUTION_PATH" -c "$CONFIGURATION" "${DOTNET_COMMON[@]}" "$CLIENT_BUILD_PROPERTY"; then
+  echo "Warning: dotnet clean failed" >&2
+fi
 
 # --- 2) Solution-level restore with static graph + parallelism ---
 mkdir -p "$RELEASE_FOLDER"
 echo "2. Restoring solution packages in parallel..."
- if ! dotnet restore "$SOLUTION_PATH" "${DOTNET_COMMON[@]}" "${MSBUILD_PARALLEL[@]}" "$CLIENT_BUILD_PROPERTY"
-    echo "dotnet restore failed for $tfm" >&2
-    exit 1
- fi
+if ! dotnet restore "$SOLUTION_PATH" "${DOTNET_COMMON[@]}" "${MSBUILD_PARALLEL[@]}" "$CLIENT_BUILD_PROPERTY"; then
+  echo "dotnet restore failed" >&2
+  exit 1
+fi
 
 # --- 3) Build TFMs sequentially (net9 first, then net10) to keep client build ordering deterministic ---
 echo "3. Building solution for: ${TARGET_FRAMEWORKS[*]}"
