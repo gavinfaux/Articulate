@@ -4,9 +4,7 @@ on:
   workflow_dispatch:
 
 jobs:
-
   build:
-
     runs-on: windows-latest
 
     env:
@@ -16,73 +14,73 @@ jobs:
       Configuration: Release
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@v5
-      with:
-        fetch-depth: 0
-    - uses: dotnet/nbgv@master
-      with:
-        setAllVars: true
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: dotnet/nbgv@master
+        with:
+          setAllVars: true
 
-    - name: Log Build Context
-      run: |
+      - name: Log Build Context
+        run: |
           echo "Articulate Build Context"
           echo "Version: ${{ env.NBGV_SemVer2 }}"
           echo "Commit: ${{ env.NBGV_GitCommitIdShort }}"
           echo "Date: ${{ env.NBGV_GitCommitDate }}"
 
-    - name: Validate Git Tag
-      continue-on-error: true
-      run: |
-        git describe --tags --exact-match *>$null
+      - name: Validate Git Tag
+        continue-on-error: true
+        run: |
+          git describe --tags --exact-match *>$null
 
-        if ($?) {
-            echo "Git tag found."
-        }
-        else {
-            echo "Git tag missing, release build may not be traceable."
-        }
+          if ($?) {
+              echo "Git tag found."
+          }
+          else {
+              echo "Git tag missing, release build may not be traceable."
+          }
 
-    - name: Setup pnpm
-      uses: pnpm/action-setup@v4
-      with:
-        version: 10.20.0
-        run_install: false
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.26.1
+          run_install: false
 
-    - name: Setup NodeJS
-      uses: actions/setup-node@v5
-      with:
-        node-version-file: 'src/Articulate.Api.Management/Client/.nvmrc'
-        cache: 'pnpm'
-        cache-dependency-path: 'src/Articulate.Api.Management/Client/pnpm-lock.yaml'
+      - name: Setup NodeJS
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: "src/Articulate.BackOffice.UI/Client/.node-version"
+          cache: "pnpm"
+          cache-dependency-path: "src/Articulate.BackOffice.UI/Client/pnpm-lock.yaml"
 
-    - name: Resolve pnpm store path
-      id: pnpm-cache
-      shell: pwsh
-      run: |
-        $path = pnpm store path
-        echo "path=$path" >> $env:GITHUB_OUTPUT
+      - name: Resolve pnpm store path
+        id: pnpm-cache
+        shell: pwsh
+        run: |
+          $path = pnpm store path
+          echo "path=$path" >> $env:GITHUB_OUTPUT
 
-    - name: Cache pnpm store
-      uses: actions/cache@v4
-      with:
-        path: ${{ steps.pnpm-cache.outputs.path }}
-        key: ${{ runner.os }}-pnpm-store-${{ hashFiles('src/Articulate.Api.Management/Client/pnpm-lock.yaml') }}
-        restore-keys: |
-          ${{ runner.os }}-pnpm-store-
+      - name: Cache pnpm store
+        uses: actions/cache@v5
+        with:
+          path: ${{ steps.pnpm-cache.outputs.path }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('src/Articulate.BackOffice.UI/Client/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
 
-    - name: Setup .NET SDKs
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: |
-          9.0.308
-          10.0.101
+      - name: Setup .NET SDKs
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: |
+            9.0.308
+            10.0.101
 
-    - name: Run build pipeline script
-      shell: pwsh
-      run: ./build/build.ps1
+      - name: Run build pipeline script
+        shell: pwsh
+        run: ./build/build.ps1
 
-    - uses: actions/upload-artifact@v4
-      with:
-        name: Articulate.${{ env.NBGV_SemVer2 }}
-        path: ${{ env.Release_Folder }}/Articulate.*
+      - uses: actions/upload-artifact@v6
+        with:
+          name: Articulate.${{ env.NBGV_SemVer2 }}
+          path: ${{ env.Release_Folder }}/Articulate.*
