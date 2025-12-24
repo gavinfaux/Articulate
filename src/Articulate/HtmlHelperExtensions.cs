@@ -161,6 +161,13 @@ namespace Articulate
         /// <summary>
         /// Creates an Html table based on the collection
         /// </summary>
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="IHtmlHelper"></param>
+        /// <param name="collection"></param>
+        /// <param name="headers"></param>
+        /// <param name="cssClasses"></param>
+        /// <returns></returns>
         [Obsolete(
             "Use Articulate.Models.PublishedContentExtensions.Table<T>(collection, htmlAttributes, headers, cssClasses)")]
         public static IHtmlContent? Table<T>(
