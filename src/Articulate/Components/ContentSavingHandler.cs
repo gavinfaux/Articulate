@@ -1,5 +1,6 @@
 #nullable enable
 using Articulate.Options;
+using Articulate.Services;
 using Microsoft.Extensions.Options;
 using Umbraco.Cms.Api.Management.Routing;
 using Umbraco.Cms.Core.Events;
@@ -14,11 +15,11 @@ namespace Articulate.Components
         IContentTypeService contentTypeService,
         IBackOfficeSecurityAccessor backOfficeSecurityAccessor,
         IOptions<ArticulateOptions> articulateOptions,
-        IAbsoluteUrlBuilder absoluteUrlBuilder)
+        IAbsoluteUrlBuilder absoluteUrlBuilder,
+        IMarkdownToHtmlConverter markdownToHtmlConverter)
         : INotificationHandler<ContentSavingNotification>
     {
         private readonly ArticulateOptions _articulateOptions = articulateOptions.Value;
-        private readonly IAbsoluteUrlBuilder _absoluteUrlBuilder = absoluteUrlBuilder;
 
         /// <inheritdoc/>
         public void Handle(ContentSavingNotification notification)
@@ -29,7 +30,8 @@ namespace Articulate.Components
                 return;
             }
 
-            var contentTypes = contentTypeService.GetMany(saved.Select(x => x.ContentTypeId).ToArray()).ToDictionary(x => x.Id);
+            var contentTypes = contentTypeService.GetMany(saved.Select(x => x.ContentTypeId).ToArray())
+                .ToDictionary(x => x.Id);
 
             foreach (IContent content in saved)
             {
@@ -65,13 +67,16 @@ namespace Articulate.Components
             content.SetAllPropertyCultureValues(
                 "publishedDate",
                 contentType,
-                (c, _, culture) => c.GetValue("publishedDate", culture?.Culture) is null ? (DateTime?)DateTime.Now : null);
+                (c, _, culture) =>
+                    c.GetValue("publishedDate", culture?.Culture) is null ? (DateTime?)DateTime.Now : null);
 
             // Set author if not already set
             content.SetAllPropertyCultureValues(
                 "author",
                 contentType,
-                (c, _, culture) => c.GetValue("author", culture?.Culture) is null ? backOfficeSecurityAccessor.BackOfficeSecurity?.CurrentUser?.Name : null);
+                (c, _, culture) => c.GetValue("author", culture?.Culture) is null
+                    ? backOfficeSecurityAccessor.BackOfficeSecurity?.CurrentUser?.Name
+                    : null);
 
             // Set enableComments default for new content
             if (!content.HasIdentity)
@@ -115,30 +120,39 @@ namespace Articulate.Components
                         }
 
                         IPropertyType excerptProperty = ct.CompositionPropertyTypes.First(x => x.Alias == "excerpt");
-                        return c.GetValue<string>("excerpt", excerptProperty.VariesByCulture() ? culture?.Culture : null);
+                        return c.GetValue<string>(
+                            "excerpt",
+                            excerptProperty.VariesByCulture() ? culture?.Culture : null);
                     });
             }
         }
 
-        private string GenerateExcerptFromContent(IContentBase content, IContentTypeComposition contentType, ContentCultureInfos? culture)
+        private string GenerateExcerptFromContent(
+            IContentBase content,
+            IContentTypeComposition contentType,
+            ContentCultureInfos? culture)
         {
             if (content.HasProperty("richText"))
             {
                 IPropertyType richTextProperty = contentType.CompositionPropertyTypes.First(x => x.Alias == "richText");
-                var val = content.GetValue<string>("richText", richTextProperty.VariesByCulture() ? culture?.Culture : null);
+                var val = content.GetValue<string>(
+                    "richText",
+                    richTextProperty.VariesByCulture() ? culture?.Culture : null);
                 return string.IsNullOrWhiteSpace(val) ? string.Empty : _articulateOptions.GenerateExcerpt(val);
             }
 
             if (content.HasProperty("markdown"))
             {
                 IPropertyType markdownProperty = contentType.CompositionPropertyTypes.First(x => x.Alias == "markdown");
-                var val = content.GetValue<string>("markdown", markdownProperty.VariesByCulture() ? culture?.Culture : null);
+                var val = content.GetValue<string>(
+                    "markdown",
+                    markdownProperty.VariesByCulture() ? culture?.Culture : null);
                 if (string.IsNullOrWhiteSpace(val))
                 {
                     return string.Empty;
                 }
 
-                var html = MarkdownHelper.ToHtml(val);
+                var html = markdownToHtmlConverter.ToHtml(val);
                 return _articulateOptions.GenerateExcerpt(html);
             }
 
@@ -157,7 +171,11 @@ namespace Articulate.Components
             SetPropertyDefault(content, contentType, "searchPageName", "Search results");
         }
 
-        private static void SetPropertyDefault(IContent content, IContentType contentType, string propertyAlias, object defaultValue)
+        private static void SetPropertyDefault(
+            IContent content,
+            IContentType contentType,
+            string propertyAlias,
+            object defaultValue)
         {
             if (!content.HasProperty(propertyAlias))
             {
@@ -190,7 +208,9 @@ namespace Articulate.Components
                     (c, ct, culture) =>
                     {
                         IPropertyType richTextProperty = ct.CompositionPropertyTypes.First(x => x.Alias == "richText");
-                        var html = c.GetValue<string>("richText", richTextProperty.VariesByCulture() ? culture?.Culture : null);
+                        var html = c.GetValue<string>(
+                            "richText",
+                            richTextProperty.VariesByCulture() ? culture?.Culture : null);
 
                         if (string.IsNullOrWhiteSpace(html))
                         {
@@ -213,7 +233,9 @@ namespace Articulate.Components
                     (c, ct, culture) =>
                     {
                         IPropertyType markdownProperty = ct.CompositionPropertyTypes.First(x => x.Alias == "markdown");
-                        var markdown = c.GetValue<string>("markdown", markdownProperty.VariesByCulture() ? culture?.Culture : null);
+                        var markdown = c.GetValue<string>(
+                            "markdown",
+                            markdownProperty.VariesByCulture() ? culture?.Culture : null);
 
                         if (string.IsNullOrWhiteSpace(markdown))
                         {
@@ -244,7 +266,7 @@ namespace Articulate.Components
                     var url = match.Groups[2].Value;
                     var suffix = match.Groups[3].Value;
 
-                    var absoluteUrl = _absoluteUrlBuilder.ToAbsoluteUrl(url).ToString();
+                    var absoluteUrl = absoluteUrlBuilder.ToAbsoluteUrl(url).ToString();
                     return prefix + absoluteUrl + suffix;
                 },
                 System.Text.RegularExpressions.RegexOptions.IgnoreCase);
@@ -259,7 +281,7 @@ namespace Articulate.Components
                     var url = match.Groups[2].Value;
                     var suffix = match.Groups[3].Value;
 
-                    var absoluteUrl = _absoluteUrlBuilder.ToAbsoluteUrl(url).ToString();
+                    var absoluteUrl = absoluteUrlBuilder.ToAbsoluteUrl(url).ToString();
                     return prefix + absoluteUrl + suffix;
                 },
                 System.Text.RegularExpressions.RegexOptions.IgnoreCase);
@@ -283,7 +305,7 @@ namespace Articulate.Components
                     var url = match.Groups[2].Value;
                     var suffix = match.Groups[3].Value;
 
-                    var absoluteUrl = _absoluteUrlBuilder.ToAbsoluteUrl(url).ToString();
+                    var absoluteUrl = absoluteUrlBuilder.ToAbsoluteUrl(url).ToString();
                     return prefix + absoluteUrl + suffix;
                 });
 
@@ -305,7 +327,7 @@ namespace Articulate.Components
                         return match.Value; // Already absolute or special protocol
                     }
 
-                    var absoluteUrl = _absoluteUrlBuilder.ToAbsoluteUrl(url).ToString();
+                    var absoluteUrl = absoluteUrlBuilder.ToAbsoluteUrl(url).ToString();
                     return prefix + absoluteUrl + suffix;
                 });
 

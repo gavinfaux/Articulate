@@ -260,15 +260,7 @@ namespace Articulate.Routing
             var contentUrl = articulateRootNode.Url();
             if (!string.IsNullOrWhiteSpace(contentUrl))
             {
-                string pathOnly;
-                if (Uri.TryCreate(contentUrl, UriKind.Absolute, out Uri? absolute))
-                {
-                    pathOnly = absolute.AbsolutePath;
-                }
-                else
-                {
-                    pathOnly = contentUrl;
-                }
+                var pathOnly = Uri.TryCreate(contentUrl, UriKind.Absolute, out Uri? absolute) ? absolute.AbsolutePath : contentUrl;
 
                 pathOnly = pathOnly.EnsureEndsWith('/');
                 if (!pathOnly.Equals(rootNodePath, StringComparison.OrdinalIgnoreCase))

@@ -6,10 +6,16 @@ namespace Articulate.MetaWeblog
     internal static partial class ArticulateMetaWeblogRegexes
     {
         // regex finds the image placeholder markdown tag and captures the temporary URL.
-        [GeneratedRegex(" src=(?:\"|')(?:http|https)://(?:[\\w\\d:/-]+?)(articulate/.*?)(?:\"|')", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase | RegexOptions.Compiled)]
+        [GeneratedRegex(
+            " src=(?:\"|')(?:http|https)://(?:[\\w\\d:/-]+?)(articulate/.*?)(?:\"|')",
+            RegexOptions.CultureInvariant | RegexOptions.IgnoreCase | RegexOptions.Compiled,
+            matchTimeoutMilliseconds: 1000)]
         public static partial Regex MediaSourceRegex();
 
-        [GeneratedRegex(" href=(?:\"|')(?:http|https)://(?:[\\w\\d:/-]+?)(articulate/.*?)(?:\"|')", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase | RegexOptions.Compiled)]
+        [GeneratedRegex(
+            " href=(?:\"|')(?:http|https)://(?:[\\w\\d:/-]+?)(articulate/.*?)(?:\"|')",
+            RegexOptions.CultureInvariant | RegexOptions.IgnoreCase | RegexOptions.Compiled,
+            matchTimeoutMilliseconds: 1000)]
         public static partial Regex MediaHrefRegex();
     }
 }

@@ -43,7 +43,7 @@ namespace Articulate.Api.Management.Controllers
         {
             try
             {
-                await themeRepository.CopyThemeAsync(model.ThemeName, model.NewThemeName).ConfigureAwait(false);
+                await themeRepository.CopyThemeAsync(model.ThemeName, model.NewThemeName);
                 return Ok(model.NewThemeName);
             }
             catch (DirectoryNotFoundException ex)
@@ -81,7 +81,7 @@ namespace Articulate.Api.Management.Controllers
         {
             try
             {
-                IEnumerable<string> themes = await themeRepository.GetDefaultThemesAsync().ConfigureAwait(false);
+                IEnumerable<string> themes = await themeRepository.GetDefaultThemesAsync();
                 return Ok(themes);
             }
             catch (Exception e)

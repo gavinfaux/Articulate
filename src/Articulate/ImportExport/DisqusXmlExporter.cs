@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Text;
 using System.Xml.Linq;
 using Argotic.Syndication.Specialized;
+using Articulate.Services;
 using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Models.PublishedContent;
@@ -13,7 +14,8 @@ namespace Articulate.ImportExport
     // ReSharper disable once ClassNeverInstantiated.Global
     public class DisqusXmlExporter(
         IPublishedUrlProvider publishedUrlProvider,
-        ILogger<DisqusXmlExporter> logger)
+        ILogger<DisqusXmlExporter> logger,
+        IMarkdownToHtmlConverter markdownToHtmlConverter)
     {
         private const string DisqusGmtDateFormat = "yyyy-MM-dd HH:mm:ss";
 
@@ -72,12 +74,12 @@ namespace Articulate.ImportExport
             return blogMlPost;
         }
 
-        private static string GetPostBody(IContent post)
+        private string GetPostBody(IContent post)
         {
             var body = post.GetValue<string>("richText");
             if (body.IsNullOrWhiteSpace())
             {
-                body = MarkdownHelper.ToHtml(post.GetValue<string>("markdown") ?? string.Empty);
+                body = markdownToHtmlConverter.ToHtml(post.GetValue<string>("markdown") ?? string.Empty);
             }
 
             return body;
@@ -94,7 +96,13 @@ namespace Articulate.ImportExport
             return publishedDate;
         }
 
-        private XElement CreatePostElement(IContent post, string body, DateTime publishedDate, XNamespace nsContent, XNamespace nsDsq, XNamespace nsWp)
+        private XElement CreatePostElement(
+            IContent post,
+            string body,
+            DateTime publishedDate,
+            XNamespace nsContent,
+            XNamespace nsDsq,
+            XNamespace nsWp)
         {
             return new XElement(
                 "item",
@@ -115,12 +123,16 @@ namespace Articulate.ImportExport
                 new XElement(nsWp + "comment_id", comment.Id),
                 new XElement(nsWp + "comment_author", comment.UserName ?? string.Empty),
                 new XElement(nsWp + "comment_author_email", comment.UserEmailAddress ?? string.Empty),
-                new XElement(nsWp + "comment_author_url", comment.UserUrl is null ? string.Empty : comment.UserUrl.ToString()),
+                new XElement(
+                    nsWp + "comment_author_url",
+                    comment.UserUrl is null ? string.Empty : comment.UserUrl.ToString()),
                 // BlogML has no notion of IPs or threading; emit the required Disqus nodes with empty defaults.
                 new XElement(nsWp + "comment_author_IP", string.Empty),
                 new XElement(nsWp + "comment_date_gmt", FormatAsDisqusDate(comment.CreatedOn)),
                 new XElement(nsWp + "comment_content", new XCData(commentText)),
-                new XElement(nsWp + "comment_approved", comment.ApprovalStatus == BlogMLApprovalStatus.Approved ? 1 : 0),
+                new XElement(
+                    nsWp + "comment_approved",
+                    comment.ApprovalStatus == BlogMLApprovalStatus.Approved ? 1 : 0),
                 new XElement(nsWp + "comment_parent", "0"));
         }
 
@@ -128,7 +140,8 @@ namespace Articulate.ImportExport
         {
             var commentText = comment.Content?.Content ?? string.Empty;
 
-            if (comment.Content?.ContentType == BlogMLContentType.Base64 && !string.IsNullOrEmpty(comment.Content.Content))
+            if (comment.Content?.ContentType == BlogMLContentType.Base64 &&
+                !string.IsNullOrEmpty(comment.Content.Content))
             {
                 try
                 {
@@ -136,12 +149,16 @@ namespace Articulate.ImportExport
                 }
                 catch (FormatException ex)
                 {
-                    logger.LogWarning(ex, "Failed to decode Base64 comment content for comment {CommentId}", comment.Id);
+                    logger.LogWarning(
+                        ex,
+                        "Failed to decode Base64 comment content for comment {CommentId}",
+                        comment.Id);
                 }
             }
 
             return commentText;
         }
+
         private static string FormatAsDisqusDate(DateTime date) =>
             date.ToUniversalTime().ToString(DisqusGmtDateFormat, CultureInfo.InvariantCulture);
     }

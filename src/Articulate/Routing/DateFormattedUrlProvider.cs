@@ -5,7 +5,9 @@ using Umbraco.Cms.Core.Configuration.Models;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.Routing;
 using Umbraco.Cms.Core.Services;
+#if NET10_0_OR_GREATER
 using Umbraco.Cms.Core.Services.Navigation;
+#endif
 using Umbraco.Cms.Core.Web;
 
 namespace Articulate.Routing

@@ -39,7 +39,7 @@ internal static class StreamExtensions
         byte[] buffer = new byte[bufferSize];
 
         int bytesRead;
-        while ((bytesRead = await source.ReadAsync(buffer.AsMemory(0, buffer.Length), cancellationToken).ConfigureAwait(false)) > 0)
+        while ((bytesRead = await source.ReadAsync(buffer.AsMemory(0, buffer.Length), cancellationToken)) > 0)
         {
             // Check for overflow using checked arithmetic
             long newTotal;
@@ -64,7 +64,7 @@ internal static class StreamExtensions
 
             totalRead = newTotal;
 
-            await destination.WriteAsync(buffer.AsMemory(0, bytesRead), cancellationToken).ConfigureAwait(false);
+            await destination.WriteAsync(buffer.AsMemory(0, bytesRead), cancellationToken);
         }
     }
 

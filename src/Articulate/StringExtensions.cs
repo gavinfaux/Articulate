@@ -6,22 +6,28 @@ namespace Articulate
 {
     public static class StringExtensions
     {
-        private static readonly Regex NewlineRegex = new(@"[\r\n]+", RegexOptions.Compiled);
-
         public static string NewLinesToSpaces(this string input) =>
-            NewlineRegex.Replace(input, " ");
-        public static string DecodeHtml(this string text) => HttpUtility.HtmlDecode(text);
+            _newlineRegex.Replace(input, " ");
 
-        public static string TruncateAtWord(this string? text, int maxCharacters, string trailingStringIfTextCut = "&hellip;")
+        public static string DecodeHtml(this string input) => HttpUtility.HtmlDecode(input);
+
+        private static readonly Regex _newlineRegex = new(@"[\r\n]+", RegexOptions.Compiled);
+
+        public static string TruncateAtWord(
+            this string? text,
+            int maxCharacters,
+            string trailingStringIfTextCut = "&hellip;")
         {
             if (text is null || (text = text.Trim()).Length <= maxCharacters)
             {
                 return text ?? string.Empty;
             }
 
-            var trailLength = trailingStringIfTextCut is ['&', ..] ? 1
+            var trailLength = trailingStringIfTextCut is ['&', ..]
+                ? 1
                 : trailingStringIfTextCut.Length;
-            maxCharacters = maxCharacters - trailLength >= 0 ? maxCharacters - trailLength
+            maxCharacters = maxCharacters - trailLength >= 0
+                ? maxCharacters - trailLength
                 : 0;
             var pos = text.LastIndexOf(" ", maxCharacters, StringComparison.Ordinal);
             if (pos >= 0)

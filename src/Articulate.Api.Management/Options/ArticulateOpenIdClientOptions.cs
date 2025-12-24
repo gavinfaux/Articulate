@@ -42,12 +42,12 @@ namespace Articulate.Api.Management.Options
         /// Gets or sets the redirect URIs allowed for the custom client. When <see cref="Enabled"/> is
         /// <see langword="true"/>, at least one absolute URI must be provided.
         /// </summary>
-        public List<string> RedirectUris { get; set; } = new();
+        public List<string> RedirectUris { get; set; } = [];
 
         /// <summary>
         /// Gets or sets the post-logout redirect URIs allowed for the custom client.
         /// </summary>
-        public List<string> PostLogoutRedirectUris { get; set; } = new();
+        public List<string> PostLogoutRedirectUris { get; set; } = [];
 
         public string? AuthorizeUrl { get; set; }
 
@@ -78,8 +78,7 @@ namespace Articulate.Api.Management.Options
         /// </summary>
         public bool HasClientSecret() => !string.IsNullOrWhiteSpace(ClientSecret);
 
-        private static readonly IReadOnlyCollection<string> _defaultPermissions = Array.AsReadOnly(new[]
-        {
+        private static readonly IReadOnlyCollection<string> _defaultPermissions = Array.AsReadOnly([
             // Allow the client to initiate the authorization code flow.
             OpenIddictConstants.Permissions.Endpoints.Authorization,
 
@@ -96,13 +95,12 @@ namespace Articulate.Api.Management.Options
             OpenIddictConstants.Permissions.GrantTypes.AuthorizationCode,
 
             // Constrain the authorization response to "code" only (no implicit/hybrid).
-            OpenIddictConstants.Permissions.ResponseTypes.Code,
-        });
+            OpenIddictConstants.Permissions.ResponseTypes.Code
+        ]);
 
-        private static readonly IReadOnlyCollection<string> _defaultRequirements = Array.AsReadOnly(new[]
-        {
+        private static readonly IReadOnlyCollection<string> _defaultRequirements = Array.AsReadOnly([
             OpenIddictConstants.Requirements.Features.ProofKeyForCodeExchange
-        });
+        ]);
     }
 }
 

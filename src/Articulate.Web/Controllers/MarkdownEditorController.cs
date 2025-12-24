@@ -218,7 +218,7 @@ namespace Articulate.Web.Controllers
 
                 static string Normalize(string value)
                 {
-                    string normalized = value ?? string.Empty;
+                    string normalized = value;
                     normalized = normalized.TrimStart('~');
                     normalized = normalized.EnsureStartsWith('/');
                     normalized = normalized.TrimEnd('/');

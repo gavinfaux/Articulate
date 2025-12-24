@@ -14,7 +14,7 @@ namespace Articulate.Components
         /// <inheritdoc/>
         public IEnumerable<string> ExpandViewLocations(ViewLocationExpanderContext context, IEnumerable<string> viewLocations)
         {
-            IDictionary<string, string?>? values = context.Values;
+            IDictionary<string, string?> values = context.Values;
 
             _ = values.TryGetValue(ThemeKey, out string? themeName);
 

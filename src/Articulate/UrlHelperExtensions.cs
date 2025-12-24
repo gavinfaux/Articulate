@@ -13,7 +13,8 @@ namespace Articulate
         /// <param name="relativeAssetPath"></param>
         /// <returns></returns>
         [Obsolete("Use your custom themes asset URLs instead.", error: true)]
-        public static string ThemedAsset(this IUrlHelper url, IMasterModel model, string relativeAssetPath) => throw new NotSupportedException("ThemedAsset is no longer supported.");
+        public static string ThemedAsset(this IUrlHelper url, IMasterModel model, string relativeAssetPath) =>
+            throw new NotSupportedException("ThemedAsset is no longer supported.");
 
         /// <summary>
         /// Returns the main rss feed url for this blog
@@ -24,8 +25,10 @@ namespace Articulate
         [Obsolete("Use Articulate.Models.PublishedContentExtensions.ArticulateRssUrl(this IMasterModel model)")]
         public static string ArticulateRssUrl(this IUrlHelper url, IMasterModel model) => model.ArticulateRssUrl();
 
-        [Obsolete("Use Articulate.Models.PublishedContentExtensions.ArticulateCreateBlogEntryUrl(this IMasterModel model)")]
-        public static string ArticulateCreateBlogEntryUrl(this IUrlHelper url, IMasterModel model) => model.ArticulateCreateBlogEntryUrl();
+        [Obsolete(
+            "Use Articulate.Models.PublishedContentExtensions.ArticulateCreateBlogEntryUrl(this IMasterModel model)")]
+        public static string ArticulateCreateBlogEntryUrl(this IUrlHelper url, IMasterModel model) =>
+            model.ArticulateCreateBlogEntryUrl();
 
         /// <summary>
         /// Returns an RSS feed URL specific to this tag
@@ -55,25 +58,34 @@ namespace Articulate
         /// <param name="includeDomain"></param>
         /// <returns></returns>
         [Obsolete("Use Articulate.Models.PublishedContentExtensions.ArticulateSearchUrl(this IMasterModel model)")]
-        public static string ArticulateSearchUrl(this IUrlHelper url, IMasterModel model, bool includeDomain = false) => model.ArticulateSearchUrl(includeDomain);
+        public static string ArticulateSearchUrl(this IUrlHelper url, IMasterModel model, bool includeDomain = false) =>
+            model.ArticulateSearchUrl(includeDomain);
 
         /// <summary>
         /// The Home Blog Url
         /// </summary>
+        /// <param name="url"></param>
+        /// <param name="model"></param>
         [Obsolete("Use Articulate.Models.PublishedContentExtensions.ArticulateRootUrl(this IMasterModel model)")]
         public static string ArticulateRootUrl(this IUrlHelper url, IMasterModel model) => model.ArticulateRootUrl();
 
         /// <summary>
         /// Returns the default categories list URL for blog posts
         /// </summary>
+        /// <param name="url"></param>
+        /// <param name="model"></param>
         [Obsolete("Use Articulate.Models.PublishedContentExtensions.ArticulateCategoriesUrl(this IMasterModel model)")]
-        public static string ArticulateCategoriesUrl(this IUrlHelper url, IMasterModel model) => model.ArticulateCategoriesUrl();
+        public static string ArticulateCategoriesUrl(this IUrlHelper url, IMasterModel model) =>
+            model.ArticulateCategoriesUrl();
 
         /// <summary>
         /// Returns the authors list URL
         /// </summary>
+        /// <param name="url"></param>
+        /// <param name="model"></param>
         [Obsolete("Use Articulate.Models.PublishedContentExtensions.ArticulateAuthorsUrl(this IMasterModel model)")]
-        public static string ArticulateAuthorsUrl(this IUrlHelper url, IMasterModel model) => model.ArticulateAuthorsUrl();
+        public static string ArticulateAuthorsUrl(this IUrlHelper url, IMasterModel model) =>
+            model.ArticulateAuthorsUrl();
 
         /// <summary>
         /// Returns the URL for the tag list
@@ -92,6 +104,7 @@ namespace Articulate
         /// <param name="category"></param>
         /// <returns></returns>
         [Obsolete("Use Articulate.Models.PublishedContentExtensions.ArticulateCategoryUrl(this IMasterModel model)")]
-        public static string ArticulateCategoryUrl(this IUrlHelper url, IMasterModel model, string category) => model.ArticulateCategoryUrl(category);
+        public static string ArticulateCategoryUrl(this IUrlHelper url, IMasterModel model, string category) =>
+            model.ArticulateCategoryUrl(category);
     }
 }

@@ -21,6 +21,9 @@ else
                 var d = document, s = d.createElement('script');
                 /** ENTER DISQUS SHORTNAME HERE **/
                 const disqusShortName = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.DisqusShortName));
+
+                // Security Note: The Disqus script is loaded from a third-party domain without Subresource Integrity (SRI)
+                // because the file content is dynamic. Ensure your Content Security Policy (CSP) trusts 'disqus.com'.
                 s.src = 'https://' + disqusShortName + '.disqus.com/embed.js';
                 s.setAttribute('data-timestamp', +new Date());
                 (d.head || d.body).appendChild(s);

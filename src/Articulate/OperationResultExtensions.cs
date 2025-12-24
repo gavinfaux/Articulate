@@ -13,7 +13,7 @@ internal static class OperationResultExtensions
         ILogger logger,
         string operationDescription)
     {
-        if (attempt is { Success: true, Result: { Success: true } })
+        if (attempt is { Success: true, Result.Success: true })
         {
             return;
         }

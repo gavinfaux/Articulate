@@ -11,7 +11,7 @@ namespace Articulate.Services
         {
             if (string.IsNullOrWhiteSpace(themeName))
             {
-                return Enumerable.Empty<string>();
+                return [];
             }
 
             var searchRoots = new[]

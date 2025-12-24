@@ -7,38 +7,26 @@ using Umbraco.Cms.Core.Services;
 
 namespace Articulate.Components
 {
-    public class ContentSavedAsyncHandler : INotificationAsyncHandler<ContentSavedNotification>
+    public class ContentSavedAsyncHandler(
+        IContentTypeService contentTypeService,
+        IContentService contentService,
+        ILanguageService languageService,
+        ILogger<ContentSavedAsyncHandler> logger)
+        : INotificationAsyncHandler<ContentSavedNotification>
     {
-        private readonly IContentTypeService _contentTypeService;
-        private readonly IContentService _contentService;
-        private readonly ILanguageService _languageService;
-        private readonly ILogger<ContentSavedAsyncHandler> _logger;
-
-        public ContentSavedAsyncHandler(
-            IContentTypeService contentTypeService,
-            IContentService contentService,
-            ILanguageService languageService,
-            ILogger<ContentSavedAsyncHandler> logger)
-        {
-            _contentTypeService = contentTypeService;
-            _contentService = contentService;
-            _languageService = languageService;
-            _logger = logger;
-        }
-
-
         /// <inheritdoc/>
         public async Task HandleAsync(ContentSavedNotification notification, CancellationToken cancellationToken)
         {
             foreach (IContent c in notification.SavedEntities)
             {
-                if (!c.WasPropertyDirty("Id") || !c.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.Articulate))
+                if (!c.WasPropertyDirty("Id") ||
+                    !c.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.Articulate))
                 {
                     continue;
                 }
 
                 // it's a root blog node, set up the required sub nodes (archive , authors) if they don't exist
-                var defaultLang = await _languageService.GetDefaultIsoCodeAsync().ConfigureAwait(false);
+                var defaultLang = await languageService.GetDefaultIsoCodeAsync();
                 cancellationToken.ThrowIfCancellationRequested();
 
                 await EnsureChildNodeExistsAsync(
@@ -46,7 +34,7 @@ namespace Articulate.Components
                     ArticulateConstants.ContentType.ArticulateArchive,
                     ArticulateConstants.Convention.ArticlesDocument,
                     defaultLang,
-                    cancellationToken).ConfigureAwait(false);
+                    cancellationToken);
 
                 cancellationToken.ThrowIfCancellationRequested();
 
@@ -55,7 +43,7 @@ namespace Articulate.Components
                     ArticulateConstants.ContentType.ArticulateAuthors,
                     ArticulateConstants.Convention.AuthorsDocument,
                     defaultLang,
-                    cancellationToken).ConfigureAwait(false);
+                    cancellationToken);
             }
         }
 
@@ -71,14 +59,17 @@ namespace Articulate.Components
                 return Task.FromResult(true);
             }
 
-            IContentType? contentType = _contentTypeService.Get(contentTypeAlias);
+            IContentType? contentType = contentTypeService.Get(contentTypeAlias);
             if (contentType is null)
             {
-                _logger.LogWarning("Content type {ContentTypeAlias} not found when ensuring child for parent {ParentId}", contentTypeAlias, parent.Id);
+                logger.LogWarning(
+                    "Content type {ContentTypeAlias} not found when ensuring child for parent {ParentId}",
+                    contentTypeAlias,
+                    parent.Id);
                 return Task.FromResult(false);
             }
 
-            IContent child = _contentService.Create(string.Empty, parent, contentTypeAlias);
+            IContent child = contentService.Create(string.Empty, parent, contentTypeAlias);
             if (contentType.VariesByCulture())
             {
                 child.SetCultureName(documentName, defaultLang);
@@ -88,7 +79,7 @@ namespace Articulate.Components
                 child.Name = documentName;
             }
 
-            OperationResult saveResult = _contentService.Save(child);
+            OperationResult saveResult = contentService.Save(child);
             if (!saveResult.Success)
             {
                 // Mitigate race: if another request created it after our initial check, skip without error.
@@ -97,7 +88,11 @@ namespace Articulate.Components
                     return Task.FromResult(true);
                 }
 
-                _logger.LogError("Failed to save {ContentType} node for parent {ParentId}: {SaveResult}", contentTypeAlias, parent.Id, saveResult);
+                logger.LogError(
+                    "Failed to save {ContentType} node for parent {ParentId}: {SaveResult}",
+                    contentTypeAlias,
+                    parent.Id,
+                    saveResult);
                 return Task.FromResult(false);
             }
 
@@ -109,7 +104,7 @@ namespace Articulate.Components
             const int pageSize = 50;
             var pageIndex = 0;
 
-            var contentTypeId = _contentTypeService.Get(contentTypeAlias)?.Id;
+            var contentTypeId = contentTypeService.Get(contentTypeAlias)?.Id;
             if (contentTypeId is null)
             {
                 return false;
@@ -121,7 +116,8 @@ namespace Articulate.Components
 
                 try
                 {
-                    IEnumerable<IContent> page = _contentService.GetPagedChildren(parentId, pageIndex, pageSize, out var total);
+                    IEnumerable<IContent> page =
+                        contentService.GetPagedChildren(parentId, pageIndex, pageSize, out var total);
                     List<IContent> items = page?.ToList() ?? [];
 
                     if (items.Any(x => x.ContentTypeId == contentTypeId))
@@ -138,7 +134,11 @@ namespace Articulate.Components
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Error checking if child exists for parent {ParentId} with type {ContentTypeAlias}", parentId, contentTypeAlias);
+                    logger.LogError(
+                        ex,
+                        "Error checking if child exists for parent {ParentId} with type {ContentTypeAlias}",
+                        parentId,
+                        contentTypeAlias);
                     return false; // Assume doesn't exist to allow creation attempt
                 }
             }

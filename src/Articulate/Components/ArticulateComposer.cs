@@ -41,6 +41,7 @@ namespace Articulate.Components
             services.TryAddEnumerable(
                 ServiceDescriptor.Singleton<MatcherPolicy, ArticulateDynamicRouteSelectorPolicy>());
             _ = services.AddSingleton<IArticulateThemeRepository, ArticulateThemeRepository>();
+            _ = services.AddSingleton<IMarkdownToHtmlConverter, MarkdownService>();
             _ = services.AddTransient<IArticulateThemeResolver, ArticulateThemeResolver>();
             _ = services.AddScoped<BackOfficeAuthService>();
 
@@ -62,7 +63,8 @@ namespace Articulate.Components
             _ = builder.AddNotificationHandler<ContentTypeSavingNotification, ContentTypeSavingHandler>();
             _ = builder.AddNotificationHandler<ContentCacheRefresherNotification, ContentCacheRefresherHandler>();
             _ = builder.AddNotificationHandler<DomainCacheRefresherNotification, DomainCacheRefresherHandler>();
-            _ = builder.AddNotificationHandler<MigrationPlansExecutedNotification, ArticulateMigrationPlanExecutedHandler>();
+            _ = builder
+                .AddNotificationHandler<MigrationPlansExecutedNotification, ArticulateMigrationPlanExecutedHandler>();
 
             _ = services.ConfigureOptions<ArticulatePipelineStartupFilter>();
             _ = services.ConfigureOptions<ConfigureArticulateMvcOptions>();

@@ -13,11 +13,6 @@ namespace Articulate.Syndication.BlogML
         public TagsSyndicationExtensionContext Context
         {
             get;
-            set
-            {
-                Guard.ArgumentNotNull(value, "value");
-                field = value;
-            }
         }
         = new();
 

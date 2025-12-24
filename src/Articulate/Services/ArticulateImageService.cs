@@ -1,6 +1,10 @@
 #nullable enable
+using System.Net;
+using System.Net.Http;
+using System.Net.Sockets;
 using System.Text.RegularExpressions;
 using Articulate.Extensions;
+using Articulate.Options;
 using FileSignatures;
 using FileSignatures.Formats;
 using Microsoft.Extensions.Logging;
@@ -11,7 +15,6 @@ using Umbraco.Cms.Core.Configuration.Models;
 using Umbraco.Cms.Core.IO;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.PropertyEditors;
-using Umbraco.Cms.Core.Serialization;
 using Umbraco.Cms.Core.Services;
 using Umbraco.Cms.Core.Strings;
 using Task = System.Threading.Tasks.Task;
@@ -28,10 +31,12 @@ namespace Articulate.Services
         IAbsoluteUrlBuilder absoluteUrlBuilder,
         IHttpClientFactory httpClientFactory,
         IFileFormatInspector formatInspector,
-        IOptions<RuntimeSettings> runtimeSettings)
+        IOptions<RuntimeSettings> runtimeSettings,
+        IOptions<ArticulateOptions> articulateOptions)
         : IArticulateImageService
     {
-        private static readonly string[] AllowedExtensions = [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp"];
+        private readonly ArticulateOptions _articulateOptions = articulateOptions.Value;
+        private static readonly string[] _allowedExtensions = [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp"];
         private const long DefaultMaxSizeBytes = 10 * 1024 * 1024; // 10MB
 
         private readonly RuntimeSettings _runtimeSettings = runtimeSettings.Value;
@@ -40,7 +45,10 @@ namespace Articulate.Services
             ? _runtimeSettings.MaxRequestLength.Value * 1024L
             : DefaultMaxSizeBytes;
 
-        public Task<ImageValidationResult> ValidateImageAsync(Stream stream, string originalExtension, long maxSizeBytes = 0)
+        public Task<ImageValidationResult> ValidateImageAsync(
+            Stream stream,
+            string originalExtension,
+            long maxSizeBytes = 0)
         {
             if (maxSizeBytes <= 0)
             {
@@ -54,15 +62,18 @@ namespace Articulate.Services
                 extension = $".{extension}";
             }
 
-            if (!AllowedExtensions.Contains(extension))
+            if (!_allowedExtensions.Contains(extension))
             {
-                return Task.FromResult(ImageValidationResult.Failure($"Extension '{extension}' not allowed. Supported: {string.Join(", ", AllowedExtensions)}"));
+                return Task.FromResult(ImageValidationResult.Failure(
+                    $"Extension '{extension}' not allowed. Supported: {string.Join(", ", _allowedExtensions)}"));
             }
 
             // 2. Size validation
             if (stream.Length > maxSizeBytes)
             {
-                return Task.FromResult(ImageValidationResult.Failure($"Image size {stream.Length} bytes exceeds maximum {maxSizeBytes} bytes"));
+                return Task.FromResult(
+                    ImageValidationResult.Failure(
+                        $"Image size {stream.Length} bytes exceeds maximum {maxSizeBytes} bytes"));
             }
 
             stream.Position = 0;
@@ -71,7 +82,9 @@ namespace Articulate.Services
             FileFormat? format = formatInspector.DetermineFileFormat(stream);
             if (format is not Image)
             {
-                return Task.FromResult(ImageValidationResult.Failure("File does not appear to be a valid image (failed magic byte validation)"));
+                return Task.FromResult(
+                    ImageValidationResult.Failure(
+                        "File does not appear to be a valid image (failed magic byte validation)"));
             }
 
             // 4. Use detected format for extension (prevents extension spoofing)
@@ -81,7 +94,10 @@ namespace Articulate.Services
             return Task.FromResult(ImageValidationResult.Success(stream, correctExtension));
         }
 
-        public async Task<ImageValidationResult> DecodeAndValidateBase64ImageAsync(string base64Content, string originalFileName, long maxSizeBytes = 0)
+        public async Task<ImageValidationResult> DecodeAndValidateBase64ImageAsync(
+            string base64Content,
+            string originalFileName,
+            long maxSizeBytes = 0)
         {
             if (maxSizeBytes <= 0)
             {
@@ -111,17 +127,21 @@ namespace Articulate.Services
             var stream = new MemoryStream(bytes);
             var extension = Path.GetExtension(originalFileName).ToLowerInvariant();
 
-            return await ValidateImageAsync(stream, extension, maxSizeBytes).ConfigureAwait(false);
+            return await ValidateImageAsync(stream, extension, maxSizeBytes);
         }
 
-        public async Task<ImageValidationResult> DownloadAndValidateImageAsync(Uri imageUrl, long maxSizeBytes = 0, CancellationToken cancellationToken = default)
+        public async Task<ImageValidationResult> DownloadAndValidateImageAsync(
+            Uri imageUrl,
+            long maxSizeBytes = 0,
+            CancellationToken cancellationToken = default)
         {
             if (maxSizeBytes <= 0)
             {
                 maxSizeBytes = MaxImageSizeBytes;
             }
 
-            if (!imageUrl.IsAbsoluteUri || (imageUrl.Scheme != Uri.UriSchemeHttp && imageUrl.Scheme != Uri.UriSchemeHttps))
+            if (!imageUrl.IsAbsoluteUri ||
+                (imageUrl.Scheme != Uri.UriSchemeHttp && imageUrl.Scheme != Uri.UriSchemeHttps))
             {
                 return ImageValidationResult.Failure("Invalid or non-HTTP image URL");
             }
@@ -133,22 +153,23 @@ namespace Articulate.Services
                 using HttpResponseMessage response = await client.GetAsync(
                     imageUrl,
                     HttpCompletionOption.ResponseHeadersRead,
-                    cancellationToken).ConfigureAwait(false);
+                    cancellationToken);
 
                 response.EnsureSuccessStatusCode();
 
                 if (response.Content.Headers.ContentLength > maxSizeBytes)
                 {
-                    return ImageValidationResult.Failure($"Remote image too large: {response.Content.Headers.ContentLength} bytes");
+                    return ImageValidationResult.Failure(
+                        $"Remote image too large: {response.Content.Headers.ContentLength} bytes");
                 }
 
                 var memStream = new MemoryStream();
-                await using Stream downloadStream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
-                await downloadStream.CopyWithLimitAsync(memStream, maxSizeBytes, cancellationToken).ConfigureAwait(false);
+                await using Stream downloadStream = await response.Content.ReadAsStreamAsync(cancellationToken);
+                await downloadStream.CopyWithLimitAsync(memStream, maxSizeBytes, cancellationToken);
                 memStream.Position = 0;
 
                 var extension = Path.GetExtension(imageUrl.AbsolutePath).ToLowerInvariant();
-                return await ValidateImageAsync(memStream, extension, maxSizeBytes).ConfigureAwait(false);
+                return await ValidateImageAsync(memStream, extension, maxSizeBytes);
             }
             catch (InvalidDataException)
             {
@@ -161,7 +182,11 @@ namespace Articulate.Services
             }
         }
 
-        public Task<MediaSaveResult> SaveToMediaLibraryAsync(Stream imageStream, string mediaName, string extension, IMedia? parentFolder = null)
+        public Task<MediaSaveResult> SaveToMediaLibraryAsync(
+            Stream imageStream,
+            string mediaName,
+            string extension,
+            IMedia? parentFolder = null)
         {
             try
             {

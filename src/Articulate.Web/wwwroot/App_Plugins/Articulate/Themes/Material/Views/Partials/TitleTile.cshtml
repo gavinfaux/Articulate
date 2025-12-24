@@ -1,11 +1,11 @@
 @using Articulate.Services
 @using Umbraco.Cms.Core
-@inject BackOfficeAuthService _backOfficeAuthService
+@inject BackOfficeAuthService BackOfficeAuthService
 @inherits UmbracoViewPage<IMasterModel>
 
 <div class="mdl-card title-banner mdl-cell mdl-cell--8-col mdl-cell--4-col-desktop">
     @{
-        var backOfficeLoggedIn = _backOfficeAuthService.IsBackOfficeLoggedIn(Context, Constants.Security.BackOfficeAuthenticationType);
+        var backOfficeLoggedIn = BackOfficeAuthService.IsBackOfficeLoggedIn(Context, Constants.Security.BackOfficeAuthenticationType);
     }
 
     @if (backOfficeLoggedIn)

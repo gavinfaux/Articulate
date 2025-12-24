@@ -604,11 +604,11 @@ body.is-login-step .md-editor__card.md-editor__card--compact .mdl-card__supporti
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.md-editor__body textarea,
-.md-editor__body .tiny-mde,
-.md-editor__body .tiny-mde textarea {
-    touch-action: pan-y;
+  .md-editor__body textarea,
+  .md-editor__body .tiny-mde,
+  .md-editor__body .tiny-mde textarea {
     -ms-touch-action: pan-y;
+    touch-action: pan-y;
 }
 
 .md-editor__card .mdl-textfield__input:focus,

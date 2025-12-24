@@ -16,11 +16,18 @@ namespace Articulate.Services
         private const string AllThemesCacheKey = "Articulate_AllThemes";
         private const string EmbeddedResourceRoot = "Articulate.Theme://";
 
-        /// <inheritdoc/>0
+        /// <inheritdoc/>
         async Task IArticulateThemeRepository.CopyThemeAsync(string themeName, string newThemeName)
         {
-            var userThemesPath = Path.Combine(hostingEnvironment.ContentRootPath, Paths.UserThemesRoot);
-            var destinationPhysicalPath = Path.Combine(userThemesPath, newThemeName);
+            var userThemesPath =
+                Path.GetFullPath(Path.Combine(hostingEnvironment.ContentRootPath, Paths.UserThemesRoot));
+            var destinationPhysicalPath = Path.GetFullPath(Path.Combine(userThemesPath, newThemeName));
+
+            if (!destinationPhysicalPath.StartsWith(userThemesPath, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new ArgumentException("Invalid theme name", nameof(newThemeName));
+            }
+
             Assembly articulateAssembly = GetWebAssembly();
 
             // User theme names must be unique
@@ -28,32 +35,8 @@ namespace Articulate.Services
             {
                 throw new IOException($"A user theme with the name '{newThemeName}' already exists.");
             }
-            char[] separators = ['/', '\\'];
-            var themeResources = articulateAssembly.GetManifestResourceNames()
-                .Where(resource =>
-                {
-                    // A. Must start with the root prefix
-                    if (!resource.StartsWith(EmbeddedResourceRoot, StringComparison.OrdinalIgnoreCase))
-                    {return false;}
 
-                    // Get the path relative to "Articulate.Theme://"
-                    // e.g. "Vapor/assets/css/style.css" OR "Vaporwave/assets/css/style.css"
-                    var relativePath = resource.Substring(EmbeddedResourceRoot.Length);
-
-                    // B. THE SEPARATOR GUARD
-                    // We check if the relative path starts with "Vapor/" or "Vapor\"
-                    // This fails for "Vaporwave/" because the character after 'r' is 'w', not '/'
-                    foreach (var sep in separators)
-                    {
-                        if (relativePath.StartsWith($"{themeName}{sep}", StringComparison.OrdinalIgnoreCase))
-                        {
-                            return true; // Match!
-                        }
-                    }
-
-                    return false;
-                })
-                .ToList();
+            var themeResources = GetThemeResourceNames(articulateAssembly, themeName).ToList();
 
             if (themeResources.Count == 0)
             {
@@ -68,40 +51,81 @@ namespace Articulate.Services
                 var cutOffIndex = EmbeddedResourceRoot.Length + themeName.Length + 1;
                 foreach (var resourceName in themeResources)
                 {
-                    var relativePath = resourceName.Substring(cutOffIndex);
+                    var relativePath = resourceName[cutOffIndex..];
                     var cleanPath = relativePath
                         .Replace('\\', Path.DirectorySeparatorChar) // Turn Windows slashes into Current OS slashes
-                        .Replace('/', Path.DirectorySeparatorChar); // Turn Web/Linux slashes into Current OS slashes                    var destinationFilePath = Path.Combine(destinationPhysicalPath, cleanedRelativePath);
+                        .Replace('/', Path.DirectorySeparatorChar); // Turn Web/Linux slashes into Current OS slashes
+
                     var destinationFilePath = Path.Combine(destinationPhysicalPath, cleanPath);
-                    if (Path.GetDirectoryName(destinationFilePath) is { } directoryPath)
-                    {
-                        _ = Directory.CreateDirectory(directoryPath);
-                    }
-                    else
-                    {
-                        logger.LogError(
-                            "Could not determine a valid directory path from '{destinationFilePath}' for '{ResourceName}'. Skipping file creation.", destinationFilePath, resourceName);
-                        continue;
-                    }
-
-                    await using Stream? stream = articulateAssembly.GetManifestResourceStream(resourceName);
-                    if (stream is null)
-                    {
-                        logger.LogError("Could not find resource stream for '{ResourceName}'. Skipping file creation.", resourceName);
-                        continue;
-                    }
-
-                    await using var fileStream = new FileStream(destinationFilePath, FileMode.Create);
-                    await stream.CopyToAsync(fileStream).ConfigureAwait(false);
+                    await ExtractResourceToFileAsync(articulateAssembly, resourceName, destinationFilePath);
                 }
 
                 appCaches.RuntimeCache.ClearByKey(AllThemesCacheKey);
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error copying embedded theme '{SourceTheme}' to '{DestinationTheme}'.", themeName, newThemeName);
+                logger.LogError(
+                    ex,
+                    "Error copying embedded theme '{SourceTheme}' to '{DestinationTheme}'.",
+                    themeName,
+                    newThemeName);
                 throw;
             }
+        }
+
+        private IEnumerable<string> GetThemeResourceNames(Assembly assembly, string themeName)
+        {
+            char[] separators = ['/', '\\'];
+            return assembly.GetManifestResourceNames()
+                .Where(resource =>
+                {
+                    // A. Must start with the root prefix
+                    if (!resource.StartsWith(EmbeddedResourceRoot, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return false;
+                    }
+
+                    // Get the path relative to "Articulate.Theme://"
+                    // e.g. "Vapor/assets/css/style.css" OR "Vaporwave/assets/css/style.css"
+                    var relativePath = resource[EmbeddedResourceRoot.Length..];
+
+                    // B. THE SEPARATOR GUARD
+                    // We check if the relative path starts with "Vapor/" or "Vapor\"
+                    // This fails for "Vaporwave/" because the character after 'r' is 'w', not '/'
+                    return separators.Any(sep =>
+                        relativePath.StartsWith($"{themeName}{sep}", StringComparison.OrdinalIgnoreCase));
+                });
+        }
+
+        private async Task ExtractResourceToFileAsync(
+            Assembly assembly,
+            string resourceName,
+            string destinationFilePath)
+        {
+            if (Path.GetDirectoryName(destinationFilePath) is { } directoryPath)
+            {
+                _ = Directory.CreateDirectory(directoryPath);
+            }
+            else
+            {
+                logger.LogError(
+                    "Could not determine a valid directory path from '{DestinationFilePath}' for '{ResourceName}'. Skipping file creation.",
+                    destinationFilePath,
+                    resourceName);
+                return;
+            }
+
+            await using Stream? stream = assembly.GetManifestResourceStream(resourceName);
+            if (stream is null)
+            {
+                logger.LogError(
+                    "Could not find resource stream for '{ResourceName}'. Skipping file creation.",
+                    resourceName);
+                return;
+            }
+
+            await using var fileStream = new FileStream(destinationFilePath, FileMode.Create);
+            await stream.CopyToAsync(fileStream);
         }
 
         /// <inheritdoc/>
@@ -114,10 +138,10 @@ namespace Articulate.Services
                     Task<IEnumerable<string>> userThemesTask = GetUserThemesAsync();
 
                     IEnumerable<string>[] results =
-                        await Task.WhenAll(defaultThemesTask, userThemesTask).ConfigureAwait(false);
+                        await Task.WhenAll(defaultThemesTask, userThemesTask);
                     return results[0].Union(results[1]).OrderBy(name => name);
                 },
-                TimeSpan.FromSeconds(30)).ConfigureAwait(false);
+                TimeSpan.FromSeconds(30));
 
         private static Assembly GetWebAssembly()
         {
@@ -132,6 +156,7 @@ namespace Articulate.Services
 
         /// <inheritdoc/>
         public Task<IEnumerable<string>> GetDefaultThemesAsync() => Task.FromResult(DefaultThemes.AllThemeNames);
+
         private static Task<IEnumerable<string>> GetThemesFromPhysicalPathAsync(string physicalPath) =>
             Task.Run(() => Directory.Exists(physicalPath)
                 ? new DirectoryInfo(physicalPath).GetDirectories().Select(d => d.Name)

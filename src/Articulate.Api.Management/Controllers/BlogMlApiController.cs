@@ -85,12 +85,16 @@ namespace Articulate.Api.Management.Controllers
                     detail: $"BlogML imports must be between 1 byte and {maxImportFileBytes / (1024d * 1024d):F1} MB.",
                     statusCode: StatusCodes.Status413PayloadTooLarge);
             }
+
             try
             {
                 var fileName = Path.GetRandomFileName();
                 await using Stream sourceStream = importFile.OpenReadStream();
-                using var buffer = new MemoryStream(capacity: (int)Math.Min(importFile.Length, Math.Min(maxImportFileBytes, int.MaxValue)));
-                await sourceStream.CopyWithLimitAsync(buffer, maxImportFileBytes, HttpContext.RequestAborted).ConfigureAwait(false);
+                using var buffer =
+                    new MemoryStream(capacity: (int)Math.Min(
+                        importFile.Length,
+                        Math.Min(maxImportFileBytes, int.MaxValue)));
+                await sourceStream.CopyWithLimitAsync(buffer, maxImportFileBytes, HttpContext.RequestAborted);
                 buffer.Position = 0;
                 articulateTempFileSystem.AddFile(fileName, buffer);
 
@@ -106,8 +110,12 @@ namespace Articulate.Api.Management.Controllers
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "An unexpected error occurred during file initialization for import.");
-                return StatusCode(StatusCodes.Status500InternalServerError, $"An unexpected error occurred during file initialization for import: {ex.Message}");
+                logger.LogError(
+                    ex,
+                    "An unexpected error occurred during file initialization for import.");
+                return StatusCode(
+                    StatusCodes.Status500InternalServerError,
+                    $"An unexpected error occurred during file initialization for import: {ex.Message}");
             }
         }
 
@@ -128,7 +136,7 @@ namespace Articulate.Api.Management.Controllers
             try
             {
                 await blogMlExporter.ExportAsync(model.ArticulateBlogNode, exportFileName, model.ExportImagesAsBase64)
-                    .ConfigureAwait(false);
+                    ;
                 var downloadFileName = $"articulate-export-{DateTime.UtcNow:yyyyMMddHHmmss}.xml";
 
                 Stream fileStream = articulateTempFileSystem.OpenFile(exportFileName);
@@ -145,13 +153,22 @@ namespace Articulate.Api.Management.Controllers
             }
             catch (InvalidOperationException ex)
             {
-                logger.LogError(ex, "Export failed due to an invalid operation, likely a missing or invalid blog node.");
-                return Problem(title: "Service Unavailable", detail: ex.Message, statusCode: StatusCodes.Status503ServiceUnavailable);
+                logger.LogError(
+                    ex,
+                    "Export failed due to an invalid operation, likely a missing or invalid blog node.");
+                return Problem(
+                    title: "Service Unavailable",
+                    detail: ex.Message,
+                    statusCode: StatusCodes.Status503ServiceUnavailable);
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "An unexpected error occurred during BlogML export.");
-                return StatusCode(StatusCodes.Status500InternalServerError, $"An unexpected error occurred during BlogML export: {ex.Message}");
+                logger.LogError(
+                    ex,
+                    "An unexpected error occurred during BlogML export.");
+                return StatusCode(
+                    StatusCodes.Status500InternalServerError,
+                    $"An unexpected error occurred during BlogML export: {ex.Message}");
             }
         }
 
@@ -173,7 +190,18 @@ namespace Articulate.Api.Management.Controllers
             IUser? currentUser = backOfficeSecurityAccessor.BackOfficeSecurity?.CurrentUser;
             if (currentUser is null)
             {
-                return Problem(title: "Unauthorized", detail: "Could not determine the current user.", statusCode: StatusCodes.Status401Unauthorized);
+                return Problem(
+                    title: "Unauthorized",
+                    detail: "Could not determine the current user.",
+                    statusCode: StatusCodes.Status401Unauthorized);
+            }
+
+            if (string.IsNullOrEmpty(model.TempFile) || model.TempFile.Contains('/') || model.TempFile.Contains('\\'))
+            {
+                return Problem(
+                    title: "Invalid File Name",
+                    detail: "The temporary file name is invalid.",
+                    statusCode: StatusCodes.Status400BadRequest);
             }
 
             try
@@ -187,7 +215,7 @@ namespace Articulate.Api.Management.Controllers
                     model.RegexReplace,
                     model.Publish,
                     model.ExportDisqusXml,
-                    model.ImportFirstImage).ConfigureAwait(false);
+                    model.ImportFirstImage);
 
                 var result = new ImportResponse(dto);
 
@@ -206,7 +234,9 @@ namespace Articulate.Api.Management.Controllers
             catch (Exception ex)
             {
                 logger.LogError(ex, "Importing failed due to an unexpected error.");
-                return StatusCode(StatusCodes.Status500InternalServerError, $"An unexpected error occurred during import: {ex.Message}");
+                return StatusCode(
+                    StatusCodes.Status500InternalServerError,
+                    $"An unexpected error occurred during import: {ex.Message}");
             }
             finally
             {
@@ -230,7 +260,10 @@ namespace Articulate.Api.Management.Controllers
             const string disqusExportFile = "DisqusXmlExport.xml";
             if (!articulateTempFileSystem.FileExists(disqusExportFile))
             {
-                return Problem(title: "File Not Found", detail: "Disqus comments export file not found.", statusCode: StatusCodes.Status404NotFound);
+                return Problem(
+                    title: "File Not Found",
+                    detail: "Disqus comments export file not found.",
+                    statusCode: StatusCodes.Status404NotFound);
             }
 
             var downloadFileName = $"articulate-disqus-comments-{DateTime.UtcNow:yyyyMMddHHmmss}.xml";

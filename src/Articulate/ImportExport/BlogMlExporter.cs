@@ -4,6 +4,7 @@ using System.Text;
 using System.Text.Json;
 using Argotic.Common;
 using Argotic.Syndication.Specialized;
+using Articulate.Services;
 using Articulate.Syndication.BlogML;
 using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Core;
@@ -28,7 +29,8 @@ namespace Articulate.ImportExport
         ArticulateTempFileSystem articulateTempFileSystem,
         IPublishedUrlProvider urlProvider,
         ISqlContext sqlContext,
-        ILogger<BlogMlExporter> logger)
+        ILogger<BlogMlExporter> logger,
+        IMarkdownToHtmlConverter markdownToHtmlConverter)
     {
         public async Task ExportAsync(
             Guid blogRootNode,
@@ -36,23 +38,26 @@ namespace Articulate.ImportExport
             bool exportImagesAsBase64 = false)
         {
             {
-                IContent root = contentService.GetById(blogRootNode) ?? throw new InvalidOperationException("No node found with id " + blogRootNode);
+                IContent root = contentService.GetById(blogRootNode) ??
+                                throw new InvalidOperationException("No node found with id " + blogRootNode);
 
                 if (!root.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.Articulate))
                 {
-                    throw new InvalidOperationException($"The node with id {blogRootNode} is not an Articulate root node");
+                    throw new InvalidOperationException(
+                        $"The node with id {blogRootNode} is not an Articulate root node");
                 }
 
                 IContentType unused = contentTypeService.Get(ArticulateConstants.ContentType.ArticulateRichText) ??
                                       throw new InvalidOperationException(
                                           "Articulate is not installed properly, the 'ArticulateRichText' doc type could not be found");
-                IDataType categoryDataType = await dataTypeService.GetAsync("Articulate Categories").ConfigureAwait(false) ??
+                IDataType categoryDataType = await dataTypeService.GetAsync("Articulate Categories") ??
                                              throw new InvalidOperationException(
                                                  "No Data Type named 'Articulate Categories' found");
                 TagConfiguration? categoryConfiguration = categoryDataType.ConfigurationAs<TagConfiguration>();
                 var categoryGroup = categoryConfiguration?.Group;
-                IDataType tagDataType = await dataTypeService.GetAsync("Articulate Tags").ConfigureAwait(false) ??
-                                        throw new InvalidOperationException("No Data Type named 'Articulate Tags' found");
+                IDataType tagDataType = await dataTypeService.GetAsync("Articulate Tags") ??
+                                        throw new InvalidOperationException(
+                                            "No Data Type named 'Articulate Tags' found");
                 TagConfiguration? tagConfiguration = tagDataType.ConfigurationAs<TagConfiguration>();
                 var tagGroup = tagConfiguration?.Group;
 
@@ -65,8 +70,10 @@ namespace Articulate.ImportExport
                     Subtitle = new BlogMLTextConstruct(root.GetValue<string>("blogDescription"))
                 };
 
-                IContentType authorsContentType = contentTypeService.Get(ArticulateConstants.ContentType.ArticulateAuthors)
-                                                  ?? throw new InvalidOperationException("Articulate is not installed properly, the 'ArticulateAuthors' doc type could not be found");
+                IContentType authorsContentType =
+                    contentTypeService.Get(ArticulateConstants.ContentType.ArticulateAuthors)
+                    ?? throw new InvalidOperationException(
+                        "Articulate is not installed properly, the 'ArticulateAuthors' doc type could not be found");
 
                 foreach (IContent authorsNode in EnumerateDescendants(
                              root.Id,
@@ -78,8 +85,10 @@ namespace Articulate.ImportExport
 
                 AddBlogCategories(blogMlDoc, categoryGroup);
 
-                IContentType archiveContentType = contentTypeService.Get(ArticulateConstants.ContentType.ArticulateArchive)
-                                                  ?? throw new InvalidOperationException("Articulate is not installed properly, the 'ArticulateArchive' doc type could not be found");
+                IContentType archiveContentType =
+                    contentTypeService.Get(ArticulateConstants.ContentType.ArticulateArchive)
+                    ?? throw new InvalidOperationException(
+                        "Articulate is not installed properly, the 'ArticulateArchive' doc type could not be found");
 
                 foreach (IContent archiveNode in EnumerateDescendants(
                              root.Id,
@@ -109,10 +118,7 @@ namespace Articulate.ImportExport
         private void WriteFile(BlogMLDocument blogMlDoc, string fileName)
         {
             using var stream = new MemoryStream();
-            blogMlDoc.Save(stream, new SyndicationResourceSaveSettings
-            {
-                CharacterEncoding = Encoding.UTF8
-            });
+            blogMlDoc.Save(stream, new SyndicationResourceSaveSettings { CharacterEncoding = Encoding.UTF8 });
             stream.Position = 0;
             articulateTempFileSystem.AddFile(fileName, stream, true);
         }
@@ -187,14 +193,24 @@ namespace Articulate.ImportExport
             }
         }
 
-        private void AddBlogPosts(IContent archiveNode, BlogMLDocument blogMlDoc, string? categoryGroup, string? tagGroup, bool exportImagesAsBase64)
+        private void AddBlogPosts(
+            IContent archiveNode,
+            BlogMLDocument blogMlDoc,
+            string? categoryGroup,
+            string? tagGroup,
+            bool exportImagesAsBase64)
         {
             const int pageSize = 1000;
             var pageIndex = 0;
             IContent[] posts;
             do
             {
-                posts = contentService.GetPagedChildren(archiveNode.Id, pageIndex, pageSize, out _, ordering: Ordering.By("createDate")).ToArray();
+                posts = contentService.GetPagedChildren(
+                    archiveNode.Id,
+                    pageIndex,
+                    pageSize,
+                    out _,
+                    ordering: Ordering.By("createDate")).ToArray();
 
                 foreach (IContent child in posts)
                 {
@@ -211,7 +227,12 @@ namespace Articulate.ImportExport
             while (posts.Length == pageSize);
         }
 
-        private void ProcessSinglePost(IContent child, BlogMLDocument blogMlDoc, string? categoryGroup, string? tagGroup, bool exportImagesAsBase64)
+        private void ProcessSinglePost(
+            IContent child,
+            BlogMLDocument blogMlDoc,
+            string? categoryGroup,
+            string? tagGroup,
+            bool exportImagesAsBase64)
         {
             var content = GetPostContent(child);
             var postUrl = new Uri(urlProvider.GetUrl(child.Id), UriKind.RelativeOrAbsolute);
@@ -227,7 +248,7 @@ namespace Articulate.ImportExport
             _ = blogMlDoc.AddPost(blogMlPost);
         }
 
-        private static string GetPostContent(IContent child)
+        private string GetPostContent(IContent child)
         {
             if (child.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateRichText))
             {
@@ -239,7 +260,7 @@ namespace Articulate.ImportExport
             {
                 // TODO: this would also need to handle Markdown extensions if supported e.g MDX
                 var markdown = child.GetValue<string>("markdown");
-                return markdown is not null ? MarkdownHelper.ToHtml(markdown) : string.Empty;
+                return markdown is not null ? markdownToHtmlConverter.ToHtml(markdown) : string.Empty;
             }
 
             return string.Empty;
@@ -287,11 +308,18 @@ namespace Articulate.ImportExport
             var tags = tagService.GetTagsForEntity(child.Id, tagGroup).Select(t => t.Text).ToList();
             if (tags.Count > 0)
             {
-                _ = blogMlPost.AddExtension(new TagsSyndicationExtension { Context = { Tags = new Collection<string>(tags) } });
+                _ = blogMlPost.AddExtension(new TagsSyndicationExtension
+                {
+                    Context = { Tags = new Collection<string>(tags) }
+                });
             }
         }
 
-        private void AttachPostImage(BlogMLPost blogMlPost, IContent child, Uri postAbsoluteUrl, bool exportImagesAsBase64)
+        private void AttachPostImage(
+            BlogMLPost blogMlPost,
+            IContent child,
+            Uri postAbsoluteUrl,
+            bool exportImagesAsBase64)
         {
             if (!TryExtractImageV3(exportImagesAsBase64, child, postAbsoluteUrl, blogMlPost))
             {
@@ -299,7 +327,11 @@ namespace Articulate.ImportExport
             }
         }
 
-        private bool TryExtractImageV1(bool exportImagesAsBase64, IContent child, Uri postAbsoluteUrl, BlogMLPost blogMlPost)
+        private bool TryExtractImageV1(
+            bool exportImagesAsBase64,
+            IContent child,
+            Uri postAbsoluteUrl,
+            BlogMLPost blogMlPost)
         {
             if (!child.HasProperty("postImage"))
             {
@@ -330,7 +362,8 @@ namespace Articulate.ImportExport
                     return false;
                 }
 
-                BlogMLAttachment attachment = CreateAttachmentFromMedia(exportImagesAsBase64, media, mediaPath!, mime, postAbsoluteUrl);
+                BlogMLAttachment attachment =
+                    CreateAttachmentFromMedia(exportImagesAsBase64, media, mediaPath!, mime, postAbsoluteUrl);
                 blogMlPost.Attachments.Add(attachment);
                 return true;
             }
@@ -381,7 +414,11 @@ namespace Articulate.ImportExport
             return true;
         }
 
-        private bool TryExtractImageV3(bool exportImagesAsBase64, IContent child, Uri postAbsoluteUrl, BlogMLPost blogMlPost)
+        private bool TryExtractImageV3(
+            bool exportImagesAsBase64,
+            IContent child,
+            Uri postAbsoluteUrl,
+            BlogMLPost blogMlPost)
         {
             if (!child.HasProperty("postImage"))
             {
@@ -418,13 +455,21 @@ namespace Articulate.ImportExport
                     return false;
                 }
 
-                BlogMLAttachment attachment = CreateAttachmentFromMedia(exportImagesAsBase64, media, mediaFilePath!, mime, postAbsoluteUrl);
+                BlogMLAttachment attachment = CreateAttachmentFromMedia(
+                    exportImagesAsBase64,
+                    media,
+                    mediaFilePath!,
+                    mime,
+                    postAbsoluteUrl);
                 blogMlPost.Attachments.Add(attachment);
                 return true;
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Could not add the file to the blogML post attachments for post {PostId}", child.Id);
+                logger.LogError(
+                    ex,
+                    "Could not add the file to the blogML post attachments for post {PostId}",
+                    child.Id);
                 return false;
             }
         }
@@ -456,15 +501,20 @@ namespace Articulate.ImportExport
             return mediaFilePath is not null;
         }
 
-        private BlogMLAttachment CreateAttachmentFromMedia(bool exportImagesAsBase64, IMedia media, string mediaFilePath, string mimeType, Uri postAbsoluteUrl)
+        private BlogMLAttachment CreateAttachmentFromMedia(
+            bool exportImagesAsBase64,
+            IMedia media,
+            string mediaFilePath,
+            string mimeType,
+            Uri postAbsoluteUrl)
         {
-            var imageUrl = new Uri(postAbsoluteUrl.GetLeftPart(UriPartial.Authority) + mediaFilePath.EnsureStartsWith('/'), UriKind.Absolute);
+            var imageUrl =
+                new Uri(
+                    postAbsoluteUrl.GetLeftPart(UriPartial.Authority) + mediaFilePath.EnsureStartsWith('/'),
+                    UriKind.Absolute);
             var attachment = new BlogMLAttachment
             {
-                Url = imageUrl,
-                ExternalUri = imageUrl,
-                IsEmbedded = exportImagesAsBase64,
-                MimeType = mimeType
+                Url = imageUrl, ExternalUri = imageUrl, IsEmbedded = exportImagesAsBase64, MimeType = mimeType
             };
 
             if (exportImagesAsBase64)

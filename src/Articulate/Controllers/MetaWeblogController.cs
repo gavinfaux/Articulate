@@ -48,17 +48,19 @@ namespace Articulate.Controllers
             string rawContent;
             using (var reader = new StreamReader(Request.Body))
             {
-                rawContent = await reader.ReadToEndAsync().ConfigureAwait(false);
+                rawContent = await reader.ReadToEndAsync();
             }
 
             try
             {
-                var result = await service.InvokeAsync(rawContent).ConfigureAwait(false);
+                var result = await service.InvokeAsync(rawContent);
                 return Content(result, "text/xml", Encoding.UTF8);
             }
             catch (NullReferenceException ex)
             {
-                logger.LogError("A NullReferenceException occurred processing a metaWeblog request. Raw Content: {RawXml}", rawContent);
+                logger.LogError(
+                    "A NullReferenceException occurred processing a metaWeblog request. Raw Content: {RawXml}",
+                    rawContent);
 
                 logger.LogError(ex, "NullReferenceException details for metaWeblog call:");
 

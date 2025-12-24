@@ -1,7 +1,7 @@
 @model TagListModel
 @{
     Layout = "Master.cshtml";
-    var asArray = Model?.Tags?.ToArray() ?? Array.Empty<PostsByTagModel>();
+    var asArray = Model?.Tags?.ToArray() ?? [];
 }
 
 
@@ -40,8 +40,8 @@
             </h2>
 
             @asArray[i].Posts?.OrderByDescending(x => x.PublishedDate).Table(
-                new[] { "Date", "Name" },
-                Array.Empty<string>(),
+                ["Date", "Name"],
+                [],
                 @<span>@item?.PublishedDate.ToString("yyyy-MM-dd")</span>,
                 @<a href="@item?.Url()" title="View Post">@item?.Name</a>)
         }

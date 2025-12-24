@@ -21,65 +21,67 @@ namespace Articulate.Api.Management.Services
         ILogger<ArticulateApplicationManager> logger) :
         INotificationAsyncHandler<UmbracoApplicationStartedNotification>
     {
-        private readonly IServiceScopeFactory _scopeFactory = scopeFactory;
-        private readonly IOptions<ArticulateOpenIdClientOptions> _options = options;
-        private readonly ILogger<ArticulateApplicationManager> _logger = logger;
-        private readonly IRuntimeState _runtimeState = runtimeState;
-
         /// <inheritdoc />
-        public Task HandleAsync(UmbracoApplicationStartedNotification notification, CancellationToken cancellationToken) =>
+        public Task HandleAsync(
+            UmbracoApplicationStartedNotification notification,
+            CancellationToken cancellationToken) =>
             EnsureOpenIdClientAsync(cancellationToken);
+
         private async Task EnsureOpenIdClientAsync(CancellationToken cancellationToken)
         {
-            ArticulateOpenIdClientOptions settings = _options.Value;
+            ArticulateOpenIdClientOptions settings = options.Value;
 
-            if (_runtimeState.Level == RuntimeLevel.Install)
+            if (runtimeState.Level == RuntimeLevel.Install)
             {
-                _logger.LogWarning("Skipping Articulate OpenId client registration: Umbraco installer is running.");
+                logger.LogWarning("Skipping Articulate OpenId client registration: Umbraco installer is running.");
                 return;
             }
 
-            if (_runtimeState.Level < RuntimeLevel.Run)
+            if (runtimeState.Level < RuntimeLevel.Run)
             {
-                _logger.LogWarning("Skipping Articulate OpenId client registration: runtime level '{Level}' is below Run.", _runtimeState.Level);
+                logger.LogWarning(
+                    "Skipping Articulate OpenId client registration: runtime level '{Level}' is below Run.",
+                    runtimeState.Level);
                 return;
             }
 
             if (!settings.Enabled)
             {
-                _logger.LogWarning("Articulate OpenId client registration disabled via configuration.");
+                logger.LogWarning("Articulate OpenId client registration disabled via configuration.");
                 return;
             }
 
             if (string.IsNullOrWhiteSpace(settings.ClientId))
             {
-                _logger.LogWarning("Articulate OpenId client registration skipped because no client id was configured.");
+                logger.LogWarning(
+                    "Articulate OpenId client registration skipped because no client id was configured.");
                 return;
             }
 
-            await using AsyncServiceScope scope = _scopeFactory.CreateAsyncScope();
-            IOpenIddictApplicationManager applications = scope.ServiceProvider.GetRequiredService<IOpenIddictApplicationManager>();
+            await using AsyncServiceScope scope = scopeFactory.CreateAsyncScope();
+            IOpenIddictApplicationManager applications =
+                scope.ServiceProvider.GetRequiredService<IOpenIddictApplicationManager>();
 
             OpenIddictApplicationDescriptor? descriptor = BuildDescriptor(settings);
             if (descriptor is null)
             {
-                _logger.LogWarning(
+                logger.LogWarning(
                     "Articulate OpenId client '{ClientId}' was not created. Provide at least one valid redirect URI.",
                     settings.ClientId);
                 return;
             }
 
-            object? existing = await applications.FindByClientIdAsync(settings.ClientId, cancellationToken).ConfigureAwait(false);
+            object? existing = await applications.FindByClientIdAsync(settings.ClientId, cancellationToken);
 
             if (existing is null)
             {
-                _ = await applications.CreateAsync(descriptor, cancellationToken).ConfigureAwait(false);
-                _logger.LogInformation("Registered OpenIddict client '{ClientId}' for Articulate.", settings.ClientId);
+                _ = await applications.CreateAsync(descriptor, cancellationToken);
+                logger.LogInformation("Registered OpenIddict client '{ClientId}' for Articulate.", settings.ClientId);
             }
             else
             {
-                await applications.UpdateAsync(existing, descriptor, cancellationToken).ConfigureAwait(false);
-                _logger.LogInformation("Updated OpenIddict client '{ClientId}' for Articulate.", settings.ClientId);
+                await applications.UpdateAsync(existing, descriptor, cancellationToken);
+                logger.LogInformation("Updated OpenIddict client '{ClientId}' for Articulate.", settings.ClientId);
             }
         }
 
@@ -88,7 +90,8 @@ namespace Articulate.Api.Management.Services
             var descriptor = new OpenIddictApplicationDescriptor
             {
                 ClientId = settings.ClientId,
-                DisplayName = string.IsNullOrWhiteSpace(settings.DisplayName) ? settings.ClientId : settings.DisplayName,
+                DisplayName =
+                    string.IsNullOrWhiteSpace(settings.DisplayName) ? settings.ClientId : settings.DisplayName,
                 ClientType = settings.ClientType
             };
 
@@ -97,12 +100,18 @@ namespace Articulate.Api.Management.Services
                 descriptor.ClientSecret = settings.ClientSecret;
             }
 
-            if (!TryPopulateMandatoryUris(descriptor.RedirectUris, settings.RedirectUris, settings.ClientId ?? string.Empty))
+            if (!TryPopulateMandatoryUris(
+                    descriptor.RedirectUris,
+                    settings.RedirectUris,
+                    settings.ClientId ?? string.Empty))
             {
                 return null;
             }
 
-            TryPopulateOptionalUris(descriptor.PostLogoutRedirectUris, settings.PostLogoutRedirectUris, settings.ClientId ?? string.Empty);
+            TryPopulateOptionalUris(
+                descriptor.PostLogoutRedirectUris,
+                settings.PostLogoutRedirectUris,
+                settings.ClientId ?? string.Empty);
 
             if (settings.Permissions.Count > 0)
             {
@@ -130,7 +139,7 @@ namespace Articulate.Api.Management.Services
                 }
                 else
                 {
-                    _logger.LogWarning(
+                    logger.LogWarning(
                         "Ignoring invalid redirect URI '{Uri}' while registering OpenIddict client '{ClientId}'.",
                         candidate,
                         clientId);
@@ -150,7 +159,7 @@ namespace Articulate.Api.Management.Services
                 }
                 else
                 {
-                    _logger.LogWarning(
+                    logger.LogWarning(
                         "Ignoring invalid post-logout redirect URI '{Uri}' while registering OpenIddict client '{ClientId}'.",
                         candidate,
                         clientId);

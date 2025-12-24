@@ -14,10 +14,15 @@ namespace Articulate.Models
         /// <summary>
         /// The basic model for all articulate objects
         /// </summary>
-        public MasterModel(IPublishedContent content, IPublishedValueFallback publishedValueFallback) : base(content, publishedValueFallback) => PublishedValueFallback = publishedValueFallback;
+        public MasterModel(IPublishedContent content, IPublishedValueFallback publishedValueFallback) : base(
+            content,
+            publishedValueFallback) => PublishedValueFallback = publishedValueFallback;
 
         [Obsolete("Use MasterModel(IPublishedContent content, IPublishedValueFallback publishedValueFallback)")]
-        protected MasterModel(IPublishedContent content, IPublishedValueFallback publishedValueFallback, IVariationContextAccessor variationContextAccessor)
+        protected MasterModel(
+            IPublishedContent content,
+            IPublishedValueFallback publishedValueFallback,
+            IVariationContextAccessor variationContextAccessor)
             : this(content, publishedValueFallback)
         {
         }
@@ -42,7 +47,9 @@ namespace Articulate.Models
                 }
 
                 IPublishedContent root = Unwrap().AncestorOrSelf(ArticulateConstants.ContentType.Articulate);
-                field = root ?? throw new InvalidOperationException("Could not find the Articulate root document for the current rendered page");
+                field = root ??
+                        throw new InvalidOperationException(
+                            "Could not find the Articulate root document for the current rendered page");
                 return field;
             }
             protected set;
@@ -60,8 +67,11 @@ namespace Articulate.Models
                     return field;
                 }
 
-                IPublishedContent list = RootBlogNode.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive)?.FirstOrDefault();
-                field = list ?? throw new InvalidOperationException("Could not find the ArticulateArchive document for the current rendered page");
+                IPublishedContent list = RootBlogNode.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive)
+                    ?.FirstOrDefault();
+                field = list ??
+                        throw new InvalidOperationException(
+                            "Could not find the ArticulateArchive document for the current rendered page");
                 return field;
             }
             protected set;
@@ -77,8 +87,11 @@ namespace Articulate.Models
                     return field;
                 }
 
-                IPublishedContent authors = RootBlogNode.ChildrenOfType(ArticulateConstants.ContentType.ArticulateAuthors)?.FirstOrDefault();
-                field = authors ?? throw new InvalidOperationException("Could not find the ArticulateAuthors document for the current rendered page");
+                IPublishedContent authors = RootBlogNode
+                    .ChildrenOfType(ArticulateConstants.ContentType.ArticulateAuthors)?.FirstOrDefault();
+                field = authors ??
+                        throw new InvalidOperationException(
+                            "Could not find the ArticulateAuthors document for the current rendered page");
                 return field;
             }
             protected set;
@@ -96,7 +109,9 @@ namespace Articulate.Models
         /// Validates that the DisqusShortName is not empty and contains only valid characters (alphanumeric and hyphens).
         /// </summary>
         public bool IsDisqusEnabled => !string.IsNullOrWhiteSpace(DisqusShortName)
-                   && System.Text.RegularExpressions.Regex.IsMatch(DisqusShortName, @"^[a-zA-Z0-9\-]+$");
+                                       && System.Text.RegularExpressions.Regex.IsMatch(
+                                           DisqusShortName,
+                                           @"^[a-zA-Z0-9\-]+$");
 
         /// <inheritdoc/>
         public string CustomRssFeed
@@ -158,10 +173,10 @@ namespace Articulate.Models
         {
             get
             {
-                if (!_pageSize.HasValue)
-                {
-                    _pageSize = Unwrap().Value("pageSize", fallback: Fallback.To(Fallback.Ancestors, Fallback.DefaultValue), defaultValue: 10);
-                }
+                _pageSize ??= Unwrap().Value(
+                    "pageSize",
+                    fallback: Fallback.To(Fallback.Ancestors, Fallback.DefaultValue),
+                    defaultValue: 10);
 
                 return _pageSize.Value;
             }

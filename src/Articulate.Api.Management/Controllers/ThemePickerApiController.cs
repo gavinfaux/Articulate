@@ -44,7 +44,7 @@ namespace Articulate.Api.Management.Controllers
         {
             try
             {
-                return Ok(await themeRepository.GetAllThemesAsync().ConfigureAwait(false));
+                return Ok(await themeRepository.GetAllThemesAsync());
             }
             catch (Exception e)
             {

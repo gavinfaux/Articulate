@@ -1,23 +1,7 @@
 @model IImageModel
 @{
-    string? bgUrl = Url.GetCropUrl(Model.Image, "wide")?.ToString();
-    string? safeBgUrl = null;
-
-    if (!string.IsNullOrEmpty(bgUrl)
-        && Uri.TryCreate(bgUrl, UriKind.RelativeOrAbsolute, out var bgUri)
-        && (!bgUri.IsAbsoluteUri || bgUri.Scheme == Uri.UriSchemeHttp || bgUri.Scheme == Uri.UriSchemeHttps))
-    {
-        // CSS escape: replace backslash, quotes, newline, and parentheses
-        safeBgUrl = bgUrl
-            .Replace("\\", "\\\\")
-            .Replace("'", "\\'")
-            .Replace("\"", "\\\"")
-            .Replace("\n", "\\n")
-            .Replace("\r", "\\r")
-            .Replace("\0", string.Empty)
-            .Replace("(", "\\(")
-            .Replace(")", "\\)");
-    }
+    var bgUrl = Url.GetCropUrl(Model.Image, "wide")?.ToString();
+    var safeBgUrl = bgUrl.ToSafeCssUrl();
 
     if (safeBgUrl is not null)
     {

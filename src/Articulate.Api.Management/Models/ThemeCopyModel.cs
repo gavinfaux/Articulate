@@ -28,7 +28,7 @@ namespace Articulate.Api.Management.Models
         /// <returns>A collection of validation results.</returns>
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
-            if (string.IsNullOrWhiteSpace(NewThemeName) == false &&
+            if (!string.IsNullOrWhiteSpace(NewThemeName) &&
                 NewThemeName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
             {
                 yield return new ValidationResult(

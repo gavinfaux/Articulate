@@ -1,4 +1,5 @@
 #nullable enable
+using System.Net;
 using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
@@ -15,31 +16,29 @@ namespace Articulate.Controllers
     /// <summary>
     /// Base controller providing common functionality for listing pages
     /// </summary>
-    public abstract class ListControllerBase : RenderController
+    public abstract class ListControllerBase(
+        ILogger<ListControllerBase> logger,
+        ICompositeViewEngine compositeViewEngine,
+        IUmbracoContextAccessor umbracoContextAccessor,
+        IPublishedUrlProvider publishedUrlProvider,
+        IPublishedValueFallback publishedValueFallback)
+        : RenderController(logger, compositeViewEngine, umbracoContextAccessor)
     {
-        protected IUmbracoContextAccessor UmbracoContextAccessor { get; }
+        protected IUmbracoContextAccessor UmbracoContextAccessor { get; } = umbracoContextAccessor;
 
-        protected IPublishedUrlProvider PublishedUrlProvider { get; }
+        protected IPublishedUrlProvider PublishedUrlProvider { get; } = publishedUrlProvider;
 
-        protected IPublishedValueFallback PublishedValueFallback { get; }
-
-        protected ListControllerBase(
-            ILogger<ListControllerBase> logger,
-            ICompositeViewEngine compositeViewEngine,
-            IUmbracoContextAccessor umbracoContextAccessor,
-            IPublishedUrlProvider publishedUrlProvider,
-            IPublishedValueFallback publishedValueFallback)
-            : base(logger, compositeViewEngine, umbracoContextAccessor)
-        {
-            UmbracoContextAccessor = umbracoContextAccessor;
-            PublishedUrlProvider = publishedUrlProvider;
-            PublishedValueFallback = publishedValueFallback;
-        }
+        protected IPublishedValueFallback PublishedValueFallback { get; } = publishedValueFallback;
 
         /// <summary>
         /// Gets a paged list view for a given posts by author/tags/categories model.
         /// </summary>
-        protected IActionResult GetPagedListView(IMasterModel masterModel, IPublishedContent pageNode, IEnumerable<IPublishedContent> listItems, long totalPosts, int? p)
+        protected IActionResult GetPagedListView(
+            IMasterModel masterModel,
+            IPublishedContent pageNode,
+            IEnumerable<IPublishedContent> listItems,
+            long totalPosts,
+            int? p)
         {
             ArgumentNullException.ThrowIfNull(masterModel, nameof(masterModel));
             ArgumentNullException.ThrowIfNull(pageNode, nameof(pageNode));
@@ -92,7 +91,7 @@ namespace Articulate.Controllers
 
                 foreach (var v in val)
                 {
-                    queryStrings.Append($"&{key}={v}");
+                    queryStrings.Append($"&{WebUtility.UrlEncode(key)}={WebUtility.UrlEncode(v)}");
                 }
             }
 
@@ -100,8 +99,11 @@ namespace Articulate.Controllers
                 pageSize,
                 pageNumber - 1,
                 totalPages,
-                totalPages > pageNumber ? GetPagedUrl(masterModel.Url(), pageNumber + 1, queryStrings.ToString()) : string.Empty,
-                pageNumber > 2 ? GetPagedUrl(masterModel.Url(), pageNumber - 1, queryStrings.ToString()) : pageNumber > 1 ? GetPagedUrl(masterModel.Url(), null, queryStrings.ToString()) : string.Empty);
+                totalPages > pageNumber
+                    ? GetPagedUrl(masterModel.Url(), pageNumber + 1, queryStrings.ToString())
+                    : string.Empty,
+                pageNumber > 2 ? GetPagedUrl(masterModel.Url(), pageNumber - 1, queryStrings.ToString()) :
+                pageNumber > 1 ? GetPagedUrl(masterModel.Url(), null, queryStrings.ToString()) : string.Empty);
 
             return true;
         }

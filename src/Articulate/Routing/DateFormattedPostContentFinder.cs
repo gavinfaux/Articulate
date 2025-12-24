@@ -7,7 +7,9 @@ using Umbraco.Cms.Core.Web;
 
 namespace Articulate.Routing
 {
-    [Obsolete("'DateFormattedPostContentFinder' is obsolete: 'ContentFinderByUrl Scheduled for removal in Umbraco 18'", false)]
+    [Obsolete(
+        "'DateFormattedPostContentFinder' is obsolete: 'ContentFinderByUrl Scheduled for removal in Umbraco 18'",
+        false)]
     public class DateFormattedPostContentFinder(
         ILogger<DateFormattedPostContentFinder> logger,
         IUmbracoContextAccessor umbracoContextAccessor)
@@ -16,7 +18,7 @@ namespace Articulate.Routing
         /// <inheritdoc/>
         public override async Task<bool> TryFindContent(IPublishedRequestBuilder contentRequest)
         {
-            await Task.CompletedTask.ConfigureAwait(false);
+            await Task.CompletedTask;
 
             var segmentLength = contentRequest.Uri.Segments.Length;
             if (segmentLength <= 4)
@@ -43,7 +45,8 @@ namespace Articulate.Routing
 
         private static bool TryParseDateFromSegments(string[] segments, int segmentLength, out DateTime postDate)
         {
-            var stringDate = segments[segmentLength - 4] + segments[segmentLength - 3] + segments[segmentLength - 2].TrimEnd('/');
+            var stringDate = segments[segmentLength - 4] + segments[segmentLength - 3] +
+                             segments[segmentLength - 2].TrimEnd('/');
             try
             {
                 postDate = DateTime.ParseExact(stringDate, "yyyy/MM/dd", CultureInfo.InvariantCulture);

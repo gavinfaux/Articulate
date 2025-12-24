@@ -102,7 +102,7 @@ namespace Articulate
         /// Escapes a URL for safe use in CSS <c>url()</c> functions within inline style attributes.
         /// Validates the URL protocol and applies CSS-specific character escaping.
         /// </summary>
-        /// <param name="url">The URL to validate and escape for CSS context. Can be absolute or relative.</param>
+        /// <param name="url">The URL to validate and escape for CSS context.</param>
         /// <returns>
         /// The CSS-escaped URL if valid and safe; <c>null</c> if the URL is invalid or uses a dangerous protocol.
         /// </returns>
@@ -169,20 +169,20 @@ namespace Articulate
 
             // CSS escape: replace characters that could break out of CSS context
             return url
-                .Replace("\\", "\\\\")    // Backslash must be escaped first
-                .Replace("'", "\\'")      // Single quote
-                .Replace("\"", "\\\"")    // Double quote
-                .Replace("\n", "\\n")     // Newline
-                .Replace("\r", "\\r")     // Carriage return
-                .Replace("\0", string.Empty)  // Null character (remove entirely)
-                .Replace("(", "\\(")      // Left parenthesis
-                .Replace(")", "\\)");     // Right parenthesis
+                .Replace("\\", "\\\\") // Backslash must be escaped first
+                .Replace("'", "\\'") // Single quote
+                .Replace("\"", "\\\"") // Double quote
+                .Replace("\n", "\\n") // Newline
+                .Replace("\r", "\\r") // Carriage return
+                .Replace("\0", string.Empty) // Null character (remove entirely)
+                .Replace("(", "\\(") // Left parenthesis
+                .Replace(")", "\\)"); // Right parenthesis
         }
 
         /// <summary>
         /// Validates if a string is a well-formed URL with a safe protocol.
         /// </summary>
-        /// <param name="url">The URL to validate. Can be absolute or relative.</param>
+        /// <param name="url">The URL to validate.</param>
         /// <returns>
         /// <c>true</c> if the URL is valid and uses a safe protocol (http, https, or relative path);
         /// <c>false</c> if the URL is null, empty, malformed, or uses a dangerous protocol.
@@ -213,7 +213,7 @@ namespace Articulate
         /// <summary>
         /// Gets a safe URL for href or src attributes, returning an empty string if the URL is invalid.
         /// </summary>
-        /// <param name="url">The URL to validate. Can be absolute or relative.</param>
+        /// <param name="url">The URL to validate.</param>
         /// <returns>
         /// The original URL if valid and safe; empty string if the URL is null, empty, or uses a dangerous protocol.
         /// </returns>
@@ -241,7 +241,7 @@ namespace Articulate
         /// <summary>
         /// Gets a safe CSS-escaped URL or returns <c>null</c> if invalid.
         /// </summary>
-        /// <param name="url">The URL to validate and escape for CSS context.</param>
+        /// <param name="url">The URL to validate and escape.</param>
         /// <returns>
         /// The CSS-escaped URL if valid and safe; <c>null</c> if the URL is invalid or uses a dangerous protocol.
         /// </returns>
@@ -257,3 +257,4 @@ namespace Articulate
         }
     }
 }
+
