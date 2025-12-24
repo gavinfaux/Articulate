@@ -69,27 +69,11 @@ dotnet --version
 # Avoid NuGet fallback folders (already disabled in Directory.Build.props, but double-sure)
 export RestoreFallbackFolders=
 
-echo "Starting clean and restore process for solution: $SOLUTION_PATH"
-
-# Best-effort pre-clean to avoid locked files during dotnet clean (MarkdownEditor assets)
-#PRE_CLEAN_TARGETS=(
-  #"$SOLUTION_ROOT/Articulate.StaticAssets/wwwroot/App_Plugins/Articulate/MarkdownEditor"
-#)
-#for target in "${PRE_CLEAN_TARGETS[@]}"; do
-#  if [[ -e "$target" ]]; then
-#    rm -rf "$target" 2>/dev/null || true
-#    if [[ -e "$target" ]]; then
-#      sleep 0.25
-#      rm -rf "$target" 2>/dev/null || true
-#    fi
-#  fi
-#done
-
 # --- 1) Clean the solution so Release/CI builds start fresh ---
 echo "1. Cleaning solution outputs..."
  if ! dotnet clean "$SOLUTION_PATH" -c "$CONFIGURATION" "${DOTNET_COMMON[@]}" "$CLIENT_BUILD_PROPERTY"
     echo "Warning: dotnet clean failed for $tfm" >&2
-  fi
+ fi
 
 # --- 2) Solution-level restore with static graph + parallelism ---
 mkdir -p "$RELEASE_FOLDER"
@@ -97,7 +81,7 @@ echo "2. Restoring solution packages in parallel..."
  if ! dotnet restore "$SOLUTION_PATH" "${DOTNET_COMMON[@]}" "${MSBUILD_PARALLEL[@]}" "$CLIENT_BUILD_PROPERTY"
     echo "dotnet restore failed for $tfm" >&2
     exit 1
-  fi
+ fi
 
 # --- 3) Build TFMs sequentially (net9 first, then net10) to keep client build ordering deterministic ---
 echo "3. Building solution for: ${TARGET_FRAMEWORKS[*]}"

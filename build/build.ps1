@@ -72,36 +72,6 @@ New-Item -ItemType Directory -Force -Path $ReleaseFolder | Out-Null
 
 dotnet --version
 
-Write-Host "Starting clean and restore process for solution: $SolutionPath"
-
-# Best-effort pre-clean to avoid locked files during dotnet clean (MarkdownEditor assets)
-#$preCleanTargets = @(
-#    Join-Path $SolutionRoot "Articulate.StaticAssets/wwwroot/App_Plugins/Articulate/MarkdownEditor"
-#)
-#function Remove-WithRetry {
-#    param(
-#        [string] $Path,
-#        [int] $Retries = 3,
-#        [int] $DelayMs = 250
-#    )
-#    for ($i = 0; $i -lt $Retries; $i++) {
-#        try {
-#            if (Test-Path $Path) {
-#                Remove-Item -Recurse -Force -ErrorAction Stop $Path
-#            }
-#            return
-#        }
-#        catch {
-#            if ($i -eq $Retries - 1) {
-#                Write-Warning "Failed to delete $Path after $Retries attempts: $($_.Exception.Message)"
-#                return
-#            }
-#            Start-Sleep -Milliseconds $DelayMs
-#        }
-#    }
-#}
-#$preCleanTargets | ForEach-Object { Remove-WithRetry $_ }
-
 # 1) Clean the solution to ensure release/CI builds start from a fresh slate
 Write-Host "1. Cleaning solution outputs..."
 & dotnet clean $SolutionPath -c $Configuration @dotnetCommon $clientBuildProperty
