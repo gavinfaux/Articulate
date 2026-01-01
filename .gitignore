@@ -473,26 +473,37 @@ $RECYCLE.BIN/
 # Git
 .orig
 
+# vscode
+/src/.vscode
 ##
 ## Articulate specific
 ##
-/src/.vscode
 
 # The packages folder can be ignored because of Package Restore
-**/[Pp]ackages/*
 # except build/, which is used as an MSBuild target.
+**/[Pp]ackages/*
 !**/[Pp]ackages/build/
 # Uncomment if necessary however generally it will be regenerated when needed
 #!**/[Pp]ackages/repositories.config
-# except monaco editor package used for now by Articulate's Markdown property editor
-!src/Articulate.Api.Management/Client/src/packages/
-!src/Articulate.Api.Management/Client/src/packages/**
+# except monaco markdown editor package used by Articulate's BackOffice UI
+!/src/Articulate.BackOffice.UI/Client/src/packages/
+!/src/Articulate.BackOffice.UI/Client/src/packages/**
 
-# extension build, built by npm/msbuild 
-/src/Articulate.Api.Management/wwwroot/App_Plugins/Articulate
+# theme build artifacts
+/src/Articulate.BackOffice.UI/wwwroot
+/src/Articulate.Web/wwwroot/App_Plugins/Articulate/Themes/**/dist/
+/src/Articulate.Web/wwwroot/App_Plugins/Articulate/MarkdownEditor/**/dist/
+/src/Articulate.BackOffice.UI/wwwroot/App_Plugins/Articulate/
+/build/tmp
+/build/ClientAssets/BackofficeClient.stamp
 
 # test website junk
 /src/Articulate.Tests.Website/Articulate/Temp
 /src/Articulate.Tests.Website/umbraco/**
-/src/Articulate.Tests.Website/wwwroot/media
+/src/Articulate.Tests.Website/wwwroot/media/*
+!/src/Articulate.Tests.Website/wwwroot/media/.gitignore
 /src/Articulate.Tests.Website/Views/Articulate
+/src/Articulate.Tests.Website/Views/ArticulateThemes
+/src/Articulate.Tests.Website/appsettings-schema.Umbraco.Cms.json
+/src/Articulate.Tests.Website/umbraco-package-schema.json
+/src/Articulate.Tests.Website/appsettings-schema.json

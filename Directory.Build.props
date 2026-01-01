@@ -1,13 +1,30 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 	<PropertyGroup>
-		<TargetFramework>net9.0</TargetFramework>
+		<TargetFrameworks Condition="'$(TargetFramework)' == '' and '$(TargetFrameworks)' == ''">net9.0;net10.0</TargetFrameworks>
 		<LangVersion>latest</LangVersion>
-		<!--TODO: Enable after phased migration. https://learn.microsoft.com/en-us/dotnet/csharp/nullable-migration-strategies-->
+		<!-- TODO: Enable after phased migration. https://learn.microsoft.com/en-us/dotnet/csharp/nullable-migration-strategies -->
 		<Nullable>warnings</Nullable>
 		<WarningsAsErrors>Nullable</WarningsAsErrors>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<NuGetAuditMode>direct</NuGetAuditMode>
+		<DisableImplicitNuGetFallbackFolder>true</DisableImplicitNuGetFallbackFolder>
+	</PropertyGroup>
+	<!-- Umbraco CMS version range per target + NuGet audit mode -->
+	<PropertyGroup Condition="'$(TargetFramework)' == 'net9.0'">
+		<!-- Support Umbraco 15.x-16.x on .NET 9 -->
+		<UmbracoCmsPackageVersion>[16.3.4,17.0.0)</UmbracoCmsPackageVersion>
+		<MicrosoftOpenApiPackageVersion>[1.6.22,2.0.0)</MicrosoftOpenApiPackageVersion>
+		<MicrosoftCodeAnalysisPackageVersion>[4.14.0,5.0.0)</MicrosoftCodeAnalysisPackageVersion>
+		<SystemServiceModelSyndicationPackageVersion>[9.0.11,10.0.0)</SystemServiceModelSyndicationPackageVersion>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(TargetFramework)' == 'net10.0'">
+		<!-- Support Umbraco 17.x (including pre-release) on .NET 10 -->
+		<UmbracoCmsPackageVersion>[17.0.2,18.0.0)</UmbracoCmsPackageVersion>
+		<MicrosoftOpenApiPackageVersion>[2.3.0,3.0.0)</MicrosoftOpenApiPackageVersion>
+		<MicrosoftCodeAnalysisPackageVersion>[5.0.0,6.0.0)</MicrosoftCodeAnalysisPackageVersion>
+		<SystemServiceModelSyndicationPackageVersion>[10.0.1,11.0.0)</SystemServiceModelSyndicationPackageVersion>
 	</PropertyGroup>
 	<PropertyGroup>
 		<!-- TODO: Enable when 6.0 version is shipped -->
@@ -17,11 +34,49 @@
 		<EnableStrictModeForCompatibleTfms>true</EnableStrictModeForCompatibleTfms>
 		<GenerateCompatibilitySuppressionFile>true</GenerateCompatibilitySuppressionFile>
 	</PropertyGroup>
+	<PropertyGroup>
+		<CompressionEnabled>false</CompressionEnabled>
+	</PropertyGroup>
+	<!-- Central client-build defaults; consumed by Articulate.StaticAssets to build the backoffice client -->
+	<PropertyGroup>
+		<EnableClientBuild Condition="'$(EnableClientBuild)'=='' and '$(ENABLE_CLIENT_BUILD)'!=''">$(ENABLE_CLIENT_BUILD)</EnableClientBuild>
+		<EnableClientBuild Condition="'$(EnableClientBuild)'==''">false</EnableClientBuild>
+		<ClientBuildCommand Condition="'$(ClientBuildCommand)'=='' and ('$(CI)'=='true' or '$(GITHUB_ACTIONS)'=='true' or '$(Configuration)'=='Release')">pnpm run build</ClientBuildCommand>
+		<ClientBuildCommand Condition="'$(ClientBuildCommand)'==''">pnpm run build:dev</ClientBuildCommand>
+	</PropertyGroup>
+	<PropertyGroup>
+		<StaticWebAssetBasePath Condition="'$(StaticWebAssetBasePath)' == ''">/</StaticWebAssetBasePath>
+		<AddRazorSupportForMvc Condition="'$(AddRazorSupportForMvc)' == ''">true</AddRazorSupportForMvc>
+		<NoWarn>$(NoWarn);1591</NoWarn>
+		<EnforceCodeStyleInBuild Condition="'$(EnforceCodeStyleInBuild)' == ''">true</EnforceCodeStyleInBuild>
+	</PropertyGroup>
 	<ItemGroup>
-		<PackageReference Include="Nerdbank.GitVersioning" Condition="!Exists('packages.config')" Version="3.7.115" PrivateAssets="All"/>
-		<PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.556" PrivateAssets="All"/>
-		<GlobalPackageReference Include="Umbraco.Code" Version="2.3.0" PrivateAssets="All"/>
-		<GlobalPackageReference Include="Umbraco.GitVersioning.Extensions" Version="0.2.0" PrivateAssets="All"/>
+		<PackageReference Include="Nerdbank.GitVersioning" Condition="!Exists('packages.config')" Version="3.9.50" PrivateAssets="All" />
+		<PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.556" PrivateAssets="All" />
+		<GlobalPackageReference Include="Umbraco.Code" Version="2.3.0" PrivateAssets="All" />
+		<GlobalPackageReference Include="Umbraco.GitVersioning.Extensions" Version="0.2.0" PrivateAssets="All" />
+	</ItemGroup>
+	<ItemGroup Condition="'$(IsPackable)' != 'false'">
+		<PackageReference Include="DotNet.ReproducibleBuilds" Version="1.2.39" PrivateAssets="all">
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Microsoft.CodeAnalysis" Version="$(MicrosoftCodeAnalysisPackageVersion)" PrivateAssets="All" />
+	</ItemGroup>
+	<ItemGroup Condition="'$(UseArticulateUsings)' == 'true'">
+		<Using Include="Umbraco.Cms.Core.DependencyInjection" />
+		<Using Include="Umbraco.Extensions" />
+		<Using Include="Articulate" />
+		<Using Include="Articulate.Models" />
+	</ItemGroup>
+	<ItemGroup Condition="'$(IsPackable)' != 'false'">
+		<None Include="$(MSBuildThisFileDirectory)LICENSE">
+			<Pack>true</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+		<None Include="$(MSBuildThisFileDirectory)README.md">
+			<Pack>true</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
 	</ItemGroup>
 	<PropertyGroup>
 		<GitVersionBaseDirectory>$(MSBuildThisFileDirectory)</GitVersionBaseDirectory>
@@ -57,7 +112,7 @@
 	<Target Name="_GetProjectReferenceVersionRanges" AfterTargets="_GetProjectReferenceVersions">
 		<ItemGroup>
 			<_ProjectReferencesWithVersions Condition="'%(ProjectVersion)' != ''">
-				<ProjectVersion>[%(ProjectVersion), $([MSBuild]::Add($([System.Text.RegularExpressions.Regex]::Match('%(ProjectVersion)', '^\d+').Value), 1)))</ProjectVersion>
+				<ProjectVersion>[%(ProjectVersion), $([MSBuild]::Add($([System.Text.RegularExpressions.Regex]::Match('%(ProjectVersion)', '^[0-9]+').Value), 1)))</ProjectVersion>
 			</_ProjectReferencesWithVersions>
 		</ItemGroup>
 	</Target>

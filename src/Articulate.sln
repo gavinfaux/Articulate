@@ -1,13 +1,16 @@
-﻿
-Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.3.32721.290
+﻿Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 18
+VisualStudioVersion = 18.0.11201.2
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Articulate", "Articulate\Articulate.csproj", "{F0C76578-5C97-4375-A862-884E2A848A4E}"
+	ProjectSection(ProjectDependencies) = postProject
+		{83EBC079-D5F1-4697-B342-9BD4129CBDE5} = {83EBC079-D5F1-4697-B342-9BD4129CBDE5}
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{7396E5F1-0587-41C4-BDD9-63FF3F8C73D7}"
 	ProjectSection(SolutionItems) = preProject
 		..\build\build.ps1 = ..\build\build.ps1
+		..\build\build.sh = ..\build\build.sh
 		..\.github\workflows\build.yml = ..\.github\workflows\build.yml
 		..\Directory.Build.props = ..\Directory.Build.props
 		..\global.json = ..\global.json
@@ -32,6 +35,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Articulate.Api.Management",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Articulate.Web", "Articulate.Web\Articulate.Web.csproj", "{151A74D4-597F-42B4-BFDC-11635E44144C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Articulate.BackOffice.UI", "Articulate.BackOffice.UI\Articulate.BackOffice.UI.csproj", "{83EBC079-D5F1-4697-B342-9BD4129CBDE5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -54,6 +59,10 @@ Global
 		{151A74D4-597F-42B4-BFDC-11635E44144C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{151A74D4-597F-42B4-BFDC-11635E44144C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{151A74D4-597F-42B4-BFDC-11635E44144C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{83EBC079-D5F1-4697-B342-9BD4129CBDE5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{83EBC079-D5F1-4697-B342-9BD4129CBDE5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{83EBC079-D5F1-4697-B342-9BD4129CBDE5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{83EBC079-D5F1-4697-B342-9BD4129CBDE5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
