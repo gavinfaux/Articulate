@@ -32,7 +32,6 @@ SOLUTION_ROOT="$REPO_ROOT/src"
 SOLUTION_PATH="$SOLUTION_ROOT/Articulate.sln"
 TARGET_FRAMEWORKS=("net9.0" "net10.0")
 
-
 # Compute CPU parallelism for MSBuild (allow override via MAXCPU)
 CPU_COUNT=${MAXCPU:-}
 if [[ -z "$CPU_COUNT" ]]; then
@@ -75,7 +74,7 @@ if ! dotnet clean "$SOLUTION_PATH" -c "$CONFIGURATION" "${DOTNET_COMMON[@]}" "$C
   echo "Warning: dotnet clean failed" >&2
 fi
 
-# --- 2) Solution-level restore with static graph + parallelism ---
+# --- 2) Solution-level restore ---
 mkdir -p "$RELEASE_FOLDER"
 echo "2. Restoring solution packages in parallel..."
 if ! dotnet restore "$SOLUTION_PATH" "${DOTNET_COMMON[@]}" "${MSBUILD_PARALLEL[@]}" "$CLIENT_BUILD_PROPERTY"; then
@@ -120,7 +119,6 @@ for proj in "${PACK_PROJECTS[@]}"; do
     exit 1
   fi
 done
-
 
 END_TIME=$(date +%s.%N)
 ELAPSED=$(awk -v start="$START_TIME" -v end="$END_TIME" 'BEGIN {printf "%.1f", end - start}')

@@ -16,7 +16,7 @@ if (-not $SupportsParallel) {
     Write-Warning "PowerShell $PSMajorVersion detected; ForEach-Object -Parallel isn't available so build + pack will run sequentially."
 }
 
-# Ensure dotnet is discoverable when installed under the user profile (parity with build.sh)
+# Ensure dotnet is discoverable when installed under the user profile
 if (-not (Get-Command dotnet -ErrorAction SilentlyContinue)) {
     $userProfile = if ($HOME) { $HOME } else { $env:USERPROFILE }
     if ($userProfile) {
@@ -27,12 +27,14 @@ if (-not (Get-Command dotnet -ErrorAction SilentlyContinue)) {
         }
     }
 }
+
 # Performance-friendly env
 $env:DOTNET_CLI_TELEMETRY_OPTOUT = "1"
 $env:DOTNET_SKIP_FIRST_TIME_EXPERIENCE = "1"
 $env:DOTNET_NOLOGO = "1"
 $env:NUGET_XMLDOC_MODE = "none"
 $env:RestoreFallbackFolders = ""
+
 # Compute CPU parallelism for MSBuild
 $cpu = [Environment]::ProcessorCount
 if ($env:MAXCPU -and ($env:MAXCPU -as [int]) -gt 0) {
@@ -50,6 +52,7 @@ $clientBuildProperty = "-p:EnableClientBuild=$clientBuildValue"
 $dotnetCommon = @("-v", "minimal")
 Write-Host "Using up to $cpu parallel MSBuild nodes"
 Write-Host "Build configuration: $Configuration"
+
 # Friendly note if running on Windows against a WSL filesystem (\\wsl$ UNC)
 if ($RepoRoot.StartsWith("\\\\wsl$", [System.StringComparison]::OrdinalIgnoreCase) -or 
     $RepoRoot.StartsWith("\\\\wsl.localhost\\", [System.StringComparison]::OrdinalIgnoreCase)) {
@@ -61,18 +64,18 @@ if (Test-Path $ReleaseFolder) {
 }
 New-Item -ItemType Directory -Force -Path $ReleaseFolder | Out-Null
 
-
-
 dotnet --version
 
 # 1) Clean the solution to ensure release/CI builds start from a fresh slate
 Write-Host "1. Cleaning solution outputs..."
 & dotnet clean $SolutionPath -c $Configuration @dotnetCommon $clientBuildProperty
 if (-not $?) { Write-Host "Warning dotnet clean failed" }
-# 2) Restore (solution-level) with static graph + parallelism
+
+# 2) Restore (solution-level)
 Write-Host "2. Restoring solution packages in parallel..."
 & dotnet restore $SolutionPath @dotnetCommon @msbuildArgs $clientBuildProperty
 if (-not $?) { throw "dotnet restore failed" }
+
 # 3) Build TFMs sequentially to ensure net9.0 (client build) runs before net10.0
 Write-Host "3. Building solution for: $($TargetFrameworks -join ', ')"
 foreach ($tfm in $TargetFrameworks) {
@@ -84,7 +87,7 @@ foreach ($tfm in $TargetFrameworks) {
     Write-Host "[build] <- $tfm done in $([int]$sw.Elapsed.TotalSeconds)s"
 }
 
-# 4) Pack primary projects (parallel where safe)
+# 4) Pack primary projects
 Write-Host "4. Packing projects..."
 $articulateProject = (Join-Path $SolutionRoot 'Articulate/Articulate.csproj')
 $articulateWebProject = (Join-Path $SolutionRoot 'Articulate.Web/Articulate.Web.csproj')
