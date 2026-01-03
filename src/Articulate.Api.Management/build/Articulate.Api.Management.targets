@@ -1,4 +1,5 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
   <Target Name="CopyXmlDocumentationToOutput" AfterTargets="PrepareForRun">
     <ItemGroup>
       <_ArticulateDllSourceItem Include="@(ReferenceCopyLocalPaths)"
@@ -11,4 +12,5 @@
     <Copy SourceFiles="$(_ArticulateSourceXmlPath)" DestinationFiles="$(_ArticulateDestXmlPath)"
           SkipUnchangedFiles="true" Condition="Exists('$(_ArticulateSourceXmlPath)')" />
   </Target>
+
 </Project>

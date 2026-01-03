@@ -10,11 +10,8 @@ namespace Articulate.Api.Management.Swagger
     /// </summary>
     internal static partial class ArticulateOperationIdRegexes
     {
-
-        // Your IDE may be showing errors here, this is because it's a new dotnet 7 feature, error resolved on compile (it's fixed in the EAP of Rider)
-
         // Lifted from Umbraco.Cms.Api.Common.OpenApi.OperationIdRegexes
-
+        // Your IDE may be showing errors here, this is because it's a new dotnet 7 feature, error resolved on compile (it's fixed in the EAP of Rider)
         [GeneratedRegex(".*?\\/v[1-9]+/", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase | RegexOptions.Compiled)]
         public static partial Regex VersionPrefixRegex();
 

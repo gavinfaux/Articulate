@@ -9,7 +9,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Api.Common.Attributes;
 using Umbraco.Cms.Api.Management.Controllers;
-using Umbraco.Cms.Api.Management.Routing;
 using Umbraco.Cms.Core.Models.Membership;
 using Umbraco.Cms.Core.Security;
 using Umbraco.Cms.Web.Common.Authorization;
@@ -47,31 +46,55 @@ namespace Articulate.Api.Management.Controllers
         [Consumes("multipart/form-data")]
         public async Task<IActionResult> PostInitialize(IFormFile? importFile)
         {
-            if (importFile is null || !Path.GetExtension(importFile.FileName.Trim('\"')).InvariantEquals(".xml"))
+            if (importFile is null)
             {
                 return Problem(
                     title: "Invalid File",
-                    detail: "The request must contain a valid XML file.",
+                    detail: "The request must include a BlogML XML file.",
                     statusCode: StatusCodes.Status415UnsupportedMediaType);
             }
+
+            if (!Path.GetExtension(importFile.FileName.Trim('\"')).InvariantEquals(".xml"))
+            {
+                return Problem(
+                    title: "Invalid File",
+                    detail: "Only BlogML .xml files are accepted.",
+                    statusCode: StatusCodes.Status415UnsupportedMediaType);
+            }
+
+            if (importFile.Length <= 0)
+            {
+                return Problem(
+                    title: "File Size Invalid",
+                    detail: "The uploaded file is empty or invalid.",
+                    statusCode: StatusCodes.Status400BadRequest);
+            }
+
+            // Note: File size limits are enforced by server configuration (Kestrel, IIS, FormOptions).
+            // The server will return 413 Payload Too Large if the file exceeds configured limits.
 
             try
             {
                 var fileName = Path.GetRandomFileName();
-                var stream = new MemoryStream();
-                await using (stream.ConfigureAwait(false))
-                {
-                    await importFile.CopyToAsync(stream).ConfigureAwait(false);
-                    articulateTempFileSystem.AddFile(fileName, stream);
-                }
+                await using Stream sourceStream = importFile.OpenReadStream();
+                using var buffer = new MemoryStream();
+
+                await sourceStream.CopyToAsync(buffer, HttpContext.RequestAborted);
+
+                buffer.Position = 0;
+                articulateTempFileSystem.AddFile(fileName, buffer);
 
                 var count = blogMlImporter.GetPostCount(fileName);
                 return Ok(new ImportFileResponse { PostCount = count, TemporaryFileName = fileName });
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "An unexpected error occurred during file initialization for import.");
-                return StatusCode(StatusCodes.Status500InternalServerError, $"An unexpected error occurred during file initialization for import: {ex.Message}");
+                logger.LogError(
+                    ex,
+                    "An unexpected error occurred during file initialization for import.");
+                return StatusCode(
+                    StatusCodes.Status500InternalServerError,
+                    $"An unexpected error occurred during file initialization for import: {ex.Message}");
             }
         }
 
@@ -92,7 +115,7 @@ namespace Articulate.Api.Management.Controllers
             try
             {
                 await blogMlExporter.ExportAsync(model.ArticulateBlogNode, exportFileName, model.ExportImagesAsBase64)
-                    .ConfigureAwait(false);
+                    ;
                 var downloadFileName = $"articulate-export-{DateTime.UtcNow:yyyyMMddHHmmss}.xml";
 
                 Stream fileStream = articulateTempFileSystem.OpenFile(exportFileName);
@@ -109,13 +132,22 @@ namespace Articulate.Api.Management.Controllers
             }
             catch (InvalidOperationException ex)
             {
-                logger.LogError(ex, "Export failed due to an invalid operation, likely a missing or invalid blog node.");
-                return Problem(title: "Service Unavailable", detail: ex.Message, statusCode: StatusCodes.Status503ServiceUnavailable);
+                logger.LogError(
+                    ex,
+                    "Export failed due to an invalid operation, likely a missing or invalid blog node.");
+                return Problem(
+                    title: "Service Unavailable",
+                    detail: ex.Message,
+                    statusCode: StatusCodes.Status503ServiceUnavailable);
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "An unexpected error occurred during BlogML export.");
-                return StatusCode(StatusCodes.Status500InternalServerError, $"An unexpected error occurred during BlogML export: {ex.Message}");
+                logger.LogError(
+                    ex,
+                    "An unexpected error occurred during BlogML export.");
+                return StatusCode(
+                    StatusCodes.Status500InternalServerError,
+                    $"An unexpected error occurred during BlogML export: {ex.Message}");
             }
         }
 
@@ -137,7 +169,18 @@ namespace Articulate.Api.Management.Controllers
             IUser? currentUser = backOfficeSecurityAccessor.BackOfficeSecurity?.CurrentUser;
             if (currentUser is null)
             {
-                return Problem(title: "Unauthorized", detail: "Could not determine the current user.", statusCode: StatusCodes.Status401Unauthorized);
+                return Problem(
+                    title: "Unauthorized",
+                    detail: "Could not determine the current user.",
+                    statusCode: StatusCodes.Status401Unauthorized);
+            }
+
+            if (string.IsNullOrEmpty(model.TempFile) || model.TempFile.Contains('/') || model.TempFile.Contains('\\'))
+            {
+                return Problem(
+                    title: "Invalid File Name",
+                    detail: "The temporary file name is invalid.",
+                    statusCode: StatusCodes.Status400BadRequest);
             }
 
             try
@@ -151,7 +194,7 @@ namespace Articulate.Api.Management.Controllers
                     model.RegexReplace,
                     model.Publish,
                     model.ExportDisqusXml,
-                    model.ImportFirstImage).ConfigureAwait(false);
+                    model.ImportFirstImage);
 
                 var result = new ImportResponse(dto);
 
@@ -170,7 +213,9 @@ namespace Articulate.Api.Management.Controllers
             catch (Exception ex)
             {
                 logger.LogError(ex, "Importing failed due to an unexpected error.");
-                return StatusCode(StatusCodes.Status500InternalServerError, $"An unexpected error occurred during import: {ex.Message}");
+                return StatusCode(
+                    StatusCodes.Status500InternalServerError,
+                    $"An unexpected error occurred during import: {ex.Message}");
             }
             finally
             {
@@ -194,7 +239,10 @@ namespace Articulate.Api.Management.Controllers
             const string disqusExportFile = "DisqusXmlExport.xml";
             if (!articulateTempFileSystem.FileExists(disqusExportFile))
             {
-                return Problem(title: "File Not Found", detail: "Disqus comments export file not found.", statusCode: StatusCodes.Status404NotFound);
+                return Problem(
+                    title: "File Not Found",
+                    detail: "Disqus comments export file not found.",
+                    statusCode: StatusCodes.Status404NotFound);
             }
 
             var downloadFileName = $"articulate-disqus-comments-{DateTime.UtcNow:yyyyMMddHHmmss}.xml";

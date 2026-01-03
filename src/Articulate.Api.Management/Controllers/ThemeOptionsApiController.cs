@@ -9,14 +9,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Api.Common.Attributes;
 using Umbraco.Cms.Api.Management.Controllers;
-using Umbraco.Cms.Api.Management.Routing;
 using Umbraco.Cms.Web.Common.Authorization;
 
 namespace Articulate.Api.Management.Controllers
 {
-    /// <summary>
-    /// Provides API endpoints for managing Articulate themes, including copying a theme and retrieving default themes.
-    /// </summary>
     /// <summary>
     /// Provides API endpoints for managing Articulate themes, including operations for copying a theme to a new name and retrieving default themes.
     /// </summary>
@@ -47,7 +43,7 @@ namespace Articulate.Api.Management.Controllers
         {
             try
             {
-                await themeRepository.CopyThemeAsync(model.ThemeName, model.NewThemeName).ConfigureAwait(false);
+                await themeRepository.CopyThemeAsync(model.ThemeName, model.NewThemeName);
                 return Ok(model.NewThemeName);
             }
             catch (DirectoryNotFoundException ex)
@@ -85,7 +81,7 @@ namespace Articulate.Api.Management.Controllers
         {
             try
             {
-                IEnumerable<string> themes = await themeRepository.GetDefaultThemesAsync().ConfigureAwait(false);
+                IEnumerable<string> themes = await themeRepository.GetDefaultThemesAsync();
                 return Ok(themes);
             }
             catch (Exception e)

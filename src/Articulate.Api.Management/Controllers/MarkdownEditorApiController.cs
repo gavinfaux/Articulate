@@ -3,163 +3,155 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using Articulate.Api.Management.Attributes;
 using Articulate.Api.Management.Models;
+using Articulate.Services;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Umbraco.Cms.Api.Common.Attributes;
 using Umbraco.Cms.Api.Management.Controllers;
 using Umbraco.Cms.Api.Management.Routing;
-using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.Actions;
-using Umbraco.Cms.Core.Configuration.Models;
-using Umbraco.Cms.Core.Hosting;
-using Umbraco.Cms.Core.IO;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Models.Membership;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.PropertyEditors;
-using Umbraco.Cms.Core.Security;
 using Umbraco.Cms.Core.Serialization;
 using Umbraco.Cms.Core.Services;
-using Umbraco.Cms.Core.Strings;
 using Umbraco.Cms.Web.Common;
 using Umbraco.Cms.Web.Common.Authorization;
 
 namespace Articulate.Api.Management.Controllers
 {
-    // NOTE: ManagementApiControllerBase [ApiController] attribute will automatically validate the model
-    // [ApiController] attribute also infers [FromBody] for model binding
-
-    /* TODO: Review security
-     * 1) Stored XSS via Markdown
-       Risk: An attacker saving a post with malicious markdown (e.g., <script>alert('pwned')</script> or [click me](javascript:alert('pwned'))).
-       Mitigation: Only authorized back office users may post and must log in first. Once logged in, any XSS concerns must be handled by the backend. The backend, before ever rendering this content as HTML on the public-facing blog, must process it through a robust HTML sanitization library. This library should strip all dangerous tags (<script>, <iframe>) and attributes (onclick, onerror).
-       Actions: Review if an HTML sanitization library should be used, or if Umbraco provides appropriate mitigations. MarkdownHelper could be adapted to provide this, or DI services (Markdown parser, HTML sanitizer) could be added.
-
-       2) File Upload Security
-       Risk: An attacker could upload a malicious file (e.g., a file named my-image.jpg that is actually an HTML file containing scripts).
-       Mitigation: As before, only authorized back office users may post and must log in first.
-       Actions: Review file validation, e.g. [FileSignatures](https://github.com/neilharvey/FileSignatures/) could be used to inspect the file's actual content (magic bytes), trusting the Content-Type header sent by the browser or file extension is not sufficient.
-       Enforce Limits: Enforce file size limits.
-       Sanitize Filename: Avoid using the user-provided filename for storage on the server. Generate a new, random, and safe filename.
-
-       3) Token Storage (localStorage):
-       Risk: We store the JWT in localStorage. If an XSS vulnerability were to be found on the site, an attacker could steal this token.
-       Mitigation & Context: This is a well-known and widely accepted trade-off for SPAs. The primary mitigation is a strong XSS defense (implemented by CSP). The alternative, storing tokens in memory, would require a re-login on every page refresh, which is a poor user experience. Given the context, this is a reasonable and standard approach, but it highlights the absolute importance of the backend sanitization mentioned in point #1.
-       */
-
     /// <summary>
-    /// Controller for handling the a-new markdown editor endpoint for creating blog posts
+    ///     Controller for handling the a-new markdown editor endpoint for creating blog posts.
     /// </summary>
     [ManagementApi(Constants.ManagementApi.MarkdownEditor)]
     [ApiVersion("1.0")]
-    [Authorize(AuthorizationPolicies.ContentPermissionByResource)]
-    [Authorize(AuthorizationPolicies.MediaPermissionByResource)]
+    [Authorize(AuthorizationPolicies.BackOfficeAccess)]
     [MapToApi(Constants.ManagementApi.Name)]
     [ManagementApiRoute("editors/markdown")]
     public class MarkdownEditorApiController : ManagementApiControllerBase
     {
-        private readonly IBackOfficeSecurityAccessor _backOfficeSecurityAccessor;
-        private readonly UmbracoHelper _umbracoHelper;
-        private readonly MediaFileManager _mediaFileManager;
-        private readonly PropertyEditorCollection _propertyEditors;
-        private readonly IJsonSerializer _jsonSerializer;
-        private readonly GlobalSettings _globalSettings;
-        private readonly IHostingEnvironment _hostingEnvironment;
-        private readonly IMediaService _mediaService;
-        private readonly MediaUrlGeneratorCollection _mediaUrlGenerators;
-        private readonly IContentTypeBaseServiceProvider _contentTypeBaseServiceProvider;
-        private readonly IShortStringHelper _shortStringHelper;
         private readonly Lazy<IMedia> _articulateRootMediaFolder;
-        private readonly ILanguageService _languageService;
         private readonly IContentService _contentService;
         private readonly IContentTypeService _contentTypeService;
         private readonly IDataTypeService _dataTypeService;
-        private readonly IUserService _userService;
+        private readonly IJsonSerializer _jsonSerializer;
+        private readonly ILanguageService _languageService;
         private readonly ILogger<MarkdownEditorApiController> _logger;
+        private readonly PropertyEditorCollection _propertyEditors;
+        private readonly UmbracoHelper _umbracoHelper;
+        private readonly BackOfficeAuthService _backOfficeAuthService;
+        private readonly IAbsoluteUrlBuilder _absoluteUrlBuilder;
+        private readonly IArticulateImportMediaService _service;
+
 
         public MarkdownEditorApiController(
-            IBackOfficeSecurityAccessor backOfficeSecurityAccessor,
+            BackOfficeAuthService backOfficeAuthService,
             UmbracoHelper umbracoHelper,
-            MediaFileManager mediaFileManager,
             PropertyEditorCollection propertyEditors,
             IJsonSerializer jsonSerializer,
-            IOptions<GlobalSettings> globalSettings,
-            IHostingEnvironment hostingEnvironment,
             IMediaService mediaService,
-            MediaUrlGeneratorCollection mediaUrlGenerators,
-            IContentTypeBaseServiceProvider contentTypeBaseServiceProvider,
-            IShortStringHelper shortStringHelper,
             ILanguageService languageService,
             IContentService contentService,
             IContentTypeService contentTypeService,
             IDataTypeService dataTypeService,
-            IUserService userService,
-            ILogger<MarkdownEditorApiController> logger)
+            ILogger<MarkdownEditorApiController> logger,
+            IAbsoluteUrlBuilder absoluteUrlBuilder,
+            IArticulateImportMediaService service)
         {
-            _backOfficeSecurityAccessor = backOfficeSecurityAccessor;
+            _backOfficeAuthService = backOfficeAuthService;
             _umbracoHelper = umbracoHelper;
-            _mediaFileManager = mediaFileManager;
             _propertyEditors = propertyEditors;
             _jsonSerializer = jsonSerializer;
-            _globalSettings = globalSettings.Value;
-            _hostingEnvironment = hostingEnvironment;
-            _mediaService = mediaService;
-            _mediaUrlGenerators = mediaUrlGenerators;
-            _contentTypeBaseServiceProvider = contentTypeBaseServiceProvider;
-            _shortStringHelper = shortStringHelper;
+            IMediaService localMediaService = mediaService;
             _languageService = languageService;
             _contentService = contentService;
             _contentTypeService = contentTypeService;
             _dataTypeService = dataTypeService;
-            _userService = userService;
             _logger = logger;
+            _absoluteUrlBuilder = absoluteUrlBuilder;
+            _service = service;
             _articulateRootMediaFolder = new Lazy<IMedia>(() =>
             {
-                IMedia? root = _mediaService.GetRootMedia().FirstOrDefault(x =>
-                    x.Name == "Articulate" &&
+                IMedia? root = localMediaService.GetRootMedia().FirstOrDefault(x =>
+                    x.Name == ArticulateConstants.Convention.ArticulateMediaFolder &&
                     x.ContentType.Alias.InvariantEquals(Umbraco.Cms.Core.Constants.Conventions.MediaTypes.Folder));
-                return root ?? _mediaService.CreateMediaWithIdentity(
-                    "Articulate",
+                return root ?? localMediaService.CreateMediaWithIdentity(
+                    ArticulateConstants.Convention.ArticulateMediaFolder,
                     Umbraco.Cms.Core.Constants.System.Root,
                     Umbraco.Cms.Core.Constants.Conventions.MediaTypes.Folder);
             });
         }
 
         /// <summary>
-        /// Creates a new post under the specified Articulate node.
+        ///     Creates a new post under the specified Articulate node.
         /// </summary>
-        /// <param name="jsonModel">The JSON model containing the post data: Title, Body, Slug, Excerpt, Tags, Categories, ArticulateBlogNode, and whether the first image should be extracted as a dedicated property.</param>
-        /// <param name="files">Any uploaded images as part of the multipart/form-data request.</param>
-        /// <returns>A <see cref="CreatePostResponse"/> containing the URL of the newly created post.</returns>
+        /// <param name="jsonModel">
+        ///     The JSON model containing the post data: Title, Body, Slug, Excerpt, Tags, Categories,
+        ///     ArticulateBlogNode, and whether the first image should be extracted as a dedicated property.
+        /// </param>
+        /// <returns>A <see cref="CreatePostResponse" /> containing the URL of the newly created post.</returns>
         [HttpPost("post")]
         [Consumes("multipart/form-data")]
         [ProducesResponseType(typeof(CreatePostResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status422UnprocessableEntity)]
-
-        // TODO: Review along with ParseImages
         public async Task<ActionResult<CreatePostResponse>> CreatePost(
-            [FromForm(Name = "json")] string jsonModel,
-            IFormFileCollection files)
+            [FromForm(Name = "json")] string jsonModel)
         {
-            if (string.IsNullOrWhiteSpace(jsonModel))
+            if (ValidateAndDeserializeModel(jsonModel, out MarkdownEditorModel? model) is { } validationError)
             {
-                return Problem("The 'json' form part is missing or empty.", statusCode: StatusCodes.Status400BadRequest);
+                return validationError;
             }
 
-            MarkdownEditorModel? model;
+            if (GetArticulateNodes(model!, out IContent? articulateNode, out IContent? archive) is { } nodeError)
+            {
+                return nodeError;
+            }
+
+            IUser? currentUser = _backOfficeAuthService.GetCurrentUser();
+            if (CheckPermissions(archive!, currentUser) is { } permissionError)
+            {
+                return permissionError;
+            }
+
+            bool extractFirstImageAsProperty = articulateNode!.HasProperty("extractFirstImage")
+                                               && articulateNode.GetValue<bool>("extractFirstImage");
+
+            ParseImageResponse parsedImageResponse = await ParseImages(
+                model!.Body,
+                Request.Form.Files,
+                extractFirstImageAsProperty);
+
+            model.Body = parsedImageResponse.BodyText;
+
+            return await CreateAndSaveContentAsync(model, archive!, parsedImageResponse, currentUser!);
+        }
+
+        private ActionResult? ValidateAndDeserializeModel(string jsonModel, out MarkdownEditorModel? model)
+        {
+            model = null;
+            if (string.IsNullOrWhiteSpace(jsonModel))
+            {
+                return Problem(
+                    "The 'json' form part is missing or empty.",
+                    statusCode: StatusCodes.Status400BadRequest);
+            }
+
             try
             {
-                model = JsonSerializer.Deserialize<MarkdownEditorModel>(jsonModel);
+                var jsonOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+                model = JsonSerializer.Deserialize<MarkdownEditorModel>(jsonModel, jsonOptions);
                 if (model is null)
                 {
                     return Problem("The provided JSON model is invalid.", statusCode: StatusCodes.Status400BadRequest);
                 }
+
+                return null;
             }
             catch (JsonException ex)
             {
@@ -168,26 +160,16 @@ namespace Articulate.Api.Management.Controllers
                     $"JSON deserialization failed: {ex.Message}",
                     statusCode: StatusCodes.Status400BadRequest);
             }
+        }
 
-            /* Duplicates implicit validation from [ApiController] */
-            /*
-            if (model.ArticulateBlogNode == 0 || string.IsNullOrWhiteSpace(model.Title))
-            {
-                if (model.ArticulateBlogNode == 0)
-                {
-                 ModelState.AddModelError(nameof(model.ArticulateBlogNode), "The ArticulateNodeId field is required.");
-                }
+        private ActionResult? GetArticulateNodes(
+            MarkdownEditorModel model,
+            out IContent? articulateNode,
+            out IContent? archive)
+        {
+            articulateNode = _contentService.GetById(model.ArticulateBlogNode);
+            archive = null;
 
-                if (string.IsNullOrWhiteSpace(model.Title))
-                {
-                    ModelState.AddModelError(nameof(model.Title), "The Title field is required.");
-                }
-
-                return ValidationProblem(ModelState);
-            }
-            */
-
-            IContent? articulateNode = _contentService.GetById(model.ArticulateBlogNode);
             if (articulateNode is null)
             {
                 return Problem(
@@ -195,12 +177,10 @@ namespace Articulate.Api.Management.Controllers
                     statusCode: StatusCodes.Status404NotFound);
             }
 
-            var extractFirstImageAsProperty = articulateNode.HasProperty("extractFirstImage")
-                                              && articulateNode.GetValue<bool>("extractFirstImage");
-
-            IContent? archive = _contentService.GetPagedChildren(model.ArticulateBlogNode, 0, 1, out _)
+            archive = _contentService.GetPagedChildren(model.ArticulateBlogNode, 0, 1, out _)
                 .FirstOrDefault(x =>
                     x.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateArchive));
+
             if (archive is null)
             {
                 return Problem(
@@ -208,24 +188,31 @@ namespace Articulate.Api.Management.Controllers
                     statusCode: StatusCodes.Status404NotFound);
             }
 
-            IUser? currentUser = _backOfficeSecurityAccessor.BackOfficeSecurity?.CurrentUser;
+            return null;
+        }
+
+        private ActionResult? CheckPermissions(IContent archive, IUser? currentUser)
+        {
             if (currentUser is null)
             {
-                // This shouldn't happen due to the [Authorize] attribute, but it's a good safeguard.
                 return Unauthorized();
             }
 
             var requiredPermissions = new[] { ActionNew.ActionLetter, ActionPublish.ActionLetter };
-            if (!CheckPermissions(currentUser, archive, requiredPermissions, _userService))
+            if (!_backOfficeAuthService.HasPermissions(currentUser, archive, requiredPermissions))
             {
                 return Forbid();
             }
 
-            ParseImageResponse parsedImageResponse =
-                await ParseImages(model.Body, files, extractFirstImageAsProperty).ConfigureAwait(false);
+            return null;
+        }
 
-            model.Body = parsedImageResponse.BodyText;
-
+        private async Task<ActionResult<CreatePostResponse>> CreateAndSaveContentAsync(
+            MarkdownEditorModel model,
+            IContent archive,
+            ParseImageResponse parsedImageResponse,
+            IUser currentUser)
+        {
             IContentType? contentType = _contentTypeService.Get("ArticulateMarkdown");
             if (contentType is null)
             {
@@ -235,11 +222,12 @@ namespace Articulate.Api.Management.Controllers
                     statusCode: StatusCodes.Status500InternalServerError);
             }
 
-            IContent? content = _contentService.CreateWithInvariantOrDefaultCultureName(
+            IContent? content = await _contentService.CreateWithInvariantOrDefaultCultureNameAsync(
                 model.Title,
                 archive,
                 contentType,
                 _languageService,
+                _logger,
                 currentUser.Id);
 
             if (content is null)
@@ -250,189 +238,56 @@ namespace Articulate.Api.Management.Controllers
                     statusCode: StatusCodes.Status500InternalServerError);
             }
 
-            content.SetInvariantOrDefaultCultureValue("markdown", model.Body, contentType, _languageService);
-
-            if (!string.IsNullOrEmpty(parsedImageResponse.FirstImage))
-            {
-                content.SetInvariantOrDefaultCultureValue("postImage", parsedImageResponse.FirstImage, contentType, _languageService);
-            }
-
-            if (model.Excerpt.IsNullOrWhiteSpace() == false)
-            {
-                content.SetInvariantOrDefaultCultureValue("excerpt", model.Excerpt, contentType, _languageService);
-            }
-
-            if (model.Tags.IsNullOrWhiteSpace() == false)
-            {
-                IEnumerable<string> tags = model.Tags.Split([','], StringSplitOptions.RemoveEmptyEntries)
-                    .Select(x => x.Trim());
-                content.AssignInvariantOrDefaultCultureTags(
-                    "tags",
-                    tags,
-                    contentType,
-                    _languageService,
-                    _dataTypeService,
-                    _propertyEditors,
-                    _jsonSerializer);
-            }
-
-            if (model.Categories.IsNullOrWhiteSpace() == false)
-            {
-                IEnumerable<string> cats = model.Categories.Split([','], StringSplitOptions.RemoveEmptyEntries)
-                    .Select(x => x.Trim());
-                content.AssignInvariantOrDefaultCultureTags(
-                    "categories",
-                    cats,
-                    contentType,
-                    _languageService,
-                    _dataTypeService,
-                    _propertyEditors,
-                    _jsonSerializer);
-            }
-
-            if (model.Slug.IsNullOrWhiteSpace() == false)
-            {
-                content.SetInvariantOrDefaultCultureValue(Umbraco.Cms.Core.Constants.Conventions.Content.UrlName, model.Slug, contentType, _languageService);
-            }
-
-            // author is required
-            content.SetInvariantOrDefaultCultureValue(
-                "author",
-                _backOfficeSecurityAccessor.BackOfficeSecurity?.CurrentUser?.Name ?? "Unknown",
+            await PopulateContentPropertiesAsync(
+                content,
                 contentType,
-                _languageService);
+                model,
+                parsedImageResponse.FirstImage,
+                currentUser);
 
-            OperationResult status =
-                _contentService.Save(content, _backOfficeSecurityAccessor.BackOfficeSecurity?.CurrentUser?.Id);
-            if (status.Success == false)
+            ActionResult? saveAndPublishResult = SaveAndPublishContent(content, currentUser.Id);
+            if (saveAndPublishResult is not null)
             {
-                ModelState.AddModelError("SaveOperation", "Content failed to save. Please check logs for details.");
-                return ValidationProblem(ModelState);
+                return saveAndPublishResult;
             }
 
             IPublishedContent? published = _umbracoHelper.Content(content.Id);
-            return Ok(new CreatePostResponse { Url = published?.Url() ?? "#" });
+            return Ok(new CreatePostResponse { Url = published?.Url() ?? string.Empty });
         }
 
-        private static bool CheckPermissions(IUser user, IContent contentItem, IEnumerable<string> permissionsToCheck, IUserService userService)
+        private async Task<ParseImageResponse> ParseImages(
+            string? body,
+            IFormFileCollection formFiles,
+            bool extractFirstImageAsProperty)
         {
-            IEnumerable<string> permissions = user.GetPermissions(contentItem.Path, userService);
-            return permissionsToCheck.All(p => permissions.Contains(p));
-        }
-
-        // TODO: Review
-        private async Task<ParseImageResponse> ParseImages(string? body, IFormFileCollection formFiles, bool extractFirstImageAsProperty)
-        {
-            // TODO: Validate the ![alt] user label used for the media name/markdown replacement.
-            // TODO: Generate a safe filename instead of relying on user supplied filename
-            // TODO: Better file validation file sizes, mimetypes, file signatures etc, extract to use elsewhere (MetaWeblog, BlogML import), plus return validation results for UX
-            // TODO: UX Validation results (invalid or missing files etc), extract to reuse elsewhere.
             if (body is null)
             {
                 return new ParseImageResponse();
             }
 
-            var reservedNames = new HashSet<string>
-            {
-                "con",
-                "prn",
-                "aux",
-                "nul",
-                "com1",
-                "lpt1"
-            };
             var firstImage = string.Empty;
-            var bodyText = body; // Start with the original body text
-
-            // Key: The original markdown tag, e.g., "![alt](tmp:0:image.png)"
-            // Value: The final URL or an empty string to remove it.
+            var bodyText = body;
             var replacementMap = new Dictionary<string, string>();
+            var firstImageCaptured = false;
 
-            // STEP 1: Find all potential image tags and gather the info needed for processing. ---
             MatchCollection matches = ArticulateMarkdownEditorRegexes.ImageTagPlaceholderRegex().Matches(body);
 
             foreach (Match match in matches)
             {
-                var userLabel = match.Groups[1].Value;
-                var tempUrl = match.Groups[2].Value;
+                ImageProcessResult result = await ProcessImageMatchAsync(
+                    match,
+                    formFiles,
+                    extractFirstImageAsProperty && !firstImageCaptured);
 
-                IFormFile? file = formFiles.FirstOrDefault(f => f.Name == tempUrl);
-
-                // STEP 2: For each match, VALIDATE and PROCESS it asynchronously.
-                if (file is null)
+                if (result.IsFirstImage && !string.IsNullOrEmpty(result.FirstImageUdi))
                 {
-                    _logger.LogWarning(
-                        "Markdown image placeholder for {TempUrl} found, but no corresponding file was uploaded.",
-                        tempUrl);
-
-                    // The file is missing. We will replace its tag with nothing.
-                    replacementMap[match.Value] = string.Empty;
-                    continue; // Move to the next match
+                    firstImage = result.FirstImageUdi;
+                    firstImageCaptured = true;
                 }
 
-                var untrustedFileName = Path.GetFullPath(file.FileName);
-                if (untrustedFileName.StartsWith("..") || untrustedFileName.Contains("/.."))
-                {
-                    // Path traversal attempt. Strip from markdown.
-                    replacementMap[match.Value] = string.Empty;
-                    continue;
-                }
-
-                var filename = Path.GetFileName(file.FileName);
-                var cleanFileName = string.Join('_', filename.Split(Path.GetInvalidFileNameChars()));
-                if (cleanFileName.IsNullOrWhiteSpace() || cleanFileName.Length > 100 ||
-                    reservedNames.Contains(cleanFileName.ToLowerInvariant()))
-                {
-                    // Invalid filename. Strip from markdown.
-                    replacementMap[match.Value] = string.Empty;
-                    continue;
-                }
-
-                // validation passed, save the file
-                var altText = !string.IsNullOrWhiteSpace(userLabel) ? userLabel : cleanFileName;
-                int? imageIndex = int.TryParse(tempUrl.Split([':'], 3).ElementAtOrDefault(1), out var idx) ? idx : null;
-
-                using var stream = new MemoryStream();
-                await file.CopyToAsync(stream).ConfigureAwait(false);
-
-                if (extractFirstImageAsProperty && imageIndex == 0)
-                {
-                    IMedia mediaItem = _mediaService.CreateMedia(altText, _articulateRootMediaFolder.Value, Umbraco.Cms.Core.Constants.Conventions.MediaTypes.Image);
-                    mediaItem.SetValue(
-                        _mediaFileManager,
-                        _mediaUrlGenerators,
-                        _shortStringHelper,
-                        _contentTypeBaseServiceProvider,
-                        Umbraco.Cms.Core.Constants.Conventions.Media.File,
-                        cleanFileName,
-                        stream);
-                    _mediaService.Save(mediaItem);
-                    IPublishedContent? media = _umbracoHelper.Media(mediaItem.Key);
-
-                    if (media is null)
-                    {
-                        continue;
-                    }
-
-                    firstImage = Udi.Create(Umbraco.Cms.Core.Constants.UdiEntityType.Media, media.Key).ToString();
-
-                    // The first image was extracted. Strip its tag from the body.
-                    replacementMap[match.Value] = string.Empty;
-                }
-                else
-                {
-                    var rndId = Guid.NewGuid().ToString("N");
-                    var fileUrl = $"articulate/{rndId}/{cleanFileName}";
-                    _mediaFileManager.FileSystem.AddFile(fileUrl, stream);
-                    var mediaRootPath = _hostingEnvironment.ToAbsolute(_globalSettings.UmbracoMediaPath);
-                    var mediaFilePath = $"{mediaRootPath.TrimEnd('/')}/{fileUrl}";
-
-                    // Replace its tag with the final URL.
-                    replacementMap[match.Value] = $"![{altText}]({mediaFilePath})";
-                }
+                replacementMap[match.Value] = result.ReplacementMarkdown;
             }
 
-            // STEP 3: Apply markdown replacements
             if (replacementMap.Count > 0)
             {
                 bodyText = ArticulateMarkdownEditorRegexes.ImageTagPlaceholderRegex().Replace(
@@ -443,11 +298,231 @@ namespace Articulate.Api.Management.Controllers
             return new ParseImageResponse { BodyText = bodyText, FirstImage = firstImage };
         }
 
+        private async Task<ImageProcessResult> ProcessImageMatchAsync(
+            Match match,
+            IFormFileCollection formFiles,
+            bool saveAsFirstImage)
+        {
+            var userLabel = match.Groups[1].Value;
+            var tempUrl = match.Groups[2].Value;
+
+            IFormFile? file = formFiles.FirstOrDefault(f => f.Name == tempUrl);
+            if (file is null)
+            {
+                _logger.LogWarning(
+                    "Markdown image placeholder for {TempUrl} found, but no corresponding file was uploaded.", tempUrl);
+                return ImageProcessResult.Removed();
+            }
+
+            var originalFileName = Path.GetFileName(file.FileName);
+            var extension = Path.GetExtension(originalFileName).ToLowerInvariant();
+
+            await using Stream uploadStream = file.OpenReadStream();
+            ImportMediaValidationResult validationResult = await _service.ValidateImageAsync(
+                uploadStream,
+                extension);
+
+            if (!validationResult.IsValid)
+            {
+                _logger.LogWarning(
+                    "Markdown image {FileName} rejected: {ErrorMessage}",
+                    originalFileName,
+                    validationResult.ErrorMessage);
+                return ImageProcessResult.Removed();
+            }
+
+            // Maintain user-provided label for alt text, falling back to original filename
+            var altText = string.IsNullOrWhiteSpace(userLabel) ? originalFileName : userLabel.Trim();
+
+            if (saveAsFirstImage)
+            {
+                return await SaveImageToMediaLibraryAsync(
+                    validationResult.ValidatedStream!,
+                    altText,
+                    validationResult.CorrectExtension!);
+            }
+
+            var absoluteUrl = await _service.SaveToFileSystemAsync(
+                validationResult.ValidatedStream!,
+                validationResult.CorrectExtension!);
+
+            if (string.IsNullOrEmpty(absoluteUrl))
+            {
+                _logger.LogWarning(
+                    "Failed to save markdown image {FileName} to filesystem - returned empty URL",
+                    Path.GetFileName(file.FileName));
+                return ImageProcessResult.Removed();
+            }
+
+            return ImageProcessResult.RegularImage($"![{altText}]({absoluteUrl})");
+        }
+
+        private async Task<ImageProcessResult> SaveImageToMediaLibraryAsync(
+            Stream stream,
+            string altText,
+            string extension)
+        {
+            ImportMediaSaveResult saveResult = await _service.SaveToMediaLibraryAsync(
+                stream,
+                altText,
+                extension,
+                _articulateRootMediaFolder.Value);
+
+            if (!saveResult.Success || saveResult.Media is null)
+            {
+                _logger.LogWarning(
+                    "Failed to save media item for first image: {ErrorMessage}",
+                    saveResult.ErrorMessage);
+                return ImageProcessResult.Removed();
+            }
+
+            IPublishedContent? media = _umbracoHelper.Media(saveResult.Media.Key);
+            if (media is null)
+            {
+                _logger.LogWarning(
+                    "Failed to retrieve published media for first image: {MediaKey}",
+                    saveResult.Media.Key);
+                return ImageProcessResult.Removed();
+            }
+
+            var mediaUrl = media.Url();
+            if (string.IsNullOrEmpty(mediaUrl))
+            {
+                _logger.LogWarning("Media URL is empty for first image: {MediaKey}", saveResult.Media.Key);
+                return ImageProcessResult.Removed();
+            }
+
+            var absoluteMediaUrl = _absoluteUrlBuilder.ToAbsoluteUrl(mediaUrl).ToString();
+
+            return ImageProcessResult.FirstImage(saveResult.MediaUdi!, $"![{altText}]({absoluteMediaUrl})");
+        }
+
+        private class ImageProcessResult
+        {
+            public bool IsFirstImage { get; private init; }
+            public string? FirstImageUdi { get; private init; }
+            public string ReplacementMarkdown { get; private init; } = string.Empty;
+
+            public static ImageProcessResult FirstImage(string udi, string markdown) =>
+                new() { IsFirstImage = true, FirstImageUdi = udi, ReplacementMarkdown = markdown };
+
+            public static ImageProcessResult RegularImage(string markdown) =>
+                new() { IsFirstImage = false, ReplacementMarkdown = markdown };
+
+            public static ImageProcessResult Removed() =>
+                new() { IsFirstImage = false, ReplacementMarkdown = string.Empty };
+        }
+
         private class ParseImageResponse
         {
             public string BodyText { get; init; } = string.Empty;
 
             public string FirstImage { get; init; } = string.Empty;
+        }
+
+        private async Task PopulateContentPropertiesAsync(
+            IContent content,
+            IContentType contentType,
+            MarkdownEditorModel model,
+            string? firstImageUdi,
+            IUser currentUser)
+        {
+            await content
+                    .SetInvariantOrDefaultCultureValueAsync(
+                        "markdown",
+                        model.Body,
+                        contentType,
+                        _languageService,
+                        _logger)
+                ;
+
+            if (!string.IsNullOrEmpty(firstImageUdi))
+            {
+                await content
+                    .SetInvariantOrDefaultCultureValueAsync(
+                        "postImage",
+                        firstImageUdi,
+                        contentType,
+                        _languageService,
+                        _logger);
+            }
+
+            if (!model.Excerpt.IsNullOrWhiteSpace())
+            {
+                await content
+                    .SetInvariantOrDefaultCultureValueAsync(
+                        "excerpt",
+                        model.Excerpt,
+                        contentType,
+                        _languageService,
+                        _logger);
+            }
+
+            if (!model.Tags.IsNullOrWhiteSpace())
+            {
+                IEnumerable<string> tags = model.Tags.Split([','], StringSplitOptions.RemoveEmptyEntries)
+                    .Select(x => x.Trim());
+                await content.AssignInvariantOrDefaultCultureTagsAsync(
+                    "tags",
+                    tags,
+                    contentType,
+                    _languageService,
+                    _dataTypeService,
+                    _propertyEditors,
+                    _jsonSerializer,
+                    _logger);
+            }
+
+            if (!model.Categories.IsNullOrWhiteSpace())
+            {
+                IEnumerable<string> cats = model.Categories.Split([','], StringSplitOptions.RemoveEmptyEntries)
+                    .Select(x => x.Trim());
+                await content.AssignInvariantOrDefaultCultureTagsAsync(
+                    "categories",
+                    cats,
+                    contentType,
+                    _languageService,
+                    _dataTypeService,
+                    _propertyEditors,
+                    _jsonSerializer,
+                    _logger);
+            }
+
+            if (!model.Slug.IsNullOrWhiteSpace())
+            {
+                await content.SetInvariantOrDefaultCultureValueAsync(
+                    Umbraco.Cms.Core.Constants.Conventions.Content.UrlName,
+                    model.Slug,
+                    contentType,
+                    _languageService,
+                    _logger);
+            }
+
+            await content.SetInvariantOrDefaultCultureValueAsync(
+                "author",
+                currentUser.Name ?? "Unknown",
+                contentType,
+                _languageService,
+                _logger);
+        }
+
+        private ActionResult? SaveAndPublishContent(IContent content, int authorId)
+        {
+            OperationResult saveStatus = _contentService.Save(content, authorId);
+            if (!saveStatus.Success)
+            {
+                ModelState.AddModelError("SaveOperation", "Content failed to save. Please check logs for details.");
+                return ValidationProblem(ModelState);
+            }
+
+            PublishResult publishStatus = _contentService.Publish(content, ["*"], authorId);
+            if (!publishStatus.Success)
+            {
+                ModelState.AddModelError("SaveOperation", "Content failed to publish. Please check logs for details.");
+                return ValidationProblem(ModelState);
+            }
+
+            return null;
         }
     }
 }
