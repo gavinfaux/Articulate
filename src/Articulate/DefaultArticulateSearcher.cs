@@ -2,6 +2,7 @@
 using System.Text;
 using Examine;
 using Examine.Search;
+using Lucene.Net.QueryParsers.Classic;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.Web;
 
@@ -12,9 +13,18 @@ namespace Articulate
         IExamineManager examineManager)
         : IArticulateSearcher
     {
+        /// <inheritdoc/>
         public IEnumerable<IPublishedContent> Search(string term, string? indexName, int blogArchiveNodeId, int pageSize, int pageIndex, out long totalResults)
         {
+            if (string.IsNullOrWhiteSpace(term))
+            {
+                totalResults = 0;
+                return [];
+            }
+
             var splitSearch = term.Split([' '], StringSplitOptions.RemoveEmptyEntries);
+
+            var escapedTerm = QueryParserBase.Escape(term);
 
             // The fields to search on and their 'weight' (importance)
             var fields = new Dictionary<string, int>
@@ -24,7 +34,7 @@ namespace Articulate
                 { "nodeName", 3 },
                 { "tags", 1 },
                 { "categories", 1 },
-                { "umbracoUrlName", 3 }
+                { "umbracoUrlName", 3 },
             };
 
             // The multipliers for match types
@@ -37,25 +47,27 @@ namespace Articulate
             foreach (KeyValuePair<string, int> field in fields)
             {
                 // full exact match (which has a higher boost)
-                fieldQuery.Append($"{field.Key}:{"\"" + term + "\""}^{field.Value * exactMatch}");
-                fieldQuery.Append(' ');
+                _ = fieldQuery.Append($"{field.Key}:\"{escapedTerm}\"^{field.Value * exactMatch}");
+                _ = fieldQuery.Append(' ');
 
                 // NOTE: Phrase match wildcard isn't really supported unless you use the Lucene
                 // API like ComplexPhraseWildcardSomethingOrOther...
                 // split match
                 foreach (var s in splitSearch)
                 {
+                    var escapedSplitTerm = QueryParserBase.Escape(s);
+
                     // match on each term, no wildcard, higher boost
-                    fieldQuery.Append($"{field.Key}:{s}^{field.Value * termMatch}");
-                    fieldQuery.Append(' ');
+                    _ = fieldQuery.Append($"{field.Key}:{escapedSplitTerm}^{field.Value * termMatch}");
+                    _ = fieldQuery.Append(' ');
 
                     // match on each term, with wildcard
-                    fieldQuery.Append($"{field.Key}:{s}*");
-                    fieldQuery.Append(' ');
+                    _ = fieldQuery.Append($"{field.Key}:{escapedSplitTerm}*");
+                    _ = fieldQuery.Append(' ');
                 }
             }
 
-            indexName = indexName.IsNullOrWhiteSpace() ? Umbraco.Cms.Core.Constants.UmbracoIndexes.ExternalIndexName : indexName;
+            indexName = string.IsNullOrWhiteSpace(indexName) ? Umbraco.Cms.Core.Constants.UmbracoIndexes.ExternalIndexName : indexName;
 
             if (!examineManager.TryGetIndex(indexName, out IIndex? index) || index is null)
             {
@@ -72,9 +84,7 @@ namespace Articulate
             ISearchResults searchResult = criteria.Execute(QueryOptions.SkipTake(pageIndex * pageSize, pageSize));
 
             IEnumerable<PublishedSearchResult> result = searchResult
-                .Skip(pageIndex * pageSize)
                 .ToPublishedSearchResults(umbracoContextAccessor.GetRequiredUmbracoContext().Content);
-
             totalResults = searchResult.TotalItemCount;
 
             return result.Select(x => x.Content);

@@ -7,6 +7,7 @@ namespace Articulate.Components
 {
     public class ContentTypeSavingHandler : INotificationHandler<ContentTypeSavingNotification>
     {
+        /// <inheritdoc/>
         public void Handle(ContentTypeSavingNotification notification)
         {
             foreach (IContentType c in notification.SavedEntities

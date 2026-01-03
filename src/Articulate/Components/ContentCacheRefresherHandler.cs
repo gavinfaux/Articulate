@@ -20,6 +20,9 @@ namespace Articulate.Components
         IScopeProvider scopeProvider)
         : INotificationHandler<ContentCacheRefresherNotification>
     {
+        private void EnsureRoutesRefreshQueued() =>
+            _ = appCaches.RequestCache.GetCacheItem(ArticulateConstants.RefreshRoutesToken, () => true);
+
         /// <summary>
         /// When the page/content cache is refreshed, we'll check if any articulate root nodes were included in the refresh, if so we'll set a flag
         /// on the current request to rebuild the routes at the end of the request
@@ -32,15 +35,7 @@ namespace Articulate.Components
             switch (notification.MessageType)
             {
                 case MessageType.RefreshByPayload:
-                    // This is the standard case for content cache refresher
-                    foreach (ContentCacheRefresher.JsonPayload payload in (ContentCacheRefresher.JsonPayload[])notification.MessageObject)
-                    {
-                        if (payload.ChangeTypes.HasTypesAny(TreeChangeTypes.Remove | TreeChangeTypes.RefreshBranch | TreeChangeTypes.RefreshNode))
-                        {
-                            RefreshById(payload.Id);
-                        }
-                    }
-
+                    HandleRefreshByPayload((ContentCacheRefresher.JsonPayload[])notification.MessageObject);
                     break;
                 case MessageType.RefreshById:
                 case MessageType.RemoveById:
@@ -48,22 +43,36 @@ namespace Articulate.Components
                     break;
                 case MessageType.RefreshByInstance:
                 case MessageType.RemoveByInstance:
-                    if (notification.MessageObject is not IContent content)
-                    {
-                        return;
-                    }
-
-                    if (content.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.Articulate))
-                    {
-                        // ensure routes are rebuilt
-                        appCaches.RequestCache.GetCacheItem(ArticulateConstants.RefreshRoutesToken, () => true);
-                    }
-
+                    HandleRefreshByInstance(notification.MessageObject);
                     break;
                 case MessageType.RefreshAll:
                 case MessageType.RefreshByJson:
                 default:
                     break;
+            }
+        }
+
+        private void HandleRefreshByPayload(ContentCacheRefresher.JsonPayload[] payloads)
+        {
+            foreach (ContentCacheRefresher.JsonPayload payload in payloads)
+            {
+                if (payload.ChangeTypes.HasTypesAny(TreeChangeTypes.Remove | TreeChangeTypes.RefreshBranch | TreeChangeTypes.RefreshNode))
+                {
+                    RefreshById(payload.Id);
+                }
+            }
+        }
+
+        private void HandleRefreshByInstance(object messageObject)
+        {
+            if (messageObject is not IContent content)
+            {
+                return;
+            }
+
+            if (content.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.Articulate))
+            {
+                EnsureRoutesRefreshQueued();
             }
         }
 
@@ -82,7 +91,7 @@ namespace Articulate.Components
                 if (item is not null && item.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.Articulate))
                 {
                     // ensure routes are rebuilt
-                    appCaches.RequestCache.GetCacheItem(ArticulateConstants.RefreshRoutesToken, () => true);
+                    EnsureRoutesRefreshQueued();
                     return;
                 }
 
@@ -97,7 +106,7 @@ namespace Articulate.Components
                     // For now we have no choice, rebuild routes on each delete :/
                     if (item is null)
                     {
-                        appCaches.RequestCache.GetCacheItem(ArticulateConstants.RefreshRoutesToken, () => true);
+                        EnsureRoutesRefreshQueued();
                         return;
                     }
                 }
@@ -110,7 +119,7 @@ namespace Articulate.Components
                     return;
                 }
 
-                appCaches.RequestCache.GetCacheItem(ArticulateConstants.RefreshRoutesToken, () => true);
+                EnsureRoutesRefreshQueued();
             }
         }
     }

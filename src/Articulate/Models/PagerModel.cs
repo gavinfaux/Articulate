@@ -18,8 +18,8 @@ namespace Articulate.Models
 
         public string? PreviousUrl { get; } = previousUrl;
 
-        public bool HasNext => NextUrl is not null;
+        public bool HasNext => !string.IsNullOrEmpty(NextUrl);
 
-        public bool HasPrevious => PreviousUrl is not null;
+        public bool HasPrevious => !string.IsNullOrEmpty(PreviousUrl);
     }
 }

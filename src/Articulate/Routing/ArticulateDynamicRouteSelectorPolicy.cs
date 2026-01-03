@@ -9,7 +9,7 @@ using Umbraco.Cms.Web.Common.Routing;
 namespace Articulate.Routing
 {
     /// <summary>
-    /// Used when their is ambiguous route candidates due to multiple dynamic routes being assigned.
+    /// Used when there is ambiguous route candidates due to multiple dynamic routes being assigned.
     /// </summary>
     /// <remarks>
     /// Ambiguous dynamic routes can occur if Umbraco detects a 404 and assigns a route, but sometimes its not
@@ -21,16 +21,20 @@ namespace Articulate.Routing
     /// </remarks>
     internal class ArticulateDynamicRouteSelectorPolicy : MatcherPolicy, IEndpointSelectorPolicy
     {
+        /// <inheritdoc/>
         public override int Order => 100;
 
+        /// <inheritdoc/>
         public bool AppliesToEndpoints(IReadOnlyList<Endpoint> endpoints) =>
 
             // Don't apply this filter to any endpoint group that is a controller route i.e. only dynamic routes.
-            !endpoints.Select(endpoint => endpoint.Metadata.GetMetadata<ControllerAttribute>()).OfType<ControllerAttribute>().Any() &&
+            !endpoints.Select(endpoint => endpoint.Metadata.GetMetadata<ControllerAttribute>())
+                .OfType<ControllerAttribute>().Any() &&
 
             // then ensure this is only applied if all endpoints are IDynamicEndpointMetadata
             endpoints.All(x => x.Metadata.GetMetadata<IDynamicEndpointMetadata>() is not null);
 
+        /// <inheritdoc/>
         public Task ApplyAsync(HttpContext httpContext, CandidateSet candidates)
         {
             UmbracoRouteValues? umbracoRouteValues = httpContext.Features.Get<UmbracoRouteValues>();
@@ -47,9 +51,15 @@ namespace Articulate.Routing
             // the request has been dynamically routed by articulate to an Articulate controller.
             for (var i = 0; i < candidates.Count; i++)
             {
-                // If the candidate is an Articulate dynamic controller, set valid
-                candidates.SetValidity(i, candidates[i].Endpoint?.Metadata.GetMetadata<ArticulateDynamicRouteAttribute>() is not null);
+                // Skip candidates with null endpoints (filtered-out or invalid candidates)
+                if (candidates[i].Endpoint is null)
+                {
+                    candidates.SetValidity(i, false);
+                    continue;
+                }
 
+                // If the candidate is an Articulate dynamic controller, set valid
+                candidates.SetValidity(i, candidates[i].Endpoint.Metadata.GetMetadata<ArticulateDynamicRouteAttribute>() is not null);
                 // else it is invalid
             }
 

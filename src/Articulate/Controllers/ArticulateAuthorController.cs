@@ -44,7 +44,7 @@ namespace Articulate.Controllers
                 throw new InvalidOperationException("An ArticulateArchive document must exist under the root Articulate document");
             }
 
-            var totalPosts = umbracoHelper.GetPostCount(CurrentPage.Name, listNodes.Select(x => x.Id).ToArray());
+            var totalPosts = umbracoHelper.GetPostCount(CurrentPage.Name, [.. listNodes.Select(x => x.Id)]);
 
             if (!GetPagerModel(masterModel, totalPosts, p, out PagerModel? pager) || pager is null)
             {

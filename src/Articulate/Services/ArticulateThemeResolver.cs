@@ -8,6 +8,7 @@ namespace Articulate.Services
     internal class ArticulateThemeResolver(IUmbracoContextAccessor umbracoContextAccessor, AppCaches appCaches)
         : IArticulateThemeResolver
     {
+        /// <inheritdoc/>
         public string? GetCurrentThemeName() =>
 
             // cache a single request.

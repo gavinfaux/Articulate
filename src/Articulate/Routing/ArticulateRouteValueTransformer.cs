@@ -32,11 +32,17 @@ namespace Articulate.Routing
         private bool _hasCache;
         private bool _disposedValue;
 
-        public override async ValueTask<RouteValueDictionary> TransformAsync(HttpContext httpContext, RouteValueDictionary values)
+        /// <inheritdoc/>
+        public override async ValueTask<RouteValueDictionary> TransformAsync(
+            HttpContext httpContext,
+            RouteValueDictionary values)
         {
             // check if Umbraco has already matched content, we don't want to execute if things
             // are already matching.
-            if (!ShouldCheck(httpContext, out IUmbracoContext umbracoContext, out UmbracoRouteValues umbracoRouteValues))
+            if (!ShouldCheck(
+                    httpContext,
+                    out IUmbracoContext umbracoContext,
+                    out UmbracoRouteValues umbracoRouteValues))
             {
                 return [];
             }
@@ -45,7 +51,8 @@ namespace Articulate.Routing
             {
                 // This can occur in Umbraco Cloud since some plugin that is used there prevents the UmbracoRouteValues from
                 // being set the normal way. In this case, we'll need to force route it.
-                RouteValueDictionary routeValues = await umbracoRouteValueTransformer.TransformAsync(httpContext, values).ConfigureAwait(false);
+                RouteValueDictionary routeValues =
+                    await umbracoRouteValueTransformer.TransformAsync(httpContext, values);
 
                 umbracoRouteValues = httpContext.Features.Get<UmbracoRouteValues>();
                 if (umbracoRouteValues is null)
@@ -57,7 +64,8 @@ namespace Articulate.Routing
 
             var newValues = new RouteValueDictionary();
 
-            (bool HasCache, bool RouteSuccess) routeResult = await TryRouteAsync(umbracoContext, umbracoRouteValues, httpContext, newValues).ConfigureAwait(false);
+            (bool HasCache, bool RouteSuccess) routeResult =
+                await TryRouteAsync(umbracoContext, umbracoRouteValues, httpContext, newValues);
             if (routeResult.HasCache)
             {
                 return routeResult.RouteSuccess ? newValues : [];
@@ -69,7 +77,11 @@ namespace Articulate.Routing
                 _lock.EnterWriteLock();
                 try
                 {
-                    articulateRouteBuilder.MapRoutes(httpContext, umbracoContext, publishedContentTypeCache, documentCacheService);
+                    articulateRouteBuilder.MapRoutes(
+                        httpContext,
+                        umbracoContext,
+                        publishedContentTypeCache,
+                        documentCacheService);
                     _hasCache = true;
                 }
                 finally
@@ -78,11 +90,12 @@ namespace Articulate.Routing
                 }
             }
 
-            routeResult = await TryRouteAsync(umbracoContext, umbracoRouteValues, httpContext, newValues).ConfigureAwait(false);
+            routeResult = await TryRouteAsync(umbracoContext, umbracoRouteValues, httpContext, newValues);
 
             return routeResult.RouteSuccess ? newValues : [];
         }
 
+        /// <inheritdoc/>
         public void Dispose() => Dispose(disposing: true);
 
         private void Dispose(bool disposing)
@@ -100,7 +113,11 @@ namespace Articulate.Routing
             _disposedValue = true;
         }
 
-        private async Task<(bool HasCache, bool RouteSuccess)> TryRouteAsync(IUmbracoContext umbracoContext, UmbracoRouteValues umbracoRouteValues, HttpContext httpContext, RouteValueDictionary values)
+        private async Task<(bool HasCache, bool RouteSuccess)> TryRouteAsync(
+            IUmbracoContext umbracoContext,
+            UmbracoRouteValues umbracoRouteValues
+            , HttpContext httpContext,
+            RouteValueDictionary values)
         {
             if (_lock == null)
             {
@@ -112,12 +129,20 @@ namespace Articulate.Routing
             {
                 if (_hasCache)
                 {
-                    if (!articulateRouteBuilder.TryMatch(httpContext.Request.Path, values, out ArticulateRootNodeCache dynamicRouteValues))
+                    if (!articulateRouteBuilder.TryMatch(
+                            httpContext.Request.Path,
+                            values,
+                            out ArticulateRootNodeCache dynamicRouteValues))
                     {
                         return (true, false);
                     }
 
-                    await WriteRouteValuesAsync(umbracoContext, httpContext, dynamicRouteValues, umbracoRouteValues, values).ConfigureAwait(false);
+                    await WriteRouteValuesAsync(
+                        umbracoContext,
+                        httpContext,
+                        dynamicRouteValues,
+                        umbracoRouteValues,
+                        values);
                     return (true, true);
                 }
             }
@@ -129,7 +154,12 @@ namespace Articulate.Routing
             return (false, false);
         }
 
-        private async Task WriteRouteValuesAsync(IUmbracoContext umbracoContext, HttpContext httpContext, ArticulateRootNodeCache dynamicRouteValues, UmbracoRouteValues umbracoRouteValues, RouteValueDictionary values)
+        private async Task WriteRouteValuesAsync(
+            IUmbracoContext umbracoContext,
+            HttpContext httpContext,
+            ArticulateRootNodeCache dynamicRouteValues,
+            UmbracoRouteValues umbracoRouteValues,
+            RouteValueDictionary values)
         {
             // Since we are executing after Umbraco's dynamic transformer, it means Umbraco has already gone ahead and matched a domain (if any). So we will use this to match our document.
             DomainAndUri assignedDomain = umbracoRouteValues?.PublishedRequest.Domain;
@@ -138,18 +168,20 @@ namespace Articulate.Routing
             var contentId = dynamicRouteValues.GetContentId(assignedDomain);
 
             IPublishedContent publishedContent = umbracoContext?.Content.GetById(contentId)
-                                                 ?? throw new InvalidOperationException("Could not resolve content by id " + contentId);
+                                                 ?? throw new InvalidOperationException(
+                                                     "Could not resolve content by id " + contentId);
 
             // instantiate, prepare and process the published content request important to use CleanedUmbracoUrl - lowercase path-only version of the current url
-            IPublishedRequestBuilder requestBuilder = await publishedRouter.CreateRequestAsync(umbracoContext.CleanedUmbracoUrl).ConfigureAwait(false);
+            IPublishedRequestBuilder requestBuilder =
+                await publishedRouter.CreateRequestAsync(umbracoContext.CleanedUmbracoUrl);
 
             // re-assign the domain if there was one.
             if (assignedDomain != null)
             {
-                requestBuilder.SetDomain(assignedDomain);
+                _ = requestBuilder.SetDomain(assignedDomain);
             }
 
-            requestBuilder.SetPublishedContent(publishedContent);
+            _ = requestBuilder.SetPublishedContent(publishedContent);
 
             IPublishedRequest publishedRequest = requestBuilder.Build();
 
@@ -163,7 +195,7 @@ namespace Articulate.Routing
             umbracoContext.PublishedRequest = publishedRequest;
 
             values[ControllerToken] = dynamicRouteValues.ControllerActionDescriptor.ControllerName;
-            if (string.IsNullOrWhiteSpace(dynamicRouteValues.ControllerActionDescriptor.ActionName) == false)
+            if (!string.IsNullOrWhiteSpace(dynamicRouteValues.ControllerActionDescriptor.ActionName))
             {
                 values[ActionToken] = dynamicRouteValues.ControllerActionDescriptor.ActionName;
             }

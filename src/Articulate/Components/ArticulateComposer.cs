@@ -1,5 +1,6 @@
 #nullable enable
 using Articulate.ImportExport;
+using Articulate.Migrations;
 using Articulate.Options;
 using Articulate.Routing;
 using Articulate.Services;
@@ -11,59 +12,73 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Umbraco.Cms.Core.Composing;
 using Umbraco.Cms.Core.Notifications;
 using Umbraco.Cms.Core.Routing;
+using Umbraco.Cms.Infrastructure.Migrations.Notifications;
 
 namespace Articulate.Components
 {
     public class ArticulateComposer : IComposer
     {
+        /// <inheritdoc/>
         public void Compose(IUmbracoBuilder builder)
         {
             IServiceCollection services = builder.Services;
-            services.AddSingleton<BlogMlExporter>();
-            services.AddSingleton<ArticulateTempFileSystem>();
-            services.AddSingleton<IRssFeedGenerator, RssFeedGenerator>();
+            _ = services.AddScoped<BlogMlExporter>();
+            _ = services.AddSingleton<ArticulateTempFileSystem>();
+            _ = services.AddSingleton<IRssFeedGenerator, RssFeedGenerator>();
 
-            services.AddSingleton<IArticulateTagRepository, ArticulateTagRepository>();
-            services.AddSingleton<ArticulateTagService>();
+            _ = services.AddSingleton<IArticulateTagRepository, ArticulateTagRepository>();
+            _ = services.AddSingleton<ArticulateTagService>();
+            _ = services.AddScoped<IArticulateImportMediaService, ArticulateImportMediaService>();
 
-            services.AddSingleton<DisqusXmlExporter>();
-            services.AddSingleton<BlogMlImporter>();
-            services.AddSingleton<IArticulateSearcher, DefaultArticulateSearcher>();
-            services.AddSingleton<ArticulateRouteValueTransformer>();
-            services.AddSingleton<ArticulateRouter>();
-            services.AddSingleton<RouteCacheRefresherFilter>();
-            services.AddSingleton<ArticulateFrontEndFilterConvention>();
-            services.TryAddEnumerable(ServiceDescriptor.Singleton<MatcherPolicy, ArticulateDynamicRouteSelectorPolicy>());
-            services.AddSingleton<IArticulateThemeRepository, ArticulateThemeRepository>();
-            services.AddScoped<IArticulateThemeResolver, ArticulateThemeResolver>();
-            services.AddScoped<BackOfficeAuthService>();
-            services.Configure<RazorViewEngineOptions>(options =>
+            _ = services.AddSingleton<DisqusXmlExporter>();
+            _ = services.AddScoped<BlogMlImporter>();
+            _ = services.AddSingleton<IArticulateSearcher, DefaultArticulateSearcher>();
+            _ = services.AddSingleton<ArticulateRouteValueTransformer>();
+            _ = services.AddSingleton<ArticulateRouter>();
+            _ = services.AddSingleton<RouteCacheRefresherFilter>();
+            _ = services.AddSingleton<ArticulateFrontEndFilterConvention>();
+            services.TryAddEnumerable(
+                ServiceDescriptor.Singleton<MatcherPolicy, ArticulateDynamicRouteSelectorPolicy>());
+            _ = services.AddSingleton<IArticulateThemeRepository, ArticulateThemeRepository>();
+            _ = services.AddSingleton<IMarkdownToHtmlConverter, MarkdownService>();
+            _ = services.AddTransient<IArticulateThemeResolver, ArticulateThemeResolver>();
+            _ = services.AddScoped<BackOfficeAuthService>();
+
+            // Register DI-driven view location provider and configure Razor view engine with provider
+            _ = services.AddSingleton<IArticulateViewLocationProvider, DefaultArticulateViewLocationProvider>();
+            _ = services.Configure<RazorViewEngineOptions>(options =>
             {
-                IArticulateThemeResolver themeResolver = services.BuildServiceProvider().GetRequiredService<IArticulateThemeResolver>();
-                options.ViewLocationExpanders.Add(new ArticulateViewLocationExpander(themeResolver));
+                options.ViewLocationExpanders.Add(new ArticulateViewLocationExpander());
             });
-            builder.UrlProviders().InsertBefore<NewDefaultUrlProvider, DateFormattedUrlProvider>();
-            builder.ContentFinders().InsertBefore<ContentFinderByUrlNew, DateFormattedPostContentFinder>();
 
-            services.AddOptions<ArticulateOptions>();
+            _ = builder.UrlProviders().InsertBefore<NewDefaultUrlProvider, DateFormattedUrlProvider>();
+            _ = builder.ContentFinders().InsertBefore<ContentFinderByUrlNew, DateFormattedPostContentFinder>();
 
-            builder.AddNotificationHandler<ContentSavingNotification, ContentSavingHandler>();
-            builder.AddNotificationHandler<ContentSavedNotification, ContentSavedHandler>();
-            builder.AddNotificationHandler<ContentTypeSavingNotification, ContentTypeSavingHandler>();
-            builder.AddNotificationHandler<ContentCacheRefresherNotification, ContentCacheRefresherHandler>();
-            builder.AddNotificationHandler<DomainCacheRefresherNotification, DomainCacheRefresherHandler>();
+            _ = services.AddOptions<ArticulateOptions>()
+                .BindConfiguration("Articulate");
 
-            services.ConfigureOptions<ArticulatePipelineStartupFilter>();
-            services.ConfigureOptions<ConfigureArticulateMvcOptions>();
+            _ = builder.AddNotificationHandler<ContentSavingNotification, ContentSavingHandler>();
+            _ = builder.AddNotificationAsyncHandler<ContentSavedNotification, ContentSavedAsyncHandler>();
+            _ = builder.AddNotificationHandler<ContentTypeSavingNotification, ContentTypeSavingHandler>();
+            _ = builder.AddNotificationHandler<ContentCacheRefresherNotification, ContentCacheRefresherHandler>();
+            _ = builder.AddNotificationHandler<DomainCacheRefresherNotification, DomainCacheRefresherHandler>();
+            _ = builder
+                .AddNotificationHandler<MigrationPlansExecutedNotification, ArticulateMigrationPlanExecutedHandler>();
 
-            services.AddOutputCache(options =>
+            _ = services.ConfigureOptions<ArticulatePipelineStartupFilter>();
+            _ = services.ConfigureOptions<ConfigureArticulateMvcOptions>();
+
+            _ = services.AddOutputCache(options =>
             {
                 options.AddPolicy("Articulate120", policyBuilder =>
-                    policyBuilder.Expire(TimeSpan.FromSeconds(120)));
+                    policyBuilder
+                        .Expire(TimeSpan.FromSeconds(120)));
                 options.AddPolicy("Articulate300", policyBuilder =>
-                    policyBuilder.Expire(TimeSpan.FromSeconds(300)));
+                    policyBuilder
+                        .Expire(TimeSpan.FromSeconds(300)));
                 options.AddPolicy("Articulate60", policyBuilder =>
-                    policyBuilder.Expire(TimeSpan.FromSeconds(60)));
+                    policyBuilder
+                        .Expire(TimeSpan.FromSeconds(60)));
             });
         }
     }

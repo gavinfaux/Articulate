@@ -22,11 +22,26 @@ namespace Articulate.Models
 
         public string BlogLogo { get; }
 
+        /// <summary>
+        /// Gets the blog logo URL with CSS escaping for safe use in inline style attributes
+        /// </summary>
+        public string? BlogLogoCss { get; }
+
         public string BlogBanner { get; }
+
+        /// <summary>
+        /// Gets the blog banner URL with CSS escaping for safe use in inline style attributes
+        /// </summary>
+        public string? BlogBannerCss { get; }
 
         public int PageSize { get; }
 
         public string DisqusShortName { get; }
+
+        /// <summary>
+        /// Gets whether Disqus comments are enabled and configured with a valid shortname
+        /// </summary>
+        public bool IsDisqusEnabled { get; }
 
         public string CustomRssFeed { get; }
 

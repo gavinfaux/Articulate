@@ -11,9 +11,10 @@ namespace Articulate.Models
 
             ArgumentNullException.ThrowIfNull(tagUrl, nameof(tagUrl));
 
+            ArgumentNullException.ThrowIfNull(tagName, nameof(tagName));
             // resolve to array so it doesn't double lookup
             Posts = posts.ToArray();
-            TagName = tagName ?? throw new ArgumentNullException(nameof(tagName));
+            TagName = tagName;
             var safeEncoded = tagUrl.SafeEncodeUrlSegments();
             TagUrl = safeEncoded.Contains("//") ? safeEncoded : safeEncoded.EnsureStartsWith('/');
             if (count > -1)
@@ -37,10 +38,7 @@ namespace Articulate.Models
         {
             get
             {
-                if (_count.HasValue == false)
-                {
-                    _count = (Posts ?? []).Count();
-                }
+                _count ??= (Posts ?? []).Count();
 
                 return _count.Value;
             }

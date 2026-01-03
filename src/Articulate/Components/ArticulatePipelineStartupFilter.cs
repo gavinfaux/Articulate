@@ -8,6 +8,7 @@ namespace Articulate.Components
 {
     public class ArticulatePipelineStartupFilter : IConfigureOptions<UmbracoPipelineOptions>
     {
+        /// <inheritdoc/>
         public void Configure(UmbracoPipelineOptions options)
             => options.AddFilter(new UmbracoPipelineFilter(nameof(ArticulatePipelineStartupFilter))
             {
@@ -17,7 +18,7 @@ namespace Articulate.Components
                         "/{any}/{**slug}",
                         null!,
                         1000); // Ensure it runs AFTER Umbraco so that we can check if things are already matched.
-                })
+                }),
             });
     }
 }

@@ -8,6 +8,7 @@ namespace Articulate.Options
     internal class ConfigureArticulateMvcOptions(ArticulateFrontEndFilterConvention articulateFrontEndFilterConvention)
         : IConfigureOptions<MvcOptions>
     {
+        /// <inheritdoc/>
         public void Configure(MvcOptions options) => options.Conventions.Add(articulateFrontEndFilterConvention);
     }
 }

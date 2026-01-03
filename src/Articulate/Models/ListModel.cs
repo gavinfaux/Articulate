@@ -1,6 +1,8 @@
 #nullable enable
-using Umbraco.Cms.Core.Media;
 using Umbraco.Cms.Core.Models.PublishedContent;
+using Umbraco.Cms.Core.PublishedCache;
+using Umbraco.Cms.Core.Services.Navigation;
+using Umbraco.Cms.Core.Web;
 
 namespace Articulate.Models
 {
@@ -10,7 +12,10 @@ namespace Articulate.Models
     public class ListModel : MasterModel
     {
         private readonly IEnumerable<IPublishedContent>? _listItems;
-        private IEnumerable<PostModel>? _resolvedList;
+        private readonly Lazy<PostModel[]> _posts;
+        private readonly IDocumentNavigationQueryService? _navigationQueryService;
+        private readonly IPublishedContentCache? _publishedContentCache;
+        private readonly IUmbracoContextAccessor? _umbracoContextAccessor;
 
         /// <summary>
         /// Accepts an explicit list of child items
@@ -19,6 +24,9 @@ namespace Articulate.Models
         /// <param name="listItems"></param>
         /// <param name="pager"></param>
         /// <param name="publishedValueFallback"></param>
+        /// <param name="navigationQueryService">Optional navigation service for loading children when listItems is null</param>
+        /// <param name="publishedContentCache">Optional content cache for loading children when listItems is null</param>
+        /// <param name="umbracoContextAccessor">Optional Umbraco context accessor for loading children when listItems is null</param>
         /// <remarks>
         /// Default sorting by published date will be disabled for this list model, it is assumed that the list items will
         /// already be sorted.
@@ -27,46 +35,32 @@ namespace Articulate.Models
             IPublishedContent? content,
             PagerModel? pager,
             IEnumerable<IPublishedContent>? listItems,
-            IPublishedValueFallback publishedValueFallback)
+            IPublishedValueFallback publishedValueFallback,
+            IDocumentNavigationQueryService? navigationQueryService = null,
+            IPublishedContentCache? publishedContentCache = null,
+            IUmbracoContextAccessor? umbracoContextAccessor = null)
             : base(content, publishedValueFallback)
         {
-            ArgumentNullException.ThrowIfNull(content, nameof(content));
+            ArgumentNullException.ThrowIfNull(content);
 
             Pages = pager ?? throw new ArgumentNullException(nameof(pager));
             _listItems = listItems ?? throw new ArgumentNullException(nameof(listItems));
+            _navigationQueryService = navigationQueryService;
+            _publishedContentCache = publishedContentCache;
+            _umbracoContextAccessor = umbracoContextAccessor;
+
+            var contentName = content.Name;
             if (content.ContentType.Alias.Equals(ArticulateConstants.ContentType.ArticulateArchive))
             {
                 PageTitle = BlogTitle + " - " + BlogDescription;
             }
             else
             {
-                PageTags = Name;
+                PageTags = contentName;
             }
+
+            _posts = new Lazy<PostModel[]>(BuildPosts, LazyThreadSafetyMode.ExecutionAndPublication);
         }
-
-        [Obsolete("Use ListModel(IPublishedContent? content, PagerModel? pager, IEnumerable<IPublishedContent>? listItems, IPublishedValueFallback publishedValueFallback)")]
-        public ListModel(
-            IPublishedContent? content,
-            PagerModel? pager,
-            IEnumerable<IPublishedContent>? listItems,
-            IPublishedValueFallback publishedValueFallback,
-            IVariationContextAccessor variationContextAccessor)
-            : this(content, pager, listItems, publishedValueFallback)
-        { }
-
-
-        public ListModel(IPublishedContent content, IPublishedValueFallback publishedValueFallback)
-            : base(content, publishedValueFallback)
-        {
-        }
-
-        [Obsolete("Use ListModel(IPublishedContent content, IPublishedValueFallback publishedValueFallback)")]
-        public ListModel(IPublishedContent content, IPublishedValueFallback publishedValueFallback, IVariationContextAccessor variationContextAccessor) : this(content, publishedValueFallback)
-        {
-        }
-
-        [Obsolete]
-        public IImageUrlGenerator? ImageUrlGenerator => null;
 
         /// <summary>
         /// Gets the pager model
@@ -76,45 +70,44 @@ namespace Articulate.Models
         /// <summary>
         /// Gets a strongly typed access to the list of blog posts
         /// </summary>
-        public IEnumerable<PostModel> Posts
+        public IEnumerable<PostModel> Posts => _posts.Value;
+
+        private PostModel[] BuildPosts()
         {
-            get
+            if (_listItems is null)
             {
-                if (_resolvedList is not null)
+                // Use navigation service to get children
+                if (_navigationQueryService is null || _publishedContentCache is null ||
+                    _umbracoContextAccessor is null)
                 {
-                    return _resolvedList;
+                    throw new InvalidOperationException(
+                        "Cannot build posts from children without IDocumentNavigationQueryService, IPublishedContentCache, and IUmbracoContextAccessor. " +
+                        "Use the constructor that accepts these dependencies or provide explicit listItems.");
                 }
 
-                if (_listItems is null)
+                if (!_umbracoContextAccessor.TryGetUmbracoContext(out IUmbracoContext? umbracoContext) ||
+                    !_navigationQueryService.TryGetChildrenKeys(Unwrap().Key, out IEnumerable<Guid> childKeys))
                 {
-                    _resolvedList = ChildrenForAllCultures.Select(x => new PostModel(x, PublishedValueFallback)).ToArray();
-                    return _resolvedList;
+                    return [];
                 }
 
-                if (_listItems is not null && Pages is not null)
-                {
-                    _resolvedList = _listItems
-
-                        // Skip will already be done in this case, but we'll take again anyways just to be safe
-                        .Take(Pages.PageSize)
-                        .Select(x => new PostModel(x, PublishedValueFallback))
-                        .ToArray();
-                }
-                else
-                {
-                    _resolvedList = [];
-                }
-
-                return _resolvedList;
+                return childKeys
+                    .Select(key => _publishedContentCache.GetById(umbracoContext.InPreviewMode, key))
+                    .Where(x => x is not null)
+                    .Select(x => new PostModel(x!, PublishedValueFallback))
+                    .ToArray();
             }
+
+            IEnumerable<IPublishedContent> items = _listItems;
+            if (Pages is not null)
+            {
+                // Apply page size limit to the pre-filtered list items
+                items = items.Take(Pages.PageSize);
+            }
+
+            return items
+                .Select(x => new PostModel(x, PublishedValueFallback))
+                .ToArray();
         }
-
-        /// <summary>
-        /// Gets the list of blog posts
-        /// </summary>
-        [Obsolete("Please use TryGetChildrenKeys() on IDocumentNavigationQueryService or IMediaNavigationQueryService instead. Scheduled for removal in V16.", false)]
-        public override IEnumerable<IPublishedContent> Children => Posts;
-
-        public IEnumerable<IPublishedContent> ChildrenForAllCultures => Posts;
     }
 }

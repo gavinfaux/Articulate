@@ -1,4 +1,5 @@
 #nullable enable
+
 namespace Articulate.Options
 {
     /// <summary>
@@ -6,9 +7,7 @@ namespace Articulate.Options
     /// </summary>
     public class ArticulateOptions
     {
-        /// <summary>
-        /// Constructor sets defaults
-        /// </summary>
+
         public ArticulateOptions() =>
             GenerateExcerpt = val => val.DetectIsJson()
                 ? string.Empty
@@ -26,5 +25,13 @@ namespace Articulate.Options
         /// The default generator will truncate the post content with 200 chars
         /// </summary>
         public Func<string, string> GenerateExcerpt { get; set; }
+
+
+        /// <summary>
+        /// When true, Articulate content created during the installer is published automatically.
+        /// Default: false.
+        /// </summary>
+        public bool AutoPublishOnStartup { get; set; } = false;
     }
+
 }

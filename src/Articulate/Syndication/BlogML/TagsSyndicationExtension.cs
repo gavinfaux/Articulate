@@ -10,18 +10,13 @@ namespace Articulate.Syndication.BlogML
     {
         private const string Namespace = "https://github.com/Shazwazza/Articulate/blogml/";
 
-        private TagsSyndicationExtensionContext _extensionContext = new();
-
         public TagsSyndicationExtensionContext Context
         {
-            get => _extensionContext;
-            set
-            {
-                Guard.ArgumentNotNull(value, "value");
-                _extensionContext = value;
-            }
+            get;
         }
+        = new();
 
+        /// <inheritdoc/>
         public int CompareTo(object obj) =>
             obj switch
             {
@@ -43,7 +38,7 @@ namespace Articulate.Syndication.BlogML
                         syndicationExtension.Context.Tags,
                         StringComparison.OrdinalIgnoreCase),
                 _ => throw new ArgumentException(
-                    string.Format(null, "obj is not of type {0}, type was found to be '{1}'.", GetType().FullName, obj.GetType().FullName), nameof(obj))
+                    string.Format(null, "obj is not of type {0}, type was found to be '{1}'.", GetType().FullName, obj.GetType().FullName), nameof(obj)),
             };
 
         /// <inheritdoc />
@@ -75,6 +70,7 @@ namespace Articulate.Syndication.BlogML
             Context.WriteTo(writer, XmlNamespace);
         }
 
+        /// <inheritdoc/>
         public override string ToString()
         {
             using var memoryStream = new MemoryStream();
@@ -82,17 +78,18 @@ namespace Articulate.Syndication.BlogML
             {
                 ConformanceLevel = ConformanceLevel.Fragment,
                 Indent = true,
-                OmitXmlDeclaration = true
+                OmitXmlDeclaration = true,
             }))
             {
                 WriteTo(writer);
             }
 
-            memoryStream.Seek(0L, SeekOrigin.Begin);
+            _ = memoryStream.Seek(0L, SeekOrigin.Begin);
             using var streamReader = new StreamReader(memoryStream);
             return streamReader.ReadToEnd();
         }
 
+        /// <inheritdoc/>
         public override bool Equals(object obj)
         {
             if (obj is not TagsSyndicationExtension)
@@ -103,6 +100,24 @@ namespace Articulate.Syndication.BlogML
             return CompareTo(obj) == 0;
         }
 
-        public override int GetHashCode() => ToString().ToCharArray().GetHashCode();
+        /// <inheritdoc/>
+        public override int GetHashCode()
+        {
+            var hash = new HashCode();
+            hash.Add(Description);
+            hash.Add(Documentation);
+            hash.Add(Name);
+            hash.Add(Version);
+            hash.Add(XmlNamespace);
+            hash.Add(XmlPrefix);
+            if (Context.Tags is not null)
+            {
+                foreach (var tag in Context.Tags)
+                {
+                    hash.Add(tag);
+                }
+            }
+            return hash.ToHashCode();
+        }
     }
 }

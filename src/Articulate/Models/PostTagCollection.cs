@@ -15,16 +15,20 @@ namespace Articulate.Models
         /// <returns></returns>
         public int GetTagWeight(PostsByTagModel postsByTag, decimal maxWeight)
         {
-            if (_maxCount.HasValue == false)
+            _maxCount ??= this.DefaultIfEmpty().Max(x => x?.PostCount ?? 0);
+
+            if (_maxCount.Value == 0)
             {
-                _maxCount = this.Max(x => x.PostCount);
+                return 0;
             }
 
             return Convert.ToInt32(Math.Ceiling(postsByTag.PostCount * maxWeight / _maxCount.Value));
         }
 
+        /// <inheritdoc/>
         public IEnumerator<PostsByTagModel> GetEnumerator() => tags.GetEnumerator();
 
+        /// <inheritdoc/>
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 }

@@ -5,25 +5,19 @@ namespace Articulate.Models
 {
     public class TagListModel : MasterModel
     {
-        [Obsolete("Use TagListModel(IPublishedContent content, string name, int pageSize, PostTagCollection tags, IPublishedValueFallback publishedValueFallback)")]
         public TagListModel(
             IMasterModel masterModel,
             string name,
             int pageSize,
             PostTagCollection tags,
-            IPublishedValueFallback publishedValueFallback,
-            IVariationContextAccessor variationContextAccessor)
-            : this(masterModel, name, pageSize, tags, publishedValueFallback)
-        { }
-
-        public TagListModel(
-        IMasterModel masterModel,
-        string name,
-        int pageSize,
-        PostTagCollection tags,
-        IPublishedValueFallback publishedValueFallback)
-        : base(masterModel.RootBlogNode, publishedValueFallback)
+            IPublishedValueFallback publishedValueFallback)
+            : base(masterModel.RootBlogNode, publishedValueFallback)
         {
+            ArgumentNullException.ThrowIfNull(masterModel);
+            ArgumentNullException.ThrowIfNull(name);
+            ArgumentNullException.ThrowIfNull(tags);
+            ArgumentNullException.ThrowIfNull(publishedValueFallback);
+
             Name = name;
             Theme = masterModel.Theme;
             RootBlogNode = masterModel.RootBlogNode;
@@ -36,11 +30,12 @@ namespace Articulate.Models
             BlogLogo = masterModel.BlogLogo;
             DisqusShortName = masterModel.DisqusShortName;
             CustomRssFeed = masterModel.CustomRssFeed;
-            PageTitle = Name + " - " + BlogTitle;
+            PageTitle = $"{name} - {BlogTitle}";
         }
 
         public PostTagCollection Tags { get; }
 
+        /// <inheritdoc/>
         public override string Name { get; }
     }
 }

@@ -1,0 +1,120 @@
+#nullable enable
+namespace Articulate
+{
+    /// <summary>
+    /// Security extension methods for validating and sanitizing URLs to prevent XSS and injection attacks.
+    /// </summary>
+    public static class SecurityExtensions
+    {
+        /// <summary>
+        /// Validates a URL for use in href or src attributes. Allows http/https/mailto/tel and relative URLs.
+        /// </summary>
+        /// <param name="url">The URL to validate.</param>
+        /// <returns>The URL if safe, otherwise <c>null</c>.</returns>
+        public static string? ToSafeHrefUrl(this string? url)
+        {
+            if (string.IsNullOrWhiteSpace(url))
+            {
+                return null;
+            }
+
+            url = url.Trim();
+
+            // Reject protocol-relative URLs (//evil.com)
+            if (url.StartsWith("//"))
+            {
+                return null;
+            }
+
+            // Allow relative URLs
+            if (url.StartsWith('/') || url.StartsWith('~') || url.StartsWith('#'))
+            {
+                return url;
+            }
+
+            // Try to parse as absolute URI
+            if (!Uri.TryCreate(url, UriKind.Absolute, out Uri? uri))
+            {
+                // Allow relative URLs without leading slash
+                return url;
+            }
+
+            // Allow safe schemes only
+            if (uri.Scheme == Uri.UriSchemeHttp ||
+                uri.Scheme == Uri.UriSchemeHttps ||
+                uri.Scheme == Uri.UriSchemeMailto ||
+                uri.Scheme == "tel")
+            {
+                return url;
+            }
+
+            // Reject dangerous protocols (javascript:, data:, vbscript:, file:, etc.)
+            return null;
+        }
+
+        /// <summary>
+        /// Validates and escapes a URL for use in CSS url() functions. Only allows http/https and relative URLs.
+        /// </summary>
+        /// <param name="url">The URL to validate and escape.</param>
+        /// <returns>The CSS-escaped URL if safe, otherwise <c>null</c>.</returns>
+        public static string? ToSafeCssUrl(this string? url)
+        {
+            if (string.IsNullOrWhiteSpace(url))
+            {
+                return null;
+            }
+
+            if (!Uri.TryCreate(url, UriKind.RelativeOrAbsolute, out Uri? uri))
+            {
+                return null;
+            }
+
+            // For absolute URIs, only allow http and https
+            if (uri.IsAbsoluteUri && uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps)
+            {
+                return null;
+            }
+
+            // Escape characters that could break out of CSS context
+            return url
+                .Replace("\\", "\\\\")
+                .Replace("'", "\\'")
+                .Replace("\"", "\\\"")
+                .Replace("\n", "\\n")
+                .Replace("\r", "\\r")
+                .Replace("\0", string.Empty)
+                .Replace("(", "\\(")
+                .Replace(")", "\\)");
+        }
+
+        /// <summary>
+        /// Checks if a URL is safe for use in href or src attributes.
+        /// </summary>
+        /// <param name="url">The URL to validate.</param>
+        /// <returns><c>true</c> if the URL is safe, otherwise <c>false</c>.</returns>
+        public static bool IsSafeUrl(this string? url)
+        {
+            return url.ToSafeHrefUrl() != null;
+        }
+
+        /// <summary>
+        /// Gets a safe URL for href or src attributes, returning an empty string if invalid.
+        /// </summary>
+        /// <param name="url">The URL to validate.</param>
+        /// <returns>The URL if safe, otherwise an empty string.</returns>
+        public static string ToSafeHrefUrlOrEmpty(this string? url)
+        {
+            return url.ToSafeHrefUrl() ?? string.Empty;
+        }
+
+        /// <summary>
+        /// Alias for <see cref="ToSafeCssUrl"/> for naming consistency.
+        /// </summary>
+        /// <param name="url">The URL to validate and escape.</param>
+        /// <returns>The CSS-escaped URL if safe, otherwise <c>null</c>.</returns>
+        public static string? ToSafeCssUrlOrNull(this string? url)
+        {
+            return url.ToSafeCssUrl();
+        }
+    }
+}

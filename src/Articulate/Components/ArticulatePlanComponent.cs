@@ -4,6 +4,7 @@ using Umbraco.Cms.Core.Composing;
 using Umbraco.Cms.Core.Migrations;
 using Umbraco.Cms.Core.Scoping;
 using Umbraco.Cms.Core.Services;
+using Umbraco.Cms.Infrastructure.Migrations;
 using Umbraco.Cms.Infrastructure.Migrations.Upgrade;
 
 namespace Articulate.Components
@@ -15,7 +16,16 @@ namespace Articulate.Components
         IRuntimeState runtimeState)
         : IAsyncComponent
     {
-        private void Initialize()
+        /// <inheritdoc/>
+        public async Task InitializeAsync(bool isRestarting, CancellationToken cancellationToken)
+        {
+            await InitializeAsync();
+        }
+
+        /// <inheritdoc/>
+        public Task TerminateAsync(bool isRestarting, CancellationToken cancellationToken) => Task.CompletedTask;
+
+        private async Task InitializeAsync()
         {
             if (runtimeState.Level < RuntimeLevel.Run)
             {
@@ -25,13 +35,15 @@ namespace Articulate.Components
             var migrationPlan = new ArticulatePlan();
 
             var upgrader = new Upgrader(migrationPlan);
-            upgrader.Execute(migrationPlanExecutor, scopeProvider, keyValueService);
+
+            ExecutedMigrationPlan result = await upgrader.ExecuteAsync(
+                migrationPlanExecutor,
+                scopeProvider,
+                keyValueService);
+            if (!result.Successful)
+            {
+                throw new InvalidOperationException("Articulate migration failed.", result.Exception);
+            }
         }
-
-        private static void Terminate() { }
-
-        public Task InitializeAsync(bool isRestarting, CancellationToken cancellationToken) => Task.Run(Initialize, cancellationToken);
-
-        public Task TerminateAsync(bool isRestarting, CancellationToken cancellationToken) => Task.Run(Terminate, cancellationToken);
     }
 }
