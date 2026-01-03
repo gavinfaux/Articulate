@@ -1,3 +1,6 @@
+using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
+
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 builder.CreateUmbracoBuilder()
@@ -14,9 +17,40 @@ if (builder.Environment.IsProduction())
     // builder.WebHost.UseStaticWebAssets();
 }
 
+// Increase upload limits, e.g. importing larger BlogML XML files; also ensure Umbraco:CMS:Runtime:MaxRequestLength is set
+builder.Services.Configure<FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = 104857600; // 100MB
+});
+builder.Services.Configure<KestrelServerOptions>(options =>
+{
+    options.Limits.MaxRequestBodySize = 104857600; // 100MB
+});
+builder.Services.Configure<IISServerOptions>(options =>
+{
+    options.MaxRequestBodySize = 104857600; // 100MB
+});
+
+/* NOTE: For legacy IIS web.config settings to work, you also need to update the following:
+
+<configuration>
+     <system.web>
+       <httpRuntime maxRequestLength="102400" />
+     </system.web>
+     <system.webServer>
+       <security>
+         <requestFiltering>
+           <requestLimits maxAllowedContentLength="104857600" />
+         </requestFiltering>
+       </security>
+     </system.webServer>
+   </configuration>
+
+*/
+
 WebApplication app = builder.Build();
 
-await app.BootUmbracoAsync().ConfigureAwait(false);
+await app.BootUmbracoAsync();
 
 if (app.Environment.IsProduction())
 {
@@ -41,4 +75,4 @@ app.UseUmbraco()
         u.UseWebsiteEndpoints();
     });
 
-await app.RunAsync().ConfigureAwait(false);
+await app.RunAsync();
