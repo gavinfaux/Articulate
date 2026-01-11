@@ -18,14 +18,14 @@ namespace Articulate.Services
                 BuildPath(Paths.UserThemesRoot, themeName, Paths.Views, Paths.ViewPlaceholder),
                 BuildPath(Paths.UserThemesRoot, themeName, Paths.Views, Paths.Partials, Paths.ViewPlaceholder),
 
-                // Built-in themes (new location outside wwwroot)
-                BuildPath(Paths.ArticulateRoot, Paths.Themes, themeName, Paths.Views, Paths.ViewPlaceholder),
-                BuildPath(Paths.ArticulateRoot, Paths.Themes, themeName, Paths.Views, Paths.Partials, Paths.ViewPlaceholder),
-
-                // BACKWARD COMPATIBILITY: Old user theme structure (v5.x)
-                // TODO: Remove in v7.0
+                // User themes (v5.x legacy structure - no Views subfolder)
                 BuildPath(Paths.UserThemesRoot, themeName, Paths.ViewPlaceholder),
                 BuildPath(Paths.UserThemesRoot, themeName, Paths.Partials, Paths.ViewPlaceholder),
+
+                // Built-in themes (after all user theme paths)
+                BuildPath(Paths.ArticulateRoot, Paths.Themes, themeName, Paths.Views, Paths.ViewPlaceholder),
+                BuildPath(Paths.ArticulateRoot, Paths.Themes, themeName, Paths.Views, Paths.Partials,
+                    Paths.ViewPlaceholder),
 
                 // MarkdownEditor
                 BuildPath(Paths.ArticulateRoot, Paths.MarkdownEditor, Paths.Views, Paths.ViewPlaceholder)

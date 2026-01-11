@@ -1,4 +1,8 @@
 @model IMasterModel
+@{
+    var theme = Model.Theme;
+    var themeLower = theme.ToLower();
+}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -19,12 +23,12 @@
     @Model.RenderOpenSearch()
 
     <environment include="Development">
-        <link href="~/App_Plugins/Articulate/Themes/Mini/assets/vendor/normalize/normalize.css" rel="stylesheet" fetchpriority="high" asp-append-version="true">
-        <link href="~/App_Plugins/Articulate/Themes/Mini/assets/vendor/skeleton/skeleton.css" rel="stylesheet" fetchpriority="high" asp-append-version="true">
-        <link href="~/App_Plugins/Articulate/Themes/Mini/assets/src/css/style.css" rel="stylesheet" asp-append-version="true">
+        <link href="~/App_Plugins/Articulate/Themes/@theme/assets/vendor/normalize/normalize.css" rel="stylesheet" fetchpriority="high" asp-append-version="true">
+        <link href="~/App_Plugins/Articulate/Themes/@theme/assets/vendor/skeleton/skeleton.css" rel="stylesheet" fetchpriority="high" asp-append-version="true">
+        <link href="~/App_Plugins/Articulate/Themes/@theme/assets/src/css/style.css" rel="stylesheet" asp-append-version="true">
     </environment>
     <environment exclude="Development">
-        <link href="~/App_Plugins/Articulate/Themes/Mini/assets/dist/css/mini.min.css" rel="stylesheet" fetchpriority="high" asp-append-version="true">
+        <link href="~/App_Plugins/Articulate/Themes/@theme/assets/dist/css/@(themeLower).min.css" rel="stylesheet" fetchpriority="high" asp-append-version="true">
     </environment>
 
     <link href="https://fonts.googleapis.com/css?family=Raleway:200&display=swap" rel="stylesheet">
@@ -44,11 +48,12 @@
     @RenderBody()
 
     <environment include="Development">
-        <script defer src="~/App_Plugins/Articulate/Themes/Mini/assets/src/js/share.js" type="text/javascript" asp-append-version="true"></script>
+        <script defer src="~/App_Plugins/Articulate/Themes/@theme/assets/src/js/share.js" type="text/javascript" asp-append-version="true"></script>
     </environment>
     <environment exclude="Development">
-        <script defer src="~/App_Plugins/Articulate/Themes/Mini/assets/dist/js/mini.min.js" type="text/javascript" asp-append-version="true"></script>
+        <script defer src="~/App_Plugins/Articulate/Themes/@theme/assets/dist/js/@(themeLower).min.js" type="text/javascript" asp-append-version="true"></script>
     </environment>
 
 </body>
 </html>
+
