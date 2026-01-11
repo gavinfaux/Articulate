@@ -1,0 +1,32 @@
+@model IMasterModel
+
+<div class="header-placeholder">&nbsp;</div>
+
+@{
+    string backgroundStyle = Model.BlogBannerCss is not null
+        ? $"background-image: url('{Model.BlogBannerCss}');"
+        : "";
+}
+<div class="header-content" style="@backgroundStyle">
+
+    @if (!string.IsNullOrWhiteSpace(Model.BlogLogo)
+        && Uri.TryCreate(Model.BlogLogo, UriKind.RelativeOrAbsolute, out var logoUri)
+        && (!logoUri.IsAbsoluteUri || (logoUri.Scheme == Uri.UriSchemeHttp || logoUri.Scheme == Uri.UriSchemeHttps)))
+    {
+        <a class="logo" href="@Model.ArticulateRootUrl()"><img src="@Model.BlogLogo" alt="Blog Logo" class="blog-logo" /></a>
+    }
+
+    <!--- Title --->
+    <div class="header-title">
+
+        <a href="@Model.ArticulateRootUrl()">
+            <h1 class="blog-title">@Model.BlogTitle</h1>
+        </a>
+        <h2 class="blog-description">@Model.BlogDescription</h2>
+    </div>
+
+    <!--- Header Menu --->
+    @await Html.PartialAsync("Menu", Model)
+
+</div>
+

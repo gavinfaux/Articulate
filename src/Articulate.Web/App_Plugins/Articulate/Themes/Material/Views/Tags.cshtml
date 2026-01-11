@@ -1,0 +1,78 @@
+@model TagListModel
+@{
+    Layout = "Master.cshtml";
+    ViewBag.CssWrapperClass = "demo-blog--blogpost";
+    var asArray = Model.Tags.ToArray();
+}
+@if (!string.IsNullOrEmpty(Model.RootBlogNode.Url()))
+{
+  <div class="demo-back">
+    <a class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon" href="@Model.RootBlogNode.Url()" title="go back" role="button">
+        <i class="material-icons" role="presentation">arrow_back</i>
+    </a>
+  </div>
+}
+
+<div class="demo-blog__posts mdl-grid">
+
+    <div class="mdl-card mdl-cell mdl-cell--8-col">
+        <div class="mdl-card__title mdl-color-text--grey-50">
+            <h1 class="mdl-card__title-text">@(Model.Name)</h1>
+        </div>
+        <div class="mdl-card__supporting-text">
+
+            @{
+                var isTagsAction = ViewContext.RouteData.Values["action"]?.ToString()?.Equals("Tags", StringComparison.OrdinalIgnoreCase) == true;
+            }
+            @if (isTagsAction)
+            {
+                <div class="tag-cloud-large">
+                    @(Model.Tags.TagCloud(@<a href="#tag-@item.HtmlId">@item.TagName</a>, 5, 50))
+                </div>
+            }
+            else
+            {
+                <ul>
+                    @foreach (var tagModel in asArray)
+                    {
+                        <li>
+                            <a href="#tag-@tagModel.HtmlId">@tagModel.TagName</a> - (@tagModel.PostCount)
+                        </li>
+                    }
+                </ul>
+            }
+
+
+        </div>
+        <div class="mdl-card__menu">
+        </div>
+    </div>
+
+    @await Html.PartialAsync("TitleTile", Model)
+
+    @foreach (var tagModel in asArray)
+    {
+        <div class="mdl-card mdl-cell mdl-cell--12-col tag-card">
+            <div class="mdl-card__title mdl-color-text--primary mdl-color--accent-contrast">
+                <h4 class="mdl-card__title-text">
+                    <a id="tag-@tagModel.HtmlId" href="@tagModel.TagUrl">@tagModel.TagName</a>
+                </h4>
+            </div>
+            <div class="mdl-card__supporting-text">
+                @tagModel.Posts?.OrderByDescending(x => x.PublishedDate).Table(new { @class = "mdl-data-table mdl-js-data-table full-box-width" },
+                    ["Date", "Name", string.Empty],
+                    ["mdl-data-table__cell--non-numeric date", "mdl-data-table__cell--non-numeric", "mdl-data-table__cell--non-numeric"],
+                    @<span>@item?.PublishedDate.ToString("yyyy-MM-dd")</span>,
+                    @<a href="@item?.Url()">@item?.Name</a>,
+                    @<text>@if (Model.IsDisqusEnabled) {<a href="@item?.Url()#disqus_thread" data-disqus-identifier="@item?.Key"></a>}</text>)
+            </div>
+            <div class="mdl-card__menu">
+                <a href="@tagModel.ArticulateTagRssUrl()" title="RSS Feed" class="mdl-button mdl-button--icon mdl-js-button mdl-js-ripple-effect mdl-color--primary mdl-color-text--grey-50">
+                    <i class="material-icons">local_library</i>
+                </a>
+            </div>
+        </div>
+    }
+
+
+</div>

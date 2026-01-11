@@ -16,6 +16,9 @@ using ManagementConstants = Articulate.Api.Management.Constants;
 
 namespace Articulate.Web.Controllers
 {
+    /// <summary>
+    /// Controller for the Articulate Markdown editor.
+    /// </summary>
     [ArticulateDynamicRoute]
     public class MarkdownEditorController(
         ILogger<MarkdownEditorController> logger,
@@ -26,6 +29,10 @@ namespace Articulate.Web.Controllers
         IOptions<WebRoutingSettings> webRoutingSettings)
         : RenderController(logger, compositeViewEngine, umbracoContextAccessor)
     {
+        /// <summary>
+        /// Renders the view for creating a new post using the Markdown editor.
+        /// </summary>
+        /// <returns>The action result yielding the editor view.</returns>
         [HttpGet]
         public IActionResult NewPost()
         {
@@ -64,7 +71,8 @@ namespace Articulate.Web.Controllers
 
             if (CurrentPage.Id <= 0)
             {
-                throw new InvalidOperationException($"Invalid Articulate node id '{CurrentPage.Id}' for Markdown editor initialization.");
+                throw new InvalidOperationException(
+                    $"Invalid Articulate node id '{CurrentPage.Id}' for Markdown editor initialization.");
             }
 
             ArticulateOpenIdClientOptions openIdClientOptions = artClientOptions.Value;
@@ -136,12 +144,23 @@ namespace Articulate.Web.Controllers
             string? postLogoutRedirect = GetSafeRedirect(options.PostLogoutRedirectUris, editorAbsoluteUri);
             string umbracoPath = GetUmbracoPathFromManagementApiUrl(editorAbsoluteUri);
 
-            string defaultAuthorizeUrl = BuildAbsoluteUrl(editorAbsoluteUri, $"{umbracoPath}/management/api/v1/security/back-office/authorize");
-            string defaultTokenUrl = BuildAbsoluteUrl(editorAbsoluteUri, $"{umbracoPath}/management/api/v1/security/back-office/token");
-            string defaultEndSessionUrl = BuildAbsoluteUrl(editorAbsoluteUri, $"{umbracoPath}/management/api/v1/security/back-office/signout");
-            string defaultRevocationUrl = BuildAbsoluteUrl(editorAbsoluteUri, $"{umbracoPath}/management/api/v1/security/back-office/revoke");
-            string defaultCurrentUserUrl = BuildAbsoluteUrl(editorAbsoluteUri, $"{umbracoPath}/management/api/v1/user/current");
-            string defaultLoginLogoUrl = BuildAbsoluteUrl(editorAbsoluteUri, $"{umbracoPath}/management/api/v1/security/back-office/graphics/login-logo-alternative");
+            string defaultAuthorizeUrl = BuildAbsoluteUrl(
+                editorAbsoluteUri,
+                $"{umbracoPath}/management/api/v1/security/back-office/authorize");
+            string defaultTokenUrl = BuildAbsoluteUrl(
+                editorAbsoluteUri,
+                $"{umbracoPath}/management/api/v1/security/back-office/token");
+            string defaultEndSessionUrl = BuildAbsoluteUrl(
+                editorAbsoluteUri,
+                $"{umbracoPath}/management/api/v1/security/back-office/signout");
+            string defaultRevocationUrl = BuildAbsoluteUrl(
+                editorAbsoluteUri,
+                $"{umbracoPath}/management/api/v1/security/back-office/revoke");
+            string defaultCurrentUserUrl =
+                BuildAbsoluteUrl(editorAbsoluteUri, $"{umbracoPath}/management/api/v1/user/current");
+            string defaultLoginLogoUrl = BuildAbsoluteUrl(
+                editorAbsoluteUri,
+                $"{umbracoPath}/management/api/v1/security/back-office/graphics/login-logo-alternative");
 
             static string UseConfiguredOrDefault(string? value, string fallback) =>
                 string.IsNullOrWhiteSpace(value) ? fallback : value;
@@ -187,12 +206,7 @@ namespace Articulate.Web.Controllers
                     path = "/" + path;
                 }
 
-                var builder = new UriBuilder(baseUri)
-                {
-                    Path = path,
-                    Query = string.Empty,
-                    Fragment = string.Empty,
-                };
+                var builder = new UriBuilder(baseUri) { Path = path, Query = string.Empty, Fragment = string.Empty, };
                 return builder.Uri.ToString();
             }
 
@@ -230,18 +244,14 @@ namespace Articulate.Web.Controllers
         private void SetSecurityHeaders()
         {
             Response.Headers["Permissions-Policy"] = "camera=(self)";
-            Response.Headers["Content-Security-Policy"] = string.Join(";", new[]
-            {
-                "default-src 'self'",
-                "script-src 'self'",
-                "style-src 'self'",
-                "img-src 'self' data: blob:",
-                "font-src 'self'",
-                "connect-src 'self'",
-                "frame-ancestors 'self'",
-                "base-uri 'self'",
-                "object-src 'none'"
-            });
+            Response.Headers["Content-Security-Policy"] = string.Join(
+                ";",
+                new[]
+                {
+                    "default-src 'self'", "script-src 'self'", "style-src 'self'", "img-src 'self' data: blob:",
+                    "font-src 'self'", "connect-src 'self'", "frame-ancestors 'self'", "base-uri 'self'",
+                    "object-src 'none'"
+                });
         }
 
         private record OAuthUrls(

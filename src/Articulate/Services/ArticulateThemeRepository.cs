@@ -22,26 +22,29 @@ namespace Articulate.Services
         /// <inheritdoc/>
         async Task IArticulateThemeRepository.CopyThemeAsync(string themeName, string newThemeName)
         {
-            var userThemesPath =
-                Path.GetFullPath(Path.Combine(hostingEnvironment.ContentRootPath, Paths.UserThemesRoot));
-            var destinationPhysicalPath = Path.GetFullPath(Path.Combine(userThemesPath, newThemeName));
+            var userThemesPath = Path.GetFullPath(
+                Path.Combine(hostingEnvironment.ContentRootPath, Paths.UserThemesRoot));
+            var themeRootDestination = Path.GetFullPath(
+                Path.Combine(userThemesPath, newThemeName));
 
-            if (!destinationPhysicalPath.StartsWith(userThemesPath, StringComparison.OrdinalIgnoreCase))
+            if (!themeRootDestination.StartsWith(userThemesPath, StringComparison.OrdinalIgnoreCase))
             {
-                throw new ArgumentException(@"Invalid theme name", nameof(newThemeName));
+                throw new ArgumentException("Invalid theme name", nameof(newThemeName));
             }
 
             Assembly articulateAssembly = GetWebAssembly();
 
-            // User theme names must be unique
-            if (Directory.Exists(destinationPhysicalPath))
+            // Check if theme already exists
+            if (Directory.Exists(themeRootDestination))
             {
                 throw new IOException($"A user theme with the name '{newThemeName}' already exists.");
             }
 
-            var themeResources = GetThemeResourceNames(articulateAssembly, themeName).ToList();
+            // Separate resources by type
+            var viewResources = GetThemeResourcesByType(articulateAssembly, themeName, "Views").ToList();
+            var assetResources = GetThemeResourcesByType(articulateAssembly, themeName, "assets").ToList();
 
-            if (themeResources.Count == 0)
+            if (viewResources.Count == 0 && assetResources.Count == 0)
             {
                 throw new DirectoryNotFoundException(
                     $"The source theme '{themeName}' could not be found as an embedded resource.");
@@ -49,19 +52,38 @@ namespace Articulate.Services
 
             try
             {
-                _ = Directory.CreateDirectory(destinationPhysicalPath);
+                // Extract Views to Views/ArticulateThemes/{newThemeName}/ (flat, no nested Views folder)
+                _ = Directory.CreateDirectory(themeRootDestination);
+                await ExtractResourcesAsync(articulateAssembly, viewResources, themeRootDestination, themeName, stripViewsPrefix: true);
 
-                var cutOffIndex = EmbeddedResourceRoot.Length + themeName.Length + 1;
-                foreach (var resourceName in themeResources)
+                logger.LogInformation(
+                    "Copied views for theme '{NewThemeName}' from '{SourceTheme}' to {ViewsPath}",
+                    newThemeName,
+                    themeName,
+                    Path.Combine("Views", "ArticulateThemes", newThemeName));
+
+                // Extract Assets to wwwroot/App_Plugins/Articulate/Themes/{newThemeName}/assets/
+                if (assetResources.Count > 0)
                 {
-                    var relativePath = resourceName[cutOffIndex..];
-                    var cleanPath = relativePath
-                        .Replace('\\', Path.DirectorySeparatorChar) // Turn Windows slashes into Current OS slashes
-                        .Replace('/', Path.DirectorySeparatorChar); // Turn Web/Linux slashes into Current OS slashes
+                    var assetsDestination = Path.Combine(
+                        hostingEnvironment.WebRootPath,
+                        "App_Plugins",
+                        "Articulate",
+                        "Themes",
+                        newThemeName,
+                        "assets");
 
-                    var destinationFilePath = Path.Combine(destinationPhysicalPath, cleanPath);
-                    await ExtractResourceToFileAsync(articulateAssembly, resourceName, destinationFilePath);
+                    _ = Directory.CreateDirectory(assetsDestination);
+                    await ExtractResourcesAsync(articulateAssembly, assetResources, assetsDestination, themeName, stripViewsPrefix: false);
+
+                    logger.LogInformation(
+                        "Copied assets for theme '{NewThemeName}' to {AssetsPath}",
+                        newThemeName,
+                        Path.Combine("wwwroot", "App_Plugins", "Articulate", "Themes", newThemeName, "assets"));
                 }
+
+                // Create helpful README
+                await CreateThemeReadmeAsync(themeRootDestination, themeName, newThemeName);
 
                 appCaches.RuntimeCache.ClearByKey(AllThemesCacheKey);
             }
@@ -69,35 +91,94 @@ namespace Articulate.Services
             {
                 logger.LogError(
                     ex,
-                    "Error copying embedded theme '{SourceTheme}' to '{DestinationTheme}'.",
+                    "Error copying embedded theme '{SourceTheme}' to '{DestinationTheme}'",
                     themeName,
                     newThemeName);
                 throw;
             }
         }
 
-        private IEnumerable<string> GetThemeResourceNames(Assembly assembly, string themeName)
+        private static IEnumerable<string> GetThemeResourcesByType(
+            Assembly assembly,
+            string themeName,
+            string resourceType)
         {
             char[] separators = ['/', '\\'];
+            var prefix = $"{EmbeddedResourceRoot}Themes/{themeName}/";
+
             return assembly.GetManifestResourceNames()
                 .Where(resource =>
                 {
-                    // A. Must start with the root prefix
-                    if (!resource.StartsWith(EmbeddedResourceRoot, StringComparison.OrdinalIgnoreCase))
+                    if (!resource.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
                     {
                         return false;
                     }
 
-                    // Get the path relative to "Articulate.Theme://"
-                    // e.g. "Vapor/assets/css/style.css" OR "Vaporwave/assets/css/style.css"
-                    var relativePath = resource[EmbeddedResourceRoot.Length..];
-
-                    // B. THE SEPARATOR GUARD
-                    // We check if the relative path starts with "Vapor/" or "Vapor\"
-                    // This fails for "Vaporwave/" because the character after 'r' is 'w', not '/'
+                    var relativePath = resource[prefix.Length..];
                     return separators.Any(sep =>
-                        relativePath.StartsWith($"{themeName}{sep}", StringComparison.OrdinalIgnoreCase));
+                        relativePath.StartsWith($"{resourceType}{sep}", StringComparison.OrdinalIgnoreCase));
                 });
+        }
+
+        private async Task ExtractResourcesAsync(
+            Assembly assembly,
+            List<string> resources,
+            string destinationBase,
+            string themeName,
+            bool stripViewsPrefix)
+        {
+            var prefixToRemove = $"{EmbeddedResourceRoot}Themes/{themeName}/";
+
+            foreach (var resourceName in resources)
+            {
+                var relativePath = resourceName[prefixToRemove.Length..];
+
+                // Strip "Views/" prefix so views land flat in theme root
+                if (stripViewsPrefix)
+                {
+                    relativePath = relativePath
+                        .Replace("Views/", string.Empty)
+                        .Replace("Views\\", string.Empty);
+                }
+
+                var cleanPath = relativePath
+                    .Replace('\\', Path.DirectorySeparatorChar)
+                    .Replace('/', Path.DirectorySeparatorChar);
+
+                var destinationFilePath = Path.Combine(destinationBase, cleanPath);
+                await ExtractResourceToFileAsync(assembly, resourceName, destinationFilePath);
+            }
+        }
+
+        private static async Task CreateThemeReadmeAsync(string themeRoot, string sourceTheme, string newTheme)
+        {
+            var readme = $"""
+                          # Articulate Theme: {newTheme}
+
+                          Created by copying '{sourceTheme}' theme.
+
+                          ## Folder Structure
+
+                          **Views:** `Views/ArticulateThemes/{newTheme}/`
+                          Edit .cshtml files here to customize your theme layout.
+
+                          **Assets:** `wwwroot/App_Plugins/Articulate/Themes/{newTheme}/assets/`
+                          CSS, JavaScript, images, and other static files.
+
+                          ## Quick Start
+
+                          1. Edit `Master.cshtml` - Main layout template
+                          2. Edit `Post.cshtml` - Individual blog post template
+                          3. Customize CSS in `wwwroot/.../assets/css/`
+
+                          ## Documentation
+
+                          - Theme Guide: https://github.com/Shazwazza/Articulate/wiki/Themes
+                          - View Models: https://github.com/Shazwazza/Articulate/wiki/Theme-View-Models
+                          """;
+
+            var readmePath = Path.Combine(themeRoot, "README.md");
+            await File.WriteAllTextAsync(readmePath, readme);
         }
 
         private async Task ExtractResourceToFileAsync(

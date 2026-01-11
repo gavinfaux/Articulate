@@ -1,0 +1,87 @@
+@model ListModel
+@{
+    Layout = "Master.cshtml";
+    ViewBag.CssWrapperClass = Model.ContentType.Alias == ArticulateConstants.ContentType.ArticulateArchive ? null : "demo-blog--blogpost";
+}
+
+<div class="demo-back">
+    <a class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon" href="@Model.RootBlogNode.Url()" title="go back" role="button">
+        <i class="material-icons" role="presentation">arrow_back</i>
+    </a>
+</div>
+<div class="demo-blog__posts mdl-grid">
+
+    @{
+        var posts = Model.Posts.ToList();
+        ViewBag.PostsList = posts;
+        var hasResults = posts.Any();
+        var term = Context.GetSearchTerm();
+
+        @if (!hasResults)
+        {
+            <div class="mdl-card mdl-cell mdl-cell--12-col comments">
+
+                @await Html.PartialAsync("SearchBox", Model)
+
+                @if (!term.IsNullOrWhiteSpace())
+                {
+                    <div class="mdl-card__media mdl-color-text--grey-50">
+                        <h3>No blog posts found for search term @(term)</h3>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+
+            var doneFirst = false;
+            foreach (var post in posts)
+            {
+                if (!doneFirst && Model.ContentType.Alias == ArticulateConstants.ContentType.ArticulateArchive)
+                {
+                    doneFirst = true;
+
+                    <div class="mdl-card mdl-cell mdl-cell--8-col">
+                        @{
+                            await PostInfoAsync(post, false);
+                        }
+                    </div>
+                    @await Html.PartialAsync("TitleTile", Model)
+
+                }
+                else
+                {
+                    <div class="mdl-card mdl-cell mdl-cell--12-col">
+                        @{
+                            await PostInfoAsync(post);
+                        }
+                    </div>
+                }
+            }
+        }
+
+        @await Html.PartialAsync("Pager", Model.Pages)
+    }
+
+
+</div>
+
+@functions {
+
+    private async Task PostInfoAsync(PostModel post, bool withExcerpt = true)
+    {
+        @(await Html.PartialAsync("PostImageHeader", post))
+
+        if (withExcerpt)
+        {
+            <div class="mdl-card__supporting-text mdl-color-text--grey-600">
+                @(post.Excerpt)&hellip;
+            </div>
+        }
+
+
+        <div class="mdl-card__supporting-text meta mdl-color-text--grey-600">
+            @await Html.PartialAsync("AuthorInfo", post)
+        </div>
+    }
+}

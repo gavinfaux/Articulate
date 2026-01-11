@@ -17,19 +17,11 @@ async function createPost(postData, fileMap) {
   const formData = new FormData();
   formData.append('json', JSON.stringify(postData));
 
-  const fileEntries = Array.from(fileMap.entries()).map(([key, file]) => ({
-    key,
-    name: file?.name ?? '<unnamed>',
-    size: file?.size ?? 0,
-    type: file?.type ?? '<unknown>',
-  }));
-  console.debug('[apiService] createPost: appending files', fileEntries);
 
   for (const [key, file] of fileMap.entries()) {
     formData.append(key, file);
   }
 
-  console.debug('[apiService] createPost: form keys', Array.from(formData.keys()));
 
   const requestOptions = {
     method: 'POST',

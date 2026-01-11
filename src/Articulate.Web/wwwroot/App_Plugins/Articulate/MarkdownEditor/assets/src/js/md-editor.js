@@ -419,21 +419,16 @@ document.addEventListener("alpine:init", () => {
           ? config.articulateBlogNode
           : parsedNodeId;
 
-        console.debug("[MarkdownEditor] configuration snapshot", {
-          articulateBlogNode: this.post.articulateBlogNode,
-        });
+
 
         const params = new URLSearchParams(window.location.search);
         if (params.has("code")) {
-          console.debug(
-            "[MarkdownEditor] handling OAuth authorization callback"
-          );
           await authService.handleLoginCallback();
         }
 
         // Validate Bearer token (external OAuth clients always use token auth)
         let token = authService.getAccessToken();
-        console.debug('[MarkdownEditor] access token present?', Boolean(token));
+
 
         if (!token) {
           console.info(
@@ -519,11 +514,6 @@ document.addEventListener("alpine:init", () => {
       this.errorDetails = null;
 
       try {
-        console.debug("[MarkdownEditor] handlePublish: preparing API call", {
-          uploadTokens: Array.from(this.fileMap.keys()),
-          fileCount: this.fileMap.size,
-          bodyLength: this.post.body?.length ?? 0,
-        });
 
         // Filter fileMap to only include files actually referenced in the markdown body
         const bodyText = this.post.body || "";
@@ -638,9 +628,6 @@ document.addEventListener("alpine:init", () => {
     handleImageUpload(event) {
       const files = Array.from(event?.target?.files ?? []);
       if (!files.length) {
-        console.debug(
-          "[MarkdownEditor] handleImageUpload: no files detected on event target"
-        );
         return;
       }
 
@@ -672,13 +659,6 @@ document.addEventListener("alpine:init", () => {
         const altText = this.escapeMarkdownText(`Uploading ${displayName}...`);
         const placeholder = `![${altText}](${uploadToken})\n`;
 
-        console.debug("[MarkdownEditor] queued upload", {
-          token: uploadToken,
-          name: file?.name ?? "<unnamed>",
-          size: file?.size ?? 0,
-          type: file?.type ?? "<unknown>",
-          mapSize: this.fileMap.size,
-        });
 
         if (
           this.editorInstance &&
@@ -690,10 +670,6 @@ document.addEventListener("alpine:init", () => {
         }
       });
 
-      console.debug(
-        "[MarkdownEditor] handleImageUpload: current upload tokens",
-        Array.from(this.fileMap.keys())
-      );
 
       // Clear the file input for the next upload
       if (event?.target) {

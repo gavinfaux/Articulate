@@ -1,0 +1,48 @@
+@model IMasterModel
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    @Model.GoogleAnalyticsTracking()
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,700|Roboto:400&display=swap" rel="stylesheet">
+
+    <title>@Model.PageTitle</title>
+    @Model.MetaTags()
+    @Html.SocialMetaTags(Model)
+    @Model.AdvertiseWeblogApi()
+    @Model.RssFeed()
+    @Model.RenderOpenSearch()
+
+    <environment include="Development">
+        <link href="~/App_Plugins/Articulate/Themes/Phantom/assets/vendor/normalize/normalize.css" rel="stylesheet" fetchpriority="high" asp-append-version="true">
+        <link href="~/App_Plugins/Articulate/Themes/Phantom/assets/src/css/site.css" rel="stylesheet" asp-append-version="true">
+    </environment>
+    <environment exclude="Development">
+        <link href="~/App_Plugins/Articulate/Themes/Phantom/assets/dist/css/phantom.min.css" rel="stylesheet" fetchpriority="high" asp-append-version="true">
+    </environment>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@@fortawesome/fontawesome-free@6.7.2/css/fontawesome.min.css" integrity="sha256-TBe0l9PhFaVR3DwHmA2jQbUf1y6yQ22RBgJKKkNkC50=" crossorigin="anonymous" media="all">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@@fortawesome/fontawesome-free@6.7.2/css/brands.min.css" integrity="sha256-lvqQzfgRxG8QBB5QMqpZGrljg5T/hNmC3vC7i3zntlI=" crossorigin="anonymous" media="all">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@@fortawesome/fontawesome-free@6.7.2/css/solid.min.css" integrity="sha256-ETbOOM9U8WfaXg2AkW2t+QbdpWYFRAO+HEXOth8EQbY=" crossorigin="anonymous" media="all">
+
+    @await RenderSectionAsync("Header", false)
+
+</head>
+<body class="@ViewBag.CssBodyClass">
+    @Model.GoogleAnalyticsNoScript()
+
+    @await Html.PartialAsync("Sidebar", Model)
+
+    <div class="content">
+        @RenderBody()
+    </div>
+
+</body>
+</html>
