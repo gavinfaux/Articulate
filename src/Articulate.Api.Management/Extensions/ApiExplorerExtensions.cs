@@ -6,8 +6,17 @@ using Microsoft.AspNetCore.Mvc.Controllers;
 
 namespace Articulate.Api.Management.Extensions
 {
+    /// <summary>
+    /// Extensions for <see cref="IApiDescriptionGroupCollectionProvider"/>.
+    /// </summary>
     public static class ApiExplorerExtensions
     {
+        /// <summary>
+        /// Generates a mapping of Controller.Action to relative URL for the specified management API groups.
+        /// </summary>
+        /// <param name="provider">The API description provider.</param>
+        /// <param name="apiGroupNames">The groups to include in the mapping.</param>
+        /// <returns>A dictionary mapping action names to relative URLs.</returns>
         public static IReadOnlyDictionary<string, string>? ManagementApiUrlMap(
             this IApiDescriptionGroupCollectionProvider? provider,
             string[] apiGroupNames)
@@ -19,7 +28,8 @@ namespace Articulate.Api.Management.Extensions
 
             var groupNameSet = new HashSet<string>(apiGroupNames, StringComparer.OrdinalIgnoreCase);
 
-            return provider.ApiDescriptionGroups.Items.Where(group => group.GroupName is not null && groupNameSet.Contains(group.GroupName))
+            return provider.ApiDescriptionGroups.Items.Where(group =>
+                    group.GroupName is not null && groupNameSet.Contains(group.GroupName))
                 .SelectMany(group => group.Items)
                 .Where(desc =>
                 {
@@ -28,9 +38,9 @@ namespace Articulate.Api.Management.Extensions
                         return false;
                     }
 
-                    return controllerActionDescriptor.ControllerTypeInfo.GetCustomAttribute<ManagementApiAttribute>() is not null;
+                    return controllerActionDescriptor.ControllerTypeInfo
+                        .GetCustomAttribute<ManagementApiAttribute>() is not null;
                 })
-
                 .ToDictionary(
                     desc =>
                     {

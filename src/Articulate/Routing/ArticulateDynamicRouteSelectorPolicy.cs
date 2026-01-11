@@ -12,7 +12,7 @@ namespace Articulate.Routing
     /// Used when there is ambiguous route candidates due to multiple dynamic routes being assigned.
     /// </summary>
     /// <remarks>
-    /// Ambiguous dynamic routes can occur if Umbraco detects a 404 and assigns a route, but sometimes its not
+    /// Ambiguous dynamic routes can occur if Umbraco detects a 404 and assigns a route, but sometimes it's not
     /// actually a 404 because the articulate router occurs after the Umbraco router which handles 404 eagerly.
     /// This causes 2x candidates to be resolved and the first (umbraco) is chosen.
     /// If we detect that Articulate actually performed the routing, then we use that candidate instead.
@@ -51,16 +51,13 @@ namespace Articulate.Routing
             // the request has been dynamically routed by articulate to an Articulate controller.
             for (var i = 0; i < candidates.Count; i++)
             {
-                // Skip candidates with null endpoints (filtered-out or invalid candidates)
-                if (candidates[i].Endpoint is null)
+                if (!candidates.IsValidCandidate(i))
                 {
-                    candidates.SetValidity(i, false);
                     continue;
                 }
 
                 // If the candidate is an Articulate dynamic controller, set valid
                 candidates.SetValidity(i, candidates[i].Endpoint.Metadata.GetMetadata<ArticulateDynamicRouteAttribute>() is not null);
-                // else it is invalid
             }
 
             return Task.CompletedTask;

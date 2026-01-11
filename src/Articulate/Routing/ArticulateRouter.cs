@@ -85,7 +85,7 @@ namespace Articulate.Routing
                     _routeCache.Clear();
 
                     // For each articulate root, we need to create some custom route, BUT routes can overlap
-                    // based on multi-tenency so we need to deal with that.
+                    // based on multi-tenancy so we need to deal with that.
                     // For example a root articulate node might yield a route like:
                     //      /
                     // and another articulate root node that has a domain might have this url:

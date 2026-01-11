@@ -2,11 +2,6 @@ using Umbraco.Cms.Infrastructure.Migrations;
 
 namespace Articulate.Migrations.Upgrade;
 
-// TODO: Why are Tags and Categories delimited by null?: '{"group":"ArticulateTags","storageType":"Json","delimiter":"\u0000"}
-// TODO: ImageCropperValue data values can be v1 (json OR json5), correct v3 ImageCropperValue, or a string with media guid or a string path "/media/*" - all should be v3
-// TODO: Do Tags and Categories still need ArticulateTagRepository or can use core from Umbraco?
-// TODO: Check Editor start node for correct guid { .. "startNodeId":"d923fffc-e62f-4fe4-8762-b83bb8d40df1" .. }
-
 /// <summary>
 /// Represents the Articulate migration plan.
 /// </summary>

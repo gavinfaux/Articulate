@@ -2,17 +2,20 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Logging;
-using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.Web;
-using Umbraco.Cms.Web.Common.ActionsResults;
 using Umbraco.Cms.Web.Common.Controllers;
 
 namespace Articulate.Controllers
 {
     /// <summary>
-    /// This is used to redirect the Authors node to the root so no 404s occur
+    /// Handles the ArticulateAuthors container node (/authors/).
     /// </summary>
+    /// <remarks>
+    /// By default, redirects to blog root when redirectArchive is enabled.
+    /// If a custom theme provides Authors.cshtml, it will render the author listing.
+    /// Individual author pages (/authors/john-doe/) are handled by <see cref="ArticulateAuthorController"/>
+    /// </remarks>
     public class ArticulateAuthorsController(
         ILogger<ArticulateAuthorsController> logger,
         ICompositeViewEngine compositeViewEngine,
@@ -29,28 +32,45 @@ namespace Articulate.Controllers
                 return NotFound();
             }
 
-            var root = new MasterModel(
-                CurrentPage,
-                publishedValueFallback);
+            var root = new MasterModel(CurrentPage, publishedValueFallback);
 
-            // TODO: Should we have another setting for authors?
             if (root.RootBlogNode.Value<bool>("redirectArchive"))
             {
                 return RedirectPermanent(root.RootBlogNode.Url());
             }
 
-            // default
-            var action = ControllerContext.RouteData.Values["action"]?.ToString();
+            // Build author list for custom themes that provide Authors.cshtml
+            var authorNodes = CurrentPage.Children().ToList();
+            var authors = authorNodes
+                .Select(a => new AuthorModel(
+                    a,
+                    null,  // No posts in listing
+                    null,  // No pager for author listing
+                    0,     // Post count not needed for listing
+                    publishedValueFallback))
+                .ToList();
+
+            var model = new AuthorListModel(CurrentPage, publishedValueFallback)
+            {
+                Authors = authors
+            };
+
+            // Check if theme has custom Authors.cshtml view
 #if NET10_0_OR_GREATER
-            if (!EnsurePhysicalViewExists(action))
+            if (EnsurePhysicalViewExists("Authors"))
 #else
-            if (!EnsurePhsyicalViewExists(action))
+            if (EnsurePhsyicalViewExists("Authors"))
 #endif
             {
-                return new PublishedContentNotFoundResult(UmbracoContext);
+                return View("Authors", model);
             }
 
-            return View(action, new ContentModel(CurrentPage));
+            // No custom view available
+            logger.LogInformation(
+                "ArticulateAuthorsController: No Authors.cshtml view found. " +
+                "Recommend enabling 'redirectArchive' or creating custom Authors.cshtml in theme.");
+
+            return NotFound();
         }
     }
 }

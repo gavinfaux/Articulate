@@ -37,14 +37,14 @@ namespace Articulate
             return content;
         }
 
-        internal static async Task<bool> SetInvariantOrDefaultCultureNameAsync(
+        internal static async Task SetInvariantOrDefaultCultureNameAsync(
             this IContentBase content,
             string name,
             IContentTypeComposition contentType,
             ILanguageService languageService,
             ILogger? logger = null)
         {
-            ArgumentNullException.ThrowIfNull(contentType, nameof(contentType));
+            ArgumentNullException.ThrowIfNull(contentType);
 
             var variesByCulture = contentType.VariesByCulture();
 
@@ -64,27 +64,19 @@ namespace Articulate
                 }
 
                 content.SetCultureName(name, culture);
-                return true;
+                return;
             }
 
             content.Name = name;
-            return true;
         }
 
         /// <summary>
-        /// Sets all invariant or variant property values safely while taking into account the variance settings on the content type/property type
+        /// Sets property values for all cultures or invariant, depending on content type variance.
         /// </summary>
-        /// <param name="content">The content to set the values for</param>
-        /// <param name="value"></param>
-        /// <param name="contentType"></param>
-        /// <param name="propertyTypeAlias"></param>
-        /// <param name="languageService"></param>
-        /// <param name="logger"></param>
         /// <remarks>
-        /// This will only set property values for cultures that have been defined on the <see cref="IContentBase"/>, it will
-        /// not set property values for cultures that don't yet exist on the content item.
+        /// Only sets values for cultures already defined on the content item.
         /// </remarks>
-        internal static async Task<bool> SetInvariantOrDefaultCultureValueAsync(
+        internal static async Task SetInvariantOrDefaultCultureValueAsync(
             this IContentBase content,
             string propertyTypeAlias,
             object? value,
@@ -92,7 +84,7 @@ namespace Articulate
             ILanguageService languageService,
             ILogger? logger = null)
         {
-            ArgumentNullException.ThrowIfNull(contentType, nameof(contentType));
+            ArgumentNullException.ThrowIfNull(contentType);
 
             var variesByCulture = VariesByCulture(propertyTypeAlias, contentType);
 
@@ -113,10 +105,9 @@ namespace Articulate
             }
 
             content.SetValue(propertyTypeAlias, value, culture);
-            return true;
         }
 
-        internal static async Task<bool> AssignInvariantOrDefaultCultureTagsAsync(
+        internal static async Task AssignInvariantOrDefaultCultureTagsAsync(
             this IContentBase content,
             string propertyTypeAlias,
             IEnumerable<string> tags,
@@ -128,7 +119,7 @@ namespace Articulate
             ILogger? logger = null,
             bool merge = false)
         {
-            ArgumentNullException.ThrowIfNull(contentType, nameof(contentType));
+            ArgumentNullException.ThrowIfNull(contentType);
 
             var variesByCulture = VariesByCulture(propertyTypeAlias, contentType);
 
@@ -156,8 +147,6 @@ namespace Articulate
                 tags,
                 merge,
                 culture);
-
-            return true;
         }
 
         internal static void SetAllPropertyCultureValues(
@@ -166,7 +155,7 @@ namespace Articulate
             IContentTypeComposition contentType,
             Func<IContentBase, IContentTypeComposition, ContentCultureInfos?, object?> propertyValueGetter)
         {
-            ArgumentNullException.ThrowIfNull(contentType, nameof(contentType));
+            ArgumentNullException.ThrowIfNull(contentType);
 
             if (content.ContentType.VariesByCulture() && content.CultureInfos is not null)
             {

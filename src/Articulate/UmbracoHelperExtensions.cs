@@ -7,14 +7,14 @@ using PublishedContentExtensions = Articulate.Models.PublishedContentExtensions;
 // TODO: #nullable enable
 namespace Articulate
 {
+    /// <summary>
+    /// Extension methods for <see cref="UmbracoHelper"/>.
+    /// </summary>
     public static class UmbracoHelperExtensions
     {
         /// <summary>
-        /// A method that will return number of posts
+        /// Gets the total number of posts.
         /// </summary>
-        /// <param name="helper"></param>
-        /// <param name="articulateArchiveIds"></param>
-        /// <returns></returns>
         public static int GetPostCount(this UmbracoHelper helper, params int[] articulateArchiveIds)
         {
             var totalPosts = articulateArchiveIds
@@ -27,12 +27,8 @@ namespace Articulate
         }
 
         /// <summary>
-        /// A method that will return number of posts
+        /// Gets the total number of posts for a specific author.
         /// </summary>
-        /// <param name="helper"></param>
-        /// <param name="authorName"></param>
-        /// <param name="articulateArchiveIds"></param>
-        /// <returns></returns>
         public static int GetPostCount(this UmbracoHelper helper, string authorName, params int[] articulateArchiveIds)
         {
             var totalPosts = articulateArchiveIds
@@ -45,13 +41,8 @@ namespace Articulate
         }
 
         /// <summary>
-        /// A method that will return the posts sorted by published date in an efficient way
+        /// Gets posts sorted by published date.
         /// </summary>
-        /// <param name="helper"></param>
-        /// <param name="pager"></param>
-        /// <param name="filter"></param>
-        /// <param name="articulateArchiveIds"></param>
-        /// <returns></returns>
         public static IEnumerable<IPublishedContent> GetPostsSortedByPublishedDate(
             this UmbracoHelper helper,
             PagerModel pager,
@@ -77,6 +68,10 @@ namespace Articulate
             return posts;
         }
 
+        /// <summary>
+        /// Gets a collection of tags for the blog.
+        /// </summary>
+        // Not used internally or by default themes, but exposed for custom themes
         public static PostTagCollection GetPostTagCollection(
             this UmbracoHelper helper,
             IMasterModel masterModel,
@@ -96,13 +91,9 @@ namespace Articulate
         }
 
         /// <summary>
-        /// Returns a list of the most recent posts
+        /// Gets a list of the most recent posts.
         /// </summary>
-        /// <param name="helper"></param>
-        /// <param name="masterModel"></param>
-        /// <param name="count"></param>
-        /// <param name="publishedValueFallback"></param>
-        /// <returns></returns>
+        // Not used internally or by default themes, but exposed for custom themes
         public static IEnumerable<PostModel> GetRecentPosts(
             this UmbracoHelper helper,
             IMasterModel masterModel,
@@ -170,7 +161,7 @@ namespace Articulate
             var pager = new PagerModel(pageSize, page - 1, 1);
 
             IEnumerable<IPublishedContent> listItems =
-                helper.GetPostsSortedByPublishedDate(pager, null, [masterModel.Id]);
+                helper.GetPostsSortedByPublishedDate(pager, null, masterModel.Id);
 
             var rootPageModel = new ListModel(masterModel, pager, listItems, publishedValueFallback);
             return rootPageModel.Posts;

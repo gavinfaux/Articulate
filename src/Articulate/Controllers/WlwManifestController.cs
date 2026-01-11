@@ -11,6 +11,9 @@ using Umbraco.Cms.Web.Common.Controllers;
 
 namespace Articulate.Controllers
 {
+    /// <summary>
+    /// Controller for Windows Live Writer manifest.
+    /// </summary>
     [ArticulateDynamicRoute]
     public class WlwManifestController(
         UmbracoHelper umbraco,
@@ -22,6 +25,9 @@ namespace Articulate.Controllers
         // http://msdn.microsoft.com/en-us/library/bb463260.aspx
         // http://msdn.microsoft.com/en-us/library/bb463263.aspx
         // http://msdn.microsoft.com/en-us/library/bb463265.aspx
+        /// <summary>
+        /// Renders the Windows Live Writer manifest XML.
+        /// </summary>
         [HttpGet]
         public ActionResult Index(int id)
         {

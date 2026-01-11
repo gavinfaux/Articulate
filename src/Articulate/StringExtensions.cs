@@ -4,15 +4,27 @@ using System.Web;
 
 namespace Articulate
 {
+    /// <summary>
+    /// Extension methods for <see cref="string"/>.
+    /// </summary>
     public static class StringExtensions
     {
+        /// <summary>
+        /// Replaces newlines with spaces.
+        /// </summary>
         public static string NewLinesToSpaces(this string input) =>
             _newlineRegex.Replace(input, " ");
 
+        /// <summary>
+        /// Decodes HTML-encoded strings.
+        /// </summary>
         public static string DecodeHtml(this string input) => HttpUtility.HtmlDecode(input);
 
         private static readonly Regex _newlineRegex = new(@"[\r\n]+", RegexOptions.Compiled);
 
+        /// <summary>
+        /// Truncates a string at a word boundary.
+        /// </summary>
         public static string TruncateAtWord(
             this string? text,
             int maxCharacters,
@@ -38,6 +50,9 @@ namespace Articulate
             return string.Empty;
         }
 
+        /// <summary>
+        /// Encodes URL segments safely.
+        /// </summary>
         public static string SafeEncodeUrlSegments(this string urlPath)
         {
             if (!urlPath.InvariantStartsWith("http://") && !urlPath.InvariantStartsWith("https://"))
@@ -68,5 +83,25 @@ namespace Articulate
                     // we are not supporting dots in our URLs it's just too difficult to
                     // support across the board with all the different config options
                     .Select(x => x.Replace('.', '-')));
+
+        /// <summary>
+        /// Gets the MIME type for an image based on its file extension.
+        /// </summary>
+        public static string GetImageMimeType(this string filePathOrExtension)
+        {
+            var ext = Path.GetExtension(filePathOrExtension).Trim('.').ToLowerInvariant();
+            if (string.IsNullOrEmpty(ext))
+            {
+                ext = filePathOrExtension.Trim('.').ToLowerInvariant();
+            }
+
+            return ext switch
+            {
+                "jpg" or "jpeg" => "image/jpeg",
+                "png" => "image/png",
+                "gif" => "image/gif",
+                _ => string.Empty
+            };
+        }
     }
 }

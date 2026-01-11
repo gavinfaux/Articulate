@@ -4,17 +4,17 @@ using Umbraco.Cms.Core.Security;
 
 namespace Articulate.Services
 {
+    /// <summary>
+    /// Service for converting Markdown to HTML with sanitization.
+    /// </summary>
     public class MarkdownService(IHtmlSanitizer htmlSanitizer) : IMarkdownToHtmlConverter
     {
         private readonly MarkdownPipeline _markdownPipeline = new MarkdownPipelineBuilder()
             .UseAdvancedExtensions()
             .Build();
 
-        // TODO: Consider centralizing HTML sanitization across all content types.
-        // Currently only Markdown content is sanitized via IHtmlSanitizer.
-        // Future enhancement: Create IArticulateContentRenderer service to sanitize
-        // both Markdown and RichText (MetaWebLog/BlogML imports) consistently.
-        // This would require a centralized rendering service to avoid performance overhead on every save.
+        // TODO: Centralize HTML sanitization for both Markdown and RichText content
+        /// <inheritdoc/>
         public string ToHtml(string markdown)
         {
             if (string.IsNullOrWhiteSpace(markdown))

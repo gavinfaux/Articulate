@@ -32,60 +32,20 @@ namespace Articulate.Api.Management.Controllers
     [Authorize(AuthorizationPolicies.BackOfficeAccess)]
     [MapToApi(Constants.ManagementApi.Name)]
     [ManagementApiRoute("editors/markdown")]
-    public class MarkdownEditorApiController : ManagementApiControllerBase
+    public class MarkdownEditorApiController(
+        BackOfficeAuthService backOfficeAuthService,
+        UmbracoHelper umbracoHelper,
+        PropertyEditorCollection propertyEditors,
+        IJsonSerializer jsonSerializer,
+        ILanguageService languageService,
+        IContentService contentService,
+        IContentTypeService contentTypeService,
+        IDataTypeService dataTypeService,
+        ILogger<MarkdownEditorApiController> logger,
+        IAbsoluteUrlBuilder absoluteUrlBuilder,
+        IArticulateImportMediaService service)
+        : ManagementApiControllerBase
     {
-        private readonly Lazy<IMedia> _articulateRootMediaFolder;
-        private readonly IContentService _contentService;
-        private readonly IContentTypeService _contentTypeService;
-        private readonly IDataTypeService _dataTypeService;
-        private readonly IJsonSerializer _jsonSerializer;
-        private readonly ILanguageService _languageService;
-        private readonly ILogger<MarkdownEditorApiController> _logger;
-        private readonly PropertyEditorCollection _propertyEditors;
-        private readonly UmbracoHelper _umbracoHelper;
-        private readonly BackOfficeAuthService _backOfficeAuthService;
-        private readonly IAbsoluteUrlBuilder _absoluteUrlBuilder;
-        private readonly IArticulateImportMediaService _service;
-
-
-        public MarkdownEditorApiController(
-            BackOfficeAuthService backOfficeAuthService,
-            UmbracoHelper umbracoHelper,
-            PropertyEditorCollection propertyEditors,
-            IJsonSerializer jsonSerializer,
-            IMediaService mediaService,
-            ILanguageService languageService,
-            IContentService contentService,
-            IContentTypeService contentTypeService,
-            IDataTypeService dataTypeService,
-            ILogger<MarkdownEditorApiController> logger,
-            IAbsoluteUrlBuilder absoluteUrlBuilder,
-            IArticulateImportMediaService service)
-        {
-            _backOfficeAuthService = backOfficeAuthService;
-            _umbracoHelper = umbracoHelper;
-            _propertyEditors = propertyEditors;
-            _jsonSerializer = jsonSerializer;
-            IMediaService localMediaService = mediaService;
-            _languageService = languageService;
-            _contentService = contentService;
-            _contentTypeService = contentTypeService;
-            _dataTypeService = dataTypeService;
-            _logger = logger;
-            _absoluteUrlBuilder = absoluteUrlBuilder;
-            _service = service;
-            _articulateRootMediaFolder = new Lazy<IMedia>(() =>
-            {
-                IMedia? root = localMediaService.GetRootMedia().FirstOrDefault(x =>
-                    x.Name == ArticulateConstants.Convention.ArticulateMediaFolder &&
-                    x.ContentType.Alias.InvariantEquals(Umbraco.Cms.Core.Constants.Conventions.MediaTypes.Folder));
-                return root ?? localMediaService.CreateMediaWithIdentity(
-                    ArticulateConstants.Convention.ArticulateMediaFolder,
-                    Umbraco.Cms.Core.Constants.System.Root,
-                    Umbraco.Cms.Core.Constants.Conventions.MediaTypes.Folder);
-            });
-        }
-
         /// <summary>
         ///     Creates a new post under the specified Articulate node.
         /// </summary>
@@ -113,7 +73,7 @@ namespace Articulate.Api.Management.Controllers
                 return nodeError;
             }
 
-            IUser? currentUser = _backOfficeAuthService.GetCurrentUser();
+            IUser? currentUser = backOfficeAuthService.GetCurrentUser();
             if (CheckPermissions(archive!, currentUser) is { } permissionError)
             {
                 return permissionError;
@@ -155,7 +115,7 @@ namespace Articulate.Api.Management.Controllers
             }
             catch (JsonException ex)
             {
-                _logger.LogWarning("JSON deserialization failed: {Message}", ex.Message);
+                logger.LogWarning("JSON deserialization failed: {Message}", ex.Message);
                 return Problem(
                     $"JSON deserialization failed: {ex.Message}",
                     statusCode: StatusCodes.Status400BadRequest);
@@ -167,7 +127,7 @@ namespace Articulate.Api.Management.Controllers
             out IContent? articulateNode,
             out IContent? archive)
         {
-            articulateNode = _contentService.GetById(model.ArticulateBlogNode);
+            articulateNode = contentService.GetById(model.ArticulateBlogNode);
             archive = null;
 
             if (articulateNode is null)
@@ -177,7 +137,7 @@ namespace Articulate.Api.Management.Controllers
                     statusCode: StatusCodes.Status404NotFound);
             }
 
-            archive = _contentService.GetPagedChildren(model.ArticulateBlogNode, 0, 1, out _)
+            archive = contentService.GetPagedChildren(model.ArticulateBlogNode, 0, 1, out _)
                 .FirstOrDefault(x =>
                     x.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateArchive));
 
@@ -199,7 +159,7 @@ namespace Articulate.Api.Management.Controllers
             }
 
             var requiredPermissions = new[] { ActionNew.ActionLetter, ActionPublish.ActionLetter };
-            if (!_backOfficeAuthService.HasPermissions(currentUser, archive, requiredPermissions))
+            if (!backOfficeAuthService.HasPermissions(currentUser, archive, requiredPermissions))
             {
                 return Forbid();
             }
@@ -213,30 +173,22 @@ namespace Articulate.Api.Management.Controllers
             ParseImageResponse parsedImageResponse,
             IUser currentUser)
         {
-            IContentType? contentType = _contentTypeService.Get("ArticulateMarkdown");
+            IContentType? contentType = contentTypeService.Get("ArticulateMarkdown");
             if (contentType is null)
             {
-                _logger.LogError("Server configuration error: The 'ArticulateMarkdown' content type was not found.");
+                logger.LogError("Server configuration error: The 'ArticulateMarkdown' content type was not found.");
                 return Problem(
                     "Server configuration error: The 'ArticulateMarkdown' content type was not found.",
                     statusCode: StatusCodes.Status500InternalServerError);
             }
 
-            IContent? content = await _contentService.CreateWithInvariantOrDefaultCultureNameAsync(
+            IContent content = await contentService.CreateWithInvariantOrDefaultCultureNameAsync(
                 model.Title,
                 archive,
                 contentType,
-                _languageService,
-                _logger,
+                languageService,
+                logger,
                 currentUser.Id);
-
-            if (content is null)
-            {
-                _logger.LogError("Content could not be created.");
-                return Problem(
-                    "Content could not be created.",
-                    statusCode: StatusCodes.Status500InternalServerError);
-            }
 
             await PopulateContentPropertiesAsync(
                 content,
@@ -251,7 +203,7 @@ namespace Articulate.Api.Management.Controllers
                 return saveAndPublishResult;
             }
 
-            IPublishedContent? published = _umbracoHelper.Content(content.Id);
+            IPublishedContent? published = umbracoHelper.Content(content.Id);
             return Ok(new CreatePostResponse { Url = published?.Url() ?? string.Empty });
         }
 
@@ -309,7 +261,7 @@ namespace Articulate.Api.Management.Controllers
             IFormFile? file = formFiles.FirstOrDefault(f => f.Name == tempUrl);
             if (file is null)
             {
-                _logger.LogWarning(
+                logger.LogWarning(
                     "Markdown image placeholder for {TempUrl} found, but no corresponding file was uploaded.", tempUrl);
                 return ImageProcessResult.Removed();
             }
@@ -318,13 +270,13 @@ namespace Articulate.Api.Management.Controllers
             var extension = Path.GetExtension(originalFileName).ToLowerInvariant();
 
             await using Stream uploadStream = file.OpenReadStream();
-            ImportMediaValidationResult validationResult = await _service.ValidateImageAsync(
+            ImportMediaValidationResult validationResult = await service.ValidateImageAsync(
                 uploadStream,
                 extension);
 
             if (!validationResult.IsValid)
             {
-                _logger.LogWarning(
+                logger.LogWarning(
                     "Markdown image {FileName} rejected: {ErrorMessage}",
                     originalFileName,
                     validationResult.ErrorMessage);
@@ -336,19 +288,19 @@ namespace Articulate.Api.Management.Controllers
 
             if (saveAsFirstImage)
             {
-                return await SaveImageToMediaLibraryAsync(
+                return SaveImageToMediaLibrary(
                     validationResult.ValidatedStream!,
                     altText,
                     validationResult.CorrectExtension!);
             }
 
-            var absoluteUrl = await _service.SaveToFileSystemAsync(
+            var absoluteUrl = service.SaveToFileSystem(
                 validationResult.ValidatedStream!,
                 validationResult.CorrectExtension!);
 
             if (string.IsNullOrEmpty(absoluteUrl))
             {
-                _logger.LogWarning(
+                logger.LogWarning(
                     "Failed to save markdown image {FileName} to filesystem - returned empty URL",
                     Path.GetFileName(file.FileName));
                 return ImageProcessResult.Removed();
@@ -357,29 +309,29 @@ namespace Articulate.Api.Management.Controllers
             return ImageProcessResult.RegularImage($"![{altText}]({absoluteUrl})");
         }
 
-        private async Task<ImageProcessResult> SaveImageToMediaLibraryAsync(
+        private ImageProcessResult SaveImageToMediaLibrary(
             Stream stream,
             string altText,
             string extension)
         {
-            ImportMediaSaveResult saveResult = await _service.SaveToMediaLibraryAsync(
+            ImportMediaSaveResult saveResult = service.SaveToMediaLibrary(
                 stream,
                 altText,
                 extension,
-                _articulateRootMediaFolder.Value);
+                service.GetOrCreateArticulateMediaFolder());
 
             if (!saveResult.Success || saveResult.Media is null)
             {
-                _logger.LogWarning(
+                logger.LogWarning(
                     "Failed to save media item for first image: {ErrorMessage}",
                     saveResult.ErrorMessage);
                 return ImageProcessResult.Removed();
             }
 
-            IPublishedContent? media = _umbracoHelper.Media(saveResult.Media.Key);
+            IPublishedContent? media = umbracoHelper.Media(saveResult.Media.Key);
             if (media is null)
             {
-                _logger.LogWarning(
+                logger.LogWarning(
                     "Failed to retrieve published media for first image: {MediaKey}",
                     saveResult.Media.Key);
                 return ImageProcessResult.Removed();
@@ -388,11 +340,11 @@ namespace Articulate.Api.Management.Controllers
             var mediaUrl = media.Url();
             if (string.IsNullOrEmpty(mediaUrl))
             {
-                _logger.LogWarning("Media URL is empty for first image: {MediaKey}", saveResult.Media.Key);
+                logger.LogWarning("Media URL is empty for first image: {MediaKey}", saveResult.Media.Key);
                 return ImageProcessResult.Removed();
             }
 
-            var absoluteMediaUrl = _absoluteUrlBuilder.ToAbsoluteUrl(mediaUrl).ToString();
+            var absoluteMediaUrl = absoluteUrlBuilder.ToAbsoluteUrl(mediaUrl).ToString();
 
             return ImageProcessResult.FirstImage(saveResult.MediaUdi!, $"![{altText}]({absoluteMediaUrl})");
         }
@@ -432,8 +384,8 @@ namespace Articulate.Api.Management.Controllers
                         "markdown",
                         model.Body,
                         contentType,
-                        _languageService,
-                        _logger)
+                        languageService,
+                        logger)
                 ;
 
             if (!string.IsNullOrEmpty(firstImageUdi))
@@ -443,8 +395,8 @@ namespace Articulate.Api.Management.Controllers
                         "postImage",
                         firstImageUdi,
                         contentType,
-                        _languageService,
-                        _logger);
+                        languageService,
+                        logger);
             }
 
             if (!model.Excerpt.IsNullOrWhiteSpace())
@@ -454,8 +406,8 @@ namespace Articulate.Api.Management.Controllers
                         "excerpt",
                         model.Excerpt,
                         contentType,
-                        _languageService,
-                        _logger);
+                        languageService,
+                        logger);
             }
 
             if (!model.Tags.IsNullOrWhiteSpace())
@@ -466,11 +418,11 @@ namespace Articulate.Api.Management.Controllers
                     "tags",
                     tags,
                     contentType,
-                    _languageService,
-                    _dataTypeService,
-                    _propertyEditors,
-                    _jsonSerializer,
-                    _logger);
+                    languageService,
+                    dataTypeService,
+                    propertyEditors,
+                    jsonSerializer,
+                    logger);
             }
 
             if (!model.Categories.IsNullOrWhiteSpace())
@@ -481,11 +433,11 @@ namespace Articulate.Api.Management.Controllers
                     "categories",
                     cats,
                     contentType,
-                    _languageService,
-                    _dataTypeService,
-                    _propertyEditors,
-                    _jsonSerializer,
-                    _logger);
+                    languageService,
+                    dataTypeService,
+                    propertyEditors,
+                    jsonSerializer,
+                    logger);
             }
 
             if (!model.Slug.IsNullOrWhiteSpace())
@@ -494,28 +446,28 @@ namespace Articulate.Api.Management.Controllers
                     Umbraco.Cms.Core.Constants.Conventions.Content.UrlName,
                     model.Slug,
                     contentType,
-                    _languageService,
-                    _logger);
+                    languageService,
+                    logger);
             }
 
             await content.SetInvariantOrDefaultCultureValueAsync(
                 "author",
                 currentUser.Name ?? "Unknown",
                 contentType,
-                _languageService,
-                _logger);
+                languageService,
+                logger);
         }
 
         private ActionResult? SaveAndPublishContent(IContent content, int authorId)
         {
-            OperationResult saveStatus = _contentService.Save(content, authorId);
+            OperationResult saveStatus = contentService.Save(content, authorId);
             if (!saveStatus.Success)
             {
                 ModelState.AddModelError("SaveOperation", "Content failed to save. Please check logs for details.");
                 return ValidationProblem(ModelState);
             }
 
-            PublishResult publishStatus = _contentService.Publish(content, ["*"], authorId);
+            PublishResult publishStatus = contentService.Publish(content, ["*"], authorId);
             if (!publishStatus.Success)
             {
                 ModelState.AddModelError("SaveOperation", "Content failed to publish. Please check logs for details.");

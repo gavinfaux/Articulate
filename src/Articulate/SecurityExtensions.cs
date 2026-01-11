@@ -86,35 +86,5 @@ namespace Articulate
                 .Replace("(", "\\(")
                 .Replace(")", "\\)");
         }
-
-        /// <summary>
-        /// Checks if a URL is safe for use in href or src attributes.
-        /// </summary>
-        /// <param name="url">The URL to validate.</param>
-        /// <returns><c>true</c> if the URL is safe, otherwise <c>false</c>.</returns>
-        public static bool IsSafeUrl(this string? url)
-        {
-            return url.ToSafeHrefUrl() != null;
-        }
-
-        /// <summary>
-        /// Gets a safe URL for href or src attributes, returning an empty string if invalid.
-        /// </summary>
-        /// <param name="url">The URL to validate.</param>
-        /// <returns>The URL if safe, otherwise an empty string.</returns>
-        public static string ToSafeHrefUrlOrEmpty(this string? url)
-        {
-            return url.ToSafeHrefUrl() ?? string.Empty;
-        }
-
-        /// <summary>
-        /// Alias for <see cref="ToSafeCssUrl"/> for naming consistency.
-        /// </summary>
-        /// <param name="url">The URL to validate and escape.</param>
-        /// <returns>The CSS-escaped URL if safe, otherwise <c>null</c>.</returns>
-        public static string? ToSafeCssUrlOrNull(this string? url)
-        {
-            return url.ToSafeCssUrl();
-        }
     }
 }

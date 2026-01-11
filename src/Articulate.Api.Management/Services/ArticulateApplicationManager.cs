@@ -134,7 +134,7 @@ namespace Articulate.Api.Management.Services
             {
                 if (Uri.TryCreate(candidate, UriKind.Absolute, out Uri? uri))
                 {
-                    target.Add(EnsureTrailingSlash(uri));
+                    target.Add(new UriBuilder(uri) { Path = uri.AbsolutePath.EnsureEndsWith('/') }.Uri);
                     added = true;
                 }
                 else
@@ -155,7 +155,7 @@ namespace Articulate.Api.Management.Services
             {
                 if (Uri.TryCreate(candidate, UriKind.Absolute, out Uri? uri))
                 {
-                    target.Add(EnsureTrailingSlash(uri));
+                    target.Add(new UriBuilder(uri) { Path = uri.AbsolutePath.EnsureEndsWith('/') }.Uri);
                 }
                 else
                 {
@@ -165,20 +165,6 @@ namespace Articulate.Api.Management.Services
                         clientId);
                 }
             }
-        }
-
-
-        // ?? dup  of extension method
-        private static Uri EnsureTrailingSlash(Uri uri)
-        {
-            var path = uri.AbsolutePath;
-            if (path.Length > 0 && path[^1] == '/')
-            {
-                return uri;
-            }
-
-            var builder = new UriBuilder(uri) { Path = path.EnsureEndsWith('/') };
-            return builder.Uri;
         }
     }
 }

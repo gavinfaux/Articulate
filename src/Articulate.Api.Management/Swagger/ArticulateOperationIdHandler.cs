@@ -11,11 +11,11 @@ namespace Articulate.Api.Management.Swagger
     /// <summary>
     /// Handles the generation of operation IDs for Articulate API endpoints in Swagger.
     /// </summary>
+#pragma warning disable CS9107 // Parameter captured and passed to base - intentional, base class doesn't expose options
     internal class ArticulateOperationIdHandler(IOptions<ApiVersioningOptions> apiVersioningOptions)
         : OperationIdHandler(apiVersioningOptions)
+#pragma warning restore CS9107
     {
-        private readonly IOptions<ApiVersioningOptions> _apiVersioningOptions = apiVersioningOptions;
-
         /// <inheritdoc/>
         public override string Handle(ApiDescription apiDescription) => ArticulateOperationId(apiDescription);
 
@@ -40,7 +40,7 @@ namespace Articulate.Api.Management.Swagger
                 throw new ArgumentException($"This handler operates only on {nameof(ControllerActionDescriptor)}.");
             }
 
-            ApiVersion defaultVersion = _apiVersioningOptions.Value.DefaultApiVersion;
+            ApiVersion defaultVersion = apiVersioningOptions.Value.DefaultApiVersion;
             var httpMethod = apiDescription.HttpMethod?.ToLower().ToFirstUpper() ?? "Get";
             var relativePath = apiDescription.RelativePath;
 
@@ -55,7 +55,7 @@ namespace Articulate.Api.Management.Swagger
                 .VersionPrefixRegex()
                 .Replace(relativePath, string.Empty);
 
-            // Remove template placeholders, e.g. tracked-reference/{id} => tracked-reference/Id
+            // Remove template placeholders, e.g. tracked-reference/{id} => tracked-reference/ID
             var formattedOperationId = ArticulateOperationIdRegexes
                 .TemplatePlaceholdersRegex()
                 .Replace(unprefixedRelativePath, m => $"By{m.Groups[1].Value.ToFirstUpper()}");

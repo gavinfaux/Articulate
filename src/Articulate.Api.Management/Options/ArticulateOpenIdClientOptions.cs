@@ -1,4 +1,5 @@
 #nullable enable
+using System.Collections.Frozen;
 using OpenIddict.Abstractions;
 
 namespace Articulate.Api.Management.Options
@@ -49,16 +50,34 @@ namespace Articulate.Api.Management.Options
         /// </summary>
         public List<string> PostLogoutRedirectUris { get; set; } = [];
 
+        /// <summary>
+        /// Gets or sets the custom Authorization URL.
+        /// </summary>
         public string? AuthorizeUrl { get; set; }
 
+        /// <summary>
+        /// Gets or sets the custom Token URL.
+        /// </summary>
         public string? TokenUrl { get; set; }
 
+        /// <summary>
+        /// Gets or sets the custom End Session URL.
+        /// </summary>
         public string? EndSessionUrl { get; set; }
 
+        /// <summary>
+        /// Gets or sets the custom Revocation URL.
+        /// </summary>
         public string? RevocationUrl { get; set; }
 
+        /// <summary>
+        /// Gets or sets the custom Current User URL.
+        /// </summary>
         public string? CurrentUserUrl { get; set; }
 
+        /// <summary>
+        /// Gets or sets the custom Login Logo URL.
+        /// </summary>
         public string? LoginLogoUrl { get; set; }
 
         /// <summary>
@@ -78,7 +97,7 @@ namespace Articulate.Api.Management.Options
         /// </summary>
         public bool HasClientSecret() => !string.IsNullOrWhiteSpace(ClientSecret);
 
-        private static readonly IReadOnlyCollection<string> _defaultPermissions = Array.AsReadOnly([
+        private static readonly FrozenSet<string> _defaultPermissions = FrozenSet.ToFrozenSet([
             // Allow the client to initiate the authorization code flow.
             OpenIddictConstants.Permissions.Endpoints.Authorization,
 
@@ -98,7 +117,7 @@ namespace Articulate.Api.Management.Options
             OpenIddictConstants.Permissions.ResponseTypes.Code
         ]);
 
-        private static readonly IReadOnlyCollection<string> _defaultRequirements = Array.AsReadOnly([
+        private static readonly FrozenSet<string> _defaultRequirements = FrozenSet.ToFrozenSet([
             OpenIddictConstants.Requirements.Features.ProofKeyForCodeExchange
         ]);
     }

@@ -5,7 +5,7 @@ using Umbraco.Cms.Core.Routing;
 namespace Articulate.Routing
 {
     /// <summary>
-    /// Used to create all of the dynamic routes.
+    /// Used to create all the dynamic routes.
     /// </summary>
     internal class ArticulateRootNodeCache(ControllerActionDescriptor controllerActionDescriptor)
     {

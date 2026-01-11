@@ -1,10 +1,16 @@
 #nullable enable
 namespace Articulate
 {
+    /// <summary>
+    /// Constants used throughout the Articulate project.
+    /// </summary>
     public static class ArticulateConstants
     {
         internal const string RefreshRoutesToken = "articulate-refresh-routes";
 
+        /// <summary>
+        /// Content type aliases.
+        /// </summary>
         public static class ContentType
         {
             public const string Articulate = "Articulate";
@@ -16,6 +22,9 @@ namespace Articulate
             public const string ArticulateRichText = "ArticulateRichText";
         }
 
+        /// <summary>
+        /// Naming conventions and document aliases.
+        /// </summary>
         public static class Convention
         {
             public const string ArticlesDocument = "Articles";
@@ -23,6 +32,9 @@ namespace Articulate
             public const string AuthorsDocument = "Authors";
         }
 
+        /// <summary>
+        /// Data type aliases and keys.
+        /// </summary>
         public static class DataType
         {
             public const string ArticulateCategories = "ArticulateCategories";
@@ -30,11 +42,17 @@ namespace Articulate
             public const string ArticulateTags = "ArticulateTags";
             public const string ArticulateThemePicker = "ArticulateThemePicker";
 
-            internal static readonly Guid ArticulateRichTextKey = new("DBCB0707-021D-4CD4-BA8B-5CC891516C28");
+            public static readonly Guid ArticulateRichTextKey = new("DBCB0707-021D-4CD4-BA8B-5CC891516C28");
         }
 
+        /// <summary>
+        /// Default theme names.
+        /// </summary>
         public static class DefaultThemes
         {
+            /// <summary>
+            /// Gets all built-in theme names.
+            /// </summary>
             public static readonly IEnumerable<string> AllThemeNames = [Vapor, Material, Phantom, Mini];
 
             private const string Material = "Material";
@@ -43,6 +61,9 @@ namespace Articulate
             private const string Vapor = "VAPOR";
         }
 
+        /// <summary>
+        /// Migration plan and step names.
+        /// </summary>
         public static class Migration
         {
             public const string AutomaticPackageMigrationPlan = "Articulate";

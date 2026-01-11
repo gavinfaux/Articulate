@@ -12,6 +12,9 @@ using Umbraco.Cms.Infrastructure.Scoping;
 
 namespace Articulate.Components
 {
+    /// <summary>
+    /// Notification handler to refresh Articulate routes when the content cache is updated.
+    /// </summary>
     public sealed class ContentCacheRefresherHandler(
         IUmbracoContextAccessor umbracoContextAccessor,
         AppCaches appCaches,
@@ -56,7 +59,8 @@ namespace Articulate.Components
         {
             foreach (ContentCacheRefresher.JsonPayload payload in payloads)
             {
-                if (payload.ChangeTypes.HasTypesAny(TreeChangeTypes.Remove | TreeChangeTypes.RefreshBranch | TreeChangeTypes.RefreshNode))
+                if (payload.ChangeTypes.HasTypesAny(TreeChangeTypes.Remove | TreeChangeTypes.RefreshBranch |
+                                                    TreeChangeTypes.RefreshNode))
                 {
                     RefreshById(payload.Id);
                 }
@@ -88,7 +92,8 @@ namespace Articulate.Components
                 IPublishedContent? item = umbracoContext.Content.GetById(id);
 
                 // if it's directly related to an articulate node
-                if (item is not null && item.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.Articulate))
+                if (item is not null &&
+                    item.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.Articulate))
                 {
                     // ensure routes are rebuilt
                     EnsureRoutesRefreshQueued();
@@ -103,7 +108,7 @@ namespace Articulate.Components
 
                     // This will occur on delete, then what?
                     // TODO: How would we know this is a node that might be at the same level/above?
-                    // For now we have no choice, rebuild routes on each delete :/
+                    // For now, we have no choice, rebuild routes on each delete :/
                     if (item is null)
                     {
                         EnsureRoutesRefreshQueued();
@@ -111,9 +116,12 @@ namespace Articulate.Components
                     }
                 }
 
-                IPublishedContentType articulateContentType = publishedContentTypeCache.Get(PublishedItemType.Content, ArticulateConstants.ContentType.Articulate);
+                IPublishedContentType articulateContentType = publishedContentTypeCache.Get(
+                    PublishedItemType.Content,
+                    ArticulateConstants.ContentType.Articulate);
 
-                IEnumerable<IPublishedContent> articulateNodes = documentCacheService.GetByContentType(articulateContentType);
+                IEnumerable<IPublishedContent> articulateNodes =
+                    documentCacheService.GetByContentType(articulateContentType);
                 if (!articulateNodes.Any(node => node.Level == item.Level && node.SortOrder > item.SortOrder))
                 {
                     return;

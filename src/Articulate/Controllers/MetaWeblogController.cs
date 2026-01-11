@@ -13,7 +13,7 @@ using WilderMinds.MetaWeblog;
 namespace Articulate.Controllers
 {
     /// <summary>
-    /// Custom controller to handle the webblog endpoints so that we can wire
+    /// Custom controller to handle the weblog endpoints so that we can wire
     /// up the articulate start node for the IMetaWeblogProvider data source.
     /// </summary>
     /// <remarks>
@@ -29,6 +29,9 @@ namespace Articulate.Controllers
         IServiceProvider serviceProvider)
         : RenderController(logger, compositeViewEngine, umbracoContextAccessor)
     {
+        /// <summary>
+        /// Handles the MetaWeblog API requests.
+        /// </summary>
         [HttpPost]
         public async Task<ActionResult> IndexAsync(int id)
         {

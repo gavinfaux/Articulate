@@ -3,16 +3,16 @@ using System.Collections;
 
 namespace Articulate.Models
 {
+    /// <summary>
+    /// A collection of <see cref="PostsByTagModel"/>.
+    /// </summary>
     public class PostTagCollection(IEnumerable<PostsByTagModel> tags) : IEnumerable<PostsByTagModel>
     {
         private int? _maxCount;
 
         /// <summary>
-        /// Returns a tag weight based on the current tag collection out of x
+        /// Gets the weight of a tag for cloud visualization.
         /// </summary>
-        /// <param name="postsByTag"></param>
-        /// <param name="maxWeight"></param>
-        /// <returns></returns>
         public int GetTagWeight(PostsByTagModel postsByTag, decimal maxWeight)
         {
             _maxCount ??= this.DefaultIfEmpty().Max(x => x?.PostCount ?? 0);

@@ -8,6 +8,13 @@ using Umbraco.Cms.Web.Common;
 
 namespace Articulate.Services
 {
+    /// <summary>
+    /// Service layer for Articulate tag/category queries.
+    /// </summary>
+    /// <remarks>
+    /// Provides database scoping for <see cref="ArticulateTagRepository"/>, which uses custom SQL
+    /// for path-scoped queries (multi-blog), paging, and sorting by publishedDate.
+    /// </remarks>
     public class ArticulateTagService(
         IArticulateTagRepository repository,
         ICoreScopeProvider provider,
@@ -15,6 +22,15 @@ namespace Articulate.Services
         IEventMessagesFactory eventMessagesFactory)
         : RepositoryService(provider, loggerFactory, eventMessagesFactory)
     {
+        /// <summary>
+        /// Gets content grouped by tags.
+        /// </summary>
+        /// <param name="helper">The Umbraco helper.</param>
+        /// <param name="tagQuery">The tag query service.</param>
+        /// <param name="masterModel">The master model for the blog root.</param>
+        /// <param name="tagGroup">The tag group to filter by.</param>
+        /// <param name="baseUrlName">The base URL name for the tag route.</param>
+        /// <returns>A collection of posts grouped by tag.</returns>
         public IEnumerable<PostsByTagModel> GetContentByTags(
             UmbracoHelper helper,
             ITagQuery tagQuery,
@@ -33,6 +49,17 @@ namespace Articulate.Services
             }
         }
 
+        /// <summary>
+        /// Gets content for a specific tag with paging.
+        /// </summary>
+        /// <param name="helper">The Umbraco helper.</param>
+        /// <param name="masterModel">The master model for the blog root.</param>
+        /// <param name="tag">The tag name.</param>
+        /// <param name="tagGroup">The tag group.</param>
+        /// <param name="baseUrlName">The base URL name for the tag route.</param>
+        /// <param name="page">The current page number.</param>
+        /// <param name="pageSize">The number of items per page.</param>
+        /// <returns>A model containing the posts for the specified tag.</returns>
         public PostsByTagModel GetContentByTag(
             UmbracoHelper helper,
             IMasterModel masterModel,
@@ -55,6 +82,12 @@ namespace Articulate.Services
             }
         }
 
+        // Not used internally or by default themes, but exposed for custom themes
+        /// <summary>
+        /// Gets all categories for a given blog root.
+        /// </summary>
+        /// <param name="masterModel">The master model for the blog root.</param>
+        /// <returns>A collection of category names.</returns>
         public IEnumerable<string> GetAllCategories(
             IMasterModel masterModel)
         {

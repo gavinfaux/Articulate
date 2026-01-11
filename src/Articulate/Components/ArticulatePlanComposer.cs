@@ -2,5 +2,11 @@ using Umbraco.Cms.Core.Composing;
 
 namespace Articulate.Components
 {
-    public class ArticulatePlanComposer : ComponentComposer<ArticulatePlanComponent> { }
+    /// <summary>
+    /// Composer for registering <see cref="ArticulatePlanComponent"/>.
+    /// </summary>
+    public class ArticulatePlanComposer : ComponentComposer<ArticulatePlanComponent>
+    {
+        // Intentionally empty
+    }
 }

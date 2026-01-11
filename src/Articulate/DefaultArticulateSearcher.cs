@@ -8,13 +8,22 @@ using Umbraco.Cms.Core.Web;
 
 namespace Articulate
 {
+    /// <summary>
+    /// Default implementation of <see cref="IArticulateSearcher"/>.
+    /// </summary>
     public class DefaultArticulateSearcher(
         IUmbracoContextAccessor umbracoContextAccessor,
         IExamineManager examineManager)
         : IArticulateSearcher
     {
         /// <inheritdoc/>
-        public IEnumerable<IPublishedContent> Search(string term, string? indexName, int blogArchiveNodeId, int pageSize, int pageIndex, out long totalResults)
+        public IEnumerable<IPublishedContent> Search(
+            string term,
+            string? indexName,
+            int blogArchiveNodeId,
+            int pageSize,
+            int pageIndex,
+            out long totalResults)
         {
             if (string.IsNullOrWhiteSpace(term))
             {
@@ -67,7 +76,9 @@ namespace Articulate
                 }
             }
 
-            indexName = string.IsNullOrWhiteSpace(indexName) ? Umbraco.Cms.Core.Constants.UmbracoIndexes.ExternalIndexName : indexName;
+            indexName = string.IsNullOrWhiteSpace(indexName)
+                ? Umbraco.Cms.Core.Constants.UmbracoIndexes.ExternalIndexName
+                : indexName;
 
             if (!examineManager.TryGetIndex(indexName, out IIndex? index) || index is null)
             {

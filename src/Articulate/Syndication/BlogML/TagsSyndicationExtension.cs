@@ -38,7 +38,7 @@ namespace Articulate.Syndication.BlogML
                         syndicationExtension.Context.Tags,
                         StringComparison.OrdinalIgnoreCase),
                 _ => throw new ArgumentException(
-                    string.Format(null, "obj is not of type {0}, type was found to be '{1}'.", GetType().FullName, obj.GetType().FullName), nameof(obj)),
+                    string.Format(null, @"obj is not of type {0}, type was found to be '{1}'.", GetType().FullName, obj.GetType().FullName), nameof(obj)),
             };
 
         /// <inheritdoc />
@@ -110,13 +110,16 @@ namespace Articulate.Syndication.BlogML
             hash.Add(Version);
             hash.Add(XmlNamespace);
             hash.Add(XmlPrefix);
-            if (Context.Tags is not null)
+            if (Context.Tags is null || Context.Tags.Count == 0)
             {
-                foreach (var tag in Context.Tags)
-                {
-                    hash.Add(tag);
-                }
+                return hash.ToHashCode();
             }
+
+            foreach (var tag in Context.Tags)
+            {
+                hash.Add(tag);
+            }
+
             return hash.ToHashCode();
         }
     }

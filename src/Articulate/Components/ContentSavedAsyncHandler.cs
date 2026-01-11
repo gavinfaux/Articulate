@@ -7,6 +7,9 @@ using Umbraco.Cms.Core.Services;
 
 namespace Articulate.Components
 {
+    /// <summary>
+    /// Notification handler to ensure required sub-nodes exist when an Articulate root node is saved.
+    /// </summary>
     public class ContentSavedAsyncHandler(
         IContentTypeService contentTypeService,
         IContentService contentService,
@@ -29,7 +32,7 @@ namespace Articulate.Components
                 var defaultLang = await languageService.GetDefaultIsoCodeAsync();
                 cancellationToken.ThrowIfCancellationRequested();
 
-                await EnsureChildNodeExistsAsync(
+                EnsureChildNodeExists(
                     c,
                     ArticulateConstants.ContentType.ArticulateArchive,
                     ArticulateConstants.Convention.ArticlesDocument,
@@ -38,7 +41,7 @@ namespace Articulate.Components
 
                 cancellationToken.ThrowIfCancellationRequested();
 
-                await EnsureChildNodeExistsAsync(
+                EnsureChildNodeExists(
                     c,
                     ArticulateConstants.ContentType.ArticulateAuthors,
                     ArticulateConstants.Convention.AuthorsDocument,
@@ -47,18 +50,13 @@ namespace Articulate.Components
             }
         }
 
-        private Task<bool> EnsureChildNodeExistsAsync(
+        private void EnsureChildNodeExists(
             IContent parent,
             string contentTypeAlias,
             string documentName,
             string defaultLang,
             CancellationToken cancellationToken)
         {
-            if (ChildExists(parent.Id, contentTypeAlias, cancellationToken))
-            {
-                return Task.FromResult(true);
-            }
-
             IContentType? contentType = contentTypeService.Get(contentTypeAlias);
             if (contentType is null)
             {
@@ -66,7 +64,12 @@ namespace Articulate.Components
                     "Content type {ContentTypeAlias} not found when ensuring child for parent {ParentId}",
                     contentTypeAlias,
                     parent.Id);
-                return Task.FromResult(false);
+                return;
+            }
+
+            if (ChildExists(parent.Id, contentType.Id, cancellationToken))
+            {
+                return;
             }
 
             IContent child = contentService.Create(string.Empty, parent, contentTypeAlias);
@@ -83,9 +86,9 @@ namespace Articulate.Components
             if (!saveResult.Success)
             {
                 // Mitigate race: if another request created it after our initial check, skip without error.
-                if (ChildExists(parent.Id, contentTypeAlias, cancellationToken))
+                if (ChildExists(parent.Id, contentType.Id, cancellationToken))
                 {
-                    return Task.FromResult(true);
+                    return;
                 }
 
                 logger.LogError(
@@ -93,22 +96,13 @@ namespace Articulate.Components
                     contentTypeAlias,
                     parent.Id,
                     saveResult);
-                return Task.FromResult(false);
             }
-
-            return Task.FromResult(true);
         }
 
-        private bool ChildExists(int parentId, string contentTypeAlias, CancellationToken cancellationToken)
+        private bool ChildExists(int parentId, int contentTypeId, CancellationToken cancellationToken)
         {
             const int pageSize = 50;
             var pageIndex = 0;
-
-            var contentTypeId = contentTypeService.Get(contentTypeAlias)?.Id;
-            if (contentTypeId is null)
-            {
-                return false;
-            }
 
             while (true)
             {
@@ -118,7 +112,7 @@ namespace Articulate.Components
                 {
                     IEnumerable<IContent> page =
                         contentService.GetPagedChildren(parentId, pageIndex, pageSize, out var total);
-                    List<IContent> items = page.ToList() ?? [];
+                    var items = page.ToList();
 
                     if (items.Any(x => x.ContentTypeId == contentTypeId))
                     {
@@ -136,9 +130,9 @@ namespace Articulate.Components
                 {
                     logger.LogError(
                         ex,
-                        "Error checking if child exists for parent {ParentId} with type {ContentTypeAlias}",
+                        "Error checking if child exists for parent {ParentId} with type {ContentTypeId}",
                         parentId,
-                        contentTypeAlias);
+                        contentTypeId);
                     return false; // Assume doesn't exist to allow creation attempt
                 }
             }

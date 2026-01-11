@@ -129,7 +129,7 @@ namespace Articulate.Routing
                 }
             }
 
-            // if there's a domain attached we need to lookup the content with the domain Id
+            // if there's a domain attached we need to look up the content with the domain ID
             // and the domain's path stripped from the start
             if (contentRequest.HasDomain() && contentRequest.Domain?.Uri is not null)
             {

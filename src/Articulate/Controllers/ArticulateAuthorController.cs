@@ -10,6 +10,9 @@ using Umbraco.Cms.Web.Website.ActionResults;
 
 namespace Articulate.Controllers
 {
+    /// <summary>
+    /// Controller for displaying author details and their posts.
+    /// </summary>
     public class ArticulateAuthorController(
         ILogger<ArticulateAuthorController> logger,
         ICompositeViewEngine compositeViewEngine,
@@ -27,6 +30,9 @@ namespace Articulate.Controllers
         [NonAction]
         public override IActionResult Index() => Index(0);
 
+        /// <summary>
+        /// Renders the author page and their posts with optional pagination.
+        /// </summary>
         public IActionResult Index(int? p)
         {
             if (CurrentPage is null)
@@ -38,10 +44,12 @@ namespace Articulate.Controllers
             // create a master model
             var masterModel = new MasterModel(CurrentPage, PublishedValueFallback);
 
-            IPublishedContent[]? listNodes = masterModel.RootBlogNode.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive)?.ToArray();
+            IPublishedContent[]? listNodes = masterModel.RootBlogNode
+                .ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive)?.ToArray();
             if (listNodes is null || listNodes.Length == 0)
             {
-                throw new InvalidOperationException("An ArticulateArchive document must exist under the root Articulate document");
+                throw new InvalidOperationException(
+                    "An ArticulateArchive document must exist under the root Articulate document");
             }
 
             var totalPosts = umbracoHelper.GetPostCount(CurrentPage.Name, [.. listNodes.Select(x => x.Id)]);

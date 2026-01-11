@@ -1,4 +1,5 @@
 #nullable enable
+using System.Collections.Frozen;
 using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Api.Management.Routing;
 using Umbraco.Cms.Core;
@@ -10,44 +11,60 @@ using Umbraco.Cms.Core.Strings;
 
 namespace Articulate.Services
 {
-    public sealed class ArticulateImportMediaService(
-        ILogger<ArticulateImportMediaService> logger,
-        IMediaService mediaService,
-        MediaFileManager mediaFileManager,
-        IShortStringHelper shortStringHelper,
-        MediaUrlGeneratorCollection mediaUrlGenerators,
-        IContentTypeBaseServiceProvider contentTypeBaseServiceProvider,
-        IAbsoluteUrlBuilder absoluteUrlBuilder,
-        IHttpClientFactory httpClientFactory)
-        : IArticulateImportMediaService
+    /// <summary>
+    /// Service for importing media into Articulate.
+    /// </summary>
+    public sealed class ArticulateImportMediaService : IArticulateImportMediaService
     {
-        // Hardcoded allowed extensions (TODO: future: make configurable)
-        private static readonly string[] _allowedExtensions = ["png", "jpg", "jpeg", "gif"];
+        private static readonly FrozenSet<string> _allowedExtensions =
+            FrozenSet.ToFrozenSet([".png", ".jpg", ".jpeg", ".gif"]);
 
-        /// <summary>
-        /// Gets the MIME type for an image based on its file extension.
-        /// </summary>
-        public static string GetMimeTypeFromExtension(string filePathOrExtension)
+        private readonly ILogger<ArticulateImportMediaService> _logger;
+        private readonly IMediaService _mediaService;
+        private readonly MediaFileManager _mediaFileManager;
+        private readonly IShortStringHelper _shortStringHelper;
+        private readonly MediaUrlGeneratorCollection _mediaUrlGenerators;
+        private readonly IContentTypeBaseServiceProvider _contentTypeBaseServiceProvider;
+        private readonly IAbsoluteUrlBuilder _absoluteUrlBuilder;
+        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly Lazy<IMedia> _articulateMediaFolder;
+
+        public ArticulateImportMediaService(
+            ILogger<ArticulateImportMediaService> logger,
+            IMediaService mediaService,
+            MediaFileManager mediaFileManager,
+            IShortStringHelper shortStringHelper,
+            MediaUrlGeneratorCollection mediaUrlGenerators,
+            IContentTypeBaseServiceProvider contentTypeBaseServiceProvider,
+            IAbsoluteUrlBuilder absoluteUrlBuilder,
+            IHttpClientFactory httpClientFactory)
         {
-            // TODO: future: consider magic-bytes checks to determine MIME type and better security (e.g. https://github.com/neilharvey/FileSignatures)
-            var ext = Path.GetExtension(filePathOrExtension).Trim('.').ToLowerInvariant();
-            if (string.IsNullOrEmpty(ext))
-            {
-                ext = filePathOrExtension.Trim('.').ToLowerInvariant();
-            }
+            _logger = logger;
+            _mediaService = mediaService;
+            _mediaFileManager = mediaFileManager;
+            _shortStringHelper = shortStringHelper;
+            _mediaUrlGenerators = mediaUrlGenerators;
+            _contentTypeBaseServiceProvider = contentTypeBaseServiceProvider;
+            _absoluteUrlBuilder = absoluteUrlBuilder;
+            _httpClientFactory = httpClientFactory;
 
-            return ext switch
+            _articulateMediaFolder = new Lazy<IMedia>(() =>
             {
-                "jpg" or "jpeg" => "image/jpeg",
-                "png" => "image/png",
-                "gif" => "image/gif",
-                _ => string.Empty
-            };
+                IMedia? root = _mediaService.GetRootMedia().FirstOrDefault(x =>
+                    x.Name == ArticulateConstants.Convention.ArticulateMediaFolder &&
+                    x.ContentType.Alias.InvariantEquals(Constants.Conventions.MediaTypes.Folder));
+                return root ?? _mediaService.CreateMediaWithIdentity(
+                    ArticulateConstants.Convention.ArticulateMediaFolder,
+                    Constants.System.Root,
+                    Constants.Conventions.MediaTypes.Folder);
+            });
         }
 
-        public ValueTask<ImportMediaValidationResult> ValidateImageAsync(
-            Stream stream,
-            string originalExtension)
+        /// <inheritdoc/>
+        public IMedia GetOrCreateArticulateMediaFolder() => _articulateMediaFolder.Value;
+
+        /// <inheritdoc/>
+        public ValueTask<ImportMediaValidationResult> ValidateImageAsync(Stream stream, string originalExtension)
         {
             var extension = originalExtension.ToLowerInvariant();
             if (!extension.StartsWith('.'))
@@ -55,24 +72,18 @@ namespace Articulate.Services
                 extension = $".{extension}";
             }
 
-            // Extension validation
-            string[] allowedExtensions = _allowedExtensions
-                .Select(ext => ext.StartsWith(".") ? ext.ToLowerInvariant() : $".{ext.ToLowerInvariant()}")
-                .ToArray();
-
-            if (!allowedExtensions.Contains(extension))
+            if (!_allowedExtensions.Contains(extension))
             {
                 return ValueTask.FromResult(ImportMediaValidationResult.Failure(
-                    $"Extension '{extension}' not allowed. Supported: {string.Join(", ", allowedExtensions)}"));
+                    $"Extension '{extension}' not allowed. Supported: {string.Join(", ", _allowedExtensions)}"));
             }
 
-            // Derive MIME type from extension
-            var mimeType = GetMimeTypeFromExtension(extension);
-
+            var mimeType = extension.GetImageMimeType();
             stream.Position = 0;
             return ValueTask.FromResult(ImportMediaValidationResult.Success(stream, extension, mimeType));
         }
 
+        /// <inheritdoc/>
         public async Task<ImportMediaValidationResult> DecodeAndValidateBase64ImageAsync(
             string base64Content,
             string originalFileName)
@@ -98,10 +109,8 @@ namespace Articulate.Services
             return await ValidateImageAsync(stream, extension);
         }
 
-        // Security Note: This method downloads from external URLs for BlogML migration.
-        // SSRF risk is accepted currently because:
-        // 1. BlogML import is admin-only (requires authentication)
-        // 2. Migration requires downloading from old blog domains
+        // Security: SSRF risk accepted - BlogML import is admin-only
+        /// <inheritdoc/>
         public async Task<ImportMediaValidationResult> DownloadAndValidateImageAsync(
             Uri imageUrl,
             CancellationToken cancellationToken = default)
@@ -113,7 +122,7 @@ namespace Articulate.Services
 
             try
             {
-                using HttpClient client = httpClientFactory.CreateClient();
+                using HttpClient client = _httpClientFactory.CreateClient();
                 using HttpResponseMessage response = await client.GetAsync(
                     imageUrl,
                     HttpCompletionOption.ResponseHeadersRead,
@@ -124,12 +133,10 @@ namespace Articulate.Services
                     return ImportMediaValidationResult.Failure($"HTTP error: {response.StatusCode}");
                 }
 
-                // Download directly to memory stream
                 var memoryStream = new MemoryStream();
                 await using Stream httpStream = await response.Content.ReadAsStreamAsync(cancellationToken);
                 await httpStream.CopyToAsync(memoryStream, cancellationToken);
 
-                // Rewind and validate
                 memoryStream.Position = 0;
                 string extension = Path.GetExtension(imageUrl.AbsolutePath).ToLowerInvariant();
                 ImportMediaValidationResult result = await ValidateImageAsync(memoryStream, extension);
@@ -140,7 +147,6 @@ namespace Articulate.Services
                     return result;
                 }
 
-                // Return the memory stream (caller owns it now)
                 memoryStream.Position = 0;
                 return ImportMediaValidationResult.Success(memoryStream, result.CorrectExtension!, result.MimeType!);
             }
@@ -158,7 +164,8 @@ namespace Articulate.Services
             imageUrl.IsAbsoluteUri &&
             (imageUrl.Scheme == Uri.UriSchemeHttp || imageUrl.Scheme == Uri.UriSchemeHttps);
 
-        public Task<ImportMediaSaveResult> SaveToMediaLibraryAsync(
+        /// <inheritdoc/>
+        public ImportMediaSaveResult SaveToMediaLibrary(
             Stream imageStream,
             string mediaName,
             string extension,
@@ -166,24 +173,21 @@ namespace Articulate.Services
         {
             try
             {
-                // Validate input
                 if (string.IsNullOrWhiteSpace(mediaName))
                 {
-                    throw new ArgumentException("Media name cannot be empty", nameof(mediaName));
+                    throw new ArgumentException(@"Media name cannot be empty", nameof(mediaName));
                 }
 
-                // Filename for physical file - use Umbraco's ToSafeFileName for filesystem safety
-                // Strip extension from input mediaName first to avoid doubling up (e.g., image.png -> image-png.png)
+                // Strip extension to avoid doubling up (e.g., image.png -> image-png.png)
                 var cleanMediaName = Path.GetFileNameWithoutExtension(mediaName);
                 if (string.IsNullOrWhiteSpace(cleanMediaName))
                 {
                     cleanMediaName = "image";
                 }
 
-                var safeFileName = $"{cleanMediaName.ToSafeFileName(shortStringHelper)}{extension}";
+                var safeFileName = $"{cleanMediaName.ToSafeFileName(_shortStringHelper)}{extension}";
 
-                // Display name for Umbraco backoffice - use ToFriendlyName for consistency with core
-                // ToFriendlyName strips extensions, replaces _/- with spaces, and applies Title Case
+                // Display name for backoffice - ToFriendlyName strips extensions and applies Title Case
                 var displayName = safeFileName.ToFriendlyName();
                 if (string.IsNullOrWhiteSpace(displayName))
                 {
@@ -195,79 +199,67 @@ namespace Articulate.Services
                     displayName = displayName[..100];
                 }
 
-                // Determine parent folder
                 var parentId = parentFolder?.Id ?? Constants.System.Root;
 
-                // Create media item with user-friendly display name
-                IMedia media = mediaService.CreateMedia(displayName, parentId, Constants.Conventions.MediaTypes.Image);
+                IMedia media = _mediaService.CreateMedia(displayName, parentId, Constants.Conventions.MediaTypes.Image);
                 media.SetValue(
-                    mediaFileManager,
-                    mediaUrlGenerators,
-                    shortStringHelper,
-                    contentTypeBaseServiceProvider,
+                    _mediaFileManager,
+                    _mediaUrlGenerators,
+                    _shortStringHelper,
+                    _contentTypeBaseServiceProvider,
                     Constants.Conventions.Media.File,
                     safeFileName,
                     imageStream);
 
-                Attempt<OperationResult?> saveResult = mediaService.Save(media);
+                Attempt<OperationResult?> saveResult = _mediaService.Save(media);
                 if (!saveResult.Success)
                 {
-                    return Task.FromResult(ImportMediaSaveResult.Failed($"Failed to save media item: {displayName}"));
+                    return ImportMediaSaveResult.Failed($"Failed to save media item: {displayName}");
                 }
 
                 var udi = Udi.Create(Constants.UdiEntityType.Media, media.Key).ToString();
-
-                return Task.FromResult(ImportMediaSaveResult.Succeeded(media, udi));
+                return ImportMediaSaveResult.Succeeded(media, udi);
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error saving image to media library");
-                return Task.FromResult(ImportMediaSaveResult.Failed($"Unexpected error: {ex.Message}"));
+                _logger.LogError(ex, "Error saving image to media library");
+                return ImportMediaSaveResult.Failed($"Unexpected error: {ex.Message}");
             }
         }
 
-        public Task<string> SaveToFileSystemAsync(Stream imageStream, string extension, string? originalFileName = null)
+        /// <inheritdoc/>
+        public string SaveToFileSystem(Stream imageStream, string extension, string? originalFileName = null)
         {
             try
             {
-                // Use 8-char GUID folder for file isolation (similar to Umbraco media pattern)
+                // 8-char GUID folder for file isolation
                 var uniqueFolder = Guid.NewGuid().ToString("N")[..8];
                 string safeFileName;
 
                 if (!string.IsNullOrWhiteSpace(originalFileName))
                 {
-                    // Sanitize the original filename
                     var fileNameWithoutExt = Path.GetFileNameWithoutExtension(originalFileName);
-                    var sanitized = fileNameWithoutExt.ToSafeFileName(shortStringHelper);
+                    var sanitized = fileNameWithoutExt.ToSafeFileName(_shortStringHelper);
                     safeFileName = $"{sanitized}{extension}";
                 }
                 else
                 {
-                    // Fallback to GUID if no original filename provided
-                    safeFileName = CreateSafeFileName(extension);
+                    safeFileName = $"{Guid.NewGuid():N}{extension}".ToSafeFileName(_shortStringHelper);
                 }
 
                 var fileUrl = $"articulate/{uniqueFolder}/{safeFileName}";
 
                 imageStream.Position = 0;
-                mediaFileManager.FileSystem.AddFile(fileUrl, imageStream);
+                _mediaFileManager.FileSystem.AddFile(fileUrl, imageStream);
 
-                var fileSystemUrl = mediaFileManager.FileSystem.GetUrl(fileUrl);
-                var absoluteUrl = absoluteUrlBuilder.ToAbsoluteUrl(fileSystemUrl).ToString();
-
-                return Task.FromResult(absoluteUrl);
+                var fileSystemUrl = _mediaFileManager.FileSystem.GetUrl(fileUrl);
+                return _absoluteUrlBuilder.ToAbsoluteUrl(fileSystemUrl).ToString();
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error saving image to file system");
-                return Task.FromResult(string.Empty);
+                _logger.LogError(ex, "Error saving image to file system");
+                return string.Empty;
             }
-        }
-
-        public string CreateSafeFileName(string extension)
-        {
-            var rndId = Guid.NewGuid().ToString("N");
-            return $"{rndId}{extension}".ToSafeFileName(shortStringHelper);
         }
     }
 }

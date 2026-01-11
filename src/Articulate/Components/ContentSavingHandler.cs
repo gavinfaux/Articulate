@@ -10,6 +10,9 @@ using Umbraco.Cms.Core.Services;
 
 namespace Articulate.Components
 {
+    /// <summary>
+    /// Notification handler to set default values and auto-generate excerpts when Articulate content is saving.
+    /// </summary>
     public sealed class ContentSavingHandler(
         IContentTypeService contentTypeService,
         IBackOfficeSecurityAccessor backOfficeSecurityAccessor,
@@ -190,6 +193,5 @@ namespace Articulate.Components
                     return current.IsNullOrWhiteSpace() ? defaultValue : null;
                 });
         }
-
     }
 }

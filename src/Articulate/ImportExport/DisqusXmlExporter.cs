@@ -13,6 +13,9 @@ using Umbraco.Cms.Core.Routing;
 namespace Articulate.ImportExport
 {
     // ReSharper disable once ClassNeverInstantiated.Global
+    /// <summary>
+    /// Exporter for blog comments to Disqus XML format.
+    /// </summary>
     public class DisqusXmlExporter(
         IPublishedUrlProvider publishedUrlProvider,
         ILogger<DisqusXmlExporter> logger,
@@ -20,6 +23,12 @@ namespace Articulate.ImportExport
     {
         private const string DisqusGmtDateFormat = "yyyy-MM-dd HH:mm:ss";
 
+        /// <summary>
+        /// Exports the comments from a collection of posts to a Disqus-compatible XML document.
+        /// </summary>
+        /// <param name="posts">The posts whose comments should be exported.</param>
+        /// <param name="document">The source BlogML document containing the comments.</param>
+        /// <returns>An XML document in Disqus import format.</returns>
         public XDocument Export(IEnumerable<IContent> posts, BlogMLDocument document)
         {
             var nsContent = XNamespace.Get("http://purl.org/rss/1.0/modules/content/");

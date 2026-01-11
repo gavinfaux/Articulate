@@ -6,6 +6,9 @@ using Umbraco.Cms.Web.Common.ApplicationBuilder;
 
 namespace Articulate.Components
 {
+    /// <summary>
+    /// Configuration for the Articulate dynamic routing in the middleware pipeline.
+    /// </summary>
     public class ArticulatePipelineStartupFilter : IConfigureOptions<UmbracoPipelineOptions>
     {
         /// <inheritdoc/>

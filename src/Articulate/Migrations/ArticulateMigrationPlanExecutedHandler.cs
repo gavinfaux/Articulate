@@ -13,6 +13,9 @@ using Umbraco.Cms.Infrastructure.Migrations.Notifications;
 
 namespace Articulate.Migrations;
 
+/// <summary>
+/// Handles notifications for Articulate migration plans.
+/// </summary>
 public class ArticulateMigrationPlanExecutedHandler(
     IRuntimeState runtimeState,
     IContentService contentService,
@@ -20,6 +23,10 @@ public class ArticulateMigrationPlanExecutedHandler(
     IOptions<ArticulateOptions> options)
     : INotificationHandler<MigrationPlansExecutedNotification>, INotificationHandler<ImportedPackageNotification>
 {
+    /// <summary>
+    /// Handles the <see cref="MigrationPlansExecutedNotification"/>.
+    /// </summary>
+    /// <param name="notification">The notification information.</param>
     public void Handle(MigrationPlansExecutedNotification notification)
     {
         if (!ShouldPublish("migration execution", notification.ExecutedPlans))
@@ -30,6 +37,10 @@ public class ArticulateMigrationPlanExecutedHandler(
         PublishArticulateTree("migration execution");
     }
 
+    /// <summary>
+    /// Handles the <see cref="ImportedPackageNotification"/>.
+    /// </summary>
+    /// <param name="notification">The notification information.</param>
     public void Handle(ImportedPackageNotification notification)
     {
         if (!ShouldPublish("package import"))
@@ -44,19 +55,23 @@ public class ArticulateMigrationPlanExecutedHandler(
     {
         if (runtimeState.Level is not RuntimeLevel.Run)
         {
-            logger.LogInformation("Umbraco is not in Run level, skipping Articulate post-migration tasks ({Trigger}).", trigger);
+            logger.LogInformation(
+                "Umbraco is not in Run level, skipping Articulate post-migration tasks ({Trigger}).",
+                trigger);
             return false;
         }
 
         if (!options.Value.AutoPublishOnStartup)
         {
-            logger.LogInformation("AutoPublishOnStartup is false, skipping Articulate post-migration tasks ({Trigger}).", trigger);
+            logger.LogInformation(
+                "AutoPublishOnStartup is false, skipping Articulate post-migration tasks ({Trigger}).", trigger);
             return false;
         }
 
         if (executedPlans is not null && !HasMigrationRun(executedPlans))
         {
-            logger.LogInformation("No Articulate migrations have run for this notification ({Trigger}), skipping publish.", trigger);
+            logger.LogInformation(
+                "No Articulate migrations have run for this notification ({Trigger}), skipping publish.", trigger);
             return false;
         }
 
@@ -72,11 +87,19 @@ public class ArticulateMigrationPlanExecutedHandler(
             .FirstOrDefault(x => x.ContentType.Alias == ArticulateConstants.ContentType.Articulate);
         if (contentHome is not null)
         {
-            logger.LogInformation("Found Articulate root node with ID {NodeId} for trigger {Trigger}", contentHome.Id, trigger);
+            logger.LogInformation(
+                "Found Articulate root node with ID {NodeId} for trigger {Trigger}",
+                contentHome.Id,
+                trigger);
             try
             {
-                logger.LogInformation("Attempting to publish Articulate branch for root node ID {NodeId} and trigger {Trigger}", contentHome.Id, trigger);
-                IEnumerable<PublishResult> result = contentService.PublishBranch(contentHome, PublishBranchFilter.IncludeUnpublished, []);
+                logger.LogInformation(
+                    "Attempting to publish Articulate branch for root node ID {NodeId} and trigger {Trigger}",
+                    contentHome.Id,
+                    trigger);
+                IEnumerable<PublishResult> resultEnumerable =
+                    contentService.PublishBranch(contentHome, PublishBranchFilter.IncludeUnpublished, []);
+                var result = resultEnumerable.ToList();
                 if (result.All(r => r.Success))
                 {
                     logger.LogInformation("Published Articulate Home page and descendants after {Trigger}", trigger);
@@ -84,12 +107,18 @@ public class ArticulateMigrationPlanExecutedHandler(
                 else
                 {
                     var failures = result.Where(r => !r.Success).ToList();
-                    logger.LogWarning("Partial publish failure: {FailureCount} items failed for trigger {Trigger}", failures.Count, trigger);
+                    logger.LogWarning(
+                        "Partial publish failure: {FailureCount} items failed for trigger {Trigger}",
+                        failures.Count,
+                        trigger);
                 }
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error publishing Articulate Home page and descendants for trigger {Trigger}", trigger);
+                logger.LogError(
+                    ex,
+                    "Error publishing Articulate Home page and descendants for trigger {Trigger}",
+                    trigger);
             }
         }
         else
@@ -102,7 +131,10 @@ public class ArticulateMigrationPlanExecutedHandler(
     {
         foreach (ExecutedMigrationPlan executedMigrationPlan in executedMigrationPlans)
         {
-            logger.LogInformation("Executed {Name}:{Success}", executedMigrationPlan.Plan.Name, executedMigrationPlan.Successful);
+            logger.LogInformation(
+                "Executed {Name}:{Success}",
+                executedMigrationPlan.Plan.Name,
+                executedMigrationPlan.Successful);
 
             if (executedMigrationPlan.Successful &&
                 (executedMigrationPlan.Plan.Name == ArticulateConstants.Migration.ArticulatePackageMigrationPlan ||

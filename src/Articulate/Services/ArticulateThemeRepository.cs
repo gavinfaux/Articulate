@@ -7,6 +7,9 @@ using static Articulate.ArticulateConstants;
 
 namespace Articulate.Services
 {
+    /// <summary>
+    /// Repository for retrieving and managing Articulate themes.
+    /// </summary>
     public sealed class ArticulateThemeRepository(
         IWebHostEnvironment hostingEnvironment,
         ILogger<ArticulateThemeRepository> logger,
@@ -25,7 +28,7 @@ namespace Articulate.Services
 
             if (!destinationPhysicalPath.StartsWith(userThemesPath, StringComparison.OrdinalIgnoreCase))
             {
-                throw new ArgumentException("Invalid theme name", nameof(newThemeName));
+                throw new ArgumentException(@"Invalid theme name", nameof(newThemeName));
             }
 
             Assembly articulateAssembly = GetWebAssembly();

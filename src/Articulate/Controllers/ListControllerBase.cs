@@ -40,9 +40,9 @@ namespace Articulate.Controllers
             long totalPosts,
             int? p)
         {
-            ArgumentNullException.ThrowIfNull(masterModel, nameof(masterModel));
-            ArgumentNullException.ThrowIfNull(pageNode, nameof(pageNode));
-            ArgumentNullException.ThrowIfNull(listItems, nameof(listItems));
+            ArgumentNullException.ThrowIfNull(masterModel);
+            ArgumentNullException.ThrowIfNull(pageNode);
+            ArgumentNullException.ThrowIfNull(listItems);
             if (!GetPagerModel(masterModel, totalPosts, p, out PagerModel? pager) || pager is null)
             {
                 return new RedirectToUmbracoPageResult(

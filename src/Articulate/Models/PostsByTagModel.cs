@@ -1,17 +1,20 @@
 #nullable enable
 namespace Articulate.Models
 {
+    /// <summary>
+    /// Model for posts grouped by a specific tag or category.
+    /// </summary>
     public class PostsByTagModel
     {
         private int? _count;
 
         public PostsByTagModel(IEnumerable<PostModel> posts, string tagName, string tagUrl, int count = -1)
         {
-            ArgumentNullException.ThrowIfNull(posts, nameof(posts));
+            ArgumentNullException.ThrowIfNull(posts);
 
-            ArgumentNullException.ThrowIfNull(tagUrl, nameof(tagUrl));
+            ArgumentNullException.ThrowIfNull(tagUrl);
 
-            ArgumentNullException.ThrowIfNull(tagName, nameof(tagName));
+            ArgumentNullException.ThrowIfNull(tagName);
             // resolve to array so it doesn't double lookup
             Posts = posts.ToArray();
             TagName = tagName;
@@ -23,17 +26,29 @@ namespace Articulate.Models
             }
         }
 
+        /// <summary>
+        /// Posts in this group.
+        /// </summary>
         public IEnumerable<PostModel>? Posts { get; }
 
+        /// <summary>
+        /// Name of the tag.
+        /// </summary>
         public string TagName { get; }
 
+        /// <summary>
+        /// URL for the tag.
+        /// </summary>
         public string TagUrl { get; }
 
         /// <summary>
-        /// Gets an string that can represent an html id for the tag
+        /// Gets a string that can represent a html id for the tag
         /// </summary>
         public string HtmlId => TagName.SafeEncodeUrlSegments();
 
+        /// <summary>
+        /// Gets the number of posts for this tag.
+        /// </summary>
         public int PostCount
         {
             get

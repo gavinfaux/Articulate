@@ -12,6 +12,9 @@ namespace Articulate.Api.Management.PropertyEditors
     // Prevent conflicts if both Markdown Editors on content type
     // TODO: Remove this when the Markdig package is merged into Umbraco
     // See: https://github.com/umbraco/Umbraco-CMS/pull/19500
+    /// <summary>
+    /// Value converter for the Articulate Markdown editor.
+    /// </summary>
     public class ArticulateMarkdownEditorValueConverter(
         HtmlLocalLinkParser localLinkParser,
         HtmlUrlParser urlParser,

@@ -1,7 +1,11 @@
 // Nullable reference annotations are used for the optional fields exposed to the view.
+
 #nullable enable
 namespace Articulate.Models
 {
+    /// <summary>
+    /// Model to initialize the Markdown editor with security and endpoint configuration.
+    /// </summary>
     public class MarkdownEditorInitModel
     {
         public required string AuthorizeUrl { get; init; }
@@ -23,6 +27,5 @@ namespace Articulate.Models
         public required string BackOfficeClientId { get; init; }
 
         public string? PostLogoutRedirectUrl { get; init; }
-
     }
 }

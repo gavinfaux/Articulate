@@ -6,18 +6,42 @@ using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.Extensions.Primitives;
+using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Models.PublishedContent;
 
 // TODO: #nullable enable
 namespace Articulate.Models
 {
+    /// <summary>
+    /// Extension methods for <see cref="IPublishedContent"/>.
+    /// </summary>
     public static class PublishedContentExtensions
     {
+#nullable enable
+        /// <summary>
+        /// Returns true if media exists and has content.
+        /// </summary>
+        public static bool HasImage(this MediaWithCrops? media)
+            => media?.Content != null;
+
+        /// <summary>
+        /// Returns base class with --has-image modifier if image exists.
+        /// Example: "mdl-card__media" returns "mdl-card__media mdl-card__media--has-image"
+        /// </summary>
+        public static string GetImageClass(this MediaWithCrops? media, string baseClass)
+            => media.HasImage()
+                ? $"{baseClass} {baseClass}--has-image"
+                : baseClass;
+#nullable disable
+
+        /// <summary>
+        /// Gets the next sibling of the current content.
+        /// </summary>
         public static IPublishedContent Next(this IPublishedContent content)
         {
             IPublishedContent parent = content?.Parent();
 
-            if (parent?.Children() is null || content is null)
+            if (parent?.Children() is null)
             {
                 return null;
             }
@@ -39,11 +63,14 @@ namespace Articulate.Models
             return null;
         }
 
+        /// <summary>
+        /// Gets the previous sibling of the current content.
+        /// </summary>
         public static IPublishedContent Previous(this IPublishedContent content)
         {
             IPublishedContent parent = content?.Parent();
 
-            if (parent?.Children() is null || content is null)
+            if (parent?.Children() is null)
             {
                 return null;
             }
@@ -75,6 +102,7 @@ namespace Articulate.Models
         /// Returns true if source has at least <paramref name="count"/> elements efficiently.
         /// </summary>
         /// <remarks>Based on int Enumerable.Count() method.</remarks>
+        [Obsolete("Scheduled for removal in a future release.")]
         public static bool HasMoreThan<TSource>(this IEnumerable<TSource> source, int count)
         {
             switch (source)
@@ -109,7 +137,7 @@ namespace Articulate.Models
         /// </summary>
         public static List<TSource> InRandomOrder<TSource>(this IEnumerable<TSource> source)
         {
-            ArgumentNullException.ThrowIfNull(source, nameof(source));
+            ArgumentNullException.ThrowIfNull(source);
 
             var list = source.ToList();
             list.Shuffle();
@@ -126,6 +154,9 @@ namespace Articulate.Models
                 ? model.RootBlogNode.Url(mode: UrlMode.Absolute).EnsureEndsWith('/') + "rss"
                 : model.CustomRssFeed;
 
+        /// <summary>
+        /// Gets the URL to create a new blog entry.
+        /// </summary>
         public static string ArticulateCreateBlogEntryUrl(this IMasterModel model) =>
             model.RootBlogNode.Url().EnsureEndsWith('/') + "a-new/";
 
@@ -179,6 +210,7 @@ namespace Articulate.Models
         /// Returns the authors list URL
         /// </summary>
         /// <param name="model"></param>
+        // Not used internally or by default themes, but exposed for custom themes
         public static string ArticulateAuthorsUrl(this IMasterModel model) => model.RootBlogNode
             .ChildrenOfType(ArticulateConstants.ContentType.ArticulateAuthors)?.FirstOrDefault()?.Url();
 
@@ -213,6 +245,9 @@ namespace Articulate.Models
             model.RootBlogNode.Value<string>("categoriesUrlName")?.EnsureEndsWith('/') +
             category.SafeEncodeUrlSegments();
 
+        /// <summary>
+        /// Renders the OpenSearch link tag.
+        /// </summary>
         public static IHtmlContent RenderOpenSearch(this IMasterModel model)
         {
             var openSearchUrl = model.RootBlogNode.Url(mode: UrlMode.Absolute).EnsureEndsWith('/') + "opensearch/" +
@@ -233,6 +268,9 @@ namespace Articulate.Models
             return tag;
         }
 
+        /// <summary>
+        /// Renders the RSS feed link tag.
+        /// </summary>
         public static IHtmlContent RssFeed(this IMasterModel model)
         {
             var url = model.CustomRssFeed.IsNullOrWhiteSpace()
@@ -251,6 +289,9 @@ namespace Articulate.Models
             return tag;
         }
 
+        /// <summary>
+        /// Renders link tags to advertise the Weblog APIs (RSD/WLW).
+        /// </summary>
         public static IHtmlContent AdvertiseWeblogApi(this IMasterModel model)
         {
             var rsdUrl = model.RootBlogNode.Url(mode: UrlMode.Absolute).EnsureEndsWith('/') + "rsd/" +
@@ -284,6 +325,9 @@ namespace Articulate.Models
             return builder;
         }
 
+        /// <summary>
+        /// Renders meta tags for description and tags.
+        /// </summary>
         public static IHtmlContent MetaTags(this IMasterModel model)
         {
             var htmlContent = new HtmlContentBuilder();
@@ -310,6 +354,9 @@ namespace Articulate.Models
             return htmlContent;
         }
 
+        /// <summary>
+        /// Renders the Google Analytics GTM tracking script.
+        /// </summary>
         public static IHtmlContent GoogleAnalyticsTracking(this IMasterModel model)
         {
             var tagId = model.RootBlogNode.Value<string>("googleAnalyticsId") ?? string.Empty;
@@ -338,6 +385,9 @@ namespace Articulate.Models
             return HtmlString.Empty;
         }
 
+        /// <summary>
+        /// Renders the Google Analytics GTM noscript block.
+        /// </summary>
         public static IHtmlContent GoogleAnalyticsNoScript(this IMasterModel model)
         {
             var tagId = model.RootBlogNode.Value<string>("googleAnalyticsId") ?? string.Empty;
@@ -357,6 +407,7 @@ namespace Articulate.Models
             return HtmlString.Empty;
         }
 
+        // Not used internally or by default themes, but exposed for custom themes
         public static IHtmlContent TagCloud(this PostTagCollection model, decimal maxWeight, int maxResults)
         {
             var tagsAndWeight = model.Select(x => new { tag = x, weight = model.GetTagWeight(x, maxWeight) })
@@ -410,18 +461,27 @@ namespace Articulate.Models
                 return Task.CompletedTask;
             });
 
+        /// <summary>
+        /// Renders a list of tags for a post.
+        /// </summary>
         public static IHtmlContent ListTags(
             this PostModel model,
             Func<string, HelperResult> tagLink,
             string delimiter = ", ") =>
             ListCategoriesOrTags([.. model.Tags], tagLink, delimiter);
 
+        /// <summary>
+        /// Renders a list of categories for a post.
+        /// </summary>
         public static IHtmlContent ListCategories(
             this PostModel model,
             Func<string, HelperResult> tagLink,
             string delimiter = ", ") =>
             ListCategoriesOrTags([.. model.Categories], tagLink, delimiter);
 
+        /// <summary>
+        /// Renders an HTML table for a collection.
+        /// </summary>
         public static IHtmlContent Table<T>(
             this IEnumerable<T> collection,
             string[] headers,
@@ -433,6 +493,9 @@ namespace Articulate.Models
                 cssClasses,
                 cellTemplates);
 
+        /// <summary>
+        /// Renders an HTML table for a collection with attributes.
+        /// </summary>
         public static IHtmlContent Table<T>(
             this IEnumerable<T> collection,
             object htmlAttributes,
@@ -558,6 +621,9 @@ namespace Articulate.Models
             return builder;
         }
 
+        /// <summary>
+        /// Renders the author's RSS feed link tag.
+        /// </summary>
         public static IHtmlContent AuthorRssFeed(this AuthorModel model)
         {
             var url = model.ArticulateAuthorRssUrl();
@@ -566,6 +632,9 @@ namespace Articulate.Models
                 $"""<link rel="alternate" type="application/rss+xml" title="RSS" href="{url}" />""");
         }
 
+        /// <summary>
+        /// Renders basic social meta tags.
+        /// </summary>
         public static void SocialMetaTags(this IPublishedContent model, IHtmlContentBuilder builder)
         {
             var twitterTag = new TagBuilder("meta")
@@ -600,12 +669,19 @@ namespace Articulate.Models
             _ = builder.AppendHtml(openGraphUrl);
         }
 
+        /// <summary>
+        /// Renders post-specific social meta tags (obsolete).
+        /// </summary>
+        [Obsolete("Please use the overload taking all parameters. Scheduled for removal in a future release.")]
         public static void PostSocialMetaTags(PostModel model, HttpRequest request)
         {
             var builder = new HtmlContentBuilder();
             PostSocialMetaTags(model, request, builder);
         }
 
+        /// <summary>
+        /// Renders post-specific social meta tags.
+        /// </summary>
         public static void PostSocialMetaTags(PostModel model, HttpRequest request, IHtmlContentBuilder builder)
         {
             if (!model.CroppedPostImageUrl.IsNullOrWhiteSpace())
@@ -642,6 +718,9 @@ namespace Articulate.Models
             _ = builder.AppendHtml(openGraphDesc);
         }
 
+        /// <summary>
+        /// Gets the archive list nodes for the blog.
+        /// </summary>
         public static IPublishedContent[] GetListNodes(IMasterModel masterModel)
         {
             IPublishedContent[] listNodes = masterModel.RootBlogNode
@@ -655,6 +734,9 @@ namespace Articulate.Models
             return listNodes;
         }
 
+        /// <summary>
+        /// Renders a list of categories or tags with a delimiter.
+        /// </summary>
         public static IHtmlContent ListCategoriesOrTags(
             string[] items,
             Func<string, HelperResult> tagLink,

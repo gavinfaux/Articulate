@@ -19,6 +19,9 @@ using Umbraco.Cms.Infrastructure.Persistence;
 
 namespace Articulate.ImportExport
 {
+    /// <summary>
+    /// Exporter for blog content to BlogML format.
+    /// </summary>
     public class BlogMlExporter(
         IContentService contentService,
         IMediaService mediaService,
@@ -32,6 +35,13 @@ namespace Articulate.ImportExport
         ILogger<BlogMlExporter> logger,
         IMarkdownToHtmlConverter markdownToHtmlConverter)
     {
+        /// <summary>
+        /// Exports the blog content from a root node to a BlogML file.
+        /// </summary>
+        /// <param name="blogRootNode">The unique identifier of the Articulate root node.</param>
+        /// <param name="exportFileName">The name of the file to create.</param>
+        /// <param name="exportImagesAsBase64">If true, images are embedded as Base64 strings.</param>
+        /// <returns>A task representing the asynchronous operation.</returns>
         public async Task ExportAsync(
             Guid blogRootNode,
             string exportFileName,
@@ -47,9 +57,9 @@ namespace Articulate.ImportExport
                         $"The node with id {blogRootNode} is not an Articulate root node");
                 }
 
-                IContentType richTextContentType = contentTypeService.Get(ArticulateConstants.ContentType.ArticulateRichText) ??
-                                      throw new InvalidOperationException(
-                                          "Articulate is not installed properly, the 'ArticulateRichText' doc type could not be found");
+                _ = contentTypeService.Get(ArticulateConstants.ContentType.ArticulateRichText) ??
+                    throw new InvalidOperationException(
+                        "Articulate is not installed properly, the 'ArticulateRichText' doc type could not be found");
                 IDataType categoryDataType = await dataTypeService.GetAsync("Articulate Categories") ??
                                              throw new InvalidOperationException(
                                                  "No Data Type named 'Articulate Categories' found");
@@ -101,7 +111,6 @@ namespace Articulate.ImportExport
                 WriteFile(blogMlDoc, exportFileName);
             }
         }
-
 
 
         private void WriteFile(BlogMLDocument blogMlDoc, string fileName)
@@ -241,13 +250,13 @@ namespace Articulate.ImportExport
         {
             if (child.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateRichText))
             {
-                // TODO: this would also need to handle RTE extensions e.g Blocks
+                // TODO: this would also need to handle RTE extensions e.g. Blocks
                 return child.GetValue<string>("richText") ?? string.Empty;
             }
 
             if (child.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateMarkdown))
             {
-                // TODO: this would also need to handle Markdown extensions if supported e.g MDX
+                // TODO: this would also need to handle Markdown extensions if supported e.g. MDX
                 var markdown = child.GetValue<string>("markdown");
                 return markdown is not null ? markdownToHtmlConverter.ToHtml(markdown) : string.Empty;
             }
@@ -310,47 +319,57 @@ namespace Articulate.ImportExport
             Uri postAbsoluteUrl,
             bool exportImagesAsBase64)
         {
-            if (!TryExtractImageV3(exportImagesAsBase64, child, postAbsoluteUrl, blogMlPost))
-            {
-                _ = TryExtractImageV1(exportImagesAsBase64, child, postAbsoluteUrl, blogMlPost);
-            }
+            _ = TryExtractImage(exportImagesAsBase64, child, postAbsoluteUrl, blogMlPost);
         }
 
-        private bool TryExtractImageV1(
+        private bool TryExtractImage(
             bool exportImagesAsBase64,
             IContent child,
             Uri postAbsoluteUrl,
             BlogMLPost blogMlPost)
         {
-            if (!child.HasProperty("postImage"))
+            if (!TryGetMediaId(child, out Guid mediaId))
             {
+                return false;
+            }
+
+            IMedia? media = mediaService.GetById(mediaId);
+            if (media is null)
+            {
+                logger.LogWarning(
+                    "Post '{PostName}' (Id: {PostId}) references Media {MediaId} which could not be found in the database.",
+                    child.Name,
+                    child.Id,
+                    mediaId);
+                return false;
+            }
+
+            if (!TryGetMediaPath(media, out string? mediaPath))
+            {
+                logger.LogWarning(
+                    "Post '{PostName}' (Id: {PostId}) references Media {MediaId} ('{MediaName}') but its file path could not be resolved.",
+                    child.Name,
+                    child.Id,
+                    mediaId,
+                    media.Name);
+                return false;
+            }
+
+            var mime = mediaPath!.GetImageMimeType();
+            if (string.IsNullOrWhiteSpace(mime))
+            {
+                logger.LogWarning(
+                    "Post '{PostName}' (Id: {PostId}) references Media {MediaId} ('{MediaName}') at path '{MediaPath}' but MIME type could not be determined.",
+                    child.Name,
+                    child.Id,
+                    mediaId,
+                    media.Name,
+                    mediaPath);
                 return false;
             }
 
             try
             {
-                if (!TryParseMediaUdi(child, out Guid mediaGuid))
-                {
-                    return false;
-                }
-
-                IMedia? media = mediaService.GetById(mediaGuid);
-                if (media is null)
-                {
-                    return false;
-                }
-
-                if (!TryGetMediaPathV1(media, out string? mediaPath))
-                {
-                    return false;
-                }
-
-                var mime = ArticulateImportMediaService.GetMimeTypeFromExtension(mediaPath!);
-                if (string.IsNullOrWhiteSpace(mime))
-                {
-                    return false;
-                }
-
                 BlogMLAttachment attachment =
                     CreateAttachmentFromMedia(exportImagesAsBase64, media, mediaPath!, mime, postAbsoluteUrl);
                 blogMlPost.Attachments.Add(attachment);
@@ -358,155 +377,91 @@ namespace Articulate.ImportExport
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Could not add the file to the blogML post attachments");
-                return false;
-            }
-        }
-
-        private static bool TryParseMediaUdi(IContent child, out Guid mediaGuid)
-        {
-            mediaGuid = Guid.Empty;
-            var mediaUdi = child.GetValue<string>("postImage");
-
-            if (string.IsNullOrWhiteSpace(mediaUdi))
-            {
-                return false;
-            }
-
-            try
-            {
-                var udi = (GuidUdi)UdiParser.Parse(mediaUdi);
-                mediaGuid = udi.Guid;
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
-        private bool TryGetMediaPathV1(IMedia media, out string? mediaPath)
-        {
-            mediaPath = null;
-            string? filename = media.GetValue(Constants.Conventions.Media.File)?.ToString();
-
-            if (filename is null)
-            {
-                return false;
-            }
-
-            mediaPath = mediaFileManager.GetMediaPath(
-                filename,
-                media.Key,
-                media.Properties[Constants.Conventions.Media.File]!.PropertyType.Key);
-
-            return true;
-        }
-
-        private bool TryExtractImageV3(
-            bool exportImagesAsBase64,
-            IContent child,
-            Uri postAbsoluteUrl,
-            BlogMLPost blogMlPost)
-        {
-            if (!child.HasProperty("postImage"))
-            {
-                return false;
-            }
-
-            string? mediaItemJson = child.GetValue<string>("postImage");
-            if (string.IsNullOrWhiteSpace(mediaItemJson) || !mediaItemJson.DetectIsJson())
-            {
-                return false;
-            }
-
-            try
-            {
-                if (!TryParseMediaKey(mediaItemJson, out Guid mediaKey))
-                {
-                    return false;
-                }
-
-                IMedia? media = mediaService.GetById(mediaKey);
-                if (media is null)
-                {
-                    return false;
-                }
-
-                if (!TryGetMediaFilePath(media, out string? mediaFilePath))
-                {
-                    return false;
-                }
-
-                var mime = ArticulateImportMediaService.GetMimeTypeFromExtension(mediaFilePath!);
-                if (string.IsNullOrWhiteSpace(mime))
-                {
-                    return false;
-                }
-
-                BlogMLAttachment attachment = CreateAttachmentFromMedia(
-                    exportImagesAsBase64,
-                    media,
-                    mediaFilePath!,
-                    mime,
-                    postAbsoluteUrl);
-                blogMlPost.Attachments.Add(attachment);
-                return true;
-            }
-            catch (Exception ex)
-            {
                 logger.LogError(
                     ex,
-                    "Could not add the file to the blogML post attachments for post {PostId}",
+                    "Could not add the file to the blogML post attachments for Post '{PostName}' (Id: {PostId}).",
+                    child.Name,
                     child.Id);
                 return false;
             }
         }
 
-        private static bool TryParseMediaKey(string mediaItemJson, out Guid mediaKey)
+        // Handles both V1 and V3 media formats
+        private static bool TryGetMediaId(IContent content, out Guid mediaId)
         {
-            mediaKey = Guid.Empty;
-            try
-            {
-                using var doc = JsonDocument.Parse(mediaItemJson);
-                JsonElement firstElement = doc.RootElement.EnumerateArray().FirstOrDefault();
-                if (firstElement.ValueKind == JsonValueKind.Undefined)
-                {
-                    return false;
-                }
-
-                if (!firstElement.TryGetProperty("mediaKey", out JsonElement mediaKeyElement))
-                {
-                    return false;
-                }
-
-                var mediaKeyStr = mediaKeyElement.GetString();
-                return Guid.TryParse(mediaKeyStr, out mediaKey);
-            }
-            catch (JsonException)
+            mediaId = Guid.Empty;
+            if (!content.HasProperty("postImage"))
             {
                 return false;
             }
+
+            var value = content.GetValue<string>("postImage");
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return false;
+            }
+
+            if (value.DetectIsJson())
+            {
+                try
+                {
+                    using var doc = JsonDocument.Parse(value);
+                    JsonElement firstElement = doc.RootElement.EnumerateArray().FirstOrDefault();
+                    if (firstElement.ValueKind != JsonValueKind.Undefined
+                        && firstElement.TryGetProperty("mediaKey", out JsonElement mediaKeyElement)
+                        && Guid.TryParse(mediaKeyElement.GetString(), out mediaId))
+                    {
+                        return true;
+                    }
+                }
+                catch (JsonException)
+                {
+                    // Ignore and fall through to try other formats
+                }
+            }
+
+            if (UdiParser.TryParse(value, out Udi? udi) && udi is GuidUdi guidUdi)
+            {
+                mediaId = guidUdi.Guid;
+                return true;
+            }
+
+            return false;
         }
 
-        private static bool TryGetMediaFilePath(IMedia media, out string? mediaFilePath)
+        // Handles both V1 and V3 media formats
+        private bool TryGetMediaPath(IMedia media, out string? mediaPath)
         {
-            mediaFilePath = media.GetValue<string>(Constants.Conventions.Media.File);
-            if (mediaFilePath is null)
+            var rawValue = media.GetValue<string>(Constants.Conventions.Media.File);
+            if (rawValue is null)
             {
+                mediaPath = null;
                 return false;
             }
 
-            if (mediaFilePath.DetectIsJson())
+            if (rawValue.DetectIsJson())
             {
-                using var mediaJson = JsonDocument.Parse(mediaFilePath);
-                if (mediaJson.RootElement.TryGetProperty("src", out JsonElement mediaSrc))
+                try
                 {
-                    mediaFilePath = mediaSrc.GetString();
+                    using var doc = JsonDocument.Parse(rawValue);
+                    if (doc.RootElement.TryGetProperty("src", out JsonElement src))
+                    {
+                        mediaPath = src.GetString();
+                        return !string.IsNullOrWhiteSpace(mediaPath);
+                    }
+                }
+                catch (JsonException)
+                {
+                    // Ignore, fall back to standard path handling
                 }
             }
 
-            return mediaFilePath is not null;
+            mediaPath = mediaFileManager.GetMediaPath(
+                rawValue,
+                media.Key,
+                media.Properties[Constants.Conventions.Media.File]!.PropertyType.Key);
+
+            return !string.IsNullOrWhiteSpace(mediaPath);
         }
 
         private BlogMLAttachment CreateAttachmentFromMedia(

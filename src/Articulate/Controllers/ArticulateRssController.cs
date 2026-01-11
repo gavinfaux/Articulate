@@ -37,6 +37,9 @@ namespace Articulate.Controllers
         [NonAction]
         public override IActionResult Index() => Index(0);
 
+        /// <summary>
+        /// Renders the main RSS feed.
+        /// </summary>
         public IActionResult Index(int? maxItems)
         {
             if (CurrentPage is null)
@@ -85,7 +88,7 @@ namespace Articulate.Controllers
 
             // Work around for above issue
             IEnumerable<PostModel> posts = umbracoHelper.GetPostsSortedByPublishedDate(
-                    pager, null, [rootPageModel.Id])
+                    pager, null, rootPageModel.Id)
                 .Select(x => new PostModel(x, publishedValueFallback));
 
             SyndicationFeed feed = feedGenerator.GetFeed(rootPageModel, posts);
@@ -93,11 +96,14 @@ namespace Articulate.Controllers
             return new RssResult(feed, rootPageModel);
         }
 
+        /// <summary>
+        /// Renders the RSS feed for a specific author.
+        /// </summary>
         public IActionResult Author(int authorId, int? maxItems)
         {
             IPublishedContent? author = umbracoHelper.Content(authorId);
 
-            ArgumentNullException.ThrowIfNull(author, nameof(author));
+            ArgumentNullException.ThrowIfNull(author);
 
             maxItems ??= 25;
 
@@ -125,11 +131,14 @@ namespace Articulate.Controllers
             return new RssResult(feed, masterModel);
         }
 
+        /// <summary>
+        /// Renders the RSS feed for a specific category.
+        /// </summary>
         public IActionResult Categories(
             string tag,
             int? maxItems)
         {
-            ArgumentNullException.ThrowIfNull(tag, nameof(tag));
+            ArgumentNullException.ThrowIfNull(tag);
 
             maxItems ??= 25;
 
@@ -140,11 +149,14 @@ namespace Articulate.Controllers
                 tag);
         }
 
+        /// <summary>
+        /// Renders the RSS feed for a specific tag.
+        /// </summary>
         public IActionResult Tags(
             string tag,
             int? maxItems)
         {
-            ArgumentNullException.ThrowIfNull(tag, nameof(tag));
+            ArgumentNullException.ThrowIfNull(tag);
 
             maxItems ??= 25;
 
@@ -155,6 +167,9 @@ namespace Articulate.Controllers
                 tag);
         }
 
+        /// <summary>
+        /// Renders an RSS feed for a tag group (categories or tags).
+        /// </summary>
         public IActionResult RenderTagsOrCategoriesRss(string tagGroup, string baseUrl, int maxItems, string tag)
         {
             if (CurrentPage is null)

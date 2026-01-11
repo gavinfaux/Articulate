@@ -9,6 +9,9 @@ using Umbraco.Cms.Infrastructure.Migrations.Upgrade;
 
 namespace Articulate.Components
 {
+    /// <summary>
+    /// Component to execute Articulate migration plans.
+    /// </summary>
     public class ArticulatePlanComponent(
         ICoreScopeProvider scopeProvider,
         IMigrationPlanExecutor migrationPlanExecutor,

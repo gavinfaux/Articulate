@@ -1,7 +1,13 @@
 namespace Articulate.Api.Management
 {
+    /// <summary>
+    /// Management API constants.
+    /// </summary>
     public static class Constants
     {
+        /// <summary>
+        /// Management API names and groups.
+        /// </summary>
         public static class ManagementApi
         {
             public const string Name = "articulate";

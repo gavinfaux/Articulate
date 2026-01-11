@@ -16,9 +16,6 @@ namespace Articulate.Api.Management.Models
         /// <summary>
         /// Gets or sets the unique identifier of the Articulate node to export.
         /// </summary>
-        /// <summary>
-        /// The unique identifier of the Articulate node to export.
-        /// </summary>
         /// <remarks>
         /// This is the identifier of the root node of the blog you want to export.
         /// </remarks>

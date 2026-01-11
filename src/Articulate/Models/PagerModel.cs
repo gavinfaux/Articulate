@@ -8,10 +8,19 @@ namespace Articulate.Models
         string? nextUrl = "",
         string? previousUrl = "")
     {
+        /// <summary>
+        /// Gets the number of items per page.
+        /// </summary>
         public int PageSize { get; } = pageSize;
 
+        /// <summary>
+        /// Gets the total number of pages.
+        /// </summary>
         public int TotalPages { get; } = totalPages;
 
+        /// <summary>
+        /// Gets the current page index.
+        /// </summary>
         public int CurrentPageIndex { get; } = currentIndex;
 
         public string? NextUrl { get; } = nextUrl;

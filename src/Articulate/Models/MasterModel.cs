@@ -68,7 +68,10 @@ namespace Articulate.Models
             protected set;
         }
 
-        /// <inheritdoc/>
+        /// <summary>
+        /// This will return the first authors node found under the blog root
+        /// </summary>
+        // Not used internally or by default themes, but exposed for custom themes
         public IPublishedContent BlogAuthorsNode
         {
             get
@@ -114,7 +117,7 @@ namespace Articulate.Models
         /// <inheritdoc/>
         public string BlogLogo
         {
-            get => field ??= RootBlogNode.Value<MediaWithCrops>("blogLogo")?.GetCropUrl("square") ?? string.Empty;
+            get => field ??= RootBlogNode.Value<MediaWithCrops>("blogLogo")?.GetCropUrl(cropAlias: "square", preferFocalPoint: true, useCropDimensions: true) ?? string.Empty;
             protected set;
         }
 
@@ -131,7 +134,7 @@ namespace Articulate.Models
         /// <inheritdoc/>
         public string BlogBanner
         {
-            get => field ??= RootBlogNode.Value<MediaWithCrops>("blogBanner")?.GetCropUrl("wide") ?? string.Empty;
+            get => field ??= RootBlogNode.Value<MediaWithCrops>("blogBanner")?.GetCropUrl(cropAlias: "wide", preferFocalPoint: true, useCropDimensions: true) ?? string.Empty;
             protected set;
         }
 

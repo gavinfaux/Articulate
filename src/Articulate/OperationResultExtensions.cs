@@ -1,6 +1,5 @@
 #nullable enable
 using Microsoft.Extensions.Logging;
-using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.Events;
 using Umbraco.Cms.Core.Services;
 
@@ -8,21 +7,6 @@ namespace Articulate;
 
 internal static class OperationResultExtensions
 {
-    public static void EnsureSuccess(
-        this Attempt<OperationResult?> attempt,
-        ILogger logger,
-        string operationDescription)
-    {
-        if (attempt is { Success: true, Result.Success: true })
-        {
-            return;
-        }
-
-        var status = attempt.Result?.Result.ToString() ?? "Unknown";
-        string summary = BuildEventMessageSummary(attempt.Result?.EventMessages);
-        ThrowLoggedOperationException(logger, operationDescription, status, summary);
-    }
-
     public static void EnsureSuccess<TResultType>(
         this OperationResult<TResultType> result,
         ILogger logger,

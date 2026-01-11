@@ -16,6 +16,9 @@ using Umbraco.Cms.Infrastructure.Migrations.Notifications;
 
 namespace Articulate.Components
 {
+    /// <summary>
+    /// Composer for Articulate dependencies and configuration.
+    /// </summary>
     public class ArticulateComposer : IComposer
     {
         /// <inheritdoc/>

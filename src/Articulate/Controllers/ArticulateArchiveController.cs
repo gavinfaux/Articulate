@@ -59,7 +59,7 @@ namespace Articulate.Controllers
             }
 
             // Get post count by xpath is much faster than iterating all children to get a count
-            var count = Umbraco.GetPostCount([archive.Id]);
+            var count = Umbraco.GetPostCount(archive.Id);
 
             if (!int.TryParse(archive.RootBlogNode.Value<string>("pageSize"), out var pageSize))
             {
