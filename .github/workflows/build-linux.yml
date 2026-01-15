@@ -46,9 +46,9 @@ jobs:
       - name: Setup NodeJS
         uses: actions/setup-node@v6
         with:
-          node-version-file: "src/Articulate.BackOffice.UI/Client/.node-version"
+          node-version-file: "src/Articulate.Web/Client/.node-version"
           cache: "pnpm"
-          cache-dependency-path: "src/Articulate.BackOffice.UI/Client/pnpm-lock.yaml"
+          cache-dependency-path: "src/Articulate.Web/Client/pnpm-lock.yaml"
 
       - name: Resolve pnpm store path
         id: pnpm-cache
@@ -59,7 +59,7 @@ jobs:
         uses: actions/cache@v5
         with:
           path: ${{ steps.pnpm-cache.outputs.path }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('src/Articulate.BackOffice.UI/Client/pnpm-lock.yaml') }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('src/Articulate.Web/Client/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
 
