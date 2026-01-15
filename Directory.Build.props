@@ -37,7 +37,7 @@
 	<PropertyGroup>
 		<CompressionEnabled>false</CompressionEnabled>
 	</PropertyGroup>
-	<!-- Central client-build defaults; consumed by Articulate.StaticAssets to build the backoffice client -->
+	<!-- Central client-build defaults; consumed by Articulate.Web to build the backoffice client -->
 	<PropertyGroup>
 		<EnableClientBuild Condition="'$(EnableClientBuild)'=='' and '$(ENABLE_CLIENT_BUILD)'!=''">$(ENABLE_CLIENT_BUILD)</EnableClientBuild>
 		<EnableClientBuild Condition="'$(EnableClientBuild)'==''">false</EnableClientBuild>

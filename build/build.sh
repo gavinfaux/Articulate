@@ -98,16 +98,10 @@ done
 
 # --- 4) Pack primary projects ---
 echo "4. Packing projects..."
-ARTICULATE_PROJECT="$SOLUTION_ROOT/Articulate/Articulate.csproj"
 ARTICULATE_WEB_PROJECT="$SOLUTION_ROOT/Articulate.Web/Articulate.Web.csproj"
-ARTICULATE_API_PROJECT="$SOLUTION_ROOT/Articulate.Api.Management/Articulate.Api.Management.csproj"
-ARTICULATE_BACKOFFICE_UI_PROJECT="$SOLUTION_ROOT/Articulate.BackOffice.UI/Articulate.BackOffice.UI.csproj"
 
 PACK_PROJECTS=(
-  "$ARTICULATE_BACKOFFICE_UI_PROJECT"
-  "$ARTICULATE_PROJECT"
   "$ARTICULATE_WEB_PROJECT"
-  "$ARTICULATE_API_PROJECT"
 )
 
 for proj in "${PACK_PROJECTS[@]}"; do

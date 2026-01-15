@@ -89,15 +89,9 @@ foreach ($tfm in $TargetFrameworks) {
 
 # 4) Pack primary projects
 Write-Host "4. Packing projects..."
-$articulateProject = (Join-Path $SolutionRoot 'Articulate/Articulate.csproj')
 $articulateWebProject = (Join-Path $SolutionRoot 'Articulate.Web/Articulate.Web.csproj')
-$articulateApiProject = (Join-Path $SolutionRoot 'Articulate.Api.Management/Articulate.Api.Management.csproj')
-$articulateBackOfficeUIProject = (Join-Path $SolutionRoot 'Articulate.BackOffice.UI/Articulate.BackOffice.UI.csproj')
 $projectsToPack = @(
-    $articulateBackOfficeUIProject,
-    $articulateProject,
-    $articulateWebProject,
-    $articulateApiProject
+    $articulateWebProject
 )
 $packThrottle = 1
 if ($SupportsParallel) {
