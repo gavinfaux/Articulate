@@ -486,14 +486,14 @@ $RECYCLE.BIN/
 # Uncomment if necessary however generally it will be regenerated when needed
 #!**/[Pp]ackages/repositories.config
 # except monaco markdown editor package used by Articulate's BackOffice UI
-!/src/Articulate.BackOffice.UI/Client/src/packages/
-!/src/Articulate.BackOffice.UI/Client/src/packages/**
+!/src/Articulate.Web/Client/src/packages/
+!/src/Articulate.Web/Client/src/packages/**
 
 # theme build artifacts
-/src/Articulate.BackOffice.UI/wwwroot
 /src/Articulate.Web/wwwroot/App_Plugins/Articulate/Themes/**/dist/
 /src/Articulate.Web/wwwroot/App_Plugins/Articulate/MarkdownEditor/**/dist/
-/src/Articulate.BackOffice.UI/wwwroot/App_Plugins/Articulate/
+/src/Articulate.Web/wwwroot/App_Plugins/Articulate/BackOffice/**/*
+/src/Articulate.Web/wwwroot/App_Plugins/Articulate/umbraco-package.json
 /build/tmp
 /build/ClientAssets/BackofficeClient.stamp
 
