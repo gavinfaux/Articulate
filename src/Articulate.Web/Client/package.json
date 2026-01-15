@@ -1,7 +1,7 @@
 {
   "name": "articulate-backoffice",
   "private": true,
-  "version": "0.0.0-dev",
+  "version": "6.0.0-gc349bdc001",
   "type": "module",
   "description": "Articulate BackOffice extension",
   "engines": {

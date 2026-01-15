@@ -4,6 +4,7 @@
     <TargetFrameworks>net9.0;net10.0</TargetFrameworks>
     <PackageId>Articulate</PackageId>
     <Title>Articulate</Title>
+    <AssemblyName>Articulate.Web</AssemblyName>
     <nullable>enable</nullable>
     <UseArticulateUsings>true</UseArticulateUsings>
     <!-- ENABLE Modern Web Assets (Replaces the need for targets files) -->
@@ -13,10 +14,31 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Articulate\Articulate.csproj" />
-    <ProjectReference Include="..\Articulate.Api.Management\Articulate.Api.Management.csproj" />
-    <!-- Reference the UI project so it gets packed into this NuGet automatically -->
-    <ProjectReference Include="..\Articulate.BackOffice.UI\Articulate.BackOffice.UI.csproj" />
+    <ProjectReference Include="..\Articulate\Articulate.csproj" PrivateAssets="all" />
+  </ItemGroup>
+
+  <!-- Include referenced project DLLs in the package using BuildOutputInPackage -->
+  <Target Name="IncludeProjectReferenceDlls" AfterTargets="Build">
+    <ItemGroup>
+      <BuildOutputInPackage Include="..\Articulate\bin\$(Configuration)\$(TargetFramework)\Articulate.dll" />
+      <BuildOutputInPackage Include="..\Articulate\bin\$(Configuration)\$(TargetFramework)\Articulate.xml" Condition="Exists('..\Articulate\bin\$(Configuration)\$(TargetFramework)\Articulate.xml')" />
+    </ItemGroup>
+  </Target>
+  <!-- External PackageReferences that Articulate.Core needs (since ProjectRefs are PrivateAssets) -->
+  <ItemGroup>
+    <!-- Umbraco dependencies (required by Articulate.Core) -->
+    <PackageReference Include="Umbraco.Cms.Web.Website" Version="$(UmbracoCmsPackageVersion)" />
+    <PackageReference Include="Umbraco.Cms.Api.Management" Version="$(UmbracoCmsPackageVersion)" />
+    <!-- Third-party dependencies (from Articulate.csproj) -->
+    <PackageReference Include="Argotic.Core" Version="3001.0.0" />
+    <PackageReference Include="Markdig" Version="0.44.0" />
+    <PackageReference Include="WilderMinds.MetaWeblog" Version="5.1.3" />
+    <PackageReference Include="System.ServiceModel.Syndication" Version="$(SystemServiceModelSyndicationPackageVersion)" />
+  </ItemGroup>
+
+  <!-- Build targets shipped with the package (copies XML docs for Swagger) -->
+  <ItemGroup>
+    <Content Include="build\Articulate.targets" Pack="true" PackagePath="build\" />
   </ItemGroup>
 
   <ItemGroup>
@@ -24,11 +46,86 @@
     <EmbeddedResource Include="App_Plugins\Articulate\Themes\**\Views\**">
       <LogicalName>Articulate.Theme://Themes/%(RecursiveDir)%(Filename)%(Extension)</LogicalName>
     </EmbeddedResource>
-    
+
     <!-- Embed theme ASSETS from wwwroot -->
     <EmbeddedResource Include="wwwroot\App_Plugins\Articulate\Themes\**\assets\**">
       <LogicalName>Articulate.Theme://Themes/%(RecursiveDir)%(Filename)%(Extension)</LogicalName>
     </EmbeddedResource>
   </ItemGroup>
+
+  <!-- ============================================================
+       BACKOFFICE CLIENT BUILD (moved from Articulate.BackOffice.UI)
+       ============================================================ -->
+  <PropertyGroup>
+    <!-- Client/ folder is now inside this project -->
+    <ClientProjectDirectory>$(MSBuildProjectDirectory)/Client</ClientProjectDirectory>
+    <BackofficeOutputDir>$(MSBuildProjectDirectory)/wwwroot/App_Plugins/Articulate/BackOffice</BackofficeOutputDir>
+    <ClientAssetsCacheDir>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/../../build/ClientAssets'))</ClientAssetsCacheDir>
+    <ClientBuildStamp>$(ClientAssetsCacheDir)/BackofficeClient.stamp</ClientBuildStamp>
+    <ClientBuildTargetFramework>net9.0</ClientBuildTargetFramework>
+  </PropertyGroup>
+
+  <!-- Define Inputs for Incremental Builds -->
+  <ItemGroup Condition="'$(EnableClientBuild)'=='true'">
+    <ClientBuildInput Include="$(ClientProjectDirectory)/pnpm-lock.yaml" />
+    <ClientBuildInput Include="$(ClientProjectDirectory)/package.json" />
+    <ClientBuildInput Include="$(ClientProjectDirectory)/tsconfig*.json" />
+    <ClientBuildInput Include="$(ClientProjectDirectory)/vite.config.ts" />
+    <ClientBuildInput Include="$(ClientProjectDirectory)/src/**/*" />
+  </ItemGroup>
+
+  <!--
+    Prevent VS race condition/locking with dynamically generated BackOffice assets.
+    NOTE: This excludes assets when building IN VS (so 'VS Pack' will miss them),
+    but allows 'dotnet pack' (CLI) to include them correctly for release.
+  -->
+  <ItemGroup Condition="'$(EnableClientBuild)'=='true' and '$(BuildingInsideVisualStudio)'=='true'">
+    <Content Remove="$(BackofficeOutputDir)\**" />
+    <None Include="$(BackofficeOutputDir)\**" />
+  </ItemGroup>
+
+  <!-- TARGET: BuildBackofficeClient -->
+  <Target Name="BuildBackofficeClient" Condition="'$(EnableClientBuild)'=='true' and '$(TargetFramework)'=='$(ClientBuildTargetFramework)'" BeforeTargets="ResolveStaticWebAssetsInputs" Inputs="@(ClientBuildInput)" Outputs="$(ClientBuildStamp)">
+    <Message Text="Building Articulate BackOffice Client (Incremental)..." Importance="High" />
+    <MakeDir Directories="$(ClientAssetsCacheDir)" />
+
+    <!-- CI Safety: Frozen Lockfile Check -->
+    <Exec Command="pnpm install --frozen-lockfile --prefer-offline" WorkingDirectory="$(ClientProjectDirectory)" IgnoreExitCode="true" Condition="'$(CI)' == 'true'">
+      <Output TaskParameter="ExitCode" PropertyName="PnpmFrozenExitCode" />
+    </Exec>
+    <Error Text="pnpm-lock.yaml is out of sync. Run 'pnpm install' locally." Condition="'$(PnpmFrozenExitCode)' != '0' and '$(PnpmFrozenExitCode)' != ''" />
+
+    <!-- Local Dev: Standard Install -->
+    <Exec Command="pnpm install" WorkingDirectory="$(ClientProjectDirectory)" Condition="'$(CI)' != 'true'" />
+
+    <!-- The Actual Build -->
+    <Exec Command="$(ClientBuildCommand)" WorkingDirectory="$(ClientProjectDirectory)" />
+
+    <!-- Touch Stamp File -->
+    <WriteLinesToFile File="$(ClientBuildStamp)" Lines="$([System.DateTime]::UtcNow.ToString('o'))" Overwrite="true" />
+  </Target>
+
+  <!-- TARGET: RefreshBackofficeStaticWebAssetItems -->
+  <Target Name="RefreshBackofficeStaticWebAssetItems" AfterTargets="BuildBackofficeClient" BeforeTargets="ResolveStaticWebAssetsInputs" Condition="'$(EnableClientBuild)'=='true'">
+    <Message Text="Refreshing BackOffice assets..." Importance="Low" />
+    <ItemGroup>
+      <Content Remove="$(BackofficeOutputDir)\**" />
+      <Content Include="$(BackofficeOutputDir)\**" />
+    </ItemGroup>
+  </Target>
+
+  <!-- TARGET: EnsureClientAssets (safety net for other TFMs) -->
+  <Target Name="EnsureClientAssets" Condition="'$(EnableClientBuild)'=='true' and '$(TargetFramework)'!='$(ClientBuildTargetFramework)' and !Exists('$(ClientBuildStamp)')" BeforeTargets="ResolveStaticWebAssetsInputs">
+    <Message Text="Client assets missing for $(TargetFramework); triggering BuildBackofficeClient..." Importance="High" />
+    <MSBuild Projects="$(MSBuildProjectFullPath)" Targets="BuildBackofficeClient" Properties="TargetFramework=$(ClientBuildTargetFramework);Configuration=$(Configuration)" />
+  </Target>
+
+  <!-- TARGET: CleanClientAssets -->
+  <Target Name="CleanClientAssets" AfterTargets="Clean" Condition="'$(EnableClientBuild)'=='true'">
+    <Delete Condition="Exists('$(ClientBuildStamp)')" Files="$(ClientBuildStamp)" />
+    <RemoveDir Directories="$(BackofficeOutputDir)" />
+  </Target>
+
+
 
 </Project>
