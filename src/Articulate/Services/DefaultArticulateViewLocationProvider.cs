@@ -14,18 +14,17 @@ namespace Articulate.Services
 
             var locations = new List<string>
             {
-                // User themes (new structure with Views subfolder)
+                // User themes (v5.x legacy structure - with Views subfolder)
                 BuildPath(Paths.UserThemesRoot, themeName, Paths.Views, Paths.ViewPlaceholder),
                 BuildPath(Paths.UserThemesRoot, themeName, Paths.Views, Paths.Partials, Paths.ViewPlaceholder),
 
-                // User themes (v5.x legacy structure - no Views subfolder)
+                // User themes (new v6 standard structure - flat, no Views subfolder)
                 BuildPath(Paths.UserThemesRoot, themeName, Paths.ViewPlaceholder),
                 BuildPath(Paths.UserThemesRoot, themeName, Paths.Partials, Paths.ViewPlaceholder),
 
                 // Built-in themes (after all user theme paths)
                 BuildPath(Paths.ArticulateRoot, Paths.Themes, themeName, Paths.Views, Paths.ViewPlaceholder),
-                BuildPath(Paths.ArticulateRoot, Paths.Themes, themeName, Paths.Views, Paths.Partials,
-                    Paths.ViewPlaceholder),
+                BuildPath(Paths.ArticulateRoot, Paths.Themes, themeName, Paths.Views, Paths.Partials, Paths.ViewPlaceholder),
 
                 // MarkdownEditor
                 BuildPath(Paths.ArticulateRoot, Paths.MarkdownEditor, Paths.Views, Paths.ViewPlaceholder)

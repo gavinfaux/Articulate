@@ -2,16 +2,17 @@
 
   <PropertyGroup>
     <TargetFrameworks>net9.0;net10.0</TargetFrameworks>
+    <!-- PackageId differentiates this from Articulate.Web's PackageId=Articulate during restore -->
     <PackageId>Articulate.Core</PackageId>
-    <Title>Articulate Core</Title>
     <UseArticulateUsings>true</UseArticulateUsings>
+    <IsPackable>false</IsPackable>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Umbraco.Cms.Web.Website" Version="$(UmbracoCmsPackageVersion)" />
-    <!-- Core likely needs Management API types if it handles management logic, otherwise remove -->
+
     <PackageReference Include="Umbraco.Cms.Api.Management" Version="$(UmbracoCmsPackageVersion)" />
-    
+
     <PackageReference Include="Argotic.Core" Version="3001.0.0" />
     <PackageReference Include="Markdig" Version="0.44.0" />
     <PackageReference Include="WilderMinds.MetaWeblog" Version="5.1.3" />
@@ -19,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <InternalsVisibleTo Include="Articulate.Api.Management" />
+
     <InternalsVisibleTo Include="Articulate.Web" />
   </ItemGroup>
 
