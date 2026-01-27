@@ -5,6 +5,8 @@ using Articulate.Options;
 using Articulate.Routing;
 using Articulate.Services;
 using Articulate.Syndication;
+using Articulate.Controllers;
+using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
@@ -67,6 +69,18 @@ namespace Articulate.Components
             _ = builder.AddNotificationHandler<DomainCacheRefresherNotification, DomainCacheRefresherHandler>();
             _ = builder
                 .AddNotificationHandler<MigrationPlansExecutedNotification, ArticulateMigrationPlanExecutedHandler>();
+
+            // Ensure MVC discovers controllers in the Articulate assembly.
+            _ = services
+                .AddControllersWithViews()
+                .ConfigureApplicationPartManager(apm =>
+                {
+                    System.Reflection.Assembly controllersAssembly = typeof(ArticulateController).Assembly;
+                    if (apm.ApplicationParts.OfType<AssemblyPart>().All(p => p.Assembly != controllersAssembly))
+                    {
+                        apm.ApplicationParts.Add(new AssemblyPart(controllersAssembly));
+                    }
+                });
 
             _ = services.ConfigureOptions<ArticulatePipelineStartupFilter>();
             _ = services.ConfigureOptions<ConfigureArticulateMvcOptions>();
