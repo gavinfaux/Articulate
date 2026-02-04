@@ -4,7 +4,7 @@
   font-weight: 400;
   font-display: swap;
 
-  src: url('MaterialIcons.woff2') format('woff2');
+  src: url('/App_Plugins/Articulate/MarkdownEditor/assets/fonts/material-icons/MaterialIcons.woff2') format('woff2');
 }
 
 .material-icons {
