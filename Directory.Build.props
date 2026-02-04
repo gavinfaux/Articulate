@@ -17,14 +17,14 @@
 		<UmbracoCmsPackageVersion>[16.3.4,17.0.0)</UmbracoCmsPackageVersion>
 		<MicrosoftOpenApiPackageVersion>[1.6.22,2.0.0)</MicrosoftOpenApiPackageVersion>
 		<MicrosoftCodeAnalysisPackageVersion>[4.14.0,5.0.0)</MicrosoftCodeAnalysisPackageVersion>
-		<SystemServiceModelSyndicationPackageVersion>[9.0.11,10.0.0)</SystemServiceModelSyndicationPackageVersion>
+		<SystemServiceModelSyndicationPackageVersion>[9.0.12,10.0.0)</SystemServiceModelSyndicationPackageVersion>
 	</PropertyGroup>
 	<PropertyGroup Condition="'$(TargetFramework)' == 'net10.0'">
 		<!-- Support Umbraco 17.x (including pre-release) on .NET 10 -->
 		<UmbracoCmsPackageVersion>[17.0.2,18.0.0)</UmbracoCmsPackageVersion>
 		<MicrosoftOpenApiPackageVersion>[2.3.0,3.0.0)</MicrosoftOpenApiPackageVersion>
 		<MicrosoftCodeAnalysisPackageVersion>[5.0.0,6.0.0)</MicrosoftCodeAnalysisPackageVersion>
-		<SystemServiceModelSyndicationPackageVersion>[10.0.1,11.0.0)</SystemServiceModelSyndicationPackageVersion>
+		<SystemServiceModelSyndicationPackageVersion>[10.0.2,11.0.0)</SystemServiceModelSyndicationPackageVersion>
 	</PropertyGroup>
 	<PropertyGroup>
 		<!-- TODO: Enable when 6.0 version is shipped -->
@@ -53,11 +53,11 @@
 	<ItemGroup>
 		<PackageReference Include="Nerdbank.GitVersioning" Condition="!Exists('packages.config')" Version="3.9.50" PrivateAssets="All" />
 		<PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.556" PrivateAssets="All" />
-		<GlobalPackageReference Include="Umbraco.Code" Version="2.3.0" PrivateAssets="All" />
+		<GlobalPackageReference Include="Umbraco.Code" Version="2.4.0" PrivateAssets="All" />
 		<GlobalPackageReference Include="Umbraco.GitVersioning.Extensions" Version="0.2.0" PrivateAssets="All" />
 	</ItemGroup>
 	<ItemGroup Condition="'$(IsPackable)' != 'false'">
-		<PackageReference Include="DotNet.ReproducibleBuilds" Version="1.2.39" PrivateAssets="all">
+		<PackageReference Include="DotNet.ReproducibleBuilds" Version="2.0.1" PrivateAssets="all">
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
 		<PackageReference Include="Microsoft.CodeAnalysis" Version="$(MicrosoftCodeAnalysisPackageVersion)" PrivateAssets="All" />

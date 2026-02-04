@@ -1,13 +1,14 @@
 {
   "name": "articulate-backoffice",
   "private": true,
-  "version": "6.0.0-gc349bdc001",
+  "version": "0.0.0-dev",
   "type": "module",
   "description": "Articulate BackOffice extension",
   "engines": {
     "node": ">=24",
-    "pnpm": ">=10.26.2"
+    "pnpm": ">=10.28"
   },
+  "packageManager": "pnpm@10.28.0",
   "keywords": [
     "blog",
     "umbraco",
@@ -32,35 +33,35 @@
     "lit-html": "Required for client build due to use of lit keyed directive, can be droped when umbraco-cms/backoffice bumped to v17+ to bring in https://github.com/umbraco/Umbraco-CMS/pull/20963"
   },
   "dependencies": {
-    "lit-html": "^3.3.0",
+    "lit-html": "^3.3.2",
     "monaco-editor": "0.52.2"
   },
   "devDependencies": {
-    "@umbraco-cms/backoffice": "16.3.4",
-    "@eslint/compat": "^2.0.0",
+    "@eslint/compat": "^2.0.1",
     "@eslint/eslintrc": "^3.3.3",
-    "@eslint/js": "^9.39.1",
+    "@eslint/js": "^9.39.2",
     "@hey-api/openapi-ts": "0.81.1",
-    "@typescript-eslint/eslint-plugin": "^8.48.1",
-    "@typescript-eslint/parser": "^8.48.1",
+    "@typescript-eslint/eslint-plugin": "^8.53.0",
+    "@typescript-eslint/parser": "^8.53.0",
+    "@umbraco-cms/backoffice": "16.3.4",
     "chalk": "^5.6.2",
     "cross-env": "^10.1.0",
     "esbuild": "^0.27.2",
-    "eslint": "^9.39.1",
+    "eslint": "^9.39.2",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-lit": "^2.1.1",
     "eslint-plugin-lit-a11y": "^5.1.1",
     "eslint-plugin-local-rules": "^3.0.2",
-    "eslint-plugin-prettier": "^5.5.4",
+    "eslint-plugin-prettier": "^5.5.5",
     "eslint-plugin-wc": "^3.0.2",
-    "globals": "^16.5.0",
+    "globals": "^17.0.0",
     "lightningcss": "^1.30.2",
     "node-fetch": "^3.3.2",
-    "prettier": "^3.7.4",
-    "terser": "^5.44.1",
+    "prettier": "^3.8.0",
+    "terser": "^5.46.0",
     "typescript": "^5.9.3",
-    "vite": "^7.2.6",
-    "vite-tsconfig-paths": "^6.0.3"
+    "vite": "^7.3.1",
+    "vite-tsconfig-paths": "^6.0.4"
   }
 }

@@ -28,19 +28,10 @@ jobs:
           echo "Commit: ${NBGV_GitCommitIdShort}"
           echo "Date: ${NBGV_GitCommitDate}"
 
-      - name: Validate Git Tag
-        continue-on-error: true
-        run: |
-          if git describe --tags --exact-match >/dev/null 2>&1; then
-            echo "Git tag found."
-          else
-            echo "Git tag missing, release build may not be traceable."
-          fi
-
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 10.26.2
+          version: 10.28
           run_install: false
 
       - name: Setup NodeJS
@@ -67,8 +58,8 @@ jobs:
         uses: actions/setup-dotnet@v5
         with:
           dotnet-version: |
-            9.0.308
-            10.0.101
+            9.0.309
+            10.0.102
 
       - name: Run build pipeline script
         run: bash ./build/build.sh
