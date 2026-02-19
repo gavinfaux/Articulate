@@ -167,6 +167,12 @@ namespace Articulate.Routing
             // if we have a domain
             var contentId = dynamicRouteValues.GetContentId(assignedDomain);
 
+            // No matching content for this domain - return early (route miss → 404)
+            if (contentId == 0)
+            {
+                return;
+            }
+
             IPublishedContent publishedContent = umbracoContext?.Content.GetById(contentId)
                                                  ?? throw new InvalidOperationException(
                                                      "Could not resolve content by id " + contentId);

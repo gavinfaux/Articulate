@@ -1,4 +1,5 @@
 #nullable enable
+using System.Collections.Concurrent;
 using Articulate.Controllers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Controllers;
@@ -18,15 +19,28 @@ namespace Articulate.Routing
     {
         private const string MarkdownEditorControllerName = "MarkdownEditor";
         private static readonly Lock _sLocker = new();
-        private static readonly string _sSearchControllerName = ControllerExtensions.GetControllerName<ArticulateSearchController>();
-        private static readonly string _sOpenSearchControllerName = ControllerExtensions.GetControllerName<OpenSearchController>();
-        private static readonly string _sRsdControllerName = ControllerExtensions.GetControllerName<RsdController>();
-        private static readonly string _sWlwControllerName = ControllerExtensions.GetControllerName<WlwManifestController>();
-        private static readonly string _sTagsControllerName = ControllerExtensions.GetControllerName<ArticulateTagsController>();
-        private static readonly string _sRssControllerName = ControllerExtensions.GetControllerName<ArticulateRssController>();
-        private static readonly string _sMetaWeblogControllerName = ControllerExtensions.GetControllerName<MetaWeblogController>();
 
-        private readonly Dictionary<ArticulateRouteTemplate, ArticulateRootNodeCache> _routeCache = [];
+        private static readonly string _sSearchControllerName =
+            ControllerExtensions.GetControllerName<ArticulateSearchController>();
+
+        private static readonly string _sOpenSearchControllerName =
+            ControllerExtensions.GetControllerName<OpenSearchController>();
+
+        private static readonly string _sRsdControllerName = ControllerExtensions.GetControllerName<RsdController>();
+
+        private static readonly string _sWlwControllerName =
+            ControllerExtensions.GetControllerName<WlwManifestController>();
+
+        private static readonly string _sTagsControllerName =
+            ControllerExtensions.GetControllerName<ArticulateTagsController>();
+
+        private static readonly string _sRssControllerName =
+            ControllerExtensions.GetControllerName<ArticulateRssController>();
+
+        private static readonly string _sMetaWeblogControllerName =
+            ControllerExtensions.GetControllerName<MetaWeblogController>();
+
+        private readonly ConcurrentDictionary<ArticulateRouteTemplate, ArticulateRootNodeCache> _routeCache = new();
         private readonly IControllerActionSearcher _controllerActionSearcher;
         private readonly IScopeProvider _scopeProvider;
 
@@ -66,13 +80,19 @@ namespace Articulate.Routing
         /// <param name="umbracoContext"></param>
         /// <param name="publishedContentTypeCache"></param>
         /// <param name="documentCacheService"></param>
-        public void MapRoutes(HttpContext httpContext, IUmbracoContext umbracoContext, IPublishedContentTypeCache publishedContentTypeCache, IDocumentCacheService documentCacheService)
+        public void MapRoutes(
+            HttpContext httpContext,
+            IUmbracoContext umbracoContext,
+            IPublishedContentTypeCache publishedContentTypeCache,
+            IDocumentCacheService documentCacheService)
         {
             lock (_sLocker)
             {
                 using (_scopeProvider.CreateCoreScope(autoComplete: true))
                 {
-                    IPublishedContentType articulateCt = publishedContentTypeCache.Get(PublishedItemType.Content, ArticulateConstants.ContentType.Articulate);
+                    IPublishedContentType articulateCt = publishedContentTypeCache.Get(
+                        PublishedItemType.Content,
+                        ArticulateConstants.ContentType.Articulate);
 
                     var articulateNodes = documentCacheService.GetByContentType(articulateCt).ToList();
 
@@ -95,12 +115,13 @@ namespace Articulate.Routing
                     // which already exists and is already assigned to a specific node ID.
                     // So what we need to do in these cases is use a special route handler that takes
                     // into account the domain assigned to the route.
-                    IOrderedEnumerable<IGrouping<string, IPublishedContent>> articulateNodesGroupedByUriPath = articulateNodes
-                        .GroupBy(x => RouteCollectionExtensions.RoutePathFromNodeUrl(httpContext, x.Url()))
+                    IOrderedEnumerable<IGrouping<string, IPublishedContent>> articulateNodesGroupedByUriPath =
+                        articulateNodes
+                            .GroupBy(x => RouteCollectionExtensions.RoutePathFromNodeUrl(httpContext, x.Url()))
 
-                        // This is required to ensure that we create routes that are more specific first
-                        // before creating routes that are less specific
-                        .OrderByDescending(x => x.Key.Split('/').Length);
+                            // This is required to ensure that we create routes that are more specific first
+                            // before creating routes that are less specific
+                            .OrderByDescending(x => x.Key.Split('/').Length);
 
                     foreach (IGrouping<string, IPublishedContent> nodeByPathGroup in articulateNodesGroupedByUriPath)
                     {
@@ -152,7 +173,8 @@ namespace Articulate.Routing
                     _controllerActionSearcher.Find<IRenderController>(
                         httpContext,
                         controllerName,
-                        actionName) ?? throw new InvalidOperationException("No controller found with name " + controllerName);
+                        actionName) ??
+                    throw new InvalidOperationException("No controller found with name " + controllerName);
 
                 dynamicRouteValues = new ArticulateRootNodeCache(controllerActionDescriptor);
 
@@ -250,7 +272,11 @@ namespace Articulate.Routing
                 domains);
         }
 
-        private void MapMarkdownEditorRoute(HttpContext httpContext, string rootNodePath, IPublishedContent articulateRootNode, IReadOnlyList<Domain> domains)
+        private void MapMarkdownEditorRoute(
+            HttpContext httpContext,
+            string rootNodePath,
+            IPublishedContent articulateRootNode,
+            IReadOnlyList<Domain> domains)
         {
             // Primary template derived from the routed path (handles domains)
             MapMarkdownEditorTemplates($"{rootNodePath}a-new", httpContext, articulateRootNode, domains);
@@ -260,7 +286,9 @@ namespace Articulate.Routing
             var contentUrl = articulateRootNode.Url();
             if (!string.IsNullOrWhiteSpace(contentUrl))
             {
-                var pathOnly = Uri.TryCreate(contentUrl, UriKind.Absolute, out Uri? absolute) ? absolute.AbsolutePath : contentUrl;
+                var pathOnly = Uri.TryCreate(contentUrl, UriKind.Absolute, out Uri? absolute)
+                    ? absolute.AbsolutePath
+                    : contentUrl;
 
                 pathOnly = pathOnly.EnsureEndsWith('/');
                 if (!pathOnly.Equals(rootNodePath, StringComparison.OrdinalIgnoreCase))
@@ -270,7 +298,11 @@ namespace Articulate.Routing
             }
         }
 
-        private void MapMarkdownEditorTemplates(string basePath, HttpContext httpContext, IPublishedContent articulateRootNode, IReadOnlyList<Domain> domains)
+        private void MapMarkdownEditorTemplates(
+            string basePath,
+            HttpContext httpContext,
+            IPublishedContent articulateRootNode,
+            IReadOnlyList<Domain> domains)
         {
             // Allow both with and without trailing slash.
             RouteTemplate templateNoSlash = TemplateParser.Parse(basePath.TrimEnd('/'));
@@ -299,6 +331,7 @@ namespace Articulate.Routing
             {
                 return; // Skip route if not configured
             }
+
             RouteTemplate template = TemplateParser.Parse($"{rootNodePath}{searchUrlName}");
             MapRoute(
                 _sSearchControllerName,
@@ -309,13 +342,18 @@ namespace Articulate.Routing
                 domains);
         }
 
-        private void MapTagsAndCategoriesRoute(HttpContext httpContext, string rootNodePath, IPublishedContent articulateRootNode, IReadOnlyList<Domain> domains)
+        private void MapTagsAndCategoriesRoute(
+            HttpContext httpContext,
+            string rootNodePath,
+            IPublishedContent articulateRootNode,
+            IReadOnlyList<Domain> domains)
         {
             var categoriesUrlName = articulateRootNode.Value<string>("categoriesUrlName");
             if (string.IsNullOrEmpty(categoriesUrlName))
             {
                 return;
             }
+
             RouteTemplate categoriesTemplate = TemplateParser.Parse($"{rootNodePath}{categoriesUrlName}/{{tag?}}");
             MapRoute(
                 _sTagsControllerName,
@@ -324,7 +362,8 @@ namespace Articulate.Routing
                 httpContext,
                 articulateRootNode,
                 domains);
-            RouteTemplate categoriesRssTemplate = TemplateParser.Parse($"{rootNodePath}{categoriesUrlName}/{{tag}}/rss");
+            RouteTemplate categoriesRssTemplate =
+                TemplateParser.Parse($"{rootNodePath}{categoriesUrlName}/{{tag}}/rss");
             MapRoute(
                 _sRssControllerName,
                 nameof(ArticulateRssController.Categories),
@@ -338,6 +377,7 @@ namespace Articulate.Routing
             {
                 return;
             }
+
             RouteTemplate tagsTemplate = TemplateParser.Parse($"{rootNodePath}{tagsUrlName}/{{tag?}}");
             MapRoute(
                 _sTagsControllerName,
