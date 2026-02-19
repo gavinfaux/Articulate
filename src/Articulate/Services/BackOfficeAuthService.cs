@@ -72,7 +72,7 @@ namespace Articulate.Services
             List<string> permissionsToCheckList = permissionsToCheck?.ToList() ?? [];
             if (permissionsToCheckList.Count == 0)
             {
-                return true;
+                return false;
             }
 
             IEnumerable<string> permissions = user.GetPermissions(contentItem.Path, userService);
