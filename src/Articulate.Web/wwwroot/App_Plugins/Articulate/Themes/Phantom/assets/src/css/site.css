@@ -456,6 +456,7 @@ a:hover {
 .articulate-search input {
     background: inherit;
     border: 1px solid rgba(255, 255, 255, 0.5);
+    color: white;
     padding: 5px;
     margin: 15px;
 }
