@@ -82,10 +82,18 @@ namespace Articulate.Controllers
 
             if (p is 1)
             {
-                return new RedirectToUmbracoPageResult(
-                    CurrentPage,
-                    PublishedUrlProvider,
-                    UmbracoContextAccessor);
+                var url = CurrentPage.Url(PublishedUrlProvider);
+                if (!string.IsNullOrWhiteSpace(term))
+                {
+                    url = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(url, "term", term);
+                }
+
+                if (!string.IsNullOrWhiteSpace(indexName))
+                {
+                    url = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(url, "indexName", indexName);
+                }
+
+                return Redirect(url);
             }
 
             if (p is not > 0)

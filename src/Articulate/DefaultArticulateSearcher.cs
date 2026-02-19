@@ -31,7 +31,21 @@ namespace Articulate
                 return [];
             }
 
+            // DoS protection: limit query complexity
+            const int MaxTermLength = 200;
+            const int MaxTokenCount = 10;
+
+            if (term.Length > MaxTermLength)
+            {
+                term = term[..MaxTermLength];
+            }
+
             var splitSearch = term.Split([' '], StringSplitOptions.RemoveEmptyEntries);
+
+            if (splitSearch.Length > MaxTokenCount)
+            {
+                splitSearch = splitSearch[..MaxTokenCount];
+            }
 
             var escapedTerm = QueryParserBase.Escape(term);
 
@@ -82,7 +96,9 @@ namespace Articulate
 
             if (!examineManager.TryGetIndex(indexName, out IIndex? index) || index is null)
             {
-                throw new InvalidOperationException("No index found by name " + indexName);
+                // Unknown index - return empty results rather than 500
+                totalResults = 0;
+                return [];
             }
 
             ISearcher searcher = index.Searcher;
