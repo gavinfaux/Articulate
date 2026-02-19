@@ -12,9 +12,10 @@
 .blog-title {
   font-size: 3.5em;
   margin: 0;
-  padding: 0;
+  padding: 0 0 0.15em 0;
   line-height: 1;
   color: whitesmoke;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6), 0 0 12px rgba(0, 0, 0, 0.25);
 }
 
 .blog-title:hover {
@@ -27,6 +28,7 @@
   padding: 0;
   line-height: 1;
   color: whitesmoke;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5), 0 0 8px rgba(0, 0, 0, 0.2);
 }
 
 /* LAYOUT - MOBILE FIRST */
@@ -348,15 +350,35 @@ hr {
 
 .post-share .share-button {
   display: inline-block;
-  margin: 15px 15px 15px 15px;
-  transition: transform 0.5s ease 0s;
-  -webkit-transition: -webkit-transform 0.5s ease 0s;
+  margin: 10px 8px;
+  color: #666;
+  transition: transform 0.5s ease 0s, color 0.3s ease;
+  -webkit-transition: -webkit-transform 0.5s ease, color 0.3s ease;
+}
+
+/* Normalize all share icons to the same rendered size */
+.post-share .share-button i,
+.post-share button.share-button i {
+  font-size: 20px;
+  vertical-align: middle;
+}
+
+/* Reset native <button> styles for the generic share icon */
+button.share-button {
+  font: inherit;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  line-height: 1;
+  vertical-align: middle;
 }
 
 .post-share .share-button:hover {
   -ms-transform: rotate(360deg) scale(1.2);
   -webkit-transform: rotate(360deg) scale(1.2);
   transform: rotate(360deg) scale(1.2);
+  color: #333;
 }
 
 .post-comment {
