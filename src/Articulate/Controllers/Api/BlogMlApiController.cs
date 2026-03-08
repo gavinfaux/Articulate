@@ -92,9 +92,10 @@ namespace Articulate.Controllers.Api
                 logger.LogError(
                     ex,
                     "An unexpected error occurred during file initialization for import.");
-                return StatusCode(
-                    StatusCodes.Status500InternalServerError,
-                    $"An unexpected error occurred during file initialization for import: {ex.Message}");
+                return Problem(
+                    title: "Internal Server Error",
+                    detail: "An unexpected error occurred during file initialization for import.",
+                    statusCode: StatusCodes.Status500InternalServerError);
             }
         }
 
@@ -111,7 +112,8 @@ namespace Articulate.Controllers.Api
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status503ServiceUnavailable)]
         public async Task<IActionResult> PostExportBlogMl(ExportModel model)
         {
-            const string exportFileName = "BlogMlExport.xml";
+            var exportFileName = $"BlogMlExport-{Guid.NewGuid()}.xml";
+            var exportSucceeded = false;
             try
             {
                 await blogMlExporter.ExportAsync(model.ArticulateBlogNode, exportFileName, model.ExportImagesAsBase64)
@@ -128,6 +130,7 @@ namespace Articulate.Controllers.Api
                 });
 
                 Response.Headers.Append("Content-Disposition", $"attachment; filename*=UTF-8''{downloadFileName}");
+                exportSucceeded = true;
                 return File(fileStream, "application/octet-stream");
             }
             catch (InvalidOperationException ex)
@@ -137,7 +140,7 @@ namespace Articulate.Controllers.Api
                     "Export failed due to an invalid operation, likely a missing or invalid blog node.");
                 return Problem(
                     title: "Service Unavailable",
-                    detail: ex.Message,
+                    detail: "The requested blog export could not be completed because the Articulate blog node was unavailable or invalid.",
                     statusCode: StatusCodes.Status503ServiceUnavailable);
             }
             catch (Exception ex)
@@ -145,9 +148,26 @@ namespace Articulate.Controllers.Api
                 logger.LogError(
                     ex,
                     "An unexpected error occurred during BlogML export.");
-                return StatusCode(
-                    StatusCodes.Status500InternalServerError,
-                    $"An unexpected error occurred during BlogML export: {ex.Message}");
+                return Problem(
+                    title: "Internal Server Error",
+                    detail: "An unexpected error occurred during BlogML export.",
+                    statusCode: StatusCodes.Status500InternalServerError);
+            }
+            finally
+            {
+                // Clean up temp file on failure (success path uses Response.OnCompleted)
+                if (!exportSucceeded && articulateTempFileSystem.FileExists(exportFileName))
+                {
+                    try
+                    {
+                        articulateTempFileSystem.DeleteFile(exportFileName);
+                    }
+                    catch
+                    {
+                        // Best effort cleanup
+                        logger.LogWarning("An error occurred while deleting the temporary export file '{ExportFileName}'.", exportFileName);
+                    }
+                }
             }
         }
 
@@ -203,19 +223,26 @@ namespace Articulate.Controllers.Api
             catch (FileNotFoundException ex)
             {
                 logger.LogError(ex, "Importing failed because a file was not found.");
-                return Problem(title: "File Not Found", detail: ex.Message, statusCode: StatusCodes.Status404NotFound);
+                return Problem(
+                    title: "File Not Found",
+                    detail: "The requested import file could not be found.",
+                    statusCode: StatusCodes.Status404NotFound);
             }
             catch (InvalidOperationException ex)
             {
                 logger.LogError(ex, "Importing failed due to an invalid operation.");
-                return Problem(title: "Bad Request", detail: ex.Message, statusCode: StatusCodes.Status400BadRequest);
+                return Problem(
+                    title: "Bad Request",
+                    detail: "The BlogML import request was invalid or the selected Articulate node could not be used.",
+                    statusCode: StatusCodes.Status400BadRequest);
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Importing failed due to an unexpected error.");
-                return StatusCode(
-                    StatusCodes.Status500InternalServerError,
-                    $"An unexpected error occurred during import: {ex.Message}");
+                return Problem(
+                    title: "Internal Server Error",
+                    detail: "An unexpected error occurred during import.",
+                    statusCode: StatusCodes.Status500InternalServerError);
             }
             finally
             {
@@ -236,7 +263,16 @@ namespace Articulate.Controllers.Api
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
         public IActionResult GetDisqusExport()
         {
-            const string disqusExportFile = "DisqusXmlExport.xml";
+            IUser? currentUser = backOfficeSecurityAccessor.BackOfficeSecurity?.CurrentUser;
+            if (currentUser is null)
+            {
+                return Problem(
+                    title: "Unauthorized",
+                    detail: "Could not determine the current user.",
+                    statusCode: StatusCodes.Status401Unauthorized);
+            }
+
+            var disqusExportFile = $"DisqusXmlExport-{currentUser.Id}.xml";
             if (!articulateTempFileSystem.FileExists(disqusExportFile))
             {
                 return Problem(

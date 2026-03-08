@@ -387,7 +387,7 @@ namespace Articulate.ImportExport
         }
 
         // Handles both V1 and V3 media formats
-        private static bool TryGetMediaId(IContent content, out Guid mediaId)
+        private bool TryGetMediaId(IContent content, out Guid mediaId)
         {
             mediaId = Guid.Empty;
             if (!content.HasProperty("postImage"))
@@ -417,6 +417,7 @@ namespace Articulate.ImportExport
                 catch (JsonException)
                 {
                     // Ignore and fall through to try other formats
+                    logger.LogDebug("Failed to parse JSON for media value '{MediaValue}', falling back to UDI.", value);
                 }
             }
 
@@ -453,6 +454,7 @@ namespace Articulate.ImportExport
                 catch (JsonException)
                 {
                     // Ignore, fall back to standard path handling
+                    logger.LogDebug("Failed to parse JSON for media value '{MediaValue}', falling back to standard path handling.", rawValue);
                 }
             }
 

@@ -122,7 +122,8 @@ namespace Articulate.ImportExport
                     returnModel.CommentCount = xDisqusDoc.Descendants(XName.Get("comment", nsWp)).Count();
                     using var memStream = new MemoryStream();
                     xDisqusDoc.Save(memStream);
-                    articulateTempFileSystem.AddFile("DisqusXmlExport.xml", memStream, true);
+                    var disqusFileName = $"DisqusXmlExport-{userId}.xml";
+                    articulateTempFileSystem.AddFile(disqusFileName, memStream, true);
                 }
 
                 // commit
@@ -650,14 +651,30 @@ namespace Articulate.ImportExport
 
             if (!regexMatch.IsNullOrWhiteSpace() && !regexReplace.IsNullOrWhiteSpace())
             {
-                content = Regex.Replace(
-                    content,
-                    regexMatch,
-                    regexReplace,
-                    RegexOptions.CultureInvariant | RegexOptions.IgnoreCase,
-                    TimeSpan.FromSeconds(1));
+                try
+                {
+                    content = Regex.Replace(
+                        content,
+                        regexMatch,
+                        regexReplace,
+                        RegexOptions.CultureInvariant | RegexOptions.IgnoreCase,
+                        TimeSpan.FromSeconds(1));
+                }
+                catch (ArgumentException ex)
+                {
+                    logger.LogWarning(ex, "Invalid regex pattern provided during import: {RegexMatch}", regexMatch);
+                    throw new InvalidOperationException($"The provided regex pattern '{regexMatch}' is invalid.", ex);
+                }
+                catch (RegexMatchTimeoutException ex)
+                {
+                    logger.LogWarning(ex, "Regex operation timed out during import for pattern: {RegexMatch}", regexMatch);
+                    throw new InvalidOperationException("The regex operation timed out. The pattern might be too complex.", ex);
+                }
             }
 
+            // TODO: SECURITY - Sanitize imported HTML before saving richText.
+            // Current behavior stores BlogML HTML as-is, which can persist script/event-handler payloads.
+            // Future PR: reuse the same sanitizer path used for Markdown-generated HTML.
             await postNode
                 .SetInvariantOrDefaultCultureValueAsync(
                     "richText",
