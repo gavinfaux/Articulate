@@ -59,6 +59,6 @@ namespace Articulate.Models
         /// <summary>
         /// Gets the wide cropped image URL.
         /// </summary>
-        public string CroppedWideUrl => Image?.GetCropUrl(cropAlias: "wide", preferFocalPoint: true) ?? string.Empty;
+        public string CroppedWideUrl => Image?.GetCropUrl(cropAlias: "wide", preferFocalPoint: true, useCropDimensions: true) ?? string.Empty;
     }
 }
