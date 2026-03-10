@@ -26,6 +26,7 @@ namespace Articulate.Models
 
         public required string BackOfficeClientId { get; init; }
 
-        public string? PostLogoutRedirectUrl { get; init; }
+        public required string PostLogoutRedirectUrl { get; init; }
+
     }
 }

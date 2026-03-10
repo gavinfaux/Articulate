@@ -2,6 +2,7 @@ import { apiService } from "./apiService.js";
 import { authService } from "./authService.js";
 import { config, initConfig } from "./config.js";
 import { formatApiError } from "./error-formatter.js";
+
 const DEFAULT_RETRY_LABEL = "Retry now";
 
 function createEmptyPost(existingNodeId) {
@@ -29,15 +30,7 @@ document.addEventListener("alpine:init", () => {
     isLoading: true,
     errorDetails: null,
     titleTouched: false,
-    post: {
-      articulateBlogNode: null,
-      title: "",
-      body: "",
-      excerpt: "",
-      tags: "",
-      categories: "",
-      slug: "",
-    },
+    post: createEmptyPost(),
     fileMap: new Map(),
     successUrl: null,
     currentUser: null,
@@ -402,13 +395,6 @@ document.addEventListener("alpine:init", () => {
       this.editorInstance.addEventListener("input", onEditorInput);
     },
 
-    // --- Initialization ---
-    // Entry point for the Markdown editor UI. This method:
-    // - Reads dynamic configuration from the Razor view (initConfig).
-    // - Handles an OAuth authorization code callback if present.
-    // - Ensures a valid access token is available (via authService).
-    // - Resolves the current back-office user and transitions to the
-    //   appropriate step (login vs editor).
     async init() {
       try {
         console.info("[MarkdownEditor] initializing component");
@@ -426,8 +412,7 @@ document.addEventListener("alpine:init", () => {
           await authService.handleLoginCallback();
         }
 
-        // Validate Bearer token (external OAuth clients always use token auth)
-        let token = authService.getAccessToken();
+        const token = authService.getAccessToken();
 
 
         if (!token) {
@@ -500,7 +485,6 @@ document.addEventListener("alpine:init", () => {
       }
     },
 
-    // --- UI Methods ---
     async handlePublish() {
       if (!this.canPublish) {
         this.errorDetails = {
@@ -514,8 +498,6 @@ document.addEventListener("alpine:init", () => {
       this.errorDetails = null;
 
       try {
-
-        // Filter fileMap to only include files actually referenced in the markdown body
         const bodyText = this.post.body || "";
         for (const token of this.fileMap.keys()) {
           if (!bodyText.includes(token)) {
@@ -524,7 +506,6 @@ document.addEventListener("alpine:init", () => {
         }
 
         const result = await apiService.createPost(this.post, this.fileMap);
-        // On success, display url
         if (result.url) {
           this.successUrl = result.url;
           this.setStep("success");
@@ -544,7 +525,6 @@ document.addEventListener("alpine:init", () => {
           "Publish failed"
         );
 
-        // For auth/network/permission failures, surface a dialog.
         if (
           formattedError.isAuthError ||
           formattedError.isNetworkError ||
@@ -557,7 +537,6 @@ document.addEventListener("alpine:init", () => {
               label: "Sign in again",
             });
           } else {
-            // Retry using current context
             this.scheduleRetry(() => this.handlePublish());
           }
         }
@@ -579,20 +558,12 @@ document.addEventListener("alpine:init", () => {
 
     resetForNewPost() {
       const nodeId = this.post.articulateBlogNode;
-      this.post = {
-        articulateBlogNode: nodeId,
-        title: "",
-        body: "",
-        excerpt: "",
-        tags: "",
-        categories: "",
-        slug: "",
-      };
+      this.post = createEmptyPost(nodeId);
       this.titleTouched = false;
       this.fileMap.clear();
       this.successUrl = null;
       this.errorDetails = null;
-      this.focusRef("editor");
+      this.setStep("editor");
     },
 
     updatePostTitle(event) {
@@ -632,7 +603,7 @@ document.addEventListener("alpine:init", () => {
       }
 
       //TODO: Consider passing from config and server side validation (IArticulateImportMediaService)
-      const MAX_UPLOAD_BYTES = 25 * 1024 * 1024; // 25MB
+      const MAX_UPLOAD_BYTES = 50 * 1024 * 1024; // 50MB
       const allowedTypes = ["image/jpeg", "image/png", "image/gif"];
 
       files.forEach((file) => {
@@ -649,7 +620,7 @@ document.addEventListener("alpine:init", () => {
               `${(file.name || "file").trim()}: ${reasons.join(", ")}. Allowed: JPEG, PNG, GIF.`,
             ],
           };
-          return; // skip this file
+          return;
         }
 
         const uploadToken = this.createUploadToken();
@@ -669,9 +640,6 @@ document.addEventListener("alpine:init", () => {
           this.post.body = `${this.post.body}${placeholder}`;
         }
       });
-
-
-      // Clear the file input for the next upload
       if (event?.target) {
         event.target.value = "";
       }

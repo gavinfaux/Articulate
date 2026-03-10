@@ -82,7 +82,7 @@ namespace Articulate.Controllers
                 ArticulateBlogNode = CurrentPage.Id,
                 EditorPostUrl = editorUrl,
                 BackOfficeClientId = openIdClientOptions.ClientId ?? string.Empty,
-                PostLogoutRedirectUrl = oauthUrls.PostLogoutRedirect,
+                PostLogoutRedirectUrl = GetDefaultPostLogoutRedirectUrl(baseUri, openIdClientOptions),
                 AuthorizeUrl = oauthUrls.AuthorizeUrl,
                 CurrentUserUrl = oauthUrls.CurrentUserUrl,
                 EndSessionUrl = oauthUrls.EndSessionUrl,
@@ -140,9 +140,11 @@ namespace Articulate.Controllers
 
         private OAuthUrls BuildOAuthUrls(Uri editorAbsoluteUri, ArticulateOpenIdClientOptions options)
         {
-            string? postLogoutRedirect = GetSafeRedirect(options.PostLogoutRedirectUris, editorAbsoluteUri);
             string umbracoPath = GetUmbracoPathFromManagementApiUrl(editorAbsoluteUri);
 
+            // These are the built-in Umbraco/OpenIddict endpoints used by the standalone editor.
+            // RedirectUris and PostLogoutRedirectUris are configured on the OpenIddict client registration,
+            // not by changing these endpoint URLs.
             string defaultAuthorizeUrl = BuildAbsoluteUrl(
                 editorAbsoluteUri,
                 $"{umbracoPath}/management/api/v1/security/back-office/authorize");
@@ -165,38 +167,12 @@ namespace Articulate.Controllers
                 string.IsNullOrWhiteSpace(value) ? fallback : value;
 
             return new OAuthUrls(
-                PostLogoutRedirect: postLogoutRedirect,
                 AuthorizeUrl: UseConfiguredOrDefault(options.AuthorizeUrl, defaultAuthorizeUrl),
                 TokenUrl: UseConfiguredOrDefault(options.TokenUrl, defaultTokenUrl),
                 EndSessionUrl: UseConfiguredOrDefault(options.EndSessionUrl, defaultEndSessionUrl),
                 RevocationUrl: UseConfiguredOrDefault(options.RevocationUrl, defaultRevocationUrl),
                 CurrentUserUrl: UseConfiguredOrDefault(options.CurrentUserUrl, defaultCurrentUserUrl),
                 LoginLogoUrl: UseConfiguredOrDefault(options.LoginLogoUrl, defaultLoginLogoUrl));
-
-            static string? GetSafeRedirect(IEnumerable<string>? candidates, Uri? allowedHost)
-            {
-                if (candidates is null || allowedHost is null)
-                {
-                    return null;
-                }
-
-                foreach (string candidate in candidates)
-                {
-                    if (!Uri.TryCreate(candidate, UriKind.Absolute, out Uri? candidateUri))
-                    {
-                        continue;
-                    }
-
-                    if (string.Equals(candidateUri.Scheme, allowedHost.Scheme, StringComparison.OrdinalIgnoreCase)
-                        && string.Equals(candidateUri.Host, allowedHost.Host, StringComparison.OrdinalIgnoreCase)
-                        && candidateUri.Port == allowedHost.Port)
-                    {
-                        return candidateUri.ToString();
-                    }
-                }
-
-                return null;
-            }
 
             static string BuildAbsoluteUrl(Uri baseUri, string path)
             {
@@ -240,6 +216,19 @@ namespace Articulate.Controllers
             }
         }
 
+        private static string GetDefaultPostLogoutRedirectUrl(Uri baseUri, ArticulateOpenIdClientOptions options)
+        {
+            foreach (string candidate in options.PostLogoutRedirectUris)
+            {
+                if (Uri.TryCreate(candidate, UriKind.Absolute, out Uri? redirectUri))
+                {
+                    return redirectUri.ToString();
+                }
+            }
+
+            return new UriBuilder(baseUri) { Path = "/", Query = string.Empty, Fragment = string.Empty }.Uri.ToString();
+        }
+
         private void SetSecurityHeaders()
         {
             Response.Headers["Permissions-Policy"] = "camera=(self)";
@@ -254,7 +243,6 @@ namespace Articulate.Controllers
         }
 
         private record OAuthUrls(
-            string? PostLogoutRedirect,
             string AuthorizeUrl,
             string TokenUrl,
             string EndSessionUrl,

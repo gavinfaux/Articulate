@@ -5,16 +5,34 @@
    - handleLoginCallback(): validates the state/code, then exchanges the
      authorization code for an access token via config.tokenUrl.
    - getAccessToken()/hasValidAccessToken(): manage the cached access token
-     (stored in sessionStorage) and perform lightweight client-side expiry checks.
+     (stored only in memory) and perform lightweight client-side expiry checks.
    - logout(): best-effort revokes the cached access token (config.revokeUrl),
      then calls the end-session endpoint (config.authEndUrl) and finally clears
-     local token storage before redirecting the browser.
+     the in-memory token before redirecting the browser.
 
-   If we decide to replace this with a full-featured OIDC client library,
-   this file is the main integration point.
 */
 
 import { config } from './config.js';
+
+let accessToken = null;
+
+function resolveSafeRedirectUrl(value, fallback = '/') {
+  if (typeof value !== 'string' || value.trim() === '') {
+    return fallback;
+  }
+
+  try {
+    const parsed = new URL(value, window.location.origin);
+    if (parsed.origin !== window.location.origin) {
+      return fallback;
+    }
+
+    return `${parsed.pathname}${parsed.search}${parsed.hash}` || fallback;
+  } catch (error) {
+    return fallback;
+  }
+}
+
 async function generateCodeChallenge(codeVerifier) {
   const encoder = new TextEncoder();
   const data = encoder.encode(codeVerifier);
@@ -78,21 +96,17 @@ function parseJwtPayload(token) {
 
 // Token and session management
 function getAccessToken() {
-  return sessionStorage.getItem(config.storageKeys.accessToken);
+  return accessToken;
 }
 
 function setAccessToken(token) {
-  const key = config.storageKeys.accessToken;
   if (token) {
-    sessionStorage.setItem(key, token);
-    localStorage.removeItem(key);
+    accessToken = token;
   }
 }
 
 function clearAccessToken() {
-  const key = config.storageKeys.accessToken;
-  sessionStorage.removeItem(key);
-  localStorage.removeItem(key);
+  accessToken = null;
 }
 
 async function revokeAccessToken() {
@@ -105,7 +119,6 @@ async function revokeAccessToken() {
     const params = new URLSearchParams();
     params.set('token', token);
     params.set('token_type_hint', 'access_token');
-    // Public client: pass client_id instead of client authentication
     if (config.oauth?.clientId) {
       params.set('client_id', config.oauth.clientId);
     }
@@ -159,7 +172,6 @@ async function handleLoginCallback() {
   const storedState = sessionStorage.getItem(config.storageKeys.oauthState);
   const codeVerifier = sessionStorage.getItem(config.storageKeys.codeVerifier);
 
-  // Clean up URL and session storage
   window.history.replaceState({}, document.title, window.location.pathname);
   sessionStorage.removeItem(config.storageKeys.oauthState);
   sessionStorage.removeItem(config.storageKeys.codeVerifier);
@@ -196,8 +208,6 @@ async function handleLoginCallback() {
 
   setAccessToken(tokenData.access_token);
 
-  const decodedToken = parseJwtPayload(tokenData.access_token);
-
   if (!hasValidAccessToken()) {
     throw new Error('Access token is invalid or expired.');
   }
@@ -219,7 +229,6 @@ function hasValidAccessToken() {
     if (!Number.isNaN(exp)) {
       const now = Math.floor(Date.now() / 1000);
       const skewAllowance = 60; // seconds
-      const remainingLifetime = exp - now;
       if (exp <= now + skewAllowance) {
         clearAccessToken();
         console.info('[authService] Detected expired access token; clearing cached value.');
@@ -232,12 +241,15 @@ function hasValidAccessToken() {
 }
 
 async function logout() {
-  let redirectUrl = '/';
+  let redirectUrl = resolveSafeRedirectUrl(config.postLogoutRedirectUrl, '/');
 
   try {
     await revokeAccessToken();
 
-    const response = await fetch(config.authEndUrl, {
+    const logoutUrl = new URL(config.authEndUrl, window.location.origin);
+    logoutUrl.searchParams.set('post_logout_redirect_uri', redirectUrl);
+
+    const response = await fetch(logoutUrl.toString(), {
       method: 'GET',
       credentials: 'include',
       headers: {
@@ -252,7 +264,7 @@ async function logout() {
         try {
           const payload = JSON.parse(responseText);
           if (payload && typeof payload.signOutRedirectUrl === 'string' && payload.signOutRedirectUrl.trim() !== '') {
-            redirectUrl = payload.signOutRedirectUrl;
+            redirectUrl = resolveSafeRedirectUrl(payload.signOutRedirectUrl, redirectUrl);
           }
         } catch (parseError) {
           console.warn('[authService] Unexpected sign-out response payload.', parseError);

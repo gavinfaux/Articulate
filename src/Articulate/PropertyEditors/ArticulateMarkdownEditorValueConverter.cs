@@ -13,8 +13,7 @@ namespace Articulate.PropertyEditors
 {
     // Full clone of src/Umbraco.Web.UI.Client/src/packages/markdown-editor
     // Prevent conflicts if both Markdown Editors on content type
-    // TODO: Remove this when the Markdig package is merged into Umbraco
-    // See: https://github.com/umbraco/Umbraco-CMS/pull/19500
+    // TODO: Remove this when HeyRed is replaced with Markdig package in Umbraco 18
     /// <summary>
     /// Value converter for the Articulate Markdown editor.
     /// </summary>

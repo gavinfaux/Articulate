@@ -40,13 +40,13 @@ namespace Articulate.Options
         public string? ClientSecret { get; set; }
 
         /// <summary>
-        /// Gets or sets the redirect URIs allowed for the custom client. When <see cref="Enabled"/> is
+        /// Gets or sets the allowed callback URLs after a successful sign-in. When <see cref="Enabled"/> is
         /// <see langword="true"/>, at least one absolute URI must be provided.
         /// </summary>
         public List<string> RedirectUris { get; set; } = [];
 
         /// <summary>
-        /// Gets or sets the post-logout redirect URIs allowed for the custom client.
+        /// Gets or sets the allowed final destinations after sign-out completes.
         /// </summary>
         public List<string> PostLogoutRedirectUris { get; set; } = [];
 

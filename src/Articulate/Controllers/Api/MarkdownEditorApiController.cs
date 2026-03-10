@@ -115,9 +115,9 @@ namespace Articulate.Controllers.Api
             }
             catch (JsonException ex)
             {
-                logger.LogWarning("JSON deserialization failed: {Message}", ex.Message);
+                logger.LogWarning(ex, "JSON deserialization failed for markdown editor create post request.");
                 return Problem(
-                    $"JSON deserialization failed: {ex.Message}",
+                    "The provided JSON model could not be parsed.",
                     statusCode: StatusCodes.Status400BadRequest);
             }
         }
@@ -237,7 +237,10 @@ namespace Articulate.Controllers.Api
                     firstImageCaptured = true;
                 }
 
-                replacementMap[match.Value] = result.ReplacementMarkdown;
+                replacementMap[match.Value] =
+                    result.IsFirstImage && !string.IsNullOrEmpty(result.FirstImageUdi)
+                        ? string.Empty
+                        : result.ReplacementMarkdown;
             }
 
             if (replacementMap.Count > 0)

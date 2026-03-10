@@ -35,9 +35,9 @@ const config = {
     currentUserUrl: '',
     // editorPostUrl: Management API endpoint used to create the blog post.
     editorPostUrl: '',
+    // postLogoutRedirectUrl: explicit destination requested during end-session.
+    postLogoutRedirectUrl: '/',
     articulateBlogNode: null,
-    // Optional post-logout redirect target returned from the server.
-    postLogoutRedirectUrl: null,
     // Optional token revocation endpoint used by authService.logout() before sign-out.
     revokeUrl: '',
 
@@ -52,7 +52,6 @@ const config = {
 
     // Keys for browser storage
     storageKeys: {
-        accessToken: 'articulate_access_token',
         codeVerifier: 'articulate_code_verifier',
         oauthState: 'articulate_oauth_state',
     }
@@ -69,9 +68,9 @@ function initConfig(dataset) {
         tokenUrl,
         currentUserUrl,
         editorPostUrl,
+        postLogoutRedirectUrl,
         articulateBlogNode,
         oauthClientId,
-        postLogoutRedirect,
         revocationUrl,
     } = dataset;
 
@@ -85,14 +84,11 @@ function initConfig(dataset) {
     config.tokenUrl = tokenUrl;
     config.currentUserUrl = currentUserUrl;
     config.editorPostUrl = editorPostUrl;
+    config.postLogoutRedirectUrl = ensureTrailingSlash(
+        typeof postLogoutRedirectUrl === "string" && postLogoutRedirectUrl.trim().length
+            ? postLogoutRedirectUrl.trim()
+            : "/");
     config.articulateBlogNode = articulateBlogNode;
-
-    if (typeof postLogoutRedirect === "string") {
-        const trimmedRedirect = postLogoutRedirect.trim();
-        config.postLogoutRedirectUrl = trimmedRedirect.length ? trimmedRedirect : null;
-    } else {
-        config.postLogoutRedirectUrl = null;
-    }
 
     const trimmedClientId = typeof oauthClientId === "string" ? oauthClientId.trim() : "";
     if (!trimmedClientId) {
