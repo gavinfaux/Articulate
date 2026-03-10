@@ -1,14 +1,14 @@
-import { UmbChangeEvent } from '@umbraco-cms/backoffice/event';
-import { customElement, html, property, state } from '@umbraco-cms/backoffice/external/lit';
-import type { UUIModalSidebarSize } from '@umbraco-cms/backoffice/external/uui';
+import type { ArticulateInputMarkdownElement } from '../../components/input-markdown-editor/index.js';
+import { html, customElement, property, state } from '@umbraco-cms/backoffice/external/lit';
 import { UmbLitElement } from '@umbraco-cms/backoffice/lit-element';
 import type {
     UmbPropertyEditorConfigCollection,
     UmbPropertyEditorUiElement,
 } from '@umbraco-cms/backoffice/property-editor';
-import type { ArticulateInputMarkdownElement } from '../../components/input-markdown-editor/index.js';
+import type { UUIModalSidebarSize } from '@umbraco-cms/backoffice/external/uui';
 
 import '../../components/input-markdown-editor/index.js';
+import { UmbChangeEvent } from '@umbraco-cms/backoffice/event';
 
 /**
  * @element articulate-property-editor-ui-markdown-editor

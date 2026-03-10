@@ -77,7 +77,6 @@ export class BlogMlService {
     
     /**
      * Begins the BlogML import process by accepting an uploaded XML file.
-     *
      * The name specified in the form's element or FormData must match the name of the parameter, e.g., <input type="file" name="importFile">
      */
     public static postBlogmlImportFile<ThrowOnError extends boolean = false>(options?: Options<PostBlogmlImportFileData, ThrowOnError>) {
@@ -145,7 +144,6 @@ export class ThemeOptionsService {
     
     /**
      * Retrieves the list of default Articulate themes.
-     *
      * This endpoint returns the names of all default themes available in the system.
      */
     public static getThemeDefault<ThrowOnError extends boolean = false>(options?: Options<GetThemeDefaultData, ThrowOnError>) {
@@ -165,7 +163,6 @@ export class ThemeOptionsService {
 export class ThemePickerService {
     /**
      * Gets the list of all available Articulate themes, both default and user-defined.
-     *
      * This endpoint returns the names of all available themes, including both default and user-defined themes.
      */
     public static getEditorsThemePickerThemes<ThrowOnError extends boolean = false>(options?: Options<GetEditorsThemePickerThemesData, ThrowOnError>) {
