@@ -56,11 +56,7 @@ namespace Articulate.Controllers
             };
 
             // Check if theme has custom Authors.cshtml view
-#if NET10_0_OR_GREATER
             if (EnsurePhysicalViewExists("Authors"))
-#else
-            if (EnsurePhsyicalViewExists("Authors"))
-#endif
             {
                 return View("Authors", model);
             }

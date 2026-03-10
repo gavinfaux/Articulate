@@ -45,7 +45,7 @@ namespace Articulate.Components
             services.TryAddEnumerable(
                 ServiceDescriptor.Singleton<MatcherPolicy, ArticulateDynamicRouteSelectorPolicy>());
             _ = services.AddSingleton<IArticulateThemeRepository, ArticulateThemeRepository>();
-            _ = services.AddSingleton<IMarkdownToHtmlConverter, MarkdownService>();
+            _ = services.AddSingleton<IArticulateMarkdownConverter, ArticulateMarkdownService>();
             _ = services.AddTransient<IArticulateThemeResolver, ArticulateThemeResolver>();
             _ = services.AddScoped<BackOfficeAuthService>();
 

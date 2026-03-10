@@ -19,7 +19,7 @@ namespace Articulate.ImportExport
     public class DisqusXmlExporter(
         IPublishedUrlProvider publishedUrlProvider,
         ILogger<DisqusXmlExporter> logger,
-        IMarkdownToHtmlConverter markdownToHtmlConverter)
+        IArticulateMarkdownConverter articulateMarkdownConverter)
     {
         private const string DisqusGmtDateFormat = "yyyy-MM-dd HH:mm:ss";
 
@@ -106,7 +106,7 @@ namespace Articulate.ImportExport
             var body = post.GetValue<string>("richText");
             if (body.IsNullOrWhiteSpace())
             {
-                body = markdownToHtmlConverter.ToHtml(post.GetValue<string>("markdown") ?? string.Empty);
+                body = articulateMarkdownConverter.ToHtml(post.GetValue<string>("markdown") ?? string.Empty);
             }
 
             return body;

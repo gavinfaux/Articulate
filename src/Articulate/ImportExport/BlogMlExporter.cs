@@ -33,7 +33,7 @@ namespace Articulate.ImportExport
         IPublishedUrlProvider urlProvider,
         ISqlContext sqlContext,
         ILogger<BlogMlExporter> logger,
-        IMarkdownToHtmlConverter markdownToHtmlConverter)
+        IArticulateMarkdownConverter articulateMarkdownConverter)
     {
         /// <summary>
         /// Exports the blog content from a root node to a BlogML file.
@@ -177,7 +177,7 @@ namespace Articulate.ImportExport
 
         private void AddBlogAuthors(IContent authorsNode, BlogMLDocument blogMlDoc)
         {
-            foreach (IContent author in contentService.GetPagedChildren(authorsNode.Id, 0, int.MaxValue, out _))
+            foreach (IContent author in contentService.GetPagedChildrenCompat(authorsNode.Id, 0, int.MaxValue, out _))
             {
                 var blogMlAuthor = new BlogMLAuthor
                 {
@@ -203,7 +203,7 @@ namespace Articulate.ImportExport
             IContent[] posts;
             do
             {
-                posts = contentService.GetPagedChildren(
+                posts = contentService.GetPagedChildrenCompat(
                     archiveNode.Id,
                     pageIndex,
                     pageSize,
@@ -258,7 +258,7 @@ namespace Articulate.ImportExport
             {
                 // TODO: this would also need to handle Markdown extensions if supported e.g. MDX
                 var markdown = child.GetValue<string>("markdown");
-                return markdown is not null ? markdownToHtmlConverter.ToHtml(markdown) : string.Empty;
+                return markdown is not null ? articulateMarkdownConverter.ToHtml(markdown) : string.Empty;
             }
 
             return string.Empty;

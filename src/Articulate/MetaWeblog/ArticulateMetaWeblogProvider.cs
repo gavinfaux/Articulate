@@ -40,7 +40,7 @@ namespace Articulate.MetaWeblog
         ILogger<ArticulateMetaWeblogProvider> logger,
         int articulateBlogRootNodeId,
         IArticulateImportMediaService service,
-        IMarkdownToHtmlConverter markdownToHtmlConverter)
+        IArticulateMarkdownConverter articulateMarkdownConverter)
         : IMetaWeblogProvider
     {
         private static readonly char[] _commaSeparator = [','];
@@ -667,7 +667,7 @@ namespace Articulate.MetaWeblog
                     : [],
                 description = post.ContentType.Alias == ArticulateConstants.ContentType.ArticulateRichText
                     ? post.GetValue<string>("richText")
-                    : markdownToHtmlConverter.ToHtml(post.GetValue<string>("markdown") ?? string.Empty),
+                    : articulateMarkdownConverter.ToHtml(post.GetValue<string>("markdown") ?? string.Empty),
                 permalink = post.GetValue<string>(Constants.Conventions.Content.UrlName).IsNullOrWhiteSpace()
                     ? post.Name?.ToUrlSegment(shortStringHelper)
                     : post.GetValue<string>(Constants.Conventions.Content.UrlName)?.ToUrlSegment(shortStringHelper),

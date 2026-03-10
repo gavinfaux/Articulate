@@ -111,7 +111,7 @@ namespace Articulate.Components
                 try
                 {
                     IEnumerable<IContent> page =
-                        contentService.GetPagedChildren(parentId, pageIndex, pageSize, out var total);
+                        contentService.GetPagedChildrenCompat(parentId, pageIndex, pageSize, out var total);
                     var items = page.ToList();
 
                     if (items.Any(x => x.ContentTypeId == contentTypeId))

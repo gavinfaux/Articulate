@@ -17,7 +17,7 @@ namespace Articulate.Components
         IContentTypeService contentTypeService,
         IBackOfficeSecurityAccessor backOfficeSecurityAccessor,
         IOptions<ArticulateOptions> articulateOptions,
-        IMarkdownToHtmlConverter markdownToHtmlConverter)
+        IArticulateMarkdownConverter articulateMarkdownConverter)
         : INotificationHandler<ContentSavingNotification>
     {
         private readonly ArticulateOptions _articulateOptions = articulateOptions.Value;
@@ -154,7 +154,7 @@ namespace Articulate.Components
                     return string.Empty;
                 }
 
-                var html = markdownToHtmlConverter.ToHtml(val);
+                var html = articulateMarkdownConverter.ToHtml(val);
                 return _articulateOptions.GenerateExcerpt(html);
             }
 

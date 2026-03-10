@@ -7,7 +7,7 @@ namespace Articulate.Services
     /// <summary>
     /// Service for converting Markdown to HTML with sanitization.
     /// </summary>
-    public class MarkdownService(IHtmlSanitizer htmlSanitizer) : IMarkdownToHtmlConverter
+    public class ArticulateMarkdownService(IHtmlSanitizer htmlSanitizer) : IArticulateMarkdownConverter
     {
         private readonly MarkdownPipeline _markdownPipeline = new MarkdownPipelineBuilder()
             .UseAdvancedExtensions()

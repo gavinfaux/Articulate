@@ -5,6 +5,9 @@ using Umbraco.Cms.Core.PropertyEditors;
 using Umbraco.Cms.Core.PropertyEditors.ValueConverters;
 using Umbraco.Cms.Core.Strings;
 using Umbraco.Cms.Core.Templates;
+#if NET10_0_OR_GREATER
+using UmbracoMarkdownConverter = Umbraco.Cms.Core.Strings.IMarkdownToHtmlConverter;
+#endif
 
 namespace Articulate.PropertyEditors
 {
@@ -18,8 +21,15 @@ namespace Articulate.PropertyEditors
     public class ArticulateMarkdownEditorValueConverter(
         HtmlLocalLinkParser localLinkParser,
         HtmlUrlParser urlParser,
-        IMarkdownToHtmlConverter markdownToHtmlConverter)
+#if NET10_0_OR_GREATER
+        UmbracoMarkdownConverter umbracoMarkdownConverter,
+#endif
+        IArticulateMarkdownConverter articulateMarkdownConverter)
+#if NET10_0_OR_GREATER
+        : MarkdownEditorValueConverter(localLinkParser, urlParser, umbracoMarkdownConverter)
+#else
         : MarkdownEditorValueConverter(localLinkParser, urlParser)
+#endif
     {
         /// <inheritdoc/>
         public override bool IsConverter(IPublishedPropertyType propertyType)
@@ -39,7 +49,7 @@ namespace Articulate.PropertyEditors
             var md = inter as string;
             return new HtmlEncodedString(inter is null
                 ? string.Empty
-                : markdownToHtmlConverter.ToHtml(md ?? string.Empty));
+                : articulateMarkdownConverter.ToHtml(md ?? string.Empty));
         }
     }
 }

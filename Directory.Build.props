@@ -14,14 +14,14 @@
 	<!-- Umbraco CMS version range per target + NuGet audit mode -->
 	<PropertyGroup Condition="'$(TargetFramework)' == 'net9.0'">
 		<!-- Support Umbraco 15.x-16.x on .NET 9 -->
-		<UmbracoCmsPackageVersion>[16.3.4,17.0.0)</UmbracoCmsPackageVersion>
+		<UmbracoCmsPackageVersion>[16.5.1,17.0.0)</UmbracoCmsPackageVersion>
 		<MicrosoftOpenApiPackageVersion>[1.6.22,2.0.0)</MicrosoftOpenApiPackageVersion>
-		<MicrosoftCodeAnalysisPackageVersion>[4.14.0,5.0.0)</MicrosoftCodeAnalysisPackageVersion>
-		<SystemServiceModelSyndicationPackageVersion>[9.0.12,10.0.0)</SystemServiceModelSyndicationPackageVersion>
+		<MicrosoftCodeAnalysisPackageVersion>[4.13.0,5.0.0)</MicrosoftCodeAnalysisPackageVersion>
+		<SystemServiceModelSyndicationPackageVersion>[9.0.13,10.0.3)</SystemServiceModelSyndicationPackageVersion>
 	</PropertyGroup>
 	<PropertyGroup Condition="'$(TargetFramework)' == 'net10.0'">
 		<!-- Support Umbraco 17.x (including pre-release) on .NET 10 -->
-		<UmbracoCmsPackageVersion>[17.0.2,18.0.0)</UmbracoCmsPackageVersion>
+		<UmbracoCmsPackageVersion>[17.2.2,18.0.0)</UmbracoCmsPackageVersion>
 		<MicrosoftOpenApiPackageVersion>[2.3.0,3.0.0)</MicrosoftOpenApiPackageVersion>
 		<MicrosoftCodeAnalysisPackageVersion>[5.0.0,6.0.0)</MicrosoftCodeAnalysisPackageVersion>
 		<SystemServiceModelSyndicationPackageVersion>[10.0.2,11.0.0)</SystemServiceModelSyndicationPackageVersion>

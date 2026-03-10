@@ -137,7 +137,7 @@ namespace Articulate.Controllers.Api
                     statusCode: StatusCodes.Status404NotFound);
             }
 
-            archive = contentService.GetPagedChildren(model.ArticulateBlogNode, 0, 1, out _)
+            archive = contentService.GetPagedChildrenCompat(model.ArticulateBlogNode, 0, 1, out _)
                 .FirstOrDefault(x =>
                     x.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateArchive));
 
