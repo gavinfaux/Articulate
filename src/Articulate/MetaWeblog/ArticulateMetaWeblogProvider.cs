@@ -253,7 +253,7 @@ namespace Articulate.MetaWeblog
             Post[] recent =
             [
                 .. contentService
-                    .GetPagedChildren(
+                    .GetPagedChildrenCompat(
                         node.Id,
                         0,
                         numberOfPosts,
@@ -426,9 +426,9 @@ namespace Articulate.MetaWeblog
         /// Processes rich text content from MetaWebLog clients.
         /// </summary>
         /// <remarks>
-        /// Security: XSS/protocol injection mitigated by authenticated access and HTML sanitization.
-        /// Only http://, https://, and /media/ URLs allowed in image src attributes.
-        /// TODO: Use IHtmlSanitizer for consistent sanitization across Markdown and RichText.
+        /// Current behavior only strips some invalid image URLs before saving HTML.
+        /// This is not full sanitization and still allows non-image HTML/script payloads through.
+        /// TODO: Run MetaWeblog rich text through IHtmlSanitizer before persisting it.
         /// </remarks>
         private async Task ProcessRichTextContentAsync(
             IContent content,
