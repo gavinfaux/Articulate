@@ -1,12 +1,15 @@
 @model PostModel
+@{
+    var categories = Model.Categories.ToList();
+    var tags = Model.Tags.ToList();
+}
 
-@if (Model.Tags.Any() || Model.Categories.Any())
+@if (tags.Count > 0 || categories.Count > 0)
 {
     <div class="post-meta tags">
 
-        @if (Model.Categories.Any())
+        @if (categories.Count > 0)
         {
-            var categories = Model.Categories.ToList();
             <div>
                 Categories
 
@@ -22,9 +25,8 @@
             </div>
         }
 
-        @if (Model.Tags.Any())
+        @if (tags.Count > 0)
         {
-            var tags = Model.Tags.ToList();
             <div>
                 Posted in
 
