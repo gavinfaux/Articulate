@@ -15,6 +15,8 @@ namespace Articulate
         /// <summary>
         /// Gets the total number of posts.
         /// </summary>
+        // TODO: Root/archive/author flows currently count posts in one pass and fetch paged posts in a second pass.
+        // Revisit a combined query shape for Umbraco 16/17 if this becomes a measurable hot path.
         public static int GetPostCount(this UmbracoHelper helper, params int[] articulateArchiveIds)
         {
             var totalPosts = articulateArchiveIds
@@ -43,6 +45,8 @@ namespace Articulate
         /// <summary>
         /// Gets posts sorted by published date.
         /// </summary>
+        // TODO: This is paired with GetPostCount in current list flows, which means two traversals over the same source set.
+        // Keep behavior stable for now; consider returning total + paged items together in a future refactor.
         public static IEnumerable<IPublishedContent> GetPostsSortedByPublishedDate(
             this UmbracoHelper helper,
             PagerModel pager,
