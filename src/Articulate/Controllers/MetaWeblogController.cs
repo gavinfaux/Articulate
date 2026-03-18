@@ -48,6 +48,9 @@ namespace Articulate.Controllers
             // create the service using the provider
             MetaWeblogService service = ActivatorUtilities.CreateInstance<MetaWeblogService>(serviceProvider, provider);
 
+            // TODO: SECURITY - Consider adding request size limit to prevent memory exhaustion.
+            // ReadToEndAsync() reads entire body with no limit. Docker config allows 100MB requests.
+            // For enhanced security, use ReadBlockAsync with max size check and return 413 if exceeded.
             string rawContent;
             using (var reader = new StreamReader(Request.Body))
             {
@@ -61,9 +64,7 @@ namespace Articulate.Controllers
             }
             catch (NullReferenceException ex)
             {
-                logger.LogError(
-                    "A NullReferenceException occurred processing a metaWeblog request. Raw Content: {RawXml}",
-                    rawContent);
+                logger.LogError("A NullReferenceException occurred processing a metaWeblog request.");
 
                 logger.LogError(ex, "NullReferenceException details for metaWeblog call:");
 
