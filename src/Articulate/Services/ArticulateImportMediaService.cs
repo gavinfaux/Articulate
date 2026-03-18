@@ -109,7 +109,13 @@ namespace Articulate.Services
             return await ValidateImageAsync(stream, extension);
         }
 
-        // Security: SSRF risk accepted - BlogML import is admin-only
+        // TODO: SECURITY - Harden external image downloads used by BlogML import.
+        // Current behavior accepts arbitrary HTTP(S) URLs and buffers the full response in memory.
+        // Future PR: reject private/link-local/loopback targets before connect and after redirects.
+        // - 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16 (RFC 1918)
+        // - 169.254.0.0/16 (link-local, including cloud metadata at 169.254.169.254)
+        // - 127.0.0.0/8 (localhost), ::1, fc00::/7 (IPv6 equivalents)
+        // Also add a max download size and either disable automatic redirects or re-validate each hop.
         /// <inheritdoc/>
         public async Task<ImportMediaValidationResult> DownloadAndValidateImageAsync(
             Uri imageUrl,
