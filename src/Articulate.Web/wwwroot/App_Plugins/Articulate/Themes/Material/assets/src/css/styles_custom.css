@@ -97,6 +97,7 @@ th.date {
 
 .demo-blog--blogpost .meta+.mdl-card__supporting-text img {
   max-width: 100%;
+  height: auto;
 }
 
 .demo-blog .mdl-card a.new-post {

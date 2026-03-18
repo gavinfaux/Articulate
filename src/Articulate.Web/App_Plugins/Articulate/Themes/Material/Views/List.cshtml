@@ -6,7 +6,6 @@
 
 @{
     var posts = Model.Posts.ToList();
-    ViewBag.PostsList = posts;
     var hasResults = posts.Any();
     var term = Context.GetSearchTerm();
     var isSearchPage = Model.IsSearchRoute(Context);

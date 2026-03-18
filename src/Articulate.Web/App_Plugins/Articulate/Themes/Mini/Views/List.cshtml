@@ -1,6 +1,7 @@
 @model ListModel
 @{
     Layout = "Master.cshtml";
+    var posts = Model.Posts.ToList();
 }
 
 <div class="container">
@@ -14,13 +15,13 @@
 
     <!--- MAIN COLUMN --->
     <div class="main-col">
-        @if (!Model.Children().Any())
+        @if (!posts.Any())
         {
             <article>No blog posts found</article>
         }
         else
         {
-            foreach (var post in Model.Posts)
+            foreach (var post in posts)
             {
                 <div class="post-entry post-list">
                     <article role="article" itemscope itemtype="http://schema.org/Article">

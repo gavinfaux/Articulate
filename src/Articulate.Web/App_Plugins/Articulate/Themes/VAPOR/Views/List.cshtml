@@ -1,15 +1,16 @@
 @model ListModel
 @{
     Layout = "Master.cshtml";
+    var posts = Model.Posts.ToList();
 }
 
-@if (!Model.Children().Any())
+@if (!posts.Any())
 {
     <article>No blog posts found</article>
 }
 else
 {
-    foreach (var post in Model.Posts)
+    foreach (var post in posts)
     {
         <article class="preview">
             <header>

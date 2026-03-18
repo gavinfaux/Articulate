@@ -457,6 +457,11 @@ p:has(> .a-image-0) {
   object-fit: cover;
 }
 
+.postContent img {
+  max-width: 100%;
+  height: auto;
+}
+
 img.thumb {
   float: left;
   padding: 0px 10px 0px 0px;
