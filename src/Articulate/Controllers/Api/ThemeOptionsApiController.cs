@@ -48,11 +48,24 @@ namespace Articulate.Controllers.Api
             }
             catch (DirectoryNotFoundException ex)
             {
-                return NotFound(new ProblemDetails { Title = "Theme Not Found", Detail = ex.Message });
+                logger.LogWarning(ex, "Theme copy failed because the source theme '{ThemeName}' was not found.", model.ThemeName);
+                return NotFound(new ProblemDetails
+                {
+                    Title = "Theme Not Found",
+                    Detail = "The requested source theme could not be found."
+                });
             }
             catch (IOException ex)
             {
-                return Conflict(new ProblemDetails { Title = "Duplicate Theme Name", Detail = ex.Message });
+                logger.LogWarning(
+                    ex,
+                    "Theme copy failed because the destination theme '{NewThemeName}' already exists or could not be created.",
+                    model.NewThemeName);
+                return Conflict(new ProblemDetails
+                {
+                    Title = "Duplicate Theme Name",
+                    Detail = "The destination theme already exists or could not be created."
+                });
             }
             catch (Exception e)
             {
