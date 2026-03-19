@@ -341,9 +341,8 @@ export default class ThemeOptionsElement extends UmbLitElement implements IFormC
         ${renderHeaderActions(this.routerPath)}
         <div class="container">
           <p>
-            You can duplicate any of Articulate's built-in themes to use as a template for your own theme. The
-            duplicated theme will be copied to the ~/Views/Articulate folder where you can edit it. You can select this
-            theme from the themes drop down on your Articulate root node to use it.
+            Articulate's built-in themes are shown here for reference. You can copy them, but the new theme name
+            must not match a built-in theme name.
           </p>
         </div>
         <div class="container">${this.#renderThemeGrid()} ${this.#renderDuplicateForm()}</div>

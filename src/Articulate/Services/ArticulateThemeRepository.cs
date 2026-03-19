@@ -22,6 +22,13 @@ namespace Articulate.Services
         /// <inheritdoc/>
         async Task IArticulateThemeRepository.CopyThemeAsync(string themeName, string newThemeName)
         {
+            if (DefaultThemes.AllThemeNames.Any(theme => string.Equals(theme, newThemeName, StringComparison.OrdinalIgnoreCase)))
+            {
+                throw new ArgumentException(
+                    $"The theme name '{newThemeName}' is reserved for a built-in theme.",
+                    nameof(newThemeName));
+            }
+
             var userThemesPath = Path.GetFullPath(
                 Path.Combine(hostingEnvironment.ContentRootPath, Paths.UserThemesRoot));
             var themeRootDestination = Path.GetFullPath(
@@ -54,7 +61,12 @@ namespace Articulate.Services
             {
                 // Extract Views to Views/ArticulateThemes/{newThemeName}/ (flat, no nested Views folder)
                 _ = Directory.CreateDirectory(themeRootDestination);
-                await ExtractResourcesAsync(articulateAssembly, viewResources, themeRootDestination, themeName, stripViewsPrefix: true);
+                await ExtractResourcesAsync(
+                    articulateAssembly,
+                    viewResources,
+                    themeRootDestination,
+                    themeName,
+                    "Views/");
 
                 logger.LogInformation(
                     "Copied views for theme '{NewThemeName}' from '{SourceTheme}' to {ViewsPath}",
@@ -74,7 +86,12 @@ namespace Articulate.Services
                         "assets");
 
                     _ = Directory.CreateDirectory(assetsDestination);
-                    await ExtractResourcesAsync(articulateAssembly, assetResources, assetsDestination, themeName, stripViewsPrefix: false);
+                    await ExtractResourcesAsync(
+                        articulateAssembly,
+                        assetResources,
+                        assetsDestination,
+                        themeName,
+                        "assets/");
 
                     logger.LogInformation(
                         "Copied assets for theme '{NewThemeName}' to {AssetsPath}",
@@ -103,20 +120,23 @@ namespace Articulate.Services
             string themeName,
             string resourceType)
         {
-            char[] separators = ['/', '\\'];
+            // Manifest resource names can contain either '/' or '\\' depending on build/platform.
+            // Normalize to '/' so prefix + relative path logic is consistent.
             var prefix = $"{EmbeddedResourceRoot}Themes/{themeName}/";
+            var typePrefix = $"{resourceType}/";
 
             return assembly.GetManifestResourceNames()
                 .Where(resource =>
                 {
-                    if (!resource.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                    var normalizedResource = resource.Replace('\\', '/');
+
+                    if (!normalizedResource.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
                     {
                         return false;
                     }
 
-                    var relativePath = resource[prefix.Length..];
-                    return separators.Any(sep =>
-                        relativePath.StartsWith($"{resourceType}{sep}", StringComparison.OrdinalIgnoreCase));
+                    var relativePath = normalizedResource[prefix.Length..];
+                    return relativePath.StartsWith(typePrefix, StringComparison.OrdinalIgnoreCase);
                 });
         }
 
@@ -125,24 +145,26 @@ namespace Articulate.Services
             List<string> resources,
             string destinationBase,
             string themeName,
-            bool stripViewsPrefix)
+            string prefixToStrip)
         {
             var prefixToRemove = $"{EmbeddedResourceRoot}Themes/{themeName}/";
 
             foreach (var resourceName in resources)
             {
-                var relativePath = resourceName[prefixToRemove.Length..];
-
-                // Strip "Views/" prefix so views land flat in theme root
-                if (stripViewsPrefix)
+                var normalizedResourceName = resourceName.Replace('\\', '/');
+                if (!normalizedResourceName.StartsWith(prefixToRemove, StringComparison.OrdinalIgnoreCase))
                 {
-                    relativePath = relativePath
-                        .Replace("Views/", string.Empty)
-                        .Replace("Views\\", string.Empty);
+                    continue;
+                }
+
+                var relativePath = normalizedResourceName[prefixToRemove.Length..];
+
+                if (relativePath.StartsWith(prefixToStrip, StringComparison.OrdinalIgnoreCase))
+                {
+                    relativePath = relativePath[prefixToStrip.Length..];
                 }
 
                 var cleanPath = relativePath
-                    .Replace('\\', Path.DirectorySeparatorChar)
                     .Replace('/', Path.DirectorySeparatorChar);
 
                 var destinationFilePath = Path.Combine(destinationBase, cleanPath);
@@ -170,11 +192,11 @@ namespace Articulate.Services
                           1. Edit `Master.cshtml` - Main layout template
                           2. Edit `Post.cshtml` - Individual blog post template
                           3. Customize CSS in `wwwroot/.../assets/css/`
+                          4. Copied themes do not include a production build pipeline for assets, either set up your own build process, or ensure production builds link to src assets.
 
                           ## Documentation
 
                           - Theme Guide: https://github.com/Shazwazza/Articulate/wiki/Themes
-                          - View Models: https://github.com/Shazwazza/Articulate/wiki/Theme-View-Models
                           """;
 
             var readmePath = Path.Combine(themeRoot, "README.md");
@@ -242,7 +264,7 @@ namespace Articulate.Services
         public Task<IEnumerable<string>> GetDefaultThemesAsync() => Task.FromResult(DefaultThemes.AllThemeNames);
 
         private static Task<IEnumerable<string>> GetThemesFromPhysicalPathAsync(string physicalPath) =>
-            Task.Run(() => Directory.Exists(physicalPath)
+            Task.FromResult<IEnumerable<string>>(Directory.Exists(physicalPath)
                 ? new DirectoryInfo(physicalPath).GetDirectories().Select(d => d.Name)
                 : []);
 
@@ -253,3 +275,5 @@ namespace Articulate.Services
         }
     }
 }
+
+

@@ -31,11 +31,13 @@ namespace Articulate.Controllers.Api
         /// <param name="model">The model containing the theme name to copy and the new theme name.</param>
         /// <returns>The new theme name.</returns>
         /// <response code="200">The theme was successfully copied to the new theme name.</response>
+        /// <response code="400">The destination theme name matches a built-in theme.</response>
         /// <response code="404">The theme name specified in the model does not exist.</response>
         /// <response code="409">The new theme name specified in the model already exists.</response>
         /// <response code="500">An unexpected error occurred during the theme copy operation.</response>
         [HttpPost("copy")]
         [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
@@ -53,6 +55,15 @@ namespace Articulate.Controllers.Api
                 {
                     Title = "Theme Not Found",
                     Detail = "The requested source theme could not be found."
+                });
+            }
+            catch (ArgumentException ex) when (ex.ParamName == "newThemeName")
+            {
+                logger.LogWarning(ex, "Theme copy was rejected because the destination theme name '{NewThemeName}' is reserved.", model.NewThemeName);
+                return BadRequest(new ProblemDetails
+                {
+                    Title = "Reserved Theme Name",
+                    Detail = "Built-in theme names cannot be used for copied themes."
                 });
             }
             catch (IOException ex)

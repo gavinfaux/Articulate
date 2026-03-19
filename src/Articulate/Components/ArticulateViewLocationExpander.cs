@@ -22,7 +22,7 @@ namespace Articulate.Components
             {
                 // Fallback: try HttpContext.Items when Values is unavailable (e.g., in unit tests)
                 HttpContext? httpContextForItems = context.ActionContext.HttpContext;
-                if (themeName is null && httpContextForItems?.Items[ThemeItemsKey] is string detectedThemeName)
+                if (httpContextForItems?.Items[ThemeItemsKey] is string detectedThemeName)
                 {
                     themeName = detectedThemeName;
                 }
