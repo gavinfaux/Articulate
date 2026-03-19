@@ -39,14 +39,25 @@ namespace Articulate.Controllers
                 return RedirectPermanent(root.RootBlogNode.Url());
             }
 
+            // Check if theme has custom Authors.cshtml view before building the listing model.
+            if (!EnsurePhysicalViewExists("Authors"))
+            {
+                logger.LogInformation(
+                    "ArticulateAuthorsController: No Authors.cshtml view found. " +
+                    "Recommend enabling 'redirectArchive' or creating custom Authors.cshtml in theme.");
+
+                return NotFound();
+            }
+
             // Build author list for custom themes that provide Authors.cshtml
+            var listingPager = new PagerModel(1, 0, 1);
             var authorNodes = CurrentPage.Children().ToList();
             var authors = authorNodes
                 .Select(a => new AuthorModel(
                     a,
-                    null,  // No posts in listing
-                    null,  // No pager for author listing
-                    0,     // Post count not needed for listing
+                    [], // Author listing pages do not need post items.
+                    listingPager,
+                    0,
                     publishedValueFallback))
                 .ToList();
 
@@ -55,18 +66,7 @@ namespace Articulate.Controllers
                 Authors = authors
             };
 
-            // Check if theme has custom Authors.cshtml view
-            if (EnsurePhysicalViewExists("Authors"))
-            {
-                return View("Authors", model);
-            }
-
-            // No custom view available
-            logger.LogInformation(
-                "ArticulateAuthorsController: No Authors.cshtml view found. " +
-                "Recommend enabling 'redirectArchive' or creating custom Authors.cshtml in theme.");
-
-            return NotFound();
+            return View("Authors", model);
         }
     }
 }
