@@ -32,13 +32,15 @@ namespace Articulate
                 posts = posts.Where(filter);
             }
 
-            IPublishedContent[] orderedPosts = posts
-                .OrderByDescending(x => x.Value<DateTime>("publishedDate"))
+            (IPublishedContent Content, DateTime PublishedDate)[] orderedPosts = posts
+                .Select(x => (Content: x, PublishedDate: x.Value<DateTime>("publishedDate")))
+                .OrderByDescending(x => x.PublishedDate)
                 .ToArray();
 
             IPublishedContent[] pagedPosts = orderedPosts
                 .Skip(pager.CurrentPageIndex * pager.PageSize)
                 .Take(pager.PageSize)
+                .Select(x => x.Content)
                 .ToArray();
 
             return (orderedPosts.Length, pagedPosts);

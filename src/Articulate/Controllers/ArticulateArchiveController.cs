@@ -58,13 +58,7 @@ namespace Articulate.Controllers
                 return RedirectPermanent(archive.RootBlogNode.Url());
             }
 
-            if (!int.TryParse(archive.RootBlogNode.Value<string>("pageSize"), out var pageSize))
-            {
-                pageSize = 10;
-            }
-
-            var pageNumber = p is > 0 ? p.Value : 1;
-            var pager = new PagerModel(pageSize, pageNumber - 1, 1);
+            PagerModel pager = CreateRequestedPager(archive, p);
             (var totalPosts, IPublishedContent[] posts) = Umbraco.GetPagedPostsSortedByPublishedDate(pager, null, archive.Id);
 
             return GetPagedListView(archive, archive, posts, totalPosts, p);

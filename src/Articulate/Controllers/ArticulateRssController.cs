@@ -66,7 +66,7 @@ namespace Articulate.Controllers
             var listNodeIds = listNodes.Select(x => x.Id).ToArray();
 
             IEnumerable<IPublishedContent> listItems =
-                umbracoHelper.GetPostsSortedByPublishedDate(pager, null, listNodeIds) ?? [];
+                umbracoHelper.GetPostsSortedByPublishedDate(pager, null, listNodeIds);
 
             var rootPageModel = new ListModel(
                 listNodes[0],

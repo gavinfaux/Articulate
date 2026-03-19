@@ -57,9 +57,7 @@ namespace Articulate.Controllers
 
             var master = new MasterModel(model.Content, PublishedValueFallback);
 
-            var pageNumber = p is > 0 ? p.Value : 1;
-            var pageSize = master.PageSize > 0 ? master.PageSize : 10;
-            var pager = new PagerModel(pageSize, pageNumber - 1, 1);
+            PagerModel pager = CreateRequestedPager(master, p);
 
             (int totalPosts, IPublishedContent[] posts) = umbracoHelper.GetPagedPostsSortedByPublishedDate(
                 pager,

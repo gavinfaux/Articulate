@@ -52,9 +52,7 @@ namespace Articulate.Controllers
                     "An ArticulateArchive document must exist under the root Articulate document");
             }
 
-            var pageNumber = p is > 0 ? p.Value : 1;
-            var pageSize = masterModel.PageSize > 0 ? masterModel.PageSize : 10;
-            var initialPager = new PagerModel(pageSize, pageNumber - 1, 1);
+            PagerModel initialPager = CreateRequestedPager(masterModel, p);
 
             (int totalPosts, IPublishedContent[] posts) = umbracoHelper.GetPagedContentByAuthor(
                 listNodes,

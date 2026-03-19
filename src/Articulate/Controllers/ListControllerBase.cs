@@ -1,10 +1,7 @@
 #nullable enable
-using System.Net;
-using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Primitives;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.Routing;
 using Umbraco.Cms.Core.Web;
@@ -29,6 +26,12 @@ namespace Articulate.Controllers
         protected IPublishedUrlProvider PublishedUrlProvider { get; } = publishedUrlProvider;
 
         protected IPublishedValueFallback PublishedValueFallback { get; } = publishedValueFallback;
+
+        protected PagerModel CreateRequestedPager(IMasterModel masterModel, int? p)
+            => new(
+                PagingHelper.NormalizePageSize(masterModel.PageSize),
+                PagingHelper.NormalizePageNumber(p) - 1,
+                1);
 
         /// <summary>
         /// Gets a paged list view for a given posts by author/tags/categories model.
@@ -57,60 +60,6 @@ namespace Articulate.Controllers
         }
 
         protected bool GetPagerModel(IMasterModel masterModel, long totalPosts, int? p, out PagerModel? pager)
-        {
-            var pageNumber = p is > 0 ? p.Value : 1;
-
-            var pageSize = masterModel.PageSize;
-            if (pageSize <= 0)
-            {
-                pageSize = 10;
-            }
-
-            var totalPages = totalPosts == 0 ? 1 : Convert.ToInt32(Math.Ceiling((double)totalPosts / pageSize));
-
-            // Invalid page, redirect without pages
-            if (totalPages < pageNumber)
-            {
-                pager = null;
-                return false;
-            }
-
-            // maintain query strings
-            var queryStrings = new StringBuilder();
-            foreach (var key in Request.Query.Keys)
-            {
-                if (key == "p")
-                {
-                    continue;
-                }
-
-                if (!Request.Query.TryGetValue(key, out StringValues val))
-                {
-                    continue;
-                }
-
-                foreach (var v in val)
-                {
-                    queryStrings.Append($"&{WebUtility.UrlEncode(key)}={WebUtility.UrlEncode(v)}");
-                }
-            }
-
-            pager = new PagerModel(
-                pageSize,
-                pageNumber - 1,
-                totalPages,
-                totalPages > pageNumber
-                    ? GetPagedUrl(masterModel.Url(), pageNumber + 1, queryStrings.ToString())
-                    : string.Empty,
-                pageNumber > 2 ? GetPagedUrl(masterModel.Url(), pageNumber - 1, queryStrings.ToString()) :
-                pageNumber > 1 ? GetPagedUrl(masterModel.Url(), null, queryStrings.ToString()) : string.Empty);
-
-            return true;
-        }
-
-        private static string GetPagedUrl(string? baseUrl, int? page, string queryStrings)
-            => page.HasValue
-                ? $"{baseUrl?.EnsureEndsWith('?')}p={page}{queryStrings}"
-                : $"{baseUrl?.EnsureEndsWith('?')}{queryStrings.TrimStart('&')}";
+            => PagingHelper.TryCreatePager(masterModel.Url(), Request.Query, masterModel.PageSize, totalPosts, p, out pager);
     }
 }
