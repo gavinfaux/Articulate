@@ -21,8 +21,8 @@ namespace Articulate.Components
             if (string.IsNullOrEmpty(themeName))
             {
                 // Fallback: try HttpContext.Items when Values is unavailable (e.g., in unit tests)
-                HttpContext? httpContextForItems = context.ActionContext.HttpContext;
-                if (httpContextForItems?.Items[ThemeItemsKey] is string detectedThemeName)
+                HttpContext httpContextForItems = context.ActionContext.HttpContext;
+                if (httpContextForItems.Items[ThemeItemsKey] is string detectedThemeName)
                 {
                     themeName = detectedThemeName;
                 }
@@ -33,7 +33,7 @@ namespace Articulate.Components
                 return viewLocations;
             }
 
-            HttpContext? httpContext = context.ActionContext?.HttpContext;
+            HttpContext? httpContext = context.ActionContext.HttpContext;
             if (httpContext is null)
             {
                 return viewLocations;
@@ -53,11 +53,7 @@ namespace Articulate.Components
         /// <inheritdoc/>
         public void PopulateValues(ViewLocationExpanderContext context)
         {
-            HttpContext? httpContext = context.ActionContext.HttpContext;
-            if (httpContext is null)
-            {
-                return;
-            }
+            HttpContext httpContext = context.ActionContext.HttpContext;
 
             IArticulateThemeResolver? themeResolver =
                 httpContext.RequestServices.GetService<IArticulateThemeResolver>();
