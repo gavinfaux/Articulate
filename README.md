@@ -1,3 +1,5 @@
+# Articulate
+
 [![Articulate Build](https://github.com/Shazwazza/Articulate/actions/workflows/build.yml/badge.svg)](https://github.com/Shazwazza/Articulate/actions/workflows/build.yml)
 
 ![Articulate](https://raw.githubusercontent.com/Shazwazza/Articulate/develop/assets/Logo.png?raw=true)
@@ -9,13 +11,57 @@ _❤️ If you use and like Articulate please consider [becoming a GitHub Sponso
 
 ## Installation
 
-### Post installtion checks
+Two support tracks are available depending on the Umbraco version you run.
 
-- In the backoffice head over to the Packages section `umbraco/section/packages/view/installed` and check if there are pending migrations to run.
+### Umbraco 13 LTS (maintenance mode)
 
-- **Umbraco 13 only** To resolve an issue with the _example_ media not displaying correctly on frontend, in the data types section `umbraco/section/settings/workspace/data-type-root/edit/` select the `Articulate Image Picker` data type and hit save. This issue does not effect other media added to Articulate. See [this issue](https://github.com/Shazwazza/Articulate/issues/460) for more information.
+Articulate 5.x remains available for Umbraco 13, which is in security maintenance until **December 2025** and reaches end of life in **December 2026**. The package still installs from the Umbraco marketplace.
+
+- After installing, open the Packages section (`umbraco/section/packages/view/installed`) and run any pending migrations.
+- Save the `Articulate Image Picker` data type once to fix bundled demo media (issue [#460](https://github.com/Shazwazza/Articulate/issues/460)). This step is only required on Umbraco 13.
+- For long-term projects consider upgrading to Umbraco 16+ where Articulate 6 receives active feature work.
 
 _Need help?_ Head over to [Articulate on GitHub](https://github.com/Shazwazza/Articulate) for extra tips, known issues and fixes.
+
+### Umbraco 16 (NET 9) & 17 (NET 10) (current track)
+
+Articulate 6 targets Umbraco 16.5.1+ and 17.2.2+
+
+- Install `Articulate` from NuGet (`dotnet add package Articulate`). The package includes the backoffice extension and static assets; no extra package references or manual copies required.
+- When building from source, run the test site `dotnet run -f net9.0 --project src/Articulate.Tests.Website/Articulate.Tests.Website.csproj` (or `-f net10.0` for Umbraco 17) and sign into the Umbraco Back Office to finish setup.
+- Migrating from 5.x: in place upgrade or export BlogML from your Articulate 5 site and import it into Articulate 6; media in `media/articulate` is not auto-migrated. During import you can map `postImage` to base64 or an attachment; other inline images must be moved manually (copy the folder, or consider an in-place package upgrade).
+
+## Markdown Editor Authentication
+
+The standalone Markdown editor uses Umbraco's built-in back-office OpenIddict endpoints with the authorization code flow and PKCE.
+
+- `RedirectUris` are the allowed callback URLs after a successful sign-in.
+- `PostLogoutRedirectUris` are the allowed final destinations after sign-out completes.
+- The built-in sign-out endpoint is an endpoint the client calls. It is **not** itself a post-logout redirect URI.
+- The editor requests a specific `post_logout_redirect_uri` during sign-out. Umbraco/OpenIddict will only honor it if it exists in `PostLogoutRedirectUris`.
+- The editor keeps the access token in memory. Refreshing the page clears that token and requires the user to sign in again.
+
+Minimal example:
+
+```json
+"Articulate": {
+  "ManagementApi": {
+    "OpenIddict": {
+      "Client": {
+        "Enabled": true,
+        "ClientId": "umbraco-articulate",
+        "DisplayName": "Articulate Markdown Editor",
+        "RedirectUris": [
+          "https://localhost:44366/a-new/"
+        ],
+        "PostLogoutRedirectUris": [
+          "https://localhost:44366/"
+        ]
+      }
+    }
+  }
+}
+```
 
 ## Features
 
@@ -26,24 +72,25 @@ Supporting all the features you'd want in a blogging platform
 - Multiple archives
 - Live Writer support
 - Markdown support
-- Post from your mobile phone including photos direct from you camera
-- Disqus or Facebook comment support (or build your own)
+- Post from your mobile phone including photos direct from your camera
+- Disqus comment support (or build your own)
 - Search
-- Blogml import/export (including Disqus import)
+- BlogML import/export (including Disqus import)
 - Customizable RSS feeds
-- Customizable urls
+- Customizable URLs
 - Author profiles
+- Extensible API + modern build tooling aligned with current .NET/Umbraco releases (DI-friendly codebase, multi-target net9/net10, pnpm/Vite client pipeline)
 
 ## Minimum requirements
 
-- Articulate version 5+ is only compatible with Umbraco 10.1.0+
-- Articulate version 6+ is only compatible with Umbraco 15.2.3+ (15.4.2 recommended) and 16+
+- Articulate 5.x (maintenance): Umbraco 13 LTS (security support through Dec 2025, EOL Dec 2026)
+- Articulate 6.x (current): Umbraco 16.5.1+ on .NET 9; Umbraco 17.2.2+ on .NET 10
 
 ## [Documentation](https://github.com/Shazwazza/Articulate/wiki)
 
-Docs on installation, creating posts, customising/creating themes, etc...
+Docs on installation, creating posts, customizing/creating themes, etc...
 
-## [Issues](https://github.com/Shandem/Articulate/issues)
+## [Issues](https://github.com/Shazwazza/Articulate/issues)
 
 If you have any issues, please post them here on GitHub
 
@@ -51,29 +98,16 @@ If you have any issues, please post them here on GitHub
 
 See here for the list of releases and their release notes
 
-## [Community Discussions](https://forum.umbraco.com/)
+## [Community Discussions](https://forum.umbraco.com/tag/packages)
 
 - Please use the Umbraco forums to ask questions and discuss Articulate, it's features and functionality.
-- Do not post issues here, post them [here](https://github.com/Shazwazza/Articulate/issues) on GitHub
+- Do not post issues here, post them to [Articulate/issues](https://github.com/Shazwazza/Articulate/issues) on GitHub
 
-## Contributing
+## Development
 
-1. Clone/fork the repository
-1. Open the /src/Articulate.sln file
-1. Build the solution (will also performa Nuget restore)
-1. Ensure that Articulate.Web is set as the startup project
-1. Start the Articulate.Web project
-1. This will run the Umbraco installer, install as per normal
-1. The Articulate package migrations will also execute and install all of the Articulate schema and content items
+Local development and contributor setup lives in [DEVELOP.md](DEVELOP.md).
 
-Now you're all set! Any source changes you wish to make just do that in Visual Studio, build the solution when you need to and the changes will be reflected in the website.
-
-### Changing Umbraco Articulate schema/data elements
-
-If you need to make changes to the underlying Umbraco schema (doc types, data types, etc...) or the installed package's content/media, then you will need
-to re-create the Articulate package in the back office with all required dependencies and then re-save the package.zip file and commit it to the repository.
-
-## Copyright & Licence
+## Copyright & License
 
 &copy; 2025 by Shannon Deminick
 
