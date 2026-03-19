@@ -32,19 +32,19 @@ namespace Articulate
             }
 
             // DoS protection: limit query complexity
-            const int MaxTermLength = 200;
-            const int MaxTokenCount = 10;
+            const int maxTermLength = 200;
+            const int maxTokenCount = 10;
 
-            if (term.Length > MaxTermLength)
+            if (term.Length > maxTermLength)
             {
-                term = term[..MaxTermLength];
+                term = term[..maxTermLength];
             }
 
             var splitSearch = term.Split([' '], StringSplitOptions.RemoveEmptyEntries);
 
-            if (splitSearch.Length > MaxTokenCount)
+            if (splitSearch.Length > maxTokenCount)
             {
-                splitSearch = splitSearch[..MaxTokenCount];
+                splitSearch = splitSearch[..maxTokenCount];
             }
 
             var escapedTerm = QueryParserBase.Escape(term);

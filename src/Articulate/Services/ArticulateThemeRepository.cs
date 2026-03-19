@@ -264,7 +264,7 @@ namespace Articulate.Services
         public Task<IEnumerable<string>> GetDefaultThemesAsync() => Task.FromResult(DefaultThemes.AllThemeNames);
 
         private static Task<IEnumerable<string>> GetThemesFromPhysicalPathAsync(string physicalPath) =>
-            Task.FromResult<IEnumerable<string>>(Directory.Exists(physicalPath)
+            Task.FromResult(Directory.Exists(physicalPath)
                 ? new DirectoryInfo(physicalPath).GetDirectories().Select(d => d.Name)
                 : []);
 

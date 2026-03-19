@@ -36,7 +36,7 @@ namespace Articulate.Routing
             UmbracoRouteValues? umbracoRouteValues = httpContext.Features.Get<UmbracoRouteValues>();
 
             // Only intervene when Articulate successfully routed to an Articulate controller.
-            if (umbracoRouteValues?.ControllerActionDescriptor?.ControllerTypeInfo is null)
+            if (umbracoRouteValues?.ControllerActionDescriptor.ControllerTypeInfo is null)
             {
                 return Task.CompletedTask;
             }

@@ -6,7 +6,6 @@ using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.Routing;
 using Umbraco.Cms.Core.Web;
-using Umbraco.Cms.Web.Website.ActionResults;
 
 namespace Articulate.Controllers
 {
