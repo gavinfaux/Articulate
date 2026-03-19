@@ -1,8 +1,13 @@
+{
+   local_certs
+   auto_https disable_redirects
+}
+
 :8080 {
     redir https://{$HTTPS_HOST:-localhost:18443}{uri} permanent
 }
 
-:8443 {
-    reverse_proxy http://{$ARTICULATE_HOST}:8080
-    tls internal
+:18443 {
+  tls internal
+  reverse_proxy http://{$ARTICULATE_HOST:-articulate}:8080
 }

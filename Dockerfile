@@ -13,7 +13,11 @@ ARG PACKAGE_DIR=/articulate-packages
 COPY global.json ./
 COPY Directory.Build.props ./
 COPY nuget.config ./
-COPY build/docker-site/ build/docker-site/
+COPY build/docker-site/ArticulateDockerSite.csproj build/docker-site/
+COPY build/docker-site/Program.cs build/docker-site/
+COPY build/docker-site/appsettings.json build/docker-site/
+COPY build/docker-site/appsettings.Container.json build/docker-site/
+COPY build/docker-site/nuget.config build/docker-site/
 COPY build/Release/ build/Release/
 
 # Copy nupkg to packages folder and extract version, then restore and publish
