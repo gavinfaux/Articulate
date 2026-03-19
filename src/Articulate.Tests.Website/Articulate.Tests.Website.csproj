@@ -4,6 +4,10 @@
     <IsPackable>false</IsPackable>
     <UseArticulateUsings>false</UseArticulateUsings>
   </PropertyGroup>
+  <!-- Prevent multi-TFM build race: Umbraco schema task writes to same file from both targets -->
+  <PropertyGroup Condition="'$(TargetFramework)' != 'net10.0'">
+    <UmbracoJsonSchemaGenerateEnabled>false</UmbracoJsonSchemaGenerateEnabled>
+  </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Umbraco.Cms" Version="$(UmbracoCmsPackageVersion)" />
   </ItemGroup>
