@@ -74,21 +74,7 @@ namespace Articulate.Controllers
                 listItems,
                 publishedValueFallback);
 
-            /*
-              TODO: Raise issue / debug Umbraco Core - This returns null, when it should be two with the default content installed
-
-              var feed = _feedGenerator.GetFeed(rootPageModel, rootPageModel.Children<PostModel>());
-
-              where .Children<PostModel>() calls this:
-
-              public static IEnumerable<T>? Children<T>(this IPublishedContent content, string? culture = null)
-                 where T : class, IPublishedContent
-                    => content.Children<T>(GetNavigationQueryService(content), GetPublishedStatusFilteringService(content), culture);
-            */
-
-            // Work around for above issue
-            IEnumerable<PostModel> posts = umbracoHelper.GetPostsSortedByPublishedDate(
-                    pager, null, rootPageModel.Id)
+            IEnumerable<PostModel> posts = listItems
                 .Select(x => new PostModel(x, publishedValueFallback));
 
             SyndicationFeed feed = feedGenerator.GetFeed(rootPageModel, posts);
