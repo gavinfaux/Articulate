@@ -104,11 +104,10 @@ namespace Articulate.Controllers
                     "An ArticulateArchive document must exist under the root Articulate document");
             }
 
-            IEnumerable<IPublishedContent> authorContent = umbracoHelper.GetContentByAuthor(
+            IEnumerable<IPublishedContent> authorContent = umbracoHelper.GetPagedContentByAuthor(
                 listNodes,
                 author.Name,
-                new PagerModel(maxItems.Value, 0, 1),
-                publishedValueFallback);
+                new PagerModel(maxItems.Value, 0, 1)).Posts;
 
             SyndicationFeed feed = feedGenerator.GetFeed(
                 masterModel,

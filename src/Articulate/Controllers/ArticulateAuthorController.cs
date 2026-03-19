@@ -52,7 +52,14 @@ namespace Articulate.Controllers
                     "An ArticulateArchive document must exist under the root Articulate document");
             }
 
-            var totalPosts = umbracoHelper.GetPostCount(CurrentPage.Name, [.. listNodes.Select(x => x.Id)]);
+            var pageNumber = p is > 0 ? p.Value : 1;
+            var pageSize = masterModel.PageSize > 0 ? masterModel.PageSize : 10;
+            var initialPager = new PagerModel(pageSize, pageNumber - 1, 1);
+
+            (int totalPosts, IPublishedContent[] posts) = umbracoHelper.GetPagedContentByAuthor(
+                listNodes,
+                CurrentPage.Name,
+                initialPager);
 
             if (!GetPagerModel(masterModel, totalPosts, p, out PagerModel? pager) || pager is null)
             {
@@ -62,15 +69,9 @@ namespace Articulate.Controllers
                     UmbracoContextAccessor);
             }
 
-            IEnumerable<IPublishedContent>? authorPosts = umbracoHelper.GetContentByAuthor(
-                listNodes,
-                CurrentPage.Name,
-                pager,
-                PublishedValueFallback);
-
             var author = new AuthorModel(
                 CurrentPage,
-                authorPosts ?? [],
+                posts,
                 pager,
                 totalPosts,
                 PublishedValueFallback);

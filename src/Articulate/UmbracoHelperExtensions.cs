@@ -1,10 +1,10 @@
+#nullable enable
 using Articulate.Services;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.PublishedCache;
 using Umbraco.Cms.Web.Common;
 using PublishedContentExtensions = Articulate.Models.PublishedContentExtensions;
 
-// TODO: #nullable enable
 namespace Articulate
 {
     /// <summary>
@@ -13,44 +13,12 @@ namespace Articulate
     public static class UmbracoHelperExtensions
     {
         /// <summary>
-        /// Gets the total number of posts.
+        /// Gets a paged set of posts sorted by published date, along with the total count.
         /// </summary>
-        // TODO: Root/archive/author flows currently count posts in one pass and fetch paged posts in a second pass.
-        // Revisit a combined query shape for Umbraco 16/17 if this becomes a measurable hot path.
-        public static int GetPostCount(this UmbracoHelper helper, params int[] articulateArchiveIds)
-        {
-            var totalPosts = articulateArchiveIds
-                .Select(helper.Content)
-                .WhereNotNull()
-                .SelectMany(x => x.Descendants())
-                .Count();
-
-            return totalPosts;
-        }
-
-        /// <summary>
-        /// Gets the total number of posts for a specific author.
-        /// </summary>
-        public static int GetPostCount(this UmbracoHelper helper, string authorName, params int[] articulateArchiveIds)
-        {
-            var totalPosts = articulateArchiveIds
-                .Select(helper.Content)
-                .WhereNotNull()
-                .SelectMany(x => x.Descendants().Where(d => d.Value<string>("author") == authorName))
-                .Count();
-
-            return totalPosts;
-        }
-
-        /// <summary>
-        /// Gets posts sorted by published date.
-        /// </summary>
-        // TODO: This is paired with GetPostCount in current list flows, which means two traversals over the same source set.
-        // Keep behavior stable for now; consider returning total + paged items together in a future refactor.
-        public static IEnumerable<IPublishedContent> GetPostsSortedByPublishedDate(
+        internal static (int TotalPosts, IPublishedContent[] Posts) GetPagedPostsSortedByPublishedDate(
             this UmbracoHelper helper,
             PagerModel pager,
-            Func<IPublishedContent, bool> filter,
+            Func<IPublishedContent, bool>? filter,
             params int[] articulateArchiveIds)
         {
             IEnumerable<IPublishedContent> posts = articulateArchiveIds
@@ -64,13 +32,27 @@ namespace Articulate
                 posts = posts.Where(filter);
             }
 
-            // now do the ordering
-            posts = posts.OrderByDescending(x => x.Value<DateTime>("publishedDate"))
-                .Skip(pager.CurrentPageIndex * pager.PageSize)
-                .Take(pager.PageSize);
+            IPublishedContent[] orderedPosts = posts
+                .OrderByDescending(x => x.Value<DateTime>("publishedDate"))
+                .ToArray();
 
-            return posts;
+            IPublishedContent[] pagedPosts = orderedPosts
+                .Skip(pager.CurrentPageIndex * pager.PageSize)
+                .Take(pager.PageSize)
+                .ToArray();
+
+            return (orderedPosts.Length, pagedPosts);
         }
+
+        /// <summary>
+        /// Gets posts sorted by published date.
+        /// </summary>
+        public static IEnumerable<IPublishedContent> GetPostsSortedByPublishedDate(
+            this UmbracoHelper helper,
+            PagerModel pager,
+            Func<IPublishedContent, bool>? filter,
+            params int[] articulateArchiveIds)
+            => helper.GetPagedPostsSortedByPublishedDate(pager, filter, articulateArchiveIds).Posts;
 
         /// <summary>
         /// Gets a collection of tags for the blog.
@@ -82,7 +64,7 @@ namespace Articulate
             ITagQuery tagQuery,
             ArticulateTagService articulateTagService)
         {
-            var tagsBaseUrl = masterModel.RootBlogNode.Value<string>("tagsUrlName") ?? "tags";
+            string tagsBaseUrl = masterModel.RootBlogNode.Value<string>("tagsUrlName") ?? "tags";
 
             IEnumerable<PostsByTagModel> contentByTags = articulateTagService.GetContentByTags(
                 helper,
@@ -110,8 +92,7 @@ namespace Articulate
 
             var pager = new PagerModel(count, 0, 1);
 
-            IEnumerable<IPublishedContent> listItems =
-                helper.GetPostsSortedByPublishedDate(pager, null, listNodeIds);
+            IPublishedContent[] listItems = helper.GetPagedPostsSortedByPublishedDate(pager, null, listNodeIds).Posts;
 
             var rootPageModel = new ListModel(listNodes[0], pager, listItems, publishedValueFallback);
             return rootPageModel.Posts;
@@ -139,8 +120,7 @@ namespace Articulate
 
             var pager = new PagerModel(pageSize, page - 1, 1);
 
-            IEnumerable<IPublishedContent> listItems =
-                helper.GetPostsSortedByPublishedDate(pager, null, listNodeIds);
+            IPublishedContent[] listItems = helper.GetPagedPostsSortedByPublishedDate(pager, null, listNodeIds).Posts;
 
             var rootPageModel = new ListModel(listNodes[0], pager, listItems, publishedValueFallback);
             return rootPageModel.Posts;
@@ -164,23 +144,21 @@ namespace Articulate
         {
             var pager = new PagerModel(pageSize, page - 1, 1);
 
-            IEnumerable<IPublishedContent> listItems =
-                helper.GetPostsSortedByPublishedDate(pager, null, masterModel.Id);
+            IPublishedContent[] listItems = helper.GetPagedPostsSortedByPublishedDate(pager, null, masterModel.Id).Posts;
 
             var rootPageModel = new ListModel(masterModel, pager, listItems, publishedValueFallback);
             return rootPageModel.Posts;
         }
 
-        internal static IEnumerable<IPublishedContent> GetContentByAuthor(
+        internal static (int TotalPosts, IPublishedContent[] Posts) GetPagedContentByAuthor(
             this UmbracoHelper helper,
             IPublishedContent[] listNodes,
             string authorName,
-            PagerModel pager,
-            IPublishedValueFallback publishedValueFallback)
+            PagerModel pager)
         {
-            var listNodeIds = listNodes.Select(x => x.Id).ToArray();
+            int[] listNodeIds = listNodes.Select(x => x.Id).ToArray();
 
-            IEnumerable<IPublishedContent> postWithAuthor = helper.GetPostsSortedByPublishedDate(
+            (int TotalPosts, IPublishedContent[] Posts) postWithAuthor = helper.GetPagedPostsSortedByPublishedDate(
                 pager,
                 x => string.Equals(
                     x.Value<string>("author"),
@@ -188,8 +166,7 @@ namespace Articulate
                     StringComparison.InvariantCultureIgnoreCase),
                 listNodeIds);
 
-            var rootPageModel = new ListModel(listNodes[0], pager, postWithAuthor, publishedValueFallback);
-            return rootPageModel.Posts;
+            return postWithAuthor;
         }
     }
 }

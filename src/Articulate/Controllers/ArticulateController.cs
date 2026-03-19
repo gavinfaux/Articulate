@@ -57,15 +57,16 @@ namespace Articulate.Controllers
 
             var master = new MasterModel(model.Content, PublishedValueFallback);
 
-            var count = umbracoHelper.GetPostCount([.. listNodes.Select(x => x.Id)]);
+            var pageNumber = p is > 0 ? p.Value : 1;
+            var pageSize = master.PageSize > 0 ? master.PageSize : 10;
+            var pager = new PagerModel(pageSize, pageNumber - 1, 1);
 
-            IEnumerable<PostModel> posts = umbracoHelper.GetRecentPosts(
-                master,
-                p ?? 1,
-                master.PageSize,
-                PublishedValueFallback) ?? [];
+            (int totalPosts, IPublishedContent[] posts) = umbracoHelper.GetPagedPostsSortedByPublishedDate(
+                pager,
+                null,
+                [.. listNodes.Select(x => x.Id)]);
 
-            return GetPagedListView(master, listNodes[0], posts, count, p);
+            return GetPagedListView(master, listNodes[0], posts, totalPosts, p);
         }
     }
 }
