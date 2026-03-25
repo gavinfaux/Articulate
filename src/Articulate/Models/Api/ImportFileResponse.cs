@@ -29,5 +29,20 @@ namespace Articulate.Models.Api
         /// The number of posts detected in the BlogML file.
         /// </value>
         public int PostCount { get; set; }
+
+        /// <summary>
+        /// Gets or sets the number of external image attachments referenced in the BlogML file.
+        /// </summary>
+        public int ExternalImageCount { get; set; }
+
+        /// <summary>
+        /// Gets or sets the unique external hosts referenced by image attachments in the BlogML file.
+        /// </summary>
+        public string[] ExternalHosts { get; set; } = [];
+
+        /// <summary>
+        /// Gets or sets the external hosts referenced by the BlogML file that are not currently allowlisted.
+        /// </summary>
+        public string[] BlockedExternalHosts { get; set; } = [];
     }
 }

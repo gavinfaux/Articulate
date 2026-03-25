@@ -6,9 +6,11 @@ using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Api.Common.Attributes;
 using Umbraco.Cms.Api.Management.Controllers;
+using Umbraco.Cms.Core.Configuration.Models;
 using Umbraco.Cms.Core.Models.Membership;
 using Umbraco.Cms.Core.Security;
 using Umbraco.Cms.Web.Common.Authorization;
@@ -28,6 +30,7 @@ namespace Articulate.Controllers.Api
         BlogMlImporter blogMlImporter,
         IBackOfficeSecurityAccessor backOfficeSecurityAccessor,
         ArticulateTempFileSystem articulateTempFileSystem,
+        IOptionsMonitor<ContentSettings> contentSettings,
         ILogger<BlogMlApiController> logger)
         : ManagementApiControllerBase
     {
@@ -84,8 +87,20 @@ namespace Articulate.Controllers.Api
                 buffer.Position = 0;
                 articulateTempFileSystem.AddFile(fileName, buffer);
 
-                var count = blogMlImporter.GetPostCount(fileName);
-                return Ok(new ImportFileResponse { PostCount = count, TemporaryFileName = fileName });
+                BlogMlImportFileSummary summary = blogMlImporter.GetImportFileSummary(fileName);
+                ISet<string> allowedHosts = contentSettings.CurrentValue.AllowedMediaHosts;
+                string[] blockedExternalHosts = summary.ExternalHosts
+                    .Where(host => !allowedHosts.Any(allowedHost => allowedHost.InvariantEquals(host)))
+                    .ToArray();
+
+                return Ok(new ImportFileResponse
+                {
+                    TemporaryFileName = fileName,
+                    PostCount = summary.PostCount,
+                    ExternalImageCount = summary.ExternalImageCount,
+                    ExternalHosts = summary.ExternalHosts,
+                    BlockedExternalHosts = blockedExternalHosts
+                });
             }
             catch (Exception ex)
             {
@@ -97,6 +112,33 @@ namespace Articulate.Controllers.Api
                     detail: "An unexpected error occurred during file initialization for import.",
                     statusCode: StatusCodes.Status500InternalServerError);
             }
+        }
+
+        /// <summary>
+        /// Deletes a previously uploaded temporary BlogML import file.
+        /// </summary>
+        /// <param name="tempFile">The temporary file name returned by the import-file endpoint.</param>
+        /// <response code="204">The temporary file was deleted or did not exist.</response>
+        /// <response code="400">The temporary file name is invalid.</response>
+        [HttpDelete("import-file")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
+        public IActionResult DeleteInitialize([FromQuery] string tempFile)
+        {
+            if (string.IsNullOrEmpty(tempFile) || tempFile.Contains('/') || tempFile.Contains('\\'))
+            {
+                return Problem(
+                    title: "Invalid File Name",
+                    detail: "The temporary file name is invalid.",
+                    statusCode: StatusCodes.Status400BadRequest);
+            }
+
+            if (articulateTempFileSystem.FileExists(tempFile))
+            {
+                articulateTempFileSystem.DeleteFile(tempFile);
+            }
+
+            return NoContent();
         }
 
         /// <summary>

@@ -32,6 +32,19 @@ namespace Articulate.Options
         /// Default: false.
         /// </summary>
         public bool AutoPublishOnStartup { get; set; } = false;
+
+        /// <summary>
+        /// Maximum number of bytes allowed when downloading an external image for import.
+        /// Default: 10 MB.
+        /// </summary>
+        public long MaxExternalImageBytes { get; set; } = 10 * 1024 * 1024;
+
+        /// <summary>
+        /// When true, allows localhost/private-network external image downloads during non-production Umbraco runtime modes.
+        /// This setting is ignored when Umbraco:CMS:Runtime:Mode is Production.
+        /// Default: false.
+        /// </summary>
+        public bool AllowUnsafeLocalExternalImageHostsInDevelopment { get; set; } = false;
     }
 
 }

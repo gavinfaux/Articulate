@@ -2,7 +2,7 @@
 
 import { type Client, formDataBodySerializer, type Options as Options2, type TDataShape } from './client';
 import { client } from './client.gen';
-import type { GetBlogmlExportDisqusData, GetBlogmlExportDisqusErrors, GetBlogmlExportDisqusResponses, GetEditorsThemePickerThemesData, GetEditorsThemePickerThemesErrors, GetEditorsThemePickerThemesResponses, GetThemeDefaultData, GetThemeDefaultErrors, GetThemeDefaultResponses, PostBlogmlExportData, PostBlogmlExportErrors, PostBlogmlExportResponses, PostBlogmlImportData, PostBlogmlImportErrors, PostBlogmlImportFileData, PostBlogmlImportFileErrors, PostBlogmlImportFileResponses, PostBlogmlImportResponses, PostEditorsMarkdownPostData, PostEditorsMarkdownPostErrors, PostEditorsMarkdownPostResponses, PostThemeCopyData, PostThemeCopyErrors, PostThemeCopyResponses } from './types.gen';
+import type { DeleteBlogmlImportFileData, DeleteBlogmlImportFileErrors, DeleteBlogmlImportFileResponses, GetBlogmlExportDisqusData, GetBlogmlExportDisqusErrors, GetBlogmlExportDisqusResponses, GetEditorsThemePickerThemesData, GetEditorsThemePickerThemesErrors, GetEditorsThemePickerThemesResponses, GetThemeDefaultData, GetThemeDefaultErrors, GetThemeDefaultResponses, PostBlogmlExportData, PostBlogmlExportErrors, PostBlogmlExportResponses, PostBlogmlImportData, PostBlogmlImportErrors, PostBlogmlImportFileData, PostBlogmlImportFileErrors, PostBlogmlImportFileResponses, PostBlogmlImportResponses, PostEditorsMarkdownPostData, PostEditorsMarkdownPostErrors, PostEditorsMarkdownPostResponses, PostThemeCopyData, PostThemeCopyErrors, PostThemeCopyResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -72,6 +72,22 @@ export class BlogMlService {
                 'Content-Type': 'application/json',
                 ...options?.headers
             }
+        });
+    }
+    
+    /**
+     * Deletes a previously uploaded temporary BlogML import file.
+     */
+    public static deleteBlogmlImportFile<ThrowOnError extends boolean = false>(options?: Options<DeleteBlogmlImportFileData, ThrowOnError>) {
+        return (options?.client ?? client).delete<DeleteBlogmlImportFileResponses, DeleteBlogmlImportFileErrors, ThrowOnError>({
+            security: [
+                {
+                    scheme: 'bearer',
+                    type: 'http'
+                }
+            ],
+            url: '/umbraco/articulate/api/v1/blogml/import-file',
+            ...options
         });
     }
     

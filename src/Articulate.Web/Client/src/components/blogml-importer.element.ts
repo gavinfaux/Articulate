@@ -59,6 +59,48 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
    */
   @state() private _postCount: number | undefined = undefined;
   /**
+   * The number of external image attachments found in the uploaded BlogML file.
+   * @private
+   * @type {number}
+   */
+  @state() private _externalImageCount = 0;
+  /**
+   * The unique external hosts referenced by the uploaded BlogML file.
+   * @private
+   * @type {string[]}
+   */
+  @state() private _externalHosts: string[] = [];
+  /**
+   * The external hosts referenced by the uploaded BlogML file that are not currently allowlisted.
+   * @private
+   * @type {string[]}
+   */
+  @state() private _blockedExternalHosts: string[] = [];
+  /**
+   * The temporary file name returned by preflight for the currently selected BlogML file.
+   * @private
+   * @type {string | undefined}
+   */
+  @state() private _tempFileName: string | undefined = undefined;
+  /**
+   * Whether the "import first image" option is currently enabled in the form.
+   * @private
+   * @type {boolean}
+   */
+  @state() private _importFirstImage = false;
+  /**
+   * Whether the selected BlogML file is currently being analyzed.
+   * @private
+   * @type {boolean}
+   */
+  @state() private _isPreflighting = false;
+  /**
+   * Monotonically increasing token used to ignore stale async file-analysis results.
+   * @private
+   * @type {number}
+   */
+  @state() private _analysisRequestId = 0;
+  /**
    * A key to force re-rendering of the form, used for resetting the file input.
    * @private
    * @type {number}
@@ -126,12 +168,19 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
    */
   resetState(fullReset = false) {
     this._postCount = undefined;
+    this._externalImageCount = 0;
+    this._externalHosts = [];
+    this._blockedExternalHosts = [];
+    this._tempFileName = undefined;
+    this._isPreflighting = false;
+    this._analysisRequestId++;
 
     if (fullReset) {
       this._formState = undefined;
       this._formError = null;
       this._articulateBlogNode = undefined;
       this._selectedBlogNodeName = '';
+      this._importFirstImage = false;
       // Incrementing the key forces Lit to re-render the form from scratch, effectively resetting it.
       // workaround for dirty uui-input-file after form submission and reset
       this._formRenderKey++;
@@ -197,7 +246,13 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
       'temporaryFileName' in data &&
       typeof (data as ImportFileResponse).temporaryFileName === 'string' &&
       'postCount' in data &&
-      typeof (data as ImportFileResponse).postCount === 'number'
+      typeof (data as ImportFileResponse).postCount === 'number' &&
+      'externalImageCount' in data &&
+      typeof (data as ImportFileResponse).externalImageCount === 'number' &&
+      'externalHosts' in data &&
+      Array.isArray((data as ImportFileResponse).externalHosts) &&
+      'blockedExternalHosts' in data &&
+      Array.isArray((data as ImportFileResponse).blockedExternalHosts)
     );
   };
 
@@ -215,6 +270,91 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
       'commentCount' in data &&
       'completed' in data
     );
+  };
+
+  #deleteTempFile = async () => {
+    if (!this._tempFileName) return;
+
+    try {
+      await BlogMlService.deleteBlogmlImportFile({ query: { tempFile: this._tempFileName } });
+    } catch {
+      // Best-effort cleanup for abandoned preflight uploads.
+    } finally {
+      this._tempFileName = undefined;
+    }
+  };
+
+  #handleImportFileChange = async (e: Event) => {
+    const input = e.target as HTMLInputElement | null;
+    const importFile = input?.files?.[0];
+    const requestId = ++this._analysisRequestId;
+
+    this._formError = null;
+    this._formState = undefined;
+    this._postCount = undefined;
+    this._externalImageCount = 0;
+    this._externalHosts = [];
+    this._blockedExternalHosts = [];
+    this._isPreflighting = false;
+
+    await this.#deleteTempFile();
+
+    if (!importFile || importFile.size <= 0) {
+      return;
+    }
+
+    this._isPreflighting = true;
+
+    try {
+      const initData = await this.#beginImport(importFile);
+      if (requestId !== this._analysisRequestId) {
+        await BlogMlService.deleteBlogmlImportFile({ query: { tempFile: initData.temporaryFileName } });
+        return;
+      }
+
+      this._postCount = initData.postCount;
+      this._externalImageCount = initData.externalImageCount;
+      this._externalHosts = initData.externalHosts;
+      this._blockedExternalHosts = initData.blockedExternalHosts;
+      this._tempFileName = initData.temporaryFileName;
+    } catch (error) {
+      if (requestId !== this._analysisRequestId) {
+        return;
+      }
+
+      setFormError(this, error, 'Import Analysis Failed');
+    } finally {
+      if (requestId === this._analysisRequestId) {
+        this._isPreflighting = false;
+      }
+    }
+  };
+
+  #restoreTempFileForRetry = async (importFile: File) => {
+    const requestId = ++this._analysisRequestId;
+    this._isPreflighting = true;
+
+    try {
+      const initData = await this.#beginImport(importFile);
+      if (requestId !== this._analysisRequestId) {
+        await BlogMlService.deleteBlogmlImportFile({ query: { tempFile: initData.temporaryFileName } });
+        return;
+      }
+
+      this._postCount = initData.postCount;
+      this._externalImageCount = initData.externalImageCount;
+      this._externalHosts = initData.externalHosts;
+      this._blockedExternalHosts = initData.blockedExternalHosts;
+      this._tempFileName = initData.temporaryFileName;
+    } catch {
+      if (requestId === this._analysisRequestId) {
+        this._tempFileName = undefined;
+      }
+    } finally {
+      if (requestId === this._analysisRequestId) {
+        this._isPreflighting = false;
+      }
+    }
   };
 
   /**
@@ -247,6 +387,14 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
         isValid: importFile && importFile.size > 0,
         message: 'A BlogML file must be selected for import.',
       },
+      {
+        isValid: !this._isPreflighting,
+        message: 'Please wait for the BlogML file analysis to finish.',
+      },
+      {
+        isValid: !!this._tempFileName,
+        message: 'The selected BlogML file must be analyzed before importing.',
+      },
     ];
 
     const firstInvalidRule = validationRules.find((rule) => !rule.isValid);
@@ -262,22 +410,13 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
 
     this._formState = 'waiting';
     this._formError = null;
-    this._postCount = undefined;
 
     try {
-      // Step 1: Upload the file and get post count
-      const initData = await this.#beginImport(importFile);
-      this._postCount = initData.postCount;
-      this.requestUpdate('_postCount');
-
-      // Step 2: Perform import and get results
-      const importData = await this.#finalizeImport(formData, initData.temporaryFileName!);
-      // Step 3: (Optional) Export Disqus comments if requested and available
+      const importData = await this.#finalizeImport(formData, this._tempFileName!);
       if (formData.get('exportDisqusXml') === 'on' && importData.commentCount > 0) {
         await this.#exportDisqusComments();
       }
 
-      // All steps succeeded
       this._formState = 'success';
       const disqusMessage =
         formData.get('exportDisqusXml') === 'on' && importData.commentCount > 0
@@ -288,12 +427,16 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
 
       await showUmbracoNotification(
         this,
-        `BlogML imported successfully! ${importData.authorCount} authors, ${this._postCount} posts imported. ${disqusMessage}`,
+        `BlogML imported successfully! ${importData.authorCount} authors, ${importData.postCount} posts imported. ${disqusMessage}`,
         'positive',
         true,
       );
       this.resetState(true);
     } catch (error) {
+      this._tempFileName = undefined;
+      if (importFile && importFile.size > 0) {
+        void this.#restoreTempFileForRetry(importFile);
+      }
       setFormError(this, error, 'Import Failed');
     }
   };
@@ -390,7 +533,7 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
    */
   private _handleReset = (e: Event) => {
     e.preventDefault();
-    this.resetState(true);
+    void this.#deleteTempFile().finally(() => this.resetState(true));
   };
 
   override render() {
@@ -407,6 +550,9 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
                 @input=${() => {
                   this._formError = null;
                   this._formState = undefined;
+                  this._importFirstImage =
+                    ((this._form?.elements.namedItem('importFirstImage') as HTMLInputElement | null)?.checked ??
+                      false);
                 }}>
                 <uui-form-validation-message>
                   <uui-form-layout-item>
@@ -433,6 +579,7 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
                     <uui-input-file
                       id="importFile"
                       accept="text/xml"
+                      @change=${this.#handleImportFileChange}
                       required
                       required-message="You must select a BlogML file to import"
                       name="importFile"
@@ -488,7 +635,76 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
                     </div>
                   </uui-form-layout-item>
                 </uui-form-validation-message>
+                ${this._postCount !== undefined
+                  ? html`
+                      <uui-box>
+                        <div>
+                          <strong>Import file summary</strong>
+                        </div>
+                        <div style="margin-top: 0.5rem;">
+                          ${this._externalImageCount > 0
+                            ? html`
+                                This file references ${this._externalImageCount} external image${this._externalImageCount === 1
+                                  ? ''
+                                  : 's'} across ${this._externalHosts.length} host${this._externalHosts.length === 1
+                                  ? ''
+                                  : 's'}.
+                              `
+                            : html`This file does not reference any external image attachments.`}
+                        </div>
+                        ${this._externalHosts.length > 0
+                          ? html`
+                              <div style="margin-top: 0.75rem;">
+                                ${this._externalHosts.map(
+                                  (host) => html`
+                                    <uui-tag
+                                      look="secondary"
+                                      color=${this._blockedExternalHosts.includes(host) ? 'danger' : 'default'}
+                                      style="margin-right: 0.5rem; margin-bottom: 0.5rem;">
+                                      ${host}
+                                    </uui-tag>
+                                  `,
+                                )}
+                              </div>
+                            `
+                          : ''}
+                        ${this._blockedExternalHosts.length > 0
+                          ? html`
+                              <uui-box headline="Some external image hosts are not allowed" style="margin-top: 0.75rem;">
+                                ${this._importFirstImage
+                                  ? html`
+                                      Posts can still be imported, but external images from these hosts will not be
+                                      fetched unless they are added to
+                                      <code>Umbraco:CMS:Content:AllowedMediaHosts</code>.
+                                    `
+                                  : html`
+                                      Posts can still be imported. This only matters if you enable
+                                      <strong>Import First Image from Post Attachments</strong>.
+                                    `}
+                                ${this._blockedExternalHosts.map(
+                                  (host) => html`
+                                    <uui-tag
+                                      look="secondary"
+                                      color="danger"
+                                      style="margin-left: 0.5rem; margin-bottom: 0.5rem;">
+                                      ${host}
+                                    </uui-tag>
+                                  `,
+                                )}
+                              </uui-box>
+                            `
+                          : ''}
+                      </uui-box>
+                    `
+                  : ''}
                 <div class="form-actions">
+                  ${this._isPreflighting
+                    ? html`
+                        <uui-tag look="secondary" color="warning" style="margin-right: 1em;">
+                          Analyzing BlogML file...
+                        </uui-tag>
+                      `
+                    : ''}
                   ${this._postCount !== undefined && this._postCount > 0
                     ? html`
                         <uui-tag look="secondary" color="positive" style="margin-right: 1em;">

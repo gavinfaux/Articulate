@@ -42,6 +42,26 @@ namespace Articulate.ImportExport
 
         internal int GetPostCount(string fileName) => GetDocument(fileName).Posts.Count();
 
+        internal BlogMlImportFileSummary GetImportFileSummary(string fileName)
+        {
+            BlogMLDocument document = GetDocument(fileName);
+
+            string[] externalHosts = document.Posts
+                .SelectMany(post => post.Attachments)
+                .Where(attachment => attachment.ExternalUri is not null && attachment.ExternalUri.IsAbsoluteUri)
+                .Select(attachment => attachment.ExternalUri!.Host)
+                .Where(host => !string.IsNullOrWhiteSpace(host))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(host => host, StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+
+            int externalImageCount = document.Posts
+                .SelectMany(post => post.Attachments)
+                .Count(attachment => attachment.ExternalUri is not null && attachment.ExternalUri.IsAbsoluteUri);
+
+            return new BlogMlImportFileSummary(document.Posts.Count(), externalImageCount, externalHosts);
+        }
+
         /// <summary>
         /// Imports the blog content from a BlogML file.
         /// </summary>
@@ -628,11 +648,7 @@ namespace Articulate.ImportExport
 
             if (post.Excerpt is not null && !post.Excerpt.Content.IsNullOrWhiteSpace())
             {
-                var excerpt = post.Excerpt.Content;
-                if (post.Excerpt.ContentType == BlogMLContentType.Base64)
-                {
-                    excerpt = Encoding.UTF8.GetString(Convert.FromBase64String(post.Excerpt.Content));
-                }
+                var excerpt = DecodeContent(post.Excerpt.Content, post.Excerpt.ContentType);
 
                 await postNode
                         .SetInvariantOrDefaultCultureValueAsync("excerpt", excerpt, postType, languageService, logger)
@@ -643,34 +659,8 @@ namespace Articulate.ImportExport
                     .SetInvariantOrDefaultCultureValueAsync("importId", post.Id, postType, languageService, logger)
                 ;
 
-            var content = post.Content.Content;
-            if (post.Content.ContentType == BlogMLContentType.Base64)
-            {
-                content = Encoding.UTF8.GetString(Convert.FromBase64String(post.Content.Content));
-            }
-
-            if (!regexMatch.IsNullOrWhiteSpace() && !regexReplace.IsNullOrWhiteSpace())
-            {
-                try
-                {
-                    content = Regex.Replace(
-                        content,
-                        regexMatch,
-                        regexReplace,
-                        RegexOptions.CultureInvariant | RegexOptions.IgnoreCase,
-                        TimeSpan.FromSeconds(1));
-                }
-                catch (ArgumentException ex)
-                {
-                    logger.LogWarning(ex, "Invalid regex pattern provided during import: {RegexMatch}", regexMatch);
-                    throw new InvalidOperationException($"The provided regex pattern '{regexMatch}' is invalid.", ex);
-                }
-                catch (RegexMatchTimeoutException ex)
-                {
-                    logger.LogWarning(ex, "Regex operation timed out during import for pattern: {RegexMatch}", regexMatch);
-                    throw new InvalidOperationException("The regex operation timed out. The pattern might be too complex.", ex);
-                }
-            }
+            var content = DecodeContent(post.Content.Content, post.Content.ContentType);
+            content = ApplyImportRegex(content, regexMatch, regexReplace);
 
             // TODO: SECURITY - Sanitize imported HTML before saving richText.
             // Current behavior stores BlogML HTML as-is, which can persist script/event-handler payloads.
@@ -683,19 +673,63 @@ namespace Articulate.ImportExport
                     languageService,
                     logger);
             await postNode
-                    .SetInvariantOrDefaultCultureValueAsync("enableComments", true, postType, languageService, logger)
-                ;
-
-            if (post.Url is not null && !string.IsNullOrWhiteSpace(post.Url.OriginalString))
-            {
-                string slug = ExtractSlugFromPost(post);
-                await postNode.SetInvariantOrDefaultCultureValueAsync(
-                    Constants.Conventions.Content.UrlName,
-                    slug,
+                .SetInvariantOrDefaultCultureValueAsync(
+                    "enableComments",
+                    true,
                     postType,
                     languageService,
                     logger);
+
+            await SetPostSlugAsync(postNode, postType, post);
+        }
+
+        private static string DecodeContent(string content, BlogMLContentType contentType) =>
+            contentType == BlogMLContentType.Base64
+                ? Encoding.UTF8.GetString(Convert.FromBase64String(content))
+                : content;
+
+        private string ApplyImportRegex(string content, string? regexMatch, string? regexReplace)
+        {
+            if (regexMatch.IsNullOrWhiteSpace() || regexReplace.IsNullOrWhiteSpace())
+            {
+                return content;
             }
+
+            try
+            {
+                return Regex.Replace(
+                    content,
+                    regexMatch,
+                    regexReplace,
+                    RegexOptions.CultureInvariant | RegexOptions.IgnoreCase,
+                    TimeSpan.FromSeconds(1));
+            }
+            catch (ArgumentException ex)
+            {
+                logger.LogWarning(ex, "Invalid regex pattern provided during import: {RegexMatch}", regexMatch);
+                throw new InvalidOperationException($"The provided regex pattern '{regexMatch}' is invalid.", ex);
+            }
+            catch (RegexMatchTimeoutException ex)
+            {
+                logger.LogWarning(ex, "Regex operation timed out during import for pattern: {RegexMatch}", regexMatch);
+                throw new InvalidOperationException("The regex operation timed out. The pattern might be too complex.", ex);
+            }
+        }
+
+        private async Task SetPostSlugAsync(IContentBase postNode, IContentType postType, BlogMLPost post)
+        {
+            if (post.Url is null || string.IsNullOrWhiteSpace(post.Url.OriginalString))
+            {
+                return;
+            }
+
+            string slug = ExtractSlugFromPost(post);
+            await postNode.SetInvariantOrDefaultCultureValueAsync(
+                Constants.Conventions.Content.UrlName,
+                slug,
+                postType,
+                languageService,
+                logger);
         }
 
         private static string ExtractSlugFromPost(BlogMLPost post)
@@ -755,4 +789,6 @@ namespace Articulate.ImportExport
             }
         }
     }
+
+    internal sealed record BlogMlImportFileSummary(int PostCount, int ExternalImageCount, string[] ExternalHosts);
 }

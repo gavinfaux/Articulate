@@ -48,6 +48,18 @@ export type ImportFileResponse = {
      * Gets or sets the number of posts detected in the BlogML file.
      */
     postCount: number;
+    /**
+     * Gets or sets the number of external image attachments referenced in the BlogML file.
+     */
+    externalImageCount: number;
+    /**
+     * Gets or sets the unique external hosts referenced by image attachments in the BlogML file.
+     */
+    externalHosts: Array<string>;
+    /**
+     * Gets or sets the external hosts referenced by the BlogML file that are not currently allowlisted.
+     */
+    blockedExternalHosts: Array<string>;
 };
 
 /**
@@ -271,6 +283,44 @@ export type PostBlogmlImportResponses = {
 
 export type PostBlogmlImportResponse = PostBlogmlImportResponses[keyof PostBlogmlImportResponses];
 
+export type DeleteBlogmlImportFileData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * The temporary file name returned by the import-file endpoint.
+         */
+        tempFile?: string;
+    };
+    url: '/umbraco/articulate/api/v1/blogml/import-file';
+};
+
+export type DeleteBlogmlImportFileErrors = {
+    /**
+     * The temporary file name is invalid.
+     */
+    400: ProblemDetails;
+    /**
+     * The resource is protected and requires an authentication token
+     */
+    401: unknown;
+    /**
+     * The authenticated user does not have access to this resource
+     */
+    403: unknown;
+};
+
+export type DeleteBlogmlImportFileError = DeleteBlogmlImportFileErrors[keyof DeleteBlogmlImportFileErrors];
+
+export type DeleteBlogmlImportFileResponses = {
+    /**
+     * The temporary file was deleted or did not exist.
+     */
+    204: void;
+};
+
+export type DeleteBlogmlImportFileResponse = DeleteBlogmlImportFileResponses[keyof DeleteBlogmlImportFileResponses];
+
 export type PostBlogmlImportFileData = {
     body?: {
         /**
@@ -372,6 +422,10 @@ export type PostThemeCopyData = {
 };
 
 export type PostThemeCopyErrors = {
+    /**
+     * The destination theme name matches a built-in theme.
+     */
+    400: ProblemDetails;
     /**
      * The resource is protected and requires an authentication token
      */

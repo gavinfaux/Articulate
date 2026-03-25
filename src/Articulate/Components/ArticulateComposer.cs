@@ -6,6 +6,8 @@ using Articulate.Routing;
 using Articulate.Services;
 using Articulate.Syndication;
 using Articulate.Controllers;
+using FileSignatures;
+using FileSignatures.Formats;
 using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.AspNetCore.Routing;
@@ -33,6 +35,8 @@ namespace Articulate.Components
 
             _ = services.AddSingleton<IArticulateTagRepository, ArticulateTagRepository>();
             _ = services.AddSingleton<ArticulateTagService>();
+            _ = services.AddSingleton<IFileFormatInspector>(_ =>
+                new FileFormatInspector([new Jpeg(), new Png(), new Gif()]));
             _ = services.AddScoped<IArticulateImportMediaService, ArticulateImportMediaService>();
 
             _ = services.AddSingleton<DisqusXmlExporter>();
