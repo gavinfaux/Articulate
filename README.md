@@ -69,10 +69,11 @@ Articulate treats external BlogML image import as an opt-in convenience feature 
 
 - If `Umbraco:CMS:Content:AllowedMediaHosts` is empty, external image downloads are disabled.
 - BlogML posts still import normally; this only affects fetching the first external image attachment when `Import First Image from Post Attachments` is enabled.
-- The backoffice importer preflights the selected BlogML file and shows:
+- In the backoffice importer, click `Verify file` after selecting a BlogML file to analyze it before import. The summary shows:
   - the number of external image attachments
   - the unique external hosts referenced by the file
-  - which of those hosts are currently blocked by `AllowedMediaHosts`
+  - which hosts are currently allowed
+  - which hosts are currently blocked by `AllowedMediaHosts`
 - Redirects are limited and revalidated on every hop. Redirect targets must still be allowlisted in `AllowedMediaHosts`, pass IP safety checks, and cannot downgrade from `https` to `http`.
 - This supports common CDN-style redirects such as `images.example.com` redirecting to `cdn.example.com`, as long as both hosts are explicitly allowlisted.
 - Downloads are validated against Umbraco upload rules and image file types, capped by size, and pinned to the validated IP address for the actual connection.

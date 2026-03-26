@@ -22,7 +22,7 @@ import { BoxStyles, ErrorBoxStyles, FormStyles, HostStyles, NodePickerStyles } f
  * @implements {IFormController}
  */
 @customElement('blogml-importer')
-export default class BlogMlImporterElement extends UmbLitElement implements IFormController {
+export default class BlogMlImporterElement extends  UmbLitElement implements IFormController {
   /**
    * Optional router path for the back button.
    * @type {string | undefined}
@@ -284,9 +284,33 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
     }
   };
 
-  #handleImportFileChange = async (e: Event) => {
-    const input = e.target as HTMLInputElement | null;
-    const importFile = input?.files?.[0];
+  #getSelectedImportFile = (): File | undefined => {
+    if (!this._form) {
+      return undefined;
+    }
+
+    const importFile = new FormData(this._form).get('importFile');
+    return importFile instanceof File && importFile.size > 0 ? importFile : undefined;
+  };
+
+  #handleImportFileChange = async () => {
+    this._formError = null;
+    this._formState = undefined;
+    this._postCount = undefined;
+    this._externalImageCount = 0;
+    this._externalHosts = [];
+    this._blockedExternalHosts = [];
+    this._isPreflighting = false;
+    await this.#deleteTempFile();
+  };
+
+  #handleImportFirstImageChange = (e: Event) => {
+    const toggle = e.target as HTMLInputElement | null;
+    this._importFirstImage = toggle?.checked ?? false;
+  };
+
+  #verifySelectedFile = async () => {
+    const importFile = this.#getSelectedImportFile();
     const requestId = ++this._analysisRequestId;
 
     this._formError = null;
@@ -295,11 +319,13 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
     this._externalImageCount = 0;
     this._externalHosts = [];
     this._blockedExternalHosts = [];
-    this._isPreflighting = false;
 
     await this.#deleteTempFile();
 
     if (!importFile || importFile.size <= 0) {
+      const validationError = new Error('A BlogML file must be selected before verification.');
+      validationError.name = 'Validation Error';
+      setFormError(this, validationError, validationError.name);
       return;
     }
 
@@ -393,7 +419,7 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
       },
       {
         isValid: !!this._tempFileName,
-        message: 'The selected BlogML file must be analyzed before importing.',
+        message: 'The selected BlogML file must be verified before importing.',
       },
     ];
 
@@ -550,9 +576,6 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
                 @input=${() => {
                   this._formError = null;
                   this._formState = undefined;
-                  this._importFirstImage =
-                    ((this._form?.elements.namedItem('importFirstImage') as HTMLInputElement | null)?.checked ??
-                      false);
                 }}>
                 <uui-form-validation-message>
                   <uui-form-layout-item>
@@ -580,11 +603,14 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
                       id="importFile"
                       accept="text/xml"
                       @change=${this.#handleImportFileChange}
+                      @input=${this.#handleImportFileChange}
                       required
                       required-message="You must select a BlogML file to import"
                       name="importFile"
                       tabindex="0"></uui-input-file>
-                    <div slot="description">The XML file to upload for import</div>
+                    <div slot="description">
+                      Select the BlogML file, then choose <strong>Verify file</strong> to analyze it before import.
+                    </div>
                   </uui-form-layout-item>
                   <uui-form-layout-item>
                     <uui-label slot="label" for="overwrite">Overwrite imported posts?</uui-label>
@@ -629,7 +655,10 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
                   </uui-form-layout-item>
                   <uui-form-layout-item>
                     <uui-label slot="label" for="importFirstImage">Import First Image from Post Attachments</uui-label>
-                    <uui-toggle id="importFirstImage" name="importFirstImage"></uui-toggle>
+                    <uui-toggle
+                      id="importFirstImage"
+                      name="importFirstImage"
+                      @change=${this.#handleImportFirstImageChange}></uui-toggle>
                     <div slot="description">
                       If you would like Articulate to try and import the first image url in the post attachments
                     </div>
@@ -655,16 +684,45 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
                         ${this._externalHosts.length > 0
                           ? html`
                               <div style="margin-top: 0.75rem;">
-                                ${this._externalHosts.map(
-                                  (host) => html`
-                                    <uui-tag
-                                      look="secondary"
-                                      color=${this._blockedExternalHosts.includes(host) ? 'danger' : 'default'}
-                                      style="margin-right: 0.5rem; margin-bottom: 0.5rem;">
-                                      ${host}
-                                    </uui-tag>
-                                  `,
-                                )}
+                                ${this._externalHosts.filter((host) => !this._blockedExternalHosts.includes(host))
+                                  .length > 0
+                                  ? html`
+                                      <div style="font-size: 0.875rem; margin-bottom: 0.35rem;">Allowed hosts</div>
+                                      <div>
+                                        ${this._externalHosts
+                                          .filter((host) => !this._blockedExternalHosts.includes(host))
+                                          .map(
+                                            (host) => html`
+                                              <uui-tag
+                                                look="secondary"
+                                                color="positive"
+                                                style="margin-right: 0.5rem; margin-bottom: 0.5rem;">
+                                                ${host}
+                                              </uui-tag>
+                                            `,
+                                          )}
+                                      </div>
+                                    `
+                                  : ''}
+                                ${this._blockedExternalHosts.length > 0
+                                  ? html`
+                                      <div style="font-size: 0.875rem; margin-top: 0.5rem; margin-bottom: 0.35rem;">
+                                        Blocked hosts
+                                      </div>
+                                      <div>
+                                        ${this._blockedExternalHosts.map(
+                                          (host) => html`
+                                            <uui-tag
+                                              look="secondary"
+                                              color="danger"
+                                              style="margin-right: 0.5rem; margin-bottom: 0.5rem;">
+                                              ${host}
+                                            </uui-tag>
+                                          `,
+                                        )}
+                                      </div>
+                                    `
+                                  : ''}
                               </div>
                             `
                           : ''}
@@ -681,16 +739,13 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
                                       Posts can still be imported. This only matters if you enable
                                       <strong>Import First Image from Post Attachments</strong>.
                                     `}
-                                ${this._blockedExternalHosts.map(
-                                  (host) => html`
-                                    <uui-tag
-                                      look="secondary"
-                                      color="danger"
-                                      style="margin-left: 0.5rem; margin-bottom: 0.5rem;">
-                                      ${host}
-                                    </uui-tag>
-                                  `,
-                                )}
+                                <div style="margin-top: 0.75rem;">
+                                  <div style="font-size: 0.875rem; margin-bottom: 0.25rem;">
+                                    Hosts to add to AllowedMediaHosts
+                                  </div>
+                                  <code
+                                    style="display: block; white-space: pre-wrap; user-select: all; padding: 0.75rem; border-radius: 6px; background: var(--uui-color-surface-alt);">${this._blockedExternalHosts.join('\n')}</code>
+                                </div>
                               </uui-box>
                             `
                           : ''}
@@ -712,7 +767,22 @@ export default class BlogMlImporterElement extends UmbLitElement implements IFor
                         </uui-tag>
                       `
                     : ''}
-                  <uui-button type="submit" look="primary" .state=${this._formState} color="primary" label="Submit">
+                  <uui-button
+                    type="button"
+                    look="outline"
+                    color="default"
+                    @click=${this.#verifySelectedFile}
+                    ?disabled=${this._isPreflighting}
+                    label="Verify file">
+                    Verify file
+                  </uui-button>
+                  <uui-button
+                    type="submit"
+                    look="primary"
+                    .state=${this._formState}
+                    color="primary"
+                    ?disabled=${!this._tempFileName || this._isPreflighting}
+                    label="Submit">
                     Submit
                   </uui-button>
                   <uui-button type="button" look="secondary" @click=${this._handleReset} label="Reset">

@@ -24,13 +24,18 @@
       <BuildOutputInPackage Include="..\Articulate\bin\$(Configuration)\$(TargetFramework)\Articulate.xml" Condition="Exists('..\Articulate\bin\$(Configuration)\$(TargetFramework)\Articulate.xml')" />
     </ItemGroup>
   </Target>
-  <!-- External PackageReferences that Articulate.Core needs (since ProjectRefs are PrivateAssets) -->
+  <!--
+    External PackageReferences that Articulate.Core needs (since ProjectRefs are PrivateAssets).
+    Keep this list in sync with src/Articulate/Articulate.csproj for any runtime dependency that must
+    flow into the packed Articulate nuspec used by source-built installs and the local Docker site.
+  -->
   <ItemGroup>
     <!-- Umbraco dependencies (required by Articulate.Core) -->
     <PackageReference Include="Umbraco.Cms.Web.Website" Version="$(UmbracoCmsPackageVersion)" />
     <PackageReference Include="Umbraco.Cms.Api.Management" Version="$(UmbracoCmsPackageVersion)" />
     <!-- Third-party dependencies (from Articulate.csproj) -->
     <PackageReference Include="Argotic.Core" Version="3001.0.0" />
+    <PackageReference Include="FileSignatures" Version="6.1.1" />
     <PackageReference Include="Markdig" Version="0.44.0" />
     <PackageReference Include="WilderMinds.MetaWeblog" Version="5.1.3" />
     <PackageReference Include="System.ServiceModel.Syndication" Version="$(SystemServiceModelSyndicationPackageVersion)" />

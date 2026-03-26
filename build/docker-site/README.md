@@ -37,3 +37,4 @@ From the repo root:
 
 - This is unrelated to NTLM/SMB hardening; it is normal browser PKI behavior.
 - If your team policy disallows installing a local root CA, you will need a publicly trusted certificate/domain for local development.
+- The Docker image builds from the packaged `Articulate` NuGet artifact in `build/Release`, not directly from the project output. If you change packaged runtime dependencies in `src/Articulate/Articulate.csproj` or `src/Articulate.Web/Articulate.Web.csproj`, regenerate the package first with `dotnet pack src/Articulate.Web/Articulate.Web.csproj -c Release -o build/Release` before running `docker compose build`.

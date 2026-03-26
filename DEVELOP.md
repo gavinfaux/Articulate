@@ -56,6 +56,7 @@ pnpm run generate:api
 - `BUILD_CONFIGURATION=Debug` is the default for local builds; Release is the default in packaging flows.
 - `ENABLE_CLIENT_BUILD=true` enables local TypeScript Back Office client builds.
 - The scripts clean, restore, build, and pack the current Articulate projects for .NET 9 and .NET 10.
+- The packable NuGet package is produced by `src/Articulate.Web/Articulate.Web.csproj` (`PackageId=Articulate`). If you change packaged runtime dependencies, re-run `dotnet pack src/Articulate.Web/Articulate.Web.csproj -c Release -o build/Release` before validating source-built or Docker-based installs.
 
 ## Back Office Client Builds
 
