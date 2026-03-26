@@ -177,6 +177,8 @@ const versioningPlugin = (): Plugin => {
   let version = "0.0.0-dev";
   let isGitVersion = false;
   let mode: string;
+  let originalPackageJson: string | undefined;
+  const packageJsonPath = path.join(UI_ROOT, "package.json");
   return {
     name: "versioning",
     config: (_, c) => {
@@ -194,8 +196,14 @@ const versioningPlugin = (): Plugin => {
     closeBundle: async () => {
       if (!isGitVersion || version === "0.0.0-dev") return;
       try {
+        originalPackageJson ??= readFileSync(packageJsonPath, "utf8");
         execSync(`pnpm version ${version} --allow-same-version --no-git-tag-version`, { stdio: 'ignore', cwd: UI_ROOT });
       } catch { }
+      finally {
+        if (originalPackageJson) {
+          await writeFile(packageJsonPath, originalPackageJson);
+        }
+      }
     }
   };
 };
