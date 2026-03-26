@@ -212,7 +212,8 @@ namespace Articulate.Models
         /// <param name="model"></param>
         // Not used internally or by default themes, but exposed for custom themes
         public static string ArticulateAuthorsUrl(this IMasterModel model) => model.RootBlogNode
-            .ChildrenOfType(ArticulateConstants.ContentType.ArticulateAuthors)?.FirstOrDefault()?.Url();
+            .ChildrenOfType(ArticulateConstants.ContentType.ArticulateAuthors)
+            .FirstOrDefault()?.Url();
 
         /// <summary>
         /// Returns the URL for the tag list
@@ -724,8 +725,9 @@ namespace Articulate.Models
         public static IPublishedContent[] GetListNodes(IMasterModel masterModel)
         {
             IPublishedContent[] listNodes = masterModel.RootBlogNode
-                .ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive)?.ToArray();
-            if (listNodes?.Length == 0)
+                .ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive)
+                .ToArray();
+            if (listNodes.Length == 0)
             {
                 throw new InvalidOperationException(
                     "An ArticulateArchive document must exist under the root Articulate document");

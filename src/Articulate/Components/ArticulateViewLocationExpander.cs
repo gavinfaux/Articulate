@@ -33,11 +33,7 @@ namespace Articulate.Components
                 return viewLocations;
             }
 
-            HttpContext? httpContext = context.ActionContext.HttpContext;
-            if (httpContext is null)
-            {
-                return viewLocations;
-            }
+            HttpContext httpContext = context.ActionContext.HttpContext;
 
             IArticulateViewLocationProvider? locationProvider =
                 httpContext.RequestServices.GetService<IArticulateViewLocationProvider>();

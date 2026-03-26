@@ -49,11 +49,15 @@ namespace Articulate.Models
                 };
 
                 // look up associated author node if we can
-                IPublishedContent? authors = RootBlogNode.Children(content =>
-                        content.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateAuthors))
-                    ?.FirstOrDefault();
-                IPublishedContent? authorNode = authors?.Children(content => content.Name.InvariantEquals(field.Name))
-                    ?.FirstOrDefault();
+                IEnumerable<IPublishedContent> authorContainers =
+                    RootBlogNode.Children().Where(content =>
+                        content.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateAuthors));
+                IPublishedContent? authors = authorContainers.FirstOrDefault();
+
+                IEnumerable<IPublishedContent> authorNodes =
+                    authors?.Children(content => content.Name.InvariantEquals(field.Name))
+                    ?? [];
+                IPublishedContent? authorNode = authorNodes.FirstOrDefault();
 
                 if (authorNode is null)
                 {

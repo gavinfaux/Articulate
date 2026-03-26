@@ -124,7 +124,7 @@ namespace Articulate.Routing
             }
 #if NET10_0_OR_GREATER
             UrlInfo? parentPath = base.GetUrl(parent, mode, culture, current);
-            var parentUrl = parentPath?.Url?.ToString()?.EnsureEndsWith("/");
+            var parentUrl = parentPath?.Url?.ToString().EnsureEndsWith("/");
             if (string.IsNullOrWhiteSpace(parentUrl) || string.IsNullOrWhiteSpace(content.UrlSegment))
             {
                 return null;

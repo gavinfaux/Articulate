@@ -62,8 +62,10 @@ namespace Articulate.MetaWeblog
 
             IPublishedContent root = BlogRoot();
 
+            IEnumerable<IPublishedContent> archiveNodes =
+                root.Children().Where(x => x.ContentType.Alias == ArticulateConstants.ContentType.ArticulateArchive);
             IPublishedContent node =
-                root.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive)?.FirstOrDefault() ??
+                archiveNodes.FirstOrDefault() ??
                 throw new InvalidOperationException("No Articulate Archive node found");
 
             IContentType contentType = contentTypeService.Get(ArticulateConstants.ContentType.ArticulateRichText) ??
@@ -246,8 +248,10 @@ namespace Articulate.MetaWeblog
 
             _ = await ValidateUserAsync(username, password);
 
+            IEnumerable<IPublishedContent> archiveNodes =
+                BlogRoot().Children().Where(x => x.ContentType.Alias == ArticulateConstants.ContentType.ArticulateArchive);
             IPublishedContent node =
-                BlogRoot().ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive)?.FirstOrDefault() ??
+                archiveNodes.FirstOrDefault() ??
                 throw new InvalidOperationException("No Articulate Archive node found");
 
             Post[] recent =

@@ -58,8 +58,9 @@ namespace Articulate.Models
                     return field;
                 }
 
-                IPublishedContent list = RootBlogNode.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive)
-                    ?.FirstOrDefault();
+                IEnumerable<IPublishedContent> archiveNodes =
+                    RootBlogNode.Children().Where(x => x.ContentType.Alias == ArticulateConstants.ContentType.ArticulateArchive);
+                IPublishedContent list = archiveNodes.FirstOrDefault();
                 field = list ??
                         throw new InvalidOperationException(
                             "Could not find the ArticulateArchive document for the current rendered page");
@@ -81,8 +82,9 @@ namespace Articulate.Models
                     return field;
                 }
 
-                IPublishedContent authors = RootBlogNode
-                    .ChildrenOfType(ArticulateConstants.ContentType.ArticulateAuthors)?.FirstOrDefault();
+                IEnumerable<IPublishedContent> authorNodes = RootBlogNode
+                    .Children().Where(x=> x.ContentType.Alias == ArticulateConstants.ContentType.ArticulateAuthors);
+                IPublishedContent authors = authorNodes.FirstOrDefault();
                 field = authors ??
                         throw new InvalidOperationException(
                             "Could not find the ArticulateAuthors document for the current rendered page");
