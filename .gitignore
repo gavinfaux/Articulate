@@ -510,3 +510,4 @@ $RECYCLE.BIN/
 /src/Articulate.Tests.Website/appsettings-schema.json
 /src/Articulate.Tests.Website/wwwroot/App_Plugins/Articulate/Themes
 /.dotnet
+*.crt

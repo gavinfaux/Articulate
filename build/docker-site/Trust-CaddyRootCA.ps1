@@ -47,7 +47,7 @@ function Copy-RootCAFromContainer {
         '/data/pki/authorities/local/root.crt'
     )
 
-    $probe = "for f in $($paths -join ' '); do [ -f \"$f\" ] && echo \"$f\" && exit 0; done; exit 1"
+    $probe = "for f in $($paths -join ' '); do [ -f ""`$f"" ] && echo ""`$f"" && exit 0; done; exit 1"
     $source = (docker exec $ContainerId sh -lc $probe) 2>$null
     if (-not $source) {
         throw "Could not locate Caddy root CA in container. Tried: $($paths -join ', ')"
