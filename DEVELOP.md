@@ -57,6 +57,9 @@ pnpm run generate:api
 - `ENABLE_CLIENT_BUILD=true` enables local TypeScript Back Office client builds.
 - The scripts clean, restore, build, and pack the current Articulate projects for .NET 9 and .NET 10.
 - The packable NuGet package is produced by `src/Articulate.Web/Articulate.Web.csproj` (`PackageId=Articulate`). If you change packaged runtime dependencies, re-run `dotnet pack src/Articulate.Web/Articulate.Web.csproj -c Release -o build/Release` before validating source-built or Docker-based installs.
+- The Docker build now selects the newest `Articulate.*.nupkg` in `build/Release` by modified time and ignores `.snupkg` files.
+- After rebuilding the Docker image, recreate the `articulate` service so it actually runs the new image: `docker compose up -d --force-recreate --no-deps articulate`.
+- If the Docker back office still appears stale after a rebuild, open `https://localhost:18443/App_Plugins/Articulate/BackOffice/articulate-backoffice.js` and confirm the imported `dashboard.element-*.js` hash matches the files inside the running container.
 
 ## Back Office Client Builds
 

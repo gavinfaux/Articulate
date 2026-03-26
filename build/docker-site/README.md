@@ -38,3 +38,6 @@ From the repo root:
 - This is unrelated to NTLM/SMB hardening; it is normal browser PKI behavior.
 - If your team policy disallows installing a local root CA, you will need a publicly trusted certificate/domain for local development.
 - The Docker image builds from the packaged `Articulate` NuGet artifact in `build/Release`, not directly from the project output. If you change packaged runtime dependencies in `src/Articulate/Articulate.csproj` or `src/Articulate.Web/Articulate.Web.csproj`, regenerate the package first with `dotnet pack src/Articulate.Web/Articulate.Web.csproj -c Release -o build/Release` before running `docker compose build`.
+- The Dockerfile selects the newest `Articulate.*.nupkg` in `build/Release` by modified time and ignores `.snupkg` files.
+- Rebuilding the image is not enough on its own. After `docker compose build articulate`, recreate the app service with `docker compose up -d --force-recreate --no-deps articulate` so the running container picks up the new image.
+- If the Docker back office still serves older JavaScript, inspect `https://localhost:18443/App_Plugins/Articulate/BackOffice/articulate-backoffice.js` and compare the imported `dashboard.element-*.js` hash with the files present in the running `articulate` container.

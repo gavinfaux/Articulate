@@ -26,10 +26,7 @@ RUN set -eux; \
     cp build/Release/*.nupkg $PACKAGE_DIR/; \
     mkdir -p build/docker-site/packages; \
     cp $PACKAGE_DIR/*.nupkg build/docker-site/packages/; \
-    for pkg in build/Release/Articulate.*.nupkg; do \
-    ARTICULATE_PKG_FILE=$(basename "$pkg"); \
-    break; \
-    done; \
+    ARTICULATE_PKG_FILE=$(ls -1t build/Release/Articulate.*.nupkg | grep -v '\.snupkg$' | head -n 1 | xargs -n 1 basename); \
     ARTICULATE_PKG_VERSION=${ARTICULATE_PKG_FILE#Articulate.}; \
     ARTICULATE_PKG_VERSION=${ARTICULATE_PKG_VERSION%.nupkg}; \
     dotnet restore build/docker-site/ArticulateDockerSite.csproj \
