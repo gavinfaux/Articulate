@@ -220,9 +220,23 @@ export default class BlogMlImporterElement extends  UmbLitElement implements IFo
     a.href = url;
     a.download = fileName;
     document.body.appendChild(a);
-    a.click();
-    window.URL.revokeObjectURL(url);
-    a.remove();
+    // Dispatch a non-bubbling click so the Umbraco backoffice router does not
+    // intercept the anchor and try to navigate to the blob: URL via pushState.
+    a.dispatchEvent(
+      new MouseEvent('click', {
+        bubbles: false,
+        cancelable: true,
+        composed: false,
+        view: window,
+      }),
+    );
+
+    // Delay cleanup so the browser has time to start the download before the
+    // object URL is revoked and the anchor is removed.
+    window.setTimeout(() => {
+      window.URL.revokeObjectURL(url);
+      a.remove();
+    }, 1000);
   };
 
   /**
