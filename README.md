@@ -31,6 +31,20 @@ Articulate 6 targets Umbraco 16.5.1+ and 17.2.2+
 - When building from source, run the test site `dotnet run -f net9.0 --project src/Articulate.Tests.Website/Articulate.Tests.Website.csproj` (or `-f net10.0` for Umbraco 17) and sign into the Umbraco Back Office to finish setup.
 - Migrating from 5.x: in place upgrade or export BlogML from your Articulate 5 site and import it into Articulate 6; media in `media/articulate` is not auto-migrated. During import you can map `postImage` to base64 or an attachment; other inline images must be moved manually (copy the folder, or consider an in-place package upgrade).
 
+### Theme Structure (Articulate 6)
+
+Articulate 6 separates built-in theme views from static assets:
+
+- Built-in Razor views live under `src/Articulate.Web/App_Plugins/Articulate/Themes/{Theme}/Views/`
+- Built-in static assets live under `src/Articulate.Web/wwwroot/App_Plugins/Articulate/Themes/{Theme}/assets/`
+
+For copied or custom user themes, the preferred layout is:
+
+- views in `Views/ArticulateThemes/{Theme}/Views/`
+- assets in `wwwroot/App_Plugins/Articulate/Themes/{Theme}/assets/`
+
+Articulate still probes older user themes with `.cshtml` files directly under `Views/ArticulateThemes/{Theme}/`, but that flat layout is now treated as a legacy compatibility path.
+
 ## Markdown Editor Authentication
 
 The standalone Markdown editor uses Umbraco's built-in back-office OpenIddict endpoints with the authorization code flow and PKCE.

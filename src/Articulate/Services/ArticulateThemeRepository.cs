@@ -33,6 +33,7 @@ namespace Articulate.Services
                 Path.Combine(hostingEnvironment.ContentRootPath, Paths.UserThemesRoot));
             var themeRootDestination = Path.GetFullPath(
                 Path.Combine(userThemesPath, newThemeName));
+            var viewsDestination = Path.Combine(themeRootDestination, Paths.Views);
 
             if (!themeRootDestination.StartsWith(userThemesPath, StringComparison.OrdinalIgnoreCase))
             {
@@ -59,12 +60,12 @@ namespace Articulate.Services
 
             try
             {
-                // Extract Views to Views/ArticulateThemes/{newThemeName}/ (flat, no nested Views folder)
-                _ = Directory.CreateDirectory(themeRootDestination);
+                // Extract views to Views/ArticulateThemes/{newThemeName}/Views/
+                _ = Directory.CreateDirectory(viewsDestination);
                 await ExtractResourcesAsync(
                     articulateAssembly,
                     viewResources,
-                    themeRootDestination,
+                    viewsDestination,
                     themeName,
                     "Views/");
 
@@ -72,7 +73,7 @@ namespace Articulate.Services
                     "Copied views for theme '{NewThemeName}' from '{SourceTheme}' to {ViewsPath}",
                     newThemeName,
                     themeName,
-                    Path.Combine("Views", "ArticulateThemes", newThemeName));
+                    Path.Combine("Views", "ArticulateThemes", newThemeName, "Views"));
 
                 // Extract Assets to wwwroot/App_Plugins/Articulate/Themes/{newThemeName}/assets/
                 if (assetResources.Count > 0)
@@ -181,7 +182,7 @@ namespace Articulate.Services
 
                           ## Folder Structure
 
-                          **Views:** `Views/ArticulateThemes/{newTheme}/`
+                          **Views:** `Views/ArticulateThemes/{newTheme}/Views/`
                           Edit .cshtml files here to customize your theme layout.
 
                           **Assets:** `wwwroot/App_Plugins/Articulate/Themes/{newTheme}/assets/`
@@ -189,8 +190,8 @@ namespace Articulate.Services
 
                           ## Quick Start
 
-                          1. Edit `Master.cshtml` - Main layout template
-                          2. Edit `Post.cshtml` - Individual blog post template
+                          1. Edit `Views/Master.cshtml` - Main layout template
+                          2. Edit `Views/Post.cshtml` - Individual blog post template
                           3. Customize CSS in `wwwroot/.../assets/css/`
                           4. Copied themes do not include a production build pipeline for assets, either set up your own build process, or ensure production builds link to src assets.
 
