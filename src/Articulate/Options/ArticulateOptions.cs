@@ -40,6 +40,12 @@ namespace Articulate.Options
         public long MaxExternalImageBytes { get; set; } = 10 * 1024 * 1024;
 
         /// <summary>
+        /// Explicit allowlist of external hosts that Articulate may fetch images from during BlogML import.
+        /// If empty, external image downloads are disabled.
+        /// </summary>
+        public string[] AllowedMediaHosts { get; set; } = [];
+
+        /// <summary>
         /// When true, allows localhost/private-network external image downloads during non-production Umbraco runtime modes.
         /// This setting is ignored when Umbraco:CMS:Runtime:Mode is Production.
         /// Default: false.

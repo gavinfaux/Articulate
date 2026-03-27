@@ -30,7 +30,7 @@ namespace Articulate.Controllers.Api
         BlogMlImporter blogMlImporter,
         IBackOfficeSecurityAccessor backOfficeSecurityAccessor,
         ArticulateTempFileSystem articulateTempFileSystem,
-        IOptionsMonitor<ContentSettings> contentSettings,
+        IOptionsMonitor<Articulate.Options.ArticulateOptions> articulateOptions,
         ILogger<BlogMlApiController> logger)
         : ManagementApiControllerBase
     {
@@ -88,7 +88,7 @@ namespace Articulate.Controllers.Api
                 articulateTempFileSystem.AddFile(fileName, buffer);
 
                 BlogMlImportFileSummary summary = blogMlImporter.GetImportFileSummary(fileName);
-                ISet<string> allowedHosts = contentSettings.CurrentValue.AllowedMediaHosts;
+                ISet<string> allowedHosts = articulateOptions.CurrentValue.AllowedMediaHosts.ToHashSet(StringComparer.OrdinalIgnoreCase);
                 string[] blockedExternalHosts = summary.ExternalHosts
                     .Where(host => !allowedHosts.Any(allowedHost => allowedHost.InvariantEquals(host)))
                     .ToArray();

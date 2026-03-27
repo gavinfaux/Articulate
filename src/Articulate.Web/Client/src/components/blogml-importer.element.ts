@@ -623,7 +623,8 @@ export default class BlogMlImporterElement extends  UmbLitElement implements IFo
                       name="importFile"
                       tabindex="0"></uui-input-file>
                     <div slot="description">
-                      Select the BlogML file, then choose <strong>Verify file</strong> to analyze it before import.
+                      Select the BlogML file, then choose <strong>Verify file</strong> to analyse the declared external
+                      hosts before import. The actual import still validates every fetched host and any redirects.
                     </div>
                   </uui-form-layout-item>
                   <uui-form-layout-item>
@@ -747,15 +748,17 @@ export default class BlogMlImporterElement extends  UmbLitElement implements IFo
                                   ? html`
                                       Posts can still be imported, but external images from these hosts will not be
                                       fetched unless they are added to
-                                      <code>Umbraco:CMS:Content:AllowedMediaHosts</code>.
+                                      <code>Articulate:AllowedMediaHosts</code>. Import also validates any
+                                      redirect targets, so all fetched hosts must be allowed.
                                     `
                                   : html`
                                       Posts can still be imported. This only matters if you enable
-                                      <strong>Import First Image from Post Attachments</strong>.
+                                      <strong>Import First Image from Post Attachments</strong>. If you do, import will
+                                      validate both the declared hosts and any redirect targets.
                                     `}
                                 <div style="margin-top: 0.75rem;">
                                   <div style="font-size: 0.875rem; margin-bottom: 0.25rem;">
-                                    Hosts to add to AllowedMediaHosts
+                                    Hosts to add to Articulate:AllowedMediaHosts
                                   </div>
                                   <code
                                     style="display: block; white-space: pre-wrap; user-select: all; padding: 0.75rem; border-radius: 6px; background: var(--uui-color-surface-alt);">${this._blockedExternalHosts.join('\n')}</code>

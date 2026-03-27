@@ -396,7 +396,7 @@ namespace Articulate.Services
             Uri imageUrl,
             CancellationToken cancellationToken)
         {
-            // Umbraco provides the explicit host allowlist via ContentSettings.AllowedMediaHosts.
+            // Articulate provides the explicit host allowlist via Articulate:AllowedMediaHosts.
             // After host validation we still resolve and vet the destination IPs per OWASP SSRF guidance.
             Options.ArticulateOptions articulateOptions = _articulateOptions.CurrentValue;
             bool allowUnsafeLocalExternalImageHosts =
@@ -409,7 +409,7 @@ namespace Articulate.Services
                 return (null, validationError);
             }
 
-            ISet<string> allowedHosts = _contentSettings.CurrentValue.AllowedMediaHosts;
+            ISet<string> allowedHosts = articulateOptions.AllowedMediaHosts.ToHashSet(StringComparer.OrdinalIgnoreCase);
             validationError = ValidateAllowedMediaHost(imageUrl, allowedHosts);
             if (validationError is not null)
             {
@@ -455,7 +455,7 @@ namespace Articulate.Services
 
             string normalizedHost = NormalizeHost(imageUrl.Host);
             return allowedHosts.All(x => NormalizeHost(x) != normalizedHost)
-                ? $"Host '{imageUrl.Host}' is not configured in Umbraco:CMS:Content:AllowedMediaHosts"
+                ? $"Host '{imageUrl.Host}' is not configured in Articulate:AllowedMediaHosts"
                 : null;
         }
 
