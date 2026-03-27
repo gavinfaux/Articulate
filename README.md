@@ -141,6 +141,71 @@ Notes:
 - Only add hosts you control or strongly trust.
 - `localhost`, loopback, and private-network targets remain blocked unless the development-only override is enabled.
 
+## Upload and Request Limits
+
+Large BlogML files can hit hosting request-size limits before Articulate receives the upload.
+
+Keep these aligned:
+
+- `Umbraco:CMS:Runtime:MaxRequestLength`
+- ASP.NET Core `FormOptions.MultipartBodyLengthLimit`
+- Kestrel `Limits.MaxRequestBodySize`
+- IIS `MaxRequestBodySize` when applicable
+
+The checked-in test site config uses:
+
+```csharp
+builder.Services.Configure<FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = 104857600; // 100MB
+});
+
+builder.Services.Configure<KestrelServerOptions>(options =>
+{
+    options.Limits.MaxRequestBodySize = 104857600; // 100MB
+});
+
+builder.Services.Configure<IISServerOptions>(options =>
+{
+    options.MaxRequestBodySize = 104857600; // 100MB
+});
+```
+
+The Docker site uses the same `FormOptions` and Kestrel configuration pattern.
+
+Appsettings example:
+
+```json
+{
+  "Umbraco": {
+    "CMS": {
+      "Runtime": {
+        "MaxRequestLength": 102400
+      }
+    }
+  }
+}
+```
+
+If you still rely on IIS `web.config` request settings, update those too:
+
+```xml
+<configuration>
+  <system.web>
+    <httpRuntime maxRequestLength="102400" />
+  </system.web>
+  <system.webServer>
+    <security>
+      <requestFiltering>
+        <requestLimits maxAllowedContentLength="104857600" />
+      </requestFiltering>
+    </security>
+  </system.webServer>
+</configuration>
+```
+
+If one layer remains lower than the others, uploads can still fail with `413 Payload Too Large`.
+
 ## Features
 
 Supporting all the features you'd want in a blogging platform
