@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using Articulate.Services;
 using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Core;
+using Umbraco.Cms.Core.Actions;
 using Umbraco.Cms.Core.IO;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Models.Membership;
@@ -40,7 +41,8 @@ namespace Articulate.MetaWeblog
         ILogger<ArticulateMetaWeblogProvider> logger,
         int articulateBlogRootNodeId,
         IArticulateImportMediaService service,
-        IArticulateMarkdownConverter articulateMarkdownConverter)
+        IArticulateMarkdownConverter articulateMarkdownConverter,
+        BackOfficeAuthService backOfficeAuthService)
         : IMetaWeblogProvider
     {
         private static readonly char[] _commaSeparator = [','];
@@ -114,6 +116,11 @@ namespace Articulate.MetaWeblog
                 return false;
             }
 
+            if (!backOfficeAuthService.HasPermissions(user, content, [ActionDelete.ActionLetter]))
+            {
+                throw new AuthenticationException("User does not have permission to delete this content");
+            }
+
             // Move to recycle bin rather than unpublish
             OperationResult recycleResult = contentService.MoveToRecycleBin(content, userId);
             if (!recycleResult.Success)
@@ -148,6 +155,15 @@ namespace Articulate.MetaWeblog
             IContent umbracoContent = contentService.GetById(asInt.Result) ??
                                       throw new InvalidOperationException(
                                           $"The content with id {asInt.Result} could not be found");
+
+            var requiredPermissions = publish
+                ? new[] { ActionUpdate.ActionLetter, ActionPublish.ActionLetter }
+                : new[] { ActionUpdate.ActionLetter };
+
+            if (!backOfficeAuthService.HasPermissions(user, umbracoContent, requiredPermissions))
+            {
+                throw new AuthenticationException("User does not have permission to edit this content");
+            }
 
             IContentType contentType = contentTypeService.Get(umbracoContent.ContentType.Alias) ??
                                        throw new InvalidOperationException(
