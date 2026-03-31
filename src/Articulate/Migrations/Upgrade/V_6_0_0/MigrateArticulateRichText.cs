@@ -1,7 +1,7 @@
 #nullable enable
+using Articulate.Options;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Articulate.Options;
 using Umbraco.Cms.Core.Services;
 using Umbraco.Cms.Infrastructure.Migrations;
 using Umbraco.Cms.Infrastructure.Scoping;
