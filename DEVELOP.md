@@ -60,6 +60,7 @@ pnpm run generate:api
 - The Docker build now selects the newest `Articulate.*.nupkg` in `build/Release` by modified time and ignores `.snupkg` files.
 - After rebuilding the Docker image, recreate the `articulate` service so it actually runs the new image: `docker compose up -d --force-recreate --no-deps articulate`.
 - If the Docker back office still appears stale after a rebuild, open `https://localhost:18443/App_Plugins/Articulate/BackOffice/articulate-backoffice.js` and confirm the imported `dashboard.element-*.js` hash matches the files inside the running container.
+- The default unattended Docker backoffice user is `admin@localhost` with password `@rticulate` and display name `Jane Doe`. Override with `UMBRACO_USER_NAME`, `UMBRACO_USER_EMAIL`, and `UMBRACO_USER_PASSWORD` when needed.
 
 ## Back Office Client Builds
 
