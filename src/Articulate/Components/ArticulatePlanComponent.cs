@@ -20,16 +20,16 @@ namespace Articulate.Components
         : IAsyncComponent
     {
         /// <inheritdoc/>
-        public async Task InitializeAsync(bool isRestarting, CancellationToken cancellationToken)
-        {
-            await InitializeAsync();
-        }
+        public Task InitializeAsync(bool isRestarting, CancellationToken cancellationToken)
+            => InitializeAsync(cancellationToken);
 
         /// <inheritdoc/>
         public Task TerminateAsync(bool isRestarting, CancellationToken cancellationToken) => Task.CompletedTask;
 
-        private async Task InitializeAsync()
+        private async Task InitializeAsync(CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             if (runtimeState.Level < RuntimeLevel.Run)
             {
                 return;
@@ -43,6 +43,9 @@ namespace Articulate.Components
                 migrationPlanExecutor,
                 scopeProvider,
                 keyValueService);
+
+            cancellationToken.ThrowIfCancellationRequested();
+
             if (!result.Successful)
             {
                 throw new InvalidOperationException("Articulate migration failed.", result.Exception);
