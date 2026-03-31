@@ -1,5 +1,7 @@
 #nullable enable
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Articulate.Options;
 using Umbraco.Cms.Core.Services;
 using Umbraco.Cms.Infrastructure.Migrations;
 using Umbraco.Cms.Infrastructure.Scoping;
@@ -13,7 +15,8 @@ namespace Articulate.Migrations.Upgrade.V_6_0_0
         IMigrationContext context,
         IScopeProvider scopeProvider,
         IDataTypeService dataTypeService,
-        ILogger<MigrateArticulateRichText> logger)
+        ILogger<MigrateArticulateRichText> logger,
+        IOptions<ArticulateOptions> articulateOptions)
         : MigrateDataTypeConfigurationBase(context, scopeProvider, dataTypeService, logger)
     {
         /// <inheritdoc/>
@@ -21,6 +24,13 @@ namespace Articulate.Migrations.Upgrade.V_6_0_0
         {
             try
             {
+                if (!articulateOptions.Value.MigrateRichTextDataTypeToTiptapOnUpgrade)
+                {
+                    logger.LogInformation(
+                        "Skipping Articulate Rich Text data type migration because Articulate:MigrateRichTextDataTypeToTiptapOnUpgrade is disabled.");
+                    return;
+                }
+
                 logger.LogInformation("Migration starting for Articulate DataType's.");
 
                 var totalUpdated = 0;

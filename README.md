@@ -31,6 +31,26 @@ Articulate 6 targets Umbraco 16.5.1+ and 17.2.2+
 - When building from source, run the test site `dotnet run -f net9.0 --project src/Articulate.Tests.Website/Articulate.Tests.Website.csproj` (or `-f net10.0` for Umbraco 17) and sign into the Umbraco Back Office to finish setup.
 - Migrating from 5.x: in place upgrade or export BlogML from your Articulate 5 site and import it into Articulate 6; media in `media/articulate` is not auto-migrated. During import you can map `postImage` to base64 or an attachment; other inline images must be moved manually (copy the folder, or consider an in-place package upgrade).
 
+#### Rich Text Editor upgrade behavior
+
+On Umbraco 16/17, Articulate can migrate the built-in `Articulate Rich Text` data type to `TipTap` during package upgrade.
+
+- Default behavior: migrate the Articulate Rich Text data type to `TipTap`.
+- If you need to preserve an existing TinyMCE-compatible setup during upgrade, set `Articulate:MigrateRichTextDataTypeToTiptapOnUpgrade` to `false` before starting the upgrade.
+- This setting affects upgrades only. Once the Articulate migration plan step has executed, Umbraco records it as complete.
+
+Example:
+
+```json
+{
+  "Articulate": {
+    "MigrateRichTextDataTypeToTiptapOnUpgrade": false
+  }
+}
+```
+
+This is intended for sites that want to keep TinyMCE compatibility via an optional Umbraco 16+ TinyMCE package instead of switching existing Articulate rich text data types to TipTap.
+
 ### Theme Structure (Articulate 6)
 
 Articulate 6 separates built-in theme views from static assets:
@@ -232,6 +252,8 @@ Supporting all the features you'd want in a blogging platform
 ## [Documentation](https://github.com/Shazwazza/Articulate/wiki)
 
 Docs on installation, creating posts, customizing/creating themes, etc...
+
+For Umbraco 16/17 upgrades, also see the rich text editor upgrade behavior notes above if you need to preserve TinyMCE compatibility.
 
 ## [Issues](https://github.com/Shazwazza/Articulate/issues)
 

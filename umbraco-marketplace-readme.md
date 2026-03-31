@@ -30,6 +30,22 @@ Supporting all the features you'd want in a blogging platform
 - Umbraco 16.5.1+ (NET 9) and 17.2.2+ (NET 10) - Articulate version 6.x
 - Umbraco 13 LTS (maintenance) - Articulate 5.x.
 
+## Upgrade note for rich text editor compatibility
+
+On Umbraco 16/17 upgrades, Articulate 6 migrates the built-in `Articulate Rich Text` data type to `TipTap` by default.
+
+If you need to preserve an existing TinyMCE-compatible setup during upgrade, set the following before starting the upgrade:
+
+```json
+{
+  "Articulate": {
+    "MigrateRichTextDataTypeToTiptapOnUpgrade": false
+  }
+}
+```
+
+This setting is intended for upgrade scenarios where a site wants to keep TinyMCE compatibility via an optional Umbraco 16+ TinyMCE package.
+
 ## [Documentation](https://github.com/Shazwazza/Articulate/wiki)
 
 Docs on installation, creating posts, customizing/creating themes, etc...
