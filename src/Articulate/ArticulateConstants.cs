@@ -53,7 +53,7 @@ namespace Articulate
             /// <summary>
             /// Gets all built-in theme names.
             /// </summary>
-            public static readonly IEnumerable<string> AllThemeNames = [Vapor, Material, Phantom, Mini];
+            public static IReadOnlyList<string> AllThemeNames { get; } = Array.AsReadOnly([Vapor, Material, Phantom, Mini]);
 
             private const string Material = "Material";
             private const string Mini = "Mini";

@@ -262,7 +262,7 @@ namespace Articulate.Services
         }
 
         /// <inheritdoc/>
-        public Task<IEnumerable<string>> GetDefaultThemesAsync() => Task.FromResult(DefaultThemes.AllThemeNames);
+        public Task<IEnumerable<string>> GetDefaultThemesAsync() => Task.FromResult<IEnumerable<string>>(DefaultThemes.AllThemeNames);
 
         private static Task<IEnumerable<string>> GetThemesFromPhysicalPathAsync(string physicalPath) =>
             Task.FromResult(Directory.Exists(physicalPath)
