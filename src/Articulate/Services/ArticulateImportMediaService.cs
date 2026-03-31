@@ -140,7 +140,13 @@ namespace Articulate.Services
             var stream = new MemoryStream(bytes);
             string extension = Path.GetExtension(originalFileName).ToLowerInvariant();
 
-            return await ValidateImageAsync(stream, extension);
+            ImportMediaValidationResult result = await ValidateImageAsync(stream, extension);
+            if (!result.IsValid)
+            {
+                await stream.DisposeAsync();
+            }
+
+            return result;
         }
 
         /// <inheritdoc/>
