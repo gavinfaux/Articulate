@@ -1,11 +1,11 @@
 # syntax=docker/dockerfile:1
 
 # Build stage - .NET 10 SDK
-FROM mcr.microsoft.com/dotnet/sdk:10.0.102 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0.201 AS build
 WORKDIR /src
 
 # Allow overriding Umbraco CMS version for the container build
-ARG UMBRACO_CMS_VERSION="[17.0.2,18.0.0)"
+ARG UMBRACO_CMS_VERSION="[17.2.2,18.0.0)"
 ARG BUILD_CONFIGURATION=Release
 ARG PACKAGE_DIR=/articulate-packages
 

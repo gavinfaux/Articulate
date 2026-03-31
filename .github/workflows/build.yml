@@ -65,7 +65,7 @@ jobs:
         with:
           dotnet-version: |
             9.0.309
-            10.0.102
+            10.0.201
 
       - name: Run build pipeline script
         shell: pwsh
