@@ -162,18 +162,27 @@ namespace Articulate.Controllers.Api
                     ;
                 var downloadFileName = $"articulate-export-{DateTime.UtcNow:yyyyMMddHHmmss}.xml";
 
-                Stream fileStream = articulateTempFileSystem.OpenFile(exportFileName);
-
-                Response.OnCompleted(() =>
+                Stream? fileStream = null;
+                try
                 {
-                    fileStream.Dispose();
-                    articulateTempFileSystem.DeleteFile(exportFileName);
-                    return Task.CompletedTask;
-                });
+                    fileStream = articulateTempFileSystem.OpenFile(exportFileName);
 
-                Response.Headers.Append("Content-Disposition", $"attachment; filename*=UTF-8''{downloadFileName}");
-                exportSucceeded = true;
-                return File(fileStream, "application/octet-stream");
+                    Response.OnCompleted(() =>
+                    {
+                        fileStream.Dispose();
+                        articulateTempFileSystem.DeleteFile(exportFileName);
+                        return Task.CompletedTask;
+                    });
+
+                    Response.Headers.Append("Content-Disposition", $"attachment; filename*=UTF-8''{downloadFileName}");
+                    exportSucceeded = true;
+                    return File(fileStream, "application/octet-stream");
+                }
+                catch
+                {
+                    fileStream?.Dispose();
+                    throw;
+                }
             }
             catch (InvalidOperationException ex)
             {
@@ -324,17 +333,27 @@ namespace Articulate.Controllers.Api
             }
 
             var downloadFileName = $"articulate-disqus-comments-{DateTime.UtcNow:yyyyMMddHHmmss}.xml";
-            Stream fileStream = articulateTempFileSystem.OpenFile(disqusExportFile);
+            Stream? fileStream = null;
 
-            Response.OnCompleted(() =>
+            try
             {
-                fileStream.Dispose();
-                articulateTempFileSystem.DeleteFile(disqusExportFile);
-                return Task.CompletedTask;
-            });
+                fileStream = articulateTempFileSystem.OpenFile(disqusExportFile);
 
-            Response.Headers.Append("Content-Disposition", $"attachment; filename*=UTF-8''{downloadFileName}");
-            return File(fileStream, "application/octet-stream");
+                Response.OnCompleted(() =>
+                {
+                    fileStream.Dispose();
+                    articulateTempFileSystem.DeleteFile(disqusExportFile);
+                    return Task.CompletedTask;
+                });
+
+                Response.Headers.Append("Content-Disposition", $"attachment; filename*=UTF-8''{downloadFileName}");
+                return File(fileStream, "application/octet-stream");
+            }
+            catch
+            {
+                fileStream?.Dispose();
+                throw;
+            }
         }
     }
 }
