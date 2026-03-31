@@ -40,6 +40,10 @@
   background-color: #263238;
 }
 
+.demo-blog .mdl-card__title.post-header--no-image {
+  background-color: transparent;
+}
+
 a.social-btn {
   display: inline-block;
 }
