@@ -117,4 +117,8 @@
 		</ItemGroup>
 	</Target>
 
+	<!-- Force minimum versions for vulnerable transitive dependencies -->
+	<ItemGroup>
+        <PackageReference Include="Microsoft.Build.Tasks.Core" Version="17.8.43" PrivateAssets="All" />
+	</ItemGroup>
 </Project>

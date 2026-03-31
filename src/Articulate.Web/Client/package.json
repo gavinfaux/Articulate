@@ -32,6 +32,13 @@
     "monaco-editor": "Articulate Markdown Editor property editor (not the mobile markdown editor), only required until Umbraco Core editor supports better markdown to HTML processing; see https://github.com/umbraco/Umbraco-CMS/issues/19500",
     "lit-html": "Required for client build due to use of lit keyed directive, can be droped when umbraco-cms/backoffice bumped to v17+ to bring in https://github.com/umbraco/Umbraco-CMS/pull/20963"
   },
+  "pnpm": {
+    "overrides": {
+      "handlebars": ">=4.7.9",
+      "dompurify": ">=3.3.3",
+      "brace-expansion": ">=1.1.13"
+    }
+  },
   "dependencies": {
     "lit-html": "^3.3.2",
     "monaco-editor": "0.54.0"
@@ -41,8 +48,8 @@
     "@eslint/eslintrc": "^3.3.5",
     "@eslint/js": "^9.39.4",
     "@hey-api/openapi-ts": "0.85.0",
-    "@typescript-eslint/eslint-plugin": "^8.57.2",
-    "@typescript-eslint/parser": "^8.57.2",
+    "@typescript-eslint/eslint-plugin": "^8.58.0",
+    "@typescript-eslint/parser": "^8.58.0",
     "@umbraco-cms/backoffice": "16.5.1",
     "chalk": "^5.6.2",
     "cross-env": "^10.1.0",
