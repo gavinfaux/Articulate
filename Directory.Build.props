@@ -40,6 +40,7 @@
 	<!-- Central client-build defaults; consumed by Articulate.Web to build the backoffice client -->
 	<PropertyGroup>
 		<EnableClientBuild Condition="'$(EnableClientBuild)'=='' and '$(ENABLE_CLIENT_BUILD)'!=''">$(ENABLE_CLIENT_BUILD)</EnableClientBuild>
+		<EnableClientBuild Condition="'$(EnableClientBuild)'=='' and '$(Configuration)'=='Release' and '$(BuildingInsideVisualStudio)'!='true'">true</EnableClientBuild>
 		<EnableClientBuild Condition="'$(EnableClientBuild)'==''">false</EnableClientBuild>
 		<ClientBuildCommand Condition="'$(ClientBuildCommand)'=='' and ('$(CI)'=='true' or '$(GITHUB_ACTIONS)'=='true' or '$(Configuration)'=='Release')">pnpm run build</ClientBuildCommand>
 		<ClientBuildCommand Condition="'$(ClientBuildCommand)'==''">pnpm run build:dev</ClientBuildCommand>

@@ -1,6 +1,7 @@
 # Usage:
 #   BUILD_CONFIGURATION=Debug pwsh -NoLogo -File build/build.ps1
 #   ENABLE_CLIENT_BUILD=true pwsh -NoLogo -File build/build.ps1
+# Release builds enable the client build by default so packaged assets carry the stamped version.
 $ScriptStart = Get-Date
 $PSScriptFilePath = Get-Item $MyInvocation.MyCommand.Path
 $RepoRoot = $PSScriptFilePath.Directory.Parent.FullName
@@ -43,7 +44,7 @@ if ($env:MAXCPU -and ($env:MAXCPU -as [int]) -gt 0) {
 $msbuildArgs = @("-m", "-maxcpucount:$cpu", "-p:BuildInParallel=true", "-p:RestoreUseStaticGraphEvaluation=true")
 $runningInCi = ($env:CI -eq 'true') -or ($env:GITHUB_ACTIONS -eq 'true')
 if ([string]::IsNullOrEmpty($env:ENABLE_CLIENT_BUILD)) {
-    $clientBuildValue = if ($runningInCi) { 'true' } else { 'false' }
+    $clientBuildValue = if ($runningInCi -or $Configuration -eq 'Release') { 'true' } else { 'false' }
 }
 else {
     $clientBuildValue = $env:ENABLE_CLIENT_BUILD

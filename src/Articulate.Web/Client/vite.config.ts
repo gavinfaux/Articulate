@@ -24,6 +24,10 @@ const PACKAGE_ROOT = path.resolve(WEB_ROOT, "wwwroot/App_Plugins/Articulate");
 const WEB_THEMES = path.resolve(WEB_ROOT, "wwwroot/App_Plugins/Articulate/Themes");
 const WEB_MARKDOWN = path.resolve(WEB_ROOT, "wwwroot/App_Plugins/Articulate/MarkdownEditor");
 
+const buildVersion = {
+  value: "0.0.0-dev"
+};
+
 
 // --- UTILS ---
 const collectFiles = (dir: string, ext: string): string[] => {
@@ -174,11 +178,7 @@ async function buildEsbuildBundle({ name, entry, output, isProd }: any) {
 
 // --- PLUGIN: VERSIONING ---
 const versioningPlugin = (): Plugin => {
-  let version = "0.0.0-dev";
-  let isGitVersion = false;
   let mode: string;
-  let originalPackageJson: string | undefined;
-  const packageJsonPath = path.join(UI_ROOT, "package.json");
   return {
     name: "versioning",
     config: (_, c) => {
@@ -186,24 +186,11 @@ const versioningPlugin = (): Plugin => {
       if (c.command === "build" && mode === "production") {
         try {
           const gitRoot = execSync("git rev-parse --show-toplevel", { encoding: "utf8" }).trim();
-          version = execSync("nbgv get-version -v SemVer2", { encoding: "utf8", cwd: gitRoot }).trim();
-          isGitVersion = true;
-          console.log(`[version] Detected: ${version}`);
+          buildVersion.value = execSync("nbgv get-version -v SemVer2", { encoding: "utf8", cwd: gitRoot }).trim();
+          console.log(`[version] Detected: ${buildVersion.value}`);
         } catch { console.warn(`[version] Defaulting to dev.`); }
       }
-      return { define: { "import.meta.env.APP_VERSION": JSON.stringify(version) } };
-    },
-    closeBundle: async () => {
-      if (!isGitVersion || version === "0.0.0-dev") return;
-      try {
-        originalPackageJson ??= readFileSync(packageJsonPath, "utf8");
-        execSync(`pnpm version ${version} --allow-same-version --no-git-tag-version`, { stdio: 'ignore', cwd: UI_ROOT });
-      } catch { }
-      finally {
-        if (originalPackageJson) {
-          await writeFile(packageJsonPath, originalPackageJson);
-        }
-      }
+      return { define: { "import.meta.env.APP_VERSION": JSON.stringify(buildVersion.value) } };
     }
   };
 };
@@ -218,8 +205,9 @@ const umbracoPackagePlugin = (): Plugin => {
       const dest = path.join(PACKAGE_ROOT, MANIFEST);
       if (existsSync(src)) {
         await mkdir(path.dirname(dest), { recursive: true });
-        const content = await readFileSync(src);
-        await writeFile(dest, content);
+        const manifest = JSON.parse(readFileSync(src, "utf8")) as { version?: string };
+        manifest.version = buildVersion.value;
+        await writeFile(dest, `${JSON.stringify(manifest, null, 2)}\n`);
         await unlink(src);
         console.log(`[manifest] Moved to ${dest}`);
       }

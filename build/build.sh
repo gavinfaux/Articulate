@@ -2,6 +2,7 @@
 # Usage:
 #   BUILD_CONFIGURATION=Debug ./build/build.sh
 #   ENABLE_CLIENT_BUILD=true ./build/build.sh
+# Release builds enable the client build by default so packaged assets carry the stamped version.
 
 set -euo pipefail
 
@@ -40,8 +41,8 @@ fi
 MSBUILD_PARALLEL=(-m -maxcpucount:"$CPU_COUNT" -p:BuildInParallel=true -p:RestoreUseStaticGraphEvaluation=true)
 DOTNET_COMMON=(--nologo -v minimal)
 
-# Handle ENABLE_CLIENT_BUILD environment variable (default to false locally, true in CI)
-if [[ "${CI:-}" == "true" || "${GITHUB_ACTIONS:-}" == "true" ]]; then
+# Handle ENABLE_CLIENT_BUILD environment variable (default to true for Release/CI, false otherwise)
+if [[ "${CI:-}" == "true" || "${GITHUB_ACTIONS:-}" == "true" || "$CONFIGURATION" == "Release" ]]; then
   CLIENT_BUILD_DEFAULT=true
 else
   CLIENT_BUILD_DEFAULT=false
