@@ -157,9 +157,11 @@ Local development example:
 
 Notes:
 
-- `AllowUnsafeLocalExternalImageHostsInDevelopment` is ignored when `Umbraco:CMS:Runtime:Mode` is `Production`.
 - Only add hosts you control or strongly trust.
+- `AllowUnsafeLocalExternalImageHostsInDevelopment` is ignored when `Umbraco:CMS:Runtime:Mode` is `Production`.
 - `localhost`, loopback, and private-network targets remain blocked unless the development-only override is enabled.
+- For BlogML export/import round-trip tests, use an importer-reachable media hostname end-to-end. `localhost` only works when the importer resolves it to the exporting site. If not, rewrite the BlogML media URLs before import or configure the exporting site to emit a reachable hostname instead.
+- The repository `docker-compose.yml` includes commented example environment variables for the common `host.docker.internal` Docker test setup.
 
 ## Upload and Request Limits
 

@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using OpenIddict.Abstractions;
 using Umbraco.Cms.Core;
+using Umbraco.Cms.Core.Configuration.Models;
 using Umbraco.Cms.Core.Events;
 using Umbraco.Cms.Core.Notifications;
 using Umbraco.Cms.Core.Services;
@@ -17,6 +18,8 @@ namespace Articulate.Services
     internal sealed class ArticulateApplicationManager(
         IServiceScopeFactory scopeFactory,
         IOptions<ArticulateOpenIdClientOptions> options,
+        IOptions<ArticulateOptions> articulateOptions,
+        IOptions<RuntimeSettings> runtimeSettings,
         IRuntimeState runtimeState,
         ILogger<ArticulateApplicationManager> logger) :
         INotificationAsyncHandler<UmbracoApplicationStartedNotification>
@@ -30,6 +33,16 @@ namespace Articulate.Services
         private async Task EnsureOpenIdClientAsync(CancellationToken cancellationToken)
         {
             ArticulateOpenIdClientOptions settings = options.Value;
+            ArticulateOptions articulateSettings = articulateOptions.Value;
+
+            if (runtimeState.Level >= RuntimeLevel.Run &&
+                articulateSettings.AllowUnsafeLocalExternalImageHostsInDevelopment)
+            {
+                logger.LogWarning(
+                    runtimeSettings.Value.Mode == RuntimeMode.Production
+                        ? "Articulate development-only local external image host importing is configured, but Umbraco is running in Production mode so the override is ignored."
+                        : "Articulate development-only local external image host importing is enabled. Loopback and private-network targets may be fetched when their hosts are allowlisted in Articulate:AllowedMediaHosts.");
+            }
 
             if (runtimeState.Level == RuntimeLevel.Install)
             {

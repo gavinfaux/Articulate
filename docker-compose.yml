@@ -24,6 +24,11 @@ services:
       # Articulate OpenID Connect
       Articulate__ManagementApi__OpenIddict__Client__RedirectUris__0: ${ARTICULATE_REDIRECT_URI:-https://localhost:18443/a-new/}
       Articulate__ManagementApi__OpenIddict__Client__PostLogoutRedirectUris__0: ${ARTICULATE_LOGOUT_REDIRECT_URI:-https://localhost:18443/}
+      # Uncomment for Docker-to-host image import testing:
+      # Articulate__AllowedMediaHosts__0: host.docker.internal
+      # Umbraco__CMS__Runtime__Mode: BackofficeDevelopment
+      # Articulate__AllowUnsafeLocalExternalImageHostsInDevelopment: "true"
+      # If you add a mock image sidecar instead, allowlist that service hostname instead of host.docker.internal.
       Umbraco__CMS__ModelsBuilder__ModelsMode: ${MODELS_MODE:-Nothing}
     volumes:
       - articulate-media:/app/wwwroot/media
