@@ -108,13 +108,7 @@ namespace Articulate.Services
                     $"Extension '{extension}' not allowed. Supported: {string.Join(", ", allowedExtensions)}"));
             }
 
-            ImportMediaValidationResult signatureResult = ValidateImageSignature(stream, extension, allowedExtensions);
-            if (!signatureResult.IsValid)
-            {
-                return ValueTask.FromResult(signatureResult);
-            }
-
-            return ValueTask.FromResult(signatureResult);
+            return ValueTask.FromResult(ValidateImageSignature(stream, extension, allowedExtensions));
         }
 
         /// <inheritdoc/>
