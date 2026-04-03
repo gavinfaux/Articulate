@@ -1,5 +1,6 @@
 #nullable enable
 using System.Reflection;
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Core.Cache;
@@ -13,7 +14,8 @@ namespace Articulate.Services
     public sealed class ArticulateThemeRepository(
         IWebHostEnvironment hostingEnvironment,
         ILogger<ArticulateThemeRepository> logger,
-        AppCaches appCaches)
+        AppCaches appCaches,
+        IEnumerable<IArticulateThemeDescriptorProvider> themeDescriptorProviders)
         : IArticulateThemeRepository
     {
         private const string AllThemesCacheKey = "Articulate_AllThemes";
@@ -243,10 +245,14 @@ namespace Articulate.Services
                 {
                     Task<IEnumerable<string>> defaultThemesTask = GetDefaultThemesAsync();
                     Task<IEnumerable<string>> userThemesTask = GetUserThemesAsync();
+                    IEnumerable<string> packageThemeKeys = GetPackageThemeKeys();
 
                     IEnumerable<string>[] results =
                         await Task.WhenAll(defaultThemesTask, userThemesTask);
-                    return results[0].Union(results[1]).OrderBy(name => name);
+                    return results[0]
+                        .Union(results[1])
+                        .Union(packageThemeKeys)
+                        .OrderBy(name => name, StringComparer.OrdinalIgnoreCase);
                 },
                 TimeSpan.FromSeconds(30));
 
@@ -273,6 +279,71 @@ namespace Articulate.Services
         {
             var physicalPath = Path.Combine(hostingEnvironment.ContentRootPath, Paths.UserThemesRoot);
             return GetThemesFromPhysicalPathAsync(physicalPath);
+        }
+
+        private IEnumerable<string> GetPackageThemeKeys()
+        {
+            var builtInThemes = new HashSet<string>(DefaultThemes.AllThemeNames, StringComparer.OrdinalIgnoreCase);
+            var packageThemeKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (IArticulateThemeDescriptorProvider provider in themeDescriptorProviders)
+            {
+                AddProviderThemeKeys(provider, builtInThemes, packageThemeKeys);
+            }
+
+            return packageThemeKeys;
+        }
+
+        private void AddProviderThemeKeys(
+            IArticulateThemeDescriptorProvider provider,
+            HashSet<string> builtInThemes,
+            HashSet<string> packageThemeKeys)
+        {
+            foreach (string rawThemeKey in provider.GetThemeKeys())
+            {
+                if (!TryNormalizeThemeKey(provider, rawThemeKey, builtInThemes, out string? themeKey))
+                {
+                    continue;
+                }
+
+                if (!packageThemeKeys.Add(themeKey))
+                {
+                    logger.LogWarning(
+                        "Skipping duplicate Articulate theme key '{ThemeName}' from provider {ProviderType}.",
+                        themeKey,
+                        provider.GetType().FullName);
+                }
+            }
+        }
+
+        private bool TryNormalizeThemeKey(
+            IArticulateThemeDescriptorProvider provider,
+            string rawThemeKey,
+            HashSet<string> builtInThemes,
+            [NotNullWhen(true)] out string? themeKey)
+        {
+            if (string.IsNullOrWhiteSpace(rawThemeKey))
+            {
+                logger.LogWarning(
+                    "Skipping an empty Articulate theme key from provider {ProviderType}.",
+                    provider.GetType().FullName);
+                themeKey = null;
+                return false;
+            }
+
+            themeKey = rawThemeKey.Trim();
+
+            if (!builtInThemes.Contains(themeKey))
+            {
+                return true;
+            }
+
+            logger.LogWarning(
+                "Skipping Articulate theme key '{ThemeName}' from provider {ProviderType} because it is reserved for a built-in theme.",
+                themeKey,
+                provider.GetType().FullName);
+            themeKey = null;
+            return false;
         }
     }
 }

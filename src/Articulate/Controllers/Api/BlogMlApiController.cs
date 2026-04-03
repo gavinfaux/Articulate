@@ -29,7 +29,7 @@ namespace Articulate.Controllers.Api
         BlogMlImporter blogMlImporter,
         IBackOfficeSecurityAccessor backOfficeSecurityAccessor,
         ArticulateTempFileSystem articulateTempFileSystem,
-        IOptionsMonitor<Articulate.Options.ArticulateOptions> articulateOptions,
+        IOptionsMonitor<Options.ArticulateOptions> articulateOptions,
         ILogger<BlogMlApiController> logger)
         : ManagementApiControllerBase
     {

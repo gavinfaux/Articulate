@@ -65,6 +65,8 @@ For copied or custom user themes, the preferred layout is:
 
 Articulate still probes older user themes with `.cshtml` files directly under `Views/ArticulateThemes/{Theme}/`, but that flat layout is now treated as a legacy compatibility path.
 
+Installed theme packages can also contribute themes to the Articulate theme picker by registering `IArticulateThemeDescriptorProvider` and returning one or more canonical theme keys. Those keys should match the package theme folder name and the theme picker value. Built-in theme names are reserved, and duplicate package keys are ignored.
+
 ## Markdown Editor Authentication
 
 The standalone Markdown editor uses Umbraco's built-in back-office OpenIddict endpoints with the authorization code flow and PKCE.
