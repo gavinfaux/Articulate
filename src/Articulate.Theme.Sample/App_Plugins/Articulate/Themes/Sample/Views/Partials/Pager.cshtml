@@ -1,0 +1,24 @@
+@model PagerModel
+
+@if (Model.HasNext || Model.HasPrevious)
+{
+    <nav class="pagination" aria-label="Pagination">
+        @if (Model.HasPrevious)
+        {
+            <a class="pagination__link" href="@Model.PreviousUrl" title="View newer posts" rel="prev">
+                <i class="fa-solid fa-circle-chevron-left" aria-hidden="true"></i>
+                <span>Newer</span>
+            </a>
+        }
+
+        <span class="pagination__meta">Page @(Model.CurrentPageIndex + 1) of @Model.TotalPages</span>
+
+        @if (Model.HasNext)
+        {
+            <a class="pagination__link" href="@Model.NextUrl" title="View older posts" rel="next">
+                <span>Older</span>
+                <i class="fa-solid fa-circle-chevron-right" aria-hidden="true"></i>
+            </a>
+        }
+    </nav>
+}

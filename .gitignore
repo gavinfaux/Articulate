@@ -476,9 +476,18 @@ $RECYCLE.BIN/
 
 # vscode
 /src/.vscode
+
+# agents
+.omx/
+/.dotnet
+/.dotnetcli
+.claude/
+.omc/
+
 ##
 ## Articulate specific
 ##
+*.crt
 
 # The packages folder can be ignored because of Package Restore
 # except build/, which is used as an MSBuild target.
@@ -509,5 +518,3 @@ $RECYCLE.BIN/
 /src/Articulate.Tests.Website/umbraco-package-schema.json
 /src/Articulate.Tests.Website/appsettings-schema.json
 /src/Articulate.Tests.Website/wwwroot/App_Plugins/Articulate/Themes
-/.dotnet
-*.crt

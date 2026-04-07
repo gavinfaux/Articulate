@@ -1,0 +1,11 @@
+@model IMasterModel
+<form class="search-panel" role="search" method="get" action="@Model.ArticulateSearchUrl()">
+    <label class="search-panel__label" for="term">Search the archive</label>
+    <div class="search-panel__row">
+        <input id="term" name="term" type="search" placeholder="Search posts">
+        <button type="submit">
+            <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+            <span>Search</span>
+        </button>
+    </div>
+</form>
