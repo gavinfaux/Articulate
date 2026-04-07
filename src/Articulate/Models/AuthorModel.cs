@@ -17,6 +17,7 @@ namespace Articulate.Models
             IEnumerable<IPublishedContent>? listItems,
             PagerModel? pager,
             int postCount,
+            DateTime? lastPostDate,
             IPublishedValueFallback publishedValueFallback)
             : base(content, pager, listItems, publishedValueFallback)
         {
@@ -24,7 +25,19 @@ namespace Articulate.Models
             _image = new Lazy<MediaWithCrops?>(() => Unwrap().Value<MediaWithCrops>("authorImage"), true);
 
             // Use Posts collection (from ListModel) instead of obsolete Children property
-            _lastPostDate = new Lazy<DateTime?>(() => Posts.FirstOrDefault()?.Value<DateTime>("publishedDate"), true);
+            _lastPostDate = new Lazy<DateTime?>(
+                () => lastPostDate ?? Posts.FirstOrDefault()?.Value<DateTime>("publishedDate"),
+                true);
+        }
+
+        public AuthorModel(
+            IPublishedContent? content,
+            IEnumerable<IPublishedContent>? listItems,
+            PagerModel? pager,
+            int postCount,
+            IPublishedValueFallback publishedValueFallback)
+            : this(content, listItems, pager, postCount, null, publishedValueFallback)
+        {
         }
 
         /// <summary>

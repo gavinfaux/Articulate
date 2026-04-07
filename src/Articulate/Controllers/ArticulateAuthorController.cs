@@ -72,6 +72,7 @@ namespace Articulate.Controllers
                 posts,
                 pager,
                 totalPosts,
+                posts.FirstOrDefault()?.Value<DateTime>("publishedDate"),
                 PublishedValueFallback);
 
             return View("Author", author);

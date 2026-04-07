@@ -164,11 +164,38 @@ namespace Articulate
                 pager,
                 x => string.Equals(
                     x.Value<string>("author"),
-                    authorName.Replace('-', ' '),
+                    NormalizeAuthorName(authorName),
                     StringComparison.InvariantCultureIgnoreCase),
                 listNodeIds);
 
             return postWithAuthor;
         }
+
+        internal static IReadOnlyDictionary<string, (int PostCount, DateTime? LastPostDate)> GetAuthorPostStatsByAuthor(
+            this UmbracoHelper helper,
+            params int[] articulateArchiveIds)
+        {
+            IEnumerable<IPublishedContent> posts = articulateArchiveIds
+                .Select(helper.Content)
+                .WhereNotNull()
+                .SelectMany(x => x.Descendants());
+
+            return posts
+                .Select(x => new
+                {
+                    AuthorName = NormalizeAuthorName(x.Value<string>("author")),
+                    PublishedDate = x.Value<DateTime>("publishedDate")
+                })
+                .Where(x => !string.IsNullOrWhiteSpace(x.AuthorName))
+                .GroupBy(x => x.AuthorName, StringComparer.InvariantCultureIgnoreCase)
+                .ToDictionary(
+                    x => x.Key,
+                    x => ((int PostCount, DateTime? LastPostDate))(x.Count(), x.Max(p => (DateTime?)p.PublishedDate)),
+                    StringComparer.InvariantCultureIgnoreCase);
+        }
+
+        internal static string NormalizeAuthorName(string? authorName) =>
+            (authorName ?? string.Empty)
+                .Trim();
     }
 }

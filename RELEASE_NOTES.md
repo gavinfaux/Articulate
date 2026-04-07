@@ -19,6 +19,7 @@
 - Obsolete model constructors that accepted `IVariationContextAccessor` have been removed.
 - `ListModel` now requires an explicit `listItems` collection. The older fallback behavior that discovered posts through Umbraco services is no longer available.
 - Built-in Articulate themes can still be copied, but copied themes cannot use a built-in theme name as the destination.
+- `redirectArchive` no longer controls the `/authors/` directory. Themes that provide `Authors.cshtml` render the authors directory; themes without it redirect `/authors/` to the blog root.
 
 ### Theme Migration
 
