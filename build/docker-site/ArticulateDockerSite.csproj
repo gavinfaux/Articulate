@@ -9,5 +9,6 @@
   <ItemGroup>
     <PackageReference Include="Umbraco.Cms" Version="$(UmbracoCmsPackageVersion)" />
     <PackageReference Include="Articulate" Version="$(ArticulatePackageVersion)" />
+    <PackageReference Include="Articulate.Theme.Sample" Version="$(ArticulatePackageVersion)" />
   </ItemGroup>
 </Project>

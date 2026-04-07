@@ -1,6 +1,7 @@
 # Usage:
 #   BUILD_CONFIGURATION=Debug pwsh -NoLogo -File build/build.ps1
 #   ENABLE_CLIENT_BUILD=true pwsh -NoLogo -File build/build.ps1
+#   PACK_SAMPLE_THEME=true pwsh -NoLogo -File build/build.ps1
 # Release builds enable the client build by default so packaged assets carry the stamped version.
 $ScriptStart = Get-Date
 $PSScriptFilePath = Get-Item $MyInvocation.MyCommand.Path
@@ -50,6 +51,7 @@ else {
     $clientBuildValue = $env:ENABLE_CLIENT_BUILD
 }
 $clientBuildProperty = "-p:EnableClientBuild=$clientBuildValue"
+$packSampleTheme = ($env:PACK_SAMPLE_THEME -eq 'true') -or ([string]::IsNullOrEmpty($env:PACK_SAMPLE_THEME) -and -not $runningInCi)
 $dotnetCommon = @("-v", "minimal")
 Write-Host "Using up to $cpu parallel MSBuild nodes"
 Write-Host "Build configuration: $Configuration"
@@ -91,9 +93,13 @@ foreach ($tfm in $TargetFrameworks) {
 # 4) Pack primary projects
 Write-Host "4. Packing projects..."
 $articulateWebProject = (Join-Path $SolutionRoot 'Articulate.Web/Articulate.Web.csproj')
+$articulateThemeSampleProject = (Join-Path $SolutionRoot 'Articulate.Theme.Sample/Articulate.Theme.Sample.csproj')
 $projectsToPack = @(
     $articulateWebProject
 )
+if ($packSampleTheme) {
+    $projectsToPack += $articulateThemeSampleProject
+}
 $packThrottle = 1
 if ($SupportsParallel) {
     $projectsToPack | ForEach-Object -Parallel {

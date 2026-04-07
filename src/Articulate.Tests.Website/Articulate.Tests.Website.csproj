@@ -25,6 +25,10 @@
       <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
       <CopyStaticWebAssetsToPublish>true</CopyStaticWebAssetsToPublish>
     </ProjectReference>
+    <ProjectReference Include="..\Articulate.Theme.Sample\Articulate.Theme.Sample.csproj">
+      <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
+      <CopyStaticWebAssetsToPublish>true</CopyStaticWebAssetsToPublish>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Compile Remove="umbraco\**" />

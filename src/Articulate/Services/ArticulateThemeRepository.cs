@@ -247,12 +247,17 @@ namespace Articulate.Services
                     Task<IEnumerable<string>> userThemesTask = GetUserThemesAsync();
                     IEnumerable<string> packageThemeKeys = GetPackageThemeKeys();
 
-                    IEnumerable<string>[] results =
+                    IEnumerable<string>[] themeKeyGroups =
                         await Task.WhenAll(defaultThemesTask, userThemesTask);
-                    return results[0]
-                        .Union(results[1])
+
+                    IEnumerable<string> defaultThemeKeys = themeKeyGroups[0];
+                    IEnumerable<string> userThemeKeys = themeKeyGroups[1];
+                    WarnForReservedUserThemeKeys(userThemeKeys);
+
+                    return defaultThemeKeys
+                        .Union(userThemeKeys)
                         .Union(packageThemeKeys)
-                        .OrderBy(name => name, StringComparer.OrdinalIgnoreCase);
+                        .OrderBy(themeKey => themeKey, StringComparer.OrdinalIgnoreCase);
                 },
                 TimeSpan.FromSeconds(30));
 
@@ -281,14 +286,26 @@ namespace Articulate.Services
             return GetThemesFromPhysicalPathAsync(physicalPath);
         }
 
+        private void WarnForReservedUserThemeKeys(IEnumerable<string> userThemeKeys)
+        {
+            var builtInThemeKeys = new HashSet<string>(DefaultThemes.AllThemeNames, StringComparer.OrdinalIgnoreCase);
+
+            foreach (string userThemeKey in userThemeKeys.Where(builtInThemeKeys.Contains))
+            {
+                logger.LogWarning(
+                    "User Articulate theme key '{ThemeKey}' matches a built-in theme key. User theme views are searched before built-in theme views.",
+                    userThemeKey);
+            }
+        }
+
         private IEnumerable<string> GetPackageThemeKeys()
         {
-            var builtInThemes = new HashSet<string>(DefaultThemes.AllThemeNames, StringComparer.OrdinalIgnoreCase);
+            var builtInThemeKeys = new HashSet<string>(DefaultThemes.AllThemeNames, StringComparer.OrdinalIgnoreCase);
             var packageThemeKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
             foreach (IArticulateThemeDescriptorProvider provider in themeDescriptorProviders)
             {
-                AddProviderThemeKeys(provider, builtInThemes, packageThemeKeys);
+                AddProviderThemeKeys(provider, builtInThemeKeys, packageThemeKeys);
             }
 
             return packageThemeKeys;
@@ -296,12 +313,12 @@ namespace Articulate.Services
 
         private void AddProviderThemeKeys(
             IArticulateThemeDescriptorProvider provider,
-            HashSet<string> builtInThemes,
+            HashSet<string> builtInThemeKeys,
             HashSet<string> packageThemeKeys)
         {
             foreach (string rawThemeKey in provider.GetThemeKeys())
             {
-                if (!TryNormalizeThemeKey(provider, rawThemeKey, builtInThemes, out string? themeKey))
+                if (!TryNormalizeThemeKey(provider, rawThemeKey, builtInThemeKeys, out string? themeKey))
                 {
                     continue;
                 }
@@ -309,7 +326,7 @@ namespace Articulate.Services
                 if (!packageThemeKeys.Add(themeKey))
                 {
                     logger.LogWarning(
-                        "Skipping duplicate Articulate theme key '{ThemeName}' from provider {ProviderType}.",
+                        "Skipping duplicate Articulate theme key '{ThemeKey}' from provider {ProviderType}.",
                         themeKey,
                         provider.GetType().FullName);
                 }
@@ -319,7 +336,7 @@ namespace Articulate.Services
         private bool TryNormalizeThemeKey(
             IArticulateThemeDescriptorProvider provider,
             string rawThemeKey,
-            HashSet<string> builtInThemes,
+            HashSet<string> builtInThemeKeys,
             [NotNullWhen(true)] out string? themeKey)
         {
             if (string.IsNullOrWhiteSpace(rawThemeKey))
@@ -333,13 +350,13 @@ namespace Articulate.Services
 
             themeKey = rawThemeKey.Trim();
 
-            if (!builtInThemes.Contains(themeKey))
+            if (!builtInThemeKeys.Contains(themeKey))
             {
                 return true;
             }
 
             logger.LogWarning(
-                "Skipping Articulate theme key '{ThemeName}' from provider {ProviderType} because it is reserved for a built-in theme.",
+                "Skipping Articulate theme key '{ThemeKey}' from provider {ProviderType} because it is reserved for a built-in theme.",
                 themeKey,
                 provider.GetType().FullName);
             themeKey = null;

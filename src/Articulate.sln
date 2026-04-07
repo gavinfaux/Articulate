@@ -31,6 +31,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Articulate.Tests.Website", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Articulate.Web", "Articulate.Web\Articulate.Web.csproj", "{151A74D4-597F-42B4-BFDC-11635E44144C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Articulate.Theme.Sample", "Articulate.Theme.Sample\Articulate.Theme.Sample.csproj", "{E8502A12-0C9A-42F0-9E0B-2E55C11E9159}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -49,6 +51,10 @@ Global
 		{151A74D4-597F-42B4-BFDC-11635E44144C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{151A74D4-597F-42B4-BFDC-11635E44144C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{151A74D4-597F-42B4-BFDC-11635E44144C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E8502A12-0C9A-42F0-9E0B-2E55C11E9159}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E8502A12-0C9A-42F0-9E0B-2E55C11E9159}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E8502A12-0C9A-42F0-9E0B-2E55C11E9159}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E8502A12-0C9A-42F0-9E0B-2E55C11E9159}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

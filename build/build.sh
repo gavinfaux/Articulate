@@ -2,6 +2,7 @@
 # Usage:
 #   BUILD_CONFIGURATION=Debug ./build/build.sh
 #   ENABLE_CLIENT_BUILD=true ./build/build.sh
+#   PACK_SAMPLE_THEME=true ./build/build.sh
 # Release builds enable the client build by default so packaged assets carry the stamped version.
 
 set -euo pipefail
@@ -49,6 +50,7 @@ else
 fi
 CLIENT_BUILD_VALUE=${ENABLE_CLIENT_BUILD:-$CLIENT_BUILD_DEFAULT}
 CLIENT_BUILD_PROPERTY="-p:EnableClientBuild=$CLIENT_BUILD_VALUE"
+PACK_SAMPLE_THEME_VALUE=${PACK_SAMPLE_THEME:-}
 
 echo "Using up to $CPU_COUNT parallel MSBuild nodes"
 echo "Build configuration: $CONFIGURATION"
@@ -100,10 +102,14 @@ done
 # --- 4) Pack primary projects ---
 echo "4. Packing projects..."
 ARTICULATE_WEB_PROJECT="$SOLUTION_ROOT/Articulate.Web/Articulate.Web.csproj"
+ARTICULATE_THEME_SAMPLE_PROJECT="$SOLUTION_ROOT/Articulate.Theme.Sample/Articulate.Theme.Sample.csproj"
 
 PACK_PROJECTS=(
   "$ARTICULATE_WEB_PROJECT"
 )
+if [[ "$PACK_SAMPLE_THEME_VALUE" == "true" || ( -z "$PACK_SAMPLE_THEME_VALUE" && "${CI:-}" != "true" && "${GITHUB_ACTIONS:-}" != "true" ) ]]; then
+  PACK_PROJECTS+=("$ARTICULATE_THEME_SAMPLE_PROJECT")
+fi
 
 for proj in "${PACK_PROJECTS[@]}"; do
   echo "[pack] -> $(basename "$proj")"

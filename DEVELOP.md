@@ -55,11 +55,22 @@ pnpm run generate:api
 - For WSL/Linux, make the script executable first with `chmod u+x ./build/build.sh`.
 - `BUILD_CONFIGURATION=Debug` is the default for local builds; Release is the default in packaging flows.
 - `ENABLE_CLIENT_BUILD=true` enables local TypeScript Back Office client builds.
+- `PACK_SAMPLE_THEME=true` forces packing `Articulate.Theme.Sample`; local builds pack it by default, but CI skips it unless explicitly enabled.
 - The scripts clean, restore, build, and pack the current Articulate projects for .NET 9 and .NET 10.
-- The packable NuGet package is produced by `src/Articulate.Web/Articulate.Web.csproj` (`PackageId=Articulate`). If you change packaged runtime dependencies, re-run `dotnet pack src/Articulate.Web/Articulate.Web.csproj -c Release -o build/Release` before validating source-built or Docker-based installs.
-- The Docker build now selects the newest `Articulate.*.nupkg` in `build/Release` by modified time and ignores `.snupkg` files.
-- After rebuilding the Docker image, recreate the `articulate` service so it actually runs the new image: `docker compose up -d --force-recreate --no-deps articulate`.
-- If the Docker back office still appears stale after a rebuild, open `https://localhost:18443/App_Plugins/Articulate/BackOffice/articulate-backoffice.js` and confirm the imported `dashboard.element-*.js` hash matches the files inside the running container.
+- The packable NuGet package is produced by `src/Articulate.Web/Articulate.Web.csproj` (`PackageId=Articulate`). Packages are written under `build/$(Configuration)` by default.
+- If you change packaged runtime dependencies or client/static assets, regenerate the Docker inputs before validating source-built or Docker-based installs:
+  - `dotnet pack src/Articulate.Web/Articulate.Web.csproj -c Release`
+  - `dotnet pack src/Articulate.Theme.Sample/Articulate.Theme.Sample.csproj -c Release`
+- Keep `Articulate` and `Articulate.Theme.Sample` at the same package version in `build/Release`; the Docker site restores both using the selected Articulate package version.
+- The Dockerfile selects the newest `Articulate.[0-9]*.nupkg` in `build/Release` by modified time and ignores `.snupkg` files and theme packages when choosing the version.
+- Rebuilding the image is not enough on its own. A running Compose service can remain on an older image/container. Use `docker compose up -d --build --force-recreate articulate`, or run both steps explicitly:
+  - `docker compose build articulate`
+  - `docker compose up -d --force-recreate --no-deps articulate`
+- The expected image tag is `articulate-local:net10`; the Compose container name will still be project/service based, for example `articulate-pr-articulate-1`.
+- If the Docker back office still appears stale after a rebuild, check the running container, not just the image:
+  - `docker compose ps`
+  - `docker exec articulate-pr-articulate-1 /bin/sh -c "find /app -path '*App_Plugins/Articulate/BackOffice/articulate-backoffice.js' -o -path '*App_Plugins/Articulate/umbraco-package.json'"`
+  - `Invoke-WebRequest https://localhost:18443/App_Plugins/Articulate/BackOffice/articulate-backoffice.js -SkipCertificateCheck`
 - The default unattended Docker backoffice user is `admin@localhost` with password `@rticulate` and display name `Jane Doe`. Override with `UMBRACO_USER_NAME`, `UMBRACO_USER_EMAIL`, and `UMBRACO_USER_PASSWORD` when needed.
 
 ## Back Office Client Builds
