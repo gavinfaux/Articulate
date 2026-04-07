@@ -97,7 +97,7 @@
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<PackageIcon>icon.png</PackageIcon>
 		<PackageTags>blog umbraco umbraco-marketplace oss tags markdown richtext</PackageTags>
-		<PackageOutputPath>$(MSBuildThisFileDirectory)../../build/Release/</PackageOutputPath>
+		<PackageOutputPath>$(MSBuildThisFileDirectory)build/$(Configuration)/</PackageOutputPath>
 		<GeneratePackageOnBuild>False</GeneratePackageOnBuild>
 		<IncludeSymbols>true</IncludeSymbols>
 		<WarnOnPackingNonPackableProject>false</WarnOnPackingNonPackableProject>
