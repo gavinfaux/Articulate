@@ -14,7 +14,8 @@
 *.png 	binary
 *.gif 	binary
 
-*.cs text=auto diff=csharp
+*.cs text eol=lf diff=csharp
+*.cshtml text eol=lf
 *.vb text=auto
 *.c text=auto
 *.cpp text=auto
@@ -55,4 +56,4 @@
 *.dbproj text=auto merge=union
 *.sln text=auto eol=crlf merge=union
 *.sh text eol=lf
-*.gitattributes text=auto
+*.gitattributes text eol=lf
