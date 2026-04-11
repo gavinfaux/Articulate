@@ -341,8 +341,8 @@ export default class ThemeOptionsElement extends UmbLitElement implements IFormC
         ${renderHeaderActions(this.routerPath)}
         <div class="container">
           <p>
-            Articulate's built-in themes are shown here for reference. You can copy them, but the new theme name
-            must not match a built-in theme name.
+            Articulate's built-in themes are shown here for reference. You can copy them, but the new theme name must
+            not match a built-in theme name.
           </p>
         </div>
         <div class="container">${this.#renderThemeGrid()} ${this.#renderDuplicateForm()}</div>

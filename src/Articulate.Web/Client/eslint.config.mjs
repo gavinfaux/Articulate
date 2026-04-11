@@ -47,7 +47,7 @@ export default [
 			...litPlugin.configs.recommended.rules,
 			...wcPlugin.configs.recommended.rules,
 			'no-var': 'error',
-			'import/no-unresolved': 'error',
+			'import/no-unresolved': ['error', { ignore: ['^@umbraco-cms'] }],
 			'import/order': 'warn',
 			'import/no-duplicates': ['warn', { 'prefer-inline': true }],
 			'local-rules/bad-type-import': 'error',

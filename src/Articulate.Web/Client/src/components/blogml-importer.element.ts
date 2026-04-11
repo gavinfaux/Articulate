@@ -22,7 +22,7 @@ import { BoxStyles, ErrorBoxStyles, FormStyles, HostStyles, NodePickerStyles } f
  * @implements {IFormController}
  */
 @customElement('blogml-importer')
-export default class BlogMlImporterElement extends  UmbLitElement implements IFormController {
+export default class BlogMlImporterElement extends UmbLitElement implements IFormController {
   /**
    * Optional router path for the back button.
    * @type {string | undefined}
@@ -688,11 +688,9 @@ export default class BlogMlImporterElement extends  UmbLitElement implements IFo
                         <div style="margin-top: 0.5rem;">
                           ${this._externalImageCount > 0
                             ? html`
-                                This file references ${this._externalImageCount} external image${this._externalImageCount === 1
-                                  ? ''
-                                  : 's'} across ${this._externalHosts.length} host${this._externalHosts.length === 1
-                                  ? ''
-                                  : 's'}.
+                                This file references ${this._externalImageCount} external
+                                image${this._externalImageCount === 1 ? '' : 's'} across ${this._externalHosts.length}
+                                host${this._externalHosts.length === 1 ? '' : 's'}.
                               `
                             : html`This file does not reference any external image attachments.`}
                         </div>
@@ -743,13 +741,15 @@ export default class BlogMlImporterElement extends  UmbLitElement implements IFo
                           : ''}
                         ${this._blockedExternalHosts.length > 0
                           ? html`
-                              <uui-box headline="Some external image hosts are not allowed" style="margin-top: 0.75rem;">
+                              <uui-box
+                                headline="Some external image hosts are not allowed"
+                                style="margin-top: 0.75rem;">
                                 ${this._importFirstImage
                                   ? html`
                                       Posts can still be imported, but external images from these hosts will not be
                                       fetched unless they are added to
-                                      <code>Articulate:AllowedMediaHosts</code>. Import also validates any
-                                      redirect targets, so all fetched hosts must be allowed.
+                                      <code>Articulate:AllowedMediaHosts</code>. Import also validates any redirect
+                                      targets, so all fetched hosts must be allowed.
                                     `
                                   : html`
                                       Posts can still be imported. This only matters if you enable
@@ -761,7 +761,9 @@ export default class BlogMlImporterElement extends  UmbLitElement implements IFo
                                     Hosts to add to Articulate:AllowedMediaHosts
                                   </div>
                                   <code
-                                    style="display: block; white-space: pre-wrap; user-select: all; padding: 0.75rem; border-radius: 6px; background: var(--uui-color-surface-alt);">${this._blockedExternalHosts.join('\n')}</code>
+                                    style="display: block; white-space: pre-wrap; user-select: all; padding: 0.75rem; border-radius: 6px; background: var(--uui-color-surface-alt);"
+                                    >${this._blockedExternalHosts.join('\n')}</code
+                                  >
                                 </div>
                               </uui-box>
                             `
