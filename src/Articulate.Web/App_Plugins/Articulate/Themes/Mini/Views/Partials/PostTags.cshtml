@@ -2,6 +2,8 @@
 @{
     var categories = Model.Categories.ToList();
     var tags = Model.Tags.ToList();
+    var hasCategoriesRoute = Model.HasCategoriesRoute();
+    var hasTagsRoute = Model.HasTagsRoute();
 }
 
 @if (tags.Count > 0 || categories.Count > 0)
@@ -16,7 +18,14 @@
                 @for (int i = 0; i < categories.Count; i++)
                 {
                     var category = categories[i];
-                    <a href="@Model.ArticulateCategoryUrl(category)">@category</a>
+                    if (hasCategoriesRoute)
+                    {
+                        <a href="@Model.ArticulateCategoryUrl(category)">@category</a>
+                    }
+                    else
+                    {
+                        <span>@category</span>
+                    }
                     if (i < categories.Count - 1)
                     {
                         <span>, </span>
@@ -30,8 +39,16 @@
             <div>
                 Posted in
 
-                @Model.ListTags(
-                @<a href="@Model.ArticulateTagUrl(item)">@item</a>)
+                @if (hasTagsRoute)
+                {
+                    @Model.ListTags(
+                    @<a href="@Model.ArticulateTagUrl(item)">@item</a>)
+                }
+                else
+                {
+                    @Model.ListTags(
+                    @<span>@item</span>)
+                }
 
             </div>
         }

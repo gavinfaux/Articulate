@@ -2,10 +2,19 @@
 
 <nav class="menu" role="navigation">
     <ul>
-        <li><a href="@Model.ArticulateCategoriesUrl()">Archive</a></li>
-        <li><a href="@Model.ArticulateTagsUrl()">Tags</a></li>
-        <li>
-            @await Html.PartialAsync("SearchBox", Model)
-        </li>
+        @if (Model.HasCategoriesRoute())
+        {
+            <li><a href="@Model.ArticulateCategoriesUrl()">Archive</a></li>
+        }
+        @if (Model.HasTagsRoute())
+        {
+            <li><a href="@Model.ArticulateTagsUrl()">Tags</a></li>
+        }
+        @if (Model.HasSearchRoute())
+        {
+            <li>
+                @await Html.PartialAsync("SearchBox", Model)
+            </li>
+        }
     </ul>
 </nav>

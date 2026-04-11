@@ -2,6 +2,8 @@
 @{
     Layout = "Master.cshtml";
     ViewBag.CssWrapperClass = "demo-blog--blogpost";
+    var hasTagsRoute = Model.HasTagsRoute();
+    var hasCategoriesRoute = Model.HasCategoriesRoute();
 }
 
 @section header
@@ -39,11 +41,25 @@
             <div class="post-tags">
                 <div>
                     <span>Tags:</span>
-                    @Model.ListTags(@<a class="mdl-color-text--accent" href="@Model.ArticulateTagUrl(item)">@item</a>)
+                    @if (hasTagsRoute)
+                    {
+                        @Model.ListTags(@<a class="mdl-color-text--accent" href="@Model.ArticulateTagUrl(item)">@item</a>)
+                    }
+                    else
+                    {
+                        @Model.ListTags(@<span class="mdl-color-text--accent">@item</span>)
+                    }
                 </div>
                 <div>
                     <span>Categories:</span>
-                    @Model.ListCategories(@<a class="mdl-color-text--accent" href="@Model.ArticulateCategoryUrl(item)">@item</a>, " | ")
+                    @if (hasCategoriesRoute)
+                    {
+                        @Model.ListCategories(@<a class="mdl-color-text--accent" href="@Model.ArticulateCategoryUrl(item)">@item</a>, " | ")
+                    }
+                    else
+                    {
+                        @Model.ListCategories(@<span class="mdl-color-text--accent">@item</span>, " | ")
+                    }
                 </div>
             </div>
         </div>

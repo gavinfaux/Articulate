@@ -66,6 +66,10 @@ namespace Articulate.Controllers
             }
 
             var model = new MasterModel(node, publishedValueFallback);
+            if (!model.HasSearchRoute())
+            {
+                return new NotFoundResult();
+            }
 
             var searchTemplateUrl = model.ArticulateSearchUrl(includeDomain: true) + "?term={searchTerms}";
 
