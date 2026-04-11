@@ -102,7 +102,7 @@ public class ArticulateMigrationPlanExecutedHandler(
             int.MaxValue,
             out _,
             sqlContext.Query<IContent>().Where(x => x.Trashed == false))
-            .Where(x => x.Trashed == false);
+            .Where(x => !x.Trashed);
 
         var publishedAny = false;
         foreach (IContent contentHome in articulateRoots)

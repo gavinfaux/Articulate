@@ -164,18 +164,19 @@ namespace Articulate.Controllers.Api
                 Stream? fileStream = null;
                 try
                 {
-                    fileStream = articulateTempFileSystem.OpenFile(exportFileName);
+                    Stream exportStream = articulateTempFileSystem.OpenFile(exportFileName);
+                    fileStream = exportStream;
 
                     Response.OnCompleted(() =>
                     {
-                        fileStream.Dispose();
+                        exportStream.Dispose();
                         articulateTempFileSystem.DeleteFile(exportFileName);
                         return Task.CompletedTask;
                     });
 
                     Response.Headers.Append("Content-Disposition", $"attachment; filename*=UTF-8''{downloadFileName}");
                     exportSucceeded = true;
-                    return File(fileStream, "application/octet-stream");
+                    return File(exportStream, "application/octet-stream");
                 }
                 catch
                 {
@@ -336,17 +337,18 @@ namespace Articulate.Controllers.Api
 
             try
             {
-                fileStream = articulateTempFileSystem.OpenFile(disqusExportFile);
+                Stream exportStream = articulateTempFileSystem.OpenFile(disqusExportFile);
+                fileStream = exportStream;
 
                 Response.OnCompleted(() =>
                 {
-                    fileStream.Dispose();
+                    exportStream.Dispose();
                     articulateTempFileSystem.DeleteFile(disqusExportFile);
                     return Task.CompletedTask;
                 });
 
                 Response.Headers.Append("Content-Disposition", $"attachment; filename*=UTF-8''{downloadFileName}");
-                return File(fileStream, "application/octet-stream");
+                return File(exportStream, "application/octet-stream");
             }
             catch
             {

@@ -245,13 +245,13 @@ namespace Articulate.Services
                 {
                     Task<IEnumerable<string>> defaultThemesTask = GetDefaultThemesAsync();
                     Task<IEnumerable<string>> userThemesTask = GetUserThemesAsync();
-                    IEnumerable<string> packageThemeKeys = GetPackageThemeKeys();
+                    string[] packageThemeKeys = GetPackageThemeKeys().ToArray();
 
                     IEnumerable<string>[] themeKeyGroups =
                         await Task.WhenAll(defaultThemesTask, userThemesTask);
 
-                    IEnumerable<string> defaultThemeKeys = themeKeyGroups[0];
-                    IEnumerable<string> userThemeKeys = themeKeyGroups[1];
+                    string[] defaultThemeKeys = themeKeyGroups[0].ToArray();
+                    string[] userThemeKeys = themeKeyGroups[1].ToArray();
                     WarnForReservedUserThemeKeys(userThemeKeys);
 
                     return defaultThemeKeys

@@ -27,8 +27,8 @@ namespace Articulate.Services
                         umbracoContext.PublishedRequest.PublishedContent.AncestorOrSelf(ArticulateConstants.ContentType
                             .Articulate);
 
-                    var themeName = articulateRoot?.Value<string>("theme");
-                    if (string.IsNullOrWhiteSpace(themeName) && articulateRoot is not null)
+                    var themeName = articulateRoot.Value<string>("theme");
+                    if (string.IsNullOrWhiteSpace(themeName))
                     {
                         logger.LogInformation("No theme has been set for the Articulate root node '{BlogName}'. Articulate theme view resolution will be bypassed.", articulateRoot.Name);
                     }
