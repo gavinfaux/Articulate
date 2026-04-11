@@ -1,7 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 	<PropertyGroup>
-		<TargetFrameworks Condition="'$(TargetFramework)' == '' and '$(TargetFrameworks)' == ''">net9.0;net10.0</TargetFrameworks>
 		<LangVersion>latest</LangVersion>
 		<!-- TODO: Enable after phased migration. https://learn.microsoft.com/en-us/dotnet/csharp/nullable-migration-strategies -->
 		<Nullable>warnings</Nullable>
@@ -33,19 +32,13 @@
 		<EnableStrictModeForCompatibleFrameworksInPackage>true</EnableStrictModeForCompatibleFrameworksInPackage>
 		<EnableStrictModeForCompatibleTfms>true</EnableStrictModeForCompatibleTfms>
 		<GenerateCompatibilitySuppressionFile>true</GenerateCompatibilitySuppressionFile>
-	</PropertyGroup>
-	<PropertyGroup>
 		<CompressionEnabled>false</CompressionEnabled>
-	</PropertyGroup>
-	<!-- Central client-build defaults; consumed by Articulate.Web to build the backoffice client -->
-	<PropertyGroup>
+		<!-- Central client-build defaults; consumed by Articulate.Web to build the backoffice client -->
 		<EnableClientBuild Condition="'$(EnableClientBuild)'=='' and '$(ENABLE_CLIENT_BUILD)'!=''">$(ENABLE_CLIENT_BUILD)</EnableClientBuild>
 		<EnableClientBuild Condition="'$(EnableClientBuild)'=='' and '$(Configuration)'=='Release' and '$(BuildingInsideVisualStudio)'!='true'">true</EnableClientBuild>
 		<EnableClientBuild Condition="'$(EnableClientBuild)'==''">false</EnableClientBuild>
 		<ClientBuildCommand Condition="'$(ClientBuildCommand)'=='' and ('$(CI)'=='true' or '$(GITHUB_ACTIONS)'=='true' or '$(Configuration)'=='Release')">pnpm run build</ClientBuildCommand>
 		<ClientBuildCommand Condition="'$(ClientBuildCommand)'==''">pnpm run build:dev</ClientBuildCommand>
-	</PropertyGroup>
-	<PropertyGroup>
 		<StaticWebAssetBasePath Condition="'$(StaticWebAssetBasePath)' == ''">/</StaticWebAssetBasePath>
 		<AddRazorSupportForMvc Condition="'$(AddRazorSupportForMvc)' == ''">true</AddRazorSupportForMvc>
 		<NoWarn>$(NoWarn);1591</NoWarn>
@@ -102,11 +95,7 @@
 		<IncludeSymbols>true</IncludeSymbols>
 		<WarnOnPackingNonPackableProject>false</WarnOnPackingNonPackableProject>
 		<NeutralLanguage>en-US</NeutralLanguage>
-	</PropertyGroup>
-
-	<PropertyGroup>
 		<PublishRepositoryUrl>true</PublishRepositoryUrl>
-		<IncludeSymbols>true</IncludeSymbols>
 		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
 	</PropertyGroup>
 
