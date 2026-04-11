@@ -1,5 +1,6 @@
 @model PostModel
 @{
+    Layout = "_Layout.cshtml";
     ViewBag.CssBodyClass = "page-post";
     var absUrl = Model.Url(mode: UrlMode.Absolute);
 }
@@ -57,7 +58,7 @@
         <aside class="author-panel">
             @if (Model.Author.Image is not null)
             {
-                <img class="author-panel__image" src="@Model.Author.Image.GetCropUrl(cropAlias: "wide", preferFocalPoint: true, useCropDimensions: true)" alt="@Model.Author.Name" width="240" height="160">
+                <img class="author-panel__image" src="@Model.Author.Image.GetCropUrl(cropAlias: "wide", preferFocalPoint: true, useCropDimensions: true)" alt="@Model.Author.Name" width="240" height="160" loading="lazy">
             }
             <div>
                 <p class="page-hero__eyebrow">Author</p>

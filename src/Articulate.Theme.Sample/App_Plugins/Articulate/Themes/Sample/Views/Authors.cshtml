@@ -31,7 +31,7 @@ else
             <article class="author-directory-card">
                 @if (!author.CroppedWideUrl.IsNullOrWhiteSpace())
                 {
-                    <a class="author-directory-card__media" href="@author.BlogUrl" aria-label="@author.Name" tabindex="-1">
+                    <a class="author-directory-card__media" href="@author.BlogUrl" aria-hidden="true" tabindex="-1">
                         <img class="author-directory-card__image" src="@author.CroppedWideUrl" alt="" width="640" height="400" loading="lazy">
                     </a>
                 }
@@ -56,7 +56,7 @@ else
                     </div>
 
                     <div class="author-directory-card__actions">
-                        <a class="meta-pill meta-pill--category" href="@author.BlogUrl"><i class="fa-solid fa-archive" aria-hidden="true"></i> View archive</a>
+                        <a class="meta-pill meta-pill--category" href="@author.BlogUrl" tabindex="-1" aria-hidden="true"><i class="fa-solid fa-archive" aria-hidden="true"></i> View archive</a>
                         <a class="meta-pill" href="@author.AuthorRssUrl" aria-label="RSS feed for @author.Name"><i class="fa-solid fa-rss" aria-hidden="true"></i> RSS</a>
                         @if (!author.AuthorUrl.IsNullOrWhiteSpace())
                         {

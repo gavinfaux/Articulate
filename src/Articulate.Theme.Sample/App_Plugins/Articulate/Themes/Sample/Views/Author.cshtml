@@ -1,5 +1,6 @@
 @model AuthorModel
 @{
+    Layout = "_Layout.cshtml";
     ViewBag.CssBodyClass = "page-author";
 }
 
@@ -31,7 +32,7 @@
 
     @if (!Model.CroppedWideUrl.IsNullOrWhiteSpace())
     {
-        <img class="page-hero__portrait" src="@Model.CroppedWideUrl" alt="@Model.Name" width="640" height="400">
+        <img class="page-hero__portrait" src="@Model.CroppedWideUrl" alt="@Model.Name" width="640" height="400" fetchpriority="high">
     }
 </section>
 

@@ -67,7 +67,7 @@ else
                     <p class="feature-story__excerpt">@featuredPost.Excerpt</p>
                 }
                 @await Html.PartialAsync("PostTags", featuredPost)
-                <a class="feature-story__link" href="@featuredUrl"@(featuredIsExternal ? Html.Raw(" rel=\"noopener noreferrer\" target=\"_blank\"") : null)>
+                <a class="feature-story__link" href="@featuredUrl" tabindex="-1" aria-hidden="true"@(featuredIsExternal ? Html.Raw(" rel=\"noopener noreferrer\" target=\"_blank\"") : null)>
                     @if (featuredIsExternal)
                     {
                         <span>Visit link</span>

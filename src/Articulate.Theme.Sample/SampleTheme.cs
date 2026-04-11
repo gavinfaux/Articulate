@@ -1,4 +1,3 @@
-#nullable enable
 using Articulate.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Umbraco.Cms.Core.Composing;
