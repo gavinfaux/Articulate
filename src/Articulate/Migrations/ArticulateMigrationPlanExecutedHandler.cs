@@ -6,6 +6,7 @@ using Umbraco.Cms.Core.Events;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Notifications;
 using Umbraco.Cms.Core.Services;
+using Umbraco.Cms.Infrastructure.Persistence;
 using Umbraco.Cms.Infrastructure.Migrations;
 using Umbraco.Cms.Infrastructure.Migrations.Notifications;
 
@@ -19,6 +20,8 @@ namespace Articulate.Migrations;
 public class ArticulateMigrationPlanExecutedHandler(
     IRuntimeState runtimeState,
     IContentService contentService,
+    IContentTypeService contentTypeService,
+    ISqlContext sqlContext,
     ILogger<ArticulateMigrationPlanExecutedHandler> logger,
     IOptions<ArticulateOptions> options)
     : INotificationHandler<MigrationPlansExecutedNotification>, INotificationHandler<ImportedPackageNotification>
@@ -82,33 +85,69 @@ public class ArticulateMigrationPlanExecutedHandler(
     {
         logger.LogInformation("Beginning Articulate post-migration tasks triggered by {Trigger}", trigger);
 
+        IContentType? articulateContentType = contentTypeService.Get(ArticulateConstants.ContentType.Articulate);
+        if (articulateContentType is null)
+        {
+            logger.LogWarning(
+                "The Articulate content type was not found when handling {Trigger}",
+                trigger);
+            return;
+        }
+
         logger.LogInformation("Attempting to get Articulate root content for trigger {Trigger}", trigger);
-        IContent? contentHome = contentService.GetRootContent()
-            .FirstOrDefault(x => x.ContentType.Alias == ArticulateConstants.ContentType.Articulate);
-        if (contentHome is not null)
+
+        IEnumerable<IContent> articulateRoots = contentService.GetPagedOfType(
+            articulateContentType.Id,
+            0,
+            int.MaxValue,
+            out _,
+            sqlContext.Query<IContent>().Where(x => x.Trashed == false))
+            .Where(x => x.Trashed == false);
+
+        var publishedAny = false;
+        foreach (IContent contentHome in articulateRoots)
         {
             logger.LogInformation(
                 "Found Articulate root node with ID {NodeId} for trigger {Trigger}",
                 contentHome.Id,
                 trigger);
+
             try
             {
                 logger.LogInformation(
                     "Attempting to publish Articulate branch for root node ID {NodeId} and trigger {Trigger}",
                     contentHome.Id,
                     trigger);
+
+                bool isFirstTimePublish = !contentHome.Published;
+                PublishBranchFilter filter = isFirstTimePublish 
+                    ? PublishBranchFilter.IncludeUnpublished 
+                    : PublishBranchFilter.ForceRepublish;
+
+                logger.LogInformation(
+                    "Publish filter for root node ID {NodeId} is {Filter} (FirstTime: {IsFirstTime})",
+                    contentHome.Id,
+                    filter,
+                    isFirstTimePublish);
+
                 IEnumerable<PublishResult> resultEnumerable =
-                    contentService.PublishBranch(contentHome, PublishBranchFilter.IncludeUnpublished, []);
+                    contentService.PublishBranch(contentHome, filter, []);
                 var result = resultEnumerable.ToList();
+                publishedAny = true;
+
                 if (result.All(r => r.Success))
                 {
-                    logger.LogInformation("Published Articulate Home page and descendants after {Trigger}", trigger);
+                    logger.LogInformation(
+                        "Published Articulate Home page and descendants for root node ID {NodeId} after {Trigger}",
+                        contentHome.Id,
+                        trigger);
                 }
                 else
                 {
                     var failures = result.Where(r => !r.Success).ToList();
                     logger.LogWarning(
-                        "Partial publish failure: {FailureCount} items failed for trigger {Trigger}",
+                        "Partial publish failure for root node ID {NodeId}: {FailureCount} items failed for trigger {Trigger}",
+                        contentHome.Id,
                         failures.Count,
                         trigger);
                 }
@@ -117,13 +156,15 @@ public class ArticulateMigrationPlanExecutedHandler(
             {
                 logger.LogError(
                     ex,
-                    "Error publishing Articulate Home page and descendants for trigger {Trigger}",
+                    "Error publishing Articulate Home page and descendants for root node ID {NodeId} after {Trigger}",
+                    contentHome.Id,
                     trigger);
             }
         }
-        else
+
+        if (!publishedAny)
         {
-            logger.LogWarning("The installed Articulate root node was not found when handling {Trigger}", trigger);
+            logger.LogWarning("No installed Articulate root nodes were found when handling {Trigger}", trigger);
         }
     }
 
