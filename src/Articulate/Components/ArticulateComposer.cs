@@ -67,6 +67,7 @@ namespace Articulate.Components
                 .BindConfiguration("Articulate");
 
             _ = builder.AddNotificationHandler<ContentSavingNotification, ContentSavingHandler>();
+            _ = builder.AddNotificationHandler<ContentPublishingNotification, ContentPublishingHandler>();
             _ = builder.AddNotificationAsyncHandler<ContentSavedNotification, ContentSavedAsyncHandler>();
             _ = builder.AddNotificationHandler<ContentTypeSavingNotification, ContentTypeSavingHandler>();
             _ = builder.AddNotificationHandler<ContentCacheRefresherNotification, ContentCacheRefresherHandler>();

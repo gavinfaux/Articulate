@@ -120,8 +120,8 @@ public class ArticulateMigrationPlanExecutedHandler(
                     trigger);
 
                 bool isFirstTimePublish = !contentHome.Published;
-                PublishBranchFilter filter = isFirstTimePublish 
-                    ? PublishBranchFilter.IncludeUnpublished 
+                PublishBranchFilter filter = isFirstTimePublish
+                    ? PublishBranchFilter.IncludeUnpublished
                     : PublishBranchFilter.ForceRepublish;
 
                 logger.LogInformation(
