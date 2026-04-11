@@ -76,7 +76,7 @@ namespace Articulate.Services
             }
 
             IEnumerable<string> permissions = user.GetPermissions(contentItem.Path, userService);
-            return permissionsToCheckList.All(p => permissions.Contains(p));
+            return permissionsToCheckList.All(permissions.Contains);
         }
     }
 }
