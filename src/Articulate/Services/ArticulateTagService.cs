@@ -96,5 +96,33 @@ namespace Articulate.Services
                 return repository.GetAllCategories(masterModel);
             }
         }
+
+        /// <summary>
+        /// Gets all distinct tags or categories for a given blog root path.
+        /// </summary>
+        /// <param name="rootPath">The blog root path.</param>
+        /// <param name="tagGroup">The Umbraco tag group.</param>
+        /// <returns>A collection of distinct tag names.</returns>
+        public IEnumerable<string> GetAllTags(string rootPath, string tagGroup)
+        {
+            using (ScopeProvider.CreateCoreScope(autoComplete: true))
+            {
+                return repository.GetAllTags(rootPath, tagGroup);
+            }
+        }
+
+        /// <summary>
+        /// Gets all distinct tags with IDs for a given blog root path.
+        /// </summary>
+        /// <param name="rootPath">The blog root path.</param>
+        /// <param name="tagGroup">The Umbraco tag group.</param>
+        /// <returns>A collection of tag infos.</returns>
+        internal IEnumerable<ArticulateTagInfo> GetAllTagInfos(string rootPath, string tagGroup)
+        {
+            using (ScopeProvider.CreateCoreScope(autoComplete: true))
+            {
+                return repository.GetAllTagInfos(rootPath, tagGroup);
+            }
+        }
     }
 }

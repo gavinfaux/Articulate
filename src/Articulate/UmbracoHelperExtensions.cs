@@ -1,5 +1,6 @@
 #nullable enable
 using Articulate.Services;
+using Articulate.Routing;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.PublishedCache;
 using Umbraco.Cms.Web.Common;
@@ -66,7 +67,11 @@ namespace Articulate
             ITagQuery tagQuery,
             ArticulateTagService articulateTagService)
         {
-            string tagsBaseUrl = masterModel.RootBlogNode.Value<string>("tagsUrlName") ?? "tags";
+            string? tagsBaseUrl = ArticulateRouteSegmentHelper.GetConfiguredSegment(masterModel.RootBlogNode, "tagsUrlName");
+            if (tagsBaseUrl is null)
+            {
+                return new PostTagCollection([]);
+            }
 
             IEnumerable<PostsByTagModel> contentByTags = articulateTagService.GetContentByTags(
                 helper,

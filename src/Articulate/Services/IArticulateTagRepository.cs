@@ -17,6 +17,22 @@ namespace Articulate.Services
         internal IEnumerable<string> GetAllCategories(IMasterModel masterModel);
 
         /// <summary>
+        /// Gets all distinct tag names for a given blog root path and tag group.
+        /// </summary>
+        /// <param name="rootPath">The root node path to scope the query to.</param>
+        /// <param name="tagGroup">The Umbraco tag group.</param>
+        /// <returns>A collection of distinct tag names.</returns>
+        internal IEnumerable<string> GetAllTags(string rootPath, string tagGroup);
+
+        /// <summary>
+        /// Gets all distinct tags with IDs for a given blog root path and tag group.
+        /// </summary>
+        /// <param name="rootPath">The root node path to scope the query to.</param>
+        /// <param name="tagGroup">The Umbraco tag group.</param>
+        /// <returns>A collection of distinct tag infos.</returns>
+        internal IEnumerable<ArticulateTagInfo> GetAllTagInfos(string rootPath, string tagGroup);
+
+        /// <summary>
         /// Gets all posts grouped by tag for the tags listing page.
         /// </summary>
         /// <param name="helper">The Umbraco helper.</param>

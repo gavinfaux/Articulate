@@ -37,11 +37,11 @@ namespace Articulate.MetaWeblog
         IJsonSerializer jsonSerializer,
         MediaFileManager mediaFileManager,
         IPublishedValueFallback publishedValueFallback,
-        ITagService tagService,
         ILogger<ArticulateMetaWeblogProvider> logger,
         int articulateBlogRootNodeId,
         IArticulateImportMediaService service,
         IArticulateMarkdownConverter articulateMarkdownConverter,
+        ArticulateTagService articulateTagService,
         BackOfficeAuthService backOfficeAuthService)
         : IMetaWeblogProvider
     {
@@ -197,14 +197,15 @@ namespace Articulate.MetaWeblog
         {
             _ = await ValidateUserAsync(username, password);
 
-            // TODO: These would be across all Articulate Blog root nodes :S
-            IEnumerable<ITag> all = await tagService.GetAllAsync(ArticulateConstants.DataType.ArticulateCategories);
+            IEnumerable<ArticulateTagInfo> all = articulateTagService.GetAllTagInfos(
+                BlogRoot().Path,
+                ArticulateConstants.DataType.ArticulateCategories);
 
             CategoryInfo[] tags =
             [
                 .. all.Select(x => new CategoryInfo
                 {
-                    title = x.Text, categoryid = x.Id.ToString(),
+                    title = x.Name, categoryid = x.Id.ToString(CultureInfo.InvariantCulture),
 
                     // TODO: HTML & RSS URL
                 })
@@ -290,10 +291,11 @@ namespace Articulate.MetaWeblog
         {
             _ = await ValidateUserAsync(username, password);
 
-            // TODO: These would be across all Articulate Blog root nodes :S
-            IEnumerable<ITag> all = await tagService.GetAllAsync(ArticulateConstants.DataType.ArticulateTags);
+            IEnumerable<string> all = articulateTagService.GetAllTags(
+                BlogRoot().Path,
+                ArticulateConstants.DataType.ArticulateTags);
 
-            Tag[] tags = [.. all.Select(x => new Tag { name = x.Text })];
+            Tag[] tags = [.. all.Select(x => new Tag { name = x })];
 
             return tags;
         }

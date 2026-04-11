@@ -35,7 +35,7 @@ namespace Articulate.Services
             // TODO: We want to use the core for this, but it's not available, this needs to be implemented: http://issues.umbraco.org/issue/U4-9290
             Sql sql = GetTagQuery(
                     $"{Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.Tag}.id, {Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.Tag}.tag, {Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.Tag}.[group], Count(*) as NodeCount",
-                    masterModel)
+                    masterModel.RootBlogNode.Path)
                 .Where(
                     $"{Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.Tag}." +
                     SqlSyntax.GetQuotedColumnName("group") + " = @tagGroup",
@@ -50,6 +50,49 @@ namespace Articulate.Services
                 Database.Fetch<TagDto>(sql).Select(x => x.Tag).WhereNotNull().OrderBy(x => x);
 
             return results;
+        }
+
+        IEnumerable<string> IArticulateTagRepository.GetAllTags(string rootPath, string tagGroup)
+        {
+            return ((IArticulateTagRepository)this).GetAllTagInfos(rootPath, tagGroup).Select(x => x.Name);
+        }
+
+        IEnumerable<ArticulateTagInfo> IArticulateTagRepository.GetAllTagInfos(string rootPath, string tagGroup)
+        {
+            IEnumerable<ArticulateTagInfo> GetResult()
+            {
+                Sql sql = GetTagQuery(
+                        $"{Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.Tag}.id, {Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.Tag}.tag, {Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.Tag}.[group]",
+                        rootPath)
+                    .Where(
+                        $"{Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.Tag}." +
+                        SqlSyntax.GetQuotedColumnName("group") + " = @tagGroup",
+                        new { tagGroup })
+                    .GroupBy(
+                        $"{Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.Tag}.id",
+                        $"{Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.Tag}.tag",
+                        $"{Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.Tag}." +
+                        SqlSyntax.GetQuotedColumnName("group") + string.Empty);
+
+                return Database.Fetch<TagDto>(sql)
+                    .Where(x => !string.IsNullOrWhiteSpace(x.Tag))
+                    .Select(x => new ArticulateTagInfo(x.TagId, x.Tag!))
+                    .OrderBy(x => x.Name, StringComparer.OrdinalIgnoreCase)
+                    .ToArray();
+            }
+
+#if DEBUG
+            return GetResult();
+#else
+            return (IEnumerable<ArticulateTagInfo>)AppCaches.RuntimeCache.Get(
+                string.Concat(
+                    typeof(ArticulateTagRepository).Name,
+                    nameof(IArticulateTagRepository.GetAllTagInfos),
+                    rootPath,
+                    tagGroup),
+                GetResult,
+                TimeSpan.FromSeconds(30))!;
+#endif
         }
 
         /// <inheritdoc/>
@@ -75,7 +118,7 @@ namespace Articulate.Services
                 {
                     Sql sql = GetTagQuery(
                             $"{Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.TagRelationship}.nodeId, {Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.TagRelationship}.tagId, {Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.Tag}.tag",
-                            masterModel)
+                            masterModel.RootBlogNode.Path)
                         .Where(
                             "tagId IN (@tagIds) AND cmsTags." + SqlSyntax.GetQuotedColumnName("group") + " = @tagGroup",
                             new
@@ -140,7 +183,9 @@ namespace Articulate.Services
         {
             PostsByTagModel GetResult()
             {
-                Sql sqlTags = GetTagQuery($"{Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.Node}.id", masterModel);
+                Sql sqlTags = GetTagQuery(
+                    $"{Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.Node}.id",
+                    masterModel.RootBlogNode.Path);
 
                 // Cast to NVARCHAR to handle tags with hyphens
                 sqlTags.Where(
@@ -241,7 +286,7 @@ namespace Articulate.Services
         }
 
 
-        private Sql GetTagQuery(string selectCols, IMasterModel masterModel)
+        private Sql GetTagQuery(string selectCols, string rootPath)
         {
             Sql sql = new Sql()
                 .Select(selectCols)
@@ -262,7 +307,7 @@ namespace Articulate.Services
                 .Where(
                     $"{Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.Node}." +
                     SqlSyntax.GetQuotedColumnName("path") + " LIKE @path",
-                    new { path = masterModel.RootBlogNode.Path + ",%" });
+                    new { path = rootPath + ",%" });
             return sql;
         }
 
