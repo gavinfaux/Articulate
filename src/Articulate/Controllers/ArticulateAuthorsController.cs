@@ -93,6 +93,8 @@ namespace Articulate.Controllers
             int rootBlogNodeId,
             int[] listNodeIds)
         {
+            ArgumentOutOfRangeException.ThrowIfNegativeOrZero(rootBlogNodeId);
+
             IReadOnlyDictionary<string, (int PostCount, DateTime? LastPostDate)> GetResult() =>
                 umbracoHelper.GetAuthorPostStatsByAuthor(listNodeIds);
 
