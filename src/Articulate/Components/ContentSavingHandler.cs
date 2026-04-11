@@ -47,19 +47,12 @@ namespace Articulate.Components
                         GenerateExcerptIfNeeded(content, contentType);
                     }
                 }
-                else if (IsArticulateRoot(content))
-                {
-                    SetArticulateRootDefaults(content, contentType);
-                }
             }
         }
 
         private static bool IsArticulatePost(IContent content) =>
             content.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateRichText) ||
             content.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateMarkdown);
-
-        private static bool IsArticulateRoot(IContent content) =>
-            content.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.Articulate);
 
         private void SetPostDefaults(IContent content, IContentType contentType)
         {
@@ -77,15 +70,6 @@ namespace Articulate.Components
                 (c, _, culture) => c.GetValue("author", culture?.Culture) is null
                     ? backOfficeSecurityAccessor.BackOfficeSecurity?.CurrentUser?.Name
                     : null);
-
-            // Set enableComments default for new content
-            if (!content.HasIdentity)
-            {
-                content.SetAllPropertyCultureValues(
-                    "enableComments",
-                    contentType,
-                    (_, _, _) => 1);
-            }
         }
 
         private void GenerateExcerptIfNeeded(IContent content, IContentType contentType)
@@ -159,39 +143,6 @@ namespace Articulate.Components
             }
 
             return string.Empty;
-        }
-
-        private void SetArticulateRootDefaults(IContent content, IContentType contentType)
-        {
-            SetPropertyDefault(content, contentType, "theme", "VAPOR");
-            SetPropertyDefault(content, contentType, "pageSize", 10);
-            SetPropertyDefault(content, contentType, "categoriesUrlName", "categories");
-            SetPropertyDefault(content, contentType, "tagsUrlName", "tags");
-            SetPropertyDefault(content, contentType, "searchUrlName", "search");
-            SetPropertyDefault(content, contentType, "categoriesPageName", "Categories");
-            SetPropertyDefault(content, contentType, "tagsPageName", "Tags");
-            SetPropertyDefault(content, contentType, "searchPageName", "Search results");
-        }
-
-        private static void SetPropertyDefault(
-            IContent content,
-            IContentType contentType,
-            string propertyAlias,
-            object defaultValue)
-        {
-            if (!content.HasProperty(propertyAlias))
-            {
-                return;
-            }
-
-            content.SetAllPropertyCultureValues(
-                propertyAlias,
-                contentType,
-                (c, _, culture) =>
-                {
-                    var current = c.GetValue(propertyAlias, culture?.Culture)?.ToString();
-                    return current.IsNullOrWhiteSpace() ? defaultValue : null;
-                });
         }
     }
 }

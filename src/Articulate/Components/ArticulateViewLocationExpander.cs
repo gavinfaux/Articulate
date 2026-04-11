@@ -3,6 +3,7 @@ using Articulate.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace Articulate.Components
 {
@@ -30,6 +31,8 @@ namespace Articulate.Components
 
             if (string.IsNullOrEmpty(themeName))
             {
+                ILogger<ArticulateViewLocationExpander>? logger = context.ActionContext.HttpContext.RequestServices.GetService<ILogger<ArticulateViewLocationExpander>>();
+                logger?.LogDebug("No Articulate theme specified. Bypassing Articulate theme engine and falling back to standard view locations.");
                 return viewLocations;
             }
 
