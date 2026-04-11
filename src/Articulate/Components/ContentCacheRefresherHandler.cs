@@ -9,6 +9,7 @@ using Umbraco.Cms.Core.Services.Changes;
 using Umbraco.Cms.Core.Sync;
 using Umbraco.Cms.Core.Web;
 using Umbraco.Cms.Infrastructure.Scoping;
+using Articulate.Routing;
 
 namespace Articulate.Components
 {
@@ -74,7 +75,12 @@ namespace Articulate.Components
                 return;
             }
 
-            if (content.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.Articulate))
+            if (ArticulateRouteChangeDetector.AffectsArticulateRoutes(
+                    content.Path,
+                    content.Level,
+                    content.SortOrder,
+                    content.ContentType.Alias,
+                    GetArticulateRoots()))
             {
                 EnsureRoutesRefreshQueued();
             }
@@ -90,15 +96,6 @@ namespace Articulate.Components
             using (scopeProvider.CreateScope(autoComplete: true))
             {
                 IPublishedContent? item = umbracoContext.Content.GetById(id);
-
-                // if it's directly related to an articulate node
-                if (item is not null &&
-                    item.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.Articulate))
-                {
-                    // ensure routes are rebuilt
-                    EnsureRoutesRefreshQueued();
-                    return;
-                }
 
                 // We need to handle cases where the state of siblings at a lower sort order directly affect an Articulate node's routing.
                 // This will happen on copy, move, sort, unpublish, delete
@@ -116,19 +113,27 @@ namespace Articulate.Components
                     }
                 }
 
-                IPublishedContentType articulateContentType = publishedContentTypeCache.Get(
-                    PublishedItemType.Content,
-                    ArticulateConstants.ContentType.Articulate);
-
-                IEnumerable<IPublishedContent> articulateNodes =
-                    documentCacheService.GetByContentType(articulateContentType);
-                if (!articulateNodes.Any(node => node.Level == item.Level && node.SortOrder > item.SortOrder))
+                if (!ArticulateRouteChangeDetector.AffectsArticulateRoutes(
+                        item.Path,
+                        item.Level,
+                        item.SortOrder,
+                        item.ContentType.Alias,
+                        GetArticulateRoots()))
                 {
                     return;
                 }
 
                 EnsureRoutesRefreshQueued();
             }
+        }
+
+        private IEnumerable<IPublishedContent> GetArticulateRoots()
+        {
+            IPublishedContentType articulateContentType = publishedContentTypeCache.Get(
+                PublishedItemType.Content,
+                ArticulateConstants.ContentType.Articulate);
+
+            return documentCacheService.GetByContentType(articulateContentType);
         }
     }
 }

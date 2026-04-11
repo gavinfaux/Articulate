@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Routing.Template;
+using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.PublishedCache;
 using Umbraco.Cms.Core.Routing;
@@ -40,8 +41,9 @@ namespace Articulate.Routing
         private static readonly string _sMetaWeblogControllerName =
             ControllerExtensions.GetControllerName<MetaWeblogController>();
 
-        private readonly ConcurrentDictionary<ArticulateRouteTemplate, ArticulateRootNodeCache> _routeCache = new();
+        private ConcurrentDictionary<ArticulateRouteTemplate, ArticulateRootNodeCache> _routeCache = new();
         private readonly IControllerActionSearcher _controllerActionSearcher;
+        private readonly ILogger<ArticulateRouter> _logger;
         private readonly IScopeProvider _scopeProvider;
 
         /// <summary>
@@ -49,20 +51,36 @@ namespace Articulate.Routing
         /// </summary>
         /// <param name="controllerActionSearcher"></param>
         /// <param name="scopeProvider"></param>
-        public ArticulateRouter(IControllerActionSearcher controllerActionSearcher, IScopeProvider scopeProvider)
+        /// <param name="logger"></param>
+        public ArticulateRouter(
+            IControllerActionSearcher controllerActionSearcher,
+            IScopeProvider scopeProvider,
+            ILogger<ArticulateRouter> logger)
         {
             _controllerActionSearcher = controllerActionSearcher;
+            _logger = logger;
             _scopeProvider = scopeProvider;
         }
 
         public bool TryMatch(PathString path, RouteValueDictionary routeValues, out ArticulateRootNodeCache? articulateRootNodeCache)
         {
-            foreach (KeyValuePair<ArticulateRouteTemplate, ArticulateRootNodeCache> item in _routeCache)
+            ConcurrentDictionary<ArticulateRouteTemplate, ArticulateRootNodeCache> routeCache = _routeCache;
+            var defaults = new RouteValueDictionary();
+            RouteValueDictionary initialValues = new(routeValues);
+
+            foreach (KeyValuePair<ArticulateRouteTemplate, ArticulateRootNodeCache> item in routeCache)
             {
-                var templateMatcher = new TemplateMatcher(item.Key.RouteTemplate, routeValues);
-                if (!templateMatcher.TryMatch(path, routeValues))
+                RouteValueDictionary matchedValues = new(initialValues);
+                var templateMatcher = new TemplateMatcher(item.Key.RouteTemplate, defaults);
+                if (!templateMatcher.TryMatch(path, matchedValues))
                 {
                     continue;
+                }
+
+                routeValues.Clear();
+                foreach (KeyValuePair<string, object?> routeValue in matchedValues)
+                {
+                    routeValues[routeValue.Key] = routeValue.Value;
                 }
 
                 articulateRootNodeCache = item.Value;
@@ -98,11 +116,7 @@ namespace Articulate.Routing
 
                     var domains = umbracoContext.Domains.GetAll(false).ToList();
 
-                    // Ensure we always start with an empty cache
-                    // We may call this MapRoutes method again when Articulate root node is published
-                    // and any of the dynamic URLs from the content node change
-                    // So we clear this out, otherwise we will have the previous working URL and the updated URL (Until the site restarts)
-                    _routeCache.Clear();
+                    var rebuiltRouteCache = new ConcurrentDictionary<ArticulateRouteTemplate, ArticulateRootNodeCache>();
 
                     // For each articulate root, we need to create some custom route, BUT routes can overlap
                     // based on multi-tenancy so we need to deal with that.
@@ -126,39 +140,52 @@ namespace Articulate.Routing
                     foreach (IGrouping<string, IPublishedContent> nodeByPathGroup in articulateNodesGroupedByUriPath)
                     {
                         var rootNodePath = nodeByPathGroup.Key.EnsureEndsWith('/');
+                        var groupedNodes = nodeByPathGroup.ToList();
 
-                        foreach (IPublishedContent articulateRootNode in nodeByPathGroup)
+                        ValidateRootPathMappings(
+                            rootNodePath,
+                            groupedNodes,
+                            domains,
+                            new Uri($"{httpContext.Request.Scheme}://{httpContext.Request.Host}{httpContext.Request.PathBase}/"));
+
+                        if (groupedNodes.Count > 1)
                         {
-                            MapRssRoute(httpContext, rootNodePath, articulateRootNode, domains);
+                            _logger.LogDebug(
+                                "Validated {Count} Articulate roots for shared path '{RootNodePath}' with domain-based disambiguation.",
+                                groupedNodes.Count,
+                                rootNodePath);
+                        }
 
-                            MapMarkdownEditorRoute(httpContext, rootNodePath, articulateRootNode, domains);
-                            MapAuthorsRssRoute(httpContext, rootNodePath, articulateRootNode, domains);
+                        foreach (IPublishedContent articulateRootNode in groupedNodes)
+                        {
+                            ArticulateRouteValidator.ValidateConfiguredRouteSegments(articulateRootNode);
 
-                            MapSearchRoute(httpContext, rootNodePath, articulateRootNode, domains);
-                            MapMetaWeblogRoute(httpContext, rootNodePath, articulateRootNode, domains);
-                            MapManifestRoute(httpContext, rootNodePath, articulateRootNode, domains);
-                            MapRsdRoute(httpContext, rootNodePath, articulateRootNode, domains);
-                            MapOpenSearchRoute(httpContext, rootNodePath, articulateRootNode, domains);
+                            MapRssRoute(rebuiltRouteCache, httpContext, rootNodePath, articulateRootNode, domains);
+
+                            MapMarkdownEditorRoute(rebuiltRouteCache, httpContext, rootNodePath, articulateRootNode, domains);
+                            MapAuthorsRssRoute(rebuiltRouteCache, httpContext, rootNodePath, articulateRootNode, domains);
+
+                            MapSearchRoute(rebuiltRouteCache, httpContext, rootNodePath, articulateRootNode, domains);
+                            MapMetaWeblogRoute(rebuiltRouteCache, httpContext, rootNodePath, articulateRootNode, domains);
+                            MapManifestRoute(rebuiltRouteCache, httpContext, rootNodePath, articulateRootNode, domains);
+                            MapRsdRoute(rebuiltRouteCache, httpContext, rootNodePath, articulateRootNode, domains);
+                            MapOpenSearchRoute(rebuiltRouteCache, httpContext, rootNodePath, articulateRootNode, domains);
 
                             // tags/cats routes are the least specific
-                            MapTagsAndCategoriesRoute(httpContext, rootNodePath, articulateRootNode, domains);
+                            MapTagsAndCategoriesRoute(rebuiltRouteCache, httpContext, rootNodePath, articulateRootNode, domains);
                         }
                     }
+
+                    _routeCache = rebuiltRouteCache;
                 }
             }
-        }
-
-        private static List<Domain> DomainsForContent(IPublishedContent content, IReadOnlyList<Domain> domains)
-        {
-            var nodePaths = new HashSet<int>(content.Path.Split(',').Select(int.Parse).ToList());
-
-            return [.. domains.Where(domain => nodePaths.Contains(domain.ContentId))];
         }
 
         /// <summary>
         /// Generically caches a url path for a particular controller
         /// </summary>
         private void MapRoute(
+            ConcurrentDictionary<ArticulateRouteTemplate, ArticulateRootNodeCache> routeCache,
             string? controllerName,
             string? actionName,
             RouteTemplate routeTemplate,
@@ -167,7 +194,7 @@ namespace Articulate.Routing
             IReadOnlyList<Domain> domains)
         {
             var art = new ArticulateRouteTemplate(routeTemplate);
-            if (!_routeCache.TryGetValue(art, out ArticulateRootNodeCache? dynamicRouteValues))
+            if (!routeCache.TryGetValue(art, out ArticulateRootNodeCache? dynamicRouteValues))
             {
                 ControllerActionDescriptor controllerActionDescriptor =
                     _controllerActionSearcher.Find<IRenderController>(
@@ -178,16 +205,44 @@ namespace Articulate.Routing
 
                 dynamicRouteValues = new ArticulateRootNodeCache(controllerActionDescriptor);
 
-                _routeCache[art] = dynamicRouteValues;
+                routeCache[art] = dynamicRouteValues;
+            }
+            else if (!string.Equals(dynamicRouteValues.ControllerActionDescriptor.ControllerName, controllerName, StringComparison.Ordinal) ||
+                     !string.Equals(dynamicRouteValues.ControllerActionDescriptor.ActionName, actionName, StringComparison.Ordinal))
+            {
+                throw new InvalidOperationException(
+                    $"Conflicting Articulate route template '{routeTemplate.TemplateText}' maps to both " +
+                    $"'{dynamicRouteValues.ControllerActionDescriptor.ControllerName}.{dynamicRouteValues.ControllerActionDescriptor.ActionName}' and " +
+                    $"'{controllerName}.{actionName}'. Check the configured route segments on your Articulate roots.");
             }
 
-            dynamicRouteValues.Add(articulateRootNode.Id, DomainsForContent(articulateRootNode, domains));
+            dynamicRouteValues.Add(articulateRootNode.Id, ArticulateRouteValidator.DomainsForContent(articulateRootNode, domains));
         }
 
-        private void MapOpenSearchRoute(HttpContext httpContext, string rootNodePath, IPublishedContent articulateRootNode, List<Domain> domains)
+        private void ValidateRootPathMappings(
+            string rootNodePath,
+            IReadOnlyList<IPublishedContent> articulateRoots,
+            IReadOnlyList<Domain> domains,
+            Uri currentUri)
         {
+            ArticulateRouteValidator.ValidateRootPathMappings(rootNodePath, articulateRoots, domains, currentUri);
+        }
+
+        private void MapOpenSearchRoute(
+            ConcurrentDictionary<ArticulateRouteTemplate, ArticulateRootNodeCache> routeCache,
+            HttpContext httpContext,
+            string rootNodePath,
+            IPublishedContent articulateRootNode,
+            List<Domain> domains)
+        {
+            if (ArticulateRouteSegmentHelper.GetConfiguredSegment(articulateRootNode, "searchUrlName") is null)
+            {
+                return;
+            }
+
             RouteTemplate template = TemplateParser.Parse($"{rootNodePath}opensearch/{{id}}");
             MapRoute(
+                routeCache,
                 _sOpenSearchControllerName,
                 nameof(OpenSearchController.Index),
                 template,
@@ -196,10 +251,16 @@ namespace Articulate.Routing
                 domains);
         }
 
-        private void MapRsdRoute(HttpContext httpContext, string rootNodePath, IPublishedContent articulateRootNode, List<Domain> domains)
+        private void MapRsdRoute(
+            ConcurrentDictionary<ArticulateRouteTemplate, ArticulateRootNodeCache> routeCache,
+            HttpContext httpContext,
+            string rootNodePath,
+            IPublishedContent articulateRootNode,
+            List<Domain> domains)
         {
             RouteTemplate template = TemplateParser.Parse($"{rootNodePath}rsd/{{id}}");
             MapRoute(
+                routeCache,
                 _sRsdControllerName,
                 nameof(RsdController.Index),
                 template,
@@ -208,10 +269,16 @@ namespace Articulate.Routing
                 domains);
         }
 
-        private void MapMetaWeblogRoute(HttpContext httpContext, string rootNodePath, IPublishedContent articulateRootNode, List<Domain> domains)
+        private void MapMetaWeblogRoute(
+            ConcurrentDictionary<ArticulateRouteTemplate, ArticulateRootNodeCache> routeCache,
+            HttpContext httpContext,
+            string rootNodePath,
+            IPublishedContent articulateRootNode,
+            List<Domain> domains)
         {
             RouteTemplate template = TemplateParser.Parse($"{rootNodePath}metaweblog/{{id}}");
             MapRoute(
+                routeCache,
                 _sMetaWeblogControllerName,
                 nameof(MetaWeblogController.Index),
                 template,
@@ -220,10 +287,16 @@ namespace Articulate.Routing
                 domains);
         }
 
-        private void MapManifestRoute(HttpContext httpContext, string rootNodePath, IPublishedContent articulateRootNode, List<Domain> domains)
+        private void MapManifestRoute(
+            ConcurrentDictionary<ArticulateRouteTemplate, ArticulateRootNodeCache> routeCache,
+            HttpContext httpContext,
+            string rootNodePath,
+            IPublishedContent articulateRootNode,
+            List<Domain> domains)
         {
             RouteTemplate template = TemplateParser.Parse($"{rootNodePath}wlwmanifest/{{id}}");
             MapRoute(
+                routeCache,
                 _sWlwControllerName,
                 nameof(WlwManifestController.Index),
                 template,
@@ -235,14 +308,21 @@ namespace Articulate.Routing
         /// <summary>
         /// Create route for root RSS
         /// </summary>
+        /// <param name="routeCache"></param>
         /// <param name="httpContext"></param>
         /// <param name="rootNodePath"></param>
         /// <param name="articulateRootNode"></param>
         /// <param name="domains"></param>
-        private void MapRssRoute(HttpContext httpContext, string rootNodePath, IPublishedContent articulateRootNode, IReadOnlyList<Domain> domains)
+        private void MapRssRoute(
+            ConcurrentDictionary<ArticulateRouteTemplate, ArticulateRootNodeCache> routeCache,
+            HttpContext httpContext,
+            string rootNodePath,
+            IPublishedContent articulateRootNode,
+            IReadOnlyList<Domain> domains)
         {
             RouteTemplate rssTemplate = TemplateParser.Parse($"{rootNodePath}rss");
             MapRoute(
+                routeCache,
                 _sRssControllerName,
                 nameof(ArticulateRssController.Index),
                 rssTemplate,
@@ -252,6 +332,7 @@ namespace Articulate.Routing
 
             RouteTemplate xsltTemplate = TemplateParser.Parse($"{rootNodePath}rss/xslt");
             MapRoute(
+                routeCache,
                 _sRssControllerName,
                 nameof(ArticulateRssController.FeedXslt),
                 xsltTemplate,
@@ -260,10 +341,16 @@ namespace Articulate.Routing
                 domains);
         }
 
-        private void MapAuthorsRssRoute(HttpContext httpContext, string rootNodePath, IPublishedContent articulateRootNode, IReadOnlyList<Domain> domains)
+        private void MapAuthorsRssRoute(
+            ConcurrentDictionary<ArticulateRouteTemplate, ArticulateRootNodeCache> routeCache,
+            HttpContext httpContext,
+            string rootNodePath,
+            IPublishedContent articulateRootNode,
+            IReadOnlyList<Domain> domains)
         {
             RouteTemplate rssTemplate = TemplateParser.Parse($"{rootNodePath}author/{{authorId}}/rss");
             MapRoute(
+                routeCache,
                 _sRssControllerName,
                 nameof(ArticulateRssController.Author),
                 rssTemplate,
@@ -273,13 +360,14 @@ namespace Articulate.Routing
         }
 
         private void MapMarkdownEditorRoute(
+            ConcurrentDictionary<ArticulateRouteTemplate, ArticulateRootNodeCache> routeCache,
             HttpContext httpContext,
             string rootNodePath,
             IPublishedContent articulateRootNode,
             IReadOnlyList<Domain> domains)
         {
             // Primary template derived from the routed path (handles domains)
-            MapMarkdownEditorTemplates($"{rootNodePath}a-new", httpContext, articulateRootNode, domains);
+            MapMarkdownEditorTemplates(routeCache, $"{rootNodePath}a-new", httpContext, articulateRootNode, domains);
 
             // Secondary template derived from the content URL (guards against cases where
             // RoutePathFromNodeUrl() collapses to '/' but the actual URL includes a segment like '/articles/').
@@ -293,12 +381,13 @@ namespace Articulate.Routing
                 pathOnly = pathOnly.EnsureEndsWith('/');
                 if (!pathOnly.Equals(rootNodePath, StringComparison.OrdinalIgnoreCase))
                 {
-                    MapMarkdownEditorTemplates($"{pathOnly}a-new", httpContext, articulateRootNode, domains);
+                    MapMarkdownEditorTemplates(routeCache, $"{pathOnly}a-new", httpContext, articulateRootNode, domains);
                 }
             }
         }
 
         private void MapMarkdownEditorTemplates(
+            ConcurrentDictionary<ArticulateRouteTemplate, ArticulateRootNodeCache> routeCache,
             string basePath,
             HttpContext httpContext,
             IPublishedContent articulateRootNode,
@@ -307,6 +396,7 @@ namespace Articulate.Routing
             // Allow both with and without trailing slash.
             RouteTemplate templateNoSlash = TemplateParser.Parse(basePath.TrimEnd('/'));
             MapRoute(
+                routeCache,
                 MarkdownEditorControllerName,
                 "NewPost",
                 templateNoSlash,
@@ -316,6 +406,7 @@ namespace Articulate.Routing
 
             RouteTemplate templateWithSlash = TemplateParser.Parse(basePath.EnsureEndsWith('/'));
             MapRoute(
+                routeCache,
                 MarkdownEditorControllerName,
                 "NewPost",
                 templateWithSlash,
@@ -324,16 +415,24 @@ namespace Articulate.Routing
                 domains);
         }
 
-        private void MapSearchRoute(HttpContext httpContext, string rootNodePath, IPublishedContent articulateRootNode, IReadOnlyList<Domain> domains)
+        private void MapSearchRoute(
+            ConcurrentDictionary<ArticulateRouteTemplate, ArticulateRootNodeCache> routeCache,
+            HttpContext httpContext,
+            string rootNodePath,
+            IPublishedContent articulateRootNode,
+            IReadOnlyList<Domain> domains)
         {
-            var searchUrlName = articulateRootNode.Value<string>("searchUrlName");
-            if (string.IsNullOrEmpty(searchUrlName))
+            string? searchRoutePath = ArticulateRouteSegmentHelper.CombineRoutePath(
+                rootNodePath,
+                articulateRootNode.Value<string>("searchUrlName"));
+            if (searchRoutePath is null)
             {
                 return; // Skip route if not configured
             }
 
-            RouteTemplate template = TemplateParser.Parse($"{rootNodePath}{searchUrlName}");
+            RouteTemplate template = TemplateParser.Parse(searchRoutePath);
             MapRoute(
+                routeCache,
                 _sSearchControllerName,
                 nameof(ArticulateSearchController.Search),
                 template,
@@ -343,57 +442,50 @@ namespace Articulate.Routing
         }
 
         private void MapTagsAndCategoriesRoute(
+            ConcurrentDictionary<ArticulateRouteTemplate, ArticulateRootNodeCache> routeCache,
             HttpContext httpContext,
             string rootNodePath,
             IPublishedContent articulateRootNode,
             IReadOnlyList<Domain> domains)
         {
-            var categoriesUrlName = articulateRootNode.Value<string>("categoriesUrlName");
-            if (string.IsNullOrEmpty(categoriesUrlName))
+            foreach ((string controllerName, string actionName, string templateText) in GetTagAndCategoryRouteMappings(
+                         rootNodePath,
+                         articulateRootNode.Value<string>("categoriesUrlName"),
+                         articulateRootNode.Value<string>("tagsUrlName")))
             {
-                return;
+                MapRoute(
+                    routeCache,
+                    controllerName,
+                    actionName,
+                    TemplateParser.Parse(templateText),
+                    httpContext,
+                    articulateRootNode,
+                    domains);
+            }
+        }
+
+        private static List<(string ControllerName, string ActionName, string TemplateText)> GetTagAndCategoryRouteMappings(
+            string rootNodePath,
+            string? categoriesUrlName,
+            string? tagsUrlName)
+        {
+            List<(string ControllerName, string ActionName, string TemplateText)> mappings = [];
+
+            string? categoriesRoutePath = ArticulateRouteSegmentHelper.CombineRoutePath(rootNodePath, categoriesUrlName);
+            if (categoriesRoutePath is not null)
+            {
+                mappings.Add((_sTagsControllerName, nameof(ArticulateTagsController.Categories), $"{categoriesRoutePath}/{{tag?}}"));
+                mappings.Add((_sRssControllerName, nameof(ArticulateRssController.Categories), $"{categoriesRoutePath}/{{tag}}/rss"));
             }
 
-            RouteTemplate categoriesTemplate = TemplateParser.Parse($"{rootNodePath}{categoriesUrlName}/{{tag?}}");
-            MapRoute(
-                _sTagsControllerName,
-                nameof(ArticulateTagsController.Categories),
-                categoriesTemplate,
-                httpContext,
-                articulateRootNode,
-                domains);
-            RouteTemplate categoriesRssTemplate =
-                TemplateParser.Parse($"{rootNodePath}{categoriesUrlName}/{{tag}}/rss");
-            MapRoute(
-                _sRssControllerName,
-                nameof(ArticulateRssController.Categories),
-                categoriesRssTemplate,
-                httpContext,
-                articulateRootNode,
-                domains);
-
-            var tagsUrlName = articulateRootNode.Value<string>("tagsUrlName");
-            if (string.IsNullOrEmpty(tagsUrlName))
+            string? tagsRoutePath = ArticulateRouteSegmentHelper.CombineRoutePath(rootNodePath, tagsUrlName);
+            if (tagsRoutePath is not null)
             {
-                return;
+                mappings.Add((_sTagsControllerName, nameof(ArticulateTagsController.Tags), $"{tagsRoutePath}/{{tag?}}"));
+                mappings.Add((_sRssControllerName, nameof(ArticulateRssController.Tags), $"{tagsRoutePath}/{{tag}}/rss"));
             }
 
-            RouteTemplate tagsTemplate = TemplateParser.Parse($"{rootNodePath}{tagsUrlName}/{{tag?}}");
-            MapRoute(
-                _sTagsControllerName,
-                nameof(ArticulateTagsController.Tags),
-                tagsTemplate,
-                httpContext,
-                articulateRootNode,
-                domains);
-            RouteTemplate tagsRssTemplate = TemplateParser.Parse($"{rootNodePath}{tagsUrlName}/{{tag}}/rss");
-            MapRoute(
-                _sRssControllerName,
-                nameof(ArticulateRssController.Tags),
-                tagsRssTemplate,
-                httpContext,
-                articulateRootNode,
-                domains);
+            return mappings;
         }
     }
 }

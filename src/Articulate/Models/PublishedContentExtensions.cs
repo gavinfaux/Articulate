@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Text.Encodings.Web;
+using Articulate.Routing;
 using Microsoft.AspNetCore.Html;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Razor;
@@ -166,11 +167,24 @@ namespace Articulate.Models
         /// <param name="model"></param>
         /// <param name="includeDomain"></param>
         /// <returns></returns>
-        public static string ArticulateSearchUrl(this IMasterModel model, bool includeDomain = false) =>
-            (includeDomain
+        public static string ArticulateSearchUrl(this IMasterModel model, bool includeDomain = false)
+        {
+            var searchRouteSegment = ArticulateRouteSegmentHelper.GetConfiguredSegment(model.RootBlogNode, "searchUrlName");
+            if (searchRouteSegment is null)
+            {
+                return string.Empty;
+            }
+
+            return (includeDomain
                 ? model.RootBlogNode.Url(mode: UrlMode.Absolute).EnsureEndsWith('/')
-                : model.RootBlogNode.Url().EnsureEndsWith('/')) +
-            model.RootBlogNode.Value<string>("searchUrlName");
+                : model.RootBlogNode.Url().EnsureEndsWith('/')) + searchRouteSegment;
+        }
+
+        /// <summary>
+        /// Returns true when the blog has a configured search route.
+        /// </summary>
+        public static bool HasSearchRoute(this IMasterModel model) =>
+            ArticulateRouteSegmentHelper.GetConfiguredSegment(model.RootBlogNode, "searchUrlName") is not null;
 
         /// <summary>
         /// Returns true when the current request is the blog's search route.
@@ -202,9 +216,19 @@ namespace Articulate.Models
         /// Returns the default categories list URL for blog posts
         /// </summary>
         /// <param name="model"></param>
-        public static string ArticulateCategoriesUrl(this IMasterModel model) =>
-            model.RootBlogNode.Url().EnsureEndsWith('/') +
-            model.RootBlogNode.Value<string>("categoriesUrlName");
+        public static string ArticulateCategoriesUrl(this IMasterModel model)
+        {
+            var categoriesRouteSegment = ArticulateRouteSegmentHelper.GetConfiguredSegment(model.RootBlogNode, "categoriesUrlName");
+            return categoriesRouteSegment is null
+                ? string.Empty
+                : model.RootBlogNode.Url().EnsureEndsWith('/') + categoriesRouteSegment;
+        }
+
+        /// <summary>
+        /// Returns true when the blog has a configured categories route.
+        /// </summary>
+        public static bool HasCategoriesRoute(this IMasterModel model) =>
+            ArticulateRouteSegmentHelper.GetConfiguredSegment(model.RootBlogNode, "categoriesUrlName") is not null;
 
         /// <summary>
         /// Returns the authors list URL
@@ -220,9 +244,19 @@ namespace Articulate.Models
         /// </summary>
         /// <param name="model"></param>
         /// <returns></returns>
-        public static string ArticulateTagsUrl(this IMasterModel model) =>
-            model.RootBlogNode.Url().EnsureEndsWith('/') +
-            model.RootBlogNode.Value<string>("tagsUrlName");
+        public static string ArticulateTagsUrl(this IMasterModel model)
+        {
+            var tagsRouteSegment = ArticulateRouteSegmentHelper.GetConfiguredSegment(model.RootBlogNode, "tagsUrlName");
+            return tagsRouteSegment is null
+                ? string.Empty
+                : model.RootBlogNode.Url().EnsureEndsWith('/') + tagsRouteSegment;
+        }
+
+        /// <summary>
+        /// Returns true when the blog has a configured tags route.
+        /// </summary>
+        public static bool HasTagsRoute(this IMasterModel model) =>
+            ArticulateRouteSegmentHelper.GetConfiguredSegment(model.RootBlogNode, "tagsUrlName") is not null;
 
         /// <summary>
         /// Returns the url for a single tag
@@ -230,10 +264,13 @@ namespace Articulate.Models
         /// <param name="model"></param>
         /// <param name="tag"></param>
         /// <returns></returns>
-        public static string ArticulateTagUrl(this IMasterModel model, string tag) =>
-            model.RootBlogNode.Url().EnsureEndsWith('/') +
-            model.RootBlogNode.Value<string>("tagsUrlName")?.EnsureEndsWith('/') +
-            tag.SafeEncodeUrlSegments();
+        public static string ArticulateTagUrl(this IMasterModel model, string tag)
+        {
+            var tagsRouteSegment = ArticulateRouteSegmentHelper.GetConfiguredSegment(model.RootBlogNode, "tagsUrlName");
+            return tagsRouteSegment is null
+                ? string.Empty
+                : model.RootBlogNode.Url().EnsureEndsWith('/') + tagsRouteSegment.EnsureEndsWith('/') + tag.SafeEncodeUrlSegments();
+        }
 
         /// <summary>
         /// Returns the url for a single category
@@ -241,16 +278,24 @@ namespace Articulate.Models
         /// <param name="model"></param>
         /// <param name="category"></param>
         /// <returns></returns>
-        public static string ArticulateCategoryUrl(this IMasterModel model, string category) =>
-            model.RootBlogNode.Url().EnsureEndsWith('/') +
-            model.RootBlogNode.Value<string>("categoriesUrlName")?.EnsureEndsWith('/') +
-            category.SafeEncodeUrlSegments();
+        public static string ArticulateCategoryUrl(this IMasterModel model, string category)
+        {
+            var categoriesRouteSegment = ArticulateRouteSegmentHelper.GetConfiguredSegment(model.RootBlogNode, "categoriesUrlName");
+            return categoriesRouteSegment is null
+                ? string.Empty
+                : model.RootBlogNode.Url().EnsureEndsWith('/') + categoriesRouteSegment.EnsureEndsWith('/') + category.SafeEncodeUrlSegments();
+        }
 
         /// <summary>
         /// Renders the OpenSearch link tag.
         /// </summary>
         public static IHtmlContent RenderOpenSearch(this IMasterModel model)
         {
+            if (!model.HasSearchRoute())
+            {
+                return HtmlString.Empty;
+            }
+
             var openSearchUrl = model.RootBlogNode.Url(mode: UrlMode.Absolute).EnsureEndsWith('/') + "opensearch/" +
                                 model.RootBlogNode.Id;
 

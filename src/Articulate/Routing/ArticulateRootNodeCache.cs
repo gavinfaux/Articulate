@@ -20,7 +20,8 @@ namespace Articulate.Routing
         public int GetContentId(Domain? currentDomain)
         {
             KeyValuePair<int, IReadOnlyList<Domain>> found = _content.FirstOrDefault(x =>
-                (currentDomain is null && x.Value.Count == 0) || x.Value.Any(d => d.Id == currentDomain?.Id));
+                (currentDomain is null && x.Value.Count == 0) ||
+                (currentDomain is not null && x.Value.Any(d => ArticulateDomainMatcher.Matches(d, currentDomain, (currentDomain as DomainAndUri)?.Uri))));
 
             return found.Key; // 0 if no match (default KeyValuePair<int,...>.Key)
         }
