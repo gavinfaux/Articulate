@@ -9,6 +9,7 @@ jobs:
   build-linux:
     runs-on: ubuntu-latest
     env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       RELEASE_FOLDER: build/Release
 
     steps:

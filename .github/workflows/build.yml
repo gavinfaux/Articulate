@@ -8,6 +8,7 @@ jobs:
     runs-on: windows-latest
 
     env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       Solution_File: src\Articulate.sln
       Release_Folder: build\Release
       Build_Folder: build
