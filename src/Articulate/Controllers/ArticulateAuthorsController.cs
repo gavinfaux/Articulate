@@ -44,8 +44,10 @@ namespace Articulate.Controllers
             if (!EnsurePhysicalViewExists("Authors"))
             {
                 logger.LogInformation(
-                    "ArticulateAuthorsController: No Authors.cshtml view found. " +
-                    "Redirecting authors directory to blog root.");
+                    "ArticulateAuthorsController: No Authors.cshtml view found for Articulate root {RootId} using theme '{Theme}'. " +
+                    "Redirecting authors directory to blog root.",
+                    root.RootBlogNode.Id,
+                    root.Theme);
 
                 return RedirectPermanent(root.RootBlogNode.Url());
             }

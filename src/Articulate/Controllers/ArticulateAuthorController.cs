@@ -48,6 +48,14 @@ namespace Articulate.Controllers
             IPublishedContent[] listNodes = archiveNodes.ToArray();
             if (listNodes.Length == 0)
             {
+                logger.LogWarning(
+                    "ArticulateAuthorController: No ArticulateArchive child nodes found for root {RootId} ('{RootName}') using theme '{Theme}' while rendering author page {PageId} ('{PageName}').",
+                    masterModel.RootBlogNode.Id,
+                    masterModel.RootBlogNode.Name,
+                    masterModel.Theme,
+                    CurrentPage.Id,
+                    CurrentPage.Name);
+
                 throw new InvalidOperationException(
                     "An ArticulateArchive document must exist under the root Articulate document");
             }
