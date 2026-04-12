@@ -2,6 +2,7 @@
 # Usage:
 #   BUILD_CONFIGURATION=Debug ./build/build.sh
 #   ENABLE_CLIENT_BUILD=true ./build/build.sh
+#   RUN_TESTS=true ./build/build.sh
 #   PACK_SAMPLE_THEME=true ./build/build.sh
 # Release builds enable the client build by default so packaged assets carry the stamped version.
 
@@ -51,6 +52,13 @@ fi
 CLIENT_BUILD_VALUE=${ENABLE_CLIENT_BUILD:-$CLIENT_BUILD_DEFAULT}
 CLIENT_BUILD_PROPERTY="-p:EnableClientBuild=$CLIENT_BUILD_VALUE"
 PACK_SAMPLE_THEME_VALUE=${PACK_SAMPLE_THEME:-}
+if [[ -n "${RUN_TESTS:-}" ]]; then
+  RUN_TESTS_VALUE="$RUN_TESTS"
+elif [[ "${CI:-}" == "true" || "${GITHUB_ACTIONS:-}" == "true" ]]; then
+  RUN_TESTS_VALUE=true
+else
+  RUN_TESTS_VALUE=false
+fi
 
 echo "Using up to $CPU_COUNT parallel MSBuild nodes"
 echo "Build configuration: $CONFIGURATION"
@@ -99,8 +107,19 @@ for tfm in "${TARGET_FRAMEWORKS[@]}"; do
   echo "[build] <- $tfm done in $((t1 - t0))s"
 done
 
-# --- 4) Pack primary projects ---
-echo "4. Packing projects..."
+# --- 4) Run tests ---
+if [[ "$RUN_TESTS_VALUE" == "true" ]]; then
+  echo "4. Running tests..."
+  if ! dotnet test "$SOLUTION_PATH" -c "$CONFIGURATION" --no-restore --no-build "${DOTNET_COMMON[@]}"; then
+    echo "dotnet test failed" >&2
+    exit 1
+  fi
+else
+  echo "4. Skipping tests (set RUN_TESTS=true to enable locally)"
+fi
+
+# --- 5) Pack primary projects ---
+echo "5. Packing projects..."
 ARTICULATE_WEB_PROJECT="$SOLUTION_ROOT/Articulate.Web/Articulate.Web.csproj"
 ARTICULATE_THEME_SAMPLE_PROJECT="$SOLUTION_ROOT/Articulate.Theme.Sample/Articulate.Theme.Sample.csproj"
 

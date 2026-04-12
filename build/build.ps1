@@ -1,6 +1,7 @@
 # Usage:
 #   BUILD_CONFIGURATION=Debug pwsh -NoLogo -File build/build.ps1
 #   ENABLE_CLIENT_BUILD=true pwsh -NoLogo -File build/build.ps1
+#   RUN_TESTS=true pwsh -NoLogo -File build/build.ps1
 #   PACK_SAMPLE_THEME=true pwsh -NoLogo -File build/build.ps1
 # Release builds enable the client build by default so packaged assets carry the stamped version.
 $ScriptStart = Get-Date
@@ -44,6 +45,12 @@ if ($env:MAXCPU -and ($env:MAXCPU -as [int]) -gt 0) {
 }
 $msbuildArgs = @("-m", "-maxcpucount:$cpu", "-p:BuildInParallel=true", "-p:RestoreUseStaticGraphEvaluation=true")
 $runningInCi = ($env:CI -eq 'true') -or ($env:GITHUB_ACTIONS -eq 'true')
+if ([string]::IsNullOrEmpty($env:RUN_TESTS)) {
+    $runTests = $runningInCi
+}
+else {
+    $runTests = $env:RUN_TESTS -eq 'true'
+}
 if ([string]::IsNullOrEmpty($env:ENABLE_CLIENT_BUILD)) {
     $clientBuildValue = if ($runningInCi -or $Configuration -eq 'Release') { 'true' } else { 'false' }
 }
@@ -90,8 +97,18 @@ foreach ($tfm in $TargetFrameworks) {
     Write-Host "[build] <- $tfm done in $([int]$sw.Elapsed.TotalSeconds)s"
 }
 
-# 4) Pack primary projects
-Write-Host "4. Packing projects..."
+# 4) Run tests
+if ($runTests) {
+    Write-Host "4. Running tests..."
+    & dotnet test $SolutionPath -c $Configuration --no-restore --no-build @dotnetCommon
+    if ($LASTEXITCODE -ne 0) { throw "dotnet test failed" }
+}
+else {
+    Write-Host "4. Skipping tests (set RUN_TESTS=true to enable locally)"
+}
+
+# 5) Pack primary projects
+Write-Host "5. Packing projects..."
 $articulateWebProject = (Join-Path $SolutionRoot 'Articulate.Web/Articulate.Web.csproj')
 $articulateThemeSampleProject = (Join-Path $SolutionRoot 'Articulate.Theme.Sample/Articulate.Theme.Sample.csproj')
 $projectsToPack = @(

@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFrameworks>net9.0;net10.0</TargetFrameworks>
@@ -23,6 +23,7 @@
   <ItemGroup>
 
     <InternalsVisibleTo Include="Articulate.Web" />
+    <InternalsVisibleTo Include="Articulate.Tests" />
   </ItemGroup>
 
   <!-- RESOURCES: Only embed things specific to Core (The Starter Kit Installer data) -->
