@@ -454,6 +454,13 @@ namespace Articulate.Controllers.Api
             }
 
             await content.SetInvariantOrDefaultCultureValueAsync(
+                "enableComments",
+                true,
+                contentType,
+                languageService,
+                logger);
+
+            await content.SetInvariantOrDefaultCultureValueAsync(
                 "author",
                 currentUser.Name ?? "Unknown",
                 contentType,

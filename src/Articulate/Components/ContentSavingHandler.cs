@@ -70,6 +70,15 @@ namespace Articulate.Components
                 (c, _, culture) => c.GetValue("author", culture?.Culture) is null
                     ? backOfficeSecurityAccessor.BackOfficeSecurity?.CurrentUser?.Name
                     : null);
+
+            // Keep comments enabled by default for new posts created outside the backoffice UI.
+            if (!content.HasIdentity)
+            {
+                content.SetAllPropertyCultureValues(
+                    "enableComments",
+                    contentType,
+                    (_, _, _) => 1);
+            }
         }
 
         private void GenerateExcerptIfNeeded(IContent content, IContentType contentType)
