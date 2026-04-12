@@ -43,7 +43,9 @@ namespace Articulate.Components
                     break;
                 case MessageType.RefreshById:
                 case MessageType.RemoveById:
-                    RefreshById((int)notification.MessageObject);
+                    RefreshById(
+                        (int)notification.MessageObject,
+                        notification.MessageType == MessageType.RemoveById);
                     break;
                 case MessageType.RefreshByInstance:
                 case MessageType.RemoveByInstance:
@@ -63,7 +65,9 @@ namespace Articulate.Components
                 if (payload.ChangeTypes.HasTypesAny(TreeChangeTypes.Remove | TreeChangeTypes.RefreshBranch |
                                                     TreeChangeTypes.RefreshNode))
                 {
-                    RefreshById(payload.Id);
+                    RefreshById(
+                        payload.Id,
+                        payload.ChangeTypes.HasTypesAny(TreeChangeTypes.Remove));
                 }
             }
         }
@@ -71,6 +75,11 @@ namespace Articulate.Components
         private void HandleRefreshByInstance(object messageObject)
         {
             if (messageObject is not IContent content)
+            {
+                return;
+            }
+
+            if (!content.Published)
             {
                 return;
             }
@@ -86,7 +95,7 @@ namespace Articulate.Components
             }
         }
 
-        private void RefreshById(int id)
+        private void RefreshById(int id, bool allowUnpublishedRefresh)
         {
             if (!umbracoContextAccessor.TryGetUmbracoContext(out IUmbracoContext? umbracoContext))
             {
@@ -109,6 +118,11 @@ namespace Articulate.Components
                     if (item is null)
                     {
                         EnsureRoutesRefreshQueued();
+                        return;
+                    }
+
+                    if (!allowUnpublishedRefresh)
+                    {
                         return;
                     }
                 }

@@ -24,7 +24,7 @@ namespace Articulate.Components
         ILogger<ContentPublishingHandler> logger)
         : INotificationHandler<ContentPublishingNotification>
     {
-        private static readonly Uri _validationUri = new("https://localhost/");
+        private static readonly Uri _domainValidationBaseUri = new("https://localhost/");
 
         /// <inheritdoc/>
         public void Handle(ContentPublishingNotification notification)
@@ -98,7 +98,7 @@ namespace Articulate.Components
                     group.Key,
                     group.ToList(),
                     domains,
-                    _validationUri);
+                    _domainValidationBaseUri);
             }
         }
 

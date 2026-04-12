@@ -8,14 +8,15 @@ using Umbraco.Cms.Core.Services;
 namespace Articulate.Components
 {
     /// <summary>
-    /// Notification handler to ensure required sub-nodes exist when an Articulate root node is saved.
+    /// Ensures required Articulate root child nodes exist on save and are published with the root when needed.
     /// </summary>
-    public class ContentSavedAsyncHandler(
+    public class ArticulateRootContentLifecycleHandler(
         IContentTypeService contentTypeService,
         IContentService contentService,
         ILanguageService languageService,
-        ILogger<ContentSavedAsyncHandler> logger)
-        : INotificationAsyncHandler<ContentSavedNotification>
+        ILogger<ArticulateRootContentLifecycleHandler> logger)
+        : INotificationAsyncHandler<ContentSavedNotification>,
+            INotificationAsyncHandler<ContentPublishedNotification>
     {
         /// <inheritdoc/>
         public async Task HandleAsync(ContentSavedNotification notification, CancellationToken cancellationToken)
@@ -28,11 +29,10 @@ namespace Articulate.Components
                     continue;
                 }
 
-                // it's a root blog node, set up the required sub nodes (archive , authors) if they don't exist
                 var defaultLang = await languageService.GetDefaultIsoCodeAsync();
                 cancellationToken.ThrowIfCancellationRequested();
 
-                EnsureChildNodeExists(
+                _ = EnsureChildNodeExists(
                     c,
                     ArticulateConstants.ContentType.ArticulateArchive,
                     ArticulateConstants.Convention.ArticlesDocument,
@@ -41,7 +41,7 @@ namespace Articulate.Components
 
                 cancellationToken.ThrowIfCancellationRequested();
 
-                EnsureChildNodeExists(
+                _ = EnsureChildNodeExists(
                     c,
                     ArticulateConstants.ContentType.ArticulateAuthors,
                     ArticulateConstants.Convention.AuthorsDocument,
@@ -50,7 +50,42 @@ namespace Articulate.Components
             }
         }
 
-        private void EnsureChildNodeExists(
+        /// <inheritdoc/>
+        public async Task HandleAsync(ContentPublishedNotification notification, CancellationToken cancellationToken)
+        {
+            foreach (IContent root in notification.PublishedEntities)
+            {
+                if (!root.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.Articulate))
+                {
+                    continue;
+                }
+
+                var defaultLang = await languageService.GetDefaultIsoCodeAsync();
+                cancellationToken.ThrowIfCancellationRequested();
+
+                PublishRequiredChildNode(
+                    EnsureChildNodeExists(
+                        root,
+                        ArticulateConstants.ContentType.ArticulateArchive,
+                        ArticulateConstants.Convention.ArticlesDocument,
+                        defaultLang,
+                        cancellationToken),
+                    cancellationToken);
+
+                cancellationToken.ThrowIfCancellationRequested();
+
+                PublishRequiredChildNode(
+                    EnsureChildNodeExists(
+                        root,
+                        ArticulateConstants.ContentType.ArticulateAuthors,
+                        ArticulateConstants.Convention.AuthorsDocument,
+                        defaultLang,
+                        cancellationToken),
+                    cancellationToken);
+            }
+        }
+
+        private IContent? EnsureChildNodeExists(
             IContent parent,
             string contentTypeAlias,
             string documentName,
@@ -64,12 +99,13 @@ namespace Articulate.Components
                     "Content type {ContentTypeAlias} not found when ensuring child for parent {ParentId}",
                     contentTypeAlias,
                     parent.Id);
-                return;
+                return null;
             }
 
-            if (ChildExists(parent.Id, contentType.Id, cancellationToken))
+            IContent? existingChild = GetChild(parent.Id, contentType.Id, cancellationToken);
+            if (existingChild is not null)
             {
-                return;
+                return existingChild;
             }
 
             IContent child = contentService.Create(string.Empty, parent, contentTypeAlias);
@@ -85,10 +121,10 @@ namespace Articulate.Components
             OperationResult saveResult = contentService.Save(child);
             if (!saveResult.Success)
             {
-                // Mitigate race: if another request created it after our initial check, skip without error.
-                if (ChildExists(parent.Id, contentType.Id, cancellationToken))
+                existingChild = GetChild(parent.Id, contentType.Id, cancellationToken);
+                if (existingChild is not null)
                 {
-                    return;
+                    return existingChild;
                 }
 
                 logger.LogError(
@@ -96,10 +132,33 @@ namespace Articulate.Components
                     contentTypeAlias,
                     parent.Id,
                     saveResult);
+                return null;
+            }
+
+            return child;
+        }
+
+        private void PublishRequiredChildNode(IContent? child, CancellationToken cancellationToken)
+        {
+            if (child is null || child.Published)
+            {
+                return;
+            }
+
+            cancellationToken.ThrowIfCancellationRequested();
+
+            PublishResult publishResult = contentService.Publish(child, ["*"]);
+            if (!publishResult.Success)
+            {
+                logger.LogError(
+                    "Failed to publish required child node {NodeId} ({ContentType}): {PublishResult}",
+                    child.Id,
+                    child.ContentType.Alias,
+                    publishResult);
             }
         }
 
-        private bool ChildExists(int parentId, int contentTypeId, CancellationToken cancellationToken)
+        private IContent? GetChild(int parentId, int contentTypeId, CancellationToken cancellationToken)
         {
             const int pageSize = 50;
             var pageIndex = 0;
@@ -114,14 +173,15 @@ namespace Articulate.Components
                         contentService.GetPagedChildrenCompat(parentId, pageIndex, pageSize, out var total);
                     var items = page.ToList();
 
-                    if (items.Any(x => x.ContentTypeId == contentTypeId))
+                    IContent? existingChild = items.FirstOrDefault(x => x.ContentTypeId == contentTypeId);
+                    if (existingChild is not null)
                     {
-                        return true;
+                        return existingChild;
                     }
 
                     if (items.Count == 0 || (pageIndex + 1) * pageSize >= total)
                     {
-                        return false;
+                        return null;
                     }
 
                     pageIndex++;
@@ -133,7 +193,7 @@ namespace Articulate.Components
                         "Error checking if child exists for parent {ParentId} with type {ContentTypeId}",
                         parentId,
                         contentTypeId);
-                    return false; // Assume doesn't exist to allow creation attempt
+                    return null;
                 }
             }
         }

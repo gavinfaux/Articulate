@@ -68,7 +68,8 @@ namespace Articulate.Components
 
             _ = builder.AddNotificationHandler<ContentSavingNotification, ContentSavingHandler>();
             _ = builder.AddNotificationHandler<ContentPublishingNotification, ContentPublishingHandler>();
-            _ = builder.AddNotificationAsyncHandler<ContentSavedNotification, ContentSavedAsyncHandler>();
+            _ = builder.AddNotificationAsyncHandler<ContentSavedNotification, ArticulateRootContentLifecycleHandler>();
+            _ = builder.AddNotificationAsyncHandler<ContentPublishedNotification, ArticulateRootContentLifecycleHandler>();
             _ = builder.AddNotificationHandler<ContentTypeSavingNotification, ContentTypeSavingHandler>();
             _ = builder.AddNotificationHandler<ContentCacheRefresherNotification, ContentCacheRefresherHandler>();
             _ = builder.AddNotificationHandler<DomainCacheRefresherNotification, DomainCacheRefresherHandler>();
