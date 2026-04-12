@@ -5,6 +5,7 @@ using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.Events;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Notifications;
+using Umbraco.Cms.Core.Packaging;
 using Umbraco.Cms.Core.Services;
 using Umbraco.Cms.Infrastructure.Persistence;
 using Umbraco.Cms.Infrastructure.Migrations;
@@ -17,7 +18,7 @@ namespace Articulate.Migrations;
 /// <summary>
 /// Handles notifications for Articulate migration plans.
 /// </summary>
-public class ArticulateMigrationPlanExecutedHandler(
+internal class ArticulateMigrationPlanExecutedHandler(
     IRuntimeState runtimeState,
     IContentService contentService,
     IContentTypeService contentTypeService,
@@ -32,12 +33,15 @@ public class ArticulateMigrationPlanExecutedHandler(
     /// <param name="notification">The notification information.</param>
     public void Handle(MigrationPlansExecutedNotification notification)
     {
-        if (!ShouldPublish("migration execution", notification.ExecutedPlans))
+        if (!ShouldPublishAfterMigration("migration execution", notification.ExecutedPlans))
         {
             return;
         }
 
-        PublishArticulateTree("migration execution");
+        PublishArticulateRoots(
+            "migration execution",
+            GetAllArticulateRoots(),
+            allowPublishingUnpublishedRoots: new HashSet<int>());
     }
 
     /// <summary>
@@ -46,15 +50,59 @@ public class ArticulateMigrationPlanExecutedHandler(
     /// <param name="notification">The notification information.</param>
     public void Handle(ImportedPackageNotification notification)
     {
-        if (!ShouldPublish("package import"))
+        IReadOnlyList<IContent> installedArticulateRoots = GetInstalledArticulateRoots(notification.InstallationSummary);
+        if (!ShouldPublishAfterPackageImport("package import", notification.InstallationSummary, installedArticulateRoots))
         {
             return;
         }
 
-        PublishArticulateTree("package import");
+        HashSet<int> installedRootIds = [.. installedArticulateRoots.Select(x => x.Id)];
+        PublishArticulateRoots(
+            "package import",
+            installedArticulateRoots,
+            installedRootIds);
     }
 
-    private bool ShouldPublish(string trigger, IEnumerable<ExecutedMigrationPlan>? executedPlans = null)
+    private bool ShouldPublishAfterMigration(string trigger, IEnumerable<ExecutedMigrationPlan> executedPlans)
+    {
+        if (!CanAutoPublish(trigger))
+        {
+            return false;
+        }
+
+        if (!HasMigrationRun(executedPlans))
+        {
+            logger.LogInformation(
+                "No Articulate migrations have run for this notification ({Trigger}), skipping publish.", trigger);
+            return false;
+        }
+
+        return true;
+    }
+
+    private bool ShouldPublishAfterPackageImport(
+        string trigger,
+        InstallationSummary installationSummary,
+        IReadOnlyList<IContent> installedArticulateRoots)
+    {
+        if (!CanAutoPublish(trigger))
+        {
+            return false;
+        }
+
+        if (installedArticulateRoots.Count == 0)
+        {
+            logger.LogInformation(
+                "Package '{PackageName}' did not install any Articulate roots, skipping publish for {Trigger}.",
+                installationSummary.PackageName,
+                trigger);
+            return false;
+        }
+
+        return true;
+    }
+
+    private bool CanAutoPublish(string trigger)
     {
         if (runtimeState.Level is not RuntimeLevel.Run)
         {
@@ -71,42 +119,28 @@ public class ArticulateMigrationPlanExecutedHandler(
             return false;
         }
 
-        if (executedPlans is not null && !HasMigrationRun(executedPlans))
-        {
-            logger.LogInformation(
-                "No Articulate migrations have run for this notification ({Trigger}), skipping publish.", trigger);
-            return false;
-        }
-
         return true;
     }
 
-    private void PublishArticulateTree(string trigger)
+    private void PublishArticulateRoots(
+        string trigger,
+        IEnumerable<IContent> articulateRoots,
+        IReadOnlySet<int> allowPublishingUnpublishedRoots)
     {
         logger.LogInformation("Beginning Articulate post-migration tasks triggered by {Trigger}", trigger);
 
-        IContentType? articulateContentType = contentTypeService.Get(ArticulateConstants.ContentType.Articulate);
-        if (articulateContentType is null)
+        var attemptedAny = false;
+        foreach (IContent contentHome in articulateRoots.GroupBy(x => x.Id).Select(x => x.First()))
         {
-            logger.LogWarning(
-                "The Articulate content type was not found when handling {Trigger}",
-                trigger);
-            return;
-        }
+            if (!TryGetPublishBranchFilter(contentHome, allowPublishingUnpublishedRoots, out PublishBranchFilter filter))
+            {
+                logger.LogInformation(
+                    "Skipping unpublished Articulate root node ID {NodeId} for trigger {Trigger} because it is not eligible for auto-publish in this context.",
+                    contentHome.Id,
+                    trigger);
+                continue;
+            }
 
-        logger.LogInformation("Attempting to get Articulate root content for trigger {Trigger}", trigger);
-
-        IEnumerable<IContent> articulateRoots = contentService.GetPagedOfType(
-            articulateContentType.Id,
-            0,
-            int.MaxValue,
-            out _,
-            sqlContext.Query<IContent>().Where(x => x.Trashed == false))
-            .Where(x => !x.Trashed);
-
-        var publishedAny = false;
-        foreach (IContent contentHome in articulateRoots)
-        {
             logger.LogInformation(
                 "Found Articulate root node with ID {NodeId} for trigger {Trigger}",
                 contentHome.Id,
@@ -119,21 +153,16 @@ public class ArticulateMigrationPlanExecutedHandler(
                     contentHome.Id,
                     trigger);
 
-                bool isFirstTimePublish = !contentHome.Published;
-                PublishBranchFilter filter = isFirstTimePublish
-                    ? PublishBranchFilter.IncludeUnpublished
-                    : PublishBranchFilter.ForceRepublish;
-
                 logger.LogInformation(
-                    "Publish filter for root node ID {NodeId} is {Filter} (FirstTime: {IsFirstTime})",
+                    "Publish filter for root node ID {NodeId} is {Filter} (Published: {IsPublished})",
                     contentHome.Id,
                     filter,
-                    isFirstTimePublish);
+                    contentHome.Published);
 
                 IEnumerable<PublishResult> resultEnumerable =
                     contentService.PublishBranch(contentHome, filter, []);
                 var result = resultEnumerable.ToList();
-                publishedAny = true;
+                attemptedAny = true;
 
                 if (result.All(r => r.Success))
                 {
@@ -162,10 +191,55 @@ public class ArticulateMigrationPlanExecutedHandler(
             }
         }
 
-        if (!publishedAny)
+        if (!attemptedAny)
         {
-            logger.LogWarning("No installed Articulate root nodes were found when handling {Trigger}", trigger);
+            logger.LogInformation("No Articulate root nodes were eligible for publish when handling {Trigger}", trigger);
         }
+    }
+
+    private IEnumerable<IContent> GetAllArticulateRoots()
+    {
+        IContentType? articulateContentType = contentTypeService.Get(ArticulateConstants.ContentType.Articulate);
+        if (articulateContentType is null)
+        {
+            logger.LogWarning("The Articulate content type was not found when attempting to locate Articulate roots.");
+            return [];
+        }
+
+        return contentService.GetPagedOfType(
+                articulateContentType.Id,
+                0,
+                int.MaxValue,
+                out _,
+                sqlContext.Query<IContent>().Where(x => x.Trashed == false))
+            .Where(x => !x.Trashed)
+            .ToArray();
+    }
+
+    private static IReadOnlyList<IContent> GetInstalledArticulateRoots(InstallationSummary installationSummary) =>
+        installationSummary.ContentInstalled
+            .Where(x => x.ContentType.Alias == ArticulateConstants.ContentType.Articulate && !x.Trashed)
+            .ToArray();
+
+    private static bool TryGetPublishBranchFilter(
+        IContent contentHome,
+        IReadOnlySet<int> allowPublishingUnpublishedRoots,
+        out PublishBranchFilter filter)
+    {
+        if (contentHome.Published)
+        {
+            filter = PublishBranchFilter.ForceRepublish;
+            return true;
+        }
+
+        if (allowPublishingUnpublishedRoots.Contains(contentHome.Id))
+        {
+            filter = PublishBranchFilter.IncludeUnpublished;
+            return true;
+        }
+
+        filter = default;
+        return false;
     }
 
     private bool HasMigrationRun(IEnumerable<ExecutedMigrationPlan> executedMigrationPlans)
