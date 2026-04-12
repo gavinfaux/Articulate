@@ -67,15 +67,7 @@ Articulate still probes older user themes with `.cshtml` files directly under `V
 
 Reusable RCL/NuGet theme packages can also contribute themes to the Articulate theme picker by registering `IArticulateThemeDescriptorProvider` and returning one or more canonical theme keys. Those keys should match the package theme folder name and the theme picker value. Built-in theme names are reserved, and duplicate package keys are ignored.
 
-### Bypassing the Theme Engine (Advanced)
-
-By default, an Articulate root node requires a Theme (e.g., `VAPOR`). If you are an advanced developer and wish to bypass the Articulate theme engine entirely to use standard ASP.NET Core MVC / Umbraco view location resolution (e.g., `~/Views/ArticulateRichText.cshtml`), you can clear the 'Theme' property backoffice selection so it is completely empty.
-
-When the Theme property is empty:
-
-- Articulate will not inject its custom theme directories into the Razor View Engine.
-- Information and Debug logs will be emitted indicating the theme engine is being bypassed.
-- You are responsible for ensuring the standard Umbraco views exist for the Articulate document types.
+For advanced theme-development details such as bypassing the Articulate theme engine and falling back to standard MVC / Umbraco view resolution when the Theme value is empty, see the theme wiki pages.
 
 ## Markdown Editor Authentication
 
