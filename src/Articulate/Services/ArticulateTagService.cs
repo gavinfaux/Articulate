@@ -103,7 +103,7 @@ namespace Articulate.Services
         /// <param name="rootPath">The blog root path.</param>
         /// <param name="tagGroup">The Umbraco tag group.</param>
         /// <returns>A collection of distinct tag names.</returns>
-        public IEnumerable<string> GetAllTags(string rootPath, string tagGroup)
+        internal IEnumerable<string> GetAllTags(string rootPath, string tagGroup)
         {
             using (ScopeProvider.CreateCoreScope(autoComplete: true))
             {

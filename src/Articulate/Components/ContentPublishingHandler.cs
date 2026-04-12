@@ -15,7 +15,7 @@ namespace Articulate.Components
     /// <summary>
     /// Validates Articulate routing configuration before publish so editors see backoffice validation errors.
     /// </summary>
-    public sealed class ContentPublishingHandler(
+    internal sealed class ContentPublishingHandler(
         IContentService contentService,
         IDomainCacheService domainCacheService,
         IShortStringHelper shortStringHelper,

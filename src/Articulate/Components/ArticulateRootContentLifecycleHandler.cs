@@ -10,7 +10,7 @@ namespace Articulate.Components
     /// <summary>
     /// Ensures required Articulate root child nodes exist on save and are published with the root when needed.
     /// </summary>
-    public class ArticulateRootContentLifecycleHandler(
+    internal class ArticulateRootContentLifecycleHandler(
         IContentTypeService contentTypeService,
         IContentService contentService,
         ILanguageService languageService,
