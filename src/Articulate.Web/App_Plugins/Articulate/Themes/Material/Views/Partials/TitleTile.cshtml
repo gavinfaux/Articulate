@@ -5,7 +5,7 @@
 
 <div class="mdl-card title-banner mdl-cell mdl-cell--8-col mdl-cell--4-col-desktop">
     @{
-        var backOfficeLoggedIn = BackOfficeAuthService.IsBackOfficeLoggedIn(Context, Constants.Security.BackOfficeAuthenticationType);
+        var backOfficeLoggedIn = await BackOfficeAuthService.IsBackOfficeLoggedInAsync(Context, Constants.Security.BackOfficeAuthenticationType);
     }
 
     @if (backOfficeLoggedIn)

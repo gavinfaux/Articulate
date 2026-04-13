@@ -1,9 +1,7 @@
 #nullable enable
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Models.Membership;
 using Umbraco.Cms.Core.Security;
@@ -15,7 +13,6 @@ namespace Articulate.Services
     /// Service for checking back-office authentication and permissions.
     /// </summary>
     public sealed class BackOfficeAuthService(
-        IOptionsMonitor<CookieAuthenticationOptions> options,
         IBackOfficeSecurityAccessor backOfficeSecurityAccessor,
         IUserService userService,
         ILogger<BackOfficeAuthService> logger)
@@ -26,30 +23,22 @@ namespace Articulate.Services
         /// <param name="context">The HTTP context.</param>
         /// <param name="authenticationType">The authentication type to check.</param>
         /// <returns>True if the user is logged in; otherwise, false.</returns>
-        public bool IsBackOfficeLoggedIn(HttpContext context, string authenticationType)
+        public async Task<bool> IsBackOfficeLoggedInAsync(HttpContext context, string authenticationType)
         {
-            CookieAuthenticationOptions cookieOptions = options.Get(authenticationType);
-            var cookieName = cookieOptions.Cookie.Name;
-            if (string.IsNullOrEmpty(cookieName))
-            {
-                return false;
-            }
-
-            var cookie = context.Request.Cookies[cookieName];
-            if (string.IsNullOrEmpty(cookie))
-            {
-                return false;
-            }
-
             try
             {
-                AuthenticationTicket? unprotected = cookieOptions.TicketDataFormat.Unprotect(cookie);
-                return unprotected is not null && unprotected.AuthenticationScheme == authenticationType;
+                AuthenticateResult authenticateResult = await context.AuthenticateAsync(authenticationType);
+                return authenticateResult.Succeeded
+                       && authenticateResult.Principal?.Identity?.IsAuthenticated == true
+                       && authenticateResult.Ticket is not null
+                       && string.Equals(
+                           authenticateResult.Ticket.AuthenticationScheme,
+                           authenticationType,
+                           StringComparison.Ordinal);
             }
             catch (Exception ex)
             {
-                // Cookie is invalid/corrupted
-                logger.LogDebug(ex, "Cookie unprotect failed for {AuthType}", authenticationType);
+                logger.LogDebug(ex, "Back-office authentication check failed for {AuthType}", authenticationType);
                 return false;
             }
         }

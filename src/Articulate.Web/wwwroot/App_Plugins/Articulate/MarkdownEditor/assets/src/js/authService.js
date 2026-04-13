@@ -16,7 +16,7 @@ import { config } from './config.js';
 
 let accessToken = null;
 
-function resolveSafeRedirectUrl(value, fallback = '/') {
+function resolveSafeSameOriginUrl(value, fallback = `${window.location.origin}/`) {
   if (typeof value !== 'string' || value.trim() === '') {
     return fallback;
   }
@@ -27,7 +27,7 @@ function resolveSafeRedirectUrl(value, fallback = '/') {
       return fallback;
     }
 
-    return `${parsed.pathname}${parsed.search}${parsed.hash}` || fallback;
+    return parsed.toString();
   } catch (error) {
     return fallback;
   }
@@ -241,7 +241,8 @@ function hasValidAccessToken() {
 }
 
 async function logout() {
-  let redirectUrl = resolveSafeRedirectUrl(config.postLogoutRedirectUrl, '/');
+  const fallbackRedirectUrl = `${window.location.origin}/`;
+  let redirectUrl = resolveSafeSameOriginUrl(config.postLogoutRedirectUrl, fallbackRedirectUrl);
 
   try {
     await revokeAccessToken();
@@ -264,7 +265,7 @@ async function logout() {
         try {
           const payload = JSON.parse(responseText);
           if (payload && typeof payload.signOutRedirectUrl === 'string' && payload.signOutRedirectUrl.trim() !== '') {
-            redirectUrl = resolveSafeRedirectUrl(payload.signOutRedirectUrl, redirectUrl);
+            redirectUrl = resolveSafeSameOriginUrl(payload.signOutRedirectUrl, redirectUrl);
           }
         } catch (parseError) {
           console.warn('[authService] Unexpected sign-out response payload.', parseError);
@@ -277,7 +278,7 @@ async function logout() {
     console.warn('[authService] Failed to sign out from Umbraco.', error);
   } finally {
     clearAccessToken();
-    window.location.href = redirectUrl;
+    window.location.assign(redirectUrl);
   }
 }
 
