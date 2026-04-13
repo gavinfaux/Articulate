@@ -31,9 +31,9 @@ namespace Articulate.Components
             IServiceCollection services = builder.Services;
             _ = services.AddScoped<BlogMlExporter>();
             _ = services.AddSingleton<ArticulateTempFileSystem>();
-            _ = services.AddSingleton<IRssFeedGenerator, RssFeedGenerator>();
+            services.TryAddSingleton<IRssFeedGenerator, RssFeedGenerator>();
 
-            _ = services.AddSingleton<IArticulateTagRepository, ArticulateTagRepository>();
+            services.TryAddSingleton<IArticulateTagRepository, ArticulateTagRepository>();
             _ = services.AddSingleton<ArticulateTagService>();
             _ = services.AddSingleton<IFileFormatInspector>(_ =>
                 new FileFormatInspector([new Jpeg(), new Png(), new Gif()]));
@@ -41,20 +41,19 @@ namespace Articulate.Components
 
             _ = services.AddSingleton<DisqusXmlExporter>();
             _ = services.AddScoped<BlogMlImporter>();
-            _ = services.AddSingleton<IArticulateSearcher, DefaultArticulateSearcher>();
+            services.TryAddSingleton<IArticulateSearcher, DefaultArticulateSearcher>();
             _ = services.AddSingleton<ArticulateRouteValueTransformer>();
             _ = services.AddSingleton<ArticulateRouter>();
-            _ = services.AddSingleton<RouteCacheRefresherFilter>();
-            _ = services.AddSingleton<ArticulateFrontEndFilterConvention>();
+            _ = services.AddTransient<RouteCacheRefresherFilter>();
             services.TryAddEnumerable(
                 ServiceDescriptor.Singleton<MatcherPolicy, ArticulateDynamicRouteSelectorPolicy>());
-            _ = services.AddSingleton<IArticulateThemeRepository, ArticulateThemeRepository>();
-            _ = services.AddSingleton<IArticulateMarkdownConverter, ArticulateMarkdownService>();
+            services.TryAddSingleton<IArticulateThemeRepository, ArticulateThemeRepository>();
+            services.TryAddSingleton<IArticulateMarkdownConverter, ArticulateMarkdownService>();
             _ = services.AddTransient<IArticulateThemeResolver, ArticulateThemeResolver>();
             _ = services.AddScoped<BackOfficeAuthService>();
 
             // Register DI-driven view location provider and configure Razor view engine with provider
-            _ = services.AddSingleton<IArticulateViewLocationProvider, DefaultArticulateViewLocationProvider>();
+            services.TryAddSingleton<IArticulateViewLocationProvider, DefaultArticulateViewLocationProvider>();
             _ = services.Configure<RazorViewEngineOptions>(options =>
             {
                 options.ViewLocationExpanders.Add(new ArticulateViewLocationExpander());

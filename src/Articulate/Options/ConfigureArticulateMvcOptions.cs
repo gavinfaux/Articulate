@@ -5,10 +5,9 @@ using Microsoft.Extensions.Options;
 
 namespace Articulate.Options
 {
-    internal class ConfigureArticulateMvcOptions(ArticulateFrontEndFilterConvention articulateFrontEndFilterConvention)
-        : IConfigureOptions<MvcOptions>
+    internal class ConfigureArticulateMvcOptions : IConfigureOptions<MvcOptions>
     {
         /// <inheritdoc/>
-        public void Configure(MvcOptions options) => options.Conventions.Add(articulateFrontEndFilterConvention);
+        public void Configure(MvcOptions options) => options.Conventions.Add(new ArticulateFrontEndFilterConvention());
     }
 }
