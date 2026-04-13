@@ -12,7 +12,7 @@ namespace Articulate.Tests
         {
             Assert.DoesNotThrow(() =>
             {
-                using var app = BuildApplication();
+                using WebApplication app = BuildApplication();
             });
         }
 
@@ -22,7 +22,7 @@ namespace Articulate.Tests
         {
             Assert.DoesNotThrow(() =>
             {
-                using var app = BuildApplication(static builder => builder.AddDeliveryApi());
+                using WebApplication app = BuildApplication(static builder => builder.AddDeliveryApi());
             });
         }
 
@@ -37,7 +37,7 @@ namespace Articulate.Tests
 
             Assert.DoesNotThrow(() =>
             {
-                using var app = BuildApplication(
+                using WebApplication app = BuildApplication(
                     static builder => builder.AddDeliveryApi(),
                     "Development");
             });
@@ -48,14 +48,14 @@ namespace Articulate.Tests
             Action<IUmbracoBuilder>? configureUmbraco = null,
             string environmentName = "Production")
         {
-            var builder = WebApplication.CreateBuilder(new WebApplicationOptions
+            WebApplicationBuilder builder = WebApplication.CreateBuilder(new WebApplicationOptions
             {
                 ApplicationName = typeof(StartupSmokeTests).Assembly.GetName().Name,
                 ContentRootPath = AppContext.BaseDirectory,
                 EnvironmentName = environmentName,
             });
 
-            var umbracoBuilder = builder.CreateUmbracoBuilder()
+            IUmbracoBuilder umbracoBuilder = builder.CreateUmbracoBuilder()
                 .AddBackOffice()
                 .AddWebsite();
 

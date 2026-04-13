@@ -33,14 +33,14 @@ namespace Articulate.Tests.Migrations
             var contentService = new Mock<IContentService>();
             contentService
                 .Setup(x => x.GetPagedOfType(123, 0, int.MaxValue, out It.Ref<long>.IsAny, It.IsAny<IQuery<IContent>>()))
-                .Returns((int _, long _, int _, out long totalRecords, IQuery<IContent> _, Ordering? __) =>
+                .Returns((int _, long _, int _, out long totalRecords, IQuery<IContent> _, Ordering? _) =>
                 {
                     totalRecords = 2;
                     return new[] { rootOne, rootTwo };
                 });
             contentService
                 .Setup(x => x.PublishBranch(It.IsAny<IContent>(), PublishBranchFilter.ForceRepublish, It.IsAny<string[]>()))
-                .Returns((IContent content, PublishBranchFilter _, string[] _, int __) =>
+                .Returns((IContent content, PublishBranchFilter _, string[] _, int _) =>
                 {
                     publishedRootIds.Add(content.Id);
                     return [];
@@ -90,14 +90,14 @@ namespace Articulate.Tests.Migrations
             var contentService = new Mock<IContentService>();
             contentService
                 .Setup(x => x.GetPagedOfType(123, 0, int.MaxValue, out It.Ref<long>.IsAny, It.IsAny<IQuery<IContent>>()))
-                .Returns((int _, long _, int _, out long totalRecords, IQuery<IContent> _, Ordering? __) =>
+                .Returns((int _, long _, int _, out long totalRecords, IQuery<IContent> _, Ordering? _) =>
                 {
                     totalRecords = 2;
                     return new[] { liveRoot, trashedRoot };
                 });
             contentService
                 .Setup(x => x.PublishBranch(It.IsAny<IContent>(), PublishBranchFilter.ForceRepublish, It.IsAny<string[]>()))
-                .Returns((IContent content, PublishBranchFilter _, string[] _, int __) =>
+                .Returns((IContent content, PublishBranchFilter _, string[] _, int _) =>
                 {
                     publishedRootIds.Add(content.Id);
                     return [];
@@ -172,7 +172,7 @@ namespace Articulate.Tests.Migrations
             Mock<IContentService> contentService = new();
             contentService
                 .Setup(x => x.PublishBranch(It.IsAny<IContent>(), PublishBranchFilter.IncludeUnpublished, It.IsAny<string[]>()))
-                .Returns((IContent content, PublishBranchFilter _, string[] _, int __) =>
+                .Returns((IContent content, PublishBranchFilter _, string[] _, int _) =>
                 {
                     publishedRootIds.Add(content.Id);
                     return [];

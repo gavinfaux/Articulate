@@ -1,4 +1,5 @@
 #nullable enable
+using System.Reflection;
 using Articulate.Controllers;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
@@ -10,9 +11,9 @@ namespace Articulate.Routing
         /// <inheritdoc/>
         public void Apply(ApplicationModel application)
         {
-            var articulateAssembly = typeof(ArticulateController).Assembly;
+            Assembly articulateAssembly = typeof(ArticulateController).Assembly;
 
-            foreach (var controller in application.Controllers
+            foreach (ControllerModel controller in application.Controllers
                          .Where(x => x.ControllerType.AsType().Assembly == articulateAssembly))
             {
                 controller.Filters.Add(new ServiceFilterAttribute(typeof(RouteCacheRefresherFilter)));

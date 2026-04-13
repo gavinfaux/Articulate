@@ -9,7 +9,6 @@ using Microsoft.AspNetCore.Routing.Template;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using NUnit.Framework;
-using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Web.Website.Routing;
 
 namespace Articulate.Tests.Routing
@@ -237,24 +236,6 @@ namespace Articulate.Tests.Routing
 
             return (ConcurrentDictionary<ArticulateRouteTemplate, ArticulateRootNodeCache>)(field.GetValue(sut)
                 ?? throw new InvalidOperationException("Field '_routeCache' returned null."));
-        }
-
-        private static IPublishedContent CreateRoot(
-            int id = 1,
-            string name = "Blog",
-            string path = "-1,1",
-            string urlSegment = "blog")
-        {
-            Mock<IPublishedContentType> contentType = new();
-            contentType.SetupGet(x => x.Alias).Returns(ArticulateConstants.ContentType.Articulate);
-
-            Mock<IPublishedContent> root = new();
-            root.SetupGet(x => x.Id).Returns(id);
-            root.SetupGet(x => x.Name).Returns(name);
-            root.SetupGet(x => x.Path).Returns(path);
-            root.SetupGet(x => x.UrlSegment).Returns(urlSegment);
-            root.SetupGet(x => x.ContentType).Returns(contentType.Object);
-            return root.Object;
         }
     }
 }

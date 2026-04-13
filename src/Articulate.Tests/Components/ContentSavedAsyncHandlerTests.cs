@@ -100,8 +100,8 @@ namespace Articulate.Tests.Components
                     It.IsAny<long>(),
                     It.IsAny<int>(),
                     out It.Ref<long>.IsAny,
-                    (IQuery<IContent>?)null,
-                    (Ordering?)null))
+                    null,
+                    null))
                 .Returns((int _, long _, int _, out long total, IQuery<IContent>? _, Ordering? _) =>
                 {
                     var items = children.ToList();

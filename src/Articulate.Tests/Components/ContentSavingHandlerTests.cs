@@ -51,7 +51,7 @@ namespace Articulate.Tests.Components
             Mock<IContentTypeService> contentTypeService = new();
             contentTypeService
                 .Setup(x => x.GetMany(It.Is<int[]>(ids => ids.Length == 1 && ids[0] == 101)))
-                .Returns(new[] { contentType.Object });
+                .Returns([contentType.Object]);
 
             Mock<IBackOfficeSecurityAccessor> securityAccessor = new();
             securityAccessor.SetupGet(x => x.BackOfficeSecurity).Returns((IBackOfficeSecurity?)null);
@@ -63,10 +63,10 @@ namespace Articulate.Tests.Components
                 Microsoft.Extensions.Options.Options.Create(new ArticulateOptions { AutoGenerateExcerpt = false }),
                 markdownConverter.Object);
 
-            sut.Handle(new ContentSavingNotification(new[] { content.Object }, new EventMessages()));
+            sut.Handle(new ContentSavingNotification([content.Object], new EventMessages()));
 
             Assert.That(
-                setValueCalls.Any(x => x.Alias == "enableComments" && Equals(x.Value, 1)),
+                setValueCalls.Any(x => x is { Alias: "enableComments", Value: 1 }),
                 Is.True,
                 "Expected new Articulate posts to default enableComments to 1.");
         }
