@@ -93,6 +93,12 @@
   <Target Name="BuildBackofficeClient" Condition="'$(EnableClientBuild)'=='true' and '$(TargetFramework)'=='$(ClientBuildTargetFramework)'" BeforeTargets="ResolveStaticWebAssetsInputs" Inputs="@(ClientBuildInput)" Outputs="$(ClientBuildStamp)">
     <Message Text="Building Articulate BackOffice Client (Incremental)..." Importance="High" />
     <MakeDir Directories="$(ClientAssetsCacheDir)" />
+    <PropertyGroup>
+      <_ResolvedArticulateAppVersion Condition="'$(ArticulateAppVersion)'!=''">$(ArticulateAppVersion)</_ResolvedArticulateAppVersion>
+      <_ResolvedArticulateAppVersion Condition="'$(_ResolvedArticulateAppVersion)'=='' and '$(NBGV_SemVer2)'!=''">$(NBGV_SemVer2)</_ResolvedArticulateAppVersion>
+      <_ResolvedArticulateAppVersion Condition="'$(_ResolvedArticulateAppVersion)'=='' and '$(PackageVersion)'!=''">$(PackageVersion)</_ResolvedArticulateAppVersion>
+      <_ResolvedArticulateAppVersion Condition="'$(_ResolvedArticulateAppVersion)'=='' and '$(Version)'!=''">$(Version)</_ResolvedArticulateAppVersion>
+    </PropertyGroup>
 
     <!-- CI Safety: Frozen Lockfile Check -->
     <Exec Command="pnpm install --frozen-lockfile --prefer-offline" WorkingDirectory="$(ClientProjectDirectory)" IgnoreExitCode="true" Condition="'$(CI)' == 'true'">
@@ -104,7 +110,7 @@
     <Exec Command="pnpm install" WorkingDirectory="$(ClientProjectDirectory)" Condition="'$(CI)' != 'true'" />
 
     <!-- The Actual Build -->
-    <Exec Command="$(ClientBuildCommand)" WorkingDirectory="$(ClientProjectDirectory)" />
+    <Exec Command="$(ClientBuildCommand)" WorkingDirectory="$(ClientProjectDirectory)" EnvironmentVariables="ARTICULATE_APP_VERSION=$(_ResolvedArticulateAppVersion)" />
 
     <!-- Touch Stamp File -->
     <WriteLinesToFile File="$(ClientBuildStamp)" Lines="$([System.DateTime]::UtcNow.ToString('o'))" Overwrite="true" />

@@ -3,7 +3,6 @@ import path from "node:path";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { mkdir, writeFile, unlink, rm } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
-import { execSync } from "node:child_process";
 import { build as esbuildBuild } from "esbuild";
 import { minify as terserMinify } from "terser";
 import * as lightningcss from "lightningcss";
@@ -23,9 +22,42 @@ const PACKAGE_ROOT = path.resolve(WEB_ROOT, "wwwroot/App_Plugins/Articulate");
 // Static asset locations
 const WEB_THEMES = path.resolve(WEB_ROOT, "wwwroot/App_Plugins/Articulate/Themes");
 const WEB_MARKDOWN = path.resolve(WEB_ROOT, "wwwroot/App_Plugins/Articulate/MarkdownEditor");
+const BUILD_VERSION_ENV_VAR = "ARTICULATE_APP_VERSION";
+const PACKAGE_JSON_PATH = path.resolve(UI_ROOT, "package.json");
+
+const defaultBuildVersion = (() => {
+  try {
+    const packageJson = JSON.parse(readFileSync(PACKAGE_JSON_PATH, "utf8")) as { version?: string };
+    return packageJson.version?.trim() || "0.0.0-dev";
+  } catch {
+    return "0.0.0-dev";
+  }
+})();
 
 const buildVersion = {
-  value: "0.0.0-dev"
+  value: defaultBuildVersion
+};
+
+const resolveBuildVersion = (command: string, mode: string): string => {
+  if (command !== "build" || mode !== "production") {
+    return defaultBuildVersion;
+  }
+
+  const version = process.env[BUILD_VERSION_ENV_VAR]?.trim();
+  if (version) {
+    return version;
+  }
+
+  const isCiBuild = process.env.CI === "true" || process.env.GITHUB_ACTIONS === "true";
+  if (isCiBuild) {
+    throw new Error(
+      `[version] Missing ${BUILD_VERSION_ENV_VAR} for production builds. ` +
+      "Run the client build via MSBuild/dotnet pack or provide the variable explicitly."
+    );
+  }
+
+  console.warn(`[version] Missing ${BUILD_VERSION_ENV_VAR}; falling back to ${defaultBuildVersion}.`);
+  return defaultBuildVersion;
 };
 
 
@@ -178,18 +210,11 @@ async function buildEsbuildBundle({ name, entry, output, isProd }: any) {
 
 // --- PLUGIN: VERSIONING ---
 const versioningPlugin = (): Plugin => {
-  let mode: string;
   return {
     name: "versioning",
     config: (_, c) => {
-      mode = c.mode;
-      if (c.command === "build" && mode === "production") {
-        try {
-          const gitRoot = execSync("git rev-parse --show-toplevel", { encoding: "utf8" }).trim();
-          buildVersion.value = execSync("nbgv get-version -v SemVer2", { encoding: "utf8", cwd: gitRoot }).trim();
-          console.log(`[version] Detected: ${buildVersion.value}`);
-        } catch { console.warn(`[version] Defaulting to dev.`); }
-      }
+      buildVersion.value = resolveBuildVersion(c.command, c.mode);
+      console.log(`[version] Using: ${buildVersion.value}`);
       return { define: { "import.meta.env.APP_VERSION": JSON.stringify(buildVersion.value) } };
     }
   };
