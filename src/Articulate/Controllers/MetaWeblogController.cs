@@ -13,7 +13,7 @@ using WilderMinds.MetaWeblog;
 namespace Articulate.Controllers
 {
     /// <summary>
-    /// Custom controller to handle the webblog endpoints so that we can wire
+    /// Custom controller to handle the weblog endpoints so that we can wire
     /// up the articulate start node for the IMetaWeblogProvider data source.
     /// </summary>
     /// <remarks>
@@ -29,6 +29,9 @@ namespace Articulate.Controllers
         IServiceProvider serviceProvider)
         : RenderController(logger, compositeViewEngine, umbracoContextAccessor)
     {
+        /// <summary>
+        /// Handles the MetaWeblog API requests.
+        /// </summary>
         [HttpPost]
         public async Task<ActionResult> IndexAsync(int id)
         {
@@ -45,20 +48,23 @@ namespace Articulate.Controllers
             // create the service using the provider
             MetaWeblogService service = ActivatorUtilities.CreateInstance<MetaWeblogService>(serviceProvider, provider);
 
+            // TODO: SECURITY - Consider adding request size limit to prevent memory exhaustion.
+            // ReadToEndAsync() reads entire body with no limit. Docker config allows 100MB requests.
+            // For enhanced security, use ReadBlockAsync with max size check and return 413 if exceeded.
             string rawContent;
             using (var reader = new StreamReader(Request.Body))
             {
-                rawContent = await reader.ReadToEndAsync().ConfigureAwait(false);
+                rawContent = await reader.ReadToEndAsync();
             }
 
             try
             {
-                var result = await service.InvokeAsync(rawContent).ConfigureAwait(false);
+                var result = await service.InvokeAsync(rawContent);
                 return Content(result, "text/xml", Encoding.UTF8);
             }
             catch (NullReferenceException ex)
             {
-                logger.LogError("A NullReferenceException occurred processing a metaWeblog request. Raw Content: {RawXml}", rawContent);
+                logger.LogError("A NullReferenceException occurred processing a metaWeblog request.");
 
                 logger.LogError(ex, "NullReferenceException details for metaWeblog call:");
 

@@ -1,0 +1,61 @@
+@model PostModel
+@{
+    var categories = Model.Categories.ToList();
+    var tags = Model.Tags.ToList();
+    var hasCategoriesRoute = Model.HasCategoriesRoute();
+    var hasTagsRoute = Model.HasTagsRoute();
+}
+
+@if (tags.Count > 0 || categories.Count > 0)
+{
+    <div class="post-meta tags">
+
+        @if (categories.Count > 0)
+        {
+            <div>
+                Categories
+
+                @for (int i = 0; i < categories.Count; i++)
+                {
+                    var category = categories[i];
+                    if (hasCategoriesRoute)
+                    {
+                        <a href="@Model.ArticulateCategoryUrl(category)">@category</a>
+                    }
+                    else
+                    {
+                        <span>@category</span>
+                    }
+                    if (i < categories.Count - 1)
+                    {
+                        <span>, </span>
+                    }
+                }
+            </div>
+        }
+
+        @if (tags.Count > 0)
+        {
+            <div>
+                Posted in
+
+                @for (int i = 0; i < tags.Count; i++)
+                {
+                    var tag = tags[i];
+                    if (hasTagsRoute)
+                    {
+                        <a href="@Model.ArticulateTagUrl(tag)">@tag</a>
+                    }
+                    else
+                    {
+                        <span>@tag</span>
+                    }
+                    if (i < tags.Count - 1)
+                    {
+                        <span>, </span>
+                    }
+                }
+            </div>
+        }
+    </div>
+}

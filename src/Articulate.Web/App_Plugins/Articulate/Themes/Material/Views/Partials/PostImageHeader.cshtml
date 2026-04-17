@@ -1,0 +1,22 @@
+@model IImageModel
+@{
+    var bgUrl = Model.CroppedWideUrl;
+    var safeBgUrl = bgUrl.ToSafeCssUrl();
+
+    if (safeBgUrl is not null)
+    {
+        <div class="@Model.Image.GetImageClass("mdl-card__media") mdl-color-text--grey-50" style="background-image: url('@safeBgUrl');">
+            <h3>
+                <a href="@Model.Url">@Model.Name</a>
+            </h3>
+        </div>
+    }
+    else
+    {
+        <div class="mdl-card__title post-header--no-image">
+            <h3 class="quote">
+                <a href="@Model.Url">@Model.Name</a>
+            </h3>
+        </div>
+    }
+}

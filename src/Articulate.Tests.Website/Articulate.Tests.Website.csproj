@@ -1,64 +1,52 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+<Project Sdk="Microsoft.NET.Sdk.Web">
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
-    <!-- Disable compression-->
-    <CompressionEnabled>false</CompressionEnabled>
+    <TargetFrameworks>net9.0;net10.0</TargetFrameworks>
     <IsPackable>false</IsPackable>
+    <UseArticulateUsings>false</UseArticulateUsings>
   </PropertyGroup>
-
+  <!-- Prevent multi-TFM build race: Umbraco schema task writes to same file from both targets -->
+  <PropertyGroup Condition="'$(TargetFramework)' != 'net10.0'">
+    <UmbracoJsonSchemaGenerateEnabled>false</UmbracoJsonSchemaGenerateEnabled>
+  </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Umbraco.Cms" Version="15.4.4" />
+    <PackageReference Include="Umbraco.Cms" Version="$(UmbracoCmsPackageVersion)" />
   </ItemGroup>
-
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
+    <PackageReference Include="Umbraco.Cms.DevelopmentMode.Backoffice" Version="$(UmbracoCmsPackageVersion)" />
+  </ItemGroup>
   <ItemGroup>
     <!-- Opt-in to app-local ICU to ensure consistent globalization APIs across different platforms -->
     <PackageReference Include="Microsoft.ICU.ICU4C.Runtime" Version="72.1.0.3" />
     <RuntimeHostConfigurationOption Include="System.Globalization.AppLocalIcu" Value="72.1.0.3" Condition="$(RuntimeIdentifier.StartsWith('linux')) or $(RuntimeIdentifier.StartsWith('win')) or ('$(RuntimeIdentifier)' == '' and !$([MSBuild]::IsOSPlatform('osx')))" />
   </ItemGroup>
-
-  <!-- Reference the Articulate project, static web assets for the backoffice for **development mode** -->
-  <ItemGroup>
-    <ProjectReference Include="..\Articulate\Articulate.csproj">
-      <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
-      <CopyStaticWebAssetsToPublish>true</CopyStaticWebAssetsToPublish>
-    </ProjectReference>
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\Articulate.Api.Management\Articulate.Api.Management.csproj">
-      <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
-      <CopyStaticWebAssetsToPublish>true</CopyStaticWebAssetsToPublish>
-    </ProjectReference>
-  </ItemGroup>
-
+  <!-- Reference Articulate.Web (which depends on the other projects) for development mode -->
   <ItemGroup>
     <ProjectReference Include="..\Articulate.Web\Articulate.Web.csproj">
       <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
       <CopyStaticWebAssetsToPublish>true</CopyStaticWebAssetsToPublish>
     </ProjectReference>
+    <ProjectReference Include="..\Articulate.Theme.Sample\Articulate.Theme.Sample.csproj">
+      <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
+      <CopyStaticWebAssetsToPublish>true</CopyStaticWebAssetsToPublish>
+    </ProjectReference>
   </ItemGroup>
-
   <ItemGroup>
     <Compile Remove="umbraco\**" />
     <Content Remove="umbraco\**" />
     <EmbeddedResource Remove="umbraco\**" />
     <None Remove="umbraco\**" />
   </ItemGroup>
-
   <ItemGroup>
     <!-- tells 'dotnet watch' to ignore any file changes  under the umbraco/ folder and its subdirectories. -->
     <Watch Remove="umbraco\**\*" />
   </ItemGroup>
-
   <PropertyGroup>
     <!-- Razor files are needed for the backoffice to work correctly -->
     <CopyRazorGenerateFilesToPublishDirectory>true</CopyRazorGenerateFilesToPublishDirectory>
   </PropertyGroup>
-
   <!-- Set this to true if ModelsBuilder mode is not InMemoryAuto-->
   <PropertyGroup>
     <RazorCompileOnBuild>false</RazorCompileOnBuild>
     <RazorCompileOnPublish>false</RazorCompileOnPublish>
   </PropertyGroup>
-
-  </Project>
+</Project>

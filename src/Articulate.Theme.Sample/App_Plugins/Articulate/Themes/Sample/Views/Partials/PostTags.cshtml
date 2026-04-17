@@ -1,0 +1,47 @@
+@model PostModel
+@{
+    var tags = Model.Tags.ToArray();
+    var categories = Model.Categories.ToArray();
+    var hasCategoriesRoute = Model.HasCategoriesRoute();
+    var hasTagsRoute = Model.HasTagsRoute();
+}
+
+@if (tags.Any() || categories.Any())
+{
+    <div class="meta-pills" aria-label="Post topics">
+        @foreach (var category in categories)
+        {
+            if (hasCategoriesRoute)
+            {
+                <a class="meta-pill meta-pill--category" href="@Model.ArticulateCategoryUrl(category)">
+                    <i class="fa-solid fa-folder-tree" aria-hidden="true"></i>
+                    <span>@category</span>
+                </a>
+            }
+            else
+            {
+                <span class="meta-pill meta-pill--category">
+                    <i class="fa-solid fa-folder-tree" aria-hidden="true"></i>
+                    <span>@category</span>
+                </span>
+            }
+        }
+        @foreach (var tag in tags)
+        {
+            if (hasTagsRoute)
+            {
+                <a class="meta-pill" href="@Model.ArticulateTagUrl(tag)">
+                    <i class="fa-solid fa-hashtag" aria-hidden="true"></i>
+                    <span>@tag</span>
+                </a>
+            }
+            else
+            {
+                <span class="meta-pill">
+                    <i class="fa-solid fa-hashtag" aria-hidden="true"></i>
+                    <span>@tag</span>
+                </span>
+            }
+        }
+    </div>
+}

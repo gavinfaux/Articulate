@@ -1,4 +1,5 @@
 #nullable enable
+
 namespace Articulate.Options
 {
     /// <summary>
@@ -6,9 +7,7 @@ namespace Articulate.Options
     /// </summary>
     public class ArticulateOptions
     {
-        /// <summary>
-        /// Constructor sets defaults
-        /// </summary>
+
         public ArticulateOptions() =>
             GenerateExcerpt = val => val.DetectIsJson()
                 ? string.Empty
@@ -26,5 +25,39 @@ namespace Articulate.Options
         /// The default generator will truncate the post content with 200 chars
         /// </summary>
         public Func<string, string> GenerateExcerpt { get; set; }
+
+
+        /// <summary>
+        /// When true, Articulate content created during the installer is published automatically.
+        /// Default: false.
+        /// </summary>
+        public bool AutoPublishOnStartup { get; set; } = false;
+
+        /// <summary>
+        /// Maximum number of bytes allowed when downloading an external image for import.
+        /// Default: 10 MB.
+        /// </summary>
+        public long MaxExternalImageBytes { get; set; } = 10 * 1024 * 1024;
+
+        /// <summary>
+        /// Explicit allowlist of external hosts that Articulate may fetch images from during BlogML import.
+        /// If empty, external image downloads are disabled.
+        /// </summary>
+        public string[] AllowedMediaHosts { get; set; } = [];
+
+        /// <summary>
+        /// When true, allows localhost/private-network external image downloads during non-production Umbraco runtime modes.
+        /// This setting is ignored when Umbraco:CMS:Runtime:Mode is Production.
+        /// Default: false.
+        /// </summary>
+        public bool AllowUnsafeLocalExternalImageHostsInDevelopment { get; set; } = false;
+
+        /// <summary>
+        /// When true, upgrades the Articulate Rich Text data type to use the TipTap editor during package migration.
+        /// Set false to preserve an existing TinyMCE-compatible data type during upgrades.
+        /// Default: true.
+        /// </summary>
+        public bool MigrateRichTextDataTypeToTiptapOnUpgrade { get; set; } = true;
     }
+
 }

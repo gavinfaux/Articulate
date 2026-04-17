@@ -10,6 +10,9 @@ using Umbraco.Cms.Web.Website.ActionResults;
 
 namespace Articulate.Controllers
 {
+    /// <summary>
+    /// Controller for displaying author details and their posts.
+    /// </summary>
     public class ArticulateAuthorController(
         ILogger<ArticulateAuthorController> logger,
         ICompositeViewEngine compositeViewEngine,
@@ -27,6 +30,9 @@ namespace Articulate.Controllers
         [NonAction]
         public override IActionResult Index() => Index(0);
 
+        /// <summary>
+        /// Renders the author page and their posts with optional pagination.
+        /// </summary>
         public IActionResult Index(int? p)
         {
             if (CurrentPage is null)
@@ -37,14 +43,29 @@ namespace Articulate.Controllers
 
             // create a master model
             var masterModel = new MasterModel(CurrentPage, PublishedValueFallback);
-
-            IPublishedContent[]? listNodes = masterModel.RootBlogNode.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive)?.ToArray();
-            if (listNodes is null || listNodes.Length == 0)
+            IEnumerable<IPublishedContent> archiveNodes = masterModel.RootBlogNode.Children()
+                    .Where(x => x.ContentType.Alias == ArticulateConstants.ContentType.ArticulateArchive);
+            IPublishedContent[] listNodes = archiveNodes.ToArray();
+            if (listNodes.Length == 0)
             {
-                throw new InvalidOperationException("An ArticulateArchive document must exist under the root Articulate document");
+                logger.LogWarning(
+                    "ArticulateAuthorController: No ArticulateArchive child nodes found for root {RootId} ('{RootName}') using theme '{Theme}' while rendering author page {PageId} ('{PageName}').",
+                    masterModel.RootBlogNode.Id,
+                    masterModel.RootBlogNode.Name,
+                    masterModel.Theme,
+                    CurrentPage.Id,
+                    CurrentPage.Name);
+
+                throw new InvalidOperationException(
+                    "An ArticulateArchive document must exist under the root Articulate document");
             }
 
-            var totalPosts = umbracoHelper.GetPostCount(CurrentPage.Name, listNodes.Select(x => x.Id).ToArray());
+            PagerModel initialPager = CreateRequestedPager(masterModel, p);
+
+            (int totalPosts, IPublishedContent[] posts) = umbracoHelper.GetPagedContentByAuthor(
+                listNodes,
+                CurrentPage.Name,
+                initialPager);
 
             if (!GetPagerModel(masterModel, totalPosts, p, out PagerModel? pager) || pager is null)
             {
@@ -54,17 +75,12 @@ namespace Articulate.Controllers
                     UmbracoContextAccessor);
             }
 
-            IEnumerable<IPublishedContent>? authorPosts = umbracoHelper.GetContentByAuthor(
-                listNodes,
-                CurrentPage.Name,
-                pager,
-                PublishedValueFallback);
-
             var author = new AuthorModel(
                 CurrentPage,
-                authorPosts ?? [],
+                posts,
                 pager,
                 totalPosts,
+                posts.FirstOrDefault()?.Value<DateTime>("publishedDate"),
                 PublishedValueFallback);
 
             return View("Author", author);

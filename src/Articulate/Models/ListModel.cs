@@ -1,5 +1,4 @@
 #nullable enable
-using Umbraco.Cms.Core.Media;
 using Umbraco.Cms.Core.Models.PublishedContent;
 
 namespace Articulate.Models
@@ -9,8 +8,8 @@ namespace Articulate.Models
     /// </summary>
     public class ListModel : MasterModel
     {
-        private readonly IEnumerable<IPublishedContent>? _listItems;
-        private IEnumerable<PostModel>? _resolvedList;
+        private readonly IEnumerable<IPublishedContent> _listItems;
+        private readonly Lazy<PostModel[]> _posts;
 
         /// <summary>
         /// Accepts an explicit list of child items
@@ -30,43 +29,23 @@ namespace Articulate.Models
             IPublishedValueFallback publishedValueFallback)
             : base(content, publishedValueFallback)
         {
-            ArgumentNullException.ThrowIfNull(content, nameof(content));
+            ArgumentNullException.ThrowIfNull(content);
 
             Pages = pager ?? throw new ArgumentNullException(nameof(pager));
             _listItems = listItems ?? throw new ArgumentNullException(nameof(listItems));
+
+            var contentName = content.Name;
             if (content.ContentType.Alias.Equals(ArticulateConstants.ContentType.ArticulateArchive))
             {
                 PageTitle = BlogTitle + " - " + BlogDescription;
             }
             else
             {
-                PageTags = Name;
+                PageTags = contentName;
             }
+
+            _posts = new Lazy<PostModel[]>(BuildPosts, LazyThreadSafetyMode.ExecutionAndPublication);
         }
-
-        [Obsolete("Use ListModel(IPublishedContent? content, PagerModel? pager, IEnumerable<IPublishedContent>? listItems, IPublishedValueFallback publishedValueFallback)")]
-        public ListModel(
-            IPublishedContent? content,
-            PagerModel? pager,
-            IEnumerable<IPublishedContent>? listItems,
-            IPublishedValueFallback publishedValueFallback,
-            IVariationContextAccessor variationContextAccessor)
-            : this(content, pager, listItems, publishedValueFallback)
-        { }
-
-
-        public ListModel(IPublishedContent content, IPublishedValueFallback publishedValueFallback)
-            : base(content, publishedValueFallback)
-        {
-        }
-
-        [Obsolete("Use ListModel(IPublishedContent content, IPublishedValueFallback publishedValueFallback)")]
-        public ListModel(IPublishedContent content, IPublishedValueFallback publishedValueFallback, IVariationContextAccessor variationContextAccessor) : this(content, publishedValueFallback)
-        {
-        }
-
-        [Obsolete]
-        public IImageUrlGenerator? ImageUrlGenerator => null;
 
         /// <summary>
         /// Gets the pager model
@@ -76,45 +55,20 @@ namespace Articulate.Models
         /// <summary>
         /// Gets a strongly typed access to the list of blog posts
         /// </summary>
-        public IEnumerable<PostModel> Posts
+        public IEnumerable<PostModel> Posts => _posts.Value;
+
+        private PostModel[] BuildPosts()
         {
-            get
+            IEnumerable<IPublishedContent> items = _listItems;
+            if (Pages is not null)
             {
-                if (_resolvedList is not null)
-                {
-                    return _resolvedList;
-                }
-
-                if (_listItems is null)
-                {
-                    _resolvedList = ChildrenForAllCultures.Select(x => new PostModel(x, PublishedValueFallback)).ToArray();
-                    return _resolvedList;
-                }
-
-                if (_listItems is not null && Pages is not null)
-                {
-                    _resolvedList = _listItems
-
-                        // Skip will already be done in this case, but we'll take again anyways just to be safe
-                        .Take(Pages.PageSize)
-                        .Select(x => new PostModel(x, PublishedValueFallback))
-                        .ToArray();
-                }
-                else
-                {
-                    _resolvedList = [];
-                }
-
-                return _resolvedList;
+                // Apply page size limit to the pre-filtered list items
+                items = items.Take(Pages.PageSize);
             }
+
+            return items
+                .Select(x => new PostModel(x, PublishedValueFallback))
+                .ToArray();
         }
-
-        /// <summary>
-        /// Gets the list of blog posts
-        /// </summary>
-        [Obsolete("Please use TryGetChildrenKeys() on IDocumentNavigationQueryService or IMediaNavigationQueryService instead. Scheduled for removal in V16.", false)]
-        public override IEnumerable<IPublishedContent> Children => Posts;
-
-        public IEnumerable<IPublishedContent> ChildrenForAllCultures => Posts;
     }
 }

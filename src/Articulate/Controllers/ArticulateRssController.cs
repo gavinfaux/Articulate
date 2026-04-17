@@ -33,9 +33,13 @@ namespace Articulate.Controllers
         : RenderController(logger, compositeViewEngine, umbracoContextAccessor)
     {
         // NonAction so it is not routed since we want to use an overload below
+        /// <inheritdoc/>
         [NonAction]
         public override IActionResult Index() => Index(0);
 
+        /// <summary>
+        /// Renders the main RSS feed.
+        /// </summary>
         public IActionResult Index(int? maxItems)
         {
             if (CurrentPage is null)
@@ -46,19 +50,25 @@ namespace Articulate.Controllers
 
             maxItems ??= 25;
 
-            IPublishedContent[] listNodes = CurrentPage.Children()
-                .Where(x => x.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateArchive))
-                .ToArray();
+            IPublishedContent[] listNodes =
+            [
+                .. CurrentPage.Children().Where(x =>
+                    x.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateArchive))
+            ];
             if (listNodes.Length == 0)
             {
-                throw new InvalidOperationException("An ArticulateArchive document must exist under the root Articulate document");
+                throw new InvalidOperationException(
+                    "An ArticulateArchive document must exist under the root Articulate document");
             }
 
             var pager = new PagerModel(maxItems.Value, 0, 1);
 
             var listNodeIds = listNodes.Select(x => x.Id).ToArray();
 
-            IEnumerable<IPublishedContent> listItems = umbracoHelper.GetPostsSortedByPublishedDate(pager, null, listNodeIds) ?? [];
+            IPublishedContent[] listItems =
+            [
+                .. umbracoHelper.GetPostsSortedByPublishedDate(pager, null, listNodeIds)
+            ];
 
             var rootPageModel = new ListModel(
                 listNodes[0],
@@ -66,21 +76,7 @@ namespace Articulate.Controllers
                 listItems,
                 publishedValueFallback);
 
-            /*
-              TODO: Raise issue / debug Umbraco Core - This returns null, when it should be two with the default content installed
-
-              var feed = _feedGenerator.GetFeed(rootPageModel, rootPageModel.Children<PostModel>());
-
-              where .Children<PostModel>() calls this:
-
-              public static IEnumerable<T>? Children<T>(this IPublishedContent content, string? culture = null)
-                 where T : class, IPublishedContent
-                    => content.Children<T>(GetNavigationQueryService(content), GetPublishedStatusFilteringService(content), culture);
-            */
-
-            // Work around for above issue
-            IEnumerable<PostModel> posts = umbracoHelper.GetPostsSortedByPublishedDate(
-                    pager, null, rootPageModel.Id)
+            IEnumerable<PostModel> posts = listItems
                 .Select(x => new PostModel(x, publishedValueFallback));
 
             SyndicationFeed feed = feedGenerator.GetFeed(rootPageModel, posts);
@@ -88,57 +84,90 @@ namespace Articulate.Controllers
             return new RssResult(feed, rootPageModel);
         }
 
+        /// <summary>
+        /// Renders the RSS feed for a specific author.
+        /// </summary>
         public IActionResult Author(int authorId, int? maxItems)
         {
             IPublishedContent? author = umbracoHelper.Content(authorId);
 
-            ArgumentNullException.ThrowIfNull(author, nameof(author));
+            ArgumentNullException.ThrowIfNull(author);
 
             maxItems ??= 25;
 
             // create a master model
             var masterModel = new MasterModel(author, publishedValueFallback);
 
-            IPublishedContent[]? listNodes = masterModel.RootBlogNode.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive)?.ToArray();
-            if (listNodes is null || listNodes.Length == 0)
+            IEnumerable<IPublishedContent> archiveNodes = masterModel.RootBlogNode.Children().Where(x => x.ContentType.Alias == ArticulateConstants.ContentType.ArticulateArchive);
+            IPublishedContent[] listNodes = archiveNodes.ToArray();
+            if (listNodes.Length == 0)
             {
-                throw new InvalidOperationException("An ArticulateArchive document must exist under the root Articulate document");
+                throw new InvalidOperationException(
+                    "An ArticulateArchive document must exist under the root Articulate document");
             }
 
-            IEnumerable<IPublishedContent> authorContent = umbracoHelper.GetContentByAuthor(
+            IEnumerable<IPublishedContent> authorContent = umbracoHelper.GetPagedContentByAuthor(
                 listNodes,
                 author.Name,
-                new PagerModel(maxItems.Value, 0, 1),
-                publishedValueFallback);
+                new PagerModel(maxItems.Value, 0, 1)).Posts;
 
-            SyndicationFeed feed = feedGenerator.GetFeed(masterModel, authorContent.Select(x => new PostModel(x, publishedValueFallback)));
+            SyndicationFeed feed = feedGenerator.GetFeed(
+                masterModel,
+                authorContent.Select(x => new PostModel(x, publishedValueFallback)));
 
             return new RssResult(feed, masterModel);
         }
 
-        public IActionResult Categories(string tag, int? maxItems)
+        /// <summary>
+        /// Renders the RSS feed for a specific category.
+        /// </summary>
+        public IActionResult Categories(
+            string tag,
+            int? maxItems)
         {
-            ArgumentNullException.ThrowIfNull(tag, nameof(tag));
+            ArgumentNullException.ThrowIfNull(tag);
 
             maxItems ??= 25;
 
-            return RenderTagsOrCategoriesRss(ArticulateConstants.DataType.ArticulateCategories, "categories", maxItems.Value, tag);
+            return RenderTagsOrCategoriesRss(
+                ArticulateConstants.DataType.ArticulateCategories,
+                "categories",
+                maxItems.Value,
+                tag);
         }
 
-        public IActionResult Tags(string tag, int? maxItems)
+        /// <summary>
+        /// Renders the RSS feed for a specific tag.
+        /// </summary>
+        public IActionResult Tags(
+            string tag,
+            int? maxItems)
         {
-            ArgumentNullException.ThrowIfNull(tag, nameof(tag));
+            ArgumentNullException.ThrowIfNull(tag);
 
             maxItems ??= 25;
 
-            return RenderTagsOrCategoriesRss(ArticulateConstants.DataType.ArticulateTags, "tags", maxItems.Value, tag);
+            return RenderTagsOrCategoriesRss(
+                ArticulateConstants.DataType.ArticulateTags,
+                "tags",
+                maxItems.Value,
+                tag);
         }
 
+        /// <summary>
+        /// Renders an RSS feed for a tag group (categories or tags).
+        /// </summary>
         public IActionResult RenderTagsOrCategoriesRss(string tagGroup, string baseUrl, int maxItems, string tag)
         {
+            if (CurrentPage is null)
+            {
+                logger.LogWarning(
+                    "ArticulateRssController.RenderTagsOrCategoriesRss: CurrentPage is null, returning 404");
+                return NotFound();
+            }
+
             // create a blog model of the main page
             var rootPageModel = new MasterModel(CurrentPage, publishedValueFallback);
-
             PostsByTagModel contentByTag = articulateTagService.GetContentByTag(
                 umbracoHelper,
                 rootPageModel,

@@ -1,0 +1,34 @@
+@model PostModel
+
+@if (!Model.IsDisqusEnabled)
+{
+    <p>
+        <em>
+            To enable comments, configure a valid Disqus shortname (alphanumeric and hyphens only).
+        </em>
+    </p>
+}
+else
+{
+    <div id="disqus_thread">
+        <script type="text/javascript">
+            var disqus_config = function () {
+                this.page.url = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Url(mode: UrlMode.Absolute)));
+                this.page.identifier = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Key));
+            };
+            (function() {
+                var d = document, s = d.createElement('script');
+                const disqusShortName = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.DisqusShortName));
+                s.src = 'https://' + disqusShortName + '.disqus.com/embed.js';
+                s.setAttribute('data-timestamp', +new Date());
+                (d.head || d.body).appendChild(s);
+            })();
+        </script>
+        <noscript>
+            Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" target="_blank" rel="noopener noreferrer">comments powered by Disqus.</a>
+        </noscript>
+        <a href="https://disqus.com" class="dsq-brlink" target="_blank" rel="noopener noreferrer">
+            comments powered by <span class="logo-disqus">Disqus</span>
+        </a>
+    </div>
+}

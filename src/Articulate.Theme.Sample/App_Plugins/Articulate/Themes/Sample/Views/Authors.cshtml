@@ -1,0 +1,70 @@
+@model AuthorDirectoryModel
+@{
+    ViewBag.CssBodyClass = "page-authors";
+    var authors = Model.Authors?.ToList() ?? [];
+}
+
+<section class="page-hero">
+    <div>
+        <p class="page-hero__eyebrow">Contributors</p>
+        <h1 class="page-hero__title">@Model.Name</h1>
+        <p class="page-hero__summary">Meet the voices shaping this archive and explore their latest writing.</p>
+    </div>
+
+    <aside class="page-hero__side">
+        @await Html.PartialAsync("SearchBox", Model)
+    </aside>
+</section>
+
+@if (!authors.Any())
+{
+    <section class="empty-state">
+        <h2>No authors yet</h2>
+        <p>Add authors under the blog root to populate this directory.</p>
+    </section>
+}
+else
+{
+    <section class="authors-grid" aria-label="Authors">
+        @foreach (var author in authors)
+        {
+            <article class="author-directory-card">
+                @if (!author.CroppedWideUrl.IsNullOrWhiteSpace())
+                {
+                    <a class="author-directory-card__media" href="@author.BlogUrl" aria-hidden="true" tabindex="-1">
+                        <img class="author-directory-card__image" src="@author.CroppedWideUrl" alt="" width="640" height="400" loading="lazy">
+                    </a>
+                }
+
+                <div class="author-directory-card__content">
+                    <p class="page-hero__eyebrow">Author</p>
+                    <h2 class="author-directory-card__title">
+                        <a href="@author.BlogUrl">@author.Name</a>
+                    </h2>
+
+                    @if (!author.Bio.IsNullOrWhiteSpace())
+                    {
+                        <p class="author-directory-card__summary">@author.Bio</p>
+                    }
+
+                    <div class="post-article__details">
+                        <span>@author.PostCount post@(author.PostCount == 1 ? string.Empty : "s")</span>
+                        @if (author.LastPostDate is not null)
+                        {
+                            <span>Latest: @author.LastPostDate.Value.ToString("dd MMM yyyy")</span>
+                        }
+                    </div>
+
+                    <div class="author-directory-card__actions">
+                        <a class="meta-pill meta-pill--category" href="@author.BlogUrl" tabindex="-1" aria-hidden="true"><i class="fa-solid fa-archive" aria-hidden="true"></i> View archive</a>
+                        <a class="meta-pill" href="@author.AuthorRssUrl" aria-label="RSS feed for @author.Name"><i class="fa-solid fa-rss" aria-hidden="true"></i> RSS</a>
+                        @if (!author.AuthorUrl.IsNullOrWhiteSpace())
+                        {
+                            <a class="meta-pill" href="@author.AuthorUrl" rel="nofollow noopener noreferrer" target="_blank"><i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i> Website</a>
+                        }
+                    </div>
+                </div>
+            </article>
+        }
+    </section>
+}

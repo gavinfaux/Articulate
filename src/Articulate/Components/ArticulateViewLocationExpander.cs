@@ -1,59 +1,75 @@
 #nullable enable
 using Articulate.Services;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Razor;
-using static Articulate.ArticulateConstants;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace Articulate.Components
 {
-    // This will first try to find the View in User themes, then in System themes.
-    // User themes can override System themes (a Post.cshtml in User theme folder with the same name as a system theme will take precedence).
-
-    /// <inheritdoc />
-    internal class ArticulateViewLocationExpander(IArticulateThemeResolver themeResolver) : IViewLocationExpander
+    internal class ArticulateViewLocationExpander : IViewLocationExpander
     {
         private const string ThemeKey = "articulate-theme";
+        private const string ThemeItemsKey = "ThemeName";
 
-        /// <inheritdoc />
-        public void PopulateValues(ViewLocationExpanderContext context)
-        {
-            var themeName = themeResolver.GetCurrentThemeName() ?? string.Empty;
-            context.Values[ThemeKey] = themeName;
-        }
-
-        /// <inheritdoc />
+        /// <inheritdoc/>
         public IEnumerable<string> ExpandViewLocations(ViewLocationExpanderContext context, IEnumerable<string> viewLocations)
         {
-            if (!context.Values.TryGetValue(ThemeKey, out var themeName) || string.IsNullOrEmpty(themeName))
+            IDictionary<string, string?> values = context.Values;
+
+            _ = values.TryGetValue(ThemeKey, out string? themeName);
+
+            if (string.IsNullOrEmpty(themeName))
+            {
+                // Fallback: try HttpContext.Items when Values is unavailable (e.g., in unit tests)
+                HttpContext httpContextForItems = context.ActionContext.HttpContext;
+                if (httpContextForItems.Items[ThemeItemsKey] is string detectedThemeName)
+                {
+                    themeName = detectedThemeName;
+                }
+            }
+
+            if (string.IsNullOrEmpty(themeName))
+            {
+                ILogger<ArticulateViewLocationExpander>? logger = context.ActionContext.HttpContext.RequestServices.GetService<ILogger<ArticulateViewLocationExpander>>();
+                logger?.LogDebug("No Articulate theme specified. Bypassing Articulate theme engine and falling back to standard view locations.");
+                return viewLocations;
+            }
+
+            HttpContext httpContext = context.ActionContext.HttpContext;
+
+            IArticulateViewLocationProvider? locationProvider =
+                httpContext.RequestServices.GetService<IArticulateViewLocationProvider>();
+            if (locationProvider is null)
             {
                 return viewLocations;
             }
 
-            var partialPlaceHolder = Path.Combine(Paths.PartialsPath, Paths.ViewPlaceHolder);
-            var viewsPlaceHolder = Path.Combine(Paths.ViewsPath, Paths.ViewPlaceHolder);
-            var themeLocations = new[]
+            IEnumerable<string> themeLocations = locationProvider.GetLocations(themeName);
+            return themeLocations.Concat(viewLocations);
+        }
+
+        /// <inheritdoc/>
+        public void PopulateValues(ViewLocationExpanderContext context)
+        {
+            HttpContext httpContext = context.ActionContext.HttpContext;
+
+            IArticulateThemeResolver? themeResolver =
+                httpContext.RequestServices.GetService<IArticulateThemeResolver>();
+            string themeName = themeResolver?.GetCurrentThemeName() ?? string.Empty;
+
+            // Values may be null in unit testing scenarios when constructed directly.
+            IDictionary<string, string?> values = context.Values;
+            values[ThemeKey] = themeName;
+
+            if (string.IsNullOrWhiteSpace(themeName))
             {
-                // User themes take priority over system themes, allows overrides.
-                // This needs documentation.
-                // Override a pager to use infinite scrolling, just need to override the themes Pager.cshtml partial
-                // Theming & styles, need to copy base theme to new theme as Views use Master from base theme.
-                Path.Combine(Paths.UserVirtualPath,  themeName, Paths.ViewPlaceHolder),
-                Path.Combine(Paths.UserVirtualPath,  themeName, viewsPlaceHolder),
-                Path.Combine(Paths.UserVirtualPath,  themeName, partialPlaceHolder),
-                Path.Combine(Paths.LegacyUserVirtualPath,  themeName, Paths.ViewPlaceHolder),
-                Path.Combine(Paths.LegacyUserVirtualPath,  themeName, viewsPlaceHolder),
-                Path.Combine(Paths.LegacyUserVirtualPath,  themeName, partialPlaceHolder),
-
-                // System themes
-                Path.Combine(Paths.SystemViewPath, Paths.ThemesPath, themeName, Paths.ViewPlaceHolder),
-                Path.Combine(Paths.SystemViewPath, Paths.ThemesPath, themeName, partialPlaceHolder),
-
-                // MarkdownEditor has no theme, but routed via Articulate root node, so themeName found.
-                Path.Combine(Paths.SystemViewPath, Paths.MarkdownEditorPath, Paths.ViewPlaceHolder)
-            };
-
-            IEnumerable<string> locations = themeLocations.Concat(viewLocations);
-
-            return locations;
+                _ = httpContext.Items.Remove(ThemeItemsKey);
+            }
+            else
+            {
+                httpContext.Items[ThemeItemsKey] = themeName;
+            }
         }
     }
 }

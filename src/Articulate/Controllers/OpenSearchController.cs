@@ -11,6 +11,9 @@ using Umbraco.Cms.Web.Common.Controllers;
 
 namespace Articulate.Controllers
 {
+    /// <summary>
+    /// Controller for OpenSearch description.
+    /// </summary>
     [ArticulateDynamicRoute]
     public class OpenSearchController(
         IPublishedValueFallback publishedValueFallback,
@@ -20,6 +23,9 @@ namespace Articulate.Controllers
         IUmbracoContextAccessor umbracoContextAccessor)
         : RenderController(logger, compositeViewEngine, umbracoContextAccessor)
     {
+        /// <summary>
+        /// Renders the OpenSearch description XML.
+        /// </summary>
         [HttpGet]
         public ActionResult Index(int id)
         {
@@ -60,6 +66,10 @@ namespace Articulate.Controllers
             }
 
             var model = new MasterModel(node, publishedValueFallback);
+            if (!model.HasSearchRoute())
+            {
+                return new NotFoundResult();
+            }
 
             var searchTemplateUrl = model.ArticulateSearchUrl(includeDomain: true) + "?term={searchTerms}";
 

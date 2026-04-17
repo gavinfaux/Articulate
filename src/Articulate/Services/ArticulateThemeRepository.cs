@@ -1,88 +1,243 @@
 #nullable enable
 using System.Reflection;
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Core.Cache;
-using Umbraco.Cms.Core.Extensions;
 using static Articulate.ArticulateConstants;
 
 namespace Articulate.Services
 {
-    internal class ArticulateThemeRepository(
+    /// <summary>
+    /// Repository for retrieving and managing Articulate themes.
+    /// </summary>
+    public sealed class ArticulateThemeRepository(
         IWebHostEnvironment hostingEnvironment,
         ILogger<ArticulateThemeRepository> logger,
-        AppCaches appCaches)
+        AppCaches appCaches,
+        IEnumerable<IArticulateThemeDescriptorProvider> themeDescriptorProviders)
         : IArticulateThemeRepository
     {
         private const string AllThemesCacheKey = "Articulate_AllThemes";
-        private const string EmbeddedResourceRoot = "Articulate.Theme/";
-        private readonly Assembly _articulateAssembly = typeof(ArticulateThemeRepository).Assembly;
+        private const string EmbeddedResourceRoot = "Articulate.Theme://";
 
+        /// <inheritdoc/>
         async Task IArticulateThemeRepository.CopyThemeAsync(string themeName, string newThemeName)
         {
-            var userThemesPath = hostingEnvironment.MapPathContentRoot(Paths.UserVirtualPath);
-            var destinationPhysicalPath = Path.Combine(userThemesPath, newThemeName);
+            if (DefaultThemes.AllThemeNames.Any(theme => string.Equals(theme, newThemeName, StringComparison.OrdinalIgnoreCase)))
+            {
+                throw new ArgumentException(
+                    $"The theme name '{newThemeName}' is reserved for a built-in theme.",
+                    nameof(newThemeName));
+            }
 
-            // User theme names must be unique
-            if (Directory.Exists(destinationPhysicalPath))
+            var userThemesPath = Path.GetFullPath(
+                Path.Combine(hostingEnvironment.ContentRootPath, Paths.UserThemesRoot));
+            var themeRootDestination = Path.GetFullPath(
+                Path.Combine(userThemesPath, newThemeName));
+            var viewsDestination = Path.Combine(themeRootDestination, Paths.Views);
+
+            if (!themeRootDestination.StartsWith(userThemesPath, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new ArgumentException("Invalid theme name", nameof(newThemeName));
+            }
+
+            Assembly articulateAssembly = GetWebAssembly();
+
+            // Check if theme already exists
+            if (Directory.Exists(themeRootDestination))
             {
                 throw new IOException($"A user theme with the name '{newThemeName}' already exists.");
             }
 
-            var resourcePathPrefix = string.Concat(EmbeddedResourceRoot, themeName);
-            var themeResources = _articulateAssembly.GetManifestResourceNames()
-                .Where(x => x.StartsWith(resourcePathPrefix))
-                .ToList();
+            // Separate resources by type
+            var viewResources = GetThemeResourcesByType(articulateAssembly, themeName, "Views").ToList();
+            var assetResources = GetThemeResourcesByType(articulateAssembly, themeName, "assets").ToList();
 
-            if (themeResources.Count == 0)
+            if (viewResources.Count == 0 && assetResources.Count == 0)
             {
-                throw new DirectoryNotFoundException($"The source theme '{themeName}' could not be found as an embedded resource.");
+                throw new DirectoryNotFoundException(
+                    $"The source theme '{themeName}' could not be found as an embedded resource.");
             }
 
             try
             {
-                Directory.CreateDirectory(destinationPhysicalPath);
+                // Extract views to Views/ArticulateThemes/{newThemeName}/Views/
+                _ = Directory.CreateDirectory(viewsDestination);
+                await ExtractResourcesAsync(
+                    articulateAssembly,
+                    viewResources,
+                    viewsDestination,
+                    themeName,
+                    "Views/");
 
-                foreach (var resourceName in themeResources)
+                logger.LogInformation(
+                    "Copied views for theme '{NewThemeName}' from '{SourceTheme}' to {ViewsPath}",
+                    newThemeName,
+                    themeName,
+                    Path.Combine("Views", "ArticulateThemes", newThemeName, "Views"));
+
+                // Extract Assets to wwwroot/App_Plugins/Articulate/Themes/{newThemeName}/assets/
+                if (assetResources.Count > 0)
                 {
-                    var relativePath = resourceName[resourcePathPrefix.Length..];
+                    var assetsDestination = Path.Combine(
+                        hostingEnvironment.WebRootPath,
+                        "App_Plugins",
+                        "Articulate",
+                        "Themes",
+                        newThemeName,
+                        "assets");
 
-                    var destinationFilePath = Path.Combine(destinationPhysicalPath, relativePath.TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
+                    _ = Directory.CreateDirectory(assetsDestination);
+                    await ExtractResourcesAsync(
+                        articulateAssembly,
+                        assetResources,
+                        assetsDestination,
+                        themeName,
+                        "assets/");
 
-                    if (Path.GetDirectoryName(destinationFilePath) is { } directoryPath)
-                    {
-                        Directory.CreateDirectory(directoryPath);
-                    }
-                    else
-                    {
-                        logger.LogError("Could not determine a valid directory path from '{destinationFilePath}' for '{ResourceName}'. Skipping file creation.", destinationFilePath, resourceName);
-                        continue;
-                    }
-
-                    await using Stream? stream = _articulateAssembly.GetManifestResourceStream(resourceName);
-                    if (stream is null)
-                    {
-                        logger.LogError("Could not find resource stream for '{ResourceName}'. Skipping file creation.", resourceName);
-                        continue;
-                    }
-
-                    await using var fileStream = new FileStream(destinationFilePath, FileMode.Create);
-                    await stream.CopyToAsync(fileStream).ConfigureAwait(false);
+                    logger.LogInformation(
+                        "Copied assets for theme '{NewThemeName}' to {AssetsPath}",
+                        newThemeName,
+                        Path.Combine("wwwroot", "App_Plugins", "Articulate", "Themes", newThemeName, "assets"));
                 }
+
+                // Create helpful README
+                await CreateThemeReadmeAsync(themeRootDestination, themeName, newThemeName);
 
                 appCaches.RuntimeCache.ClearByKey(AllThemesCacheKey);
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error copying embedded theme '{SourceTheme}' to '{DestinationTheme}'.", themeName, newThemeName);
+                logger.LogError(
+                    ex,
+                    "Error copying embedded theme '{SourceTheme}' to '{DestinationTheme}'",
+                    themeName,
+                    newThemeName);
                 throw;
             }
         }
 
-        public Task<IEnumerable<string>> GetDefaultThemesAsync() => Task.Run(() => DefaultThemes.AllThemeNames);
+        private static IEnumerable<string> GetThemeResourcesByType(
+            Assembly assembly,
+            string themeName,
+            string resourceType)
+        {
+            // Manifest resource names can contain either '/' or '\\' depending on build/platform.
+            // Normalize to '/' so prefix + relative path logic is consistent.
+            var prefix = $"{EmbeddedResourceRoot}Themes/{themeName}/";
+            var typePrefix = $"{resourceType}/";
 
-        private Task<IEnumerable<string>> GetUserThemesAsync() => Task.Run(() => GetThemesFromPathAsync(Paths.UserVirtualPath));
+            return assembly.GetManifestResourceNames()
+                .Where(resource =>
+                {
+                    var normalizedResource = resource.Replace('\\', '/');
 
+                    if (!normalizedResource.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return false;
+                    }
+
+                    var relativePath = normalizedResource[prefix.Length..];
+                    return relativePath.StartsWith(typePrefix, StringComparison.OrdinalIgnoreCase);
+                });
+        }
+
+        private async Task ExtractResourcesAsync(
+            Assembly assembly,
+            List<string> resources,
+            string destinationBase,
+            string themeName,
+            string prefixToStrip)
+        {
+            var prefixToRemove = $"{EmbeddedResourceRoot}Themes/{themeName}/";
+
+            foreach (var resourceName in resources)
+            {
+                var normalizedResourceName = resourceName.Replace('\\', '/');
+                if (!normalizedResourceName.StartsWith(prefixToRemove, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                var relativePath = normalizedResourceName[prefixToRemove.Length..];
+
+                if (relativePath.StartsWith(prefixToStrip, StringComparison.OrdinalIgnoreCase))
+                {
+                    relativePath = relativePath[prefixToStrip.Length..];
+                }
+
+                var cleanPath = relativePath
+                    .Replace('/', Path.DirectorySeparatorChar);
+
+                var destinationFilePath = Path.Combine(destinationBase, cleanPath);
+                await ExtractResourceToFileAsync(assembly, resourceName, destinationFilePath);
+            }
+        }
+
+        private static async Task CreateThemeReadmeAsync(string themeRoot, string sourceTheme, string newTheme)
+        {
+            var readme = $"""
+                          # Articulate Theme: {newTheme}
+
+                          Created by copying '{sourceTheme}' theme.
+
+                          ## Folder Structure
+
+                          **Views:** `Views/ArticulateThemes/{newTheme}/Views/`
+                          Edit .cshtml files here to customize your theme layout.
+
+                          **Assets:** `wwwroot/App_Plugins/Articulate/Themes/{newTheme}/assets/`
+                          CSS, JavaScript, images, and other static files.
+
+                          ## Quick Start
+
+                          1. Edit `Views/Master.cshtml` - Main layout template
+                          2. Edit `Views/Post.cshtml` - Individual blog post template
+                          3. Customize CSS in `wwwroot/.../assets/css/`
+                          4. Copied themes do not include a production build pipeline for assets, either set up your own build process, or ensure production builds link to src assets.
+
+                          ## Documentation
+
+                          - Theme Guide: https://github.com/Shazwazza/Articulate/wiki/Themes
+                          """;
+
+            var readmePath = Path.Combine(themeRoot, "README.md");
+            await File.WriteAllTextAsync(readmePath, readme);
+        }
+
+        private async Task ExtractResourceToFileAsync(
+            Assembly assembly,
+            string resourceName,
+            string destinationFilePath)
+        {
+            if (Path.GetDirectoryName(destinationFilePath) is { } directoryPath)
+            {
+                _ = Directory.CreateDirectory(directoryPath);
+            }
+            else
+            {
+                logger.LogError(
+                    "Could not determine a valid directory path from '{DestinationFilePath}' for '{ResourceName}'. Skipping file creation.",
+                    destinationFilePath,
+                    resourceName);
+                return;
+            }
+
+            await using Stream? stream = assembly.GetManifestResourceStream(resourceName);
+            if (stream is null)
+            {
+                logger.LogError(
+                    "Could not find resource stream for '{ResourceName}'. Skipping file creation.",
+                    resourceName);
+                return;
+            }
+
+            await using var fileStream = new FileStream(destinationFilePath, FileMode.Create);
+            await stream.CopyToAsync(fileStream);
+        }
+
+        /// <inheritdoc/>
         public async Task<IEnumerable<string>?> GetAllThemesAsync() =>
             await appCaches.RuntimeCache.GetCacheItemAsync(
                 AllThemesCacheKey,
@@ -90,21 +245,124 @@ namespace Articulate.Services
                 {
                     Task<IEnumerable<string>> defaultThemesTask = GetDefaultThemesAsync();
                     Task<IEnumerable<string>> userThemesTask = GetUserThemesAsync();
+                    string[] packageThemeKeys = GetPackageThemeKeys().ToArray();
 
-                    IEnumerable<string>[] results = await Task.WhenAll(defaultThemesTask, userThemesTask).ConfigureAwait(false);
-                    return results[0].Union(results[1]).OrderBy(name => name);
+                    IEnumerable<string>[] themeKeyGroups =
+                        await Task.WhenAll(defaultThemesTask, userThemesTask);
+
+                    string[] defaultThemeKeys = themeKeyGroups[0].ToArray();
+                    string[] userThemeKeys = themeKeyGroups[1].ToArray();
+                    WarnForReservedUserThemeKeys(userThemeKeys);
+
+                    return defaultThemeKeys
+                        .Union(userThemeKeys)
+                        .Union(packageThemeKeys)
+                        .OrderBy(themeKey => themeKey, StringComparer.OrdinalIgnoreCase);
                 },
-                TimeSpan.FromSeconds(30)).ConfigureAwait(false);
+                TimeSpan.FromSeconds(30));
 
-        private Task<IEnumerable<string>> GetThemesFromPathAsync(string virtualPath)
+        private static Assembly GetWebAssembly()
         {
-            var physicalPath = hostingEnvironment.MapPathContentRoot(virtualPath);
-            return Task.Run(() =>
+            // 1. Try to find Articulate.Web if already loaded
+            Assembly? assembly = AppDomain.CurrentDomain.GetAssemblies()
+                .FirstOrDefault(x => x.GetName().Name == "Articulate.Web");
+
+            // 2. Safety check
+            return assembly ?? throw new InvalidOperationException(
+                "Could not find 'Articulate.Web' assembly. Ensure the Articulate package is installed correctly.");
+        }
+
+        /// <inheritdoc/>
+        public Task<IEnumerable<string>> GetDefaultThemesAsync() => Task.FromResult<IEnumerable<string>>(DefaultThemes.AllThemeNames);
+
+        private static Task<IEnumerable<string>> GetThemesFromPhysicalPathAsync(string physicalPath) =>
+            Task.FromResult(Directory.Exists(physicalPath)
+                ? new DirectoryInfo(physicalPath).GetDirectories().Select(d => d.Name)
+                : []);
+
+        private Task<IEnumerable<string>> GetUserThemesAsync()
+        {
+            var physicalPath = Path.Combine(hostingEnvironment.ContentRootPath, Paths.UserThemesRoot);
+            return GetThemesFromPhysicalPathAsync(physicalPath);
+        }
+
+        private void WarnForReservedUserThemeKeys(IEnumerable<string> userThemeKeys)
+        {
+            var builtInThemeKeys = new HashSet<string>(DefaultThemes.AllThemeNames, StringComparer.OrdinalIgnoreCase);
+
+            foreach (string userThemeKey in userThemeKeys.Where(builtInThemeKeys.Contains))
             {
-                return Directory.Exists(physicalPath)
-                    ? new DirectoryInfo(physicalPath).GetDirectories().Select(d => d.Name)
-                    : [];
-            });
+                logger.LogWarning(
+                    "User Articulate theme key '{ThemeKey}' matches a built-in theme key. User theme views are searched before built-in theme views.",
+                    userThemeKey);
+            }
+        }
+
+        private IEnumerable<string> GetPackageThemeKeys()
+        {
+            var builtInThemeKeys = new HashSet<string>(DefaultThemes.AllThemeNames, StringComparer.OrdinalIgnoreCase);
+            var packageThemeKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (IArticulateThemeDescriptorProvider provider in themeDescriptorProviders)
+            {
+                AddProviderThemeKeys(provider, builtInThemeKeys, packageThemeKeys);
+            }
+
+            return packageThemeKeys;
+        }
+
+        private void AddProviderThemeKeys(
+            IArticulateThemeDescriptorProvider provider,
+            HashSet<string> builtInThemeKeys,
+            HashSet<string> packageThemeKeys)
+        {
+            foreach (string rawThemeKey in provider.GetThemeKeys())
+            {
+                if (!TryNormalizeThemeKey(provider, rawThemeKey, builtInThemeKeys, out string? themeKey))
+                {
+                    continue;
+                }
+
+                if (!packageThemeKeys.Add(themeKey))
+                {
+                    logger.LogWarning(
+                        "Skipping duplicate Articulate theme key '{ThemeKey}' from provider {ProviderType}.",
+                        themeKey,
+                        provider.GetType().FullName);
+                }
+            }
+        }
+
+        private bool TryNormalizeThemeKey(
+            IArticulateThemeDescriptorProvider provider,
+            string rawThemeKey,
+            HashSet<string> builtInThemeKeys,
+            [NotNullWhen(true)] out string? themeKey)
+        {
+            if (string.IsNullOrWhiteSpace(rawThemeKey))
+            {
+                logger.LogWarning(
+                    "Skipping an empty Articulate theme key from provider {ProviderType}.",
+                    provider.GetType().FullName);
+                themeKey = null;
+                return false;
+            }
+
+            themeKey = rawThemeKey.Trim();
+
+            if (!builtInThemeKeys.Contains(themeKey))
+            {
+                return true;
+            }
+
+            logger.LogWarning(
+                "Skipping Articulate theme key '{ThemeKey}' from provider {ProviderType} because it is reserved for a built-in theme.",
+                themeKey,
+                provider.GetType().FullName);
+            themeKey = null;
+            return false;
         }
     }
 }
+
+

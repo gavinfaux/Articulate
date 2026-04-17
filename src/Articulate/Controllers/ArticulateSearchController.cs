@@ -6,7 +6,6 @@ using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.Routing;
 using Umbraco.Cms.Core.Web;
-using Umbraco.Cms.Web.Website.ActionResults;
 
 namespace Articulate.Controllers
 {
@@ -37,48 +36,86 @@ namespace Articulate.Controllers
         /// <returns></returns>
         public IActionResult Search(string? term, string? indexName = null, int? p = null)
         {
+            indexName = SanitizeIndexName(indexName);
+
             if (CurrentPage is null)
             {
                 logger.LogWarning("ArticulateSearchController.Search: CurrentPage is null, returning 404");
                 return NotFound();
             }
 
-            // create a master model
-            var masterModel = new MasterModel(CurrentPage, PublishedValueFallback);
-
-            if (masterModel.BlogArchiveNode is null)
-            {
-                throw new InvalidOperationException("An ArticulateArchive document must exist under the root Articulate document");
-            }
+            IPublishedContent currentPage = CurrentPage;
+            var masterModel = new MasterModel(currentPage, PublishedValueFallback);
 
             if (term is null)
             {
-                // nothing to search, just render the view
-                var emptyList = new ListModel(
-                    CurrentPage,
-                    new PagerModel(masterModel.PageSize, 0, 0),
-                    [],
-                    PublishedValueFallback);
-
-                return View("List", emptyList);
+                return View("List", CreateEmptyListModel(currentPage, masterModel));
             }
 
             if (p is 1)
             {
-                return new RedirectToUmbracoPageResult(
-                    CurrentPage,
-                    PublishedUrlProvider,
-                    UmbracoContextAccessor);
+                return Redirect(BuildSearchUrl(currentPage, term, indexName));
             }
 
-            if (p is not > 0)
+            var pageNumber = p is > 0 ? p.Value : 1;
+
+            IEnumerable<IPublishedContent>? searchResult = articulateSearcher.Search(
+                term,
+                indexName,
+                masterModel.BlogArchiveNode.Id,
+                masterModel.PageSize,
+                pageNumber - 1,
+                out var totalPosts);
+
+            return GetPagedListView(masterModel, currentPage, searchResult ?? [], totalPosts, pageNumber);
+        }
+
+        private string? SanitizeIndexName(string? indexName)
+        {
+            if (string.IsNullOrWhiteSpace(indexName))
             {
-                p = 1;
+                return indexName;
             }
 
-            IEnumerable<IPublishedContent>? searchResult = articulateSearcher.Search(term, indexName, masterModel.BlogArchiveNode.Id, masterModel.PageSize, p.Value - 1, out var totalPosts);
+            if (!indexName.Equals(
+                    Umbraco.Cms.Core.Constants.UmbracoIndexes.InternalIndexName,
+                    StringComparison.OrdinalIgnoreCase) &&
+                !indexName.Equals(
+                    Umbraco.Cms.Core.Constants.UmbracoIndexes.MembersIndexName,
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                return indexName;
+            }
 
-            return GetPagedListView(masterModel, CurrentPage, searchResult ?? [], totalPosts, p);
+            logger.LogWarning(
+                "ArticulateSearchController.Search: Blocked access to sensitive index '{IndexName}'",
+                indexName);
+
+            return Umbraco.Cms.Core.Constants.UmbracoIndexes.ExternalIndexName;
+        }
+
+        private ListModel CreateEmptyListModel(IPublishedContent currentPage, MasterModel masterModel) =>
+            new(
+                currentPage,
+                new PagerModel(masterModel.PageSize, 0, 0),
+                [],
+                PublishedValueFallback);
+
+        private string BuildSearchUrl(IPublishedContent currentPage, string term, string? indexName)
+        {
+            var url = currentPage.Url(PublishedUrlProvider);
+
+            if (!string.IsNullOrWhiteSpace(term))
+            {
+                url = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(url, "term", term);
+            }
+
+            if (!string.IsNullOrWhiteSpace(indexName))
+            {
+                url = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(url, "indexName", indexName);
+            }
+
+            return url;
         }
     }
 }

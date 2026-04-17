@@ -14,7 +14,8 @@
 *.png 	binary
 *.gif 	binary
 
-*.cs text=auto diff=csharp
+*.cs text eol=lf diff=csharp
+*.cshtml text eol=lf
 *.vb text=auto
 *.c text=auto
 *.cpp text=auto
@@ -30,7 +31,7 @@
 *.scss text=auto
 *.sass text=auto
 *.less text=auto
-*.js text=auto
+*.js text=lf
 *.lisp text=auto
 *.clj text=auto
 *.sql text=auto
@@ -42,16 +43,17 @@
 *.fs text=auto
 *.fsx text=auto
 *.hs text=auto
-*.json text=auto
+*.json text=lf
 *.xml text=auto
 *.resx text=auto
 *.yml text eol=lf core.whitespace whitespace=tab-in-indent,trailing-space,tabwidth=2
-*.sh eol=lf
-
+*.yaml text eol=lf core.whitespace whitespace=tab-in-indent,trailing-space,tabwidth=2
+*.ts text eol=lf
+*.tsx text eol=lf
 *.csproj text=auto merge=union
 *.vbproj text=auto merge=union
 *.fsproj text=auto merge=union
 *.dbproj text=auto merge=union
 *.sln text=auto eol=crlf merge=union
-
-*.gitattributes text=auto
+*.sh text eol=lf
+*.gitattributes text eol=lf

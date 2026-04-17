@@ -4,41 +4,74 @@ using Umbraco.Cms.Core.Models.PublishedContent;
 
 namespace Articulate.Models
 {
-    public class AuthorModel(
-        IPublishedContent? content,
-        IEnumerable<IPublishedContent>? listItems,
-        PagerModel? pager,
-        int postCount,
-        IPublishedValueFallback publishedValueFallback)
-        : ListModel(content, pager, listItems, publishedValueFallback), IImageModel
+    /// <summary>
+    /// Model for an individual author.
+    /// </summary>
+    public class AuthorModel : ListModel, IImageModel
     {
-        private DateTime? _lastPostDate;
-        private MediaWithCrops? _image;
+        private readonly Lazy<MediaWithCrops?> _image;
+        private readonly Lazy<DateTime?> _lastPostDate;
 
-        [Obsolete("Use AuthorModel(IEnumerable<IPublishedContent>? listItems,PagerModel? pager, int postCount,  IPublishedValueFallback publishedValueFallback)")]
         public AuthorModel(
             IPublishedContent? content,
             IEnumerable<IPublishedContent>? listItems,
             PagerModel? pager,
             int postCount,
-            IPublishedValueFallback publishedValueFallback,
-            IVariationContextAccessor variationContextAccessor)
-            : this(content, listItems, pager, postCount, publishedValueFallback)
+            DateTime? lastPostDate,
+            IPublishedValueFallback publishedValueFallback)
+            : base(content, pager, listItems, publishedValueFallback)
+        {
+            PostCount = postCount;
+            _image = new Lazy<MediaWithCrops?>(() => Unwrap().Value<MediaWithCrops>("authorImage"), true);
+
+            // Use Posts collection (from ListModel) instead of obsolete Children property
+            _lastPostDate = new Lazy<DateTime?>(
+                () => lastPostDate ?? Posts.FirstOrDefault()?.Value<DateTime>("publishedDate"),
+                true);
+        }
+
+        public AuthorModel(
+            IPublishedContent? content,
+            IEnumerable<IPublishedContent>? listItems,
+            PagerModel? pager,
+            int postCount,
+            IPublishedValueFallback publishedValueFallback)
+            : this(content, listItems, pager, postCount, null, publishedValueFallback)
         {
         }
 
+        /// <summary>
+        /// Gets the author's bio.
+        /// </summary>
         public string Bio => this.Value<string>("authorBio") ?? string.Empty;
 
-        public string AuthorUrl => this.Value<string>("authorUrl") ?? string.Empty;
+        /// <summary>
+        /// Gets the author's URL.
+        /// </summary>
+        public string? AuthorUrl => this.Value<string>("authorUrl").ToSafeHrefUrl();
 
-        public MediaWithCrops? Image => _image ??= Unwrap().Value<MediaWithCrops>("authorImage");
+        /// <inheritdoc/>
+        public MediaWithCrops? Image => _image.Value;
 
-        public int PostCount { get; } = postCount;
+        /// <summary>
+        /// Gets the total post count for this author.
+        /// </summary>
+        public int PostCount { get; }
 
         // We know the list of posts passed in is already ordered descending so get the first
-        [Obsolete("Please use TryGetChildrenKeys() on IDocumentNavigationQueryService or IMediaNavigationQueryService instead. Scheduled for removal in V16.", false)]
-        public DateTime? LastPostDate => _lastPostDate ??= Children.FirstOrDefault()?.Value<DateTime>("publishedDate");
+        // Not used internally or by default themes, but exposed for custom themes
 
+        /// <summary>
+        /// Gets the date of the last post by this author.
+        /// </summary>
+        public DateTime? LastPostDate => _lastPostDate.Value;
+
+        /// <inheritdoc/>
         string IImageModel.Url => this.Url();
+
+        /// <summary>
+        /// Gets the wide cropped image URL.
+        /// </summary>
+        public string CroppedWideUrl => Image?.GetCropUrl(cropAlias: "wide", preferFocalPoint: true, useCropDimensions: true) ?? string.Empty;
     }
 }

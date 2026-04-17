@@ -48,24 +48,25 @@ namespace Articulate.Controllers
 
         private IActionResult RenderView(ContentModel model, int? p = null)
         {
-            IPublishedContent[]? listNodes = model.Content.ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive)?.ToArray();
+            IEnumerable<IPublishedContent> archiveNodes =
+                model.Content.Children().Where(x => x.ContentType.Alias == ArticulateConstants.ContentType.ArticulateArchive);
+            IPublishedContent[] listNodes = archiveNodes.ToArray();
 
-            if (listNodes is null || listNodes.Length == 0)
+            if (listNodes.Length == 0)
             {
                 throw new InvalidOperationException("An ArticulateArchive document must exist under the root Articulate document");
             }
 
             var master = new MasterModel(model.Content, PublishedValueFallback);
 
-            var count = umbracoHelper.GetPostCount(listNodes.Select(x => x.Id).ToArray());
+            PagerModel pager = CreateRequestedPager(master, p);
 
-            IEnumerable<PostModel> posts = umbracoHelper.GetRecentPosts(
-                master,
-                p ?? 1,
-                master.PageSize,
-                PublishedValueFallback) ?? [];
+            (int totalPosts, IPublishedContent[] posts) = umbracoHelper.GetPagedPostsSortedByPublishedDate(
+                pager,
+                null,
+                [.. listNodes.Select(x => x.Id)]);
 
-            return GetPagedListView(master, listNodes[0], posts, count, p);
+            return GetPagedListView(master, listNodes[0], posts, totalPosts, p);
         }
     }
 }

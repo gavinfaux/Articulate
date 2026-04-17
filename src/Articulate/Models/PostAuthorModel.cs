@@ -3,6 +3,9 @@ using Umbraco.Cms.Core.Models;
 
 namespace Articulate.Models
 {
+    /// <summary>
+    /// Model for a post author.
+    /// </summary>
     public class PostAuthorModel
     {
         public string? Name { get; set; }

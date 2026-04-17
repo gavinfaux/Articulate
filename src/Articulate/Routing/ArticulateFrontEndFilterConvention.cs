@@ -1,19 +1,22 @@
 #nullable enable
+using System.Reflection;
+using Articulate.Controllers;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
-using Umbraco.Cms.Core.PublishedCache;
 
 namespace Articulate.Routing
 {
-    internal class ArticulateFrontEndFilterConvention(
-        IPublishedContentTypeCache publishedContentTypeCache,
-        IDocumentCacheService documentCacheService)
-        : IApplicationModelConvention
+    internal class ArticulateFrontEndFilterConvention : IApplicationModelConvention
     {
+        /// <inheritdoc/>
         public void Apply(ApplicationModel application)
         {
-            foreach (ControllerModel controller in application.Controllers)
+            Assembly articulateAssembly = typeof(ArticulateController).Assembly;
+
+            foreach (ControllerModel controller in application.Controllers
+                         .Where(x => x.ControllerType.AsType().Assembly == articulateAssembly))
             {
-                controller.Filters.Add(new RouteCacheRefresherFilter(publishedContentTypeCache, documentCacheService));
+                controller.Filters.Add(new ServiceFilterAttribute(typeof(RouteCacheRefresherFilter)));
             }
         }
     }

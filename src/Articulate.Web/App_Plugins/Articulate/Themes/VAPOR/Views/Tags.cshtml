@@ -1,0 +1,52 @@
+@model TagListModel
+@{
+    Layout = "Master.cshtml";
+    var asArray = Model.Tags.ToArray();
+}
+
+
+<article>
+    <h1>@Model.Name</h1>
+    @{
+        var isTagsAction = ViewContext.RouteData.Values["action"]?.ToString()?.Equals("Tags", StringComparison.OrdinalIgnoreCase) == true;
+    }
+
+    @if (isTagsAction)
+    {
+        <div class="tag-cloud-large">
+            @Model.Tags.TagCloud(@<a href="#tag-@item.HtmlId" title="View Posts with the tag @item.TagName">@item.TagName</a>, 5, 50)
+        </div>
+    }
+    else
+    {
+        <ul class="tag-list">
+            @foreach (var t in asArray)
+            {
+                <li>
+                    <a href="#tag-@t.HtmlId" title="View Posts with the tag @t.TagName">@t.TagName</a> - (@t.PostCount)
+                </li>
+            }
+        </ul>
+    }
+
+    <hr />
+
+    <div class="tag-list">
+        @foreach (var tagModel in asArray)
+        {
+            <h2>
+                <a href="@tagModel.ArticulateTagRssUrl()" title="RSS feed for the tag @tagModel.TagName"><i class="fa-solid fa-rss"></i><span class="hidden">RSS</span></a>
+                <a id="tag-@tagModel.HtmlId" href="@tagModel.TagUrl" title="View Posts with the tag @tagModel.TagName">@tagModel.TagName</a>
+            </h2>
+
+            @tagModel.Posts?.OrderByDescending(x => x.PublishedDate).Table(
+                ["Date", "Name"],
+                [],
+                @<span>@item?.PublishedDate.ToString("yyyy-MM-dd")</span>,
+                @<a href="@item?.Url()" title="View Post">@item?.Name</a>)
+        }
+    </div>
+
+
+</article>
+

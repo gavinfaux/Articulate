@@ -9,9 +9,13 @@ using Umbraco.Cms.Core.Services.Changes;
 using Umbraco.Cms.Core.Sync;
 using Umbraco.Cms.Core.Web;
 using Umbraco.Cms.Infrastructure.Scoping;
+using Articulate.Routing;
 
 namespace Articulate.Components
 {
+    /// <summary>
+    /// Notification handler to refresh Articulate routes when the content cache is updated.
+    /// </summary>
     public sealed class ContentCacheRefresherHandler(
         IUmbracoContextAccessor umbracoContextAccessor,
         AppCaches appCaches,
@@ -20,6 +24,9 @@ namespace Articulate.Components
         IScopeProvider scopeProvider)
         : INotificationHandler<ContentCacheRefresherNotification>
     {
+        private void EnsureRoutesRefreshQueued() =>
+            _ = appCaches.RequestCache.GetCacheItem(ArticulateConstants.RefreshRoutesToken, () => true);
+
         /// <summary>
         /// When the page/content cache is refreshed, we'll check if any articulate root nodes were included in the refresh, if so we'll set a flag
         /// on the current request to rebuild the routes at the end of the request
@@ -32,33 +39,17 @@ namespace Articulate.Components
             switch (notification.MessageType)
             {
                 case MessageType.RefreshByPayload:
-                    // This is the standard case for content cache refresher
-                    foreach (ContentCacheRefresher.JsonPayload payload in (ContentCacheRefresher.JsonPayload[])notification.MessageObject)
-                    {
-                        if (payload.ChangeTypes.HasTypesAny(TreeChangeTypes.Remove | TreeChangeTypes.RefreshBranch | TreeChangeTypes.RefreshNode))
-                        {
-                            RefreshById(payload.Id);
-                        }
-                    }
-
+                    HandleRefreshByPayload((ContentCacheRefresher.JsonPayload[])notification.MessageObject);
                     break;
                 case MessageType.RefreshById:
                 case MessageType.RemoveById:
-                    RefreshById((int)notification.MessageObject);
+                    RefreshById(
+                        (int)notification.MessageObject,
+                        notification.MessageType == MessageType.RemoveById);
                     break;
                 case MessageType.RefreshByInstance:
                 case MessageType.RemoveByInstance:
-                    if (notification.MessageObject is not IContent content)
-                    {
-                        return;
-                    }
-
-                    if (content.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.Articulate))
-                    {
-                        // ensure routes are rebuilt
-                        appCaches.RequestCache.GetCacheItem(ArticulateConstants.RefreshRoutesToken, () => true);
-                    }
-
+                    HandleRefreshByInstance(notification.MessageObject);
                     break;
                 case MessageType.RefreshAll:
                 case MessageType.RefreshByJson:
@@ -67,7 +58,44 @@ namespace Articulate.Components
             }
         }
 
-        private void RefreshById(int id)
+        private void HandleRefreshByPayload(ContentCacheRefresher.JsonPayload[] payloads)
+        {
+            foreach (ContentCacheRefresher.JsonPayload payload in payloads)
+            {
+                if (payload.ChangeTypes.HasTypesAny(TreeChangeTypes.Remove | TreeChangeTypes.RefreshBranch |
+                                                    TreeChangeTypes.RefreshNode))
+                {
+                    RefreshById(
+                        payload.Id,
+                        payload.ChangeTypes.HasTypesAny(TreeChangeTypes.Remove));
+                }
+            }
+        }
+
+        private void HandleRefreshByInstance(object messageObject)
+        {
+            if (messageObject is not IContent content)
+            {
+                return;
+            }
+
+            if (!content.Published)
+            {
+                return;
+            }
+
+            if (ArticulateRouteChangeDetector.AffectsArticulateRoutes(
+                    content.Path,
+                    content.Level,
+                    content.SortOrder,
+                    content.ContentType.Alias,
+                    GetArticulateRoots()))
+            {
+                EnsureRoutesRefreshQueued();
+            }
+        }
+
+        private void RefreshById(int id, bool allowUnpublishedRefresh)
         {
             if (!umbracoContextAccessor.TryGetUmbracoContext(out IUmbracoContext? umbracoContext))
             {
@@ -78,14 +106,6 @@ namespace Articulate.Components
             {
                 IPublishedContent? item = umbracoContext.Content.GetById(id);
 
-                // if it's directly related to an articulate node
-                if (item is not null && item.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.Articulate))
-                {
-                    // ensure routes are rebuilt
-                    appCaches.RequestCache.GetCacheItem(ArticulateConstants.RefreshRoutesToken, () => true);
-                    return;
-                }
-
                 // We need to handle cases where the state of siblings at a lower sort order directly affect an Articulate node's routing.
                 // This will happen on copy, move, sort, unpublish, delete
                 if (item is null)
@@ -94,24 +114,40 @@ namespace Articulate.Components
 
                     // This will occur on delete, then what?
                     // TODO: How would we know this is a node that might be at the same level/above?
-                    // For now we have no choice, rebuild routes on each delete :/
+                    // For now, we have no choice, rebuild routes on each delete :/
                     if (item is null)
                     {
-                        appCaches.RequestCache.GetCacheItem(ArticulateConstants.RefreshRoutesToken, () => true);
+                        EnsureRoutesRefreshQueued();
+                        return;
+                    }
+
+                    if (!allowUnpublishedRefresh)
+                    {
                         return;
                     }
                 }
 
-                IPublishedContentType articulateContentType = publishedContentTypeCache.Get(PublishedItemType.Content, ArticulateConstants.ContentType.Articulate);
-
-                IEnumerable<IPublishedContent> articulateNodes = documentCacheService.GetByContentType(articulateContentType);
-                if (!articulateNodes.Any(node => node.Level == item.Level && node.SortOrder > item.SortOrder))
+                if (!ArticulateRouteChangeDetector.AffectsArticulateRoutes(
+                        item.Path,
+                        item.Level,
+                        item.SortOrder,
+                        item.ContentType.Alias,
+                        GetArticulateRoots()))
                 {
                     return;
                 }
 
-                appCaches.RequestCache.GetCacheItem(ArticulateConstants.RefreshRoutesToken, () => true);
+                EnsureRoutesRefreshQueued();
             }
+        }
+
+        private IEnumerable<IPublishedContent> GetArticulateRoots()
+        {
+            IPublishedContentType articulateContentType = publishedContentTypeCache.Get(
+                PublishedItemType.Content,
+                ArticulateConstants.ContentType.Articulate);
+
+            return documentCacheService.GetByContentType(articulateContentType);
         }
     }
 }

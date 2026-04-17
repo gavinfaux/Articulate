@@ -8,15 +8,6 @@ namespace Articulate.Models
 {
     public sealed class PostModel : MasterModel, IImageModel
     {
-        private PostAuthorModel? _author;
-        private MediaWithCrops? _postImage;
-        private string? _croppedPostImageUrl;
-
-        [Obsolete("Use PostModel(IPublishedContent content, IPublishedValueFallback publishedValueFallback)")]
-        public PostModel(IPublishedContent content, IPublishedValueFallback publishedValueFallback, IVariationContextAccessor variationContextAccessor)
-            : this(content, publishedValueFallback)
-        { }
-
         public PostModel(IPublishedContent content, IPublishedValueFallback publishedValueFallback)
             : base(content, publishedValueFallback)
         {
@@ -25,63 +16,88 @@ namespace Articulate.Models
             PageTags = string.Join(",", Tags);
         }
 
+        /// <summary>
+        /// Gets the tags associated with the post.
+        /// </summary>
         public IEnumerable<string> Tags => this.Value<IEnumerable<string>>("tags") ?? [];
 
+        /// <summary>
+        /// Gets the categories associated with the post.
+        /// </summary>
         public IEnumerable<string> Categories => this.Value<IEnumerable<string>>("categories") ?? [];
 
+        /// <summary>
+        /// Gets a value indicating whether comments are enabled for this post.
+        /// </summary>
         public bool EnableComments => Unwrap().Value<bool>("enableComments", fallback: Fallback.ToAncestors);
 
+        /// <summary>
+        /// Gets the author of the post.
+        /// </summary>
         public PostAuthorModel Author
         {
             get
             {
-                if (_author is not null)
+                if (field is not null)
                 {
-                    return _author;
+                    return field;
                 }
 
-                _author = new PostAuthorModel
+                field = new PostAuthorModel
                 {
-                    Name = Unwrap().Value<string>("author", fallback: Fallback.ToAncestors)
+                    Name = Unwrap().Value<string>("author", fallback: Fallback.ToAncestors),
                 };
 
-                // look up assocated author node if we can
-                IPublishedContent? authors = RootBlogNode.Children(content => content.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateAuthors))?.FirstOrDefault();
-                IPublishedContent? authorNode = authors?.Children(content => content.Name.InvariantEquals(_author.Name))?.FirstOrDefault();
+                // look up associated author node if we can
+                IEnumerable<IPublishedContent> authorContainers =
+                    RootBlogNode.Children().Where(content =>
+                        content.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateAuthors));
+                IPublishedContent? authors = authorContainers.FirstOrDefault();
+
+                IEnumerable<IPublishedContent> authorNodes =
+                    authors?.Children(content => content.Name.InvariantEquals(field.Name))
+                    ?? [];
+                IPublishedContent? authorNode = authorNodes.FirstOrDefault();
 
                 if (authorNode is null)
                 {
-                    return _author;
+                    return field;
                 }
 
-                _author.Bio = authorNode.Value<string>("authorBio");
-                _author.Url = authorNode.Value<string>("authorUrl");
-                _author.Image = authorNode.Value<MediaWithCrops>("authorImage");
-                _author.BlogUrl = authorNode.Url();
+                field.Bio = authorNode.Value<string>("authorBio");
+                field.Url = authorNode.Value<string>("authorUrl").ToSafeHrefUrl();
+                field.Image = authorNode.Value<MediaWithCrops>("authorImage");
+                field.BlogUrl = authorNode.Url().ToSafeHrefUrl();
 
-                return _author;
+                return field;
             }
         }
 
+        /// <summary>
+        /// Gets the post excerpt.
+        /// </summary>
         public string Excerpt => this.Value<string>("excerpt") ?? string.Empty;
 
+        /// <summary>
+        /// Gets the published date of the post.
+        /// </summary>
         public DateTime PublishedDate => Unwrap().Value<DateTime>("publishedDate");
 
         /// <summary>
-        /// Gets the blog post associated image
+        /// Gets the post image item.
         /// </summary>
-        public MediaWithCrops? PostImage => _postImage ??= Unwrap().Value<MediaWithCrops>("postImage");
+        public MediaWithCrops? PostImage => field ??= Unwrap().Value<MediaWithCrops>("postImage");
 
         /// <summary>
-        /// Gets a Cropped version of the PostImageUrl
+        /// Gets the wide cropped image URL for the post.
         /// </summary>
         public string CroppedPostImageUrl
         {
             get
             {
-                if (_croppedPostImageUrl is not null)
+                if (field is not null)
                 {
-                    return _croppedPostImageUrl;
+                    return field;
                 }
 
                 if (PostImage is null)
@@ -89,29 +105,42 @@ namespace Articulate.Models
                     return string.Empty;
                 }
 
-                var wideCropUrl = PostImage.GetCropUrl("wide");
-                _croppedPostImageUrl = (wideCropUrl ?? string.Empty) + (wideCropUrl is not null && wideCropUrl.Contains('?') ? "&" : "?");
-                return _croppedPostImageUrl;
+                field = PostImage.GetCropUrl(cropAlias: "wide", preferFocalPoint: true, useCropDimensions: true) ??
+                        string.Empty;
+                return field;
             }
         }
 
         /// <summary>
-        /// Gets the Social Meta Description
+        /// Gets the social meta description.
         /// </summary>
         public string SocialMetaDescription => this.Value<string>("socialDescription") ?? string.Empty;
 
+        /// <summary>
+        /// Gets the post body content as HTML.
+        /// </summary>
         public IHtmlContent Body =>
             new HtmlString(
                 this.Value<IHtmlEncodedString>(
                         this.HasProperty("richText") ? "richText" : "markdown")
                     ?.ToHtmlString());
 
+        /// <summary>
+        /// Gets the external URL for the post if set.
+        /// </summary>
+        // Not used internally or by default themes, but exposed for custom themes
         public string ExternalUrl => this.Value<string>("externalUrl") ?? string.Empty;
 
+        /// <inheritdoc/>
         MediaWithCrops? IImageModel.Image => PostImage;
 
+        /// <inheritdoc/>
         string IImageModel.Name => Name;
 
+        /// <inheritdoc/>
         string IImageModel.Url => this.Url();
+
+        /// <inheritdoc/>
+        string IImageModel.CroppedWideUrl => CroppedPostImageUrl;
     }
 }

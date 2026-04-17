@@ -1,0 +1,31 @@
+{
+    "name": "Articulate Dev",
+    "build": {
+        "dockerfile": "Dockerfile"
+    },
+    "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+    "forwardPorts": [
+        8080,
+        8443,
+        44366
+    ],
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-dotnettools.csdevkit",
+                "ms-dotnettools.csharp",
+                "ms-azuretools.vscode-docker",
+                "EditorConfig.EditorConfig",
+                "dbaeumer.vscode-eslint",
+                "esbenp.prettier-vscode",
+                "runem.lit-plugin"
+            ],
+            "settings": {
+                "dotnet.defaultSolution": "${workspaceFolder}/src/Articulate.sln",
+                "dotnet.solution.autoOpen": "${workspaceFolder}/src/Articulate.sln"
+            }
+        }
+    },
+    "postCreateCommand": "cd src && dotnet restore && cd Articulate.Web/Client && pnpm install && pnpm run build:dev",
+    "remoteUser": "vscode"
+}

@@ -13,7 +13,7 @@ namespace Articulate.Routing
     /// At the end of a request, we'll check if there is a flag in the request indicating to rebuild the routes
     /// </summary>
     /// <remarks>
-    /// In some cases many articulate roots might be published at one time but we only want to rebuild the routes once so we'll do it once
+    /// In some cases many articulate roots might be published at one time, but we only want to rebuild the routes once so we'll do it once
     /// at the end of the request.
     /// </remarks>
     internal class RouteCacheRefresherFilter(
@@ -21,8 +21,10 @@ namespace Articulate.Routing
         IDocumentCacheService documentCacheService)
         : IActionFilter
     {
+        /// <inheritdoc/>
         public void OnActionExecuted(ActionExecutedContext context) => PerformRefresh(context.HttpContext);
 
+        /// <inheritdoc/>
         public void OnActionExecuting(ActionExecutingContext context)
         {
         }

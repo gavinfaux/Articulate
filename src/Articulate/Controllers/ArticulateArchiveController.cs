@@ -58,21 +58,10 @@ namespace Articulate.Controllers
                 return RedirectPermanent(archive.RootBlogNode.Url());
             }
 
-            // Get post count by xpath is much faster than iterating all children to get a count
-            var count = Umbraco.GetPostCount(archive.Id);
+            PagerModel pager = CreateRequestedPager(archive, p);
+            (var totalPosts, IPublishedContent[] posts) = Umbraco.GetPagedPostsSortedByPublishedDate(pager, null, archive.Id);
 
-            if (!int.TryParse(archive.RootBlogNode.Value<string>("pageSize"), out var pageSize))
-            {
-                pageSize = 10;
-            }
-
-            IEnumerable<PostModel> posts = Umbraco.GetRecentPostsByArchive(
-                archive,
-                p ?? 1,
-                pageSize,
-                PublishedValueFallback) ?? [];
-
-            return GetPagedListView(archive, archive, posts, count, null);
+            return GetPagedListView(archive, archive, posts, totalPosts, p);
         }
     }
 }

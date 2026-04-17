@@ -1,0 +1,106 @@
+@using Microsoft.AspNetCore.Authentication.Cookies
+@using Microsoft.Extensions.Options
+@using Umbraco.Cms.Core
+@inject IOptionsMonitor<CookieAuthenticationOptions> backOfficeCookieOptions
+
+@model IMasterModel
+@{
+    var theme = Model.Theme;
+    var bannerStyle = !Model.BlogBanner.IsNullOrWhiteSpace()
+        ? "background-image: url(" + Model.BlogBanner + ");"
+        : string.Empty;
+    var headerClass = !Model.BlogBanner.IsNullOrWhiteSpace()
+        ? "site-header site-header--has-banner"
+        : "site-header";
+
+    var isBackOfficeLoggedIn = false;
+    var cookieOptions = backOfficeCookieOptions.Get(Constants.Security.BackOfficeAuthenticationType);
+    var cookieName = cookieOptions.Cookie.Name;
+    var cookie = string.IsNullOrWhiteSpace(cookieName)
+        ? null
+        : Context.Request.Cookies[cookieName];
+    if (cookie is not null)
+    {
+        var unprotected = cookieOptions.TicketDataFormat.Unprotect(cookie);
+        isBackOfficeLoggedIn = unprotected is not null && unprotected.AuthenticationScheme == Constants.Security.BackOfficeAuthenticationType;
+    }
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    @Model.GoogleAnalyticsTracking()
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#2e2e2e">
+    <title>@Model.PageTitle</title>
+    @Model.MetaTags()
+    @Html.SocialMetaTags(Model)
+    @Model.AdvertiseWeblogApi()
+    @Model.RssFeed()
+    @Model.RenderOpenSearch()
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Figtree:ital,wght@0,300..900;1,300..900&display=swap">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@@fortawesome/fontawesome-free@6.7.2/css/fontawesome.min.css" integrity="sha256-TBe0l9PhFaVR3DwHmA2jQbUf1y6yQ22RBgJKKkNkC50=" crossorigin="anonymous" media="all">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@@fortawesome/fontawesome-free@6.7.2/css/brands.min.css" integrity="sha256-lvqQzfgRxG8QBB5QMqpZGrljg5T/hNmC3vC7i3zntlI=" crossorigin="anonymous" media="all">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@@fortawesome/fontawesome-free@6.7.2/css/solid.min.css" integrity="sha256-ETbOOM9U8WfaXg2AkW2t+QbdpWYFRAO+HEXOth8EQbY=" crossorigin="anonymous" media="all">
+    <link rel="stylesheet" href="~/App_Plugins/Articulate/Themes/@theme/assets/css/site.css" asp-append-version="true">
+    @await RenderSectionAsync("Head", false)
+</head>
+<body class="theme-sample @ViewBag.CssBodyClass">
+    @Model.GoogleAnalyticsNoScript()
+    <a class="skip-link" href="#main-content">Skip to main content</a>
+
+    <div class="page-shell">
+        <header class="@headerClass" style="@bannerStyle">
+            <div class="site-header__inner">
+                <div class="site-brand">
+                    @if (!Model.BlogLogo.IsNullOrWhiteSpace())
+                    {
+                        <a class="site-brand__logo-link" href="@Model.ArticulateRootUrl()">
+                            <img class="site-brand__logo" src="@Model.BlogLogo" alt="@Model.BlogTitle">
+                        </a>
+                    }
+                    <h1 class="site-brand__title">
+                        <a href="@Model.ArticulateRootUrl()">@Model.BlogTitle</a>
+                    </h1>
+                    @if (!Model.BlogDescription.IsNullOrWhiteSpace())
+                    {
+                        <p class="site-brand__description">@Model.BlogDescription</p>
+                    }
+                </div>
+
+                <button class="nav-toggle" type="button" data-nav-toggle aria-expanded="false" aria-controls="site-nav">
+                    <span>Menu</span>
+                    <i class="fa-solid fa-bars" aria-hidden="true"></i>
+                </button>
+            </div>
+
+            @await Html.PartialAsync("Menu", Model)
+        </header>
+
+        <main id="main-content" class="page-shell__content" tabindex="-1">
+            @RenderBody()
+        </main>
+
+        <footer class="site-footer">
+            <p class="site-footer__kicker">Built for readable, expressive publishing.</p>
+            <p>&copy; @DateTime.UtcNow.Year @Model.BlogTitle &nbsp;&middot;&nbsp; <a href="@Model.ArticulateRssUrl()" aria-label="RSS feed"><i class="fa-solid fa-rss" aria-hidden="true"></i> RSS</a></p>
+        </footer>
+    </div>
+
+    @if (isBackOfficeLoggedIn)
+    {
+        <a class="fab-new-post" href="@Model.ArticulateCreateBlogEntryUrl()" rel="nofollow" title="Create new blog post">
+            <i class="fa-solid fa-plus" aria-hidden="true"></i>
+            <span class="sr-only">Create new blog post</span>
+        </a>
+    }
+
+    <div class="site-toast" data-site-toast role="status" aria-live="polite" hidden></div>
+
+    <script src="~/App_Plugins/Articulate/Themes/@theme/assets/js/site.js" asp-append-version="true" defer></script>
+    @await RenderSectionAsync("Scripts", false)
+</body>
+</html>

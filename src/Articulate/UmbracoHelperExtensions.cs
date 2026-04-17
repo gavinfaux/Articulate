@@ -1,61 +1,25 @@
+#nullable enable
 using Articulate.Services;
+using Articulate.Routing;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.PublishedCache;
 using Umbraco.Cms.Web.Common;
 using PublishedContentExtensions = Articulate.Models.PublishedContentExtensions;
 
-// TODO: #nullable enable
 namespace Articulate
 {
+    /// <summary>
+    /// Extension methods for <see cref="UmbracoHelper"/>.
+    /// </summary>
     public static class UmbracoHelperExtensions
     {
         /// <summary>
-        /// A method that will return number of posts
+        /// Gets a paged set of posts sorted by published date, along with the total count.
         /// </summary>
-        /// <param name="helper"></param>
-        /// <param name="articulateArchiveIds"></param>
-        /// <returns></returns>
-        public static int GetPostCount(this UmbracoHelper helper, params int[] articulateArchiveIds)
-        {
-            var totalPosts = articulateArchiveIds
-                .Select(helper.Content)
-                .WhereNotNull()
-                .SelectMany(x => x.Descendants())
-                .Count();
-
-            return totalPosts;
-        }
-
-        /// <summary>
-        /// A method that will return number of posts
-        /// </summary>
-        /// <param name="helper"></param>
-        /// <param name="authorName"></param>
-        /// <param name="articulateArchiveIds"></param>
-        /// <returns></returns>
-        public static int GetPostCount(this UmbracoHelper helper, string authorName, params int[] articulateArchiveIds)
-        {
-            var totalPosts = articulateArchiveIds
-                .Select(helper.Content)
-                .WhereNotNull()
-                .SelectMany(x => x.Descendants().Where(d => d.Value<string>("author") == authorName))
-                .Count();
-
-            return totalPosts;
-        }
-
-        /// <summary>
-        /// A method that will return the posts sorted by published date in an efficient way
-        /// </summary>
-        /// <param name="helper"></param>
-        /// <param name="pager"></param>
-        /// <param name="filter"></param>
-        /// <param name="articulateArchiveIds"></param>
-        /// <returns></returns>
-        public static IEnumerable<IPublishedContent> GetPostsSortedByPublishedDate(
+        internal static (int TotalPosts, IPublishedContent[] Posts) GetPagedPostsSortedByPublishedDate(
             this UmbracoHelper helper,
             PagerModel pager,
-            Func<IPublishedContent, bool> filter,
+            Func<IPublishedContent, bool>? filter,
             params int[] articulateArchiveIds)
         {
             IEnumerable<IPublishedContent> posts = articulateArchiveIds
@@ -69,21 +33,45 @@ namespace Articulate
                 posts = posts.Where(filter);
             }
 
-            // now do the ordering
-            posts = posts.OrderByDescending(x => x.Value<DateTime>("publishedDate"))
-                .Skip(pager.CurrentPageIndex * pager.PageSize)
-                .Take(pager.PageSize);
+            (IPublishedContent Content, DateTime PublishedDate)[] orderedPosts = posts
+                .Select(x => (Content: x, PublishedDate: x.Value<DateTime>("publishedDate")))
+                .OrderByDescending(x => x.PublishedDate)
+                .ToArray();
 
-            return posts;
+            IPublishedContent[] pagedPosts = orderedPosts
+                .Skip(pager.CurrentPageIndex * pager.PageSize)
+                .Take(pager.PageSize)
+                .Select(x => x.Content)
+                .ToArray();
+
+            return (orderedPosts.Length, pagedPosts);
         }
 
+        /// <summary>
+        /// Gets posts sorted by published date.
+        /// </summary>
+        public static IEnumerable<IPublishedContent> GetPostsSortedByPublishedDate(
+            this UmbracoHelper helper,
+            PagerModel pager,
+            Func<IPublishedContent, bool>? filter,
+            params int[] articulateArchiveIds)
+            => helper.GetPagedPostsSortedByPublishedDate(pager, filter, articulateArchiveIds).Posts;
+
+        /// <summary>
+        /// Gets a collection of tags for the blog.
+        /// </summary>
+        // Not used internally or by default themes, but exposed for custom themes
         public static PostTagCollection GetPostTagCollection(
             this UmbracoHelper helper,
             IMasterModel masterModel,
             ITagQuery tagQuery,
             ArticulateTagService articulateTagService)
         {
-            var tagsBaseUrl = masterModel.RootBlogNode.Value<string>("tagsUrlName") ?? "tags";
+            string? tagsBaseUrl = ArticulateRouteSegmentHelper.GetConfiguredSegment(masterModel.RootBlogNode, "tagsUrlName");
+            if (tagsBaseUrl is null)
+            {
+                return new PostTagCollection([]);
+            }
 
             IEnumerable<PostsByTagModel> contentByTags = articulateTagService.GetContentByTags(
                 helper,
@@ -95,22 +83,10 @@ namespace Articulate
             return new PostTagCollection(contentByTags);
         }
 
-        [Obsolete("Use GetRecentPosts(this UmbracoHelper helper, IMasterModel masterModel, int count, IPublishedValueFallback publishedValueFallback)")]
-        public static IEnumerable<PostModel> GetRecentPosts(
-            this UmbracoHelper helper,
-            IMasterModel masterModel,
-            int count,
-            IPublishedValueFallback publishedValueFallback,
-            IVariationContextAccessor variationContextAccessor) => GetRecentPosts(helper, masterModel, count, publishedValueFallback);
-
         /// <summary>
-        /// Returns a list of the most recent posts
+        /// Gets a list of the most recent posts.
         /// </summary>
-        /// <param name="helper"></param>
-        /// <param name="masterModel"></param>
-        /// <param name="count"></param>
-        /// <param name="publishedValueFallback"></param>
-        /// <returns></returns>
+        // Not used internally or by default themes, but exposed for custom themes
         public static IEnumerable<PostModel> GetRecentPosts(
             this UmbracoHelper helper,
             IMasterModel masterModel,
@@ -123,21 +99,11 @@ namespace Articulate
 
             var pager = new PagerModel(count, 0, 1);
 
-            IEnumerable<IPublishedContent> listItems = helper.GetPostsSortedByPublishedDate(pager, null, listNodeIds);
+            IPublishedContent[] listItems = helper.GetPagedPostsSortedByPublishedDate(pager, null, listNodeIds).Posts;
 
             var rootPageModel = new ListModel(listNodes[0], pager, listItems, publishedValueFallback);
             return rootPageModel.Posts;
         }
-
-        [Obsolete("Use GetRecentPosts(this UmbracoHelper helper, IMasterModel masterModel, int page, int pageSize, IPublishedValueFallback publishedValueFallback)")]
-
-        public static IEnumerable<PostModel> GetRecentPosts(
-            this UmbracoHelper helper,
-            IMasterModel masterModel,
-            int page,
-            int pageSize,
-            IPublishedValueFallback publishedValueFallback,
-            IVariationContextAccessor variationContextAccessor) => GetRecentPosts(helper, masterModel, page, pageSize, publishedValueFallback);
 
         /// <summary>
         /// Returns a list of the most recent posts
@@ -161,20 +127,11 @@ namespace Articulate
 
             var pager = new PagerModel(pageSize, page - 1, 1);
 
-            IEnumerable<IPublishedContent> listItems = helper.GetPostsSortedByPublishedDate(pager, null, listNodeIds);
+            IPublishedContent[] listItems = helper.GetPagedPostsSortedByPublishedDate(pager, null, listNodeIds).Posts;
 
             var rootPageModel = new ListModel(listNodes[0], pager, listItems, publishedValueFallback);
             return rootPageModel.Posts;
         }
-
-        [Obsolete("Use GetRecentPostsByArchive(this UmbracoHelper helper, IMasterModel masterModel, int page, int pageSize, IPublishedValueFallback publishedValueFallback)")]
-        public static IEnumerable<PostModel> GetRecentPostsByArchive(
-            this UmbracoHelper helper,
-            IMasterModel masterModel,
-            int page,
-            int pageSize,
-            IPublishedValueFallback publishedValueFallback,
-            IVariationContextAccessor variationContextAccessor) => GetRecentPostsByArchive(helper, masterModel, page, pageSize, publishedValueFallback);
 
         /// <summary>
         /// Returns a list of the most recent posts by archive
@@ -194,28 +151,56 @@ namespace Articulate
         {
             var pager = new PagerModel(pageSize, page - 1, 1);
 
-            IEnumerable<IPublishedContent> listItems = helper.GetPostsSortedByPublishedDate(pager, null, masterModel.Id);
+            IPublishedContent[] listItems = helper.GetPagedPostsSortedByPublishedDate(pager, null, masterModel.Id).Posts;
 
             var rootPageModel = new ListModel(masterModel, pager, listItems, publishedValueFallback);
             return rootPageModel.Posts;
         }
 
-        internal static IEnumerable<IPublishedContent> GetContentByAuthor(
+        internal static (int TotalPosts, IPublishedContent[] Posts) GetPagedContentByAuthor(
             this UmbracoHelper helper,
             IPublishedContent[] listNodes,
             string authorName,
-            PagerModel pager,
-            IPublishedValueFallback publishedValueFallback)
+            PagerModel pager)
         {
-            var listNodeIds = listNodes.Select(x => x.Id).ToArray();
+            int[] listNodeIds = listNodes.Select(x => x.Id).ToArray();
 
-            IEnumerable<IPublishedContent> postWithAuthor = helper.GetPostsSortedByPublishedDate(pager, x => string.Equals(x.Value<string>("author"), authorName.Replace('-', ' '), StringComparison.InvariantCultureIgnoreCase), listNodeIds);
+            (int TotalPosts, IPublishedContent[] Posts) postWithAuthor = helper.GetPagedPostsSortedByPublishedDate(
+                pager,
+                x => string.Equals(
+                    x.Value<string>("author"),
+                    NormalizeAuthorName(authorName),
+                    StringComparison.InvariantCultureIgnoreCase),
+                listNodeIds);
 
-            var rootPageModel = new ListModel(listNodes[0], pager, postWithAuthor, publishedValueFallback);
-            return rootPageModel.Posts;
+            return postWithAuthor;
         }
 
-        [Obsolete("Use Articulate.Models.PublishedContentExtensions.GetListNodes(this IMasterModel model)")]
-        private static IPublishedContent[] GetListNodes(IMasterModel masterModel) => PublishedContentExtensions.GetListNodes(masterModel);
+        internal static IReadOnlyDictionary<string, (int PostCount, DateTime? LastPostDate)> GetAuthorPostStatsByAuthor(
+            this UmbracoHelper helper,
+            params int[] articulateArchiveIds)
+        {
+            IEnumerable<IPublishedContent> posts = articulateArchiveIds
+                .Select(helper.Content)
+                .WhereNotNull()
+                .SelectMany(x => x.Descendants());
+
+            return posts
+                .Select(x => new
+                {
+                    AuthorName = NormalizeAuthorName(x.Value<string>("author")),
+                    PublishedDate = x.Value<DateTime>("publishedDate")
+                })
+                .Where(x => !string.IsNullOrWhiteSpace(x.AuthorName))
+                .GroupBy(x => x.AuthorName, StringComparer.InvariantCultureIgnoreCase)
+                .ToDictionary(
+                    x => x.Key,
+                    x => ((int PostCount, DateTime? LastPostDate))(x.Count(), x.Max(p => (DateTime?)p.PublishedDate)),
+                    StringComparer.InvariantCultureIgnoreCase);
+        }
+
+        internal static string NormalizeAuthorName(string? authorName) =>
+            (authorName ?? string.Empty)
+                .Trim();
     }
 }

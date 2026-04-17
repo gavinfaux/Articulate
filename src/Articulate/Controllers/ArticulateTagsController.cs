@@ -1,5 +1,6 @@
 #nullable enable
 using Articulate.Attributes;
+using Articulate.Routing;
 using Articulate.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
@@ -47,7 +48,11 @@ namespace Articulate.Controllers
                 return NotFound();
             }
 
-            var categoriesUrlName = CurrentPage.Value<string>("categoriesUrlName") ?? "categories";
+            string? categoriesUrlName = ArticulateRouteSegmentHelper.GetConfiguredSegment(CurrentPage, "categoriesUrlName");
+            if (categoriesUrlName is null)
+            {
+                return NotFound();
+            }
 
             return tag.IsNullOrWhiteSpace()
                 ? RenderTagsOrCategories(ArticulateConstants.DataType.ArticulateCategories, categoriesUrlName)
@@ -68,7 +73,11 @@ namespace Articulate.Controllers
                 return NotFound();
             }
 
-            var tagUrlName = CurrentPage.Value<string>("tagsUrlName") ?? "tags";
+            string? tagUrlName = ArticulateRouteSegmentHelper.GetConfiguredSegment(CurrentPage, "tagsUrlName");
+            if (tagUrlName is null)
+            {
+                return NotFound();
+            }
 
             return tag.IsNullOrWhiteSpace()
                 ? RenderTagsOrCategories(ArticulateConstants.DataType.ArticulateTags, tagUrlName)
