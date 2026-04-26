@@ -2,6 +2,7 @@
 using Articulate.Attributes;
 using Articulate.ImportExport;
 using Articulate.Models.Api;
+using Articulate.Services;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -10,6 +11,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Umbraco.Cms.Api.Common.Attributes;
 using Umbraco.Cms.Api.Management.Controllers;
+using Umbraco.Cms.Core.Configuration.Models;
 using Umbraco.Cms.Core.Models.Membership;
 using Umbraco.Cms.Core.Security;
 using Umbraco.Cms.Web.Common.Authorization;
@@ -30,6 +32,7 @@ namespace Articulate.Controllers.Api
         IBackOfficeSecurityAccessor backOfficeSecurityAccessor,
         ArticulateTempFileSystem articulateTempFileSystem,
         IOptionsMonitor<Options.ArticulateOptions> articulateOptions,
+        IOptionsMonitor<RuntimeSettings> runtimeSettings,
         ILogger<BlogMlApiController> logger)
         : ManagementApiControllerBase
     {
@@ -87,9 +90,16 @@ namespace Articulate.Controllers.Api
                 articulateTempFileSystem.AddFile(fileName, buffer);
 
                 BlogMlImportFileSummary summary = blogMlImporter.GetImportFileSummary(fileName);
-                ISet<string> allowedHosts = articulateOptions.CurrentValue.AllowedMediaHosts.ToHashSet(StringComparer.OrdinalIgnoreCase);
+                Options.ArticulateOptions options = articulateOptions.CurrentValue;
+                bool allowUnsafeLocalExternalImageHosts =
+                    runtimeSettings.CurrentValue.Mode != RuntimeMode.Production &&
+                    options.AllowUnsafeLocalExternalImageHostsInDevelopment;
+                ISet<string> allowedHosts = options.AllowedMediaHosts.ToHashSet(StringComparer.OrdinalIgnoreCase);
                 string[] blockedExternalHosts = summary.ExternalHosts
-                    .Where(host => !allowedHosts.Any(allowedHost => allowedHost.InvariantEquals(host)))
+                    .Where(host => ArticulateImportMediaService.ValidateExternalImageHost(
+                        host,
+                        allowedHosts,
+                        allowUnsafeLocalExternalImageHosts) is not null)
                     .ToArray();
 
                 return Ok(new ImportFileResponse
