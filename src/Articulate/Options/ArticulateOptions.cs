@@ -46,7 +46,8 @@ namespace Articulate.Options
         public string[] AllowedMediaHosts { get; set; } = [];
 
         /// <summary>
-        /// When true, allows localhost/private-network external image downloads during non-production Umbraco runtime modes.
+        /// When true, allows localhost/private-network external image downloads during non-production Umbraco runtime modes,
+        /// except for cloud metadata endpoints that are always blocked.
         /// This setting is ignored when Umbraco:CMS:Runtime:Mode is Production.
         /// Default: false.
         /// </summary>

@@ -27,6 +27,22 @@ namespace Articulate.Services
         private const int MaxRedirects = 5;
         private static readonly FrozenSet<string> _fallbackAllowedExtensions =
             FrozenSet.ToFrozenSet([".png", ".jpg", ".jpeg", ".gif"]);
+        private static readonly FrozenSet<string> _alwaysBlockedExternalImageHostNames =
+            FrozenSet.ToFrozenSet([
+                "metadata.amazonaws.com",
+                "metadata.google.internal"
+            ]);
+        private static readonly FrozenSet<string> _alwaysBlockedExternalImageHostSuffixes =
+            FrozenSet.ToFrozenSet([
+                "localtest.me",
+                "lvh.me",
+                "nip.io",
+                "sslip.io",
+                "traefik.me",
+                "xip.io"
+            ]);
+        private static readonly IPAddress _azurePlatformAddress = IPAddress.Parse("168.63.129.16");
+        private static readonly IPAddress _awsIpv6MetadataAddress = IPAddress.Parse("fd00:ec2::254");
 
         private readonly ILogger<ArticulateImportMediaService> _logger;
         private readonly IMediaService _mediaService;
@@ -410,7 +426,7 @@ namespace Articulate.Services
             }
 
             ISet<string> allowedHosts = articulateOptions.AllowedMediaHosts.ToHashSet(StringComparer.OrdinalIgnoreCase);
-            validationError = ValidateAllowedMediaHost(imageUrl, allowedHosts);
+            validationError = ValidateExternalImageHost(imageUrl.Host, allowedHosts, allowUnsafeLocalExternalImageHosts);
             if (validationError is not null)
             {
                 return (null, validationError);
@@ -446,17 +462,44 @@ namespace Articulate.Services
                 ? "Only absolute HTTP(S) image URLs are allowed"
                 : null;
 
-        private static string? ValidateAllowedMediaHost(Uri imageUrl, ISet<string> allowedHosts)
+        internal static string? ValidateExternalImageHost(
+            string host,
+            ISet<string> allowedHosts,
+            bool allowUnsafeLocalExternalImageHosts)
         {
+            string normalizedHost = NormalizeHost(host);
+            if (normalizedHost.Length == 0)
+            {
+                return "Image URL host cannot be empty";
+            }
+
+            if (IsAlwaysBlockedExternalImageHost(normalizedHost))
+            {
+                return $"Host '{host}' is not allowed for external image downloads";
+            }
+
             if (allowedHosts.Count == 0)
             {
                 return "External image downloads are disabled because no allowed media hosts are configured";
             }
 
-            string normalizedHost = NormalizeHost(imageUrl.Host);
-            return allowedHosts.All(x => NormalizeHost(x) != normalizedHost)
-                ? $"Host '{imageUrl.Host}' is not configured in Articulate:AllowedMediaHosts"
-                : null;
+            if (allowedHosts.All(x => NormalizeHost(x) != normalizedHost))
+            {
+                return $"Host '{host}' is not configured in Articulate:AllowedMediaHosts";
+            }
+
+            if (IPAddress.TryParse(normalizedHost, out IPAddress? literalAddress) &&
+                IsDisallowedAddress(literalAddress, allowUnsafeLocalExternalImageHosts))
+            {
+                return $"Address '{literalAddress}' for host '{host}' is not allowed";
+            }
+
+            if (IsLocalhostName(normalizedHost) && !allowUnsafeLocalExternalImageHosts)
+            {
+                return $"Host '{host}' is a local host and requires AllowUnsafeLocalExternalImageHostsInDevelopment in a non-production runtime mode";
+            }
+
+            return null;
         }
 
         private string? ValidateResolvedAddresses(
@@ -506,14 +549,12 @@ namespace Articulate.Services
                 lastException);
         }
 
-        private static HttpClient CreatePinnedHttpClient(HttpClient templateClient)
-        {
-            var handler = new SocketsHttpHandler
+        internal static SocketsHttpHandler CreatePinnedHttpHandler() =>
+            new()
             {
                 AllowAutoRedirect = false,
                 AutomaticDecompression = DecompressionMethods.All,
-                Proxy = HttpClient.DefaultProxy,
-                UseProxy = true,
+                UseProxy = false,
                 ConnectCallback = async (context, cancellationToken) =>
                 {
                     if (!context.InitialRequestMessage.Options.TryGetValue(_pinnedAddressOption, out IPAddress? pinnedAddress))
@@ -536,6 +577,10 @@ namespace Articulate.Services
                 }
             };
 
+        internal static HttpClient CreatePinnedHttpClient(HttpClient templateClient)
+        {
+            SocketsHttpHandler handler = CreatePinnedHttpHandler();
+
             HttpClient client = new(handler, disposeHandler: true)
             {
                 BaseAddress = templateClient.BaseAddress,
@@ -545,15 +590,21 @@ namespace Articulate.Services
                 Timeout = templateClient.Timeout
             };
 
-            foreach (KeyValuePair<string, IEnumerable<string>> header in templateClient.DefaultRequestHeaders)
-            {
-                client.DefaultRequestHeaders.TryAddWithoutValidation(header.Key, header.Value);
-            }
-
+            // Do not copy any default headers from the template client. Even non-credential
+            // headers can reveal local deployment details or be confused for trusted auth context.
             return client;
         }
 
-        private static string NormalizeHost(string host) => host.Trim().TrimEnd('.').ToLowerInvariant();
+        internal static string NormalizeHost(string host) => host.Trim().TrimEnd('.').ToLowerInvariant();
+
+        private static bool IsAlwaysBlockedExternalImageHost(string normalizedHost) =>
+            _alwaysBlockedExternalImageHostNames.Contains(normalizedHost) ||
+            _alwaysBlockedExternalImageHostSuffixes.Any(suffix =>
+                normalizedHost == suffix || normalizedHost.EndsWith($".{suffix}", StringComparison.Ordinal));
+
+        private static bool IsLocalhostName(string normalizedHost) =>
+            normalizedHost == "localhost" ||
+            normalizedHost.EndsWith(".localhost", StringComparison.Ordinal);
 
         private static string NormalizeExtension(string extension)
         {
@@ -582,15 +633,17 @@ namespace Articulate.Services
 
         // Reject special-use and non-public destinations before connect time. This follows the OWASP SSRF
         // prevention guidance and the IANA special-purpose address registries for IPv4/IPv6.
-        private static bool IsDisallowedAddress(IPAddress address, bool allowUnsafeLocalExternalImageHosts)
+        internal static bool IsDisallowedAddress(IPAddress address, bool allowUnsafeLocalExternalImageHosts)
         {
-            if (!allowUnsafeLocalExternalImageHosts &&
-                (IPAddress.IsLoopback(address) ||
-                 address.Equals(IPAddress.Any) ||
-                 address.Equals(IPAddress.IPv6Any) ||
-                 address.Equals(IPAddress.None) ||
-                 address.Equals(IPAddress.IPv6None) ||
-                 address.Equals(IPAddress.IPv6Loopback)))
+            if (address.Equals(IPAddress.Any) ||
+                address.Equals(IPAddress.IPv6Any) ||
+                address.Equals(IPAddress.None) ||
+                address.Equals(IPAddress.IPv6None))
+            {
+                return true;
+            }
+
+            if (!allowUnsafeLocalExternalImageHosts && IPAddress.IsLoopback(address))
             {
                 return true;
             }
@@ -616,6 +669,21 @@ namespace Articulate.Services
                 return true;
             }
 
+            if (address.Equals(IPAddress.IPv6Loopback))
+            {
+                return !allowUnsafeLocalExternalImageHosts;
+            }
+
+            if (TryGetEmbeddedIPv4Address(address, out IPAddress embeddedIPv4Address))
+            {
+                return IsDisallowedIPv4Address(embeddedIPv4Address, allowUnsafeLocalExternalImageHosts);
+            }
+
+            if (IsAlwaysBlockedMetadataIPv6Address(address))
+            {
+                return true;
+            }
+
             byte[] bytes = address.GetAddressBytes();
             if (allowUnsafeLocalExternalImageHosts)
             {
@@ -633,6 +701,11 @@ namespace Articulate.Services
         private static bool IsDisallowedIPv4Address(IPAddress address, bool allowUnsafeLocalExternalImageHosts)
         {
             byte[] ipv4 = address.GetAddressBytes();
+
+            if (IsAlwaysBlockedIPv4Address(ipv4))
+            {
+                return true;
+            }
 
             if (ipv4[0] == 0 ||
                 ipv4[0] >= 224)
@@ -654,6 +727,55 @@ namespace Articulate.Services
                 (ipv4[0] == 192 && ipv4[1] == 168) ||
                 (ipv4[0] == 198 && (ipv4[1] == 18 || ipv4[1] == 19));
         }
+
+        private static bool TryGetEmbeddedIPv4Address(IPAddress address, out IPAddress embeddedIPv4Address)
+        {
+            if (address.IsIPv4MappedToIPv6)
+            {
+                embeddedIPv4Address = address.MapToIPv4();
+                return true;
+            }
+
+            byte[] bytes = address.GetAddressBytes();
+            if (IsIPv4CompatibleIPv6Address(bytes) ||
+                IsIPv4TranslatedIPv6Address(bytes) ||
+                IsWellKnownNat64Address(bytes))
+            {
+                embeddedIPv4Address = new IPAddress(bytes[^4..]);
+                return true;
+            }
+
+            embeddedIPv4Address = IPAddress.None;
+            return false;
+        }
+
+        private static bool IsIPv4CompatibleIPv6Address(byte[] bytes) =>
+            bytes.Take(12).All(x => x == 0) &&
+            bytes.Skip(12).Any(x => x != 0);
+
+        private static bool IsIPv4TranslatedIPv6Address(byte[] bytes) =>
+            bytes.Take(8).All(x => x == 0) &&
+            bytes[8] == 0xFF &&
+            bytes[9] == 0xFF &&
+            bytes[10] == 0 &&
+            bytes[11] == 0;
+
+        private static bool IsWellKnownNat64Address(byte[] bytes) =>
+            bytes[0] == 0x00 &&
+            bytes[1] == 0x64 &&
+            bytes[2] == 0xFF &&
+            bytes[3] == 0x9B &&
+            bytes.Skip(4).Take(8).All(x => x == 0);
+
+        private static bool IsAlwaysBlockedIPv4Address(byte[] ipv4) =>
+            (ipv4[0] == 169 && ipv4[1] == 254 && ipv4[2] == 169 && ipv4[3] == 254) ||
+            (ipv4[0] == 169 && ipv4[1] == 254 && ipv4[2] == 170 && ipv4[3] == 2) ||
+            (ipv4[0] == 100 && ipv4[1] == 100 && ipv4[2] == 100 && ipv4[3] == 200) ||
+            // Azure platform WireServer/DNS/agent address. External imports should never fetch it.
+            ipv4.SequenceEqual(_azurePlatformAddress.GetAddressBytes());
+
+        private static bool IsAlwaysBlockedMetadataIPv6Address(IPAddress address) =>
+            address.Equals(_awsIpv6MetadataAddress);
 
         /// <inheritdoc/>
         public ImportMediaSaveResult SaveToMediaLibrary(
