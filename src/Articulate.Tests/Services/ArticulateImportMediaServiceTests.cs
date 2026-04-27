@@ -118,18 +118,24 @@ namespace Articulate.Tests.Services
         }
 
         [Test]
-        public void CreatePinnedHttpClient_does_not_copy_ambient_credential_headers()
+        public void CreatePinnedHttpClient_does_not_copy_ambient_default_headers()
         {
             using var templateClient = new HttpClient();
             templateClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "secret");
             templateClient.DefaultRequestHeaders.TryAddWithoutValidation("Cookie", "session=secret");
             templateClient.DefaultRequestHeaders.TryAddWithoutValidation("Proxy-Authorization", "Basic secret");
+            templateClient.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "image/*");
+            templateClient.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "Articulate-Test");
+            templateClient.DefaultRequestHeaders.TryAddWithoutValidation("X-Articulate-Import", "configured");
 
             using HttpClient client = ArticulateImportMediaService.CreatePinnedHttpClient(templateClient);
 
             Assert.That(client.DefaultRequestHeaders.Authorization, Is.Null);
             Assert.That(client.DefaultRequestHeaders.Contains("Cookie"), Is.False);
             Assert.That(client.DefaultRequestHeaders.Contains("Proxy-Authorization"), Is.False);
+            Assert.That(client.DefaultRequestHeaders.Contains("Accept"), Is.False);
+            Assert.That(client.DefaultRequestHeaders.Contains("User-Agent"), Is.False);
+            Assert.That(client.DefaultRequestHeaders.Contains("X-Articulate-Import"), Is.False);
         }
 
         [Test]
@@ -207,6 +213,16 @@ namespace Articulate.Tests.Services
             Assert.That(
                 ArticulateImportMediaService.IsDisallowedAddress(
                     IPAddress.Parse("169.254.169.254"),
+                    allowUnsafeLocalExternalImageHosts: true),
+                Is.True);
+        }
+
+        [Test]
+        public void IsDisallowedAddress_blocks_azure_platform_ipv4_even_with_development_override()
+        {
+            Assert.That(
+                ArticulateImportMediaService.IsDisallowedAddress(
+                    IPAddress.Parse("168.63.129.16"),
                     allowUnsafeLocalExternalImageHosts: true),
                 Is.True);
         }

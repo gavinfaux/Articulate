@@ -30,7 +30,6 @@ namespace Articulate.Services
         private static readonly FrozenSet<string> _alwaysBlockedExternalImageHostNames =
             FrozenSet.ToFrozenSet([
                 "metadata.amazonaws.com",
-                "metadata.google",
                 "metadata.google.internal"
             ]);
         private static readonly FrozenSet<string> _alwaysBlockedExternalImageHostSuffixes =
@@ -42,6 +41,7 @@ namespace Articulate.Services
                 "traefik.me",
                 "xip.io"
             ]);
+        private static readonly IPAddress _azurePlatformAddress = IPAddress.Parse("168.63.129.16");
         private static readonly IPAddress _awsIpv6MetadataAddress = IPAddress.Parse("fd00:ec2::254");
 
         private readonly ILogger<ArticulateImportMediaService> _logger;
@@ -590,6 +590,8 @@ namespace Articulate.Services
                 Timeout = templateClient.Timeout
             };
 
+            // Do not copy any default headers from the template client. Even non-credential
+            // headers can reveal local deployment details or be confused for trusted auth context.
             return client;
         }
 
@@ -669,7 +671,7 @@ namespace Articulate.Services
 
             if (address.Equals(IPAddress.IPv6Loopback))
             {
-                return false;
+                return !allowUnsafeLocalExternalImageHosts;
             }
 
             if (TryGetEmbeddedIPv4Address(address, out IPAddress embeddedIPv4Address))
@@ -700,7 +702,7 @@ namespace Articulate.Services
         {
             byte[] ipv4 = address.GetAddressBytes();
 
-            if (IsAlwaysBlockedMetadataIPv4Address(ipv4))
+            if (IsAlwaysBlockedIPv4Address(ipv4))
             {
                 return true;
             }
@@ -765,10 +767,12 @@ namespace Articulate.Services
             bytes[3] == 0x9B &&
             bytes.Skip(4).Take(8).All(x => x == 0);
 
-        private static bool IsAlwaysBlockedMetadataIPv4Address(byte[] ipv4) =>
+        private static bool IsAlwaysBlockedIPv4Address(byte[] ipv4) =>
             (ipv4[0] == 169 && ipv4[1] == 254 && ipv4[2] == 169 && ipv4[3] == 254) ||
             (ipv4[0] == 169 && ipv4[1] == 254 && ipv4[2] == 170 && ipv4[3] == 2) ||
-            (ipv4[0] == 100 && ipv4[1] == 100 && ipv4[2] == 100 && ipv4[3] == 200);
+            (ipv4[0] == 100 && ipv4[1] == 100 && ipv4[2] == 100 && ipv4[3] == 200) ||
+            // Azure platform WireServer/DNS/agent address. External imports should never fetch it.
+            ipv4.SequenceEqual(_azurePlatformAddress.GetAddressBytes());
 
         private static bool IsAlwaysBlockedMetadataIPv6Address(IPAddress address) =>
             address.Equals(_awsIpv6MetadataAddress);
