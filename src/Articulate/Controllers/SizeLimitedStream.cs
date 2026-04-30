@@ -4,7 +4,7 @@ namespace Articulate.Controllers
 {
     /// <summary>
     /// A read-only stream wrapper that throws <see cref="InvalidOperationException"/> once
-    /// more than <paramref name="maxBytes"/> bytes have been read from the inner stream.
+    /// more than <c>maxBytes</c> bytes have been read from the inner stream.
     /// </summary>
     internal sealed class SizeLimitedStream(Stream inner, long maxBytes) : Stream
     {
