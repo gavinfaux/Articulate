@@ -18,7 +18,7 @@ namespace Articulate.Services
         public ValueTask<ImportMediaValidationResult> ValidateImageAsync(Stream stream, string originalExtension);
 
         /// <summary>
-        /// Decodes and validates a base64-encoded image.
+        /// Decodes and validates a base64-encoded image, capped by Articulate:MaxImportImageBytes.
         /// </summary>
         /// <param name="base64Content">The base64-encoded image content.</param>
         /// <param name="originalFileName">The original filename.</param>

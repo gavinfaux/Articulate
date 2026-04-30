@@ -115,13 +115,14 @@ Articulate treats external BlogML image import as an opt-in convenience feature 
 - Redirects are limited and revalidated on every hop. Redirect targets must still be allowlisted in `Articulate:AllowedMediaHosts`, pass IP safety checks, and cannot downgrade from `https` to `http`.
 - This supports common CDN-style redirects such as `images.example.com` redirecting to `cdn.example.com`, as long as both hosts are explicitly allowlisted.
 - Downloads are validated against Umbraco upload rules and image file types, capped by size, and pinned to the validated IP address for the actual connection.
+- External image downloads use direct validated connections and do not inherit ambient proxy settings or default authentication headers from application `HttpClient` configuration.
 
 Production-oriented example:
 
 ```json
 {
   "Articulate": {
-    "MaxExternalImageBytes": 10485760,
+    "MaxImportImageBytes": 10485760,
     "AllowedMediaHosts": [
       "images.example.com",
       "cdn.example.com"
@@ -143,7 +144,7 @@ Local development example:
 ```json
 {
   "Articulate": {
-    "MaxExternalImageBytes": 10485760,
+    "MaxImportImageBytes": 10485760,
     "AllowedMediaHosts": [
       "localhost"
     ],
@@ -169,7 +170,11 @@ Notes:
 
 ## Upload and Request Limits
 
-Large BlogML files can hit hosting request-size limits before Articulate receives the upload.
+Images entering Articulate import/editor flows are validated against Umbraco upload rules and image file types, and capped by `Articulate:MaxImportImageBytes` (`10 MB` by default).
+
+Large BlogML files and MetaWeblog XML-RPC requests can hit hosting request-size limits before Articulate receives them.
+
+These limits are related but separate: `MaxImportImageBytes` caps each image Articulate accepts after a request is being processed; the startup/server request limits below cap the total HTTP request size before import or MetaWeblog processing can run.
 
 Keep these aligned:
 
