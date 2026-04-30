@@ -124,6 +124,17 @@ namespace Articulate.Services
                     $"Extension '{extension}' not allowed. Supported: {string.Join(", ", allowedExtensions)}"));
             }
 
+            string? imageLimitError = TryGetMaxImportImageBytes(out long maxImportImageBytes);
+            if (imageLimitError is not null)
+            {
+                return ValueTask.FromResult(ImportMediaValidationResult.Failure(imageLimitError));
+            }
+            if (stream.CanSeek && stream.Length > maxImportImageBytes)
+            {
+                return ValueTask.FromResult(ImportMediaValidationResult.Failure(
+                    $"Image exceeded the configured limit of {maxImportImageBytes} bytes"));
+            }
+
             return ValueTask.FromResult(ValidateImageSignature(stream, extension, allowedExtensions));
         }
 
@@ -137,6 +148,18 @@ namespace Articulate.Services
                 return ImportMediaValidationResult.Failure("Base64 content is empty");
             }
 
+            string? imageLimitError = TryGetMaxImportImageBytes(out long maxImportImageBytes);
+            if (imageLimitError is not null)
+            {
+                return ImportMediaValidationResult.Failure(imageLimitError);
+            }
+            long? estimatedDecodedBytes = TryEstimateBase64DecodedBytes(base64Content);
+            if (estimatedDecodedBytes is { } estimatedBytes && estimatedBytes > maxImportImageBytes)
+            {
+                return ImportMediaValidationResult.Failure(
+                    $"Image exceeded the configured limit of {maxImportImageBytes} bytes");
+            }
+
             byte[] bytes;
             try
             {
@@ -145,6 +168,12 @@ namespace Articulate.Services
             catch (FormatException)
             {
                 return ImportMediaValidationResult.Failure("Invalid base64 content");
+            }
+
+            if (bytes.LongLength > maxImportImageBytes)
+            {
+                return ImportMediaValidationResult.Failure(
+                    $"Image exceeded the configured limit of {maxImportImageBytes} bytes");
             }
 
             var stream = new MemoryStream(bytes);
@@ -157,6 +186,44 @@ namespace Articulate.Services
             }
 
             return result;
+        }
+
+        private static long? TryEstimateBase64DecodedBytes(string base64Content)
+        {
+            long nonWhitespaceLength = 0;
+            var padding = 0;
+
+            for (var i = base64Content.Length - 1; i >= 0; i--)
+            {
+                char c = base64Content[i];
+                if (char.IsWhiteSpace(c))
+                {
+                    continue;
+                }
+
+                if (c == '=' && padding < 2)
+                {
+                    padding++;
+                    continue;
+                }
+
+                break;
+            }
+
+            foreach (char c in base64Content)
+            {
+                if (!char.IsWhiteSpace(c))
+                {
+                    nonWhitespaceLength++;
+                }
+            }
+
+            if (nonWhitespaceLength == 0 || nonWhitespaceLength % 4 != 0)
+            {
+                return null;
+            }
+
+            return (nonWhitespaceLength / 4 * 3) - padding;
         }
 
         /// <inheritdoc/>
@@ -179,17 +246,17 @@ namespace Articulate.Services
                         return ImportMediaValidationResult.Failure($"HTTP error: {response.StatusCode}");
                     }
 
-                    long maxExternalImageBytes = _articulateOptions.CurrentValue.MaxExternalImageBytes;
-                    if (maxExternalImageBytes <= 0)
+                    string? imageLimitError = TryGetMaxImportImageBytes(out long maxImportImageBytes);
+                    if (imageLimitError is not null)
                     {
-                        return ImportMediaValidationResult.Failure("MaxExternalImageBytes must be greater than zero");
+                        return ImportMediaValidationResult.Failure(imageLimitError);
                     }
 
                     long? contentLength = response.Content.Headers.ContentLength;
-                    if (contentLength is { } knownLength && knownLength > maxExternalImageBytes)
+                    if (contentLength is { } knownLength && knownLength > maxImportImageBytes)
                     {
                         return ImportMediaValidationResult.Failure(
-                            $"Image download exceeded the configured limit of {maxExternalImageBytes} bytes");
+                            $"Image exceeded the configured limit of {maxImportImageBytes} bytes");
                     }
 
                     var memoryStream = new MemoryStream();
@@ -197,14 +264,14 @@ namespace Articulate.Services
                     bool copiedWithinLimit = await TryCopyToMemoryStreamAsync(
                         httpStream,
                         memoryStream,
-                        maxExternalImageBytes,
+                        maxImportImageBytes,
                         cancellationToken);
 
                     if (!copiedWithinLimit)
                     {
                         await memoryStream.DisposeAsync();
                         return ImportMediaValidationResult.Failure(
-                            $"Image download exceeded the configured limit of {maxExternalImageBytes} bytes");
+                            $"Image exceeded the configured limit of {maxImportImageBytes} bytes");
                     }
 
                     memoryStream.Position = 0;
@@ -236,6 +303,14 @@ namespace Articulate.Services
             {
                 return ImportMediaValidationResult.Failure("Image download timed out");
             }
+        }
+
+        private string? TryGetMaxImportImageBytes(out long maxImportImageBytes)
+        {
+            maxImportImageBytes = _articulateOptions.CurrentValue.MaxImportImageBytes;
+            return maxImportImageBytes > 0
+                ? null
+                : "MaxImportImageBytes must be greater than zero";
         }
 
         /*

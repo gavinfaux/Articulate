@@ -48,14 +48,8 @@ namespace Articulate.Controllers
             // create the service using the provider
             MetaWeblogService service = ActivatorUtilities.CreateInstance<MetaWeblogService>(serviceProvider, provider);
 
-            // TODO: SECURITY - Consider adding request size limit to prevent memory exhaustion.
-            // ReadToEndAsync() reads entire body with no limit. Docker config allows 100MB requests.
-            // For enhanced security, use ReadBlockAsync with max size check and return 413 if exceeded.
-            string rawContent;
-            using (var reader = new StreamReader(Request.Body))
-            {
-                rawContent = await reader.ReadToEndAsync();
-            }
+            using var reader = new StreamReader(Request.Body, Encoding.UTF8, detectEncodingFromByteOrderMarks: true);
+            string rawContent = await reader.ReadToEndAsync(HttpContext.RequestAborted);
 
             try
             {
@@ -76,5 +70,6 @@ namespace Articulate.Controllers
                 return StatusCode(500, "An error occurred while processing the request.");
             }
         }
+
     }
 }

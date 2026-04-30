@@ -73,6 +73,21 @@ namespace Articulate.Tests.Services
         }
 
         [Test]
+        public async Task ValidateImageAsync_returns_failure_when_image_exceeds_limit()
+        {
+            ArticulateImportMediaService sut = CreateSut(articulateOptions: new ArticulateOptions
+            {
+                MaxImportImageBytes = 1
+            });
+            await using MemoryStream stream = new(Convert.FromBase64String(OneByOnePngBase64));
+
+            ImportMediaValidationResult result = await sut.ValidateImageAsync(stream, ".png");
+
+            Assert.That(result.IsValid, Is.False);
+            Assert.That(result.ErrorMessage, Is.EqualTo("Image exceeded the configured limit of 1 bytes"));
+        }
+
+        [Test]
         public async Task DecodeAndValidateBase64ImageAsync_returns_failure_for_empty_content()
         {
             ArticulateImportMediaService sut = CreateSut();
@@ -107,6 +122,38 @@ namespace Articulate.Tests.Services
             Assert.That(result.ValidatedStream, Is.Not.Null);
             Assert.That(result.ValidatedStream!.CanSeek, Is.True);
             await result.ValidatedStream.DisposeAsync();
+        }
+
+        [Test]
+        public async Task DecodeAndValidateBase64ImageAsync_returns_failure_when_embedded_image_exceeds_limit()
+        {
+            ArticulateImportMediaService sut = CreateSut(articulateOptions: new ArticulateOptions
+            {
+                MaxImportImageBytes = 1
+            });
+
+            ImportMediaValidationResult result = await sut.DecodeAndValidateBase64ImageAsync(
+                OneByOnePngBase64,
+                "image.png");
+
+            Assert.That(result.IsValid, Is.False);
+            Assert.That(result.ErrorMessage, Is.EqualTo("Image exceeded the configured limit of 1 bytes"));
+        }
+
+        [Test]
+        public async Task DecodeAndValidateBase64ImageAsync_returns_failure_when_embedded_image_limit_is_invalid()
+        {
+            ArticulateImportMediaService sut = CreateSut(articulateOptions: new ArticulateOptions
+            {
+                MaxImportImageBytes = 0
+            });
+
+            ImportMediaValidationResult result = await sut.DecodeAndValidateBase64ImageAsync(
+                OneByOnePngBase64,
+                "image.png");
+
+            Assert.That(result.IsValid, Is.False);
+            Assert.That(result.ErrorMessage, Is.EqualTo("MaxImportImageBytes must be greater than zero"));
         }
 
         [Test]
