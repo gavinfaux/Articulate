@@ -1,4 +1,5 @@
 #nullable enable
+using System.Net;
 using System.Net.Http.Headers;
 using Articulate.Options;
 using Articulate.Services;
@@ -150,6 +151,103 @@ namespace Articulate.Tests.Services
             ImportMediaValidationResult result = await sut.DecodeAndValidateBase64ImageAsync(
                 OneByOnePngBase64,
                 "image.png");
+
+            Assert.That(result.IsValid, Is.False);
+            Assert.That(result.ErrorMessage, Is.EqualTo("MaxImportImageBytes must be greater than zero"));
+        }
+
+        [Test]
+        public async Task ProcessImageResponseAsync_returns_failure_when_content_length_exceeds_limit()
+        {
+            ArticulateImportMediaService sut = CreateSut(articulateOptions: new ArticulateOptions
+            {
+                MaxImportImageBytes = 100
+            });
+
+            using var response = new HttpResponseMessage(HttpStatusCode.OK);
+            response.Content = new ByteArrayContent(new byte[10]);
+            response.Content.Headers.ContentLength = 101;
+
+            var finalUri = new Uri("http://example.com/image.png");
+
+            ImportMediaValidationResult result = await sut.ProcessImageResponseAsync(response, finalUri);
+
+            Assert.That(result.IsValid, Is.False);
+            Assert.That(result.ErrorMessage, Is.EqualTo("Image exceeded the configured limit of 100 bytes"));
+        }
+
+        [Test]
+        public async Task ProcessImageResponseAsync_returns_failure_when_streamed_content_exceeds_limit()
+        {
+            byte[] imageBytes = Convert.FromBase64String(OneByOnePngBase64);
+            ArticulateImportMediaService sut = CreateSut(articulateOptions: new ArticulateOptions
+            {
+                MaxImportImageBytes = imageBytes.Length - 1
+            });
+
+            using var response = new HttpResponseMessage(HttpStatusCode.OK);
+            response.Content = new ByteArrayContent(imageBytes);
+
+            var finalUri = new Uri("http://example.com/image.png");
+
+            ImportMediaValidationResult result = await sut.ProcessImageResponseAsync(response, finalUri);
+
+            Assert.That(result.IsValid, Is.False);
+            Assert.That(result.ErrorMessage, Does.Contain("Image exceeded the configured limit of"));
+        }
+
+        [Test]
+        public async Task ProcessImageResponseAsync_returns_failure_for_non_success_status_code()
+        {
+            ArticulateImportMediaService sut = CreateSut();
+
+            using var response = new HttpResponseMessage(HttpStatusCode.NotFound);
+            response.Content = new ByteArrayContent([]);
+
+            var finalUri = new Uri("http://example.com/image.png");
+
+            ImportMediaValidationResult result = await sut.ProcessImageResponseAsync(response, finalUri);
+
+            Assert.That(result.IsValid, Is.False);
+            Assert.That(result.ErrorMessage, Is.EqualTo("HTTP error: NotFound"));
+        }
+
+        [Test]
+        public async Task ProcessImageResponseAsync_returns_success_when_image_is_within_limit()
+        {
+            ArticulateImportMediaService sut = CreateSut();
+
+            byte[] imageBytes = Convert.FromBase64String(OneByOnePngBase64);
+            using var response = new HttpResponseMessage(HttpStatusCode.OK);
+            response.Content = new ByteArrayContent(imageBytes);
+            response.Content.Headers.ContentLength = imageBytes.Length;
+
+            var finalUri = new Uri("http://example.com/image.png");
+
+            ImportMediaValidationResult result = await sut.ProcessImageResponseAsync(response, finalUri);
+
+            Assert.That(result.IsValid, Is.True);
+            Assert.That(result.CorrectExtension, Is.EqualTo(".png"));
+            if (result.ValidatedStream is not null)
+            {
+                await result.ValidatedStream.DisposeAsync();
+            }
+        }
+
+        [Test]
+        public async Task ProcessImageResponseAsync_returns_failure_when_limit_is_invalid()
+        {
+            ArticulateImportMediaService sut = CreateSut(articulateOptions: new ArticulateOptions
+            {
+                MaxImportImageBytes = 0
+            });
+
+            using var response = new HttpResponseMessage(HttpStatusCode.OK);
+            response.Content = new ByteArrayContent(Convert.FromBase64String(OneByOnePngBase64));
+
+            var finalUri = new Uri("http://example.com/image.png");
+
+            ImportMediaValidationResult result = await sut.ProcessImageResponseAsync(response, finalUri);
 
             Assert.That(result.IsValid, Is.False);
             Assert.That(result.ErrorMessage, Is.EqualTo("MaxImportImageBytes must be greater than zero"));

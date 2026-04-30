@@ -225,54 +225,7 @@ namespace Articulate.Services
                     cancellationToken);
                 using (response)
                 {
-                    if (!response.IsSuccessStatusCode)
-                    {
-                        return ImportMediaValidationResult.Failure($"HTTP error: {response.StatusCode}");
-                    }
-
-                    string? imageLimitError = TryGetMaxImportImageBytes(out long maxImportImageBytes);
-                    if (imageLimitError is not null)
-                    {
-                        return ImportMediaValidationResult.Failure(imageLimitError);
-                    }
-
-                    long? contentLength = response.Content.Headers.ContentLength;
-                    if (contentLength is { } knownLength && knownLength > maxImportImageBytes)
-                    {
-                        return ImportMediaValidationResult.Failure(
-                            $"Image exceeded the configured limit of {maxImportImageBytes} bytes");
-                    }
-
-                    var memoryStream = new MemoryStream();
-                    await using Stream httpStream = await response.Content.ReadAsStreamAsync(cancellationToken);
-                    bool copiedWithinLimit = await TryCopyToMemoryStreamAsync(
-                        httpStream,
-                        memoryStream,
-                        maxImportImageBytes,
-                        cancellationToken);
-
-                    if (!copiedWithinLimit)
-                    {
-                        await memoryStream.DisposeAsync();
-                        return ImportMediaValidationResult.Failure(
-                            $"Image exceeded the configured limit of {maxImportImageBytes} bytes");
-                    }
-
-                    memoryStream.Position = 0;
-                    string extension = Path.GetExtension(finalUri.AbsolutePath).ToLowerInvariant();
-                    ImportMediaValidationResult result = await ValidateImageAsync(memoryStream, extension);
-
-                    if (!result.IsValid)
-                    {
-                        await memoryStream.DisposeAsync();
-                        return result;
-                    }
-
-                    memoryStream.Position = 0;
-                    return ImportMediaValidationResult.Success(
-                        memoryStream,
-                        result.CorrectExtension!,
-                        result.MimeType!);
+                    return await ProcessImageResponseAsync(response, finalUri, cancellationToken);
                 }
             }
             catch (HttpRequestException ex)
@@ -287,6 +240,65 @@ namespace Articulate.Services
             {
                 return ImportMediaValidationResult.Failure("Image download timed out");
             }
+        }
+
+        /// <summary>
+        /// Applies size-limit checks and image validation to an already-received HTTP response.
+        /// Exposed as internal so unit tests can verify size-limiting without requiring a live HTTP server.
+        /// </summary>
+        internal async Task<ImportMediaValidationResult> ProcessImageResponseAsync(
+            HttpResponseMessage response,
+            Uri finalUri,
+            CancellationToken cancellationToken = default)
+        {
+            if (!response.IsSuccessStatusCode)
+            {
+                return ImportMediaValidationResult.Failure($"HTTP error: {response.StatusCode}");
+            }
+
+            string? imageLimitError = TryGetMaxImportImageBytes(out long maxImportImageBytes);
+            if (imageLimitError is not null)
+            {
+                return ImportMediaValidationResult.Failure(imageLimitError);
+            }
+
+            long? contentLength = response.Content.Headers.ContentLength;
+            if (contentLength is { } knownLength && knownLength > maxImportImageBytes)
+            {
+                return ImportMediaValidationResult.Failure(
+                    $"Image exceeded the configured limit of {maxImportImageBytes} bytes");
+            }
+
+            var memoryStream = new MemoryStream();
+            await using Stream httpStream = await response.Content.ReadAsStreamAsync(cancellationToken);
+            bool copiedWithinLimit = await TryCopyToMemoryStreamAsync(
+                httpStream,
+                memoryStream,
+                maxImportImageBytes,
+                cancellationToken);
+
+            if (!copiedWithinLimit)
+            {
+                await memoryStream.DisposeAsync();
+                return ImportMediaValidationResult.Failure(
+                    $"Image exceeded the configured limit of {maxImportImageBytes} bytes");
+            }
+
+            memoryStream.Position = 0;
+            string extension = Path.GetExtension(finalUri.AbsolutePath).ToLowerInvariant();
+            ImportMediaValidationResult result = await ValidateImageAsync(memoryStream, extension);
+
+            if (!result.IsValid)
+            {
+                await memoryStream.DisposeAsync();
+                return result;
+            }
+
+            memoryStream.Position = 0;
+            return ImportMediaValidationResult.Success(
+                memoryStream,
+                result.CorrectExtension!,
+                result.MimeType!);
         }
 
         private string? TryGetMaxImportImageBytes(out long maxImportImageBytes)
