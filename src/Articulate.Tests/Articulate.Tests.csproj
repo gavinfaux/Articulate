@@ -19,6 +19,7 @@
     <PackageReference Include="NUnit3TestAdapter" Version="4.6.0" />
     <PackageReference Include="Umbraco.Cms" Version="$(UmbracoCmsPackageVersion)" />
     <PackageReference Include="Umbraco.Cms.Tests.Integration" Version="$(UmbracoCmsPackageVersion)" />
+    <PackageReference Include="OpenMcdf" Version="$(OpenMcdfPackageVersion)" PrivateAssets="All" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
