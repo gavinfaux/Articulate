@@ -32,7 +32,7 @@ namespace Articulate.Services
         IEnumerable<string> IArticulateTagRepository.GetAllCategories(
             IMasterModel masterModel)
         {
-            // TODO: We want to use the core for this, but it's not available, this needs to be implemented: http://issues.umbraco.org/issue/U4-9290
+            // Umbraco's ITagQuery does not support the path-scoped, grouped query Articulate needs here.
             Sql sql = GetTagQuery(
                     $"{Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.Tag}.id, {Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.Tag}.tag, {Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.Tag}.[group], Count(*) as NodeCount",
                     masterModel.RootBlogNode.Path)

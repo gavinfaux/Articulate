@@ -27,7 +27,7 @@ namespace Articulate.Services
             if (DefaultThemes.AllThemeNames.Any(theme => string.Equals(theme, newThemeName, StringComparison.OrdinalIgnoreCase)))
             {
                 throw new ArgumentException(
-                    $"The theme name '{newThemeName}' is reserved for a built-in theme.",
+                    $@"The theme name '{newThemeName}' is reserved for a built-in theme.",
                     nameof(newThemeName));
             }
 
@@ -39,7 +39,7 @@ namespace Articulate.Services
 
             if (!themeRootDestination.StartsWith(userThemesPath, StringComparison.OrdinalIgnoreCase))
             {
-                throw new ArgumentException("Invalid theme name", nameof(newThemeName));
+                throw new ArgumentException(@"Invalid theme name", nameof(newThemeName));
             }
 
             Assembly articulateAssembly = GetWebAssembly();

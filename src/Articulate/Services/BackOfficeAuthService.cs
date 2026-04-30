@@ -28,9 +28,7 @@ namespace Articulate.Services
             try
             {
                 AuthenticateResult authenticateResult = await context.AuthenticateAsync(authenticationType);
-                return authenticateResult.Succeeded
-                       && authenticateResult.Principal?.Identity?.IsAuthenticated == true
-                       && authenticateResult.Ticket is not null
+                return authenticateResult is { Succeeded: true, Principal.Identity.IsAuthenticated: true, Ticket: not null }
                        && string.Equals(
                            authenticateResult.Ticket.AuthenticationScheme,
                            authenticationType,

@@ -112,9 +112,9 @@ namespace Articulate.Components
                 {
                     item = umbracoContext.Content.GetById(true, id);
 
-                    // This will occur on delete, then what?
-                    // TODO: How would we know this is a node that might be at the same level/above?
-                    // For now, we have no choice, rebuild routes on each delete :/
+                    // Deleted items are no longer in the published or preview cache. When the
+                    // deleted item cannot be inspected, the existing routing code falls back to
+                    // rebuilding Articulate routes so sibling route precedence is recalculated.
                     if (item is null)
                     {
                         EnsureRoutesRefreshQueued();

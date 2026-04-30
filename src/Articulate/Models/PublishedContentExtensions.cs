@@ -10,7 +10,7 @@ using Microsoft.Extensions.Primitives;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Models.PublishedContent;
 
-// TODO: #nullable enable
+// Legacy extension methods below are still nullable-oblivious; newer helpers opt in locally.
 namespace Articulate.Models
 {
     /// <summary>
@@ -234,10 +234,14 @@ namespace Articulate.Models
         /// Returns the authors list URL
         /// </summary>
         /// <param name="model"></param>
+        /// <exception cref="InvalidOperationException"></exception>
+
         // Not used internally or by default themes, but exposed for custom themes
-        public static string ArticulateAuthorsUrl(this IMasterModel model) => model.RootBlogNode
-            .ChildrenOfType(ArticulateConstants.ContentType.ArticulateAuthors)
-            .FirstOrDefault()?.Url();
+
+        public static string ArticulateAuthorsUrl(this IMasterModel model) => (model.RootBlogNode
+                .ChildrenOfType(ArticulateConstants.ContentType.ArticulateAuthors) ?? throw new InvalidOperationException(
+                $"No ArticulateArchive not found for RootBlogNodeArticulateAuthors found for RootBlogNode: {model.RootBlogNode.Key}"))
+            .FirstOrDefault()?.Url() ?? string.Empty;
 
         /// <summary>
         /// Returns the URL for the tag list
@@ -767,18 +771,29 @@ namespace Articulate.Models
         /// <summary>
         /// Gets the archive list nodes for the blog.
         /// </summary>
+        /// <exception cref="ArgumentNullException"></exception>
+        /// <exception cref="InvalidOperationException"></exception>
         public static IPublishedContent[] GetListNodes(IMasterModel masterModel)
         {
-            IPublishedContent[] listNodes = masterModel.RootBlogNode
-                .ChildrenOfType(ArticulateConstants.ContentType.ArticulateArchive)
+            if (masterModel == null)
+            {
+                throw new ArgumentNullException(nameof(masterModel));
+            }
+
+            IPublishedContent[] listNodes = (masterModel.RootBlogNode
+                                                 .ChildrenOfType(ArticulateConstants.ContentType
+                                                     .ArticulateArchive) ??
+                                             throw new InvalidOperationException(
+                                                 $"ArticulateArchive not found for RootBlogNode: {masterModel.RootBlogNode.Key}"))
                 .ToArray();
             if (listNodes.Length == 0)
             {
                 throw new InvalidOperationException(
-                    "An ArticulateArchive document must exist under the root Articulate document");
+                    $"ArticulateArchive not found for RootBlogNode: {masterModel.RootBlogNode.Key}");
             }
 
             return listNodes;
+
         }
 
         /// <summary>

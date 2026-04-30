@@ -3,7 +3,7 @@ using Umbraco.Cms.Core.PropertyEditors;
 
 namespace Articulate.PropertyEditors
 {
-    // TODO: Remove this when HeyRed is replaced with Markdig package in Umbraco 18
+    // Keep this editor while supported Umbraco versions still expose the legacy Markdown editor shape.
     /// <summary>
     /// Property editor for the Articulate Markdown editor.
     /// </summary>

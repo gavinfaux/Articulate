@@ -42,7 +42,8 @@ namespace Articulate.MetaWeblog
         IArticulateImportMediaService service,
         IArticulateMarkdownConverter articulateMarkdownConverter,
         ArticulateTagService articulateTagService,
-        BackOfficeAuthService backOfficeAuthService)
+        BackOfficeAuthService backOfficeAuthService,
+        IHtmlSanitizer htmlSanitizer)
         : IMetaWeblogProvider
     {
         private static readonly char[] _commaSeparator = [','];
@@ -207,7 +208,7 @@ namespace Articulate.MetaWeblog
                 {
                     title = x.Name, categoryid = x.Id.ToString(CultureInfo.InvariantCulture),
 
-                    // TODO: HTML & RSS URL
+                    // The tag service only exposes category identity here; leave optional HTML/RSS URLs unset.
                 })
             ];
 
@@ -447,11 +448,6 @@ namespace Articulate.MetaWeblog
         /// <summary>
         /// Processes rich text content from MetaWebLog clients.
         /// </summary>
-        /// <remarks>
-        /// Current behavior only strips some invalid image URLs before saving HTML.
-        /// This is not full sanitization and still allows non-image HTML/script payloads through.
-        /// TODO: Run MetaWeblog rich text through IHtmlSanitizer before persisting it.
-        /// </remarks>
         private async Task ProcessRichTextContentAsync(
             IContent content,
             IContentType contentType,
@@ -475,6 +471,7 @@ namespace Articulate.MetaWeblog
 
             var contentToSave = UpdateMediaSourceUrls(cleanedContent);
             contentToSave = UpdateMediaHrefUrls(contentToSave);
+            contentToSave = htmlSanitizer.Sanitize(contentToSave);
 
             await content
                 .SetInvariantOrDefaultCultureValueAsync(

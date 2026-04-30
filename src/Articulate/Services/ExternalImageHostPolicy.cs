@@ -159,13 +159,7 @@ namespace Articulate.Services
         {
             byte[] ipv4 = address.GetAddressBytes();
 
-            if (IsAlwaysBlockedIPv4Address(ipv4))
-            {
-                return true;
-            }
-
-            if (ipv4[0] == 0 ||
-                ipv4[0] >= 224)
+            if (IsAlwaysBlockedIPv4Address(ipv4) || IsUnroutableIPv4Address(ipv4))
             {
                 return true;
             }
@@ -184,6 +178,10 @@ namespace Articulate.Services
                 (ipv4[0] == 192 && ipv4[1] == 168) ||
                 (ipv4[0] == 198 && (ipv4[1] == 18 || ipv4[1] == 19));
         }
+
+        private static bool IsUnroutableIPv4Address(byte[] ipv4) =>
+            ipv4[0] == 0 ||
+            ipv4[0] >= 224;
 
         private static bool TryGetEmbeddedIPv4Address(IPAddress address, out IPAddress embeddedIPv4Address)
         {

@@ -521,3 +521,4 @@ $RECYCLE.BIN/
 /.dotnet-home
 /src/Articulate.Tests/umbraco-package-schema.json
 /src/Articulate.Tests/appsettings-schema.Umbraco.Cms.json
+src/Articulate.Tests/appsettings-schema.json

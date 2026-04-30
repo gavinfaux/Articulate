@@ -174,40 +174,50 @@ namespace Articulate.Services
 
         private static long? TryEstimateBase64DecodedBytes(string base64Content)
         {
-            long nonWhitespaceLength = 0;
-            var padding = 0;
-
-            for (var i = base64Content.Length - 1; i >= 0; i--)
-            {
-                char c = base64Content[i];
-                if (char.IsWhiteSpace(c))
-                {
-                    continue;
-                }
-
-                if (c == '=' && padding < 2)
-                {
-                    padding++;
-                    continue;
-                }
-
-                break;
-            }
-
-            foreach (char c in base64Content)
-            {
-                if (!char.IsWhiteSpace(c))
-                {
-                    nonWhitespaceLength++;
-                }
-            }
+            long nonWhitespaceLength = CountNonWhitespaceCharacters(base64Content);
 
             if (nonWhitespaceLength == 0 || nonWhitespaceLength % 4 != 0)
             {
                 return null;
             }
 
-            return (nonWhitespaceLength / 4 * 3) - padding;
+            return (nonWhitespaceLength / 4 * 3) - CountBase64PaddingCharacters(base64Content);
+        }
+
+        private static long CountNonWhitespaceCharacters(string value)
+        {
+            long count = 0;
+            foreach (char c in value)
+            {
+                if (!char.IsWhiteSpace(c))
+                {
+                    count++;
+                }
+            }
+
+            return count;
+        }
+
+        private static int CountBase64PaddingCharacters(string value)
+        {
+            var count = 0;
+            for (var i = value.Length - 1; i >= 0 && count < 2; i--)
+            {
+                char c = value[i];
+                if (char.IsWhiteSpace(c))
+                {
+                    continue;
+                }
+
+                if (c != '=')
+                {
+                    break;
+                }
+
+                count++;
+            }
+
+            return count;
         }
 
         /// <inheritdoc/>

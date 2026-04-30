@@ -16,7 +16,7 @@ namespace Articulate.Controllers
         {
             if (maxBytes <= 0)
             {
-                throw new ArgumentOutOfRangeException(nameof(maxBytes), maxBytes, "The byte limit must be greater than zero.");
+                throw new ArgumentOutOfRangeException(nameof(maxBytes), maxBytes, @"The byte limit must be greater than zero.");
             }
 
             _inner = inner;

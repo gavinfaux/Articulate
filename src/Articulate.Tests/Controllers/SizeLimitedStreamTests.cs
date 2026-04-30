@@ -39,7 +39,12 @@ namespace Articulate.Tests.Controllers
         {
             using var inner = new MemoryStream();
 
-            Assert.Throws<ArgumentOutOfRangeException>(() => new SizeLimitedStream(inner, maxBytes: 0));
+            ArgumentOutOfRangeException? exception = Assert.Throws<ArgumentOutOfRangeException>(() =>
+            {
+                using var stream = new SizeLimitedStream(inner, maxBytes: 0);
+            });
+
+            Assert.That(exception, Is.Not.Null);
         }
     }
 }

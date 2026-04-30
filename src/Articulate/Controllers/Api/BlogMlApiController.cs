@@ -167,8 +167,7 @@ namespace Articulate.Controllers.Api
             var exportSucceeded = false;
             try
             {
-                await blogMlExporter.ExportAsync(model.ArticulateBlogNode, exportFileName, model.ExportImagesAsBase64)
-                    ;
+                await blogMlExporter.ExportAsync(model.ArticulateBlogNode, exportFileName, model.ExportImagesAsBase64);
                 var downloadFileName = $"articulate-export-{DateTime.UtcNow:yyyyMMddHHmmss}.xml";
 
                 Stream? fileStream = null;
@@ -190,7 +189,11 @@ namespace Articulate.Controllers.Api
                 }
                 catch
                 {
-                    fileStream?.Dispose();
+                    if (fileStream is not null)
+                    {
+                        await fileStream.DisposeAsync();
+                    }
+
                     throw;
                 }
             }
