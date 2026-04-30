@@ -64,7 +64,7 @@
                     ["mdl-data-table__cell--non-numeric date", "mdl-data-table__cell--non-numeric", "mdl-data-table__cell--non-numeric"],
                     @<span>@item?.PublishedDate.ToString("yyyy-MM-dd")</span>,
                     @<a href="@item?.Url()">@item?.Name</a>,
-                    @<text>@if (Model.IsDisqusEnabled) {<a href="@item?.Url()#disqus_thread" data-disqus-identifier="@item?.Key"></a>}</text>)
+                    @<text>@if (item is { EnableComments: true, IsDisqusEnabled: true }) {<a href="@item.Url()#disqus_thread" data-disqus-identifier="@item.Key"></a>}</text>)
             </div>
             <div class="mdl-card__menu">
                 <a href="@tagModel.ArticulateTagRssUrl()" title="RSS Feed" class="mdl-button mdl-button--icon mdl-js-button mdl-js-ripple-effect mdl-color--primary mdl-color-text--grey-50">

@@ -1,14 +1,6 @@
 @model PostModel
 
-@if (!Model.IsDisqusEnabled)
-{
-    <p>
-        <em>
-            To enable comments, configure a valid Disqus shortname (alphanumeric and hyphens only).
-        </em>
-    </p>
-}
-else
+@if (Model.IsDisqusEnabled)
 {
     <div id="disqus_thread">
         <script type="text/javascript">

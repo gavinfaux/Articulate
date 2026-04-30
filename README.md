@@ -255,6 +255,10 @@ Supporting all the features you'd want in a blogging platform
 - Author profiles
 - Extensible API + modern build tooling aligned with current .NET/Umbraco releases (DI-friendly codebase, multi-target net9/net10, pnpm/Vite client pipeline)
 
+## Disqus comments
+
+Built-in themes render Disqus comments only when both post comments are enabled and the Articulate root has a valid `disqusShortname` value. Leave `disqusShortname` empty to disable the Disqus widget entirely; themes should not render placeholder comment panels or load Disqus scripts without it.
+
 ## Minimum requirements
 
 - Articulate 5.x (maintenance): Umbraco 13 LTS (security support through Dec 2025, EOL Dec 2026)
