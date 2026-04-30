@@ -203,8 +203,14 @@ export default class ThemeOptionsElement extends UmbLitElement implements IFormC
         throw result.error || new Error('Failed to copy theme.');
       }
 
+      const newThemeName = result.data ?? this._themeName!;
       this._formState = 'success';
-      await showUmbracoNotification(this, 'Theme copied successfully!', 'positive');
+      await showUmbracoNotification(
+        this,
+        `Theme "${newThemeName}" copied. Edit views in Views/ArticulateThemes/${newThemeName} and assets in wwwroot/App_Plugins/Articulate/Themes/${newThemeName}. To activate it, open the Articulate root node and choose "${newThemeName}" in the Theme Picker.`,
+        'positive',
+        true,
+      );
       this.resetState(true);
     } catch (error) {
       setFormError(this, error, 'Copy Failed');
