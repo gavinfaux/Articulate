@@ -2,10 +2,12 @@
 using System.Text;
 using Articulate.Attributes;
 using Articulate.MetaWeblog;
+using Articulate.Options;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Umbraco.Cms.Core.Web;
 using Umbraco.Cms.Web.Common.Controllers;
 using WilderMinds.MetaWeblog;
@@ -26,9 +28,14 @@ namespace Articulate.Controllers
         ILogger<MetaWeblogController> logger,
         ICompositeViewEngine compositeViewEngine,
         IUmbracoContextAccessor umbracoContextAccessor,
-        IServiceProvider serviceProvider)
+        IServiceProvider serviceProvider,
+        IOptionsMonitor<ArticulateOptions> articulateOptions)
         : RenderController(logger, compositeViewEngine, umbracoContextAccessor)
     {
+        // A MetaWeblog post body may contain base64-encoded images (~4/3 of raw size) plus XML-RPC
+        // markup overhead. Allow up to twice MaxImportImageBytes as the cap for the whole request body.
+        private const int RequestBodyLimitMultiplier = 2;
+
         /// <summary>
         /// Handles the MetaWeblog API requests.
         /// </summary>
@@ -40,6 +47,19 @@ namespace Articulate.Controllers
                 return Problem("Invalid root node id");
             }
 
+            long maxImportImageBytes = articulateOptions.CurrentValue.MaxImportImageBytes;
+            if (maxImportImageBytes <= 0)
+            {
+                return Problem("MaxImportImageBytes must be greater than zero");
+            }
+
+            long maxRequestBodyBytes = maxImportImageBytes * RequestBodyLimitMultiplier;
+
+            if (Request.ContentLength is { } contentLength && contentLength > maxRequestBodyBytes)
+            {
+                return StatusCode(413, $"Request body exceeds the configured limit of {maxRequestBodyBytes} bytes");
+            }
+
             // create the provider using the start node
             ArticulateMetaWeblogProvider provider = ActivatorUtilities.CreateInstance<ArticulateMetaWeblogProvider>(
                 serviceProvider,
@@ -48,8 +68,19 @@ namespace Articulate.Controllers
             // create the service using the provider
             MetaWeblogService service = ActivatorUtilities.CreateInstance<MetaWeblogService>(serviceProvider, provider);
 
-            using var reader = new StreamReader(Request.Body, Encoding.UTF8, detectEncodingFromByteOrderMarks: true);
-            string rawContent = await reader.ReadToEndAsync(HttpContext.RequestAborted);
+            string rawContent;
+            using var reader = new StreamReader(
+                new SizeLimitedStream(Request.Body, maxRequestBodyBytes),
+                Encoding.UTF8,
+                detectEncodingFromByteOrderMarks: true);
+            try
+            {
+                rawContent = await reader.ReadToEndAsync(HttpContext.RequestAborted);
+            }
+            catch (InvalidOperationException)
+            {
+                return StatusCode(413, $"Request body exceeds the configured limit of {maxRequestBodyBytes} bytes");
+            }
 
             try
             {
