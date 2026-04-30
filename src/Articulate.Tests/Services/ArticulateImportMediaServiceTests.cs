@@ -1,5 +1,4 @@
 #nullable enable
-using System.Net;
 using System.Net.Http.Headers;
 using Articulate.Options;
 using Articulate.Services;
