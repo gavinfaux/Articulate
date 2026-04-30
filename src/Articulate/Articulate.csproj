@@ -18,8 +18,11 @@
     <PackageReference Include="Markdig" Version="0.44.0" />
     <PackageReference Include="WilderMinds.MetaWeblog" Version="5.1.3" />
     <PackageReference Include="System.ServiceModel.Syndication" Version="$(SystemServiceModelSyndicationPackageVersion)" />
-    <PackageReference Include="System.Security.Cryptography.Xml" Version="$(SystemSecurityCryptographyXmlPackageVersion)" />
-    <PackageReference Include="OpenMcdf" Version="$(OpenMcdfPackageVersion)" />
+  </ItemGroup>
+
+  <ItemGroup Label="Force minimum versions">
+    <PackageReference Include="System.Security.Cryptography.Xml" Version="$(SystemSecurityCryptographyXmlPackageVersion)" PrivateAssets="All" />
+    <PackageReference Include="OpenMcdf" Version="$(OpenMcdfPackageVersion)" PrivateAssets="All" />
   </ItemGroup>
 
   <ItemGroup>
