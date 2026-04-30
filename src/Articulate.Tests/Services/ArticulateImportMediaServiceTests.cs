@@ -111,6 +111,8 @@ namespace Articulate.Tests.Services
 
         [Test]
         public void CreatePinnedHttpHandler_disables_proxy_routing()
+        [Test]
+        public void CreatePinnedHttpHandler_disables_proxying()
         {
             using SocketsHttpHandler handler = ArticulateImportMediaService.CreatePinnedHttpHandler();
 
@@ -138,156 +140,9 @@ namespace Articulate.Tests.Services
             Assert.That(client.DefaultRequestHeaders.Contains("X-Articulate-Import"), Is.False);
         }
 
-        [Test]
-        public void ValidateExternalImageHost_allows_localhost_only_with_development_override_and_allowlist()
-        {
-            ISet<string> allowedHosts = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "localhost" };
-
-            string? defaultResult = ArticulateImportMediaService.ValidateExternalImageHost(
-                "LOCALHOST.",
-                allowedHosts,
-                allowUnsafeLocalExternalImageHosts: false);
-            string? unsafeDevelopmentResult = ArticulateImportMediaService.ValidateExternalImageHost(
-                "localhost",
-                allowedHosts,
-                allowUnsafeLocalExternalImageHosts: true);
-
-            Assert.That(defaultResult, Does.Contain("requires AllowUnsafeLocalExternalImageHostsInDevelopment"));
-            Assert.That(unsafeDevelopmentResult, Is.Null);
-        }
-
-        [Test]
-        public void ValidateExternalImageHost_blocks_metadata_hosts_even_with_development_override()
-        {
-            ISet<string> allowedHosts = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-            {
-                "metadata.amazonaws.com",
-                "metadata.google.internal"
-            };
-
-            string? googleResult = ArticulateImportMediaService.ValidateExternalImageHost(
-                "metadata.google.internal",
-                allowedHosts,
-                allowUnsafeLocalExternalImageHosts: true);
-            string? awsResult = ArticulateImportMediaService.ValidateExternalImageHost(
-                "metadata.amazonaws.com",
-                allowedHosts,
-                allowUnsafeLocalExternalImageHosts: true);
-
-            Assert.That(googleResult, Does.Contain("not allowed"));
-            Assert.That(awsResult, Does.Contain("not allowed"));
-        }
-
-        [Test]
-        public void ValidateExternalImageHost_blocks_wildcard_dns_hosts_even_with_allowlist()
-        {
-            ISet<string> allowedHosts = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-            {
-                "127.0.0.1.nip.io"
-            };
-
-            string? result = ArticulateImportMediaService.ValidateExternalImageHost(
-                "127.0.0.1.nip.io",
-                allowedHosts,
-                allowUnsafeLocalExternalImageHosts: true);
-
-            Assert.That(result, Does.Contain("not allowed"));
-        }
-
-        [Test]
-        public void ValidateExternalImageHost_normalizes_allowed_hosts()
-        {
-            ISet<string> allowedHosts = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "Images.Example.Com." };
-
-            string? result = ArticulateImportMediaService.ValidateExternalImageHost(
-                "images.example.com",
-                allowedHosts,
-                allowUnsafeLocalExternalImageHosts: false);
-
-            Assert.That(result, Is.Null);
-        }
-
-        [Test]
-        public void IsDisallowedAddress_blocks_metadata_ipv4_even_with_development_override()
-        {
-            Assert.That(
-                ArticulateImportMediaService.IsDisallowedAddress(
-                    IPAddress.Parse("169.254.169.254"),
-                    allowUnsafeLocalExternalImageHosts: true),
-                Is.True);
-        }
-
-        [Test]
-        public void IsDisallowedAddress_blocks_azure_platform_ipv4_even_with_development_override()
-        {
-            Assert.That(
-                ArticulateImportMediaService.IsDisallowedAddress(
-                    IPAddress.Parse("168.63.129.16"),
-                    allowUnsafeLocalExternalImageHosts: true),
-                Is.True);
-        }
-
-        [Test]
-        public void IsDisallowedAddress_allows_loopback_when_development_override_is_enabled()
-        {
-            Assert.That(
-                ArticulateImportMediaService.IsDisallowedAddress(
-                    IPAddress.Loopback,
-                    allowUnsafeLocalExternalImageHosts: true),
-                Is.False);
-        }
-
-        [Test]
-        public void IsDisallowedAddress_allows_ipv6_loopback_when_development_override_is_enabled()
-        {
-            Assert.That(
-                ArticulateImportMediaService.IsDisallowedAddress(
-                    IPAddress.IPv6Loopback,
-                    allowUnsafeLocalExternalImageHosts: true),
-                Is.False);
-        }
-
-        [Test]
-        public void IsDisallowedAddress_blocks_ipv6_any_even_with_development_override()
-        {
-            Assert.That(
-                ArticulateImportMediaService.IsDisallowedAddress(
-                    IPAddress.IPv6Any,
-                    allowUnsafeLocalExternalImageHosts: true),
-                Is.True);
-        }
-
-        [Test]
-        public void IsDisallowedAddress_blocks_nat64_private_ipv4_by_default()
-        {
-            Assert.That(
-                ArticulateImportMediaService.IsDisallowedAddress(
-                    IPAddress.Parse("64:ff9b::7f00:1"),
-                    allowUnsafeLocalExternalImageHosts: false),
-                Is.True);
-        }
-
-        [Test]
-        public void IsDisallowedAddress_blocks_nat64_metadata_ipv4_even_with_development_override()
-        {
-            Assert.That(
-                ArticulateImportMediaService.IsDisallowedAddress(
-                    IPAddress.Parse("64:ff9b::a9fe:a9fe"),
-                    allowUnsafeLocalExternalImageHosts: true),
-                Is.True);
-        }
-
-        [Test]
-        public void IsDisallowedAddress_allows_public_ipv6_address()
-        {
-            Assert.That(
-                ArticulateImportMediaService.IsDisallowedAddress(
-                    IPAddress.Parse("2606:4700:4700::1111"),
-                    allowUnsafeLocalExternalImageHosts: false),
-                Is.False);
-        }
-
-        private static ArticulateImportMediaService CreateSut(ContentSettings? contentSettings = null)
+        private static ArticulateImportMediaService CreateSut(
+            ContentSettings? contentSettings = null,
+            ArticulateOptions? articulateOptions = null)
         {
             ContentSettings effectiveContentSettings = contentSettings ?? new ContentSettings
             {
@@ -324,7 +179,7 @@ namespace Articulate.Tests.Services
                 new FileFormatInspector([new Png(), new Jpeg()]),
                 CreateOptionsMonitor(effectiveContentSettings),
                 CreateOptionsMonitor(new RuntimeSettings { Mode = RuntimeMode.BackofficeDevelopment }),
-                CreateOptionsMonitor(new ArticulateOptions()));
+                CreateOptionsMonitor(articulateOptions ?? new ArticulateOptions()));
         }
 
         private static IOptionsMonitor<T> CreateOptionsMonitor<T>(T currentValue)

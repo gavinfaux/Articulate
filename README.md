@@ -111,7 +111,7 @@ Articulate treats external BlogML image import as an opt-in convenience feature 
   - the number of external image attachments
   - the unique external hosts referenced by the file
   - which hosts are currently allowed
-  - which hosts are currently blocked by `Articulate:AllowedMediaHosts`
+  - which hosts are currently blocked by the external image safety policy
 - Redirects are limited and revalidated on every hop. Redirect targets must still be allowlisted in `Articulate:AllowedMediaHosts`, pass IP safety checks, and cannot downgrade from `https` to `http`.
 - This supports common CDN-style redirects such as `images.example.com` redirecting to `cdn.example.com`, as long as both hosts are explicitly allowlisted.
 - Downloads are validated against Umbraco upload rules and image file types, capped by size, and pinned to the validated IP address for the actual connection.

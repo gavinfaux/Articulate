@@ -96,7 +96,7 @@ namespace Articulate.Controllers.Api
                     options.AllowUnsafeLocalExternalImageHostsInDevelopment;
                 ISet<string> allowedHosts = options.AllowedMediaHosts.ToHashSet(StringComparer.OrdinalIgnoreCase);
                 string[] blockedExternalHosts = summary.ExternalHosts
-                    .Where(host => ArticulateImportMediaService.ValidateExternalImageHost(
+                    .Where(host => ExternalImageHostPolicy.ValidateHost(
                         host,
                         allowedHosts,
                         allowUnsafeLocalExternalImageHosts) is not null)
