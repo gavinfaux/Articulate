@@ -32,8 +32,9 @@ namespace Articulate.Controllers
         IOptionsMonitor<ArticulateOptions> articulateOptions)
         : RenderController(logger, compositeViewEngine, umbracoContextAccessor)
     {
-        // A MetaWeblog post body may contain base64-encoded images (~4/3 of raw size) plus XML-RPC
-        // markup overhead. Allow up to twice MaxImportImageBytes as the cap for the whole request body.
+        // This caps the XML-RPC request envelope, not the decoded image. MetaWeblog media uploads
+        // send base64 image bytes (~4/3 raw size) inside XML with method parameters and metadata,
+        // while DecodeAndValidateBase64ImageAsync still enforces MaxImportImageBytes on the image.
         private const int RequestBodyLimitMultiplier = 2;
 
         /// <summary>
@@ -51,6 +52,10 @@ namespace Articulate.Controllers
             if (maxImportImageBytes <= 0)
             {
                 return Problem("MaxImportImageBytes must be greater than zero");
+            }
+            if (maxImportImageBytes > long.MaxValue / RequestBodyLimitMultiplier)
+            {
+                return Problem("MaxImportImageBytes is too large");
             }
 
             long maxRequestBodyBytes = maxImportImageBytes * RequestBodyLimitMultiplier;
