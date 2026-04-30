@@ -157,8 +157,6 @@ namespace Articulate.Tests.Services
         }
 
         [Test]
-        public void CreatePinnedHttpHandler_disables_proxy_routing()
-        [Test]
         public void CreatePinnedHttpHandler_disables_proxying()
         {
             using SocketsHttpHandler handler = ArticulateImportMediaService.CreatePinnedHttpHandler();
