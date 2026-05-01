@@ -34,7 +34,7 @@ namespace Articulate.Services
         {
             // Umbraco's ITagQuery does not support the path-scoped, grouped query Articulate needs here.
             Sql sql = GetTagQuery(
-                    $"{Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.Tag}.id, {Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.Tag}.tag, {Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.Tag}.[group], Count(*) as NodeCount",
+                    $"{Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.Tag}.id AS TagId, {Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.Tag}.tag AS Tag, {Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.Tag}.[group] AS [Group], Count(*) as NodeCount",
                     masterModel.RootBlogNode.Path)
                 .Where(
                     $"{Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.Tag}." +
@@ -62,7 +62,7 @@ namespace Articulate.Services
             IEnumerable<ArticulateTagInfo> GetResult()
             {
                 Sql sql = GetTagQuery(
-                        $"{Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.Tag}.id, {Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.Tag}.tag, {Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.Tag}.[group]",
+                        $"{Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.Tag}.id AS TagId, {Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.Tag}.tag AS Tag, {Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.Tag}.[group] AS [Group]",
                         rootPath)
                     .Where(
                         $"{Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.Tag}." +
@@ -319,6 +319,8 @@ namespace Articulate.Services
             public int TagId { get; init; }
 
             public string? Tag { get; init; }
+
+            public string? Group { get; init; }
         }
     }
 }

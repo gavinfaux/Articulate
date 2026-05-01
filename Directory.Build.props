@@ -47,7 +47,6 @@
 		<ClientBuildCommand Condition="'$(ClientBuildCommand)'==''">pnpm run build:dev</ClientBuildCommand>
 		<StaticWebAssetBasePath Condition="'$(StaticWebAssetBasePath)' == ''">/</StaticWebAssetBasePath>
 		<AddRazorSupportForMvc Condition="'$(AddRazorSupportForMvc)' == ''">true</AddRazorSupportForMvc>
-		<NoWarn>$(NoWarn);1591</NoWarn>
 		<EnforceCodeStyleInBuild Condition="'$(EnforceCodeStyleInBuild)' == ''">true</EnforceCodeStyleInBuild>
 	</PropertyGroup>
 	<ItemGroup>
