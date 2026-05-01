@@ -17,11 +17,7 @@ namespace Articulate.Models.Api
         {
         }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="ImportResponse"/> class from a <see cref="ImportResponseDto"/>.
-        /// </summary>
-        /// <param name="dto">The data transfer object containing the import statistics.</param>
-        public ImportResponse(ImportResponseDto dto)
+        internal ImportResponse(ImportResponseDto dto)
         {
             AuthorCount = dto.AuthorCount;
             CommentCount = dto.CommentCount;
