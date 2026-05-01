@@ -207,7 +207,7 @@ export default class ThemeOptionsElement extends UmbLitElement implements IFormC
       this._formState = 'success';
       await showUmbracoNotification(
         this,
-        `Theme "${newThemeName}" copied. Edit views in Views/ArticulateThemes/${newThemeName} and assets in wwwroot/App_Plugins/Articulate/Themes/${newThemeName}. To activate it, open the Articulate root node and choose "${newThemeName}" in the Theme Picker.`,
+        `"${newThemeName}" created; review theme README.md for next steps.`,
         'positive',
         true,
       );

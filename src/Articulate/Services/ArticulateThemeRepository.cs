@@ -197,6 +197,14 @@ namespace Articulate.Services
                           3. Customize CSS in `wwwroot/.../assets/css/`
                           4. Copied themes do not include a production build pipeline for assets, either set up your own build process, or ensure production builds link to src assets.
 
+                          ## Activate Theme
+
+                          To use this theme in production, you need to configure it in your Articulate settings:
+
+                          1. Open your Articulate root node in the Umbraco backoffice
+                          2. Select **"Theme Name"** from the **Theme** dropdown
+                          3. Save changes
+
                           ## Documentation
 
                           - Theme Guide: https://github.com/Shazwazza/Articulate/wiki/Themes
