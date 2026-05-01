@@ -1,6 +1,7 @@
 #nullable enable
-using Umbraco.Cms.Core.Cache;
+using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Core.Events;
+using Umbraco.Cms.Core.Cache;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.Notifications;
@@ -18,21 +19,18 @@ namespace Articulate.Components
     /// </summary>
     public sealed class ContentCacheRefresherHandler(
         IUmbracoContextAccessor umbracoContextAccessor,
-        AppCaches appCaches,
+        IArticulateRouteRefreshState routeRefreshState,
         IPublishedContentTypeCache publishedContentTypeCache,
         IDocumentCacheService documentCacheService,
-        IScopeProvider scopeProvider)
+        IScopeProvider scopeProvider,
+        ILogger<ContentCacheRefresherHandler> logger)
         : INotificationHandler<ContentCacheRefresherNotification>
     {
-        private void EnsureRoutesRefreshQueued() =>
-            _ = appCaches.RequestCache.GetCacheItem(ArticulateConstants.RefreshRoutesToken, () => true);
-
         /// <summary>
-        /// When the page/content cache is refreshed, we'll check if any articulate root nodes were included in the refresh, if so we'll set a flag
-        /// on the current request to rebuild the routes at the end of the request
+        /// When the page/content cache is refreshed, mark Articulate routes dirty when a relevant change is detected.
         /// </summary>
         /// <remarks>
-        /// This will also work for load balanced scenarios since this event executes on all servers
+        /// This also works for load balanced scenarios since this event executes on all servers.
         /// </remarks>
         public void Handle(ContentCacheRefresherNotification notification)
         {
@@ -91,7 +89,11 @@ namespace Articulate.Components
                     content.ContentType.Alias,
                     GetArticulateRoots()))
             {
-                EnsureRoutesRefreshQueued();
+                MarkRoutesDirty(
+                    "content cache instance refresh",
+                    content.Id,
+                    content.ContentType.Alias,
+                    content.Path);
             }
         }
 
@@ -117,7 +119,11 @@ namespace Articulate.Components
                     // rebuilding Articulate routes so sibling route precedence is recalculated.
                     if (item is null)
                     {
-                        EnsureRoutesRefreshQueued();
+                        MarkRoutesDirty(
+                            allowUnpublishedRefresh ? "content cache remove by id for unresolved content" : "content cache refresh by id for unresolved content",
+                            id,
+                            contentTypeAlias: null,
+                            contentPath: null);
                         return;
                     }
 
@@ -137,8 +143,23 @@ namespace Articulate.Components
                     return;
                 }
 
-                EnsureRoutesRefreshQueued();
+                MarkRoutesDirty(
+                    allowUnpublishedRefresh ? "content cache remove by id" : "content cache refresh by id",
+                    item.Id,
+                    item.ContentType.Alias,
+                    item.Path);
             }
+        }
+
+        private void MarkRoutesDirty(string trigger, int contentId, string? contentTypeAlias, string? contentPath)
+        {
+            routeRefreshState.MarkDirty();
+            logger.LogInformation(
+                "Marked Articulate routes dirty due to {Trigger}. ContentId: {ContentId}, ContentTypeAlias: {ContentTypeAlias}, Path: {Path}",
+                trigger,
+                contentId,
+                contentTypeAlias,
+                contentPath);
         }
 
         private IEnumerable<IPublishedContent> GetArticulateRoots()

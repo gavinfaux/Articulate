@@ -37,7 +37,7 @@ namespace Articulate.Routing
         {
             var configuredSegments = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-#pragma warning disable CS0618 // IPublishedContent.Children is used here to avoid navigation-service requirements during validation.
+#pragma warning disable CS0618 // IPublishedContent.Children used here to avoid navigation-service requirements during validation.
             foreach (IPublishedContent child in articulateRootNode.Children)
 #pragma warning restore CS0618
             {

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.PublishedCache;
@@ -21,6 +22,8 @@ namespace Articulate.Routing
         IPublishedRouter publishedRouter,
         IRoutableDocumentFilter routableDocumentFilter,
         ArticulateRouter articulateRouteBuilder,
+        IArticulateRouteRefreshState routeRefreshState,
+        ILogger<ArticulateRouteValueTransformer> logger,
         UmbracoRouteValueTransformer umbracoRouteValueTransformer,
         IPublishedContentTypeCache publishedContentTypeCache,
         IDocumentCacheService documentCacheService)
@@ -62,30 +65,13 @@ namespace Articulate.Routing
 
             var newValues = new RouteValueDictionary();
 
+            EnsureRouteCache(umbracoContext, httpContext);
+
             (bool HasCache, bool RouteSuccess) routeResult =
                 await TryRouteAsync(umbracoContext, umbracoRouteValues, httpContext, newValues);
             if (routeResult.HasCache)
             {
                 return routeResult.RouteSuccess ? newValues : [];
-            }
-
-            // we don't have a cache yet
-            if (_lock != null)
-            {
-                _lock.EnterWriteLock();
-                try
-                {
-                    articulateRouteBuilder.MapRoutes(
-                        httpContext,
-                        umbracoContext,
-                        publishedContentTypeCache,
-                        documentCacheService);
-                    _hasCache = true;
-                }
-                finally
-                {
-                    _lock.ExitWriteLock();
-                }
             }
 
             routeResult = await TryRouteAsync(umbracoContext, umbracoRouteValues, httpContext, newValues);
@@ -95,6 +81,50 @@ namespace Articulate.Routing
 
         /// <inheritdoc/>
         public void Dispose() => Dispose(disposing: true);
+
+        private void EnsureRouteCache(IUmbracoContext umbracoContext, HttpContext httpContext)
+        {
+            if (_lock == null)
+            {
+                return;
+            }
+
+            if (_hasCache && !routeRefreshState.IsDirty)
+            {
+                return;
+            }
+
+            _lock.EnterWriteLock();
+            try
+            {
+                if (_hasCache && !routeRefreshState.IsDirty)
+                {
+                    return;
+                }
+
+                logger.LogInformation(
+                    "Rebuilding Articulate route cache. HasCache: {HasCache}, IsDirty: {IsDirty}, RequestPath: {RequestPath}",
+                    _hasCache,
+                    routeRefreshState.IsDirty,
+                    httpContext.Request.Path.Value);
+
+                articulateRouteBuilder.MapRoutes(
+                    httpContext,
+                    umbracoContext,
+                    publishedContentTypeCache,
+                    documentCacheService);
+                _hasCache = true;
+                routeRefreshState.MarkClean();
+
+                logger.LogInformation(
+                    "Rebuilt Articulate route cache and marked it clean. RequestPath: {RequestPath}",
+                    httpContext.Request.Path.Value);
+            }
+            finally
+            {
+                _lock.ExitWriteLock();
+            }
+        }
 
         private void Dispose(bool disposing)
         {

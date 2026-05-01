@@ -15,7 +15,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Umbraco.Cms.Core.Composing;
 using Umbraco.Cms.Core.Notifications;
-using Umbraco.Cms.Core.Packaging;
 using Umbraco.Cms.Core.Routing;
 using Umbraco.Cms.Infrastructure.Migrations.Notifications;
 
@@ -33,6 +32,7 @@ namespace Articulate.Components
             _ = services.AddScoped<BlogMlExporter>();
             _ = services.AddSingleton<ArticulateTempFileSystem>();
             services.TryAddSingleton<IRssFeedGenerator, RssFeedGenerator>();
+            services.TryAddSingleton<IArticulateRouteRefreshState, ArticulateRouteRefreshState>();
 
             services.TryAddSingleton<IArticulateTagRepository, ArticulateTagRepository>();
             _ = services.AddSingleton<ArticulateTagService>();
@@ -45,7 +45,6 @@ namespace Articulate.Components
             services.TryAddSingleton<IArticulateSearcher, DefaultArticulateSearcher>();
             _ = services.AddSingleton<ArticulateRouteValueTransformer>();
             _ = services.AddSingleton<ArticulateRouter>();
-            _ = services.AddTransient<RouteCacheRefresherFilter>();
             services.TryAddEnumerable(
                 ServiceDescriptor.Singleton<MatcherPolicy, ArticulateDynamicRouteSelectorPolicy>());
             services.TryAddSingleton<IArticulateThemeRepository, ArticulateThemeRepository>();
@@ -91,7 +90,6 @@ namespace Articulate.Components
                 });
 
             _ = services.ConfigureOptions<ArticulatePipelineStartupFilter>();
-            _ = services.ConfigureOptions<ConfigureArticulateMvcOptions>();
 
             _ = services.AddOutputCache(options =>
             {
