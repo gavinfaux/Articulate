@@ -8,12 +8,34 @@ using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Persistence.Querying;
 using Umbraco.Cms.Core.Notifications;
 using Umbraco.Cms.Core.Services;
+using Umbraco.Cms.Infrastructure.Scoping;
+using Umbraco.Cms.Core.Scoping;
+using System.Data;
+using IScope = Umbraco.Cms.Infrastructure.Scoping.IScope;
+using IScopeProvider = Umbraco.Cms.Infrastructure.Scoping.IScopeProvider;
 
 namespace Articulate.Tests.Components
 {
     [TestFixture]
     public class ContentSavedAsyncHandlerTests
     {
+        private Mock<IScopeProvider> _scopeProvider = null!;
+
+        [SetUp]
+        public void SetUp()
+        {
+            _scopeProvider = new Mock<IScopeProvider>();
+            _scopeProvider.Setup(x => x.CreateScope(
+                    It.IsAny<IsolationLevel>(),
+                    It.IsAny<RepositoryCacheMode>(),
+                    It.IsAny<IEventDispatcher>(),
+                    It.IsAny<IScopedNotificationPublisher>(),
+                    It.IsAny<bool?>(),
+                    It.IsAny<bool>(),
+                    It.IsAny<bool>()))
+                .Returns(Mock.Of<IScope>());
+        }
+
         [Test]
         public async Task HandleAsync_publishes_required_children_when_articulate_root_is_published()
         {
@@ -58,7 +80,8 @@ namespace Articulate.Tests.Components
                 contentTypeService.Object,
                 contentService.Object,
                 languageService.Object,
-                NullLogger<ArticulateRootContentLifecycleHandler>.Instance);
+                NullLogger<ArticulateRootContentLifecycleHandler>.Instance,
+                _scopeProvider.Object);
 
             await sut.HandleAsync(
                 new ContentPublishedNotification([root], new EventMessages()),

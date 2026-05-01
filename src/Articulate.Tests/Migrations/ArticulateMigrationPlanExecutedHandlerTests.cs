@@ -13,12 +13,34 @@ using Umbraco.Cms.Core.Services;
 using Umbraco.Cms.Infrastructure.Migrations;
 using Umbraco.Cms.Infrastructure.Migrations.Notifications;
 using Umbraco.Cms.Infrastructure.Persistence;
+using Umbraco.Cms.Infrastructure.Scoping;
+using Umbraco.Cms.Core.Events;
+using Umbraco.Cms.Core.Scoping;
+using System.Data;
+using IScope = Umbraco.Cms.Infrastructure.Scoping.IScope;
+using IScopeProvider = Umbraco.Cms.Infrastructure.Scoping.IScopeProvider;
 
 namespace Articulate.Tests.Migrations
 {
     [TestFixture]
     public class ArticulateMigrationPlanExecutedHandlerTests
     {
+        private Mock<IScopeProvider> _scopeProvider = null!;
+
+        [SetUp]
+        public void SetUp()
+        {
+            _scopeProvider = new Mock<IScopeProvider>();
+            _scopeProvider.Setup(x => x.CreateScope(
+                    It.IsAny<IsolationLevel>(),
+                    It.IsAny<RepositoryCacheMode>(),
+                    It.IsAny<IEventDispatcher>(),
+                    It.IsAny<IScopedNotificationPublisher>(),
+                    It.IsAny<bool?>(),
+                    It.IsAny<bool>(),
+                    It.IsAny<bool>()))
+                .Returns(Mock.Of<IScope>());
+        }
         [Test]
         public void Handle_publishes_all_articulate_roots_when_articulate_migration_ran()
         {
@@ -37,7 +59,7 @@ namespace Articulate.Tests.Migrations
                 {
                     totalRecords = 2;
                     return new[] { rootOne, rootTwo };
-                });
+            });
             contentService
                 .Setup(x => x.PublishBranch(It.IsAny<IContent>(), PublishBranchFilter.ForceRepublish, It.IsAny<string[]>()))
                 .Returns((IContent content, PublishBranchFilter _, string[] _, int _) =>
@@ -65,7 +87,8 @@ namespace Articulate.Tests.Migrations
                 contentTypeService.Object,
                 sqlContext.Object,
                 NullLogger<ArticulateMigrationPlanExecutedHandler>.Instance,
-                Microsoft.Extensions.Options.Options.Create(new ArticulateOptions { AutoPublishOnStartup = true }));
+                Microsoft.Extensions.Options.Options.Create(new ArticulateOptions { AutoPublishOnStartup = true }),
+                _scopeProvider.Object);
 
             MigrationPlan plan = new(ArticulateConstants.Migration.ArticulatePackageMigrationPlan);
             var notification = new MigrationPlansExecutedNotification(
@@ -94,7 +117,7 @@ namespace Articulate.Tests.Migrations
                 {
                     totalRecords = 2;
                     return new[] { liveRoot, trashedRoot };
-                });
+            });
             contentService
                 .Setup(x => x.PublishBranch(It.IsAny<IContent>(), PublishBranchFilter.ForceRepublish, It.IsAny<string[]>()))
                 .Returns((IContent content, PublishBranchFilter _, string[] _, int _) =>
@@ -122,7 +145,8 @@ namespace Articulate.Tests.Migrations
                 contentTypeService.Object,
                 sqlContext.Object,
                 NullLogger<ArticulateMigrationPlanExecutedHandler>.Instance,
-                Microsoft.Extensions.Options.Options.Create(new ArticulateOptions { AutoPublishOnStartup = true }));
+                Microsoft.Extensions.Options.Options.Create(new ArticulateOptions { AutoPublishOnStartup = true }),
+                _scopeProvider.Object);
 
             MigrationPlan plan = new(ArticulateConstants.Migration.ArticulatePackageMigrationPlan);
             var notification = new MigrationPlansExecutedNotification(
@@ -149,7 +173,8 @@ namespace Articulate.Tests.Migrations
                 contentTypeService.Object,
                 sqlContext.Object,
                 NullLogger<ArticulateMigrationPlanExecutedHandler>.Instance,
-                Microsoft.Extensions.Options.Options.Create(new ArticulateOptions { AutoPublishOnStartup = true }));
+                Microsoft.Extensions.Options.Options.Create(new ArticulateOptions { AutoPublishOnStartup = true }),
+                _scopeProvider.Object);
 
             MigrationPlan plan = new("Other.Plan");
             var notification = new MigrationPlansExecutedNotification(
@@ -171,7 +196,7 @@ namespace Articulate.Tests.Migrations
 
             Mock<IContentService> contentService = new();
             contentService
-                .Setup(x => x.PublishBranch(It.IsAny<IContent>(), PublishBranchFilter.IncludeUnpublished, It.IsAny<string[]>()))
+                .Setup(x => x.PublishBranch(It.IsAny<IContent>(), PublishBranchFilter.All, It.IsAny<string[]>()))
                 .Returns((IContent content, PublishBranchFilter _, string[] _, int _) =>
                 {
                     publishedRootIds.Add(content.Id);
@@ -190,11 +215,47 @@ namespace Articulate.Tests.Migrations
                 contentTypeService.Object,
                 sqlContext.Object,
                 NullLogger<ArticulateMigrationPlanExecutedHandler>.Instance,
-                Microsoft.Extensions.Options.Options.Create(new ArticulateOptions { AutoPublishOnStartup = true }));
+                Microsoft.Extensions.Options.Options.Create(new ArticulateOptions { AutoPublishOnStartup = true }),
+                _scopeProvider.Object);
 
             sut.Handle(CreateImportedPackageNotification(rootOne, rootTwo));
 
             Assert.That(publishedRootIds, Is.EqualTo(new[] { 1, 2 }));
+        }
+
+        [Test]
+        public void Handle_imported_package_publishes_installed_published_articulate_root_with_all_filter()
+        {
+            IContent root = CreateContent(1, published: true);
+
+            Mock<IContentService> contentService = new();
+            contentService
+                .Setup(x => x.PublishBranch(root, PublishBranchFilter.All, It.IsAny<string[]>()))
+                .Returns([]);
+
+            Mock<IContentTypeService> contentTypeService = new(MockBehavior.Strict);
+            Mock<ISqlContext> sqlContext = new(MockBehavior.Strict);
+
+            Mock<IRuntimeState> runtimeState = new();
+            runtimeState.SetupGet(x => x.Level).Returns(RuntimeLevel.Run);
+
+            var sut = new ArticulateMigrationPlanExecutedHandler(
+                runtimeState.Object,
+                contentService.Object,
+                contentTypeService.Object,
+                sqlContext.Object,
+                NullLogger<ArticulateMigrationPlanExecutedHandler>.Instance,
+                Microsoft.Extensions.Options.Options.Create(new ArticulateOptions { AutoPublishOnStartup = true }),
+                _scopeProvider.Object);
+
+            sut.Handle(CreateImportedPackageNotification(root));
+
+            contentService.Verify(
+                x => x.PublishBranch(root, PublishBranchFilter.All, It.IsAny<string[]>()),
+                Times.Once);
+            contentService.Verify(
+                x => x.PublishBranch(root, PublishBranchFilter.ForceRepublish, It.IsAny<string[]>()),
+                Times.Never);
         }
 
         [Test]
@@ -213,7 +274,8 @@ namespace Articulate.Tests.Migrations
                 contentTypeService.Object,
                 sqlContext.Object,
                 NullLogger<ArticulateMigrationPlanExecutedHandler>.Instance,
-                Microsoft.Extensions.Options.Options.Create(new ArticulateOptions { AutoPublishOnStartup = false }));
+                Microsoft.Extensions.Options.Options.Create(new ArticulateOptions { AutoPublishOnStartup = false }),
+                _scopeProvider.Object);
 
             Assert.DoesNotThrow(() => sut.Handle(CreateImportedPackageNotification()));
             contentService.VerifyNoOtherCalls();
@@ -237,7 +299,8 @@ namespace Articulate.Tests.Migrations
                 contentTypeService.Object,
                 sqlContext.Object,
                 NullLogger<ArticulateMigrationPlanExecutedHandler>.Instance,
-                Microsoft.Extensions.Options.Options.Create(new ArticulateOptions { AutoPublishOnStartup = true }));
+                Microsoft.Extensions.Options.Options.Create(new ArticulateOptions { AutoPublishOnStartup = true }),
+                _scopeProvider.Object);
 
             Assert.DoesNotThrow(() => sut.Handle(CreateImportedPackageNotification()));
             contentService.VerifyNoOtherCalls();
@@ -261,7 +324,8 @@ namespace Articulate.Tests.Migrations
                 contentTypeService.Object,
                 sqlContext.Object,
                 NullLogger<ArticulateMigrationPlanExecutedHandler>.Instance,
-                Microsoft.Extensions.Options.Options.Create(new ArticulateOptions { AutoPublishOnStartup = true }));
+                Microsoft.Extensions.Options.Options.Create(new ArticulateOptions { AutoPublishOnStartup = true }),
+                _scopeProvider.Object);
 
             Assert.DoesNotThrow(() => sut.Handle(CreateImportedPackageNotification()));
             contentService.VerifyNoOtherCalls();

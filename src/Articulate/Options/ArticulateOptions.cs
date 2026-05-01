@@ -53,12 +53,6 @@ namespace Articulate.Options
         /// </summary>
         public bool AllowUnsafeLocalExternalImageHostsInDevelopment { get; set; } = false;
 
-        /// <summary>
-        /// When true, upgrades the Articulate Rich Text data type to use the TipTap editor during package migration.
-        /// Set false to preserve an existing TinyMCE-compatible data type during upgrades.
-        /// Default: true.
-        /// </summary>
-        public bool MigrateRichTextDataTypeToTiptapOnUpgrade { get; set; } = true;
     }
 
 }
