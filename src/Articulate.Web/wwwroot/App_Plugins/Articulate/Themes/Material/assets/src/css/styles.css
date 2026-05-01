@@ -338,6 +338,14 @@ body .demo-blog {
     justify-content: space-between;
 }
 
+.demo-blog .title-banner .meta.meta--fill {
+    min-height: 44px;
+}
+
+.demo-blog .title-banner .meta.meta--fill > .mdl-button--icon {
+    align-self: center;
+}
+
 .demo-blog .meta>*:first-child {
     margin-right: 16px;
 }
