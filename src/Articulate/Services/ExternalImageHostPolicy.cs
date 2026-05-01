@@ -29,7 +29,8 @@ namespace Articulate.Services
         public static string? ValidateHost(
             string host,
             ISet<string> allowedHosts,
-            bool allowUnsafeLocalExternalImageHosts)
+            bool allowUnsafeLocalExternalImageHosts,
+            bool isProductionMode)
         {
             string normalizedHost = NormalizeHost(host);
             if (normalizedHost.Length == 0)
@@ -60,7 +61,9 @@ namespace Articulate.Services
 
             if (IsLocalhostName(normalizedHost) && !allowUnsafeLocalExternalImageHosts)
             {
-                return $"Host '{host}' is a local host and requires AllowUnsafeLocalExternalImageHostsInDevelopment in a non-production runtime mode";
+                return isProductionMode
+                    ? $"Host '{host}' is a local host and is not allowed in production"
+                    : $"Host '{host}' is a local host and is blocked because AllowUnsafeLocalExternalImageHostsInDevelopment is disabled";
             }
 
             return null;

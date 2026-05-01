@@ -14,7 +14,8 @@ namespace Articulate.Tests.Services
             string? result = ExternalImageHostPolicy.ValidateHost(
                 "Images.Example.com.",
                 new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "images.example.com" },
-                allowUnsafeLocalExternalImageHosts: false);
+                allowUnsafeLocalExternalImageHosts: false,
+                isProductionMode: false);
 
             Assert.That(result, Is.Null);
         }
@@ -27,7 +28,8 @@ namespace Articulate.Tests.Services
             string? result = ExternalImageHostPolicy.ValidateHost(
                 host,
                 new HashSet<string>(StringComparer.OrdinalIgnoreCase) { host },
-                allowUnsafeLocalExternalImageHosts: true);
+                allowUnsafeLocalExternalImageHosts: true,
+                isProductionMode: false);
 
             Assert.That(result, Does.Contain("is not allowed"));
         }
@@ -40,11 +42,13 @@ namespace Articulate.Tests.Services
             string? productionResult = ExternalImageHostPolicy.ValidateHost(
                 "localhost",
                 allowedHosts,
-                allowUnsafeLocalExternalImageHosts: false);
+                allowUnsafeLocalExternalImageHosts: false,
+                isProductionMode: true);
             string? developmentResult = ExternalImageHostPolicy.ValidateHost(
                 "localhost",
                 allowedHosts,
-                allowUnsafeLocalExternalImageHosts: true);
+                allowUnsafeLocalExternalImageHosts: true,
+                isProductionMode: false);
 
             Assert.That(productionResult, Does.Contain("is a local host"));
             Assert.That(developmentResult, Is.Null);
@@ -57,7 +61,8 @@ namespace Articulate.Tests.Services
             string? result = ExternalImageHostPolicy.ValidateHost(
                 host,
                 new HashSet<string>(StringComparer.OrdinalIgnoreCase) { host },
-                allowUnsafeLocalExternalImageHosts: true);
+                allowUnsafeLocalExternalImageHosts: true,
+                isProductionMode: false);
 
             Assert.That(result, Does.Contain("is not allowed"));
         }
