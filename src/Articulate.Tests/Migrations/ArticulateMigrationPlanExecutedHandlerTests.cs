@@ -13,7 +13,6 @@ using Umbraco.Cms.Core.Services;
 using Umbraco.Cms.Infrastructure.Migrations;
 using Umbraco.Cms.Infrastructure.Migrations.Notifications;
 using Umbraco.Cms.Infrastructure.Persistence;
-using Umbraco.Cms.Infrastructure.Scoping;
 using Umbraco.Cms.Core.Events;
 using Umbraco.Cms.Core.Scoping;
 using System.Data;

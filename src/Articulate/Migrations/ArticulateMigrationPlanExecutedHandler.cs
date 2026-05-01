@@ -163,29 +163,27 @@ internal class ArticulateMigrationPlanExecutedHandler(
                     filter,
                     contentHome.Published);
 
-                using (IScope scope = scopeProvider.CreateScope(autoComplete: true))
-                {
-                    IEnumerable<PublishResult> resultEnumerable =
-                        contentService.PublishBranch(contentHome, filter, []);
-                    var result = resultEnumerable.ToList();
-                    attemptedAny = true;
+                using IScope scope = scopeProvider.CreateScope(autoComplete: true);
+                IEnumerable<PublishResult> resultEnumerable =
+                    contentService.PublishBranch(contentHome, filter, []);
+                var result = resultEnumerable.ToList();
+                attemptedAny = true;
 
-                    if (result.All(r => r.Success))
-                    {
-                        logger.LogInformation(
-                            "Published Articulate Home page and descendants for root node ID {NodeId} after {Trigger}",
-                            contentHome.Id,
-                            trigger);
-                    }
-                    else
-                    {
-                        var failures = result.Where(r => !r.Success).ToList();
-                        logger.LogWarning(
-                            "Partial publish failure for root node ID {NodeId}: {FailureCount} items failed for trigger {Trigger}",
-                            contentHome.Id,
-                            failures.Count,
-                            trigger);
-                    }
+                if (result.All(r => r.Success))
+                {
+                    logger.LogInformation(
+                        "Published Articulate Home page and descendants for root node ID {NodeId} after {Trigger}",
+                        contentHome.Id,
+                        trigger);
+                }
+                else
+                {
+                    var failures = result.Where(r => !r.Success).ToList();
+                    logger.LogWarning(
+                        "Partial publish failure for root node ID {NodeId}: {FailureCount} items failed for trigger {Trigger}",
+                        contentHome.Id,
+                        failures.Count,
+                        trigger);
                 }
             }
             catch (Exception ex)
