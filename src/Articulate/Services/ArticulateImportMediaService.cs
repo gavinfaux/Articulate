@@ -496,8 +496,9 @@ namespace Articulate.Services
             // Articulate provides the explicit host allowlist via Articulate:AllowedMediaHosts.
             // After host validation we still resolve and vet the destination IPs per OWASP SSRF guidance.
             Options.ArticulateOptions articulateOptions = _articulateOptions.CurrentValue;
+            bool isProductionMode = _runtimeSettings.CurrentValue.Mode == RuntimeMode.Production;
             bool allowUnsafeLocalExternalImageHosts =
-                _runtimeSettings.CurrentValue.Mode != RuntimeMode.Production &&
+                !isProductionMode &&
                 articulateOptions.AllowUnsafeLocalExternalImageHostsInDevelopment;
 
             string? validationError = ValidateExternalImageUri(imageUrl);
@@ -510,7 +511,8 @@ namespace Articulate.Services
             validationError = ExternalImageHostPolicy.ValidateHost(
                 imageUrl.Host,
                 allowedHosts,
-                allowUnsafeLocalExternalImageHosts);
+                allowUnsafeLocalExternalImageHosts,
+                isProductionMode);
             if (validationError is not null)
             {
                 return (null, validationError);

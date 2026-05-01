@@ -91,15 +91,17 @@ namespace Articulate.Controllers.Api
 
                 BlogMlImportFileSummary summary = blogMlImporter.GetImportFileSummary(fileName);
                 Options.ArticulateOptions options = articulateOptions.CurrentValue;
+                bool isProductionMode = runtimeSettings.CurrentValue.Mode == RuntimeMode.Production;
                 bool allowUnsafeLocalExternalImageHosts =
-                    runtimeSettings.CurrentValue.Mode != RuntimeMode.Production &&
+                    !isProductionMode &&
                     options.AllowUnsafeLocalExternalImageHostsInDevelopment;
                 ISet<string> allowedHosts = options.AllowedMediaHosts.ToHashSet(StringComparer.OrdinalIgnoreCase);
                 string[] blockedExternalHosts = summary.ExternalHosts
                     .Where(host => ExternalImageHostPolicy.ValidateHost(
                         host,
                         allowedHosts,
-                        allowUnsafeLocalExternalImageHosts) is not null)
+                        allowUnsafeLocalExternalImageHosts,
+                        isProductionMode) is not null)
                     .ToArray();
 
                 return Ok(new ImportFileResponse

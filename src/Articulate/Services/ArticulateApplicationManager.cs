@@ -34,14 +34,16 @@ namespace Articulate.Services
         {
             ArticulateOpenIdClientOptions settings = options.Value;
             ArticulateOptions articulateSettings = articulateOptions.Value;
+            bool isProductionMode = runtimeSettings.Value.Mode == RuntimeMode.Production;
+            bool allowUnsafeLocalExternalImageHosts =
+                !isProductionMode &&
+                articulateSettings.AllowUnsafeLocalExternalImageHostsInDevelopment;
 
             if (runtimeState.Level >= RuntimeLevel.Run &&
-                articulateSettings.AllowUnsafeLocalExternalImageHostsInDevelopment)
+                allowUnsafeLocalExternalImageHosts)
             {
                 logger.LogWarning(
-                    runtimeSettings.Value.Mode == RuntimeMode.Production
-                        ? "Articulate development-only local external image host importing is configured, but Umbraco is running in Production mode so the override is ignored."
-                        : "Articulate development-only local external image host importing is enabled. Loopback and private-network targets may be fetched when their hosts are allowlisted in Articulate:AllowedMediaHosts, but cloud metadata endpoints remain blocked.");
+                    "Articulate development-only local external image host importing is enabled. Loopback and private-network targets may be fetched when their hosts are listed in Articulate:AllowedMediaHosts.");
             }
 
             if (runtimeState.Level == RuntimeLevel.Install)
