@@ -198,21 +198,16 @@ namespace Articulate.MetaWeblog
         {
             _ = await ValidateUserAsync(username, password);
 
-            IEnumerable<ArticulateTagInfo> all = articulateTagService.GetAllTagInfos(
+            IEnumerable<ArticulateTagInfo> categories = articulateTagService.GetAllTagInfos(
                 BlogRoot().Path,
                 ArticulateConstants.DataType.ArticulateCategories);
 
-            CategoryInfo[] tags =
-            [
-                .. all.Select(x => new CategoryInfo
-                {
-                    title = x.Name, categoryid = x.Id.ToString(CultureInfo.InvariantCulture),
-
-                    // The tag service only exposes category identity here; leave optional HTML/RSS URLs unset.
-                })
-            ];
-
-            return tags;
+            return categories.Select(x => new CategoryInfo
+            {
+                title = x.Name,
+                description = x.Name,
+                categoryid = x.Id.ToString(CultureInfo.InvariantCulture)
+            }).ToArray();
         }
 
         /// <inheritdoc/>
@@ -418,7 +413,7 @@ namespace Articulate.MetaWeblog
 
             await content.AssignInvariantOrDefaultCultureTagsAsync(
                 "categories",
-                post.categories,
+                CleanTagValues(post.categories ?? []),
                 contentType,
                 languageService,
                 dataTypeService,
@@ -426,11 +421,7 @@ namespace Articulate.MetaWeblog
                 jsonSerializer,
                 logger);
 
-            var tags = post.mt_keywords
-                .Split(_commaSeparator, StringSplitOptions.RemoveEmptyEntries)
-                .Select(x => x.Trim())
-                .Distinct()
-                .ToArray();
+            var tags = SplitTagValue(post.mt_keywords);
 
             await content.AssignInvariantOrDefaultCultureTagsAsync(
                 "tags",
@@ -668,22 +659,21 @@ namespace Articulate.MetaWeblog
 
         private Post FromContent(IContent post)
         {
-            var tagsValue = post.GetValue<string>("tags");
-            var categoriesValue = post.GetValue<string>("categories");
+            string[] tags = GetTagValues(post, "tags");
+            string[] categories = GetTagValues(post, "categories");
+            DateTime? publishedDate = post.GetValue<DateTime?>("publishedDate");
 
             return new Post
             {
                 title = post.Name,
                 postid = post.Id.ToString(CultureInfo.InvariantCulture),
-                dateCreated = post.UpdateDate,
+                dateCreated = publishedDate is { } value && value != default
+                    ? value
+                    : post.CreateDate != default ? post.CreateDate : post.UpdateDate,
                 mt_excerpt = post.GetValue<string>("excerpt"),
                 link = string.Empty,
-                mt_keywords = !string.IsNullOrWhiteSpace(tagsValue)
-                    ? string.Join(',', tagsValue.Split(_commaSeparator, StringSplitOptions.RemoveEmptyEntries))
-                    : string.Empty,
-                categories = !string.IsNullOrEmpty(categoriesValue)
-                    ? categoriesValue.Split(_commaSeparator, StringSplitOptions.RemoveEmptyEntries)
-                    : [],
+                mt_keywords = string.Join(',', tags),
+                categories = categories,
                 description = post.ContentType.Alias == ArticulateConstants.ContentType.ArticulateRichText
                     ? post.GetValue<string>("richText")
                     : articulateMarkdownConverter.ToHtml(post.GetValue<string>("markdown") ?? string.Empty),
@@ -692,6 +682,32 @@ namespace Articulate.MetaWeblog
                     : post.GetValue<string>(Constants.Conventions.Content.UrlName)?.ToUrlSegment(shortStringHelper),
             };
         }
+
+        private static string[] GetTagValues(IContent post, string propertyAlias)
+        {
+            object? value = post.GetValue(propertyAlias);
+            return value switch
+            {
+                null => [],
+                string raw => SplitTagValue(raw),
+                IEnumerable<string> values => CleanTagValues(values),
+                IEnumerable<object> values => CleanTagValues(values.Select(x => x?.ToString())),
+                _ => SplitTagValue(value.ToString())
+            };
+        }
+
+        private static string[] SplitTagValue(string? value) =>
+            string.IsNullOrWhiteSpace(value)
+                ? []
+                : CleanTagValues(value.Split(_commaSeparator, StringSplitOptions.RemoveEmptyEntries));
+
+        private static string[] CleanTagValues(IEnumerable<string?> values) =>
+            values
+                .Select(x => x?.Trim())
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Select(x => x!)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToArray();
 
         /// <summary>
         ///     There are so many variants of Metaweblog API, so I've just included as many properties, custom ones, etc... that I

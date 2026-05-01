@@ -1,5 +1,7 @@
 #nullable enable
 using System.Text;
+using System.Xml;
+using System.Xml.Linq;
 using Articulate.Attributes;
 using Articulate.MetaWeblog;
 using Articulate.Options;
@@ -89,7 +91,7 @@ namespace Articulate.Controllers
 
             try
             {
-                var result = await service.InvokeAsync(rawContent);
+                var result = await service.InvokeAsync(NormalizeMetaWeblogRequest(rawContent));
                 return Content(result, "text/xml", Encoding.UTF8);
             }
             catch (NullReferenceException ex)
@@ -107,5 +109,25 @@ namespace Articulate.Controllers
             }
         }
 
+        private static string NormalizeMetaWeblogRequest(string rawContent)
+        {
+            try
+            {
+                var document = XDocument.Parse(rawContent, LoadOptions.PreserveWhitespace);
+                foreach (XElement nameElement in document.Descendants("name"))
+                {
+                    if (nameElement.Value == "date_created_gmt")
+                    {
+                        nameElement.Value = "dateCreated";
+                    }
+                }
+
+                return document.ToString(SaveOptions.DisableFormatting);
+            }
+            catch (XmlException)
+            {
+                return rawContent;
+            }
+        }
     }
 }
