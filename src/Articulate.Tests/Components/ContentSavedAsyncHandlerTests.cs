@@ -8,7 +8,6 @@ using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Persistence.Querying;
 using Umbraco.Cms.Core.Notifications;
 using Umbraco.Cms.Core.Services;
-using Umbraco.Cms.Infrastructure.Scoping;
 using Umbraco.Cms.Core.Scoping;
 using System.Data;
 using IScope = Umbraco.Cms.Infrastructure.Scoping.IScope;

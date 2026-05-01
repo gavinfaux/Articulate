@@ -61,7 +61,7 @@ namespace Articulate.Swagger
                 .Replace(unprefixedRelativePath, m => $"By{m.Groups[1].Value.ToFirstUpper()}");
 
             // Remove dashes (-) and slashes (/) and convert the following letter to uppercase with
-            // the word "By" in front, e.g. tracked-reference/Id => trackedReferenceById
+            // the word "By" in front, e.g. tracked-reference-id => trackedReferenceById
             formattedOperationId = ArticulateOperationIdRegexes
                 .ToCamelCaseRegex()
                 .Replace(formattedOperationId, m => m.Groups[1].Value.ToUpper());

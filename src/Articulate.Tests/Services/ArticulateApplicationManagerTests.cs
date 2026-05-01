@@ -7,7 +7,6 @@ using Moq;
 using NUnit.Framework;
 using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.Configuration.Models;
-using Umbraco.Cms.Core.Notifications;
 using Umbraco.Cms.Core.Services;
 
 namespace Articulate.Tests.Services
@@ -26,7 +25,7 @@ namespace Articulate.Tests.Services
                     AllowUnsafeLocalExternalImageHostsInDevelopment = false
                 });
 
-            await sut.HandleAsync(null!, default);
+            await sut.HandleAsync(null!, CancellationToken.None);
 
             Assert.That(logger.Messages, Does.Not.Contain(
                 "Articulate development-only local external image host importing is enabled. Loopback and private-network targets may be fetched when their hosts are listed in Articulate:AllowedMediaHosts."));
@@ -44,7 +43,7 @@ namespace Articulate.Tests.Services
                     AllowUnsafeLocalExternalImageHostsInDevelopment = true
                 });
 
-            await sut.HandleAsync(null!, default);
+            await sut.HandleAsync(null!, CancellationToken.None);
 
             Assert.That(logger.Messages, Does.Contain(
                 "Articulate development-only local external image host importing is enabled. Loopback and private-network targets may be fetched when their hosts are listed in Articulate:AllowedMediaHosts."));
@@ -62,7 +61,7 @@ namespace Articulate.Tests.Services
                     AllowUnsafeLocalExternalImageHostsInDevelopment = true
                 });
 
-            await sut.HandleAsync(null!, default);
+            await sut.HandleAsync(null!, CancellationToken.None);
 
             Assert.That(logger.Messages, Does.Not.Contain(
                 "Articulate development-only local external image host importing is enabled. Loopback and private-network targets may be fetched when their hosts are listed in Articulate:AllowedMediaHosts."));

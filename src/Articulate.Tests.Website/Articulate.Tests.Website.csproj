@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
   <PropertyGroup>
     <TargetFrameworks>net9.0;net10.0</TargetFrameworks>
     <IsPackable>false</IsPackable>
@@ -40,6 +40,10 @@
   <ItemGroup>
     <!-- tells 'dotnet watch' to ignore any file changes  under the umbraco/ folder and its subdirectories. -->
     <Watch Remove="umbraco\**\*" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Views\ArticulateThemes\" />
+    <Folder Include="wwwroot\App_Plugins\Articulate\Themes\" />
   </ItemGroup>
   <PropertyGroup>
     <!-- Razor files are needed for the backoffice to work correctly -->
