@@ -3,12 +3,10 @@ namespace Articulate.Routing
 {
     internal sealed class ArticulateRouteRefreshState : IArticulateRouteRefreshState
     {
-        private int _isDirty = 1;
+        private long _currentVersion = 1;
 
-        public bool IsDirty => Volatile.Read(ref _isDirty) == 1;
+        public long CurrentVersion => Interlocked.Read(ref _currentVersion);
 
-        public void MarkDirty() => Interlocked.Exchange(ref _isDirty, 1);
-
-        public void MarkClean() => Interlocked.Exchange(ref _isDirty, 0);
+        public long MarkDirty() => Interlocked.Increment(ref _currentVersion);
     }
 }

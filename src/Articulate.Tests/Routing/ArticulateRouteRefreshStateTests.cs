@@ -8,32 +8,32 @@ namespace Articulate.Tests.Routing
     public class ArticulateRouteRefreshStateTests
     {
         [Test]
-        public void IsDirty_is_true_by_default()
+        public void CurrentVersion_is_one_by_default()
         {
             ArticulateRouteRefreshState sut = new();
 
-            Assert.That(sut.IsDirty, Is.True);
+            Assert.That(sut.CurrentVersion, Is.EqualTo(1));
         }
 
         [Test]
-        public void MarkClean_sets_state_to_clean()
+        public void MarkDirty_increments_current_version()
         {
             ArticulateRouteRefreshState sut = new();
-
-            sut.MarkClean();
-
-            Assert.That(sut.IsDirty, Is.False);
-        }
-
-        [Test]
-        public void MarkDirty_sets_state_back_to_dirty()
-        {
-            ArticulateRouteRefreshState sut = new();
-            sut.MarkClean();
 
             sut.MarkDirty();
 
-            Assert.That(sut.IsDirty, Is.True);
+            Assert.That(sut.CurrentVersion, Is.EqualTo(2));
+        }
+
+        [Test]
+        public void MarkDirty_returns_updated_version()
+        {
+            ArticulateRouteRefreshState sut = new();
+
+            long version = sut.MarkDirty();
+
+            Assert.That(version, Is.EqualTo(2));
+            Assert.That(sut.CurrentVersion, Is.EqualTo(version));
         }
     }
 }

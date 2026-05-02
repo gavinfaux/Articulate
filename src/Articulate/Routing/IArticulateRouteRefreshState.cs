@@ -3,10 +3,8 @@ namespace Articulate.Routing
 {
     public interface IArticulateRouteRefreshState
     {
-        public void MarkDirty();
+        public long MarkDirty();
 
-        public bool IsDirty { get; }
-
-        public void MarkClean();
+        public long CurrentVersion { get; }
     }
 }

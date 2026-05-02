@@ -30,6 +30,7 @@ namespace Articulate.Routing
         : DynamicRouteValueTransformer, IDisposable
     {
         private readonly ReaderWriterLockSlim _lock = new();
+        private long _builtVersion;
         private bool _hasCache;
         private bool _disposedValue;
 
@@ -89,7 +90,8 @@ namespace Articulate.Routing
                 return;
             }
 
-            if (_hasCache && !routeRefreshState.IsDirty)
+            long currentVersion = routeRefreshState.CurrentVersion;
+            if (_hasCache && _builtVersion == currentVersion)
             {
                 return;
             }
@@ -97,15 +99,17 @@ namespace Articulate.Routing
             _lock.EnterWriteLock();
             try
             {
-                if (_hasCache && !routeRefreshState.IsDirty)
+                currentVersion = routeRefreshState.CurrentVersion;
+                if (_hasCache && _builtVersion == currentVersion)
                 {
                     return;
                 }
 
                 logger.LogInformation(
-                    "Rebuilding Articulate route cache. HasCache: {HasCache}, IsDirty: {IsDirty}, RequestPath: {RequestPath}",
+                    "Rebuilding Articulate route cache. HasCache: {HasCache}, BuiltVersion: {BuiltVersion}, CurrentVersion: {CurrentVersion}, RequestPath: {RequestPath}",
                     _hasCache,
-                    routeRefreshState.IsDirty,
+                    _builtVersion,
+                    currentVersion,
                     httpContext.Request.Path.Value);
 
                 articulateRouteBuilder.MapRoutes(
@@ -114,10 +118,11 @@ namespace Articulate.Routing
                     publishedContentTypeCache,
                     documentCacheService);
                 _hasCache = true;
-                routeRefreshState.MarkClean();
+                _builtVersion = currentVersion;
 
                 logger.LogInformation(
-                    "Rebuilt Articulate route cache and marked it clean. RequestPath: {RequestPath}",
+                    "Rebuilt Articulate route cache. BuiltVersion: {BuiltVersion}, RequestPath: {RequestPath}",
+                    _builtVersion,
                     httpContext.Request.Path.Value);
             }
             finally
