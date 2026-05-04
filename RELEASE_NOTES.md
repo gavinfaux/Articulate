@@ -1,6 +1,6 @@
 # Articulate Release Notes
 
-## Version 6.0.0 (Upcoming)
+## Version 6.0.0
 
 ### Breaking Changes
 

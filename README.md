@@ -50,11 +50,7 @@ For copied or custom user themes, the preferred layout is:
 - views in `Views/ArticulateThemes/{Theme}/Views/`
 - assets in `wwwroot/App_Plugins/Articulate/Themes/{Theme}/assets/`
 
-Articulate still probes older user themes with `.cshtml` files directly under `Views/ArticulateThemes/{Theme}/`, but that flat layout is now treated as a legacy compatibility path.
-
 Reusable RCL/NuGet theme packages can also contribute themes to the Articulate theme picker by registering `IArticulateThemeDescriptorProvider` and returning one or more canonical theme keys. Those keys should match the package theme folder name and the theme picker value. Built-in theme names are reserved, and duplicate package keys are ignored.
-
-For advanced theme-development details such as bypassing the Articulate theme engine and falling back to standard MVC / Umbraco view resolution when the Theme value is empty, see the theme wiki pages.
 
 ## Markdown Editor Authentication
 
