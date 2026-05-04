@@ -71,7 +71,6 @@ namespace Articulate.ImportExport
                 TagConfiguration? tagConfiguration = tagDataType.ConfigurationAs<TagConfiguration>();
                 var tagGroup = tagConfiguration?.Group;
 
-                // TODO: See: http://argotic.codeplex.com/wikipage?title=Generating%20portable%20web%20log%20content&referringTitle=Home
                 var blogMlDoc = new BlogMLDocument
                 {
                     RootUrl = new Uri(urlProvider.GetUrl(root.Id), UriKind.RelativeOrAbsolute),
@@ -250,13 +249,15 @@ namespace Articulate.ImportExport
         {
             if (child.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateRichText))
             {
-                // TODO: this would also need to handle RTE extensions e.g. Blocks
+                // Export the stored rich-text HTML as-is. Block/grid expansion is editor-specific
+                // and should be added only when BlogML can represent those structures explicitly.
                 return child.GetValue<string>("richText") ?? string.Empty;
             }
 
             if (child.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateMarkdown))
             {
-                // TODO: this would also need to handle Markdown extensions if supported e.g. MDX
+                // Markdown exports as sanitized HTML because BlogML content is HTML-oriented.
+                // MDX/component syntax is intentionally unsupported by the current Markdown converter.
                 var markdown = child.GetValue<string>("markdown");
                 return markdown is not null ? articulateMarkdownConverter.ToHtml(markdown) : string.Empty;
             }

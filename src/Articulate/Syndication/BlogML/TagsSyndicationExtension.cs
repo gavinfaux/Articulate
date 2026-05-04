@@ -1,9 +1,9 @@
+#nullable enable
 using System.Xml;
 using System.Xml.XPath;
 using Argotic.Common;
 using Argotic.Extensions;
 
-// TODO: #nullable enable
 namespace Articulate.Syndication.BlogML
 {
     public class TagsSyndicationExtension() : SyndicationExtension("tags", Namespace, new Version("1.0")), IComparable
@@ -17,7 +17,7 @@ namespace Articulate.Syndication.BlogML
         = new();
 
         /// <inheritdoc/>
-        public int CompareTo(object obj) =>
+        public int CompareTo(object? obj) =>
             obj switch
             {
                 null => 1,
@@ -45,7 +45,7 @@ namespace Articulate.Syndication.BlogML
         public override bool Load(IXPathNavigable source)
         {
             Guard.ArgumentNotNull(source, "source");
-            XPathNavigator navigator = source.CreateNavigator();
+            XPathNavigator? navigator = source.CreateNavigator();
             if (navigator is null)
             {
                 return false;
@@ -90,7 +90,7 @@ namespace Articulate.Syndication.BlogML
         }
 
         /// <inheritdoc/>
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             if (obj is not TagsSyndicationExtension)
             {

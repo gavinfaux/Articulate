@@ -5,7 +5,7 @@ namespace Articulate.Routing
 {
     internal static class ArticulateRouteSegmentHelper
     {
-        public static string Normalize(string? routeSegment) => routeSegment?.Trim().Trim('/') ?? string.Empty;
+        private static string Normalize(string? routeSegment) => routeSegment?.Trim().Trim('/') ?? string.Empty;
 
         public static string? NormalizeOrNull(string? routeSegment)
         {

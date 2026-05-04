@@ -1,17 +1,8 @@
 @model PostModel
 
-<div class="post-comment">
-
-    @if (!Model.IsDisqusEnabled)
-    {
-        <p>
-            <em>
-                To enable comments, configure a valid Disqus shortname (alphanumeric and hyphens only).
-            </em>
-        </p>
-    }
-    else
-    {
+@if (Model.IsDisqusEnabled)
+{
+    <div class="post-comment">
         <div id="disqus_thread">
             <script type="text/javascript">
                 var disqus_config = function () {
@@ -21,7 +12,6 @@
                 };
                 (function() {
                     var d = document, s = d.createElement('script');
-                    /** ENTER DISQUS SHORTNAME HERE **/
                     const disqusShortName = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.DisqusShortName));
                     s.src = 'https://' + disqusShortName + '.disqus.com/embed.js';
                     s.setAttribute('data-timestamp', +new Date());
@@ -35,5 +25,5 @@
                 comments powered by <span class="logo-disqus">Disqus</span>
             </a>
         </div>
-    }
-</div>
+    </div>
+}

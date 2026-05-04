@@ -15,8 +15,8 @@ namespace Articulate.Routing
     /// actually a 404 because the articulate router occurs after the Umbraco router which handles 404 eagerly.
     /// This causes 2x candidates to be resolved and the first (umbraco) is chosen.
     /// If we detect that Articulate actually performed the routing, then we use that candidate instead.
-    /// TODO: Ideally - Umbraco would dynamically route the 404 in a much later state which could be done,
-    /// by a dynamic router that has a much larger Order so it occurs later in the pipeline instead of eagerly.
+    /// Umbraco currently assigns the 404 candidate before Articulate routing has fully resolved,
+    /// so this policy keeps Articulate's dynamic route when the Articulate router succeeded.
     /// </remarks>
     internal class ArticulateDynamicRouteSelectorPolicy : MatcherPolicy, IEndpointSelectorPolicy
     {

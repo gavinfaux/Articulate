@@ -91,15 +91,17 @@ namespace Articulate.Controllers.Api
 
                 BlogMlImportFileSummary summary = blogMlImporter.GetImportFileSummary(fileName);
                 Options.ArticulateOptions options = articulateOptions.CurrentValue;
+                bool isProductionMode = runtimeSettings.CurrentValue.Mode == RuntimeMode.Production;
                 bool allowUnsafeLocalExternalImageHosts =
-                    runtimeSettings.CurrentValue.Mode != RuntimeMode.Production &&
+                    !isProductionMode &&
                     options.AllowUnsafeLocalExternalImageHostsInDevelopment;
                 ISet<string> allowedHosts = options.AllowedMediaHosts.ToHashSet(StringComparer.OrdinalIgnoreCase);
                 string[] blockedExternalHosts = summary.ExternalHosts
-                    .Where(host => ArticulateImportMediaService.ValidateExternalImageHost(
+                    .Where(host => ExternalImageHostPolicy.ValidateHost(
                         host,
                         allowedHosts,
-                        allowUnsafeLocalExternalImageHosts) is not null)
+                        allowUnsafeLocalExternalImageHosts,
+                        isProductionMode) is not null)
                     .ToArray();
 
                 return Ok(new ImportFileResponse
@@ -167,8 +169,7 @@ namespace Articulate.Controllers.Api
             var exportSucceeded = false;
             try
             {
-                await blogMlExporter.ExportAsync(model.ArticulateBlogNode, exportFileName, model.ExportImagesAsBase64)
-                    ;
+                await blogMlExporter.ExportAsync(model.ArticulateBlogNode, exportFileName, model.ExportImagesAsBase64);
                 var downloadFileName = $"articulate-export-{DateTime.UtcNow:yyyyMMddHHmmss}.xml";
 
                 Stream? fileStream = null;
@@ -190,7 +191,11 @@ namespace Articulate.Controllers.Api
                 }
                 catch
                 {
-                    fileStream?.Dispose();
+                    if (fileStream is not null)
+                    {
+                        await fileStream.DisposeAsync();
+                    }
+
                     throw;
                 }
             }

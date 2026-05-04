@@ -65,7 +65,7 @@
                 @await Html.PartialAsync("Share", Model)
 
                 <!--- Comment sections - using DISQUS as default --->
-                @if (Model.EnableComments)
+                @if (Model.EnableComments && Model.IsDisqusEnabled)
                 {
                     @await Html.PartialAsync("CommentsDisqus", Model)
                 }

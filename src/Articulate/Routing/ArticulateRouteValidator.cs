@@ -37,7 +37,7 @@ namespace Articulate.Routing
         {
             var configuredSegments = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-#pragma warning disable CS0618 // IPublishedContent.Children is used here to avoid navigation-service requirements during validation.
+#pragma warning disable CS0618 // IPublishedContent.Children used here to avoid navigation-service requirements during validation.
             foreach (IPublishedContent child in articulateRootNode.Children)
 #pragma warning restore CS0618
             {
@@ -81,18 +81,20 @@ namespace Articulate.Routing
                 string? childRouteSegment = ArticulateRouteSegmentHelper.NormalizeOrNull(
                     child.GetUrlSegment(shortStringHelper, urlSegmentProviderList, culture: null, published: false));
 
-                if (childRouteSegment is not null)
+                if (childRouteSegment is null)
                 {
-                    string childDescription = $"child content '{child.Name}'";
-                    if (configuredSegments.TryGetValue(childRouteSegment, out string? existingRouteSource))
-                    {
-                        throw new InvalidOperationException(
-                            $"Articulate root '{articulateRootNode.Name}' (id: {articulateRootNode.Id}) uses the same route segment " +
-                            $"'{childRouteSegment}' for both '{existingRouteSource}' and '{childDescription}'.");
-                    }
-
-                    configuredSegments[childRouteSegment] = childDescription;
+                    continue;
                 }
+
+                string childDescription = $"child content '{child.Name}'";
+                if (configuredSegments.TryGetValue(childRouteSegment, out string? existingRouteSource))
+                {
+                    throw new InvalidOperationException(
+                        $"Articulate root '{articulateRootNode.Name}' (id: {articulateRootNode.Id}) uses the same route segment " +
+                        $"'{childRouteSegment}' for both '{existingRouteSource}' and '{childDescription}'.");
+                }
+
+                configuredSegments[childRouteSegment] = childDescription;
             }
 
             foreach (string propertyAlias in _configuredRouteAliases)
@@ -131,17 +133,19 @@ namespace Articulate.Routing
                             .Distinct(StringComparer.OrdinalIgnoreCase)
                     ];
 
-                    if ((leftDomains.Count == 0 && rightDomains.Count == 0) || overlappingDomains.Count > 0)
+                    if ((leftDomains.Count != 0 || rightDomains.Count != 0) && overlappingDomains.Count <= 0)
                     {
-                        var overlapDescription = overlappingDomains.Count > 0
-                            ? $"overlapping domains: {string.Join(", ", overlappingDomains)}"
-                            : "no domain assignments";
-
-                        throw new InvalidOperationException(
-                            $"Ambiguous Articulate root routing detected for path '{rootNodePath}' between " +
-                            $"'{DescribeRoot(leftRoot)}' and '{DescribeRoot(rightRoot)}' ({overlapDescription}). " +
-                            "Use distinct paths or non-overlapping domain assignments.");
+                        continue;
                     }
+
+                    var overlapDescription = overlappingDomains.Count > 0
+                        ? $"overlapping domains: {string.Join(", ", overlappingDomains)}"
+                        : "no domain assignments";
+
+                    throw new InvalidOperationException(
+                        $"Ambiguous Articulate root routing detected for path '{rootNodePath}' between " +
+                        $"'{DescribeRoot(leftRoot)}' and '{DescribeRoot(rightRoot)}' ({overlapDescription}). " +
+                        "Use distinct paths or non-overlapping domain assignments.");
                 }
             }
         }
@@ -171,34 +175,34 @@ namespace Articulate.Routing
                             .Distinct(StringComparer.OrdinalIgnoreCase)
                     ];
 
-                    if ((leftDomains.Count == 0 && rightDomains.Count == 0) || overlappingDomains.Count > 0)
+                    if ((leftDomains.Count != 0 || rightDomains.Count != 0) && overlappingDomains.Count <= 0)
                     {
-                        var overlapDescription = overlappingDomains.Count > 0
-                            ? $"overlapping domains: {string.Join(", ", overlappingDomains)}"
-                            : "no domain assignments";
-
-                        throw new InvalidOperationException(
-                            $"Ambiguous Articulate root routing detected for path '{rootNodePath}' between " +
-                            $"'{DescribeRoot(leftRoot)}' and '{DescribeRoot(rightRoot)}' ({overlapDescription}). " +
-                            "Use distinct paths or non-overlapping domain assignments.");
+                        continue;
                     }
+
+                    var overlapDescription = overlappingDomains.Count > 0
+                        ? $"overlapping domains: {string.Join(", ", overlappingDomains)}"
+                        : "no domain assignments";
+
+                    throw new InvalidOperationException(
+                        $"Ambiguous Articulate root routing detected for path '{rootNodePath}' between " +
+                        $"'{DescribeRoot(leftRoot)}' and '{DescribeRoot(rightRoot)}' ({overlapDescription}). " +
+                        "Use distinct paths or non-overlapping domain assignments.");
                 }
             }
         }
 
-        private static void ValidateConfiguredRouteSegment(
+        internal static void ValidateConfiguredRouteSegment(
             IPublishedContent articulateRootNode,
             string propertyAlias,
             string? routeSegment,
-            IDictionary<string, string> configuredSegments)
-        {
+            IDictionary<string, string> configuredSegments) =>
             ValidateConfiguredRouteSegment(
                 articulateRootNode.Name,
                 articulateRootNode.Id,
                 propertyAlias,
                 routeSegment,
                 configuredSegments);
-        }
 
         private static void ValidateConfiguredRouteSegment(
             string articulateRootName,

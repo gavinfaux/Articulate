@@ -24,6 +24,8 @@ Optional controller-rendered views:
 
 This sample also uses normal Razor layout files (`_ViewStart.cshtml` and `_Layout.cshtml`) and theme-owned partials such as `Menu.cshtml`, `Pager.cshtml`, `PostCard.cshtml`, and `CommentsDisqus.cshtml`.
 
+`CommentsDisqus.cshtml` renders only when post comments are enabled and the Articulate root has a valid `disqusShortname` value. Leave `disqusShortname` empty to disable Disqus without showing a placeholder panel.
+
 See the wiki for the full theme guidance:
 
 - https://github.com/Shazwazza/Articulate/wiki/Creating-a-theme

@@ -243,6 +243,9 @@ const umbracoPackagePlugin = (): Plugin => {
 export default defineConfig(({ mode }) => {
   const isProd = mode === "production";
   return {
+    resolve: {
+      tsconfigPaths: true,
+    },
     root: UI_ROOT,
     base: "/App_Plugins/Articulate/BackOffice/",
     build: {
@@ -259,7 +262,6 @@ export default defineConfig(({ mode }) => {
       cssMinify: isProd ? 'lightningcss' : false,
     },
     plugins: [
-      tsconfigPaths(),
       sideCarAssetsPlugin(),
       versioningPlugin(),
       umbracoPackagePlugin()

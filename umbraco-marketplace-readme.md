@@ -32,19 +32,10 @@ Supporting all the features you'd want in a blogging platform
 
 ## Upgrade note for rich text editor compatibility
 
-On Umbraco 16/17 upgrades, Articulate 6 migrates the built-in `Articulate Rich Text` data type to `TipTap` by default.
+On Umbraco 16/17, Articulate will migrate the built-in `Umbraco.RichText` property editor to `Umb.PropertyEditorUi.TipTap` during package upgrade only if the TinyMCE editor UI is actually registered. 
 
-If you need to preserve an existing TinyMCE-compatible setup during upgrade, set the following before starting the upgrade:
-
-```json
-{
-  "Articulate": {
-    "MigrateRichTextDataTypeToTiptapOnUpgrade": false
-  }
-}
-```
-
-This setting is intended for upgrade scenarios where a site wants to keep TinyMCE compatibility via an optional Umbraco 16+ TinyMCE package.
+- You must have the [TinyMCE.Umbraco](https://github.com/ProWorksCorporation/TinyMCE-Umbraco) package installed before you start your site to keep using TinyMCE after upgrade.
+- This setting affects upgrades only. Once the Articulate migration plan step has executed, Umbraco records it as complete.
 
 ## [Documentation](https://github.com/Shazwazza/Articulate/wiki)
 

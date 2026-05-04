@@ -99,7 +99,7 @@
         </nav>
     }
 
-    @if (Model.EnableComments)
+    @if (Model.EnableComments && Model.IsDisqusEnabled)
     {
         <section class="comments-panel">
             @await Html.PartialAsync("CommentsDisqus", Model)

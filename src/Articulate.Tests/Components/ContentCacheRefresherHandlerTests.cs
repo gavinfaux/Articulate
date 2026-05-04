@@ -1,12 +1,13 @@
 #nullable enable
 using Articulate.Components;
 using Articulate.Routing;
-using Umbraco.Cms.Core.Cache;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using NUnit.Framework;
+using Umbraco.Cms.Core.Cache;
 using Umbraco.Cms.Core.Models;
-using Umbraco.Cms.Core.Notifications;
 using Umbraco.Cms.Core.Models.PublishedContent;
+using Umbraco.Cms.Core.Notifications;
 using Umbraco.Cms.Core.PublishedCache;
 using Umbraco.Cms.Core.Scoping;
 using Umbraco.Cms.Core.Services.Changes;
@@ -20,7 +21,7 @@ namespace Articulate.Tests.Components
         [Test]
         public void AffectsArticulateRoutes_returns_true_for_articulate_root_change()
         {
-            ContentCacheRefresherHandler unused = CreateSut([]);
+            ContentCacheRefresherHandler unused = CreateSut([], out _);
 
             bool result = ArticulateRouteChangeDetector.AffectsArticulateRoutes(
                 "-1,100",
@@ -42,7 +43,7 @@ namespace Articulate.Tests.Components
                 sortOrder: 0,
                 alias: ArticulateConstants.ContentType.Articulate);
 
-            ContentCacheRefresherHandler unused = CreateSut([nestedRoot]);
+            ContentCacheRefresherHandler unused = CreateSut([nestedRoot], out _);
 
             bool result = ArticulateRouteChangeDetector.AffectsArticulateRoutes("-1,100", 1, 0, "Home", [nestedRoot]);
 
@@ -59,7 +60,7 @@ namespace Articulate.Tests.Components
                 sortOrder: 0,
                 alias: ArticulateConstants.ContentType.Articulate);
 
-            ContentCacheRefresherHandler unused = CreateSut([nestedRoot]);
+            ContentCacheRefresherHandler unused = CreateSut([nestedRoot], out _);
 
             bool result = ArticulateRouteChangeDetector.AffectsArticulateRoutes("-1,999", 1, 0, "Elsewhere", [nestedRoot]);
 
@@ -76,7 +77,7 @@ namespace Articulate.Tests.Components
                 sortOrder: 5,
                 alias: ArticulateConstants.ContentType.Articulate);
 
-            ContentCacheRefresherHandler unused = CreateSut([root]);
+            ContentCacheRefresherHandler unused = CreateSut([root], out _);
 
             bool result = ArticulateRouteChangeDetector.AffectsArticulateRoutes("-1,150", 1, 1, "Sibling", [root]);
 
@@ -84,15 +85,8 @@ namespace Articulate.Tests.Components
         }
 
         [Test]
-        public void Handle_queues_route_refresh_for_refresh_by_id_when_content_affects_routes()
+        public void Handle_refreshes_routes_for_refresh_by_id_when_content_affects_routes()
         {
-            string? queuedToken = null;
-            var requestCache = new Mock<IRequestCache>();
-            requestCache
-                .Setup(x => x.Get(It.IsAny<string>(), It.IsAny<Func<object?>>()))
-                .Callback((string key, Func<object?> _) => queuedToken = key)
-                .Returns((string _, Func<object?> factory) => factory());
-
             IPublishedContent changedContent = CreatePublishedContent(
                 id: 100,
                 path: "-1,100",
@@ -100,38 +94,19 @@ namespace Articulate.Tests.Components
                 sortOrder: 0,
                 alias: ArticulateConstants.ContentType.Articulate);
 
-            var publishedContentCache = new Mock<IPublishedContentCache>();
-            publishedContentCache.Setup(x => x.GetById(100)).Returns(changedContent);
-
-            var umbracoContext = new Mock<Umbraco.Cms.Core.Web.IUmbracoContext>();
-            umbracoContext.SetupGet(x => x.Content).Returns(publishedContentCache.Object);
-
-            var umbracoContextAccessor = new Mock<Umbraco.Cms.Core.Web.IUmbracoContextAccessor>();
-            Umbraco.Cms.Core.Web.IUmbracoContext? context = umbracoContext.Object;
-            umbracoContextAccessor
-                .Setup(x => x.TryGetUmbracoContext(out context))
-                .Returns(true);
-
             ContentCacheRefresherHandler sut = CreateSut(
                 [],
-                AppCaches.Create(requestCache.Object),
-                umbracoContextAccessor.Object);
+                out Mock<IArticulateRouteRefreshState> routeRefreshState,
+                CreateUmbracoContextAccessor(liveContent: changedContent));
 
             sut.Handle(new ContentCacheRefresherNotification(100, MessageType.RefreshById));
 
-            Assert.That(queuedToken, Is.EqualTo(ArticulateConstants.RefreshRoutesToken));
+            routeRefreshState.Verify(x => x.MarkDirty(), Times.Once);
         }
 
         [Test]
-        public void Handle_does_not_queue_route_refresh_for_refresh_by_id_when_content_does_not_affect_routes()
+        public void Handle_does_not_refresh_routes_for_refresh_by_id_when_content_does_not_affect_routes()
         {
-            string? queuedToken = null;
-            var requestCache = new Mock<IRequestCache>();
-            requestCache
-                .Setup(x => x.Get(It.IsAny<string>(), It.IsAny<Func<object?>>()))
-                .Callback((string key, Func<object?> _) => queuedToken = key)
-                .Returns((string _, Func<object?> factory) => factory());
-
             IPublishedContent articulateRoot = CreatePublishedContent(
                 id: 200,
                 path: "-1,100,200",
@@ -146,34 +121,19 @@ namespace Articulate.Tests.Components
                 sortOrder: 0,
                 alias: "Elsewhere");
 
-            var publishedContentCache = new Mock<IPublishedContentCache>();
-            publishedContentCache.Setup(x => x.GetById(999)).Returns(changedContent);
-
-            var umbracoContext = new Mock<Umbraco.Cms.Core.Web.IUmbracoContext>();
-            umbracoContext.SetupGet(x => x.Content).Returns(publishedContentCache.Object);
-
-            var umbracoContextAccessor = new Mock<Umbraco.Cms.Core.Web.IUmbracoContextAccessor>();
-            Umbraco.Cms.Core.Web.IUmbracoContext? context = umbracoContext.Object;
-            umbracoContextAccessor
-                .Setup(x => x.TryGetUmbracoContext(out context))
-                .Returns(true);
-
             ContentCacheRefresherHandler sut = CreateSut(
                 [articulateRoot],
-                AppCaches.Create(requestCache.Object),
-                umbracoContextAccessor.Object);
+                out Mock<IArticulateRouteRefreshState> routeRefreshState,
+                CreateUmbracoContextAccessor(liveContent: changedContent));
 
             sut.Handle(new ContentCacheRefresherNotification(999, MessageType.RefreshById));
 
-            Assert.That(queuedToken, Is.Null);
+            routeRefreshState.Verify(x => x.MarkDirty(), Times.Never);
         }
 
         [Test]
-        public void Handle_refresh_by_payload_queues_when_payload_contains_refresh_node()
+        public void Handle_refresh_by_payload_refreshes_when_payload_contains_refresh_node()
         {
-            string? queuedToken = null;
-            Mock<IRequestCache> requestCache = CreateRequestCache(queuedTokenValue => queuedToken = queuedTokenValue);
-
             IPublishedContent changedContent = CreatePublishedContent(
                 id: 100,
                 path: "-1,100",
@@ -183,56 +143,48 @@ namespace Articulate.Tests.Components
 
             ContentCacheRefresherHandler sut = CreateSut(
                 [],
-                AppCaches.Create(requestCache.Object),
+                out Mock<IArticulateRouteRefreshState> routeRefreshState,
                 CreateUmbracoContextAccessor(liveContent: changedContent));
 
             sut.Handle(new ContentCacheRefresherNotification(
                 new[] { new ContentCacheRefresher.JsonPayload { Id = 100, ChangeTypes = TreeChangeTypes.RefreshNode } },
                 MessageType.RefreshByPayload));
 
-            Assert.That(queuedToken, Is.EqualTo(ArticulateConstants.RefreshRoutesToken));
+            routeRefreshState.Verify(x => x.MarkDirty(), Times.Once);
         }
 
         [Test]
         public void Handle_refresh_by_payload_ignores_payload_without_relevant_change_types()
         {
-            string? queuedToken = null;
-            Mock<IRequestCache> requestCache = CreateRequestCache(queuedTokenValue => queuedToken = queuedTokenValue);
-
-            ContentCacheRefresherHandler sut = CreateSut([], AppCaches.Create(requestCache.Object));
+            ContentCacheRefresherHandler sut = CreateSut([], out Mock<IArticulateRouteRefreshState> routeRefreshState);
 
             sut.Handle(new ContentCacheRefresherNotification(
                 new[] { new ContentCacheRefresher.JsonPayload { Id = 100, ChangeTypes = TreeChangeTypes.None } },
                 MessageType.RefreshByPayload));
 
-            Assert.That(queuedToken, Is.Null);
+            routeRefreshState.Verify(x => x.MarkDirty(), Times.Never);
         }
 
         [Test]
-        public void Handle_remove_by_id_queues_route_refresh_when_content_cannot_be_resolved()
+        public void Handle_remove_by_id_refreshes_routes_when_content_cannot_be_resolved()
         {
-            string? queuedToken = null;
-            Mock<IRequestCache> requestCache = CreateRequestCache(queuedTokenValue => queuedToken = queuedTokenValue);
-
             Mock<IPublishedContentCache> publishedContentCache = new();
             publishedContentCache.Setup(x => x.GetById(100)).Returns((IPublishedContent?)null);
             publishedContentCache.Setup(x => x.GetById(true, 100)).Returns((IPublishedContent?)null);
 
             ContentCacheRefresherHandler sut = CreateSut(
                 [],
-                AppCaches.Create(requestCache.Object),
+                out Mock<IArticulateRouteRefreshState> routeRefreshState,
                 CreateUmbracoContextAccessor(publishedContentCache: publishedContentCache.Object));
 
             sut.Handle(new ContentCacheRefresherNotification(100, MessageType.RemoveById));
 
-            Assert.That(queuedToken, Is.EqualTo(ArticulateConstants.RefreshRoutesToken));
+            routeRefreshState.Verify(x => x.MarkDirty(), Times.Once);
         }
 
         [Test]
         public void Handle_refresh_by_id_returns_when_umbraco_context_is_unavailable()
         {
-            string? queuedToken = null;
-            Mock<IRequestCache> requestCache = CreateRequestCache(queuedTokenValue => queuedToken = queuedTokenValue);
             Mock<Umbraco.Cms.Core.Web.IUmbracoContextAccessor> umbracoContextAccessor = new();
             Umbraco.Cms.Core.Web.IUmbracoContext? context = null;
             umbracoContextAccessor
@@ -241,20 +193,17 @@ namespace Articulate.Tests.Components
 
             ContentCacheRefresherHandler sut = CreateSut(
                 [],
-                AppCaches.Create(requestCache.Object),
+                out Mock<IArticulateRouteRefreshState> routeRefreshState,
                 umbracoContextAccessor.Object);
 
             sut.Handle(new ContentCacheRefresherNotification(100, MessageType.RefreshById));
 
-            Assert.That(queuedToken, Is.Null);
+            routeRefreshState.Verify(x => x.MarkDirty(), Times.Never);
         }
 
         [Test]
-        public void Handle_refresh_by_id_does_not_queue_when_only_preview_content_exists()
+        public void Handle_refresh_by_id_does_not_refresh_when_only_preview_content_exists()
         {
-            string? queuedToken = null;
-            Mock<IRequestCache> requestCache = CreateRequestCache(queuedTokenValue => queuedToken = queuedTokenValue);
-
             IPublishedContent changedContent = CreatePublishedContent(
                 id: 100,
                 path: "-1,100",
@@ -268,21 +217,18 @@ namespace Articulate.Tests.Components
 
             ContentCacheRefresherHandler sut = CreateSut(
                 [],
-                AppCaches.Create(requestCache.Object),
+                out Mock<IArticulateRouteRefreshState> routeRefreshState,
                 CreateUmbracoContextAccessor(publishedContentCache: publishedContentCache.Object));
 
             sut.Handle(new ContentCacheRefresherNotification(100, MessageType.RefreshById));
 
-            Assert.That(queuedToken, Is.Null);
+            routeRefreshState.Verify(x => x.MarkDirty(), Times.Never);
             publishedContentCache.Verify(x => x.GetById(true, 100), Times.Once);
         }
 
         [Test]
         public void Handle_remove_by_id_uses_preview_lookup_when_live_lookup_returns_null()
         {
-            string? queuedToken = null;
-            Mock<IRequestCache> requestCache = CreateRequestCache(queuedTokenValue => queuedToken = queuedTokenValue);
-
             IPublishedContent changedContent = CreatePublishedContent(
                 id: 100,
                 path: "-1,100",
@@ -296,53 +242,44 @@ namespace Articulate.Tests.Components
 
             ContentCacheRefresherHandler sut = CreateSut(
                 [],
-                AppCaches.Create(requestCache.Object),
+                out Mock<IArticulateRouteRefreshState> routeRefreshState,
                 CreateUmbracoContextAccessor(publishedContentCache: publishedContentCache.Object));
 
             sut.Handle(new ContentCacheRefresherNotification(100, MessageType.RemoveById));
 
-            Assert.That(queuedToken, Is.EqualTo(ArticulateConstants.RefreshRoutesToken));
+            routeRefreshState.Verify(x => x.MarkDirty(), Times.Once);
             publishedContentCache.Verify(x => x.GetById(true, 100), Times.Once);
         }
 
         [Test]
         public void Handle_refresh_by_instance_ignores_non_content_message_object()
         {
-            string? queuedToken = null;
-            Mock<IRequestCache> requestCache = CreateRequestCache(queuedTokenValue => queuedToken = queuedTokenValue);
-
-            ContentCacheRefresherHandler sut = CreateSut([], AppCaches.Create(requestCache.Object));
+            ContentCacheRefresherHandler sut = CreateSut([], out Mock<IArticulateRouteRefreshState> routeRefreshState);
 
             sut.Handle(new ContentCacheRefresherNotification("not-content", MessageType.RefreshByInstance));
 
-            Assert.That(queuedToken, Is.Null);
+            routeRefreshState.Verify(x => x.MarkDirty(), Times.Never);
         }
 
         [Test]
-        public void Handle_refresh_by_instance_queues_when_content_affects_routes()
+        public void Handle_refresh_by_instance_marks_routes_dirty_when_content_affects_routes()
         {
-            string? queuedToken = null;
-            Mock<IRequestCache> requestCache = CreateRequestCache(queuedTokenValue => queuedToken = queuedTokenValue);
-
             IContent changedContent = CreateContent(
                 path: "-1,100",
                 level: 1,
                 sortOrder: 0,
                 alias: ArticulateConstants.ContentType.Articulate);
 
-            ContentCacheRefresherHandler sut = CreateSut([], AppCaches.Create(requestCache.Object));
+            ContentCacheRefresherHandler sut = CreateSut([], out Mock<IArticulateRouteRefreshState> routeRefreshState);
 
             sut.Handle(new ContentCacheRefresherNotification(changedContent, MessageType.RefreshByInstance));
 
-            Assert.That(queuedToken, Is.EqualTo(ArticulateConstants.RefreshRoutesToken));
+            routeRefreshState.Verify(x => x.MarkDirty(), Times.Once);
         }
 
         [Test]
         public void Handle_refresh_by_instance_ignores_unpublished_content()
         {
-            string? queuedToken = null;
-            Mock<IRequestCache> requestCache = CreateRequestCache(queuedTokenValue => queuedToken = queuedTokenValue);
-
             IContent changedContent = CreateContent(
                 path: "-1,100",
                 level: 1,
@@ -350,19 +287,21 @@ namespace Articulate.Tests.Components
                 alias: ArticulateConstants.ContentType.Articulate,
                 published: false);
 
-            ContentCacheRefresherHandler sut = CreateSut([], AppCaches.Create(requestCache.Object));
+            ContentCacheRefresherHandler sut = CreateSut([], out Mock<IArticulateRouteRefreshState> routeRefreshState);
 
             sut.Handle(new ContentCacheRefresherNotification(changedContent, MessageType.RefreshByInstance));
 
-            Assert.That(queuedToken, Is.Null);
+            routeRefreshState.Verify(x => x.MarkDirty(), Times.Never);
         }
 
         private static ContentCacheRefresherHandler CreateSut(
             IEnumerable<IPublishedContent> articulateRoots,
-            AppCaches? appCaches = null,
+            out Mock<IArticulateRouteRefreshState> routeRefreshState,
             Umbraco.Cms.Core.Web.IUmbracoContextAccessor? umbracoContextAccessor = null,
             Umbraco.Cms.Infrastructure.Scoping.IScopeProvider? scopeProvider = null)
         {
+            routeRefreshState = new Mock<IArticulateRouteRefreshState>();
+
             Mock<IPublishedContentTypeCache> contentTypeCache = new();
             contentTypeCache
                 .Setup(x => x.Get(PublishedItemType.Content, ArticulateConstants.ContentType.Articulate))
@@ -375,20 +314,11 @@ namespace Articulate.Tests.Components
 
             return new ContentCacheRefresherHandler(
                 umbracoContextAccessor ?? Mock.Of<Umbraco.Cms.Core.Web.IUmbracoContextAccessor>(),
-                appCaches ?? AppCaches.Disabled,
+                routeRefreshState.Object,
                 contentTypeCache.Object,
                 documentCacheService.Object,
-                scopeProvider ?? CreateScopeProvider());
-        }
-
-        private static Mock<IRequestCache> CreateRequestCache(Action<string> onKey)
-        {
-            Mock<IRequestCache> requestCache = new();
-            requestCache
-                .Setup(x => x.Get(It.IsAny<string>(), It.IsAny<Func<object?>>()))
-                .Callback((string key, Func<object?> _) => onKey(key))
-                .Returns((string _, Func<object?> factory) => factory());
-            return requestCache;
+                scopeProvider ?? CreateScopeProvider(),
+                NullLogger<ContentCacheRefresherHandler>.Instance);
         }
 
         private static Umbraco.Cms.Infrastructure.Scoping.IScopeProvider CreateScopeProvider()

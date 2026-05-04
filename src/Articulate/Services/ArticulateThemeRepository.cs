@@ -27,7 +27,7 @@ namespace Articulate.Services
             if (DefaultThemes.AllThemeNames.Any(theme => string.Equals(theme, newThemeName, StringComparison.OrdinalIgnoreCase)))
             {
                 throw new ArgumentException(
-                    $"The theme name '{newThemeName}' is reserved for a built-in theme.",
+                    $@"The theme name '{newThemeName}' is reserved for a built-in theme.",
                     nameof(newThemeName));
             }
 
@@ -39,7 +39,7 @@ namespace Articulate.Services
 
             if (!themeRootDestination.StartsWith(userThemesPath, StringComparison.OrdinalIgnoreCase))
             {
-                throw new ArgumentException("Invalid theme name", nameof(newThemeName));
+                throw new ArgumentException(@"Invalid theme name", nameof(newThemeName));
             }
 
             Assembly articulateAssembly = GetWebAssembly();
@@ -196,6 +196,14 @@ namespace Articulate.Services
                           2. Edit `Views/Post.cshtml` - Individual blog post template
                           3. Customize CSS in `wwwroot/.../assets/css/`
                           4. Copied themes do not include a production build pipeline for assets, either set up your own build process, or ensure production builds link to src assets.
+
+                          ## Activate Theme
+
+                          To use this theme in production, you need to configure it in your Articulate settings:
+
+                          1. Open your Articulate root node in the Umbraco backoffice
+                          2. Select **"Theme Name"** from the **Theme** dropdown
+                          3. Save changes
 
                           ## Documentation
 

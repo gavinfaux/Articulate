@@ -25,7 +25,7 @@
         <div class="mdl-color-text--grey-700 mdl-card__supporting-text meta">
             @await Html.PartialAsync("AuthorInfo", Model)
             <div class="section-spacer"></div>
-            @if (Model.IsDisqusEnabled)
+            @if (Model.EnableComments && Model.IsDisqusEnabled)
             {
                 <div class="meta__favorites">
                     <a class="mdl-color-text--grey-700" href="@Model.Url()#disqus_thread" data-disqus-identifier="@Model.Key"></a>
@@ -63,7 +63,7 @@
                 </div>
             </div>
         </div>
-        @if (Model.EnableComments)
+        @if (Model.EnableComments && Model.IsDisqusEnabled)
         {
             <div class="mdl-card__supporting-text mdl-color--grey-200">
 

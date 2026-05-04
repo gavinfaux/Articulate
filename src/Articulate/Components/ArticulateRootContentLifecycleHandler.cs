@@ -4,6 +4,7 @@ using Umbraco.Cms.Core.Events;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Notifications;
 using Umbraco.Cms.Core.Services;
+using Umbraco.Cms.Infrastructure.Scoping;
 
 namespace Articulate.Components
 {
@@ -14,7 +15,8 @@ namespace Articulate.Components
         IContentTypeService contentTypeService,
         IContentService contentService,
         ILanguageService languageService,
-        ILogger<ArticulateRootContentLifecycleHandler> logger)
+        ILogger<ArticulateRootContentLifecycleHandler> logger,
+        IScopeProvider scopeProvider)
         : INotificationAsyncHandler<ContentSavedNotification>,
             INotificationAsyncHandler<ContentPublishedNotification>
     {
@@ -32,6 +34,7 @@ namespace Articulate.Components
                 var defaultLang = await languageService.GetDefaultIsoCodeAsync();
                 cancellationToken.ThrowIfCancellationRequested();
 
+                using IScope scope = scopeProvider.CreateScope(autoComplete: true);
                 _ = EnsureChildNodeExists(
                     c,
                     ArticulateConstants.ContentType.ArticulateArchive,
@@ -63,6 +66,7 @@ namespace Articulate.Components
                 var defaultLang = await languageService.GetDefaultIsoCodeAsync();
                 cancellationToken.ThrowIfCancellationRequested();
 
+                using IScope scope = scopeProvider.CreateScope(autoComplete: true);
                 PublishRequiredChildNode(
                     EnsureChildNodeExists(
                         root,

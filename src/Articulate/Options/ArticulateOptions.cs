@@ -34,10 +34,10 @@ namespace Articulate.Options
         public bool AutoPublishOnStartup { get; set; } = false;
 
         /// <summary>
-        /// Maximum number of bytes allowed when downloading an external image for import.
+        /// Maximum number of bytes allowed for images entering Articulate import/editor flows.
         /// Default: 10 MB.
         /// </summary>
-        public long MaxExternalImageBytes { get; set; } = 10 * 1024 * 1024;
+        public long MaxImportImageBytes { get; set; } = 10 * 1024 * 1024;
 
         /// <summary>
         /// Explicit allowlist of external hosts that Articulate may fetch images from during BlogML import.
@@ -53,12 +53,6 @@ namespace Articulate.Options
         /// </summary>
         public bool AllowUnsafeLocalExternalImageHostsInDevelopment { get; set; } = false;
 
-        /// <summary>
-        /// When true, upgrades the Articulate Rich Text data type to use the TipTap editor during package migration.
-        /// Set false to preserve an existing TinyMCE-compatible data type during upgrades.
-        /// Default: true.
-        /// </summary>
-        public bool MigrateRichTextDataTypeToTiptapOnUpgrade { get; set; } = true;
     }
 
 }

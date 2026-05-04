@@ -42,9 +42,12 @@
       "lodash@>=4.0.0 <=4.17.23": ">=4.18.0",
       "lodash@<=4.17.23": ">=4.18.0",
       "defu@<=6.1.4": ">=6.1.5",
-      "vite@>=7.0.0 <=7.3.1": ">=7.3.2",
-      "vite@>=7.1.0 <=7.3.1": ">=7.3.2"
-    }
+      "vite@>=7.0.0 <=7.3.1": ">=7.3.2"
+    },
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "unrs-resolver"
+    ]
   },
   "dependencies": {
     "lit-html": "^3.3.2",
@@ -55,13 +58,13 @@
     "@eslint/eslintrc": "^3.3.5",
     "@eslint/js": "^9.39.4",
     "@hey-api/openapi-ts": "0.85.0",
-    "@typescript-eslint/eslint-plugin": "^8.58.0",
-    "@typescript-eslint/parser": "^8.58.0",
+    "@typescript-eslint/eslint-plugin": "^8.59.1",
+    "@typescript-eslint/parser": "^8.59.1",
     "@umbraco-cms/backoffice": "16.5.1",
     "chalk": "^5.6.2",
     "cross-env": "^10.1.0",
-    "dompurify": "^3.3.3",
-    "esbuild": "^0.27.4",
+    "dompurify": "^3.4.2",
+    "esbuild": "^0.28.0",
     "eslint": "^9.39.4",
     "eslint-config-prettier": "^10.1.8",
     "eslint-import-resolver-typescript": "^4.4.4",
@@ -71,14 +74,13 @@
     "eslint-plugin-local-rules": "^3.0.2",
     "eslint-plugin-prettier": "^5.5.5",
     "eslint-plugin-wc": "^3.1.0",
-    "globals": "^17.4.0",
+    "globals": "^17.5.0",
     "lightningcss": "^1.32.0",
     "marked": "^16.4.2",
     "node-fetch": "^3.3.2",
-    "prettier": "^3.8.0",
-    "terser": "^5.46.1",
+    "prettier": "^3.8.3",
+    "terser": "^5.46.2",
     "typescript": "^5.9.3",
-    "vite": "^7.3.1",
-    "vite-tsconfig-paths": "^6.1.1"
+    "vite": "^8.0.10"
   }
 }

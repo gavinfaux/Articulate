@@ -60,6 +60,7 @@ namespace Articulate
         /// <summary>
         /// Gets a collection of tags for the blog.
         /// </summary>
+
         // Not used internally or by default themes, but exposed for custom themes
         public static PostTagCollection GetPostTagCollection(
             this UmbracoHelper helper,
@@ -86,6 +87,7 @@ namespace Articulate
         /// <summary>
         /// Gets a list of the most recent posts.
         /// </summary>
+
         // Not used internally or by default themes, but exposed for custom themes
         public static IEnumerable<PostModel> GetRecentPosts(
             this UmbracoHelper helper,
@@ -114,6 +116,8 @@ namespace Articulate
         /// <param name="pageSize"></param>
         /// <param name="publishedValueFallback"></param>
         /// <returns></returns>
+
+        // Not used internally or by default themes, but exposed for custom themes
         public static IEnumerable<PostModel> GetRecentPosts(
             this UmbracoHelper helper,
             IMasterModel masterModel,
@@ -142,6 +146,9 @@ namespace Articulate
         /// <param name="pageSize"></param>
         /// <param name="publishedValueFallback"></param>
         /// <returns></returns>
+
+        // Not used internally or by default themes, but exposed for custom themes
+
         public static IEnumerable<PostModel> GetRecentPostsByArchive(
             this UmbracoHelper helper,
             IMasterModel masterModel,

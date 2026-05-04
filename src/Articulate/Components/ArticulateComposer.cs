@@ -32,6 +32,7 @@ namespace Articulate.Components
             _ = services.AddScoped<BlogMlExporter>();
             _ = services.AddSingleton<ArticulateTempFileSystem>();
             services.TryAddSingleton<IRssFeedGenerator, RssFeedGenerator>();
+            services.TryAddSingleton<IArticulateRouteRefreshState, ArticulateRouteRefreshState>();
 
             services.TryAddSingleton<IArticulateTagRepository, ArticulateTagRepository>();
             _ = services.AddSingleton<ArticulateTagService>();
@@ -44,7 +45,6 @@ namespace Articulate.Components
             services.TryAddSingleton<IArticulateSearcher, DefaultArticulateSearcher>();
             _ = services.AddSingleton<ArticulateRouteValueTransformer>();
             _ = services.AddSingleton<ArticulateRouter>();
-            _ = services.AddTransient<RouteCacheRefresherFilter>();
             services.TryAddEnumerable(
                 ServiceDescriptor.Singleton<MatcherPolicy, ArticulateDynamicRouteSelectorPolicy>());
             services.TryAddSingleton<IArticulateThemeRepository, ArticulateThemeRepository>();
@@ -74,6 +74,8 @@ namespace Articulate.Components
             _ = builder.AddNotificationHandler<DomainCacheRefresherNotification, DomainCacheRefresherHandler>();
             _ = builder
                 .AddNotificationHandler<MigrationPlansExecutedNotification, ArticulateMigrationPlanExecutedHandler>();
+            _ = builder
+                .AddNotificationHandler<ImportedPackageNotification, ArticulateMigrationPlanExecutedHandler>();
 
             // Ensure MVC discovers controllers in the Articulate assembly.
             _ = services
@@ -88,7 +90,6 @@ namespace Articulate.Components
                 });
 
             _ = services.ConfigureOptions<ArticulatePipelineStartupFilter>();
-            _ = services.ConfigureOptions<ConfigureArticulateMvcOptions>();
 
             _ = services.AddOutputCache(options =>
             {

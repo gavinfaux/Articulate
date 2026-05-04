@@ -33,23 +33,10 @@ Articulate 6 targets Umbraco 16.5.1+ and 17.2.2+
 
 #### Rich Text Editor upgrade behavior
 
-On Umbraco 16/17, Articulate can migrate the built-in `Articulate Rich Text` data type to `TipTap` during package upgrade.
+On Umbraco 16/17, Articulate will migrate the built-in `Umbraco.RichText` property editor to `Umb.PropertyEditorUi.TipTap` during package upgrade only if the TinyMCE editor UI is actually registered. 
 
-- Default behavior: migrate the Articulate Rich Text data type to `TipTap`.
-- If you need to preserve an existing TinyMCE-compatible setup during upgrade, set `Articulate:MigrateRichTextDataTypeToTiptapOnUpgrade` to `false` before starting the upgrade.
+- You must have the [TinyMCE.Umbraco](https://github.com/ProWorksCorporation/TinyMCE-Umbraco) package installed before you start your site to keep using TinyMCE after upgrade.
 - This setting affects upgrades only. Once the Articulate migration plan step has executed, Umbraco records it as complete.
-
-Example:
-
-```json
-{
-  "Articulate": {
-    "MigrateRichTextDataTypeToTiptapOnUpgrade": false
-  }
-}
-```
-
-This is intended for sites that want to keep TinyMCE compatibility via an optional Umbraco 16+ TinyMCE package instead of switching existing Articulate rich text data types to TipTap.
 
 ### Theme Structure (Articulate 6)
 
@@ -63,11 +50,7 @@ For copied or custom user themes, the preferred layout is:
 - views in `Views/ArticulateThemes/{Theme}/Views/`
 - assets in `wwwroot/App_Plugins/Articulate/Themes/{Theme}/assets/`
 
-Articulate still probes older user themes with `.cshtml` files directly under `Views/ArticulateThemes/{Theme}/`, but that flat layout is now treated as a legacy compatibility path.
-
 Reusable RCL/NuGet theme packages can also contribute themes to the Articulate theme picker by registering `IArticulateThemeDescriptorProvider` and returning one or more canonical theme keys. Those keys should match the package theme folder name and the theme picker value. Built-in theme names are reserved, and duplicate package keys are ignored.
-
-For advanced theme-development details such as bypassing the Articulate theme engine and falling back to standard MVC / Umbraco view resolution when the Theme value is empty, see the theme wiki pages.
 
 ## Markdown Editor Authentication
 
@@ -111,17 +94,18 @@ Articulate treats external BlogML image import as an opt-in convenience feature 
   - the number of external image attachments
   - the unique external hosts referenced by the file
   - which hosts are currently allowed
-  - which hosts are currently blocked by `Articulate:AllowedMediaHosts`
+  - which hosts are currently blocked by the external image safety policy
 - Redirects are limited and revalidated on every hop. Redirect targets must still be allowlisted in `Articulate:AllowedMediaHosts`, pass IP safety checks, and cannot downgrade from `https` to `http`.
 - This supports common CDN-style redirects such as `images.example.com` redirecting to `cdn.example.com`, as long as both hosts are explicitly allowlisted.
 - Downloads are validated against Umbraco upload rules and image file types, capped by size, and pinned to the validated IP address for the actual connection.
+- External image downloads use direct validated connections and do not inherit ambient proxy settings or default authentication headers from application `HttpClient` configuration.
 
 Production-oriented example:
 
 ```json
 {
   "Articulate": {
-    "MaxExternalImageBytes": 10485760,
+    "MaxImportImageBytes": 10485760,
     "AllowedMediaHosts": [
       "images.example.com",
       "cdn.example.com"
@@ -143,7 +127,7 @@ Local development example:
 ```json
 {
   "Articulate": {
-    "MaxExternalImageBytes": 10485760,
+    "MaxImportImageBytes": 10485760,
     "AllowedMediaHosts": [
       "localhost"
     ],
@@ -169,7 +153,11 @@ Notes:
 
 ## Upload and Request Limits
 
-Large BlogML files can hit hosting request-size limits before Articulate receives the upload.
+Images entering Articulate import/editor flows are validated against Umbraco upload rules and image file types, and capped by `Articulate:MaxImportImageBytes` (`10 MB` by default).
+
+Large BlogML files and MetaWeblog XML-RPC requests can hit hosting request-size limits before Articulate receives them.
+
+These limits are related but separate: `MaxImportImageBytes` caps each image Articulate accepts after a request is being processed; the startup/server request limits below cap the total HTTP request size before import or MetaWeblog processing can run.
 
 Keep these aligned:
 
@@ -249,6 +237,10 @@ Supporting all the features you'd want in a blogging platform
 - Customizable URLs
 - Author profiles
 - Extensible API + modern build tooling aligned with current .NET/Umbraco releases (DI-friendly codebase, multi-target net9/net10, pnpm/Vite client pipeline)
+
+## Disqus comments
+
+Built-in themes render Disqus comments only when both post comments are enabled and the Articulate root has a valid `disqusShortname` value. Leave `disqusShortname` empty to disable the Disqus widget entirely; themes should not render placeholder comment panels or load Disqus scripts without it.
 
 ## Minimum requirements
 

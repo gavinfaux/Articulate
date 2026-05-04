@@ -477,12 +477,19 @@ $RECYCLE.BIN/
 # vscode
 /src/.vscode
 
-# agents
-.omx/
+# dotnet
+/.dotnet-home
 /.dotnet
 /.dotnetcli
-.claude/
-.omc/
+
+# agents
+/.agents
+/skills
+/.pi
+/.slopwatch
+skills-lock.json
+build_*.txt
+scratch/
 
 ##
 ## Articulate specific
@@ -518,6 +525,7 @@ $RECYCLE.BIN/
 /src/Articulate.Tests.Website/umbraco-package-schema.json
 /src/Articulate.Tests.Website/appsettings-schema.json
 /src/Articulate.Tests.Website/wwwroot/App_Plugins/Articulate/Themes
-/.dotnet-home
+
 /src/Articulate.Tests/umbraco-package-schema.json
 /src/Articulate.Tests/appsettings-schema.Umbraco.Cms.json
+src/Articulate.Tests/appsettings-schema.json

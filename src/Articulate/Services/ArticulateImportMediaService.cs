@@ -27,22 +27,6 @@ namespace Articulate.Services
         private const int MaxRedirects = 5;
         private static readonly FrozenSet<string> _fallbackAllowedExtensions =
             FrozenSet.ToFrozenSet([".png", ".jpg", ".jpeg", ".gif"]);
-        private static readonly FrozenSet<string> _alwaysBlockedExternalImageHostNames =
-            FrozenSet.ToFrozenSet([
-                "metadata.amazonaws.com",
-                "metadata.google.internal"
-            ]);
-        private static readonly FrozenSet<string> _alwaysBlockedExternalImageHostSuffixes =
-            FrozenSet.ToFrozenSet([
-                "localtest.me",
-                "lvh.me",
-                "nip.io",
-                "sslip.io",
-                "traefik.me",
-                "xip.io"
-            ]);
-        private static readonly IPAddress _azurePlatformAddress = IPAddress.Parse("168.63.129.16");
-        private static readonly IPAddress _awsIpv6MetadataAddress = IPAddress.Parse("fd00:ec2::254");
 
         private readonly ILogger<ArticulateImportMediaService> _logger;
         private readonly IMediaService _mediaService;
@@ -124,6 +108,17 @@ namespace Articulate.Services
                     $"Extension '{extension}' not allowed. Supported: {string.Join(", ", allowedExtensions)}"));
             }
 
+            string? imageLimitError = TryGetMaxImportImageBytes(out long maxImportImageBytes);
+            if (imageLimitError is not null)
+            {
+                return ValueTask.FromResult(ImportMediaValidationResult.Failure(imageLimitError));
+            }
+            if (stream.CanSeek && stream.Length > maxImportImageBytes)
+            {
+                return ValueTask.FromResult(ImportMediaValidationResult.Failure(
+                    $"Image exceeded the configured limit of {maxImportImageBytes} bytes"));
+            }
+
             return ValueTask.FromResult(ValidateImageSignature(stream, extension, allowedExtensions));
         }
 
@@ -137,6 +132,18 @@ namespace Articulate.Services
                 return ImportMediaValidationResult.Failure("Base64 content is empty");
             }
 
+            string? imageLimitError = TryGetMaxImportImageBytes(out long maxImportImageBytes);
+            if (imageLimitError is not null)
+            {
+                return ImportMediaValidationResult.Failure(imageLimitError);
+            }
+            long? estimatedDecodedBytes = TryEstimateBase64DecodedBytes(base64Content);
+            if (estimatedDecodedBytes is { } estimatedBytes && estimatedBytes > maxImportImageBytes)
+            {
+                return ImportMediaValidationResult.Failure(
+                    $"Image exceeded the configured limit of {maxImportImageBytes} bytes");
+            }
+
             byte[] bytes;
             try
             {
@@ -145,6 +152,12 @@ namespace Articulate.Services
             catch (FormatException)
             {
                 return ImportMediaValidationResult.Failure("Invalid base64 content");
+            }
+
+            if (bytes.LongLength > maxImportImageBytes)
+            {
+                return ImportMediaValidationResult.Failure(
+                    $"Image exceeded the configured limit of {maxImportImageBytes} bytes");
             }
 
             var stream = new MemoryStream(bytes);
@@ -157,6 +170,54 @@ namespace Articulate.Services
             }
 
             return result;
+        }
+
+        private static long? TryEstimateBase64DecodedBytes(string base64Content)
+        {
+            long nonWhitespaceLength = CountNonWhitespaceCharacters(base64Content);
+
+            if (nonWhitespaceLength == 0 || nonWhitespaceLength % 4 != 0)
+            {
+                return null;
+            }
+
+            return (nonWhitespaceLength / 4 * 3) - CountBase64PaddingCharacters(base64Content);
+        }
+
+        private static long CountNonWhitespaceCharacters(string value)
+        {
+            long count = 0;
+            foreach (char c in value)
+            {
+                if (!char.IsWhiteSpace(c))
+                {
+                    count++;
+                }
+            }
+
+            return count;
+        }
+
+        private static int CountBase64PaddingCharacters(string value)
+        {
+            var count = 0;
+            for (var i = value.Length - 1; i >= 0 && count < 2; i--)
+            {
+                char c = value[i];
+                if (char.IsWhiteSpace(c))
+                {
+                    continue;
+                }
+
+                if (c != '=')
+                {
+                    break;
+                }
+
+                count++;
+            }
+
+            return count;
         }
 
         /// <inheritdoc/>
@@ -174,54 +235,7 @@ namespace Articulate.Services
                     cancellationToken);
                 using (response)
                 {
-                    if (!response.IsSuccessStatusCode)
-                    {
-                        return ImportMediaValidationResult.Failure($"HTTP error: {response.StatusCode}");
-                    }
-
-                    long maxExternalImageBytes = _articulateOptions.CurrentValue.MaxExternalImageBytes;
-                    if (maxExternalImageBytes <= 0)
-                    {
-                        return ImportMediaValidationResult.Failure("MaxExternalImageBytes must be greater than zero");
-                    }
-
-                    long? contentLength = response.Content.Headers.ContentLength;
-                    if (contentLength is { } knownLength && knownLength > maxExternalImageBytes)
-                    {
-                        return ImportMediaValidationResult.Failure(
-                            $"Image download exceeded the configured limit of {maxExternalImageBytes} bytes");
-                    }
-
-                    var memoryStream = new MemoryStream();
-                    await using Stream httpStream = await response.Content.ReadAsStreamAsync(cancellationToken);
-                    bool copiedWithinLimit = await TryCopyToMemoryStreamAsync(
-                        httpStream,
-                        memoryStream,
-                        maxExternalImageBytes,
-                        cancellationToken);
-
-                    if (!copiedWithinLimit)
-                    {
-                        await memoryStream.DisposeAsync();
-                        return ImportMediaValidationResult.Failure(
-                            $"Image download exceeded the configured limit of {maxExternalImageBytes} bytes");
-                    }
-
-                    memoryStream.Position = 0;
-                    string extension = Path.GetExtension(finalUri.AbsolutePath).ToLowerInvariant();
-                    ImportMediaValidationResult result = await ValidateImageAsync(memoryStream, extension);
-
-                    if (!result.IsValid)
-                    {
-                        await memoryStream.DisposeAsync();
-                        return result;
-                    }
-
-                    memoryStream.Position = 0;
-                    return ImportMediaValidationResult.Success(
-                        memoryStream,
-                        result.CorrectExtension!,
-                        result.MimeType!);
+                    return await ProcessImageResponseAsync(response, finalUri, cancellationToken);
                 }
             }
             catch (HttpRequestException ex)
@@ -236,6 +250,73 @@ namespace Articulate.Services
             {
                 return ImportMediaValidationResult.Failure("Image download timed out");
             }
+        }
+
+        /// <summary>
+        /// Applies size-limit checks and image validation to an already-received HTTP response.
+        /// Exposed as internal so unit tests can verify size-limiting without requiring a live HTTP server.
+        /// </summary>
+        internal async Task<ImportMediaValidationResult> ProcessImageResponseAsync(
+            HttpResponseMessage response,
+            Uri finalUri,
+            CancellationToken cancellationToken = default)
+        {
+            if (!response.IsSuccessStatusCode)
+            {
+                return ImportMediaValidationResult.Failure($"HTTP error: {response.StatusCode}");
+            }
+
+            string? imageLimitError = TryGetMaxImportImageBytes(out long maxImportImageBytes);
+            if (imageLimitError is not null)
+            {
+                return ImportMediaValidationResult.Failure(imageLimitError);
+            }
+
+            long? contentLength = response.Content.Headers.ContentLength;
+            if (contentLength is { } knownLength && knownLength > maxImportImageBytes)
+            {
+                return ImportMediaValidationResult.Failure(
+                    $"Image exceeded the configured limit of {maxImportImageBytes} bytes");
+            }
+
+            var memoryStream = new MemoryStream();
+            await using Stream httpStream = await response.Content.ReadAsStreamAsync(cancellationToken);
+            bool copiedWithinLimit = await TryCopyToMemoryStreamAsync(
+                httpStream,
+                memoryStream,
+                maxImportImageBytes,
+                cancellationToken);
+
+            if (!copiedWithinLimit)
+            {
+                await memoryStream.DisposeAsync();
+                return ImportMediaValidationResult.Failure(
+                    $"Image exceeded the configured limit of {maxImportImageBytes} bytes");
+            }
+
+            memoryStream.Position = 0;
+            string extension = Path.GetExtension(finalUri.AbsolutePath).ToLowerInvariant();
+            ImportMediaValidationResult result = await ValidateImageAsync(memoryStream, extension);
+
+            if (!result.IsValid)
+            {
+                await memoryStream.DisposeAsync();
+                return result;
+            }
+
+            memoryStream.Position = 0;
+            return ImportMediaValidationResult.Success(
+                memoryStream,
+                result.CorrectExtension!,
+                result.MimeType!);
+        }
+
+        private string? TryGetMaxImportImageBytes(out long maxImportImageBytes)
+        {
+            maxImportImageBytes = _articulateOptions.CurrentValue.MaxImportImageBytes;
+            return maxImportImageBytes > 0
+                ? null
+                : "MaxImportImageBytes must be greater than zero";
         }
 
         /*
@@ -415,8 +496,9 @@ namespace Articulate.Services
             // Articulate provides the explicit host allowlist via Articulate:AllowedMediaHosts.
             // After host validation we still resolve and vet the destination IPs per OWASP SSRF guidance.
             Options.ArticulateOptions articulateOptions = _articulateOptions.CurrentValue;
+            bool isProductionMode = _runtimeSettings.CurrentValue.Mode == RuntimeMode.Production;
             bool allowUnsafeLocalExternalImageHosts =
-                _runtimeSettings.CurrentValue.Mode != RuntimeMode.Production &&
+                !isProductionMode &&
                 articulateOptions.AllowUnsafeLocalExternalImageHostsInDevelopment;
 
             string? validationError = ValidateExternalImageUri(imageUrl);
@@ -426,7 +508,11 @@ namespace Articulate.Services
             }
 
             ISet<string> allowedHosts = articulateOptions.AllowedMediaHosts.ToHashSet(StringComparer.OrdinalIgnoreCase);
-            validationError = ValidateExternalImageHost(imageUrl.Host, allowedHosts, allowUnsafeLocalExternalImageHosts);
+            validationError = ExternalImageHostPolicy.ValidateHost(
+                imageUrl.Host,
+                allowedHosts,
+                allowUnsafeLocalExternalImageHosts,
+                isProductionMode);
             if (validationError is not null)
             {
                 return (null, validationError);
@@ -447,7 +533,10 @@ namespace Articulate.Services
                 return (null, $"Could not resolve any addresses for image host '{imageUrl.Host}'");
             }
 
-            validationError = ValidateResolvedAddresses(addresses, imageUrl.Host, allowUnsafeLocalExternalImageHosts);
+            validationError = ExternalImageHostPolicy.ValidateResolvedAddresses(
+                addresses,
+                imageUrl.Host,
+                allowUnsafeLocalExternalImageHosts);
             if (validationError is not null)
             {
                 return (null, validationError);
@@ -461,62 +550,6 @@ namespace Articulate.Services
             (imageUrl.Scheme != Uri.UriSchemeHttp && imageUrl.Scheme != Uri.UriSchemeHttps)
                 ? "Only absolute HTTP(S) image URLs are allowed"
                 : null;
-
-        internal static string? ValidateExternalImageHost(
-            string host,
-            ISet<string> allowedHosts,
-            bool allowUnsafeLocalExternalImageHosts)
-        {
-            string normalizedHost = NormalizeHost(host);
-            if (normalizedHost.Length == 0)
-            {
-                return "Image URL host cannot be empty";
-            }
-
-            if (IsAlwaysBlockedExternalImageHost(normalizedHost))
-            {
-                return $"Host '{host}' is not allowed for external image downloads";
-            }
-
-            if (allowedHosts.Count == 0)
-            {
-                return "External image downloads are disabled because no allowed media hosts are configured";
-            }
-
-            if (allowedHosts.All(x => NormalizeHost(x) != normalizedHost))
-            {
-                return $"Host '{host}' is not configured in Articulate:AllowedMediaHosts";
-            }
-
-            if (IPAddress.TryParse(normalizedHost, out IPAddress? literalAddress) &&
-                IsDisallowedAddress(literalAddress, allowUnsafeLocalExternalImageHosts))
-            {
-                return $"Address '{literalAddress}' for host '{host}' is not allowed";
-            }
-
-            if (IsLocalhostName(normalizedHost) && !allowUnsafeLocalExternalImageHosts)
-            {
-                return $"Host '{host}' is a local host and requires AllowUnsafeLocalExternalImageHostsInDevelopment in a non-production runtime mode";
-            }
-
-            return null;
-        }
-
-        private string? ValidateResolvedAddresses(
-            IEnumerable<IPAddress> addresses,
-            string host,
-            bool allowUnsafeLocalExternalImageHosts)
-        {
-            foreach (IPAddress address in addresses)
-            {
-                if (IsDisallowedAddress(address, allowUnsafeLocalExternalImageHosts))
-                {
-                    return $"Resolved address '{address}' for host '{host}' is not allowed";
-                }
-            }
-
-            return null;
-        }
 
         private async Task<HttpResponseMessage> SendPinnedRequestAsync(
             HttpClient client,
@@ -595,17 +628,6 @@ namespace Articulate.Services
             return client;
         }
 
-        internal static string NormalizeHost(string host) => host.Trim().TrimEnd('.').ToLowerInvariant();
-
-        private static bool IsAlwaysBlockedExternalImageHost(string normalizedHost) =>
-            _alwaysBlockedExternalImageHostNames.Contains(normalizedHost) ||
-            _alwaysBlockedExternalImageHostSuffixes.Any(suffix =>
-                normalizedHost == suffix || normalizedHost.EndsWith($".{suffix}", StringComparison.Ordinal));
-
-        private static bool IsLocalhostName(string normalizedHost) =>
-            normalizedHost == "localhost" ||
-            normalizedHost.EndsWith(".localhost", StringComparison.Ordinal);
-
         private static string NormalizeExtension(string extension)
         {
             string normalized = extension.ToLowerInvariant();
@@ -630,152 +652,6 @@ namespace Articulate.Services
             (requestedExtension, detectedExtension) is
             (".jpg", ".jpeg") or
             (".jpeg", ".jpg");
-
-        // Reject special-use and non-public destinations before connect time. This follows the OWASP SSRF
-        // prevention guidance and the IANA special-purpose address registries for IPv4/IPv6.
-        internal static bool IsDisallowedAddress(IPAddress address, bool allowUnsafeLocalExternalImageHosts)
-        {
-            if (address.Equals(IPAddress.Any) ||
-                address.Equals(IPAddress.IPv6Any) ||
-                address.Equals(IPAddress.None) ||
-                address.Equals(IPAddress.IPv6None))
-            {
-                return true;
-            }
-
-            if (!allowUnsafeLocalExternalImageHosts && IPAddress.IsLoopback(address))
-            {
-                return true;
-            }
-
-            if (address.AddressFamily == AddressFamily.InterNetworkV6)
-            {
-                return IsDisallowedIPv6Address(address, allowUnsafeLocalExternalImageHosts);
-            }
-
-            if (address.AddressFamily != AddressFamily.InterNetwork)
-            {
-                return true;
-            }
-
-            return IsDisallowedIPv4Address(address, allowUnsafeLocalExternalImageHosts);
-        }
-
-        // IPv6 checks focus on non-routable/local scopes such as link-local, site-local, and unique-local.
-        private static bool IsDisallowedIPv6Address(IPAddress address, bool allowUnsafeLocalExternalImageHosts)
-        {
-            if (address.IsIPv6Multicast)
-            {
-                return true;
-            }
-
-            if (address.Equals(IPAddress.IPv6Loopback))
-            {
-                return !allowUnsafeLocalExternalImageHosts;
-            }
-
-            if (TryGetEmbeddedIPv4Address(address, out IPAddress embeddedIPv4Address))
-            {
-                return IsDisallowedIPv4Address(embeddedIPv4Address, allowUnsafeLocalExternalImageHosts);
-            }
-
-            if (IsAlwaysBlockedMetadataIPv6Address(address))
-            {
-                return true;
-            }
-
-            byte[] bytes = address.GetAddressBytes();
-            if (allowUnsafeLocalExternalImageHosts)
-            {
-                return false;
-            }
-
-            return address.IsIPv6LinkLocal ||
-                address.IsIPv6SiteLocal ||
-                bytes[0] == 0 ||
-                (bytes[0] & 0xFE) == 0xFC;
-        }
-
-        // IPv4 checks cover unspecified, loopback, RFC 1918 private space, carrier-grade NAT, link-local,
-        // benchmarking/test ranges, and multicast/reserved space.
-        private static bool IsDisallowedIPv4Address(IPAddress address, bool allowUnsafeLocalExternalImageHosts)
-        {
-            byte[] ipv4 = address.GetAddressBytes();
-
-            if (IsAlwaysBlockedIPv4Address(ipv4))
-            {
-                return true;
-            }
-
-            if (ipv4[0] == 0 ||
-                ipv4[0] >= 224)
-            {
-                return true;
-            }
-
-            if (allowUnsafeLocalExternalImageHosts)
-            {
-                return false;
-            }
-
-            return
-                ipv4[0] == 10 ||
-                ipv4[0] == 127 ||
-                (ipv4[0] == 100 && ipv4[1] >= 64 && ipv4[1] <= 127) ||
-                (ipv4[0] == 169 && ipv4[1] == 254) ||
-                (ipv4[0] == 172 && ipv4[1] >= 16 && ipv4[1] <= 31) ||
-                (ipv4[0] == 192 && ipv4[1] == 168) ||
-                (ipv4[0] == 198 && (ipv4[1] == 18 || ipv4[1] == 19));
-        }
-
-        private static bool TryGetEmbeddedIPv4Address(IPAddress address, out IPAddress embeddedIPv4Address)
-        {
-            if (address.IsIPv4MappedToIPv6)
-            {
-                embeddedIPv4Address = address.MapToIPv4();
-                return true;
-            }
-
-            byte[] bytes = address.GetAddressBytes();
-            if (IsIPv4CompatibleIPv6Address(bytes) ||
-                IsIPv4TranslatedIPv6Address(bytes) ||
-                IsWellKnownNat64Address(bytes))
-            {
-                embeddedIPv4Address = new IPAddress(bytes[^4..]);
-                return true;
-            }
-
-            embeddedIPv4Address = IPAddress.None;
-            return false;
-        }
-
-        private static bool IsIPv4CompatibleIPv6Address(byte[] bytes) =>
-            bytes.Take(12).All(x => x == 0) &&
-            bytes.Skip(12).Any(x => x != 0);
-
-        private static bool IsIPv4TranslatedIPv6Address(byte[] bytes) =>
-            bytes.Take(8).All(x => x == 0) &&
-            bytes[8] == 0xFF &&
-            bytes[9] == 0xFF &&
-            bytes[10] == 0 &&
-            bytes[11] == 0;
-
-        private static bool IsWellKnownNat64Address(byte[] bytes) =>
-            bytes[0] == 0x00 &&
-            bytes[1] == 0x64 &&
-            bytes[2] == 0xFF &&
-            bytes[3] == 0x9B &&
-            bytes.Skip(4).Take(8).All(x => x == 0);
-
-        private static bool IsAlwaysBlockedIPv4Address(byte[] ipv4) =>
-            (ipv4[0] == 169 && ipv4[1] == 254 && ipv4[2] == 169 && ipv4[3] == 254) ||
-            (ipv4[0] == 169 && ipv4[1] == 254 && ipv4[2] == 170 && ipv4[3] == 2) ||
-            (ipv4[0] == 100 && ipv4[1] == 100 && ipv4[2] == 100 && ipv4[3] == 200) ||
-            // Azure platform WireServer/DNS/agent address. External imports should never fetch it.
-            ipv4.SequenceEqual(_azurePlatformAddress.GetAddressBytes());
-
-        private static bool IsAlwaysBlockedMetadataIPv6Address(IPAddress address) =>
-            address.Equals(_awsIpv6MetadataAddress);
 
         /// <inheritdoc/>
         public ImportMediaSaveResult SaveToMediaLibrary(

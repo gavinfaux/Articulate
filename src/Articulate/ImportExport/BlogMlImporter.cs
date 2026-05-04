@@ -12,6 +12,7 @@ using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Models.Membership;
 using Umbraco.Cms.Core.PropertyEditors;
+using Umbraco.Cms.Core.Security;
 using Umbraco.Cms.Core.Serialization;
 using Umbraco.Cms.Core.Services;
 using Umbraco.Cms.Infrastructure.Persistence;
@@ -36,7 +37,8 @@ namespace Articulate.ImportExport
         PropertyEditorCollection dataEditors,
         IJsonSerializer jsonSerializer,
         ArticulateTempFileSystem articulateTempFileSystem,
-        IArticulateImportMediaService service)
+        IArticulateImportMediaService service,
+        IHtmlSanitizer htmlSanitizer)
     {
         private const long MaxXmlCharacters = 10_000_000;
 
@@ -110,52 +112,44 @@ namespace Articulate.ImportExport
             using IScope scope = scopeProvider.CreateScope();
             var returnModel = new ImportResponseDto();
 
-            try
+            BlogMLDocument document = GetDocument(fileName);
+            XDocument xDoc = LoadBlogMlXDocument(fileName);
+
+            Dictionary<string, string> authorIdsToName =
+                await ImportAuthorsAsync(userId, root, document.Authors);
+            returnModel.AuthorCount = authorIdsToName.Count;
+
+            IEnumerable<IContent> imported = await ImportPostsAsync(
+                userId,
+                xDoc,
+                root,
+                document.Posts,
+                [.. document.Authors],
+                [.. document.Categories],
+                authorIdsToName,
+                overwrite,
+                regexMatch,
+                regexReplace,
+                publishAll,
+                importFirstImage);
+            IContent[] enumerable = imported as IContent[] ?? [.. imported];
+            returnModel.PostCount = enumerable.Length;
+
+            if (exportDisqusXml)
             {
-                BlogMLDocument document = GetDocument(fileName);
-                XDocument xDoc = LoadBlogMlXDocument(fileName);
-
-                Dictionary<string, string> authorIdsToName =
-                    await ImportAuthorsAsync(userId, root, document.Authors);
-                returnModel.AuthorCount = authorIdsToName.Count;
-
-                IEnumerable<IContent> imported = await ImportPostsAsync(
-                    userId,
-                    xDoc,
-                    root,
-                    document.Posts,
-                    [.. document.Authors],
-                    [.. document.Categories],
-                    authorIdsToName,
-                    overwrite,
-                    regexMatch,
-                    regexReplace,
-                    publishAll,
-                    importFirstImage);
-                IContent[] enumerable = imported as IContent[] ?? [.. imported];
-                returnModel.PostCount = enumerable.Length;
-
-                if (exportDisqusXml)
-                {
-                    XDocument xDisqusDoc = disqusXmlExporter.Export(enumerable, document);
-                    const string nsWp = "http://wordpress.org/export/1.0/";
-                    returnModel.CommentCount = xDisqusDoc.Descendants(XName.Get("comment", nsWp)).Count();
-                    using var memStream = new MemoryStream();
-                    xDisqusDoc.Save(memStream);
-                    var disqusFileName = $"DisqusXmlExport-{userId}.xml";
-                    articulateTempFileSystem.AddFile(disqusFileName, memStream, true);
-                }
-
-                // commit
-                _ = scope.Complete();
-                returnModel.Completed = true;
-                return returnModel;
+                XDocument xDisqusDoc = disqusXmlExporter.Export(enumerable, document);
+                const string nsWp = "http://wordpress.org/export/1.0/";
+                returnModel.CommentCount = xDisqusDoc.Descendants(XName.Get("comment", nsWp)).Count();
+                using var memStream = new MemoryStream();
+                xDisqusDoc.Save(memStream);
+                var disqusFileName = $"DisqusXmlExport-{userId}.xml";
+                articulateTempFileSystem.AddFile(disqusFileName, memStream, true);
             }
-            catch (Exception)
-            {
-                returnModel.Completed = false;
-                throw;
-            }
+
+            // commit
+            _ = scope.Complete();
+            returnModel.Completed = true;
+            return returnModel;
         }
 
         private BlogMLDocument GetDocument(string fileName)
@@ -232,9 +226,12 @@ namespace Articulate.ImportExport
 
             foreach (BlogMLAuthor author in authors)
             {
-                var authorName =
-                        await ProcessSingleAuthorAsync(userId, author, authorsNode, authorType, existingAuthorNodes)
-                    ;
+                var authorName = await ProcessSingleAuthorAsync(
+                    userId,
+                    author,
+                    authorsNode,
+                    authorType,
+                    existingAuthorNodes);
                 result.Add(author.Id, authorName);
             }
 
@@ -298,8 +295,7 @@ namespace Articulate.ImportExport
             var authorName = found?.Name ?? author.Title.Content;
 
             IContent authorNode = existingAuthorNodes.FirstOrDefault(x => x.Name.InvariantEquals(authorName)) ??
-                                  await CreateAndPublishAuthorNodeAsync(userId, authorName, authorsNode, authorType)
-                ;
+                                  await CreateAndPublishAuthorNodeAsync(userId, authorName, authorsNode, authorType);
 
             return authorNode.Name!;
         }
@@ -372,10 +368,8 @@ namespace Articulate.ImportExport
                             logger);
                 }
 
-                await PopulatePostContentAsync(postNode, postType, post, regexMatch, regexReplace)
-                    ;
-                await SetPostMetadataAsync(postNode, postType, post, xDoc, authors, categories, authorIdsToName)
-                    ;
+                await PopulatePostContentAsync(postNode, postType, post, regexMatch, regexReplace);
+                await SetPostMetadataAsync(postNode, postType, post, xDoc, authors, categories, authorIdsToName);
 
                 if (importFirstImage)
                 {
@@ -386,7 +380,7 @@ namespace Articulate.ImportExport
                 result.Add(postNode);
             }
 
-            return await Task.FromResult(result);
+            return result;
         }
 
         private async Task ImportFirstImageAsync(IContentBase postNode, IContentType postType, BlogMLPost post)
@@ -408,7 +402,9 @@ namespace Articulate.ImportExport
             if (!attachment.Content.IsNullOrWhiteSpace())
             {
                 // Base64 content
-                var fileName = Path.GetFileName(attachment.Url.OriginalString);
+                var fileName = attachment.Url is not null
+                    ? Path.GetFileName(attachment.Url.OriginalString)
+                    : $"{post.Id}-image";
                 attachmentSource = "base64";
                 attachmentIdentifier = fileName;
                 validationResult = await service
@@ -559,7 +555,7 @@ namespace Articulate.ImportExport
             var tags = xmlPost.Descendants(XName.Get("tag", xDoc.Root.Name.NamespaceName))
                 .Select(x => x.Attribute("ref")?.Value)
                 .Where(x => x is not null)
-                .Select(x => x!)
+                .OfType<string>()
                 .ToArray();
 
             await postNode.AssignInvariantOrDefaultCultureTagsAsync(
@@ -650,21 +646,25 @@ namespace Articulate.ImportExport
             {
                 var excerpt = DecodeContent(post.Excerpt.Content, post.Excerpt.ContentType);
 
-                await postNode
-                        .SetInvariantOrDefaultCultureValueAsync("excerpt", excerpt, postType, languageService, logger)
-                    ;
+                await postNode.SetInvariantOrDefaultCultureValueAsync(
+                    "excerpt",
+                    excerpt,
+                    postType,
+                    languageService,
+                    logger);
             }
 
-            await postNode
-                    .SetInvariantOrDefaultCultureValueAsync("importId", post.Id, postType, languageService, logger)
-                ;
+            await postNode.SetInvariantOrDefaultCultureValueAsync(
+                "importId",
+                post.Id,
+                postType,
+                languageService,
+                logger);
 
             var content = DecodeContent(post.Content.Content, post.Content.ContentType);
             content = ApplyImportRegex(content, regexMatch, regexReplace);
+            content = htmlSanitizer.Sanitize(content);
 
-            // TODO: SECURITY - Sanitize imported HTML before saving richText.
-            // Current behavior stores BlogML HTML as-is, which can persist script/event-handler payloads.
-            // Future PR: reuse the same sanitizer path used for Markdown-generated HTML.
             await postNode
                 .SetInvariantOrDefaultCultureValueAsync(
                     "richText",
@@ -759,12 +759,10 @@ namespace Articulate.ImportExport
             if (post.Authors.Count > 0)
             {
                 BlogMLAuthor? author = authors.FirstOrDefault(x => x.Id.InvariantEquals(post.Authors[0]));
-                if (author is not null)
+                if (author is not null && authorIdsToName.TryGetValue(author.Id, out string? name))
                 {
-                    var name = authorIdsToName[author.Id];
                     await postNode
-                            .SetInvariantOrDefaultCultureValueAsync("author", name, postType, languageService, logger)
-                        ;
+                        .SetInvariantOrDefaultCultureValueAsync("author", name, postType, languageService, logger);
                 }
             }
 

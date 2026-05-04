@@ -6,6 +6,9 @@
 <div class="mdl-card title-banner mdl-cell mdl-cell--8-col mdl-cell--4-col-desktop">
     @{
         var backOfficeLoggedIn = await BackOfficeAuthService.IsBackOfficeLoggedInAsync(Context, Constants.Security.BackOfficeAuthenticationType);
+        var hasMenuItems = Model.HasCategoriesRoute() || Model.HasTagsRoute() || Model.HasSearchRoute();
+        var hasCustomBlogTitle = !string.IsNullOrWhiteSpace(Model.BlogTitle)
+                                 && !Model.BlogTitle.Equals("Articulate Blog", StringComparison.OrdinalIgnoreCase);
     }
 
     @if (backOfficeLoggedIn)
@@ -21,11 +24,20 @@
             <img src="@Model.BlogLogo" alt="Blog Logo" />
         </a>
     </div>
-    <div class="mdl-card__supporting-text meta meta--fill mdl-color-text--grey-600">
-        <div>
-            <strong>@Model.BlogTitle</strong>
-        </div>
+    @if (hasCustomBlogTitle || hasMenuItems)
+    {
+        <div class="mdl-card__supporting-text meta meta--fill mdl-color-text--grey-600">
+            @if (hasCustomBlogTitle)
+            {
+                <div>
+                    <strong>@Model.BlogTitle</strong>
+                </div>
+            }
 
-        @await Html.PartialAsync("Menu", Model)
-    </div>
+            @if (hasMenuItems)
+            {
+                @await Html.PartialAsync("Menu", Model)
+            }
+        </div>
+    }
 </div>

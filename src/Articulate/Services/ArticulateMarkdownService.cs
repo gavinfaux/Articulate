@@ -13,7 +13,6 @@ namespace Articulate.Services
             .UseAdvancedExtensions()
             .Build();
 
-        // TODO: Centralize HTML sanitization for both Markdown and RichText content
         /// <inheritdoc/>
         public string ToHtml(string markdown)
         {

@@ -73,6 +73,21 @@ namespace Articulate.Tests.Services
         }
 
         [Test]
+        public async Task ValidateImageAsync_returns_failure_when_image_exceeds_limit()
+        {
+            ArticulateImportMediaService sut = CreateSut(articulateOptions: new ArticulateOptions
+            {
+                MaxImportImageBytes = 1
+            });
+            await using MemoryStream stream = new(Convert.FromBase64String(OneByOnePngBase64));
+
+            ImportMediaValidationResult result = await sut.ValidateImageAsync(stream, ".png");
+
+            Assert.That(result.IsValid, Is.False);
+            Assert.That(result.ErrorMessage, Is.EqualTo("Image exceeded the configured limit of 1 bytes"));
+        }
+
+        [Test]
         public async Task DecodeAndValidateBase64ImageAsync_returns_failure_for_empty_content()
         {
             ArticulateImportMediaService sut = CreateSut();
@@ -110,7 +125,136 @@ namespace Articulate.Tests.Services
         }
 
         [Test]
-        public void CreatePinnedHttpHandler_disables_proxy_routing()
+        public async Task DecodeAndValidateBase64ImageAsync_returns_failure_when_embedded_image_exceeds_limit()
+        {
+            ArticulateImportMediaService sut = CreateSut(articulateOptions: new ArticulateOptions
+            {
+                MaxImportImageBytes = 1
+            });
+
+            ImportMediaValidationResult result = await sut.DecodeAndValidateBase64ImageAsync(
+                OneByOnePngBase64,
+                "image.png");
+
+            Assert.That(result.IsValid, Is.False);
+            Assert.That(result.ErrorMessage, Is.EqualTo("Image exceeded the configured limit of 1 bytes"));
+        }
+
+        [Test]
+        public async Task DecodeAndValidateBase64ImageAsync_returns_failure_when_embedded_image_limit_is_invalid()
+        {
+            ArticulateImportMediaService sut = CreateSut(articulateOptions: new ArticulateOptions
+            {
+                MaxImportImageBytes = 0
+            });
+
+            ImportMediaValidationResult result = await sut.DecodeAndValidateBase64ImageAsync(
+                OneByOnePngBase64,
+                "image.png");
+
+            Assert.That(result.IsValid, Is.False);
+            Assert.That(result.ErrorMessage, Is.EqualTo("MaxImportImageBytes must be greater than zero"));
+        }
+
+        [Test]
+        public async Task ProcessImageResponseAsync_returns_failure_when_content_length_exceeds_limit()
+        {
+            ArticulateImportMediaService sut = CreateSut(articulateOptions: new ArticulateOptions
+            {
+                MaxImportImageBytes = 100
+            });
+
+            using var response = new HttpResponseMessage(HttpStatusCode.OK);
+            response.Content = new ByteArrayContent(new byte[10]);
+            response.Content.Headers.ContentLength = 101;
+
+            var finalUri = new Uri("http://example.com/image.png");
+
+            ImportMediaValidationResult result = await sut.ProcessImageResponseAsync(response, finalUri);
+
+            Assert.That(result.IsValid, Is.False);
+            Assert.That(result.ErrorMessage, Is.EqualTo("Image exceeded the configured limit of 100 bytes"));
+        }
+
+        [Test]
+        public async Task ProcessImageResponseAsync_returns_failure_when_streamed_content_exceeds_limit()
+        {
+            byte[] imageBytes = Convert.FromBase64String(OneByOnePngBase64);
+            ArticulateImportMediaService sut = CreateSut(articulateOptions: new ArticulateOptions
+            {
+                MaxImportImageBytes = imageBytes.Length - 1
+            });
+
+            using var response = new HttpResponseMessage(HttpStatusCode.OK);
+            response.Content = new ByteArrayContent(imageBytes);
+
+            var finalUri = new Uri("http://example.com/image.png");
+
+            ImportMediaValidationResult result = await sut.ProcessImageResponseAsync(response, finalUri);
+
+            Assert.That(result.IsValid, Is.False);
+            Assert.That(result.ErrorMessage, Does.Contain("Image exceeded the configured limit of"));
+        }
+
+        [Test]
+        public async Task ProcessImageResponseAsync_returns_failure_for_non_success_status_code()
+        {
+            ArticulateImportMediaService sut = CreateSut();
+
+            using var response = new HttpResponseMessage(HttpStatusCode.NotFound);
+            response.Content = new ByteArrayContent([]);
+
+            var finalUri = new Uri("http://example.com/image.png");
+
+            ImportMediaValidationResult result = await sut.ProcessImageResponseAsync(response, finalUri);
+
+            Assert.That(result.IsValid, Is.False);
+            Assert.That(result.ErrorMessage, Is.EqualTo("HTTP error: NotFound"));
+        }
+
+        [Test]
+        public async Task ProcessImageResponseAsync_returns_success_when_image_is_within_limit()
+        {
+            ArticulateImportMediaService sut = CreateSut();
+
+            byte[] imageBytes = Convert.FromBase64String(OneByOnePngBase64);
+            using var response = new HttpResponseMessage(HttpStatusCode.OK);
+            response.Content = new ByteArrayContent(imageBytes);
+            response.Content.Headers.ContentLength = imageBytes.Length;
+
+            var finalUri = new Uri("http://example.com/image.png");
+
+            ImportMediaValidationResult result = await sut.ProcessImageResponseAsync(response, finalUri);
+
+            Assert.That(result.IsValid, Is.True);
+            Assert.That(result.CorrectExtension, Is.EqualTo(".png"));
+            if (result.ValidatedStream is not null)
+            {
+                await result.ValidatedStream.DisposeAsync();
+            }
+        }
+
+        [Test]
+        public async Task ProcessImageResponseAsync_returns_failure_when_limit_is_invalid()
+        {
+            ArticulateImportMediaService sut = CreateSut(articulateOptions: new ArticulateOptions
+            {
+                MaxImportImageBytes = 0
+            });
+
+            using var response = new HttpResponseMessage(HttpStatusCode.OK);
+            response.Content = new ByteArrayContent(Convert.FromBase64String(OneByOnePngBase64));
+
+            var finalUri = new Uri("http://example.com/image.png");
+
+            ImportMediaValidationResult result = await sut.ProcessImageResponseAsync(response, finalUri);
+
+            Assert.That(result.IsValid, Is.False);
+            Assert.That(result.ErrorMessage, Is.EqualTo("MaxImportImageBytes must be greater than zero"));
+        }
+
+        [Test]
+        public void CreatePinnedHttpHandler_disables_proxying()
         {
             using SocketsHttpHandler handler = ArticulateImportMediaService.CreatePinnedHttpHandler();
 
@@ -138,156 +282,9 @@ namespace Articulate.Tests.Services
             Assert.That(client.DefaultRequestHeaders.Contains("X-Articulate-Import"), Is.False);
         }
 
-        [Test]
-        public void ValidateExternalImageHost_allows_localhost_only_with_development_override_and_allowlist()
-        {
-            ISet<string> allowedHosts = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "localhost" };
-
-            string? defaultResult = ArticulateImportMediaService.ValidateExternalImageHost(
-                "LOCALHOST.",
-                allowedHosts,
-                allowUnsafeLocalExternalImageHosts: false);
-            string? unsafeDevelopmentResult = ArticulateImportMediaService.ValidateExternalImageHost(
-                "localhost",
-                allowedHosts,
-                allowUnsafeLocalExternalImageHosts: true);
-
-            Assert.That(defaultResult, Does.Contain("requires AllowUnsafeLocalExternalImageHostsInDevelopment"));
-            Assert.That(unsafeDevelopmentResult, Is.Null);
-        }
-
-        [Test]
-        public void ValidateExternalImageHost_blocks_metadata_hosts_even_with_development_override()
-        {
-            ISet<string> allowedHosts = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-            {
-                "metadata.amazonaws.com",
-                "metadata.google.internal"
-            };
-
-            string? googleResult = ArticulateImportMediaService.ValidateExternalImageHost(
-                "metadata.google.internal",
-                allowedHosts,
-                allowUnsafeLocalExternalImageHosts: true);
-            string? awsResult = ArticulateImportMediaService.ValidateExternalImageHost(
-                "metadata.amazonaws.com",
-                allowedHosts,
-                allowUnsafeLocalExternalImageHosts: true);
-
-            Assert.That(googleResult, Does.Contain("not allowed"));
-            Assert.That(awsResult, Does.Contain("not allowed"));
-        }
-
-        [Test]
-        public void ValidateExternalImageHost_blocks_wildcard_dns_hosts_even_with_allowlist()
-        {
-            ISet<string> allowedHosts = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-            {
-                "127.0.0.1.nip.io"
-            };
-
-            string? result = ArticulateImportMediaService.ValidateExternalImageHost(
-                "127.0.0.1.nip.io",
-                allowedHosts,
-                allowUnsafeLocalExternalImageHosts: true);
-
-            Assert.That(result, Does.Contain("not allowed"));
-        }
-
-        [Test]
-        public void ValidateExternalImageHost_normalizes_allowed_hosts()
-        {
-            ISet<string> allowedHosts = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "Images.Example.Com." };
-
-            string? result = ArticulateImportMediaService.ValidateExternalImageHost(
-                "images.example.com",
-                allowedHosts,
-                allowUnsafeLocalExternalImageHosts: false);
-
-            Assert.That(result, Is.Null);
-        }
-
-        [Test]
-        public void IsDisallowedAddress_blocks_metadata_ipv4_even_with_development_override()
-        {
-            Assert.That(
-                ArticulateImportMediaService.IsDisallowedAddress(
-                    IPAddress.Parse("169.254.169.254"),
-                    allowUnsafeLocalExternalImageHosts: true),
-                Is.True);
-        }
-
-        [Test]
-        public void IsDisallowedAddress_blocks_azure_platform_ipv4_even_with_development_override()
-        {
-            Assert.That(
-                ArticulateImportMediaService.IsDisallowedAddress(
-                    IPAddress.Parse("168.63.129.16"),
-                    allowUnsafeLocalExternalImageHosts: true),
-                Is.True);
-        }
-
-        [Test]
-        public void IsDisallowedAddress_allows_loopback_when_development_override_is_enabled()
-        {
-            Assert.That(
-                ArticulateImportMediaService.IsDisallowedAddress(
-                    IPAddress.Loopback,
-                    allowUnsafeLocalExternalImageHosts: true),
-                Is.False);
-        }
-
-        [Test]
-        public void IsDisallowedAddress_allows_ipv6_loopback_when_development_override_is_enabled()
-        {
-            Assert.That(
-                ArticulateImportMediaService.IsDisallowedAddress(
-                    IPAddress.IPv6Loopback,
-                    allowUnsafeLocalExternalImageHosts: true),
-                Is.False);
-        }
-
-        [Test]
-        public void IsDisallowedAddress_blocks_ipv6_any_even_with_development_override()
-        {
-            Assert.That(
-                ArticulateImportMediaService.IsDisallowedAddress(
-                    IPAddress.IPv6Any,
-                    allowUnsafeLocalExternalImageHosts: true),
-                Is.True);
-        }
-
-        [Test]
-        public void IsDisallowedAddress_blocks_nat64_private_ipv4_by_default()
-        {
-            Assert.That(
-                ArticulateImportMediaService.IsDisallowedAddress(
-                    IPAddress.Parse("64:ff9b::7f00:1"),
-                    allowUnsafeLocalExternalImageHosts: false),
-                Is.True);
-        }
-
-        [Test]
-        public void IsDisallowedAddress_blocks_nat64_metadata_ipv4_even_with_development_override()
-        {
-            Assert.That(
-                ArticulateImportMediaService.IsDisallowedAddress(
-                    IPAddress.Parse("64:ff9b::a9fe:a9fe"),
-                    allowUnsafeLocalExternalImageHosts: true),
-                Is.True);
-        }
-
-        [Test]
-        public void IsDisallowedAddress_allows_public_ipv6_address()
-        {
-            Assert.That(
-                ArticulateImportMediaService.IsDisallowedAddress(
-                    IPAddress.Parse("2606:4700:4700::1111"),
-                    allowUnsafeLocalExternalImageHosts: false),
-                Is.False);
-        }
-
-        private static ArticulateImportMediaService CreateSut(ContentSettings? contentSettings = null)
+        private static ArticulateImportMediaService CreateSut(
+            ContentSettings? contentSettings = null,
+            ArticulateOptions? articulateOptions = null)
         {
             ContentSettings effectiveContentSettings = contentSettings ?? new ContentSettings
             {
@@ -324,7 +321,7 @@ namespace Articulate.Tests.Services
                 new FileFormatInspector([new Png(), new Jpeg()]),
                 CreateOptionsMonitor(effectiveContentSettings),
                 CreateOptionsMonitor(new RuntimeSettings { Mode = RuntimeMode.BackofficeDevelopment }),
-                CreateOptionsMonitor(new ArticulateOptions()));
+                CreateOptionsMonitor(articulateOptions ?? new ArticulateOptions()));
         }
 
         private static IOptionsMonitor<T> CreateOptionsMonitor<T>(T currentValue)

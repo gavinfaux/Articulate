@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.PublishedCache;
@@ -11,25 +12,26 @@ using Umbraco.Cms.Web.Common.Routing;
 using Umbraco.Cms.Web.Website.Routing;
 using static Umbraco.Cms.Core.Constants.Web.Routing;
 
-// TODO: #nullable enable
 namespace Articulate.Routing
 {
-    // TODO: We're going to need to do this for all dynamic routes so no more building routes
-    // This is because there is no more RouteTable that you can write too so we sort of have to
-    // re-create that here.
+    // ASP.NET Core no longer exposes a mutable RouteTable, so Articulate keeps its dynamic
+    // route cache here and refreshes it when content changes.
     internal sealed class ArticulateRouteValueTransformer(
         IRuntimeState runtime,
         IUmbracoContextAccessor umbracoContextAccessor,
         IPublishedRouter publishedRouter,
         IRoutableDocumentFilter routableDocumentFilter,
         ArticulateRouter articulateRouteBuilder,
+        IArticulateRouteRefreshState routeRefreshState,
+        ILogger<ArticulateRouteValueTransformer> logger,
         UmbracoRouteValueTransformer umbracoRouteValueTransformer,
         IPublishedContentTypeCache publishedContentTypeCache,
         IDocumentCacheService documentCacheService)
         : DynamicRouteValueTransformer, IDisposable
     {
         private readonly ReaderWriterLockSlim _lock = new();
-        private bool _hasCache;
+        private long _builtVersion;
+        private volatile bool _hasCache;
         private bool _disposedValue;
 
         /// <inheritdoc/>
@@ -64,39 +66,58 @@ namespace Articulate.Routing
 
             var newValues = new RouteValueDictionary();
 
-            (bool HasCache, bool RouteSuccess) routeResult =
-                await TryRouteAsync(umbracoContext, umbracoRouteValues, httpContext, newValues);
-            if (routeResult.HasCache)
-            {
-                return routeResult.RouteSuccess ? newValues : [];
-            }
+            EnsureRouteCache(umbracoContext, httpContext);
 
-            // we don't have a cache yet
-            if (_lock != null)
-            {
-                _lock.EnterWriteLock();
-                try
-                {
-                    articulateRouteBuilder.MapRoutes(
-                        httpContext,
-                        umbracoContext,
-                        publishedContentTypeCache,
-                        documentCacheService);
-                    _hasCache = true;
-                }
-                finally
-                {
-                    _lock.ExitWriteLock();
-                }
-            }
+            bool routeSuccess = await TryRouteAsync(umbracoContext, umbracoRouteValues, httpContext, newValues);
 
-            routeResult = await TryRouteAsync(umbracoContext, umbracoRouteValues, httpContext, newValues);
-
-            return routeResult.RouteSuccess ? newValues : [];
+            return routeSuccess ? newValues : [];
         }
 
         /// <inheritdoc/>
         public void Dispose() => Dispose(disposing: true);
+
+        private void EnsureRouteCache(IUmbracoContext umbracoContext, HttpContext httpContext)
+        {
+            long currentVersion = routeRefreshState.CurrentVersion;
+            if (_hasCache && Volatile.Read(ref _builtVersion) == currentVersion)
+            {
+                return;
+            }
+
+            _lock.EnterWriteLock();
+            try
+            {
+                currentVersion = routeRefreshState.CurrentVersion;
+                if (_hasCache && _builtVersion == currentVersion)
+                {
+                    return;
+                }
+
+                logger.LogInformation(
+                    "Rebuilding Articulate route cache. HasCache: {HasCache}, BuiltVersion: {BuiltVersion}, CurrentVersion: {CurrentVersion}, RequestPath: {RequestPath}",
+                    _hasCache,
+                    _builtVersion,
+                    currentVersion,
+                    httpContext.Request.Path.Value);
+
+                articulateRouteBuilder.MapRoutes(
+                    httpContext,
+                    umbracoContext,
+                    publishedContentTypeCache,
+                    documentCacheService);
+                _builtVersion = currentVersion;
+                _hasCache = true;
+
+                logger.LogInformation(
+                    "Rebuilt Articulate route cache. BuiltVersion: {BuiltVersion}, RequestPath: {RequestPath}",
+                    _builtVersion,
+                    httpContext.Request.Path.Value);
+            }
+            finally
+            {
+                _lock.ExitWriteLock();
+            }
+        }
 
         private void Dispose(bool disposing)
         {
@@ -113,17 +134,12 @@ namespace Articulate.Routing
             _disposedValue = true;
         }
 
-        private async Task<(bool HasCache, bool RouteSuccess)> TryRouteAsync(
+        private async Task<bool> TryRouteAsync(
             IUmbracoContext umbracoContext,
-            UmbracoRouteValues umbracoRouteValues
-            , HttpContext httpContext,
+            UmbracoRouteValues umbracoRouteValues,
+            HttpContext httpContext,
             RouteValueDictionary values)
         {
-            if (_lock == null)
-            {
-                return (false, false);
-            }
-
             _lock.EnterReadLock();
             try
             {
@@ -134,7 +150,7 @@ namespace Articulate.Routing
                             values,
                             out ArticulateRootNodeCache dynamicRouteValues))
                     {
-                        return (true, false);
+                        return false;
                     }
 
                     await WriteRouteValuesAsync(
@@ -143,7 +159,7 @@ namespace Articulate.Routing
                         dynamicRouteValues,
                         umbracoRouteValues,
                         values);
-                    return (true, true);
+                    return true;
                 }
             }
             finally
@@ -151,7 +167,7 @@ namespace Articulate.Routing
                 _lock.ExitReadLock();
             }
 
-            return (false, false);
+            return false;
         }
 
         private async Task WriteRouteValuesAsync(

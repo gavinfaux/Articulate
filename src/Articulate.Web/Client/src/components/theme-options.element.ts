@@ -203,8 +203,14 @@ export default class ThemeOptionsElement extends UmbLitElement implements IFormC
         throw result.error || new Error('Failed to copy theme.');
       }
 
+      const newThemeName = result.data ?? this._themeName!;
       this._formState = 'success';
-      await showUmbracoNotification(this, 'Theme copied successfully!', 'positive');
+      await showUmbracoNotification(
+        this,
+        `"${newThemeName}" created; review theme README.md for next steps.`,
+        'positive',
+        true,
+      );
       this.resetState(true);
     } catch (error) {
       setFormError(this, error, 'Copy Failed');

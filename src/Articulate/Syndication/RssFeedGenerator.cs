@@ -24,9 +24,6 @@ namespace Articulate.Syndication
             {
                 Generator = "Articulate, blogging built on Umbraco", ImageUrl = GetBlogImage(rootPageModel),
             };
-
-            // TODO: attempting to add media:thumbnail...
-            // feed.AttributeExtensions.Add(new XmlQualifiedName("media", "http://www.w3.org/2000/xmlns/"), "http://search.yahoo.com/mrss/");
             return feed;
         }
 
@@ -80,9 +77,6 @@ namespace Articulate.Syndication
                 // don't include this as it will override the main content bits
                 // Summary = new TextSyndicationContent(post.Excerpt)
             };
-
-            // TODO: attempting to add media:thumbnail...
-            // item.ElementExtensions.Add(new SyndicationElementExtension("thumbnail", "http://search.yahoo.com/mrss/", "This is a test!"));
             foreach (var c in post.Categories)
             {
                 item.Categories.Add(new SyndicationCategory(c));

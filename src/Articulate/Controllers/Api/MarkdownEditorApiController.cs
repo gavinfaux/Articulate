@@ -382,14 +382,12 @@ namespace Articulate.Controllers.Api
             string? firstImageUdi,
             IUser currentUser)
         {
-            await content
-                    .SetInvariantOrDefaultCultureValueAsync(
-                        "markdown",
-                        model.Body,
-                        contentType,
-                        languageService,
-                        logger)
-                ;
+            await content.SetInvariantOrDefaultCultureValueAsync(
+                "markdown",
+                model.Body,
+                contentType,
+                languageService,
+                logger);
 
             if (!string.IsNullOrEmpty(firstImageUdi))
             {

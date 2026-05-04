@@ -10,6 +10,7 @@ using Umbraco.Cms.Core.Services;
 using Umbraco.Cms.Infrastructure.Persistence;
 using Umbraco.Cms.Infrastructure.Migrations;
 using Umbraco.Cms.Infrastructure.Migrations.Notifications;
+using Umbraco.Cms.Infrastructure.Scoping;
 
 #nullable enable
 
@@ -24,7 +25,8 @@ internal class ArticulateMigrationPlanExecutedHandler(
     IContentTypeService contentTypeService,
     ISqlContext sqlContext,
     ILogger<ArticulateMigrationPlanExecutedHandler> logger,
-    IOptions<ArticulateOptions> options)
+    IOptions<ArticulateOptions> options,
+    IScopeProvider scopeProvider)
     : INotificationHandler<MigrationPlansExecutedNotification>, INotificationHandler<ImportedPackageNotification>
 {
     /// <summary>
@@ -50,7 +52,9 @@ internal class ArticulateMigrationPlanExecutedHandler(
     /// <param name="notification">The notification information.</param>
     public void Handle(ImportedPackageNotification notification)
     {
-        IReadOnlyList<IContent> installedArticulateRoots = GetInstalledArticulateRoots(notification.InstallationSummary);
+        IReadOnlyList<IContent> installedArticulateRoots =
+            GetInstalledArticulateRoots(notification.InstallationSummary);
+        LogPackageImportContentSummary(notification.InstallationSummary, installedArticulateRoots);
         if (!ShouldPublishAfterPackageImport("package import", notification.InstallationSummary, installedArticulateRoots))
         {
             return;
@@ -159,6 +163,7 @@ internal class ArticulateMigrationPlanExecutedHandler(
                     filter,
                     contentHome.Published);
 
+                using IScope scope = scopeProvider.CreateScope(autoComplete: true);
                 IEnumerable<PublishResult> resultEnumerable =
                     contentService.PublishBranch(contentHome, filter, []);
                 var result = resultEnumerable.ToList();
@@ -221,20 +226,39 @@ internal class ArticulateMigrationPlanExecutedHandler(
             .Where(x => x.ContentType.Alias == ArticulateConstants.ContentType.Articulate && !x.Trashed)
             .ToArray();
 
+    private void LogPackageImportContentSummary(
+        InstallationSummary installationSummary,
+        IReadOnlyList<IContent> installedArticulateRoots)
+    {
+        IContent[] installedContent = [.. installationSummary.ContentInstalled];
+        string[] installedAliases = installedContent
+            .Select(x => x.ContentType.Alias)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        logger.LogInformation(
+            "Package '{PackageName}' installed {InstalledContentCount} content items with aliases [{InstalledContentAliases}] and {InstalledArticulateRootCount} Articulate roots.",
+            installationSummary.PackageName,
+            installedContent.Length,
+            string.Join(", ", installedAliases),
+            installedArticulateRoots.Count);
+    }
+
     private static bool TryGetPublishBranchFilter(
         IContent contentHome,
         IReadOnlySet<int> allowPublishingUnpublishedRoots,
         out PublishBranchFilter filter)
     {
-        if (contentHome.Published)
+        if (allowPublishingUnpublishedRoots.Contains(contentHome.Id))
         {
-            filter = PublishBranchFilter.ForceRepublish;
+            filter = PublishBranchFilter.All;
             return true;
         }
 
-        if (allowPublishingUnpublishedRoots.Contains(contentHome.Id))
+        if (contentHome.Published)
         {
-            filter = PublishBranchFilter.IncludeUnpublished;
+            filter = PublishBranchFilter.ForceRepublish;
             return true;
         }
 
