@@ -238,9 +238,8 @@ namespace Articulate.Models
 
         // Not used internally or by default themes, but exposed for custom themes
 
-        public static string ArticulateAuthorsUrl(this IMasterModel model) => (model.RootBlogNode
-                .ChildrenOfType(ArticulateConstants.ContentType.ArticulateAuthors) ?? throw new InvalidOperationException(
-                $"No ArticulateArchive not found for RootBlogNodeArticulateAuthors found for RootBlogNode: {model.RootBlogNode.Key}"))
+        public static string ArticulateAuthorsUrl(this IMasterModel model) => model.RootBlogNode
+                .ChildrenOfType(ArticulateConstants.ContentType.ArticulateAuthors)
             .FirstOrDefault()?.Url() ?? string.Empty;
 
         /// <summary>
@@ -780,12 +779,10 @@ namespace Articulate.Models
                 throw new ArgumentNullException(nameof(masterModel));
             }
 
-            IPublishedContent[] listNodes = (masterModel.RootBlogNode
-                                                 .ChildrenOfType(ArticulateConstants.ContentType
-                                                     .ArticulateArchive) ??
-                                             throw new InvalidOperationException(
-                                                 $"ArticulateArchive not found for RootBlogNode: {masterModel.RootBlogNode.Key}"))
-                .ToArray();
+                IPublishedContent[] listNodes = masterModel.RootBlogNode
+                    .ChildrenOfType(ArticulateConstants.ContentType
+                        .ArticulateArchive).ToArray();
+
             if (listNodes.Length == 0)
             {
                 throw new InvalidOperationException(
