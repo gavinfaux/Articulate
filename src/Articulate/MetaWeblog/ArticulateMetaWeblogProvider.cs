@@ -691,8 +691,8 @@ namespace Articulate.MetaWeblog
                 null => [],
                 string raw => SplitTagValue(raw),
                 IEnumerable<string> values => CleanTagValues(values),
-                IEnumerable<object> values => CleanTagValues(values.Select(x => x.ToString())),
-                _ => SplitTagValue(value.ToString())
+                IEnumerable<object> values => CleanTagValues(values.Select(x => x?.ToString())),
+                _ => SplitTagValue(value.ToString()),
             };
         }
 
