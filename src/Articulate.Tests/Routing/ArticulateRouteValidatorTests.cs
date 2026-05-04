@@ -1,5 +1,4 @@
 #nullable enable
-using System.Reflection;
 using Articulate.Routing;
 using Moq;
 using NUnit.Framework;
@@ -61,8 +60,8 @@ namespace Articulate.Tests.Routing
             InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() =>
                 ArticulateRouteValidator.ValidateRootPathMappings(
                     "/blog/",
-                    new List<IPublishedContent> { left, right },
-                    new List<Domain>(),
+                    [left, right],
+                    [],
                     new Uri("https://example.local/")))!;
 
             Assert.That(ex.Message, Does.Contain("Ambiguous Articulate root routing"));
@@ -83,7 +82,7 @@ namespace Articulate.Tests.Routing
             Assert.DoesNotThrow(() =>
                 ArticulateRouteValidator.ValidateRootPathMappings(
                     "/blog/",
-                    new List<IPublishedContent> { left, right },
+                    [left, right],
                     domains,
                     new Uri("https://example.local/")));
         }
@@ -103,7 +102,7 @@ namespace Articulate.Tests.Routing
             InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() =>
                 ArticulateRouteValidator.ValidateRootPathMappings(
                     "/blog/",
-                    new List<IPublishedContent> { left, right },
+                    [left, right],
                     domains,
                     new Uri("https://blog.local/")))!;
 
@@ -118,8 +117,8 @@ namespace Articulate.Tests.Routing
             Assert.DoesNotThrow(() =>
                 ArticulateRouteValidator.ValidateRootPathMappings(
                     "/blog/",
-                    new List<IPublishedContent> { single },
-                    new List<Domain>(),
+                    [single],
+                    [],
                     new Uri("https://example.local/")));
         }
 
@@ -138,7 +137,7 @@ namespace Articulate.Tests.Routing
             Assert.DoesNotThrow(() =>
                 ArticulateRouteValidator.ValidateRootPathMappings(
                     "/blog/",
-                    new List<IPublishedContent> { left, right },
+                    [left, right],
                     domains,
                     new Uri("https://blog.local/")));
         }
@@ -158,7 +157,7 @@ namespace Articulate.Tests.Routing
             InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() =>
                 ArticulateRouteValidator.ValidateRootPathMappings(
                     "/blog/",
-                    new List<IPublishedContent> { left, right },
+                    [left, right],
                     domains,
                     new Uri("https://blog.local/")))!;
 
@@ -192,7 +191,11 @@ namespace Articulate.Tests.Routing
             IPublishedContent content = CreateRoot();
 
             InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() =>
-                InvokePrivateValidateConfiguredRouteSegment(content, "searchUrlName", routeSegment))!;
+                ArticulateRouteValidator.ValidateConfiguredRouteSegment(
+                    content,
+                    "searchUrlName",
+                    routeSegment,
+                    new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)))!;
 
             Assert.That(ex.Message, Does.Contain(expectedMessageFragment));
         }
@@ -203,43 +206,11 @@ namespace Articulate.Tests.Routing
             IPublishedContent content = CreateRoot();
 
             Assert.DoesNotThrow(() =>
-                InvokePrivateValidateConfiguredRouteSegment(content, "searchUrlName", string.Empty));
-        }
-
-        private static void InvokePrivateValidateConfiguredRouteSegment(
-            IPublishedContent content,
-            string propertyAlias,
-            string? routeSegment)
-        {
-            MethodInfo method = typeof(ArticulateRouteValidator)
-                .GetMethod(
-                    "ValidateConfiguredRouteSegment",
-                    BindingFlags.NonPublic | BindingFlags.Static,
-                    binder: null,
-                    [
-                        typeof(IPublishedContent),
-                        typeof(string),
-                        typeof(string),
-                        typeof(IDictionary<string, string>)
-                    ],
-                    modifiers: null)
-                ?? throw new InvalidOperationException("Method 'ValidateConfiguredRouteSegment' not found.");
-
-            try
-            {
-                method.Invoke(
-                    null,
-                    [
-                        content,
-                        propertyAlias,
-                        routeSegment,
-                        new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-                    ]);
-            }
-            catch (TargetInvocationException ex) when (ex.InnerException is not null)
-            {
-                throw ex.InnerException;
-            }
+                ArticulateRouteValidator.ValidateConfiguredRouteSegment(
+                    content,
+                    "searchUrlName",
+                    string.Empty,
+                    new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)));
         }
 
         private static IPublishedContent CreateRoot(

@@ -48,12 +48,10 @@ namespace Articulate.MetaWeblog
     {
         private static readonly char[] _commaSeparator = [','];
 
-        // Not supported
         /// <inheritdoc/>
         public Task<int> AddCategoryAsync(string key, string username, string password, NewCategory category) =>
             throw new NotSupportedException();
 
-        // Not supporting WordPress pages
         /// <inheritdoc/>
         public Task<string> AddPageAsync(string blogid, string username, string password, Page page, bool publish) =>
             throw new NotSupportedException();
@@ -124,13 +122,13 @@ namespace Articulate.MetaWeblog
 
             // Move to recycle bin rather than unpublish
             OperationResult recycleResult = contentService.MoveToRecycleBin(content, userId);
-            if (!recycleResult.Success)
+            if (recycleResult.Success)
             {
-                logger.LogWarning("Failed to move content {ContentId} to recycle bin", content.Id);
-                return false;
+                return true;
             }
 
-            return true;
+            logger.LogWarning("Failed to move content {ContentId} to recycle bin", content.Id);
+            return false;
         }
 
         /// <inheritdoc/>
@@ -229,7 +227,6 @@ namespace Articulate.MetaWeblog
                 throw new InvalidOperationException("The id could not be parsed to an integer");
             }
 
-
             IPublishedContent? post = umbracoContextAccessor.GetRequiredUmbracoContext().Content.GetById(asInt.Result);
             if (post is not null)
             {
@@ -255,7 +252,6 @@ namespace Articulate.MetaWeblog
             {
                 throw new ArgumentOutOfRangeException(nameof(numberOfPosts), @"Number of posts must be non-negative");
             }
-
 
             numberOfPosts = Math.Min(numberOfPosts, 1000);
 
@@ -347,16 +343,16 @@ namespace Articulate.MetaWeblog
                     validationResult.CorrectExtension!,
                     fileName);
 
-                if (string.IsNullOrEmpty(absoluteUrl))
+                if (!string.IsNullOrEmpty(absoluteUrl))
                 {
-                    logger.LogWarning(
-                        "Failed to save MetaWeblog image {FileName} to filesystem - SaveToFileSystem returned empty URL",
-                        fileName);
-                    throw new InvalidOperationException(
-                        "Failed to save image to filesystem - SaveToFileSystem returned empty URL");
+                    return new MediaObjectInfo { url = absoluteUrl };
                 }
 
-                return new MediaObjectInfo { url = absoluteUrl };
+                logger.LogWarning(
+                    "Failed to save MetaWeblog image {FileName} to filesystem - SaveToFileSystem returned empty URL",
+                    fileName);
+                throw new InvalidOperationException(
+                    "Failed to save image to filesystem - SaveToFileSystem returned empty URL");
             }
             finally
             {
@@ -433,7 +429,7 @@ namespace Articulate.MetaWeblog
                 jsonSerializer,
                 logger);
 
-            await SaveAndPublishIfNeededAsync(content, user, post, publish);
+            await SaveAndPublishIfNeededAsync(content, user, post, publish).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -446,7 +442,6 @@ namespace Articulate.MetaWeblog
             bool extractFirstImageAsProperty)
         {
             var cleanedContent = StripInvalidImageUrls(post.description);
-
 
             if (cleanedContent != post.description)
             {
@@ -486,28 +481,15 @@ namespace Articulate.MetaWeblog
         /// Prevents file:///, javascript:, data:, and protocol-relative URLs.
         /// Only allows http://, https://, and /media/ URLs.
         /// </remarks>
-        private string StripInvalidImageUrls(string content)
+        internal static string StripInvalidImageUrls(string content)
         {
-            content = Regex.Replace(
-                content,
-                @"<p[^>]*>\s*<img[^>]*src=[""'](?!https?://|/media/)[^""']*[""'][^>]*>\s*</p>",
-                string.Empty,
-                RegexOptions.IgnoreCase | RegexOptions.CultureInvariant,
-                TimeSpan.FromSeconds(1));
-
-            content = Regex.Replace(
-                content,
-                @"<img[^>]*src=[""'](?!https?://|/media/)[^""']*[""'][^>]*>",
-                string.Empty,
-                RegexOptions.IgnoreCase | RegexOptions.CultureInvariant,
-                TimeSpan.FromSeconds(1));
-
+            content = ArticulateMetaWeblogRegexes.InvalidImageParagraphRegex().Replace(content, string.Empty);
+            content = ArticulateMetaWeblogRegexes.InvalidImageTagRegex().Replace(content, string.Empty);
             return content;
         }
 
-        private string UpdateMediaSourceUrls(string description)
-        {
-            return ArticulateMetaWeblogRegexes.MediaSourceRegex().Replace(description, match =>
+        private string UpdateMediaSourceUrls(string description) =>
+            ArticulateMetaWeblogRegexes.MediaSourceRegex().Replace(description, match =>
             {
                 if (match.Groups.Count != 2)
                 {
@@ -519,7 +501,6 @@ namespace Articulate.MetaWeblog
 
                 return " src=\"" + mediaFileSystemPath + "\"";
             });
-        }
 
         private string UpdateMediaHrefUrls(string content)
         {
@@ -713,8 +694,8 @@ namespace Articulate.MetaWeblog
         ///     There are so many variants of Metaweblog API, so I've just included as many properties, custom ones, etc... that I
         ///     can find.
         /// </summary>
-        /// <param name="post"></param>
-        /// <returns></returns>
+        /// <param name="post">The Articulate post model to convert.</param>
+        /// <returns>A MetaWeblog <see cref="Post"/> populated from the Articulate post.</returns>
         /// <remarks>
         ///     http://msdn.microsoft.com/en-us/library/bb463260.aspx
         ///     http://xmlrpc.scripting.com/metaWeblogApi.html
@@ -725,7 +706,7 @@ namespace Articulate.MetaWeblog
         private static Post FromPost(PostModel post) => new()
         {
             categories = [.. post.Categories],
-            description = post.Body.ToString(),
+            description = post.Body.ToString() ?? string.Empty,
             dateCreated = post.PublishedDate != default ? post.PublishedDate : post.UpdateDate,
             postid = post.Id.ToString(CultureInfo.InvariantCulture),
             wp_slug = post.Url(),

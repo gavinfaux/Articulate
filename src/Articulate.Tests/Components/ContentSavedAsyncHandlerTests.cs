@@ -104,9 +104,9 @@ namespace Articulate.Tests.Components
                     It.IsAny<long>(),
                     It.IsAny<int>(),
                     out It.Ref<long>.IsAny,
-                    (string[]?)null,
-                    (IQuery<IContent>?)null,
-                    (Ordering?)null,
+                    null,
+                    null,
+                    null,
                     true))
                 .Returns((int _, long _, int _, out long total, string[]? _, IQuery<IContent>? _, Ordering? _, bool _) =>
                 {

@@ -17,5 +17,17 @@ namespace Articulate.MetaWeblog
             RegexOptions.CultureInvariant | RegexOptions.IgnoreCase | RegexOptions.Compiled,
             matchTimeoutMilliseconds: 1000)]
         public static partial Regex MediaHrefRegex();
+
+        [GeneratedRegex(
+            "<p[^>]*>\\s*<img[^>]*src=[\"'](?!https?://|/media/)[^\"']*[\"'][^>]*>\\s*</p>",
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled,
+            matchTimeoutMilliseconds: 1000)]
+        public static partial Regex InvalidImageParagraphRegex();
+
+        [GeneratedRegex(
+            "<img[^>]*src=[\"'](?!https?://|/media/)[^\"']*[\"'][^>]*>",
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled,
+            matchTimeoutMilliseconds: 1000)]
+        public static partial Regex InvalidImageTagRegex();
     }
 }

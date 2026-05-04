@@ -70,5 +70,98 @@ namespace Articulate.Tests.Components
                 Is.True,
                 "Expected new Articulate posts to default enableComments to 1.");
         }
+
+        [Test]
+        public void Handle_does_not_set_enableComments_for_existing_articulate_posts()
+        {
+            Mock<IPropertyType> enableCommentsProperty = new();
+            enableCommentsProperty.SetupGet(x => x.Alias).Returns("enableComments");
+
+            Mock<IPropertyType> publishedDateProperty = new();
+            publishedDateProperty.SetupGet(x => x.Alias).Returns("publishedDate");
+
+            Mock<IPropertyType> authorProperty = new();
+            authorProperty.SetupGet(x => x.Alias).Returns("author");
+
+            Mock<IContentType> contentType = new();
+            contentType.SetupGet(x => x.Id).Returns(101);
+            contentType.SetupGet(x => x.Alias).Returns(ArticulateConstants.ContentType.ArticulateRichText);
+            contentType.SetupGet(x => x.CompositionPropertyTypes).Returns(
+                [publishedDateProperty.Object, authorProperty.Object, enableCommentsProperty.Object]);
+
+            Mock<ISimpleContentType> simpleContentType = new();
+            simpleContentType.SetupGet(x => x.Alias).Returns(ArticulateConstants.ContentType.ArticulateRichText);
+
+            Mock<IContent> content = new();
+            content.SetupGet(x => x.ContentTypeId).Returns(101);
+            content.SetupGet(x => x.ContentType).Returns(simpleContentType.Object);
+            content.SetupGet(x => x.HasIdentity).Returns(true);
+            content.Setup(x => x.GetValue("publishedDate", null, null, false)).Returns(DateTime.Now);
+            content.Setup(x => x.GetValue("author", null, null, false)).Returns("existing-author");
+
+            var setValueCalls = new List<string>();
+            content
+                .Setup(x => x.SetValue(It.IsAny<string>(), It.IsAny<object?>(), It.IsAny<string?>(), It.IsAny<string?>()))
+                .Callback<string, object?, string?, string?>((alias, _, _, _) => setValueCalls.Add(alias));
+
+            Mock<IContentTypeService> contentTypeService = new();
+            contentTypeService
+                .Setup(x => x.GetMany(It.Is<int[]>(ids => ids.Length == 1 && ids[0] == 101)))
+                .Returns([contentType.Object]);
+
+            Mock<IBackOfficeSecurityAccessor> securityAccessor = new();
+            securityAccessor.SetupGet(x => x.BackOfficeSecurity).Returns((IBackOfficeSecurity?)null);
+
+            Mock<IArticulateMarkdownConverter> markdownConverter = new();
+            var sut = new ContentSavingHandler(
+                contentTypeService.Object,
+                securityAccessor.Object,
+                Microsoft.Extensions.Options.Options.Create(new ArticulateOptions { AutoGenerateExcerpt = false }),
+                markdownConverter.Object);
+
+            sut.Handle(new ContentSavingNotification([content.Object], new EventMessages()));
+
+            Assert.That(
+                setValueCalls,
+                Does.Not.Contain("enableComments"),
+                "Expected enableComments not to be set for existing content.");
+        }
+
+        [Test]
+        public void Handle_does_not_set_defaults_for_non_articulate_content_type()
+        {
+            Mock<IContentType> contentType = new();
+            contentType.SetupGet(x => x.Id).Returns(200);
+            contentType.SetupGet(x => x.Alias).Returns("textPage");
+
+            Mock<ISimpleContentType> simpleContentType = new();
+            simpleContentType.SetupGet(x => x.Alias).Returns("textPage");
+
+            Mock<IContent> content = new();
+            content.SetupGet(x => x.ContentTypeId).Returns(200);
+            content.SetupGet(x => x.ContentType).Returns(simpleContentType.Object);
+
+            var setValueCalls = new List<string>();
+            content
+                .Setup(x => x.SetValue(It.IsAny<string>(), It.IsAny<object?>(), It.IsAny<string?>(), It.IsAny<string?>()))
+                .Callback<string, object?, string?, string?>((alias, _, _, _) => setValueCalls.Add(alias));
+
+            Mock<IContentTypeService> contentTypeService = new();
+            contentTypeService
+                .Setup(x => x.GetMany(It.IsAny<int[]>()))
+                .Returns([contentType.Object]);
+
+            Mock<IBackOfficeSecurityAccessor> securityAccessor = new();
+            Mock<IArticulateMarkdownConverter> markdownConverter = new();
+            var sut = new ContentSavingHandler(
+                contentTypeService.Object,
+                securityAccessor.Object,
+                Microsoft.Extensions.Options.Options.Create(new ArticulateOptions { AutoGenerateExcerpt = false }),
+                markdownConverter.Object);
+
+            sut.Handle(new ContentSavingNotification([content.Object], new EventMessages()));
+
+            Assert.That(setValueCalls, Is.Empty, "Expected no SetValue calls for non-Articulate content.");
+        }
     }
 }

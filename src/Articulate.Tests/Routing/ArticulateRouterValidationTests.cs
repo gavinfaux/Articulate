@@ -1,6 +1,5 @@
 #nullable enable
 using System.Collections.Concurrent;
-using System.Reflection;
 using Articulate.Routing;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Controllers;
@@ -29,7 +28,7 @@ namespace Articulate.Tests.Routing
             rootCache.Add(123, []);
 
             ArticulateRouter sut = CreateSut();
-            ConcurrentDictionary<ArticulateRouteTemplate, ArticulateRootNodeCache> routeCache = GetRouteCache(sut);
+            ConcurrentDictionary<ArticulateRouteTemplate, ArticulateRootNodeCache> routeCache = sut.RouteCache;
 
             routeCache.TryAdd(new ArticulateRouteTemplate(TemplateParser.Parse("/blog/rss")), rootCache);
 
@@ -47,7 +46,7 @@ namespace Articulate.Tests.Routing
         public void TryMatch_returns_false_and_null_cache_when_no_registered_route_matches_path()
         {
             ArticulateRouter sut = CreateSut();
-            ConcurrentDictionary<ArticulateRouteTemplate, ArticulateRootNodeCache> routeCache = GetRouteCache(sut);
+            ConcurrentDictionary<ArticulateRouteTemplate, ArticulateRootNodeCache> routeCache = sut.RouteCache;
             routeCache.TryAdd(
                 new ArticulateRouteTemplate(TemplateParser.Parse("/blog/rss")),
                 new ArticulateRootNodeCache(new ControllerActionDescriptor()));
@@ -64,7 +63,7 @@ namespace Articulate.Tests.Routing
         public void TryMatch_preserves_prepopulated_route_values_when_no_registered_route_matches_path()
         {
             ArticulateRouter sut = CreateSut();
-            ConcurrentDictionary<ArticulateRouteTemplate, ArticulateRootNodeCache> routeCache = GetRouteCache(sut);
+            ConcurrentDictionary<ArticulateRouteTemplate, ArticulateRootNodeCache> routeCache = sut.RouteCache;
             routeCache.TryAdd(
                 new ArticulateRouteTemplate(TemplateParser.Parse("/blog/rss")),
                 new ArticulateRootNodeCache(new ControllerActionDescriptor()));
@@ -94,7 +93,7 @@ namespace Articulate.Tests.Routing
             rootCache.Add(123, []);
 
             ArticulateRouter sut = CreateSut();
-            ConcurrentDictionary<ArticulateRouteTemplate, ArticulateRootNodeCache> routeCache = GetRouteCache(sut);
+            ConcurrentDictionary<ArticulateRouteTemplate, ArticulateRootNodeCache> routeCache = sut.RouteCache;
             routeCache.TryAdd(new ArticulateRouteTemplate(TemplateParser.Parse("/blog/author/{authorId}/rss")), rootCache);
 
             RouteValueDictionary routeValues = new();
@@ -119,7 +118,7 @@ namespace Articulate.Tests.Routing
             rootCache.Add(123, []);
 
             ArticulateRouter sut = CreateSut();
-            ConcurrentDictionary<ArticulateRouteTemplate, ArticulateRootNodeCache> routeCache = GetRouteCache(sut);
+            ConcurrentDictionary<ArticulateRouteTemplate, ArticulateRootNodeCache> routeCache = sut.RouteCache;
             routeCache.TryAdd(new ArticulateRouteTemplate(TemplateParser.Parse("/blog/author/{authorId}/rss")), rootCache);
 
             RouteValueDictionary routeValues = new()
@@ -139,7 +138,7 @@ namespace Articulate.Tests.Routing
         public void TryMatch_matches_correct_route_when_multiple_routes_registered_and_only_one_matches()
         {
             ArticulateRouter sut = CreateSut();
-            ConcurrentDictionary<ArticulateRouteTemplate, ArticulateRootNodeCache> routeCache = GetRouteCache(sut);
+            ConcurrentDictionary<ArticulateRouteTemplate, ArticulateRootNodeCache> routeCache = sut.RouteCache;
 
             ArticulateRootNodeCache expectedCache = new(new ControllerActionDescriptor
             {
@@ -171,7 +170,7 @@ namespace Articulate.Tests.Routing
         public void TryMatch_does_not_leave_route_values_when_parameterized_route_does_not_match()
         {
             ArticulateRouter sut = CreateSut();
-            ConcurrentDictionary<ArticulateRouteTemplate, ArticulateRootNodeCache> routeCache = GetRouteCache(sut);
+            ConcurrentDictionary<ArticulateRouteTemplate, ArticulateRootNodeCache> routeCache = sut.RouteCache;
             routeCache.TryAdd(
                 new ArticulateRouteTemplate(TemplateParser.Parse("/blog/author/{authorId}/rss")),
                 new ArticulateRootNodeCache(new ControllerActionDescriptor()));
@@ -211,7 +210,7 @@ namespace Articulate.Tests.Routing
             rootCache.Add(123, []);
 
             ArticulateRouter sut = CreateSut();
-            ConcurrentDictionary<ArticulateRouteTemplate, ArticulateRootNodeCache> routeCache = GetRouteCache(sut);
+            ConcurrentDictionary<ArticulateRouteTemplate, ArticulateRootNodeCache> routeCache = sut.RouteCache;
             routeCache.TryAdd(new ArticulateRouteTemplate(TemplateParser.Parse("/blog/rss")), rootCache);
 
             RouteValueDictionary routeValues = new();
@@ -227,15 +226,5 @@ namespace Articulate.Tests.Routing
                 Mock.Of<IControllerActionSearcher>(),
                 Mock.Of<Umbraco.Cms.Infrastructure.Scoping.IScopeProvider>(),
                 NullLogger<ArticulateRouter>.Instance);
-
-        private static ConcurrentDictionary<ArticulateRouteTemplate, ArticulateRootNodeCache> GetRouteCache(ArticulateRouter sut)
-        {
-            FieldInfo field = typeof(ArticulateRouter)
-                .GetField("_routeCache", BindingFlags.Instance | BindingFlags.NonPublic)
-                ?? throw new InvalidOperationException("Field '_routeCache' not found on ArticulateRouter. Was it renamed?");
-
-            return (ConcurrentDictionary<ArticulateRouteTemplate, ArticulateRootNodeCache>)(field.GetValue(sut)
-                ?? throw new InvalidOperationException("Field '_routeCache' returned null."));
-        }
     }
 }

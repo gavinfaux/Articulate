@@ -3,6 +3,7 @@ using System.Text;
 using System.Xml;
 using System.Xml.Linq;
 using Articulate.Attributes;
+using Articulate.ImportExport;
 using Articulate.MetaWeblog;
 using Articulate.Options;
 using Microsoft.AspNetCore.Mvc;
@@ -40,8 +41,13 @@ namespace Articulate.Controllers
         private const int RequestBodyLimitMultiplier = 2;
 
         /// <summary>
-        /// Handles the MetaWeblog API requests.
+        /// Handles MetaWeblog XML-RPC requests for the specified blog node.
         /// </summary>
+        /// <param name="id">The node ID of the Articulate blog root.</param>
+        /// <returns>
+        /// A 200 XML-RPC response with the MetaWeblog API result, a 400 if the node ID, size configuration,
+        /// or XML-RPC envelope is invalid, or a 413 if the request body exceeds the configured size limit.
+        /// </returns>
         [HttpPost]
         public async Task<ActionResult> IndexAsync(int id)
         {
@@ -89,23 +95,36 @@ namespace Articulate.Controllers
                 return StatusCode(413, $"Request body exceeds the configured limit of {maxRequestBodyBytes} bytes");
             }
 
+            string normalized = NormalizeMetaWeblogRequest(rawContent);
+
+            if (!IsValidXmlRpcEnvelope(normalized))
+            {
+                return BadRequest("Invalid XML-RPC request envelope.");
+            }
+
             try
             {
-                var result = await service.InvokeAsync(NormalizeMetaWeblogRequest(rawContent));
+                var result = await service.InvokeAsync(normalized);
                 return Content(result, "text/xml", Encoding.UTF8);
-            }
-            catch (NullReferenceException ex)
-            {
-                logger.LogError("A NullReferenceException occurred processing a metaWeblog request.");
-
-                logger.LogError(ex, "NullReferenceException details for metaWeblog call:");
-
-                return StatusCode(500, "An error occurred while processing the request.");
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "An unexpected exception occurred in metaWeblog service.");
                 return StatusCode(500, "An error occurred while processing the request.");
+            }
+        }
+
+        internal static bool IsValidXmlRpcEnvelope(string content)
+        {
+            try
+            {
+                var doc = XDocument.Parse(content);
+                return doc.Root?.Name.LocalName == "methodCall"
+                    && doc.Descendants("methodName").FirstOrDefault() is not null;
+            }
+            catch (XmlException)
+            {
+                return false;
             }
         }
 
