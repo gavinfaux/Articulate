@@ -1,0 +1,110 @@
+@model ListModel
+@{
+    ViewBag.CssBodyClass = "page-list";
+    var searchTerm = Context.Request.Query["term"].ToString();
+    var isSearch = !searchTerm.IsNullOrWhiteSpace();
+    var posts = Model.Posts.ToList();
+    var featuredPost = isSearch ? null : posts.FirstOrDefault();
+    var remainingPosts = featuredPost is not null ? posts.Skip(1).ToList() : posts;
+}
+
+<section class="page-hero">
+    <div>
+        @if (isSearch)
+        {
+            <p class="page-hero__eyebrow">Search results</p>
+            <h1 class="page-hero__title">@searchTerm</h1>
+            <p class="page-hero__summary">@posts.Count result@(posts.Count == 1 ? string.Empty : "s") found</p>
+        }
+        else
+        {
+            <p class="page-hero__eyebrow">Latest writing</p>
+            <h1 class="page-hero__title">@Model.Name</h1>
+            @if (!Model.BlogDescription.IsNullOrWhiteSpace())
+            {
+                <p class="page-hero__summary">@Model.BlogDescription</p>
+            }
+        }
+    </div>
+
+    <aside class="page-hero__side">
+        @await Html.PartialAsync("SearchBox", Model)
+    </aside>
+</section>
+
+@if (!posts.Any())
+{
+    <section class="empty-state">
+        <h2>No posts yet</h2>
+        <p>Publish a post and it will show up here.</p>
+    </section>
+}
+else
+{
+    @if (featuredPost is not null)
+    {
+        var featuredUrl = featuredPost.ExternalUrl.IsNullOrWhiteSpace() ? featuredPost.Url() : featuredPost.ExternalUrl;
+        var featuredIsExternal = !featuredPost.ExternalUrl.IsNullOrWhiteSpace();
+        var featuredHasImage = !featuredPost.CroppedPostImageUrl.IsNullOrWhiteSpace();
+
+        <section class="feature-story@(featuredHasImage ? string.Empty : " feature-story--text-only")">
+            <div class="feature-story__content">
+                <p class="feature-story__eyebrow">Lead Story</p>
+                <div class="post-card__meta">
+                    <time datetime="@featuredPost.PublishedDate.ToString("yyyy-MM-dd")">
+                        @featuredPost.PublishedDate.ToString("dd MMM yyyy")
+                    </time>
+                    @if (!featuredPost.Author.Name.IsNullOrWhiteSpace())
+                    {
+                        <span>@featuredPost.Author.Name</span>
+                    }
+                </div>
+                <h2 class="feature-story__title">
+                    <a href="@featuredUrl"@(featuredIsExternal ? Html.Raw(" rel=\"noopener noreferrer\" target=\"_blank\"") : null)>@featuredPost.Name</a>
+                </h2>
+                @if (!featuredPost.Excerpt.IsNullOrWhiteSpace())
+                {
+                    <p class="feature-story__excerpt">@featuredPost.Excerpt</p>
+                }
+                @await Html.PartialAsync("PostTags", featuredPost)
+                <a class="feature-story__link" href="@featuredUrl" tabindex="-1" aria-hidden="true"@(featuredIsExternal ? Html.Raw(" rel=\"noopener noreferrer\" target=\"_blank\"") : null)>
+                    @if (featuredIsExternal)
+                    {
+                        <span>Visit link</span>
+                        <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
+                    }
+                    else
+                    {
+                        <span>Read the lead story</span>
+                    }
+                </a>
+            </div>
+
+            @if (featuredHasImage)
+            {
+                <a class="feature-story__media" href="@featuredUrl" tabindex="-1" aria-hidden="true"@(featuredIsExternal ? Html.Raw(" rel=\"noopener noreferrer\" target=\"_blank\"") : null)>
+                    <img class="feature-story__image" src="@featuredPost.CroppedPostImageUrl" alt="" fetchpriority="high" width="960" height="540">
+                </a>
+            }
+        </section>
+    }
+
+    @if (remainingPosts.Any())
+    {
+        <section class="post-grid-wrap">
+            <div class="post-grid-wrap__header">
+                <p class="page-hero__eyebrow">Archive</p>
+                <h2 class="post-grid-wrap__title">Recent dispatches</h2>
+            </div>
+
+            <section class="post-grid" aria-label="Blog posts">
+                @foreach (var post in remainingPosts)
+                {
+                    @await Html.PartialAsync("PostCard", post)
+                }
+            </section>
+        </section>
+    }
+
+    @await Html.PartialAsync("Pager", Model.Pages)
+}

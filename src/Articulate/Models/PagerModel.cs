@@ -1,28 +1,34 @@
+#nullable enable
 namespace Articulate.Models
 {
-    public class PagerModel
+    public class PagerModel(
+        int pageSize,
+        int currentIndex,
+        int totalPages,
+        string? nextUrl = "",
+        string? previousUrl = "")
     {
-        public PagerModel(int pageSize, int currentIndex, int totalPages, string nextUrl = null, string previousUrl = null)
-        {
-            PageSize = pageSize;
-            CurrentPageIndex = currentIndex;
-            TotalPages = totalPages;
-            NextUrl = nextUrl;
-            PreviousUrl = previousUrl;
-        }
+        /// <summary>
+        /// Gets the number of items per page.
+        /// </summary>
+        public int PageSize { get; } = pageSize;
 
-        public int PageSize { get; }
+        /// <summary>
+        /// Gets the total number of pages.
+        /// </summary>
+        public int TotalPages { get; } = totalPages;
 
-        public int TotalPages { get; }
+        /// <summary>
+        /// Gets the current page index.
+        /// </summary>
+        public int CurrentPageIndex { get; } = currentIndex;
 
-        public int CurrentPageIndex { get; }
+        public string? NextUrl { get; } = nextUrl;
 
-        public string NextUrl { get; }
+        public string? PreviousUrl { get; } = previousUrl;
 
-        public string PreviousUrl { get; }
+        public bool HasNext => !string.IsNullOrEmpty(NextUrl);
 
-        public bool HasNext => NextUrl != null;
-
-        public bool HasPrevious => PreviousUrl != null;
+        public bool HasPrevious => !string.IsNullOrEmpty(PreviousUrl);
     }
 }

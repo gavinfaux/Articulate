@@ -1,0 +1,22 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <!--
+    Articulate XML Documentation Copy Target
+
+    Copies the Articulate.xml file to the consumer's output directory
+    so that Swagger can pick up the XML documentation for the Management API endpoints.
+  -->
+  <Target Name="CopyArticulateXmlDocumentation" AfterTargets="PrepareForRun">
+    <ItemGroup>
+      <_ArticulateDllItem Include="@(ReferenceCopyLocalPaths)"
+                             Condition="$([System.String]::new('%(Filename)').Equals('Articulate'))" />
+    </ItemGroup>
+    <PropertyGroup>
+      <_ArticulateSourceXmlPath>$([System.IO.Path]::ChangeExtension('%(_ArticulateDllItem.FullPath)', '.xml'))</_ArticulateSourceXmlPath>
+      <_ArticulateDestXmlPath>$(OutDir)Articulate.xml</_ArticulateDestXmlPath>
+    </PropertyGroup>
+    <Copy SourceFiles="$(_ArticulateSourceXmlPath)" DestinationFiles="$(_ArticulateDestXmlPath)"
+          SkipUnchangedFiles="true" Condition="Exists('$(_ArticulateSourceXmlPath)')" />
+  </Target>
+
+</Project>

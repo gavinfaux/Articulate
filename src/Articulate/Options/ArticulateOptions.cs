@@ -1,5 +1,4 @@
-﻿using System;
-using Umbraco.Extensions;
+#nullable enable
 
 namespace Articulate.Options
 {
@@ -8,18 +7,14 @@ namespace Articulate.Options
     /// </summary>
     public class ArticulateOptions
     {
-        /// <summary>
-        /// Constructor sets defaults
-        /// </summary>
-        public ArticulateOptions()
-        {
-            GenerateExcerpt = (val => val == null
+
+        public ArticulateOptions() =>
+            GenerateExcerpt = val => val.DetectIsJson()
                 ? string.Empty
-                : string.Join("", val.StripHtml()
+                : val.StripHtml()
                     .DecodeHtml()
                     .NewLinesToSpaces()
-                    .TruncateAtWord(200, "")));
-        }
+                    .TruncateAtWord(200, string.Empty);
 
         /// <summary>
         /// Default is true and will generate an excerpt if it is blank, will be a truncated version based on the post content
@@ -30,6 +25,34 @@ namespace Articulate.Options
         /// The default generator will truncate the post content with 200 chars
         /// </summary>
         public Func<string, string> GenerateExcerpt { get; set; }
-        
+
+
+        /// <summary>
+        /// When true, Articulate content created during the installer is published automatically.
+        /// Default: false.
+        /// </summary>
+        public bool AutoPublishOnStartup { get; set; } = false;
+
+        /// <summary>
+        /// Maximum number of bytes allowed for images entering Articulate import/editor flows.
+        /// Default: 10 MB.
+        /// </summary>
+        public long MaxImportImageBytes { get; set; } = 10 * 1024 * 1024;
+
+        /// <summary>
+        /// Explicit allowlist of external hosts that Articulate may fetch images from during BlogML import.
+        /// If empty, external image downloads are disabled.
+        /// </summary>
+        public string[] AllowedMediaHosts { get; set; } = [];
+
+        /// <summary>
+        /// When true, allows localhost/private-network external image downloads during non-production Umbraco runtime modes,
+        /// except for cloud metadata endpoints that are always blocked.
+        /// This setting is ignored when Umbraco:CMS:Runtime:Mode is Production.
+        /// Default: false.
+        /// </summary>
+        public bool AllowUnsafeLocalExternalImageHostsInDevelopment { get; set; } = false;
+
     }
+
 }

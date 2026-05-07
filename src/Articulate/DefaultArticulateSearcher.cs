@@ -1,88 +1,117 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
+#nullable enable
 using System.Text;
 using Examine;
 using Examine.Search;
-using Umbraco.Cms.Core;
+using Lucene.Net.QueryParsers.Classic;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.Web;
-using Umbraco.Extensions;
 
 namespace Articulate
 {
-    public class DefaultArticulateSearcher : IArticulateSearcher
+    /// <summary>
+    /// Default implementation of <see cref="IArticulateSearcher"/>.
+    /// </summary>
+    public class DefaultArticulateSearcher(
+        IUmbracoContextAccessor umbracoContextAccessor,
+        IExamineManager examineManager)
+        : IArticulateSearcher
     {
-        private readonly IUmbracoContextAccessor _umbracoContextAccessor;
-        private readonly IExamineManager _examineManager;
-
-        public DefaultArticulateSearcher(IUmbracoContextAccessor umbracoContextAccessor, IExamineManager examineManager)
+        /// <inheritdoc/>
+        public IEnumerable<IPublishedContent> Search(
+            string term,
+            string? indexName,
+            int blogArchiveNodeId,
+            int pageSize,
+            int pageIndex,
+            out long totalResults)
         {
-            _umbracoContextAccessor = umbracoContextAccessor;
-            _examineManager = examineManager;
-        }
+            if (string.IsNullOrWhiteSpace(term))
+            {
+                totalResults = 0;
+                return [];
+            }
 
-        public IEnumerable<IPublishedContent> Search(string term, string indexName, int blogArchiveNodeId, int pageSize, int pageIndex, out long totalResults)
-        {
-            var splitSearch = term.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            // DoS protection: limit query complexity
+            const int maxTermLength = 200;
+            const int maxTokenCount = 10;
 
-            //The fields to search on and their 'weight' (importance)
+            if (term.Length > maxTermLength)
+            {
+                term = term[..maxTermLength];
+            }
+
+            var splitSearch = term.Split([' '], StringSplitOptions.RemoveEmptyEntries);
+
+            if (splitSearch.Length > maxTokenCount)
+            {
+                splitSearch = splitSearch[..maxTokenCount];
+            }
+
+            var escapedTerm = QueryParserBase.Escape(term);
+
+            // The fields to search on and their 'weight' (importance)
             var fields = new Dictionary<string, int>
             {
-                {"markdown", 2},
-                {"richText", 2},
-                {"nodeName", 3},
-                {"tags", 1},
-                {"categories", 1},
-                {"umbracoUrlName", 3}
+                { "markdown", 2 },
+                { "richText", 2 },
+                { "nodeName", 3 },
+                { "tags", 1 },
+                { "categories", 1 },
+                { "umbracoUrlName", 3 },
             };
 
-            //The multipliers for match types
+            // The multipliers for match types
             const int exactMatch = 5;
             const int termMatch = 2;
 
             var fieldQuery = new StringBuilder();
-            //build field query
-            foreach (var field in fields)
+
+            // build field query
+            foreach (KeyValuePair<string, int> field in fields)
             {
-                //full exact match (which has a higher boost)
-                fieldQuery.Append($"{field.Key}:{"\"" + term + "\""}^{field.Value*exactMatch}");
-                fieldQuery.Append(" ");
-                //NOTE: Phrase match wildcard isn't really supported unless you use the Lucene
+                // full exact match (which has a higher boost)
+                _ = fieldQuery.Append($"{field.Key}:\"{escapedTerm}\"^{field.Value * exactMatch}");
+                _ = fieldQuery.Append(' ');
+
+                // NOTE: Phrase match wildcard isn't really supported unless you use the Lucene
                 // API like ComplexPhraseWildcardSomethingOrOther...
-                //split match
+                // split match
                 foreach (var s in splitSearch)
                 {
-                    //match on each term, no wildcard, higher boost
-                    fieldQuery.Append($"{field.Key}:{s}^{field.Value*termMatch}");
-                    fieldQuery.Append(" ");
+                    var escapedSplitTerm = QueryParserBase.Escape(s);
 
-                    //match on each term, with wildcard 
-                    fieldQuery.Append($"{field.Key}:{s}*");
-                    fieldQuery.Append(" ");
+                    // match on each term, no wildcard, higher boost
+                    _ = fieldQuery.Append($"{field.Key}:{escapedSplitTerm}^{field.Value * termMatch}");
+                    _ = fieldQuery.Append(' ');
+
+                    // match on each term, with wildcard
+                    _ = fieldQuery.Append($"{field.Key}:{escapedSplitTerm}*");
+                    _ = fieldQuery.Append(' ');
                 }
             }
 
-            indexName = indexName.IsNullOrWhiteSpace() ? Constants.UmbracoIndexes.ExternalIndexName : indexName;
+            indexName = string.IsNullOrWhiteSpace(indexName)
+                ? Umbraco.Cms.Core.Constants.UmbracoIndexes.ExternalIndexName
+                : indexName;
 
-            if (!_examineManager.TryGetIndex(indexName, out IIndex index))
+            if (!examineManager.TryGetIndex(indexName, out IIndex? index) || index is null)
             {
-                throw new InvalidOperationException("No index found by name " + indexName);
+                // Unknown index - return empty results rather than 500
+                totalResults = 0;
+                return [];
             }
 
-            var searcher = index.Searcher;
+            ISearcher searcher = index.Searcher;
 
-            var criteria = searcher.CreateQuery()
+            IBooleanOperation criteria = searcher.CreateQuery()
                 .Field("parentID", blogArchiveNodeId)
                 .And()
                 .NativeQuery($" +({fieldQuery})");
 
-            var searchResult = criteria.Execute(QueryOptions.SkipTake(pageIndex * pageSize, pageSize));
+            ISearchResults searchResult = criteria.Execute(QueryOptions.SkipTake(pageIndex * pageSize, pageSize));
 
-            var result = searchResult
-                .Skip(pageIndex * pageSize)
-                .ToPublishedSearchResults(_umbracoContextAccessor.GetRequiredUmbracoContext().PublishedSnapshot.Content);
-
+            IEnumerable<PublishedSearchResult> result = searchResult
+                .ToPublishedSearchResults(umbracoContextAccessor.GetRequiredUmbracoContext().Content);
             totalResults = searchResult.TotalItemCount;
 
             return result.Select(x => x.Content);

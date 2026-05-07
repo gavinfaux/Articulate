@@ -1,7 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using Umbraco.Cms.Core.Media;
+#nullable enable
 using Umbraco.Cms.Core.Models.PublishedContent;
 
 namespace Articulate.Models
@@ -12,90 +9,66 @@ namespace Articulate.Models
     public class ListModel : MasterModel
     {
         private readonly IEnumerable<IPublishedContent> _listItems;
-        private IEnumerable<PostModel> _resolvedList;
+        private readonly Lazy<PostModel[]> _posts;
 
         /// <summary>
-        /// Constructor accepting an explicit list of child items
+        /// Accepts an explicit list of child items
         /// </summary>
         /// <param name="content"></param>
         /// <param name="listItems"></param>
         /// <param name="pager"></param>
+        /// <param name="publishedValueFallback"></param>
         /// <remarks>
         /// Default sorting by published date will be disabled for this list model, it is assumed that the list items will
         /// already be sorted.
         /// </remarks>
         public ListModel(
-            IPublishedContent content,
-            PagerModel pager,
-            IEnumerable<IPublishedContent> listItems,
-            IPublishedValueFallback publishedValueFallback,
-            IVariationContextAccessor variationContextAccessor)
-            : base(content, publishedValueFallback, variationContextAccessor)
+            IPublishedContent? content,
+            PagerModel? pager,
+            IEnumerable<IPublishedContent>? listItems,
+            IPublishedValueFallback publishedValueFallback)
+            : base(content, publishedValueFallback)
         {
-            
-            if (content == null) throw new ArgumentNullException(nameof(content));
-            if (listItems == null) throw new ArgumentNullException(nameof(listItems));
-            if (pager == null) throw new ArgumentNullException(nameof(pager));
+            ArgumentNullException.ThrowIfNull(content);
 
-            Pages = pager;
-            _listItems = listItems;
-            if (content.ContentType.Alias.Equals(ArticulateConstants.ArticulateArchiveContentTypeAlias))
-                PageTitle = BlogTitle + " - " + BlogDescription;
-            else
-                PageTags = Name;
-        }        
+            Pages = pager ?? throw new ArgumentNullException(nameof(pager));
+            _listItems = listItems ?? throw new ArgumentNullException(nameof(listItems));
 
-        public ListModel(IPublishedContent content, IPublishedValueFallback publishedValueFallback, IVariationContextAccessor variationContextAccessor)
-            : base(content, publishedValueFallback, variationContextAccessor)
-        {
-        }
-
-        public IImageUrlGenerator ImageUrlGenerator { get; }
-
-        /// <summary>
-        /// The pager model
-        /// </summary>
-        public PagerModel Pages { get; }
-
-        /// <summary>
-        /// Strongly typed access to the list of blog posts
-        /// </summary>
-        public IEnumerable<PostModel> Posts
-        {
-            get
+            var contentName = content.Name;
+            if (content.ContentType.Alias.Equals(ArticulateConstants.ContentType.ArticulateArchive))
             {
-
-                if (_resolvedList != null)
-                    return _resolvedList;
-
-                if (_listItems == null)
-                {
-                    _resolvedList = base.ChildrenForAllCultures.Select(x => new PostModel(x, PublishedValueFallback, VariationContextAccessor)).ToArray();
-                    return _resolvedList;
-                }
-
-                if (_listItems != null && Pages != null)
-                {
-                    _resolvedList = _listItems
-                    //Skip will already be done in this case, but we'll take again anyways just to be safe                    
-                        .Take(Pages.PageSize)
-                        .Select(x => new PostModel(x, PublishedValueFallback, VariationContextAccessor))
-                        .ToArray();
-                }
-                else
-                {
-                    _resolvedList = Enumerable.Empty<PostModel>();
-                }
-
-                return _resolvedList;
+                PageTitle = BlogTitle + " - " + BlogDescription;
             }
+            else
+            {
+                PageTags = contentName;
+            }
+
+            _posts = new Lazy<PostModel[]>(BuildPosts, LazyThreadSafetyMode.ExecutionAndPublication);
         }
 
         /// <summary>
-        /// The list of blog posts
+        /// Gets the pager model
         /// </summary>
-        public override IEnumerable<IPublishedContent> Children => Posts;
+        public PagerModel? Pages { get; }
 
-        public override IEnumerable<IPublishedContent> ChildrenForAllCultures => Posts;
+        /// <summary>
+        /// Gets a strongly typed access to the list of blog posts
+        /// </summary>
+        public IEnumerable<PostModel> Posts => _posts.Value;
+
+        private PostModel[] BuildPosts()
+        {
+            IEnumerable<IPublishedContent> items = _listItems;
+            if (Pages is not null)
+            {
+                // Apply page size limit to the pre-filtered list items
+                items = items.Take(Pages.PageSize);
+            }
+
+            return items
+                .Select(x => new PostModel(x, PublishedValueFallback))
+                .ToArray();
+        }
     }
 }

@@ -1,0 +1,11 @@
+@model IMasterModel
+
+@if (Model.HasSearchRoute())
+{
+    <div class="articulate-search">
+        <form method="get" action="@Model.ArticulateSearchUrl()">
+            <input type="text" name="term" placeholder="Search..." required />
+            <button type="submit">Search</button>
+        </form>
+    </div>
+}

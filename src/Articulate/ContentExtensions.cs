@@ -1,117 +1,143 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using Umbraco.Cms.Core.IO;
+using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.PropertyEditors;
 using Umbraco.Cms.Core.Serialization;
 using Umbraco.Cms.Core.Services;
-using Umbraco.Cms.Core.Strings;
-using Umbraco.Extensions;
 
+#nullable enable
 namespace Articulate
 {
-    public static class ContentExtensions
+    internal static class ContentExtensions
     {
-        public static IContent CreateWithInvariantOrDefaultCultureName(
+        internal static async Task<IContent> CreateWithInvariantOrDefaultCultureNameAsync(
             this IContentService contentService,
             string name,
             IContent parent,
             IContentTypeComposition contentType,
-            ILocalizationService localizationService,
+            ILanguageService languageService,
+            ILogger? logger = null,
             int userId = -1)
         {
-            var content = contentService.Create(name, parent, contentType.Alias, userId);
-            content.SetInvariantOrDefaultCultureName(name, contentType, localizationService);
+            IContent content = contentService.Create(name, parent, contentType.Alias, userId);
+            await content.SetInvariantOrDefaultCultureNameAsync(name, contentType, languageService, logger);
             return content;
         }
 
-        public static IContent CreateWithInvariantOrDefaultCultureName(
+        internal static async Task<IContent> CreateWithInvariantOrDefaultCultureNameAsync(
             this IContentService contentService,
             string name,
             int parent,
             IContentTypeComposition contentType,
-            ILocalizationService localizationService,
+            ILanguageService languageService,
+            ILogger? logger = null,
             int userId = -1)
         {
-            var content = contentService.Create(name, parent, contentType.Alias, userId);
-            content.SetInvariantOrDefaultCultureName(name, contentType, localizationService);
+            IContent content = contentService.Create(name, parent, contentType.Alias, userId);
+            await content.SetInvariantOrDefaultCultureNameAsync(name, contentType, languageService, logger);
             return content;
         }
 
-        public static void SetInvariantOrDefaultCultureName(
+        internal static async Task SetInvariantOrDefaultCultureNameAsync(
             this IContentBase content,
             string name,
             IContentTypeComposition contentType,
-            ILocalizationService localizationService)
+            ILanguageService languageService,
+            ILogger? logger = null)
         {
-            if (contentType is null)
-                throw new ArgumentNullException(nameof(contentType));
+            ArgumentNullException.ThrowIfNull(contentType);
 
-            var variesByCulure = contentType.VariesByCulture();
+            var variesByCulture = contentType.VariesByCulture();
 
-            if (variesByCulure)
+            if (variesByCulture)
             {
-                content.SetCultureName(name, localizationService.GetDefaultLanguageIsoCode());
+                string? culture = null;
+                try
+                {
+                    culture = await languageService.GetDefaultIsoCodeAsync();
+                }
+                catch (Exception ex)
+                {
+                    logger?.LogWarning(
+                        ex,
+                        "Failed to get default culture for {ContentName}, falling back to invariant.",
+                        name);
+                }
+
+                content.SetCultureName(name, culture);
+                return;
             }
-            else
-            {
-                content.Name = name;
-            }
+
+            content.Name = name;
         }
 
         /// <summary>
-        /// Sets the value for a property type with the correct variance
+        /// Sets property values for all cultures or invariant, depending on content type variance.
         /// </summary>
         /// <remarks>
-        /// Used to safely set a value for a property taking into account if the property type varies by culture/segment.
-        /// If varying by culture it will assign the value to the default language only.
-        /// If varying by segment it will assign the value to no segment.
+        /// Only sets values for cultures already defined on the content item.
         /// </remarks>
-        public static void SetInvariantOrDefaultCultureValue(
+        internal static async Task SetInvariantOrDefaultCultureValueAsync(
             this IContentBase content,
             string propertyTypeAlias,
-            object value,
+            object? value,
             IContentTypeComposition contentType,
-            ILocalizationService localizationService)
+            ILanguageService languageService,
+            ILogger? logger = null)
         {
-            if (contentType is null)
-            {
-                throw new ArgumentNullException(nameof(contentType));
-            }
+            ArgumentNullException.ThrowIfNull(contentType);
 
             var variesByCulture = VariesByCulture(propertyTypeAlias, contentType);
 
-            content.SetValue(
-                propertyTypeAlias,
-                value,
-                variesByCulture ? localizationService.GetDefaultLanguageIsoCode() : null);
+            string? culture = null;
+            if (variesByCulture)
+            {
+                try
+                {
+                    culture = await languageService.GetDefaultIsoCodeAsync();
+                }
+                catch (Exception ex)
+                {
+                    logger?.LogWarning(
+                        ex,
+                        "Failed to get default culture for property {PropertyAlias}, falling back to invariant.",
+                        propertyTypeAlias);
+                }
+            }
+
+            content.SetValue(propertyTypeAlias, value, culture);
         }
 
-        /// <summary>
-        /// Sets the tags for a property type with the correct variance
-        /// </summary>
-        /// <remarks>
-        /// Used to safely set a value for a property taking into account if the property type varies by culture/segment.
-        /// If varying by culture it will assign the value to the default language only.
-        /// If varying by segment it will assign the value to no segment.
-        /// </remarks>
-        public static void AssignInvariantOrDefaultCultureTags(
+        internal static async Task AssignInvariantOrDefaultCultureTagsAsync(
             this IContentBase content,
             string propertyTypeAlias,
             IEnumerable<string> tags,
             IContentTypeComposition contentType,
-            ILocalizationService localizationService,
+            ILanguageService languageService,
             IDataTypeService dataTypeService,
             PropertyEditorCollection dataEditors,
             IJsonSerializer jsonSerializer,
+            ILogger? logger = null,
             bool merge = false)
         {
-            if (contentType is null)
-                throw new ArgumentNullException(nameof(contentType));
+            ArgumentNullException.ThrowIfNull(contentType);
 
             var variesByCulture = VariesByCulture(propertyTypeAlias, contentType);
+
+            string? culture = null;
+            if (variesByCulture)
+            {
+                try
+                {
+                    culture = await languageService.GetDefaultIsoCodeAsync();
+                }
+                catch (Exception ex)
+                {
+                    logger?.LogWarning(
+                        ex,
+                        "Failed to get default culture for tags property {PropertyAlias}, falling back to invariant.",
+                        propertyTypeAlias);
+                }
+            }
 
             content.AssignTags(
                 dataEditors,
@@ -120,62 +146,73 @@ namespace Articulate
                 propertyTypeAlias,
                 tags,
                 merge,
-                variesByCulture ? localizationService.GetDefaultLanguageIsoCode() : null);
+                culture);
         }
 
-        /// <summary>
-        /// Sets all invariant or variant property values safely while taking into account the variance settings on the content type/property type
-        /// </summary>
-        /// <param name="content">The content to set the values for</param>
-        /// <param name="propertyAlias">The property alias to set the values for</param>
-        /// <param name="propertyValueGetter">Callback to get the value to be set for the given culture</param>
-        /// <remarks>
-        /// This will only set property values for cultures that have been defined on the <see cref="IContentBase"/>, it will
-        /// not set property values for cultures that don't yet exist on the content item.
-        /// </remarks>
-        public static void SetAllPropertyCultureValues(
+        internal static void SetAllPropertyCultureValues(
             this IContentBase content,
             string propertyAlias,
             IContentTypeComposition contentType,
-            Func<IContentBase, IContentTypeComposition, ContentCultureInfos, object> propertyValueGetter)
+            Func<IContentBase, IContentTypeComposition, ContentCultureInfos?, object?> propertyValueGetter)
         {
-            if (contentType is null)
-                throw new ArgumentNullException(nameof(contentType));
+            ArgumentNullException.ThrowIfNull(contentType);
 
-            if (content.ContentType.VariesByCulture())
+            if (content.ContentType.VariesByCulture() && content.CultureInfos is not null)
             {
-                // iterate over any existing cultures defined on the content item
-                foreach (var c in content.CultureInfos)
-                {
-                    var propertyType = contentType.CompositionPropertyTypes.FirstOrDefault(x => x.Alias == propertyAlias);
-                    if (propertyType == null)
-                        throw new InvalidOperationException($"No property type found by alias {propertyAlias}");
-
-                    var valueToSet = propertyValueGetter(content, contentType, c);
-                    if (valueToSet == null || (valueToSet is string propValAsString && string.IsNullOrWhiteSpace(propValAsString)))
-                        continue;
-
-                    content.SetValue(propertyAlias, valueToSet, propertyType.VariesByCulture() ? c.Culture : null);
-                }
+                SetCultureVariantPropertyValues(content, propertyAlias, contentType, propertyValueGetter);
             }
             else
             {
-                var propertyValue = propertyValueGetter(content, contentType, null);
-                if (propertyValue == null || (propertyValue is string propValAsString && string.IsNullOrWhiteSpace(propValAsString)))
-                    return;
-
-                content.SetValue(propertyAlias, propertyValue);
+                SetInvariantPropertyValue(content, propertyAlias, contentType, propertyValueGetter);
             }
-            
+        }
+
+        private static void SetCultureVariantPropertyValues(
+            IContentBase content,
+            string propertyAlias,
+            IContentTypeComposition contentType,
+            Func<IContentBase, IContentTypeComposition, ContentCultureInfos?, object?> propertyValueGetter)
+        {
+            IPropertyType propertyType =
+                contentType.CompositionPropertyTypes.FirstOrDefault(x => x.Alias == propertyAlias)
+                ?? throw new InvalidOperationException($"No property type found by alias {propertyAlias}");
+            foreach (ContentCultureInfos c in content.CultureInfos!)
+            {
+                var valueToSet = propertyValueGetter(content, contentType, c);
+                if (IsNullOrEmptyValue(valueToSet))
+                {
+                    continue;
+                }
+
+                content.SetValue(propertyAlias, valueToSet, propertyType.VariesByCulture() ? c.Culture : null);
+            }
+        }
+
+        private static void SetInvariantPropertyValue(
+            IContentBase content,
+            string propertyAlias,
+            IContentTypeComposition contentType,
+            Func<IContentBase, IContentTypeComposition, ContentCultureInfos?, object?> propertyValueGetter)
+        {
+            var propertyValue = propertyValueGetter(content, contentType, null);
+            if (IsNullOrEmptyValue(propertyValue))
+            {
+                return;
+            }
+
+            content.SetValue(propertyAlias, propertyValue);
+        }
+
+        private static bool IsNullOrEmptyValue(object? value)
+        {
+            return value is null || (value is string propValAsString && string.IsNullOrWhiteSpace(propValAsString));
         }
 
         private static bool VariesByCulture(string propertyTypeAlias, IContentTypeComposition contentType)
         {
             // will throw if the property type is not found
-            var variesByCulture = contentType.VariesByCulture()
-                // only look up the property type if the content type varies else there's no point
-                ? contentType.CompositionPropertyTypes.First(x => x.Alias.InvariantEquals(propertyTypeAlias)).VariesByCulture()
-                : false;
+            var variesByCulture = contentType.VariesByCulture() && contentType.CompositionPropertyTypes
+                .First(x => x.Alias.InvariantEquals(propertyTypeAlias)).VariesByCulture();
 
             return variesByCulture;
         }

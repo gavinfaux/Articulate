@@ -1,0 +1,42 @@
+@model PostModel
+@{
+    var heroImage = Model.PostImage?.GetCropUrl(cropAlias: "blogPost", preferFocalPoint: true, useCropDimensions: true);
+    var isExternal = !Model.ExternalUrl.IsNullOrWhiteSpace();
+    var postUrl = isExternal ? Model.ExternalUrl : Model.Url();
+}
+<article class="post-card">
+    @if (!heroImage.IsNullOrWhiteSpace())
+    {
+        <a class="post-card__image-link" href="@postUrl" tabindex="-1" aria-hidden="true"@(isExternal ? Html.Raw(" rel=\"noopener noreferrer\" target=\"_blank\"") : null)>
+            <img class="post-card__image" src="@heroImage" alt="" width="640" height="360" loading="lazy">
+        </a>
+    }
+    <div class="post-card__content">
+        <div class="post-card__meta">
+            <time datetime="@Model.PublishedDate.ToString("yyyy-MM-dd")">@Model.PublishedDate.ToString("dd MMM yyyy")</time>
+            @if (!Model.Author.Name.IsNullOrWhiteSpace())
+            {
+                <span>@Model.Author.Name</span>
+            }
+        </div>
+        <h2 class="post-card__title">
+            <a href="@postUrl"@(isExternal ? Html.Raw(" rel=\"noopener noreferrer\" target=\"_blank\"") : null)>@Model.Name</a>
+        </h2>
+        @if (!Model.Excerpt.IsNullOrWhiteSpace())
+        {
+            <p class="post-card__excerpt">@Model.Excerpt</p>
+        }
+        <a class="post-card__link" href="@postUrl" tabindex="-1" aria-hidden="true"@(isExternal ? Html.Raw(" rel=\"noopener noreferrer\" target=\"_blank\"") : null)>
+            @if (isExternal)
+            {
+                <span>Visit link</span>
+                <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
+            }
+            else
+            {
+                <span>Open story</span>
+                <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+            }
+        </a>
+    </div>
+</article>

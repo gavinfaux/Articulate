@@ -1,7 +1,5 @@
-using System;
-using System.Linq;
+using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Models.PublishedContent;
-using Umbraco.Extensions;
 
 namespace Articulate.Models
 {
@@ -10,143 +8,193 @@ namespace Articulate.Models
     /// </summary>
     public class MasterModel : PublishedContentWrapped, IMasterModel
     {
-        public MasterModel(IPublishedContent content, IPublishedValueFallback publishedValueFallback, IVariationContextAccessor variationContextAccessor)
-            : base(content, publishedValueFallback)
-        {
-            PublishedValueFallback = publishedValueFallback;
-            VariationContextAccessor = variationContextAccessor;
-        }
-        
+        private int? _pageSize;
+
+        /// <summary>
+        /// The basic model for all articulate objects
+        /// </summary>
+        public MasterModel(IPublishedContent content, IPublishedValueFallback publishedValueFallback) : base(
+            content,
+            publishedValueFallback) => PublishedValueFallback = publishedValueFallback;
+
         /// <summary>
         /// Returns the current theme
         /// </summary>
         public string Theme
         {
-            get => _theme ??= base.Unwrap().Value<string>("theme", fallback: Fallback.ToAncestors);
-            protected set => _theme = value;
+            get => field ??= Unwrap().Value<string>("theme", fallback: Fallback.ToAncestors);
+            protected set;
         }
 
+        /// <inheritdoc/>
         public IPublishedContent RootBlogNode
         {
             get
             {
-                var root = base.Unwrap().AncestorOrSelf("Articulate");
-                _rootBlogNode = root ?? throw new InvalidOperationException("Could not find the Articulate root document for the current rendered page");
-                return _rootBlogNode;
+                if (field is not null)
+                {
+                    return field;
+                }
+
+                IPublishedContent root = Unwrap().AncestorOrSelf(ArticulateConstants.ContentType.Articulate);
+                field = root ??
+                        throw new InvalidOperationException(
+                            "Could not find the Articulate root document for the current rendered page");
+                return field;
             }
-            protected set => _rootBlogNode = value;
+            protected set;
         }
-
-        private IPublishedContent _rootBlogNode;
-        private string _theme;
-        private IPublishedContent _blogListNode;
-        private IPublishedContent _blogAuthorsNode;
-        private int? _pageSize;
-        private string _blogTitle;
-        private string _blogDescription;
-        private string _blogBanner;
-        private string _blogLogo;
-        private string _disqusShortName;
-        private string _customRssFeed;
-
-        private string _pageTitle;
-        private string _pageDescription;
 
         /// <summary>
         /// This will return the first archive node found under the blog root
         /// </summary>
-        /// <remarks>
-        /// We can support multiple archive nodes - TODO: Should we change this method to return an array of archive nodes?
-        /// </remarks>
         public IPublishedContent BlogArchiveNode
         {
             get
             {
-                var list = RootBlogNode.ChildrenOfType(ArticulateConstants.ArticulateArchiveContentTypeAlias).FirstOrDefault();
-                _blogListNode = list ?? throw new InvalidOperationException("Could not find the ArticulateArchive document for the current rendered page");
-                return _blogListNode;
+                if (field is not null)
+                {
+                    return field;
+                }
+
+                IEnumerable<IPublishedContent> archiveNodes =
+                    RootBlogNode.Children().Where(x => x.ContentType.Alias == ArticulateConstants.ContentType.ArticulateArchive);
+                IPublishedContent list = archiveNodes.FirstOrDefault();
+                field = list ??
+                        throw new InvalidOperationException(
+                            "Could not find the ArticulateArchive document for the current rendered page");
+                return field;
             }
-            protected set => _blogListNode = value;
+            protected set;
         }
 
         /// <summary>
-        /// This will return the first archive node found under the blog root
+        /// This will return the first authors node found under the blog root
         /// </summary>
+        // Not used internally or by default themes, but exposed for custom themes
         public IPublishedContent BlogAuthorsNode
         {
             get
             {
-                var authors = RootBlogNode.ChildrenOfType(ArticulateConstants.ArticulateAuthorsContentTypeAlias).FirstOrDefault();
-                _blogAuthorsNode = authors ?? throw new InvalidOperationException("Could not find the ArticulateAuthors document for the current rendered page");
-                return _blogAuthorsNode;
+                if (field is not null)
+                {
+                    return field;
+                }
+
+                IEnumerable<IPublishedContent> authorNodes = RootBlogNode
+                    .Children().Where(x=> x.ContentType.Alias == ArticulateConstants.ContentType.ArticulateAuthors);
+                IPublishedContent authors = authorNodes.FirstOrDefault();
+                field = authors ??
+                        throw new InvalidOperationException(
+                            "Could not find the ArticulateAuthors document for the current rendered page");
+                return field;
             }
-            protected set => _blogListNode = value;
+            protected set;
         }
 
+        /// <inheritdoc/>
         public string DisqusShortName
         {
-            get => _disqusShortName ?? (_disqusShortName = base.Unwrap().Value<string>("disqusShortname", fallback: Fallback.ToAncestors));
-            protected set => _disqusShortName = value;
+            get => field ??= Unwrap().Value<string>("disqusShortname", fallback: Fallback.ToAncestors);
+            protected set;
         }
 
+        /// <summary>
+        /// Gets whether Disqus comments are enabled and configured with a valid shortname.
+        /// Validates that the DisqusShortName is not empty and contains only valid characters (alphanumeric and hyphens).
+        /// </summary>
+        public bool IsDisqusEnabled => !string.IsNullOrWhiteSpace(DisqusShortName)
+                                       && System.Text.RegularExpressions.Regex.IsMatch(
+                                           DisqusShortName,
+                                           @"^[a-zA-Z0-9\-]+$");
+
+        /// <inheritdoc/>
         public string CustomRssFeed
         {
-            get => _customRssFeed ?? (_customRssFeed = RootBlogNode.Value<string>("customRssFeedUrl"));
-            protected set => _customRssFeed = value;
-        }        
+            get => field ??= RootBlogNode.Value<string>("customRssFeedUrl");
+            protected set;
+        }
 
+        /// <inheritdoc/>
         public string BlogLogo
         {
-            get => _blogLogo ?? (_blogLogo = RootBlogNode.GetArticulateCropUrl("blogLogo", VariationContextAccessor?.VariationContext));
-            protected set => _blogLogo = value;
+            get => field ??= RootBlogNode.Value<MediaWithCrops>("blogLogo")?.GetCropUrl(cropAlias: "square", preferFocalPoint: true, useCropDimensions: true) ?? string.Empty;
+            protected set;
         }
 
+        /// <summary>
+        /// Gets the blog logo URL with CSS escaping for safe use in inline style attributes.
+        /// Use this for style="background: url(...)" contexts instead of BlogLogo.
+        /// </summary>
+        public string BlogLogoCss
+        {
+            get => field ??= BlogLogo.ToSafeCssUrl();
+            protected set;
+        }
+
+        /// <inheritdoc/>
         public string BlogBanner
         {
-            get => _blogBanner ?? (_blogBanner = RootBlogNode.GetArticulateCropUrl("blogBanner", VariationContextAccessor?.VariationContext));
-            protected set => _blogBanner = value;
+            get => field ??= RootBlogNode.Value<MediaWithCrops>("blogBanner")?.GetCropUrl(cropAlias: "wide", preferFocalPoint: true, useCropDimensions: true) ?? string.Empty;
+            protected set;
         }
 
+        /// <summary>
+        /// Gets the blog banner URL with CSS escaping for safe use in inline style attributes.
+        /// Use this for style="background-image: url(...)" contexts instead of BlogBanner.
+        /// </summary>
+        public string BlogBannerCss
+        {
+            get => field ??= BlogBanner.ToSafeCssUrl();
+            protected set;
+        }
+
+        /// <inheritdoc/>
         public string BlogTitle
         {
-            get => _blogTitle ?? (_blogTitle = base.Unwrap().Value<string>("blogTitle", fallback: Fallback.ToAncestors));
-            protected set => _blogTitle = value;
+            get => field ??= Unwrap().Value<string>("blogTitle", fallback: Fallback.ToAncestors);
+            protected set;
         }
 
+        /// <inheritdoc/>
         public string BlogDescription
         {
-            get => _blogDescription ?? (_blogDescription = base.Unwrap().Value<string>("blogDescription", fallback: Fallback.ToAncestors));
-            protected set => _blogDescription = value;
+            get => field ??= Unwrap().Value<string>("blogDescription", fallback: Fallback.ToAncestors);
+            protected set;
         }
 
+        /// <inheritdoc/>
         public int PageSize
         {
             get
             {
-                if (_pageSize.HasValue == false)
-                {
-                    _pageSize = base.Unwrap().Value<int>("pageSize", fallback: Fallback.To(Fallback.Ancestors, Fallback.DefaultValue), defaultValue: 10);
-                }
+                _pageSize ??= Unwrap().Value(
+                    "pageSize",
+                    fallback: Fallback.To(Fallback.Ancestors, Fallback.DefaultValue),
+                    defaultValue: 10);
 
                 return _pageSize.Value;
             }
             protected set => _pageSize = value;
         }
 
+        /// <inheritdoc/>
         public string PageTitle
         {
-            get => _pageTitle ?? (_pageTitle = Name + " - " + BlogTitle);
-            protected set => _pageTitle = value;
+            get => field ??= Name + " - " + BlogTitle;
+            protected set;
         }
 
+        /// <inheritdoc/>
         public string PageDescription
         {
-            get => _pageDescription ?? (_pageDescription = BlogDescription);
-            protected set => _pageDescription = value;
+            get => field ??= BlogDescription;
+            protected set;
         }
 
+        /// <inheritdoc/>
         public string PageTags { get; protected set; }
-        public IPublishedValueFallback PublishedValueFallback { get; }
-        public IVariationContextAccessor VariationContextAccessor { get; }
+
+        protected IPublishedValueFallback PublishedValueFallback { get; }
     }
 }

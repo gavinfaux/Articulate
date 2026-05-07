@@ -1,0 +1,99 @@
+@model ListModel
+@{
+    Layout = "Master.cshtml";
+    ViewBag.CssWrapperClass = Model.ContentType.Alias == ArticulateConstants.ContentType.ArticulateArchive ? null : "demo-blog--blogpost";
+}
+
+@{
+    var posts = Model.Posts.ToList();
+    var hasResults = posts.Any();
+    var term = Context.GetSearchTerm();
+    var isSearchPage = Model.IsSearchRoute(Context);
+}
+
+@if (isSearchPage)
+{
+    <div class="search-sticky-header">
+        <a class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon search-sticky-header__back" href="@Model.RootBlogNode.Url()" title="go back" role="button">
+            <i class="material-icons" role="presentation">arrow_back</i>
+        </a>
+        @await Html.PartialAsync("SearchBox", Model)
+    </div>
+}
+else
+{
+    <div class="demo-back">
+        <a class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--icon" href="@Model.RootBlogNode.Url()" title="go back" role="button">
+            <i class="material-icons" role="presentation">arrow_back</i>
+        </a>
+    </div>
+}
+
+<div class="demo-blog__posts mdl-grid">
+    @if (isSearchPage && !hasResults)
+    {
+        <div class="mdl-cell mdl-cell--12-col">
+            <div class="search-empty-state">
+                <i class="material-icons search-empty-state__icon" aria-hidden="true">@(term.IsNullOrWhiteSpace() ? "search" : "sentiment_dissatisfied")</i>
+                @if (term.IsNullOrWhiteSpace())
+                {
+                    <h3 class="search-empty-state__heading">Search the blog</h3>
+                    <p class="search-empty-state__text">Enter a term above to find blog posts.</p>
+                }
+                else
+                {
+                    <h3 class="search-empty-state__heading">No results for &ldquo;@term&rdquo;</h3>
+                    <p class="search-empty-state__text">Try a different search term or browse the blog.</p>
+                }
+            </div>
+        </div>
+    }
+    else
+    {
+        var doneFirst = false;
+        foreach (var post in posts)
+        {
+            if (!doneFirst && Model.ContentType.Alias == ArticulateConstants.ContentType.ArticulateArchive)
+            {
+                doneFirst = true;
+
+                <div class="mdl-card mdl-cell mdl-cell--8-col">
+                    @{
+                        await PostInfoAsync(post, false);
+                    }
+                </div>
+                @await Html.PartialAsync("TitleTile", Model)
+            }
+            else
+            {
+                <div class="mdl-card mdl-cell mdl-cell--12-col">
+                    @{
+                        await PostInfoAsync(post);
+                    }
+                </div>
+            }
+        }
+    }
+
+    @await Html.PartialAsync("Pager", Model.Pages)
+</div>
+
+@functions {
+
+    private async Task PostInfoAsync(PostModel post, bool withExcerpt = true)
+    {
+        @(await Html.PartialAsync("PostImageHeader", post))
+
+        if (withExcerpt)
+        {
+            <div class="mdl-card__supporting-text mdl-color-text--grey-600">
+                @(post.Excerpt)&hellip;
+            </div>
+        }
+
+
+        <div class="mdl-card__supporting-text meta mdl-color-text--grey-600">
+            @await Html.PartialAsync("AuthorInfo", post)
+        </div>
+    }
+}

@@ -1,0 +1,122 @@
+@model PostModel
+@{
+    Layout = "Master.cshtml";
+    ViewBag.CssBodyClass = "post-template";
+    var absUrl = Model.Url(mode: UrlMode.Absolute);
+}
+
+@section header
+{
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.30.0/themes/prism.min.css" integrity="sha256-ko4j5rn874LF8dHwW29/xabhh8YBleWfvxb8nQce4Fc=" crossorigin="anonymous" media="all">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.38/dist/katex.min.css" integrity="sha256-RY5cj+WCt7sIKd7ocDoL1HSUDQ7IMt+1RVhHRVS2MJg=" crossorigin="anonymous" media="all">
+}
+
+<article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+    <header>
+        <h1 class="post-title" itemprop="headline">@Model.Name</h1>
+        <div class="post-meta" aria-label="Post details">
+            <time datetime="@Model.PublishedDate.ToString("yyyy-MM-dd")" itemprop="datePublished">
+                @Model.PublishedDate.ToString("dddd, MMMM dd, yyyy")
+            </time>
+        </div>
+        @await Html.PartialAsync("PostTags", Model)
+    </header>
+
+    <section class="post-content">
+
+        @if (!Model.CroppedPostImageUrl.IsNullOrWhiteSpace())
+        {
+            <img class="postImage" alt="@Model.Name" src="@Model.CroppedPostImageUrl" fetchpriority="high" width="625" height="320" />
+        }
+
+        <div class="post-body">
+            @Model.Body
+        </div>
+
+    </section>
+
+    <section class="share">
+        <p class="info prompt">Share this post</p>
+        <div class="share-icons">
+            <button type="button" class="share-icon" data-share-button data-title="@Model.Name" data-url="@absUrl" aria-label="Share this post">
+                <i class="fa-solid fa-share-nodes" aria-hidden="true"></i>
+                <span class="sr-only">Share this post</span>
+            </button>
+            <a href="https://x.com/share?text=@Uri.EscapeDataString(Model.Name)&url=@Uri.EscapeDataString(absUrl)"
+               onclick="window.open(this.href, 'x-share', 'width=550,height=235');return false;"
+               aria-label="Share on X (opens in new window)"
+               rel="noopener noreferrer" title="Share on X (opens in new window)">
+                <i class="fa-brands fa-x-twitter" aria-hidden="true"></i>
+                <span class="sr-only">Share on X (opens in new window)</span>
+            </a>
+            <a href="https://www.facebook.com/sharer/sharer.php?u=@Uri.EscapeDataString(absUrl)"
+               onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;"
+               aria-label="Share on Facebook (opens in new window)"
+               rel="noopener noreferrer" title="Share on Facebook (opens in new window)">
+                <i class="fa-brands fa-facebook-f" aria-hidden="true"></i>
+                <span class="sr-only">Share on Facebook (opens in new window)</span>
+            </a>
+        </div>
+    </section>
+
+    <footer class="post-footer">
+
+        @if (!Model.Author.Name.IsNullOrWhiteSpace())
+        {
+            <section class="author">
+                @{
+                    var thumbnail = Model.Author.Image?.GetCropUrl(cropAlias: "blogPost", preferFocalPoint: true, useCropDimensions: true)?.ToSafeCssUrl();
+                }
+                @if (thumbnail is not null)
+                {
+                    <div class="authorimage" style="background: url('@thumbnail')"></div>
+                }
+                <p class="attr">Author</p>
+                <h4>
+                    @if (Model.Author.BlogUrl is not null)
+                    {
+                        <a href="@Model.Author.BlogUrl" title="View Author Blog" rel="nofollow noopener noreferrer">@Model.Author.Name</a>
+                    }
+                    else
+                    {
+                        @Model.Author.Name
+                    }
+                </h4>
+                @if (!Model.Author.Bio.IsNullOrWhiteSpace())
+                {
+                    <p class="bio">@Model.Author.Bio</p>
+                }
+            </section>
+        }
+
+    </footer>
+
+    @if (Model.EnableComments && Model.IsDisqusEnabled)
+    {
+        @await Html.PartialAsync("CommentsDisqus", Model)
+    }
+
+</article>
+
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-core.min.js" integrity="sha256-bKrTFt2ZHyT4AE4LnBnAVctYKf9l6XP77kBvltgbjn4=" crossorigin="anonymous" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.30.0/plugins/autoloader/prism-autoloader.min.js" integrity="sha256-AjM0J5XIbiB590BrznLEgZGLnOQWrt62s3BEq65Q/I0=" crossorigin="anonymous" data-autoloader-path="https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.38/dist/katex.min.js" integrity="sha256-G2hiT4+WhwSWAR3lRvrTOAWxEuHhwPf6Z17ea6pHE2w=" crossorigin="anonymous" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.38/dist/contrib/auto-render.min.js" integrity="sha256-5TctGZvNrotN5x0PfOunKkuhJ3SifGCm8fd9A7MijuQ=" crossorigin="anonymous" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.13.0/dist/mermaid.min.js" integrity="sha256-PiACvzM5B/rnwdaGC7x49dpBe8cLZPPSJoWBuguouWo=" crossorigin="anonymous" defer></script>
+
+<!-- Katex and Mermaid Init -->
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+      renderMathInElement(document.body, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '$', right: '$', display: false},
+          {left: '\\(', right: '\\)', display: false},
+          {left: '\\[', right: '\\]', display: true}
+        ],
+        throwOnError: false
+      });
+    mermaid.initialize({ startOnLoad: true });
+    });
+</script>

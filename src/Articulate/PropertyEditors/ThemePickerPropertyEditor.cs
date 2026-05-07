@@ -1,12 +1,21 @@
+#nullable enable
 using Umbraco.Cms.Core.PropertyEditors;
 
 namespace Articulate.PropertyEditors
 {
-    [DataEditor("ArticulateThemePicker", EditorType.PropertyValue, "Articulate Theme Picker", "../App_Plugins/Articulate/BackOffice/PropertyEditors/ThemePicker.html")]
-    public class ThemePickerPropertyEditor : DataEditor
+    // Maps to alias: \Client\src\editors\theme-picker.element.ts
+    // ArticulateThemePicker | Umbraco.Plain.String
+    /// <summary>
+    /// Property editor for picking Articulate themes.
+    /// </summary>
+    [DataEditor(
+        ArticulateConstants.DataType.ArticulateThemePicker,
+        ValueType = ValueTypes.String,
+        ValueEditorIsReusable = true)]
+    public class ThemePickerPropertyEditor(IDataValueEditorFactory dataValueEditorFactory)
+        : DataEditor(dataValueEditorFactory)
     {
-        public ThemePickerPropertyEditor(IDataValueEditorFactory dataValueEditorFactory, EditorType type = EditorType.PropertyValue) : base(dataValueEditorFactory, type)
-        {
-        }
+        /// <inheritdoc/>
+        protected override IConfigurationEditor CreateConfigurationEditor() => new ThemePickerConfigurationEditor();
     }
 }

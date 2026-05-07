@@ -1,120 +1,157 @@
+#nullable enable
 using Articulate.Options;
+using Articulate.Services;
 using Microsoft.Extensions.Options;
-using System;
-using System.Linq;
 using Umbraco.Cms.Core.Events;
+using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Notifications;
 using Umbraco.Cms.Core.Security;
 using Umbraco.Cms.Core.Services;
-using Umbraco.Cms.Core.Web;
-using Umbraco.Extensions;
 
 namespace Articulate.Components
 {
-
-    public sealed class ContentSavingHandler : INotificationHandler<ContentSavingNotification>
+    /// <summary>
+    /// Notification handler to set default values and auto-generate excerpts when Articulate content is saving.
+    /// </summary>
+    public sealed class ContentSavingHandler(
+        IContentTypeService contentTypeService,
+        IBackOfficeSecurityAccessor backOfficeSecurityAccessor,
+        IOptions<ArticulateOptions> articulateOptions,
+        IArticulateMarkdownConverter articulateMarkdownConverter)
+        : INotificationHandler<ContentSavingNotification>
     {
-        private readonly IContentTypeService _contentTypeService;
-        private readonly IUmbracoContextAccessor _umbracoContextAccessor;
-        private readonly IBackOfficeSecurityAccessor _backOfficeSecurityAccessor;
-        private readonly ArticulateOptions _articulateOptions;
+        private readonly ArticulateOptions _articulateOptions = articulateOptions.Value;
 
-        public ContentSavingHandler(
-            IContentTypeService contentTypeService,
-            IUmbracoContextAccessor umbracoContextAccessor,
-            IBackOfficeSecurityAccessor backOfficeSecurityAccessor,
-            IOptions<ArticulateOptions> articulateOptions)
-        {
-            _contentTypeService = contentTypeService;
-            _umbracoContextAccessor = umbracoContextAccessor;
-            _backOfficeSecurityAccessor = backOfficeSecurityAccessor;
-            _articulateOptions = articulateOptions.Value;
-        }
-
+        /// <inheritdoc/>
         public void Handle(ContentSavingNotification notification)
         {
             var saved = notification.SavedEntities.ToList();
-            if (saved.Count == 0) return;
-
-            var contentTypes = _contentTypeService.GetAll(saved.Select(x => x.ContentTypeId).ToArray()).ToDictionary(x => x.Id);
-
-            foreach (var content in saved)
+            if (saved.Count == 0)
             {
-                if (content.ContentType.Alias.InvariantEquals("ArticulateRichText")
-                    || content.ContentType.Alias.InvariantEquals("ArticulateMarkdown"))
+                return;
+            }
+
+            var contentTypes = contentTypeService.GetMany(saved.Select(x => x.ContentTypeId).ToArray())
+                .ToDictionary(x => x.Id);
+
+            foreach (IContent content in saved)
+            {
+                IContentType contentType = contentTypes[content.ContentTypeId];
+
+                if (IsArticulatePost(content))
                 {
-                    content.SetAllPropertyCultureValues(
-                        "publishedDate",
-                        contentTypes[content.ContentTypeId],
-                        // if the publishedDate is not already set, then set it 
-                        (c, ct, culture) => c.GetValue("publishedDate", culture?.Culture) == null ? (DateTime?)DateTime.Now : null);
+                    SetPostDefaults(content, contentType);
 
-                    content.SetAllPropertyCultureValues(
-                        "author",
-                        contentTypes[content.ContentTypeId],
-                        // if the author is not already set, then set it 
-                        (c, ct, culture) => c.GetValue("author", culture?.Culture) == null ? _backOfficeSecurityAccessor.BackOfficeSecurity?.CurrentUser?.Name : null);
-
-                    if (!content.HasIdentity)
+                    if (_articulateOptions.AutoGenerateExcerpt)
                     {
-                        // default values
-                        content.SetAllPropertyCultureValues(
-                            "enableComments",
-                            contentTypes[content.ContentTypeId],
-                            (c, ct, culture) => 1);
-                    }
-                }
-
-                if (_articulateOptions.AutoGenerateExcerpt)
-                {
-                    if (content.ContentType.Alias.InvariantEquals("ArticulateRichText")
-                        || content.ContentType.Alias.InvariantEquals("ArticulateMarkdown"))
-                    {
-
-                        // fill in the excerpt if it is empty
-                        content.SetAllPropertyCultureValues(
-                            "excerpt",
-                            contentTypes[content.ContentTypeId],
-                            (c, ct, culture) =>
-                            {
-                                // don't set it if it's already set
-                                var currentExcerpt = c.GetValue("excerpt", culture?.Culture)?.ToString();
-                                if (!currentExcerpt.IsNullOrWhiteSpace()) return null;
-
-                                if (content.HasProperty("richText"))
-                                {
-                                    var richTextProperty = ct.CompositionPropertyTypes.First(x => x.Alias == "richText");
-                                    var val = c.GetValue<string>("richText", richTextProperty.VariesByCulture() ? culture?.Culture : null);
-                                    return _articulateOptions.GenerateExcerpt(val);
-                                }
-                                else
-                                {
-                                    var markdownProperty = ct.CompositionPropertyTypes.First(x => x.Alias == "markdown");
-                                    var val = c.GetValue<string>("markdown", markdownProperty.VariesByCulture() ? culture?.Culture : null);
-                                    var html = MarkdownHelper.ToHtml(val);
-                                    return _articulateOptions.GenerateExcerpt(html);
-                                }
-                            });
-
-                        //now fill in the social description if it is empty with the excerpt
-                        if (content.HasProperty("socialDescription"))
-                        {
-                            content.SetAllPropertyCultureValues(
-                                "socialDescription",
-                                contentTypes[content.ContentTypeId],
-                                (c, ct, culture) =>
-                                {
-                                    // don't set it if it's already set
-                                    var currentSocialDescription = c.GetValue("socialDescription", culture?.Culture)?.ToString();
-                                    if (!currentSocialDescription.IsNullOrWhiteSpace()) return null;
-
-                                    var excerptProperty = ct.CompositionPropertyTypes.First(x => x.Alias == "excerpt");
-                                    return content.GetValue<string>("excerpt", excerptProperty.VariesByCulture() ? culture?.Culture : null);
-                                });
-                        }
+                        GenerateExcerptIfNeeded(content, contentType);
                     }
                 }
             }
+        }
+
+        private static bool IsArticulatePost(IContent content) =>
+            content.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateRichText) ||
+            content.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateMarkdown);
+
+        private void SetPostDefaults(IContent content, IContentType contentType)
+        {
+            // Set publishedDate if not already set
+            content.SetAllPropertyCultureValues(
+                "publishedDate",
+                contentType,
+                (c, _, culture) =>
+                    c.GetValue("publishedDate", culture?.Culture) is null ? (DateTime?)DateTime.Now : null);
+
+            // Set author if not already set
+            content.SetAllPropertyCultureValues(
+                "author",
+                contentType,
+                (c, _, culture) => c.GetValue("author", culture?.Culture) is null
+                    ? backOfficeSecurityAccessor.BackOfficeSecurity?.CurrentUser?.Name
+                    : null);
+
+            // Keep comments enabled by default for new posts created outside the backoffice UI.
+            if (!content.HasIdentity)
+            {
+                content.SetAllPropertyCultureValues(
+                    "enableComments",
+                    contentType,
+                    (_, _, _) => 1);
+            }
+        }
+
+        private void GenerateExcerptIfNeeded(IContent content, IContentType contentType)
+        {
+            // Generate excerpt from richText or markdown if not already set
+            content.SetAllPropertyCultureValues(
+                "excerpt",
+                contentType,
+                (c, ct, culture) =>
+                {
+                    var currentExcerpt = c.GetValue("excerpt", culture?.Culture)?.ToString();
+                    if (!currentExcerpt.IsNullOrWhiteSpace())
+                    {
+                        return null;
+                    }
+
+                    return GenerateExcerptFromContent(c, ct, culture);
+                });
+
+            // Set socialDescription from excerpt if not already set
+            if (content.HasProperty("socialDescription"))
+            {
+                content.SetAllPropertyCultureValues(
+                    "socialDescription",
+                    contentType,
+                    (c, ct, culture) =>
+                    {
+                        var currentSocialDescription = c.GetValue("socialDescription", culture?.Culture)?.ToString();
+                        if (!currentSocialDescription.IsNullOrWhiteSpace())
+                        {
+                            return null;
+                        }
+
+                        IPropertyType excerptProperty = ct.CompositionPropertyTypes.First(x => x.Alias == "excerpt");
+                        return c.GetValue<string>(
+                            "excerpt",
+                            excerptProperty.VariesByCulture() ? culture?.Culture : null);
+                    });
+            }
+        }
+
+        private string GenerateExcerptFromContent(
+            IContentBase content,
+            IContentTypeComposition contentType,
+            ContentCultureInfos? culture)
+        {
+            if (content.HasProperty("richText"))
+            {
+                IPropertyType richTextProperty = contentType.CompositionPropertyTypes.First(x => x.Alias == "richText");
+                var val = content.GetValue<string>(
+                    "richText",
+                    richTextProperty.VariesByCulture() ? culture?.Culture : null);
+                return string.IsNullOrWhiteSpace(val)
+                    ? string.Empty
+                    : _articulateOptions.GenerateExcerpt(val);
+            }
+
+            if (content.HasProperty("markdown"))
+            {
+                IPropertyType markdownProperty = contentType.CompositionPropertyTypes.First(x => x.Alias == "markdown");
+                var val = content.GetValue<string>(
+                    "markdown",
+                    markdownProperty.VariesByCulture() ? culture?.Culture : null);
+                if (string.IsNullOrWhiteSpace(val))
+                {
+                    return string.Empty;
+                }
+
+                var html = articulateMarkdownConverter.ToHtml(val);
+                return _articulateOptions.GenerateExcerpt(html);
+            }
+
+            return string.Empty;
         }
     }
 }

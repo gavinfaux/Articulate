@@ -1,29 +1,35 @@
-using System;
+#nullable enable
 using Microsoft.AspNetCore.Http;
-using Umbraco.Extensions;
 
 namespace Articulate.Routing
 {
+    /// <summary>
+    /// Extension methods for route collections.
+    /// </summary>
     public static class RouteCollectionExtensions
     {
         /// <summary>
         /// Returns a route path from a given node's URL since a node's Url might contain a domain which we can't use in our routing.
         /// </summary>
-        /// <param name="routePath"></param>
-        /// <returns></returns>
+        /// <param name="httpContext">The HTTP context.</param>
+        /// <param name="routePath">The route path or URL to convert.</param>
+        /// <returns>A virtual path suitable for routing.</returns>
         internal static string RoutePathFromNodeUrl(HttpContext httpContext, string routePath)
         {
-            var virtualPath = $"{httpContext.Request.Scheme}://{httpContext.Request.Host}{httpContext.Request.PathBase}";
+            var virtualPath =
+                $"{httpContext.Request.Scheme}://{httpContext.Request.Host}{httpContext.Request.PathBase}";
 
-            var rootRoutePath = (Uri.TryCreate(routePath, UriKind.Absolute, out Uri result)
+            var rootRoutePath = (Uri.TryCreate(routePath, UriKind.Absolute, out Uri? result)
                 ? result.PathAndQuery
                 : routePath).EnsureEndsWith('/');
 
             if (rootRoutePath == virtualPath)
+            {
                 return string.Empty;
+            }
 
             return rootRoutePath.StartsWith(virtualPath)
-                ? rootRoutePath.Substring(virtualPath.Length)
+                ? rootRoutePath[virtualPath.Length..]
                 : rootRoutePath.TrimStart('/');
         }
     }

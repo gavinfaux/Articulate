@@ -1,0 +1,43 @@
+@using Articulate.Services
+@using Umbraco.Cms.Core
+@inject BackOfficeAuthService BackOfficeAuthService
+@inherits UmbracoViewPage<IMasterModel>
+
+<div class="mdl-card title-banner mdl-cell mdl-cell--8-col mdl-cell--4-col-desktop">
+    @{
+        var backOfficeLoggedIn = await BackOfficeAuthService.IsBackOfficeLoggedInAsync(Context, Constants.Security.BackOfficeAuthenticationType);
+        var hasMenuItems = Model.HasCategoriesRoute() || Model.HasTagsRoute() || Model.HasSearchRoute();
+        var hasCustomBlogTitle = !string.IsNullOrWhiteSpace(Model.BlogTitle)
+                                 && !Model.BlogTitle.Equals("Articulate Blog", StringComparison.OrdinalIgnoreCase);
+    }
+
+    @if (backOfficeLoggedIn)
+    {
+        <a href="@Model.ArticulateCreateBlogEntryUrl()" rel="nofollow" title="Create new blog post"
+           class="new-post mdl-button mdl-js-ripple-effect mdl-js-button mdl-button--fab mdl-color--primary">
+            <i class="material-icons mdl-color-text--white" role="presentation">add</i>
+            <span class="visuallyhidden">add</span>
+        </a>
+    }
+    <div class="mdl-card__media mdl-color--white mdl-color-text--grey-600">
+        <a href="@Model.ArticulateRootUrl()">
+            <img src="@Model.BlogLogo" alt="Blog Logo" />
+        </a>
+    </div>
+    @if (hasCustomBlogTitle || hasMenuItems)
+    {
+        <div class="mdl-card__supporting-text meta meta--fill mdl-color-text--grey-600">
+            @if (hasCustomBlogTitle)
+            {
+                <div>
+                    <strong>@Model.BlogTitle</strong>
+                </div>
+            }
+
+            @if (hasMenuItems)
+            {
+                @await Html.PartialAsync("Menu", Model)
+            }
+        </div>
+    }
+</div>

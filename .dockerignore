@@ -1,0 +1,31 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Dev Container
+.devcontainer
+
+# IDE
+.vscode
+.vs
+*.user
+*.suo
+
+# Build artifacts
+**/bin
+**/obj
+**/node_modules
+build/ClientAssets
+
+# Documentation and misc
+*.md
+!README.md
+LICENSE
+docs
+
+# Test and temp files
+*.log
+*.tmp
+.husky
+.jj

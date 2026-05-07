@@ -1,3 +1,4 @@
+# Articulate
 [![Articulate Build](https://github.com/Shazwazza/Articulate/actions/workflows/build.yml/badge.svg)](https://github.com/Shazwazza/Articulate/actions/workflows/build.yml)
 
 ![Articulate](https://raw.githubusercontent.com/Shazwazza/Articulate/develop/assets/Logo.png?raw=true)
@@ -11,32 +12,40 @@ _❤️ If you use and like Articulate please consider [becoming a GitHub Sponso
 
 Supporting all the features you'd want in a blogging platform
 
-* Categories & Tags
-* Themes
-* Multiple archives
-* Live Writer support
-* Markdown support
-* Post from your mobile phone including photos direct from you camera
-* Disqus or Facebook comment support (or build your own)
-* Search
-* Blogml import/export (including Disqus import)
-* Customizable RSS feeds
-* Customizable urls 
-* Author profiles
+- Categories & Tags
+- Themes
+- Multiple archives
+- Live Writer support
+- Markdown support
+- Post from your mobile phone including photos direct from your camera
+- Disqus comment support (or build your own)
+- Search
+- BlogML import/export (including Disqus import)
+- Customizable RSS feeds
+- Customizable URLs
+- Author profiles
 
 ## Minimum requirements
 
-Articulate version 5+ is only compatible with Umbraco 10.1.0+
+- Umbraco 16.5.1+ (NET 9) and 17.2.2+ (NET 10) - Articulate version 6.x
+- Umbraco 13 LTS (maintenance) - Articulate 5.x.
+
+## Upgrade note for rich text editor compatibility
+
+On Umbraco 16/17, Articulate will migrate the built-in `Umbraco.RichText` property editor to `Umb.PropertyEditorUi.TipTap` during package upgrade only if the TinyMCE editor UI is actually registered. 
+
+- You must have the [TinyMCE.Umbraco](https://github.com/ProWorksCorporation/TinyMCE-Umbraco) package installed before you start your site to keep using TinyMCE after upgrade.
+- This setting affects upgrades only. Once the Articulate migration plan step has executed, Umbraco records it as complete.
 
 ## [Documentation](https://github.com/Shazwazza/Articulate/wiki)
 
 Docs on installation, creating posts, customizing/creating themes, etc...
 
-## [Discussions](https://our.umbraco.org/projects/starter-kits/articulate/discussions)
+## [Discussions](https://forum.umbraco.com/tag/packages)
 
-Please post to this Umbraco discussions forum to discuss Articulate, it's features and functionality. Do not post issues here, post them [here](https://github.com/Shazwazza/Articulate/issues) on GitHub
+Please post to this Umbraco discussions forum to discuss Articulate, it's features and functionality. Do not post issues here, [post them here](https://github.com/Shazwazza/Articulate/issues) on GitHub
 
-## [Issues](https://github.com/Shandem/Articulate/issues)
+## [Issues](https://github.com/Shazwazza/Articulate/issues)
 
 If you have any issues, please post them here on GitHub
 
@@ -44,27 +53,17 @@ If you have any issues, please post them here on GitHub
 
 See here for the list of releases and their release notes
 
-## Contributing
+## Development
 
-1. Clone/fork the repository
-1. Open the /src/Articulate.sln file
-1. Build the solution (will also performa Nuget restore)
-1. Ensure that Articulate.Web is set as the startup project
-1. Start the Articulate.Web project
-1. This will run the Umbraco installer, install as per normal
-1. The Articulate package migrations will also execute and install all of the Articulate schema and content items
-
-Now you're all set! Any source changes you wish to make just do that in Visual Studio, build the solution when you need to and the changes will be reflected in the website.
+For local setup and contributor notes, see [DEVELOP.md](https://github.com/Shazwazza/Articulate/blob/develop/DEVELOP.md).
 
 ### Changing Umbraco Articulate schema/data elements
 
 If you need to make changes to the underlying Umbraco schema (doc types, data types, etc...) or the installed package's content/media, then you will need
 to re-create the Articulate package in the back office with all required dependencies and then re-save the package.zip file and commit it to the repository.
 
-### Updating to latest committed changes
+## Copyright & License
 
-## Copyright & Licence
-
-&copy; 2023 by Shannon Deminick
+&copy; 2025 by Shannon Deminick
 
 This is free software and is licensed under the [The MIT License (MIT)](http://opensource.org/licenses/MIT)

@@ -1,0 +1,26 @@
+@inherits UmbracoViewPage<PostModel>
+
+@if (!Model.Author.Name.IsNullOrWhiteSpace())
+{
+    if (Model.Author.Image is not null)
+    {
+        var thumbnail = Model.Author.Image.GetCropUrl(cropAlias: "thumbnail", preferFocalPoint: true, useCropDimensions: true)?.ToSafeCssUrl();
+        if (thumbnail is not null)
+        {
+            <div class="minilogo" style="background: url('@thumbnail')"></div>
+        }
+    }
+    <div>
+        <strong>
+            @if (Model.Author.BlogUrl is not null)
+            {
+                <a href="@Model.Author.BlogUrl" rel="noopener noreferrer">@Model.Author.Name</a>
+            }
+            else
+            {
+                @Model.Author.Name
+            }
+        </strong>
+        <span>@(Model.PublishedDate.ToString("MMMM dd, yyyy"))</span>
+        </div>
+}

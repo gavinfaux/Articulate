@@ -1,0 +1,56 @@
+@model TagListModel
+@{
+    ViewBag.CssBodyClass = "page-tags";
+    var groups = Model.Tags.ToArray();
+}
+
+<section class="page-hero">
+    <div>
+        <p class="page-hero__eyebrow">Explore</p>
+        <h1 class="page-hero__title">@Model.Name</h1>
+        <p class="page-hero__summary">Browse topic clusters across the archive.</p>
+    </div>
+
+    <aside class="page-hero__side">
+        @await Html.PartialAsync("SearchBox", Model)
+    </aside>
+</section>
+
+@if (groups.Any())
+{
+    <section class="tag-summary">
+        <div class="tag-cloud">
+            @Model.Tags.TagCloud(@<a class="tag-pill" href="#tag-@item.HtmlId">@item.TagName <span>@item.PostCount</span></a>, 5, 50)
+        </div>
+    </section>
+
+    <section class="tag-groups">
+        @foreach (var group in groups)
+        {
+            <article class="tag-group">
+                <header class="tag-group__header">
+                    <h2 id="tag-@group.HtmlId">
+                        <a href="@group.TagUrl">@group.TagName</a>
+                    </h2>
+                    <div class="tag-group__meta">
+                        <span>@group.PostCount post@(group.PostCount == 1 ? string.Empty : "s")</span>
+                        <a class="meta-pill" href="@(group.TagUrl.TrimEnd('/'))/rss" aria-label="RSS feed for @group.TagName"><i class="fa-solid fa-rss" aria-hidden="true"></i> RSS</a>
+                    </div>
+                </header>
+
+                <div class="post-grid post-grid--compact">
+                    @foreach (var post in group.Posts?.OrderByDescending(x => x.PublishedDate) ?? Enumerable.Empty<PostModel>())
+                    {
+                        @await Html.PartialAsync("PostCard", post)
+                    }
+                </div>
+            </article>
+        }
+    </section>
+}
+else
+{
+    <section class="empty-state">
+        <h2>No tags found</h2>
+    </section>
+}

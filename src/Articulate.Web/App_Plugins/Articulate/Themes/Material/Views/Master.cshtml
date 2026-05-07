@@ -1,0 +1,104 @@
+@model IMasterModel
+@{
+    var theme = Model.Theme;
+    var themeLower = theme.ToLower();
+}
+
+<!doctype html>
+<!--
+  Material Design Lite
+  Copyright 2015 Google Inc. All rights reserved.
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      https://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License
+-->
+
+<html lang="en">
+<head>
+    @Model.GoogleAnalyticsTracking()
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+
+    <title>@Model.PageTitle</title>
+    @Model.MetaTags()
+    @Html.SocialMetaTags(Model)
+    @Model.AdvertiseWeblogApi()
+    @Model.RssFeed()
+    @Model.RenderOpenSearch()
+
+    @if (Model is IImageModel { CroppedWideUrl: not null and not "" } img)
+    {
+        <link rel="preload" as="image" href="@img.CroppedWideUrl" fetchpriority="high">
+    }
+    else if (Model is ListModel list)
+    {
+        foreach (var post in list.Posts.Take(2))
+        {
+            if (post is IImageModel { CroppedWideUrl: not (null or "") } postImg)
+            {
+                <link rel="preload" as="image" href="@postImg.CroppedWideUrl" fetchpriority="high">
+            }
+        }
+    }
+
+    <environment include="Development">
+        <link href="~/App_Plugins/Articulate/Themes/@theme/assets/vendor/mdl/material.pink-blue.min.css" rel="stylesheet" fetchpriority="high" asp-append-version="true">
+        <link href="~/App_Plugins/Articulate/Themes/@theme/assets/src/css/styles.css" rel="stylesheet" fetchpriority="high" asp-append-version="true">
+        <link href="~/App_Plugins/Articulate/Themes/@theme/assets/src/css/styles_custom.css" rel="stylesheet" asp-append-version="true">
+    </environment>
+    <environment exclude="Development">
+        <link href="~/App_Plugins/Articulate/Themes/@theme/assets/dist/css/@(themeLower).min.css" rel="stylesheet" fetchpriority="high" asp-append-version="true">
+    </environment>
+
+    <link href="https://fonts.googleapis.com/css?family=Roboto:regular,italic&lang=en&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" media="all">
+
+    @await RenderSectionAsync("Header", false)
+
+    @if (Model.BlogBannerCss is not null)
+    {
+        <style>
+            body::before {
+                background-image: url('@Model.BlogBannerCss');
+                background-size: cover;
+                background-attachment: fixed;
+            }
+        </style>
+    }
+</head>
+<body>
+    @Model.GoogleAnalyticsNoScript()
+    <div class="demo-blog @ViewBag.CssWrapperClass mdl-layout mdl-js-layout has-drawer is-upgraded">
+        <main class="mdl-layout__content">
+            @RenderBody()
+
+            @await Html.PartialAsync("Footer", Model)
+        </main>
+        <div class="mdl-layout__obfuscator"></div>
+    </div>
+
+    <environment include="Development">
+        <script defer src="~/App_Plugins/Articulate/Themes/@theme/assets/vendor/mdl/material.min.js" type="text/javascript" asp-append-version="true"></script>
+        <script defer src="~/App_Plugins/Articulate/Themes/@theme/assets/src/js/mdl-cards.js" type="text/javascript" asp-append-version="true"></script>
+        <script defer src="~/App_Plugins/Articulate/Themes/@theme/assets/src/js/share.js" type="text/javascript" asp-append-version="true"></script>
+    </environment>
+    <environment exclude="Development">
+        <script defer src="~/App_Plugins/Articulate/Themes/@theme/assets/dist/js/@(themeLower).min.js" type="text/javascript" asp-append-version="true"></script>
+    </environment>
+
+</body>
+</html>
+

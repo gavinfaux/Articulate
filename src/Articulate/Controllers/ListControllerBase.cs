@@ -1,56 +1,52 @@
-using System;
-using System.Collections.Generic;
-using System.Text;
-using Articulate.Models;
+#nullable enable
 using Microsoft.AspNetCore.Mvc;
-using Umbraco.Cms.Web.Common.Controllers;
-using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
-using Umbraco.Cms.Core.Web;
+using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Core.Models.PublishedContent;
-using Umbraco.Cms.Web.Website.ActionResults;
 using Umbraco.Cms.Core.Routing;
-using Umbraco.Cms.Core.Media;
-using Umbraco.Extensions;
-using Microsoft.Extensions.Primitives;
+using Umbraco.Cms.Core.Web;
+using Umbraco.Cms.Web.Common.Controllers;
+using Umbraco.Cms.Web.Website.ActionResults;
 
 namespace Articulate.Controllers
 {
     /// <summary>
     /// Base controller providing common functionality for listing pages
     /// </summary>
-    public abstract class ListControllerBase : RenderController
+    public abstract class ListControllerBase(
+        ILogger<ListControllerBase> logger,
+        ICompositeViewEngine compositeViewEngine,
+        IUmbracoContextAccessor umbracoContextAccessor,
+        IPublishedUrlProvider publishedUrlProvider,
+        IPublishedValueFallback publishedValueFallback)
+        : RenderController(logger, compositeViewEngine, umbracoContextAccessor)
     {
-        protected ListControllerBase(
-            ILogger<RenderController> logger,
-            ICompositeViewEngine compositeViewEngine,
-            IUmbracoContextAccessor umbracoContextAccessor,
-            IPublishedUrlProvider publishedUrlProvider,
-            IPublishedValueFallback publishedValueFallback,
-            IVariationContextAccessor variationContextAccessor)
-            : base(logger, compositeViewEngine, umbracoContextAccessor)
-        {
-            UmbracoContextAccessor = umbracoContextAccessor;
-            PublishedUrlProvider = publishedUrlProvider;
-            PublishedValueFallback = publishedValueFallback;
-            VariationContextAccessor = variationContextAccessor;
-        }
+        protected IUmbracoContextAccessor UmbracoContextAccessor { get; } = umbracoContextAccessor;
 
-        public IUmbracoContextAccessor UmbracoContextAccessor { get; }
-        public IPublishedUrlProvider PublishedUrlProvider { get; }
-        public IPublishedValueFallback PublishedValueFallback { get; }
-        public IVariationContextAccessor VariationContextAccessor { get; }
+        protected IPublishedUrlProvider PublishedUrlProvider { get; } = publishedUrlProvider;
+
+        protected IPublishedValueFallback PublishedValueFallback { get; } = publishedValueFallback;
+
+        protected PagerModel CreateRequestedPager(IMasterModel masterModel, int? p)
+            => new(
+                PagingHelper.NormalizePageSize(masterModel.PageSize),
+                PagingHelper.NormalizePageNumber(p) - 1,
+                1);
 
         /// <summary>
-        /// Gets a paged list view for a given posts by author/tags/categories model
+        /// Gets a paged list view for a given posts by author/tags/categories model.
         /// </summary>
-        protected IActionResult GetPagedListView(IMasterModel masterModel, IPublishedContent pageNode, IEnumerable<IPublishedContent> listItems, long totalPosts, int? p)
+        protected IActionResult GetPagedListView(
+            IMasterModel masterModel,
+            IPublishedContent pageNode,
+            IEnumerable<IPublishedContent> listItems,
+            long totalPosts,
+            int? p)
         {
-            if (masterModel == null) throw new ArgumentNullException(nameof(masterModel));
-            if (pageNode == null) throw new ArgumentNullException(nameof(pageNode));
-            if (listItems == null) throw new ArgumentNullException(nameof(listItems));
-
-            if (!GetPagerModel(masterModel, totalPosts, p, out var pager))
+            ArgumentNullException.ThrowIfNull(masterModel);
+            ArgumentNullException.ThrowIfNull(pageNode);
+            ArgumentNullException.ThrowIfNull(listItems);
+            if (!GetPagerModel(masterModel, totalPosts, p, out PagerModel? pager) || pager is null)
             {
                 return new RedirectToUmbracoPageResult(
                     masterModel.RootBlogNode,
@@ -58,61 +54,12 @@ namespace Articulate.Controllers
                     UmbracoContextAccessor);
             }
 
-            var listModel = new ListModel(pageNode, pager, listItems, PublishedValueFallback, VariationContextAccessor);
+            var listModel = new ListModel(pageNode, pager, listItems, PublishedValueFallback);
 
-            return View(PathHelper.GetThemeViewPath(listModel, "List"), listModel);
+            return View("List", listModel);
         }
 
-        protected bool GetPagerModel(IMasterModel masterModel, long totalPosts, int? p, out PagerModel pager)
-        {
-            if (p == null || p.Value <= 0)
-            {
-                p = 1;
-            }
-
-            var pageSize = masterModel.PageSize;
-            var totalPages = totalPosts == 0 ? 1 : Convert.ToInt32(Math.Ceiling((double)totalPosts / pageSize));
-
-            //Invalid page, redirect without pages
-            if (totalPages < p)
-            {
-                pager = null;
-                return false;
-            }
-
-            //maintain query strings
-            var queryStrings = new StringBuilder();
-            foreach (var key in Request.Query.Keys)
-            {
-                if (key == "p") continue;
-                if (Request.Query.TryGetValue(key, out StringValues val))
-                {
-                    foreach (var v in val)
-                    {
-                        queryStrings.Append($"&{key}={v}");
-                    }
-                }
-            }
-
-            pager = new PagerModel(
-                pageSize,
-                p.Value - 1,
-                totalPages,
-                totalPages > p
-                    ? GetPagedUrl(masterModel.Url(), (p + 1), queryStrings.ToString())
-                    : null,
-                p > 2
-                    ? GetPagedUrl(masterModel.Url(), (p - 1), queryStrings.ToString())
-                    : p > 1
-                        ? GetPagedUrl(masterModel.Url(), null, queryStrings.ToString())
-                        : null);
-
-            return true;
-        }
-
-        private string GetPagedUrl(string baseUrl, int? page, string queryStrings)
-            => page.HasValue
-                ? $"{baseUrl.EnsureEndsWith('?')}p={page}{queryStrings}"
-                : $"{baseUrl.EnsureEndsWith('?')}{queryStrings.TrimStart('&')}";
+        protected bool GetPagerModel(IMasterModel masterModel, long totalPosts, int? p, out PagerModel? pager)
+            => PagingHelper.TryCreatePager(masterModel.Url(), Request.Query, masterModel.PageSize, totalPosts, p, out pager);
     }
 }

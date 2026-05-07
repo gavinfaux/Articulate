@@ -1,21 +1,23 @@
-using Umbraco.Cms.Core.Cache;
+#nullable enable
+using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Core.Events;
 using Umbraco.Cms.Core.Notifications;
-using Umbraco.Extensions;
 
 namespace Articulate.Components
 {
-
-    public sealed class DomainCacheRefresherHandler : INotificationHandler<DomainCacheRefresherNotification>
+    /// <summary>
+    /// Notification handler to refresh Articulate routes when domains are updated in the cache.
+    /// </summary>
+    public sealed class DomainCacheRefresherHandler(
+        Routing.IArticulateRouteRefreshState routeRefreshState,
+        ILogger<DomainCacheRefresherHandler> logger)
+        : INotificationHandler<DomainCacheRefresherNotification>
     {
-        private readonly AppCaches _appCaches;
-
-        public DomainCacheRefresherHandler(AppCaches appCaches) => _appCaches = appCaches;
-
+        /// <inheritdoc/>
         public void Handle(DomainCacheRefresherNotification notification)
         {
-            //ensure routes are rebuilt
-            _appCaches.RequestCache.GetCacheItem(ArticulateConstants.RefreshRoutesToken, () => true);
+            routeRefreshState.MarkDirty();
+            logger.LogInformation("Marked Articulate routes dirty due to domain cache refresh.");
         }
     }
 }

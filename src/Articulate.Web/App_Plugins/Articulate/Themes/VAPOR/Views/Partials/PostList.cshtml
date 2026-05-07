@@ -1,0 +1,31 @@
+@model IEnumerable<PostModel>
+
+<div>
+    <ul class="nostyle recent-posts">
+        @foreach (var post in Model)
+        {
+            <li>
+                @{
+                    var thumbnail = post.PostImage?.GetCropUrl(cropAlias: "blogPost", preferFocalPoint: true, useCropDimensions: true)?.ToSafeCssUrl();
+                }
+                @if (thumbnail is not null)
+                {
+                    <div class="postthumb" style="background: url('@thumbnail')"></div>
+                }
+                    <div class="time">
+                    <time datetime="@post.PublishedDate">
+                        @post.PublishedDate.ToString("MMM d, yyyy HH:mm")
+                    </time>
+                </div>
+
+                <a href="@post.Url()" title="View Post">@post.Name</a>
+                @if (post.EnableComments && post.IsDisqusEnabled)
+                {
+                    <div>
+                        <a data-disqus-identifier="@post.Key" class="comment-count" href="@post.Url()#disqus_thread" title="View Comments"></a>
+                    </div>
+                }
+            </li>
+        }
+    </ul>
+</div>

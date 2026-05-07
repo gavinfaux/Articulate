@@ -1,47 +1,54 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFrameworks>net9.0;net10.0</TargetFrameworks>
     <IsPackable>false</IsPackable>
+    <UseArticulateUsings>false</UseArticulateUsings>
   </PropertyGroup>
-
+  <!-- Prevent multi-TFM build race: Umbraco schema task writes to same file from both targets -->
+  <PropertyGroup Condition="'$(TargetFramework)' != 'net10.0'">
+    <UmbracoJsonSchemaGenerateEnabled>false</UmbracoJsonSchemaGenerateEnabled>
+  </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Umbraco.Cms" Version="13.12.1" />
+    <PackageReference Include="Umbraco.Cms" Version="$(UmbracoCmsPackageVersion)" />
+    <PackageReference Include="OpenMcdf" Version="$(OpenMcdfPackageVersion)" PrivateAssets="All" />
   </ItemGroup>
-
-  <Import Project="..\Articulate\build\Articulate.targets" />
-  <ItemGroup>
-    <ProjectReference Include="..\Articulate\Articulate.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Compile Remove="umbraco\Data\**" />
-    <Compile Remove="umbraco\logs\**" />
-    <Compile Remove="umbraco\MediaCache\**" />
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
+    <PackageReference Include="Umbraco.Cms.DevelopmentMode.Backoffice" Version="$(UmbracoCmsPackageVersion)" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Remove="umbraco\Data\**" />
-    <EmbeddedResource Remove="umbraco\logs\**" />
-    <EmbeddedResource Remove="umbraco\MediaCache\**" />
+    <!-- Opt-in to app-local ICU to ensure consistent globalization APIs across different platforms -->
+    <PackageReference Include="Microsoft.ICU.ICU4C.Runtime" Version="72.1.0.3" />
+    <RuntimeHostConfigurationOption Include="System.Globalization.AppLocalIcu" Value="72.1.0.3" Condition="$(RuntimeIdentifier.StartsWith('linux')) or $(RuntimeIdentifier.StartsWith('win')) or ('$(RuntimeIdentifier)' == '' and !$([MSBuild]::IsOSPlatform('osx')))" />
+  </ItemGroup>
+  <!-- Reference Articulate.Web (which depends on the other projects) for development mode -->
+  <ItemGroup>
+    <ProjectReference Include="..\Articulate.Web\Articulate.Web.csproj">
+      <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
+      <CopyStaticWebAssetsToPublish>true</CopyStaticWebAssetsToPublish>
+    </ProjectReference>
+    <ProjectReference Include="..\Articulate.Theme.Sample\Articulate.Theme.Sample.csproj">
+      <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
+      <CopyStaticWebAssetsToPublish>true</CopyStaticWebAssetsToPublish>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <None Remove="umbraco\Data\**" />
-    <None Remove="umbraco\logs\**" />
-    <None Remove="umbraco\MediaCache\**" />
-    <None Include="config\**\*.*">
-      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-      <CopyToPublishDirectory>Always</CopyToPublishDirectory>
-    </None>
-    <None Include="umbraco\**\*.*">
-      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-      <CopyToPublishDirectory>Always</CopyToPublishDirectory>
-    </None>
+    <Compile Remove="umbraco\**" />
+    <Content Remove="umbraco\**" />
+    <EmbeddedResource Remove="umbraco\**" />
+    <None Remove="umbraco\**" />
   </ItemGroup>
   <ItemGroup>
-    <Content Remove="umbraco\Data\**" />
-    <Content Remove="umbraco\logs\**" />
-    <Content Remove="umbraco\MediaCache\**" />
+    <!-- tells 'dotnet watch' to ignore any file changes  under the umbraco/ folder and its subdirectories. -->
+    <Watch Remove="umbraco\**\*" />
   </ItemGroup>
-
+  <ItemGroup>
+    <Folder Include="Views\ArticulateThemes\" />
+    <Folder Include="wwwroot\App_Plugins\Articulate\Themes\" />
+  </ItemGroup>
+  <PropertyGroup>
+    <!-- Razor files are needed for the backoffice to work correctly -->
+    <CopyRazorGenerateFilesToPublishDirectory>true</CopyRazorGenerateFilesToPublishDirectory>
+  </PropertyGroup>
   <!-- Set this to true if ModelsBuilder mode is not InMemoryAuto-->
   <PropertyGroup>
     <RazorCompileOnBuild>false</RazorCompileOnBuild>
