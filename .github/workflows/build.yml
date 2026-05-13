@@ -1,18 +1,17 @@
 name: Articulate Build
 
 on:
+  push:
+  pull_request:
   workflow_dispatch:
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
 
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-      Solution_File: src\Articulate.sln
-      Release_Folder: build\Release
-      Build_Folder: build
-      Configuration: Release
+      RELEASE_FOLDER: build/Release
 
     steps:
       - name: Checkout
@@ -20,18 +19,16 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup NBGV
-        uses: dotnet/nbgv@v0.5.1
+      - uses: dotnet/nbgv@v0.5.1
         with:
           setAllVars: true
 
       - name: Log Build Context
-        shell: pwsh
         run: |
-          Write-Host "Articulate Build Context"
-          Write-Host "Version: $env:NBGV_SemVer2"
-          Write-Host "Commit: $env:NBGV_GitCommitIdShort"
-          Write-Host "Date: $env:NBGV_GitCommitDate"
+          echo "Articulate Build Context"
+          echo "Version: ${NBGV_SemVer2}"
+          echo "Commit: ${NBGV_GitCommitIdShort}"
+          echo "Date: ${NBGV_GitCommitDate}"
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v5.0.0
@@ -48,10 +45,8 @@ jobs:
 
       - name: Resolve pnpm store path
         id: pnpm-cache
-        shell: pwsh
         run: |
-          $path = pnpm store path
-          echo "path=$path" >> $env:GITHUB_OUTPUT
+          echo "path=$(pnpm store path)" >> "$GITHUB_OUTPUT"
 
       - name: Cache pnpm store
         uses: actions/cache@v5.0.4
@@ -69,11 +64,10 @@ jobs:
             10.0.201
 
       - name: Run build pipeline script
-        shell: pwsh
-        run: ./build/build.ps1
+        run: bash ./build/build.sh
 
-      - name: Upload artifacts
+      - name: Upload packages
         uses: actions/upload-artifact@v7.0.1
         with:
           name: Articulate.${{ env.NBGV_SemVer2 }}
-          path: ${{ env.Release_Folder }}/Articulate.*
+          path: ${{ env.RELEASE_FOLDER }}/Articulate.*
