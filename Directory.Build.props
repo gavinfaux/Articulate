@@ -97,6 +97,8 @@
 		<PackageTags>blog umbraco umbraco-marketplace oss tags markdown richtext</PackageTags>
 		<PackageOutputPath>$(MSBuildThisFileDirectory)build/$(Configuration)/</PackageOutputPath>
 		<GeneratePackageOnBuild>False</GeneratePackageOnBuild>
+		<DebugType Condition="'$(IsPackable)' != 'false'">portable</DebugType>
+		<DebugSymbols Condition="'$(IsPackable)' != 'false'">true</DebugSymbols>
 		<IncludeSymbols>true</IncludeSymbols>
 		<WarnOnPackingNonPackableProject>false</WarnOnPackingNonPackableProject>
 		<NeutralLanguage>en-US</NeutralLanguage>
