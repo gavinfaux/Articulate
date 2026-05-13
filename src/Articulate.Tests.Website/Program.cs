@@ -17,15 +17,22 @@ if (builder.Environment.IsProduction())
     // builder.WebHost.UseStaticWebAssets();
 }
 
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Limits.MaxRequestBodySize = 100000000;
+});
+
 // Increase upload limits, e.g. importing larger BlogML XML files; also ensure Umbraco:CMS:Runtime:MaxRequestLength is set
 builder.Services.Configure<FormOptions>(options =>
 {
     options.MultipartBodyLengthLimit = 104857600; // 100MB
 });
+
 builder.Services.Configure<KestrelServerOptions>(options =>
 {
     options.Limits.MaxRequestBodySize = 104857600; // 100MB
 });
+
 builder.Services.Configure<IISServerOptions>(options =>
 {
     options.MaxRequestBodySize = 104857600; // 100MB
