@@ -1,6 +1,14 @@
 minimumReleaseAge: 10080
 minimumReleaseAgeStrict: true
-onlyBuiltDependencies:
-  - esbuild
 allowBuilds:
   esbuild: true
+  unrs-resolver: true
+blockExoticSubdeps: true
+overrides:
+  diff@>=6.0.0 <8.0.3: ^8.0.3
+  dompurify@<3.4.0: ^3.4.0
+  handlebars@>=4.0.0 <4.7.9: ^4.7.9
+minimumReleaseAgeExclude:
+  - diff@8.0.3
+  - handlebars@4.7.9
+  - dompurify@3.4.0
