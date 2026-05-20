@@ -5,10 +5,9 @@
   "type": "module",
   "description": "Articulate BackOffice extension",
   "engines": {
-    "node": ">=24",
-    "pnpm": ">=10.33"
+    "node": ">=24"
   },
-  "packageManager": "pnpm@10.33.0",
+  "packageManager": "pnpm@11.1.3",
   "keywords": [
     "blog",
     "umbraco",
@@ -31,23 +30,6 @@
   "dependenciesComments": {
     "monaco-editor": "Articulate Markdown Editor property editor (not the mobile markdown editor), only required until Umbraco Core editor supports better markdown to HTML processing; see https://github.com/umbraco/Umbraco-CMS/issues/19500",
     "lit-html": "Required for client build due to use of lit keyed directive, can be droped when umbraco-cms/backoffice bumped to v17+ to bring in https://github.com/umbraco/Umbraco-CMS/pull/20963"
-  },
-  "pnpm": {
-    "overrides": {
-      "handlebars": ">=4.7.9",
-      "dompurify": ">=3.3.3",
-      "brace-expansion": ">=1.1.13",
-      "lodash@>=4.0.0 <=4.17.22": ">=4.17.23",
-      "diff@>=6.0.0 <8.0.3": ">=8.0.3",
-      "lodash@>=4.0.0 <=4.17.23": ">=4.18.0",
-      "lodash@<=4.17.23": ">=4.18.0",
-      "defu@<=6.1.4": ">=6.1.5",
-      "vite@>=7.0.0 <=7.3.1": ">=7.3.2"
-    },
-    "onlyBuiltDependencies": [
-      "esbuild",
-      "unrs-resolver"
-    ]
   },
   "dependencies": {
     "lit-html": "^3.3.2",
