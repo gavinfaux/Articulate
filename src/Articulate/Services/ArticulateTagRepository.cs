@@ -193,6 +193,10 @@ namespace Articulate.Services
                     SqlSyntax.GetQuotedColumnName("group") + " = @tagGroup",
                     new { tagName = tag, tagGroup, });
 
+                // The publishedDate property type ID is schema-level data that only changes on
+                // schema migration, so cache it for the app lifetime to avoid a DB round-trip on
+                // every tag-page cache miss.
+#if DEBUG
                 var publishedDatePropertyTypeId = Database.ExecuteScalar<int>(
                     $@"SELECT {Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.PropertyType}.id FROM {Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.ContentType} INNER JOIN {Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.PropertyType} ON {Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.PropertyType}.contentTypeId = {Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.ContentType}.nodeId WHERE {Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.ContentType}.alias = @contentTypeAlias AND {Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.PropertyType}.alias = @propertyTypeAlias",
                     new
@@ -200,6 +204,18 @@ namespace Articulate.Services
                         contentTypeAlias = ArticulateConstants.ContentType.ArticulatePost,
                         propertyTypeAlias = "publishedDate"
                     });
+#else
+                var publishedDatePropertyTypeId = (int)AppCaches.RuntimeCache.Get(
+                    $"{typeof(ArticulateTagRepository).Name}_publishedDatePropertyTypeId",
+                    () => Database.ExecuteScalar<int>(
+                        $@"SELECT {Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.PropertyType}.id FROM {Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.ContentType} INNER JOIN {Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.PropertyType} ON {Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.PropertyType}.contentTypeId = {Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.ContentType}.nodeId WHERE {Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.ContentType}.alias = @contentTypeAlias AND {Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.PropertyType}.alias = @propertyTypeAlias",
+                        new
+                        {
+                            contentTypeAlias = ArticulateConstants.ContentType.ArticulatePost,
+                            propertyTypeAlias = "publishedDate"
+                        }),
+                    TimeSpan.FromHours(1))!;
+#endif
 
                 Sql sqlContent = GetContentByTagQueryForPaging(
                     $"{Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.Node}.id, {Umbraco.Cms.Core.Constants.DatabaseSchema.Tables.PropertyData}.dateValue",
