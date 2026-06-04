@@ -48,15 +48,19 @@ namespace Articulate
                 }
             }
 
+            // Build the query string once to avoid allocating the same string multiple times
+            // (up to 3 times previously — once per conditional URL argument).
+            string queryString = queryStrings.ToString();
+
             pager = new PagerModel(
                 normalizedPageSize,
                 pageNumber - 1,
                 totalPages,
                 totalPages > pageNumber
-                    ? GetPagedUrl(baseUrl, pageNumber + 1, queryStrings.ToString())
+                    ? GetPagedUrl(baseUrl, pageNumber + 1, queryString)
                     : string.Empty,
-                pageNumber > 2 ? GetPagedUrl(baseUrl, pageNumber - 1, queryStrings.ToString()) :
-                pageNumber > 1 ? GetPagedUrl(baseUrl, null, queryStrings.ToString()) : string.Empty);
+                pageNumber > 2 ? GetPagedUrl(baseUrl, pageNumber - 1, queryString) :
+                pageNumber > 1 ? GetPagedUrl(baseUrl, null, queryString) : string.Empty);
 
             return true;
         }
