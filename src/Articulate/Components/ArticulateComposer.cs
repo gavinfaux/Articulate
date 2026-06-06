@@ -16,7 +16,6 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Umbraco.Cms.Core.Composing;
 using Umbraco.Cms.Core.Notifications;
 using Umbraco.Cms.Core.Routing;
-using Umbraco.Cms.Infrastructure.Migrations.Notifications;
 
 namespace Articulate.Components
 {
@@ -64,18 +63,22 @@ namespace Articulate.Components
 
             _ = services.AddOptions<ArticulateOptions>()
                 .BindConfiguration("Articulate");
+#if ARTICULATE_DEV_AUTOMATION
+            _ = services.AddOptions<ArticulateDevAutomationOptions>()
+                .BindConfiguration(ArticulateDevAutomationOptions.SectionName);
+#endif
 
             _ = builder.AddNotificationHandler<ContentSavingNotification, ContentSavingHandler>();
             _ = builder.AddNotificationHandler<ContentPublishingNotification, ContentPublishingHandler>();
+            _ = builder.AddNotificationHandler<ImportedPackageNotification, ArticulateAutoPublishHandler>();
+#if ARTICULATE_DEV_AUTOMATION
+            _ = builder.AddNotificationAsyncHandler<UmbracoApplicationStartedNotification, ArticulateDevAutomationBootstrapper>();
+#endif
             _ = builder.AddNotificationAsyncHandler<ContentSavedNotification, ArticulateRootContentLifecycleHandler>();
             _ = builder.AddNotificationAsyncHandler<ContentPublishedNotification, ArticulateRootContentLifecycleHandler>();
             _ = builder.AddNotificationHandler<ContentTypeSavingNotification, ContentTypeSavingHandler>();
             _ = builder.AddNotificationHandler<ContentCacheRefresherNotification, ContentCacheRefresherHandler>();
             _ = builder.AddNotificationHandler<DomainCacheRefresherNotification, DomainCacheRefresherHandler>();
-            _ = builder
-                .AddNotificationHandler<MigrationPlansExecutedNotification, ArticulateMigrationPlanExecutedHandler>();
-            _ = builder
-                .AddNotificationHandler<ImportedPackageNotification, ArticulateMigrationPlanExecutedHandler>();
 
             // Ensure MVC discovers controllers in the Articulate assembly.
             _ = services

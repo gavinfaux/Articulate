@@ -6,6 +6,7 @@
 - Views use modern Razor layout files with `_ViewStart.cshtml` and `_Layout.cshtml`
 - Theme views live under `App_Plugins/Articulate/Themes/Sample/Views/`
 - Theme assets live under `wwwroot/App_Plugins/Articulate/Themes/Sample/assets/`
+- When the sample package ships publishable content in `Packaging/package.zip`, it also serves as the canonical package-side opt-in example for the tiny auto-publish hook.
 
 The package registers itself with Articulate by contributing the `Sample` theme key through `IArticulateThemeDescriptorProvider`.
 

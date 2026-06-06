@@ -11,6 +11,7 @@ import { UmbTextStyles } from '@umbraco-cms/backoffice/style';
 import { ThemePickerService } from '../api/sdk.gen.js';
 import { formatApiError } from '../utils/error-utils.js';
 
+
 /**
  * A custom element for picking an Articulate theme.
  * @element theme-picker-element
@@ -113,11 +114,13 @@ export default class ThemePickerElement extends UmbElementMixin(UmbLitElement) i
     }
 
     return html`
-      <uui-select
-        .options=${this._themeSelectOptions}
-        .value=${this.value}
-        @change=${this._handleInput}
-        label="Select a theme"></uui-select>
+      <div class="theme-picker">
+        <uui-select
+          .options=${this._themeSelectOptions}
+          .value=${this.value}
+          @change=${this._handleInput}
+          label="Select a theme"></uui-select>
+      </div>
     `;
   }
 
@@ -129,6 +132,11 @@ export default class ThemePickerElement extends UmbElementMixin(UmbLitElement) i
   static override readonly styles = [
     UmbTextStyles,
     css`
+      .theme-picker {
+        display: grid;
+        gap: var(--uui-size-space-4);
+      }
+
       uui-select {
         width: 100%;
       }

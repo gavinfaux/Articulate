@@ -8,6 +8,7 @@ import { ThemeOptionsService } from '../api/sdk.gen.js';
 import { type IFormController, setFormError } from '../utils/form-utils.js';
 import { showUmbracoNotification } from '../utils/notification-utils.js';
 import { renderErrorMessage, renderHeaderActions } from '../utils/template-utils.js';
+import { getThemePreviewUrl, handleThemePreviewError } from '../utils/theme-preview-utils.js';
 import { BoxStyles, ErrorBoxStyles, FormStyles, HostStyles } from '../utils/style-utils.js';
 
 /**
@@ -256,23 +257,10 @@ export default class ThemeOptionsElement extends UmbLitElement implements IFormC
               tabindex="0">
               <img
                 class="theme-preview-img"
-                src="/App_Plugins/Articulate/BackOffice/assets/theme-${theme.toLowerCase()}.png"
+                src=${getThemePreviewUrl(theme)}
                 alt="${theme} theme preview"
                 loading="lazy"
-                @error=${(e: Event) => {
-                  const img = e.target as HTMLImageElement;
-                  img.style.display = 'none';
-
-                  const parent = img.parentElement;
-                  if (!parent) return;
-
-                  if (!parent.querySelector(':scope > .theme-fallback-initial')) {
-                    const span = document.createElement('span');
-                    span.className = 'theme-fallback-initial';
-                    span.textContent = theme.charAt(0).toUpperCase();
-                    parent.appendChild(span);
-                  }
-                }} />
+                @error=${(e: Event) => handleThemePreviewError(e, theme)} />
               <div slot="actions">
                 <uui-button
                   look="primary"
@@ -395,7 +383,7 @@ export default class ThemeOptionsElement extends UmbLitElement implements IFormC
       }
       .theme-preview-img {
         border-bottom: 1px solid var(--uui-color-border);
-        object-fit: none;
+        object-fit: contain;
         background-color: var(--uui-color-surface-alt);
         border-radius: var(--uui-border-radius);
         box-sizing: border-box;

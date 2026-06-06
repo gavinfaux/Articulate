@@ -117,6 +117,6 @@
 	<!-- Force minimum versions for vulnerable transitive dependencies -->
 	<ItemGroup>
         <PackageReference Include="Microsoft.Build.Tasks.Core" Version="17.8.43" PrivateAssets="All" />
-		<PackageReference Include="MailKit" Version="$(MailKitPackageVersion)" PrivateAssets="All" />
+		<PackageReference Include="MailKit" Version="$(MailKitPackageVersion)" />
 	</ItemGroup>
 </Project>

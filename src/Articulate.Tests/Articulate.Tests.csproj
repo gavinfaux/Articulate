@@ -6,7 +6,12 @@
     <UseArticulateUsings>true</UseArticulateUsings>
     <TestTfmsInParallel>false</TestTfmsInParallel>
     <UmbracoJsonSchemaGenerateEnabled>false</UmbracoJsonSchemaGenerateEnabled>
+    <IncludeArticulateDevAutomation Condition="'$(IncludeArticulateDevAutomation)' == ''">true</IncludeArticulateDevAutomation>
   </PropertyGroup>
+
+  <ItemGroup Condition="'$(IncludeArticulateDevAutomation)' != 'true'">
+    <Compile Remove="Services\ArticulateDevAutomationBootstrapperTests.cs" />
+  </ItemGroup>
 
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
@@ -28,6 +33,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Articulate\Articulate.csproj" />
+    <ProjectReference Include="..\Articulate.Theme.Sample\Articulate.Theme.Sample.csproj" />
   </ItemGroup>
 
   <ItemGroup>

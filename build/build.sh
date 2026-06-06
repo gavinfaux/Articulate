@@ -52,6 +52,16 @@ fi
 CLIENT_BUILD_VALUE=${ENABLE_CLIENT_BUILD:-$CLIENT_BUILD_DEFAULT}
 CLIENT_BUILD_PROPERTY="-p:EnableClientBuild=$CLIENT_BUILD_VALUE"
 PACK_SAMPLE_THEME_VALUE=${PACK_SAMPLE_THEME:-}
+INCLUDE_DEV_AUTOMATION_VALUE=${INCLUDE_ARTICULATE_DEV_AUTOMATION:-}
+if [[ -z "$INCLUDE_DEV_AUTOMATION_VALUE" ]]; then
+  if [[ "${CI:-}" == "true" || "${GITHUB_ACTIONS:-}" == "true" ]]; then
+    INCLUDE_DEV_AUTOMATION_VALUE=false
+  else
+    INCLUDE_DEV_AUTOMATION_VALUE=true
+  fi
+fi
+DEV_AUTOMATION_PROPERTY="-p:IncludeArticulateDevAutomation=$INCLUDE_DEV_AUTOMATION_VALUE"
+
 if [[ -n "${RUN_TESTS:-}" ]]; then
   RUN_TESTS_VALUE="$RUN_TESTS"
 elif [[ "${CI:-}" == "true" || "${GITHUB_ACTIONS:-}" == "true" ]]; then
@@ -81,8 +91,12 @@ export RestoreFallbackFolders=
 
 # --- 1) Clean the solution so Release/CI builds start fresh ---
 echo "1. Cleaning solution outputs..."
-if ! dotnet clean "$SOLUTION_PATH" -c "$CONFIGURATION" "${DOTNET_COMMON[@]}" "$CLIENT_BUILD_PROPERTY"; then
-  echo "Warning: dotnet clean failed" >&2
+if [[ "${FORCE_CLEAN:-false}" == "true" ]]; then
+  if ! dotnet clean "$SOLUTION_PATH" -c "$CONFIGURATION" "${DOTNET_COMMON[@]}" "$CLIENT_BUILD_PROPERTY"; then
+    echo "Warning: dotnet clean failed" >&2
+  fi
+else
+  echo "Skipping dotnet clean (FORCE_CLEAN not set). Set FORCE_CLEAN=true to force a clean."
 fi
 
 # --- 2) Solution-level restore ---
@@ -134,7 +148,7 @@ for proj in "${PACK_PROJECTS[@]}"; do
   echo "[pack] -> $(basename "$proj")"
   RESTORE_SWITCHES=(--no-restore)
   if ! dotnet pack -c "$CONFIGURATION" "$proj" "${RESTORE_SWITCHES[@]}" -o "$RELEASE_FOLDER" \
-    "${DOTNET_COMMON[@]}" -p:BuildInParallel=false "$CLIENT_BUILD_PROPERTY"; then
+    "${DOTNET_COMMON[@]}" -p:BuildInParallel=false "$CLIENT_BUILD_PROPERTY" "$DEV_AUTOMATION_PROPERTY"; then
     echo "dotnet pack failed for $proj" >&2
     exit 1
   fi

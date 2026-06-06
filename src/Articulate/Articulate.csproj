@@ -6,7 +6,17 @@
     <PackageId>Articulate.Core</PackageId>
     <UseArticulateUsings>true</UseArticulateUsings>
     <IsPackable>false</IsPackable>
+    <IncludeArticulateDevAutomation Condition="'$(IncludeArticulateDevAutomation)' == ''">true</IncludeArticulateDevAutomation>
   </PropertyGroup>
+
+  <PropertyGroup Condition="'$(IncludeArticulateDevAutomation)' == 'true'">
+    <DefineConstants>$(DefineConstants);ARTICULATE_DEV_AUTOMATION</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(IncludeArticulateDevAutomation)' != 'true'">
+    <Compile Remove="Services\ArticulateDevAutomationBootstrapper.cs" />
+    <Compile Remove="Options\ArticulateDevAutomationOptions.cs" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Umbraco.Cms.Web.Website" Version="$(UmbracoCmsPackageVersion)" />
@@ -22,7 +32,7 @@
 
   <ItemGroup Label="Force minimum versions">
     <PackageReference Include="System.Security.Cryptography.Xml" Version="$(SystemSecurityCryptographyXmlPackageVersion)" PrivateAssets="All" />
-    <PackageReference Include="OpenMcdf" Version="$(OpenMcdfPackageVersion)" PrivateAssets="All" />
+    <PackageReference Include="OpenMcdf" Version="$(OpenMcdfPackageVersion)" />
   </ItemGroup>
 
   <ItemGroup>

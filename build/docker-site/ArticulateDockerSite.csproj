@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk.Web">
   <PropertyGroup>
-    <TargetFrameworks>net10.0</TargetFrameworks>
+    <TargetFramework Condition="'$(TargetFramework)' == ''">net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <AssemblyName>ArticulateDockerSite</AssemblyName>
     <ArticulatePackageVersion Condition="'$(ArticulatePackageVersion)' == ''">6.0.0</ArticulatePackageVersion>
@@ -10,6 +10,5 @@
     <PackageReference Include="Umbraco.Cms" Version="$(UmbracoCmsPackageVersion)" />
     <PackageReference Include="Articulate" Version="$(ArticulatePackageVersion)" />
     <PackageReference Include="Articulate.Theme.Sample" Version="$(ArticulatePackageVersion)" />
-    <PackageReference Include="OpenMcdf" Version="$(OpenMcdfPackageVersion)" PrivateAssets="All" />
   </ItemGroup>
 </Project>

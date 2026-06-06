@@ -50,9 +50,9 @@ namespace Articulate.Services
                 throw new IOException($"A user theme with the name '{newThemeName}' already exists.");
             }
 
-            // Separate resources by type
-            var viewResources = GetThemeResourcesByType(articulateAssembly, themeName, "Views").ToList();
-            var assetResources = GetThemeResourcesByType(articulateAssembly, themeName, "assets").ToList();
+            // Separate resources by type (cached to avoid repeated manifest scans)
+            var viewResources = await GetThemeResourcesByTypeCachedAsync(articulateAssembly, themeName, "Views");
+            var assetResources = await GetThemeResourcesByTypeCachedAsync(articulateAssembly, themeName, "assets");
 
             if (viewResources.Count == 0 && assetResources.Count == 0)
             {
@@ -141,6 +141,23 @@ namespace Articulate.Services
                     var relativePath = normalizedResource[prefix.Length..];
                     return relativePath.StartsWith(typePrefix, StringComparison.OrdinalIgnoreCase);
                 });
+        }
+
+        // Cache manifest resource lookups per theme/type for a short duration to avoid repeated
+        // expensive GetManifestResourceNames scans on each CopyTheme request.
+        private async Task<List<string>> GetThemeResourcesByTypeCachedAsync(
+            Assembly assembly,
+            string themeName,
+            string resourceType)
+        {
+            var cacheKey = $"Articulate_ThemeResources_{themeName}_{resourceType}";
+
+            string[]? resources = await appCaches.RuntimeCache.GetCacheItemAsync(
+                cacheKey,
+                async () => GetThemeResourcesByType(assembly, themeName, resourceType).ToArray(),
+                TimeSpan.FromMinutes(5)) ?? Array.Empty<string>();
+
+            return resources.ToList();
         }
 
         private async Task ExtractResourcesAsync(

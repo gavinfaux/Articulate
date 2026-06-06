@@ -15,6 +15,7 @@ jobs:
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       RELEASE_FOLDER: build/Release
+      INCLUDE_ARTICULATE_DEV_AUTOMATION: false
 
     steps:
       - name: Checkout

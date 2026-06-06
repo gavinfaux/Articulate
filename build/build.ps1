@@ -59,6 +59,12 @@ else {
 }
 $clientBuildProperty = "-p:EnableClientBuild=$clientBuildValue"
 $packSampleTheme = ($env:PACK_SAMPLE_THEME -eq 'true') -or ([string]::IsNullOrEmpty($env:PACK_SAMPLE_THEME) -and -not $runningInCi)
+if ([string]::IsNullOrEmpty($env:INCLUDE_ARTICULATE_DEV_AUTOMATION)) {
+    $devAutomationValue = if ($runningInCi) { 'false' } else { 'true' }
+} else {
+    $devAutomationValue = $env:INCLUDE_ARTICULATE_DEV_AUTOMATION
+}
+$devAutomationProperty = "-p:IncludeArticulateDevAutomation=$devAutomationValue"
 $dotnetCommon = @("-v", "minimal")
 Write-Host "Using up to $cpu parallel MSBuild nodes"
 Write-Host "Build configuration: $Configuration"
@@ -78,8 +84,13 @@ dotnet --version
 
 # 1) Clean the solution to ensure release/CI builds start from a fresh slate
 Write-Host "1. Cleaning solution outputs..."
-& dotnet clean $SolutionPath -c $Configuration @dotnetCommon $clientBuildProperty
-if (-not $?) { Write-Host "Warning dotnet clean failed" }
+if ($env:FORCE_CLEAN -eq 'true') {
+    & dotnet clean $SolutionPath -c $Configuration @dotnetCommon $clientBuildProperty
+    if ($LASTEXITCODE -ne 0) { Write-Host "Warning dotnet clean failed" }
+}
+else {
+    Write-Host "Skipping dotnet clean (set FORCE_CLEAN=true to force a clean)"
+}
 
 # 2) Restore (solution-level)
 Write-Host "2. Restoring solution packages in parallel..."
@@ -125,7 +136,8 @@ if ($SupportsParallel) {
         $restoreArgs = @("--no-restore")
         $commonArgs = $using:dotnetCommon
         $clientBuildSwitch = $using:clientBuildProperty
-        & dotnet pack -c $using:Configuration $project @restoreArgs -o $using:ReleaseFolder @commonArgs "-p:BuildInParallel=false" $clientBuildSwitch
+        $devAutomationSwitch = $using:devAutomationProperty
+        & dotnet pack -c $using:Configuration $project @restoreArgs -o $using:ReleaseFolder @commonArgs "-p:BuildInParallel=false" $clientBuildSwitch $devAutomationSwitch
         if ($LASTEXITCODE -ne 0) { throw "dotnet pack failed for $project" }
     } -ThrottleLimit $packThrottle -ErrorVariable packErrors
     if ($packErrors) { throw "One or more pack operations failed: $($packErrors | Out-String)" }
@@ -133,7 +145,7 @@ if ($SupportsParallel) {
 else {
     foreach ($project in $projectsToPack) {
         Write-Host "[pack] -> $([IO.Path]::GetFileName($project))"
-        & dotnet pack -c $Configuration $project --no-restore -o $ReleaseFolder @dotnetCommon "-p:BuildInParallel=false" $clientBuildProperty
+        & dotnet pack -c $Configuration $project --no-restore -o $ReleaseFolder @dotnetCommon "-p:BuildInParallel=false" $clientBuildProperty $devAutomationProperty
         if ($LASTEXITCODE -ne 0) { throw "dotnet pack failed for $project" }
     }
 }

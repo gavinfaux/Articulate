@@ -28,12 +28,6 @@ namespace Articulate.Options
 
 
         /// <summary>
-        /// When true, Articulate content created during the installer is published automatically.
-        /// Default: false.
-        /// </summary>
-        public bool AutoPublishOnStartup { get; set; } = false;
-
-        /// <summary>
         /// Maximum number of bytes allowed for images entering Articulate import/editor flows.
         /// Default: 10 MB.
         /// </summary>
@@ -52,6 +46,13 @@ namespace Articulate.Options
         /// Default: false.
         /// </summary>
         public bool AllowUnsafeLocalExternalImageHostsInDevelopment { get; set; } = false;
+
+        /// <summary>
+        /// When true, Articulate may auto-publish contributed package content after package migration/import when the
+        /// contributing package ships publishable content in its embedded package.zip.
+        /// Default: false.
+        /// </summary>
+        public bool AutoPublishOnStartup { get; set; } = false;
 
     }
 

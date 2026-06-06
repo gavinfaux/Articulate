@@ -11,7 +11,11 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedHost;
 
     // Trust proxies from Docker network
+#if NET10_0_OR_GREATER
     options.KnownIPNetworks.Clear();
+#else
+    options.KnownNetworks.Clear();
+#endif
     options.KnownProxies.Clear();
 });
 
