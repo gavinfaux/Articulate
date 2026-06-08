@@ -60,6 +60,10 @@ namespace Articulate.Controllers
                 GetAuthorPostStats(root.RootBlogNode.Id, listNodeIds);
 
             var authorNodes = CurrentPage.Children().ToList();
+            // Hoist the invariant absolute root URL out of the per-author loop: Url(Absolute)
+            // resolves DNS/port from the current request and EnsureEndsWith allocates a new string;
+            // computing it once instead of once per author avoids N redundant allocations.
+            var rootAbsoluteUrl = root.RootBlogNode.Url(mode: UrlMode.Absolute).EnsureEndsWith('/');
             var authors = authorNodes
                 .Select(a =>
                 {
@@ -74,7 +78,7 @@ namespace Articulate.Controllers
                         Bio = a.Value<string>("authorBio") ?? string.Empty,
                         AuthorUrl = a.Value<string>("authorUrl").ToSafeHrefUrl(),
                         BlogUrl = a.Url(),
-                        AuthorRssUrl = root.RootBlogNode.Url(mode: UrlMode.Absolute).EnsureEndsWith('/') + "author/" + a.Id + "/rss",
+                        AuthorRssUrl = $"{rootAbsoluteUrl}author/{a.Id}/rss",
                         Image = image,
                         CroppedWideUrl = image?.GetCropUrl(cropAlias: "wide", preferFocalPoint: true, useCropDimensions: true) ?? string.Empty,
                         PostCount = stats.PostCount,

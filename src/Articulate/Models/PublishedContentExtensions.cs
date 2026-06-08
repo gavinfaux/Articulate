@@ -343,10 +343,11 @@ namespace Articulate.Models
         /// </summary>
         public static IHtmlContent AdvertiseWeblogApi(this IMasterModel model)
         {
-            var rsdUrl = model.RootBlogNode.Url(mode: UrlMode.Absolute).EnsureEndsWith('/') + "rsd/" +
-                         model.RootBlogNode.Id;
-            var manifestUrl = model.RootBlogNode.Url(mode: UrlMode.Absolute).EnsureEndsWith('/') + "wlwmanifest/" +
-                              model.RootBlogNode.Id;
+            // Compute the absolute root URL once; it is used for both rsdUrl and manifestUrl.
+            var rootUrl = model.RootBlogNode.Url(mode: UrlMode.Absolute).EnsureEndsWith('/');
+            var nodeId = model.RootBlogNode.Id;
+            var rsdUrl = rootUrl + "rsd/" + nodeId;
+            var manifestUrl = rootUrl + "wlwmanifest/" + nodeId;
 
             var rsdTag = new TagBuilder("link")
             {
