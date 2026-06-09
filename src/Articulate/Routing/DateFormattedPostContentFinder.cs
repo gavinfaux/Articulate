@@ -106,16 +106,12 @@ namespace Articulate.Routing
         {
             var stringDate = segments[segmentLength - 4] + segments[segmentLength - 3] +
                              segments[segmentLength - 2].TrimEnd('/');
-            try
-            {
-                postDate = DateTime.ParseExact(stringDate, "yyyy/MM/dd", CultureInfo.InvariantCulture);
-                return true;
-            }
-            catch (FormatException)
-            {
-                postDate = default;
-                return false;
-            }
+            return DateTime.TryParseExact(
+                stringDate,
+                "yyyy/MM/dd",
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.None,
+                out postDate);
         }
 
         private static string BuildRouteWithoutDateSegments(IPublishedRequestBuilder contentRequest, int segmentLength)
