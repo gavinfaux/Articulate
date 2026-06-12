@@ -65,14 +65,12 @@ namespace Articulate.Routing
         public bool TryMatch(PathString path, RouteValueDictionary routeValues, out ArticulateRootNodeCache? articulateRootNodeCache)
         {
             ConcurrentDictionary<ArticulateRouteTemplate, ArticulateRootNodeCache> routeCache = RouteCache;
-            var defaults = new RouteValueDictionary();
             RouteValueDictionary initialValues = new(routeValues);
 
             foreach (KeyValuePair<ArticulateRouteTemplate, ArticulateRootNodeCache> item in routeCache)
             {
                 RouteValueDictionary matchedValues = new(initialValues);
-                var templateMatcher = new TemplateMatcher(item.Key.RouteTemplate, defaults);
-                if (!templateMatcher.TryMatch(path, matchedValues))
+                if (!item.Key.Matcher.TryMatch(path, matchedValues))
                 {
                     continue;
                 }
