@@ -14,14 +14,6 @@ export type CreatePostResponse = {
     url: string;
 };
 
-export enum EventMessageTypeModel {
-    DEFAULT = 'Default',
-    INFO = 'Info',
-    ERROR = 'Error',
-    SUCCESS = 'Success',
-    WARNING = 'Warning'
-}
-
 /**
  * Represents the options for exporting blog data in BlogML format.
  */
@@ -122,19 +114,13 @@ export type ImportResponse = {
     completed: boolean;
 };
 
-export type NotificationHeaderModel = {
-    message: string;
-    category: string;
-    type: EventMessageTypeModel;
-};
-
 export type ProblemDetails = {
     type?: string | null;
     title?: string | null;
     status?: number | null;
     detail?: string | null;
     instance?: string | null;
-    [key: string]: unknown | string | null | string | null | number | null | string | null | string | null | undefined;
+    [key: string]: unknown;
 };
 
 /**
@@ -161,9 +147,7 @@ export type ValidationProblemDetails = {
     errors: {
         [key: string]: Array<string>;
     };
-    [key: string]: unknown | string | null | string | null | number | null | string | null | string | null | {
-        [key: string]: Array<string>;
-    } | undefined;
+    [key: string]: unknown;
 };
 
 export type PostBlogmlExportData = {
@@ -335,6 +319,10 @@ export type PostBlogmlImportFileData = {
 
 export type PostBlogmlImportFileErrors = {
     /**
+     * Bad Request
+     */
+    400: ProblemDetails;
+    /**
      * The resource is protected and requires an authentication token
      */
     401: unknown;
@@ -397,6 +385,10 @@ export type PostEditorsMarkdownPostErrors = {
      * Unprocessable Content
      */
     422: ValidationProblemDetails;
+    /**
+     * Internal Server Error
+     */
+    500: ProblemDetails;
 };
 
 export type PostEditorsMarkdownPostError = PostEditorsMarkdownPostErrors[keyof PostEditorsMarkdownPostErrors];
