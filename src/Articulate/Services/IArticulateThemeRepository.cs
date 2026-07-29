@@ -28,10 +28,9 @@ namespace Articulate.Services
         /// the static-web-assets path with the CORS header giscus's cross-origin iframe needs.
         /// </remarks>
         /// <param name="themeName">Theme key (e.g. <c>"Material"</c>).</param>
-        /// <param name="assetRelativePath">Path under <c>assets/</c> (currently always <c>giscus.css</c>).</param>
         /// <param name="request">The live request (LB-correct base URL is resolved from its scheme/host/path base).</param>
         /// <returns>The absolute asset URL, or <c>null</c> when <paramref name="themeName"/> is empty/whitespace.</returns>
-        public string? GetThemeAssetUrl(string themeName, string assetRelativePath, HttpRequest request);
+        public string? GetThemeAssetUrl(string themeName, HttpRequest request);
 
         /// <summary>
         /// Copies an existing embedded theme to the user themes directory.
