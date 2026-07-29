@@ -81,9 +81,7 @@ function checkGroup(name, fn) {
 	groupFails = [];
 	fn();
 	const total = checks - start;
-	if (groupFails.length === 0) {
-		console.log(`  ok   ${name} (${total})`);
-	} else {
+	if (groupFails.length > 0) {
 		console.log(`  FAIL ${name} (${groupFails.length}/${total} failed)`);
 		for (const line of groupFails) console.log(line);
 	}
