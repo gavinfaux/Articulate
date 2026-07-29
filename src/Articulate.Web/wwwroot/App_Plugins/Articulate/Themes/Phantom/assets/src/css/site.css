@@ -528,3 +528,31 @@ img.thumb {
         margin-left: 0px;
     }
 }
+
+/* === Giscus comments container ===
+ * Covers the wrapper partial (.giscus, #comments) and the iframe giscus creates
+ * (.giscus-frame). color-scheme supports giscus's preferred_color_scheme fallback.
+ * Per-theme giscus.css (auto-served when DataTheme is empty) recolours the iframe.
+ */
+.giscus,
+.giscus-frame,
+#comments {
+    width: 100%;
+    max-width: 100%;
+    border: 0;
+    display: block;
+    color-scheme: light dark;
+}
+
+#comments {
+    margin: 2rem 0 0;
+    min-height: 300px;
+}
+
+#comments noscript {
+    display: block;
+    padding: 1rem;
+    border: 1px solid currentColor;
+    border-radius: 4px;
+    opacity: 0.7;
+}
