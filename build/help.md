@@ -1,0 +1,148 @@
+# Articulate build utility
+
+```
+dotnet run --file build/build.cs -- <command> [options]
+dotnet run --file build/build.cs -- help [command]
+```
+
+Use `build/build.cs` for repo-owned build and Docker tasks.
+
+| Command         | Purpose                                                               |
+|-----------------|-----------------------------------------------------------------------|
+| `build`         | Restore, build, optionally test, and pack a package lane.             |
+| `client`        | Install, typecheck, build, and lint one Backoffice client.           |
+| `site`          | Run `Articulate.Tests.Website` for one lane.                         |
+| `docker-build`  | Build the Docker image for one lane.                                 |
+| `docker-dev`    | Start the development Docker stack for one lane.                     |
+| `docker-prod`   | Restart one lane in Production mode; skip smoke with `--skip-smoke`. |
+| `docker-status` | Inspect a running lane and verify packaged Backoffice assets.        |
+| `docker-test`   | Run Docker validation for one or both lanes.                         |
+| `docker-ca`     | Export and trust the local Caddy root CA.                            |
+
+Commands that accept `--lane` default to `v17`. `docker-test` defaults to
+`--lane all`. `help <command>` below shows command-specific options.
+
+### build
+
+Restore, build, optionally test, and pack a package lane.
+
+```
+dotnet run --file build/build.cs -- build [options]
+```
+
+| Option                | Default                                | Notes                                                                  |
+|-----------------------|----------------------------------------|------------------------------------------------------------------------|
+| `--lane`              | `v17`                                  | `v17` (Articulate 6.x for Umbraco 17) or `v18` (Articulate 7.x for Umbraco 18). |
+| `--configuration`     | `BUILD_CONFIGURATION` or `Release`      | `Debug` or `Release`.                                                   |
+| `--tests` (flag or `true\|false`) | `RUN_TESTS`, else `true` in CI         | Run `dotnet test` after build. Bare flag forces `true`.                |
+| `--client true\|false`            | `ENABLE_CLIENT_BUILD`, else CI/Release | Build the Backoffice client (Vite + tsc). Bare flag falls back to env. |
+| `--sample` (flag or `true\|false`) | `PACK_SAMPLE_THEME`, else local only   | Pack `Articulate.Theme.Sample`. Bare flag forces `true`.               |
+| `--clean`             | `false`                                | Wipe `src/**/bin`, `src/**/obj`, `build/ClientAssets`, `Client/node_modules` before building. |
+
+Packages land in `build/<Configuration>/<lane>/`.
+
+### client
+
+```
+dotnet run --file build/build.cs -- client [--lane v17|v18]
+```
+
+Runs `pnpm install` at the client workspace root, then `pnpm run check`,
+`pnpm run build`, and `pnpm run lint` for the selected Backoffice client lane.
+
+### site
+
+```
+dotnet run --file build/build.cs -- site [options]
+```
+
+| Option             | Default | Notes                                                      |
+|--------------------|---------|------------------------------------------------------------|
+| `--lane`           | `v17`   | v17 or v18.                                                |
+| `--configuration`  | `Debug` | Build configuration.                                       |
+| `--reset`          | `false` | Delete the site's `umbraco/` data folder first.             |
+
+This command remains attached to the running site until stopped.
+
+### docker-build
+
+```
+dotnet run --file build/build.cs -- docker-build [--lane v17|v18] [--tag image:tag]
+```
+
+| Option   | Default                   | Notes                      |
+|----------|---------------------------|----------------------------|
+| `--lane` | `v17`                     | v17 or v18.                |
+| `--tag`  | `articulate-local:<lane>` | Image tag.                 |
+
+Missing `Articulate` and sample-theme packages are built first.
+
+### docker-dev
+
+```
+dotnet run --file build/build.cs -- docker-dev [options]
+```
+
+| Option       | Default | Notes                                                          |
+|--------------|---------|----------------------------------------------------------------|
+| `--lane`     | `v17`   | v17 or v18.                                                    |
+| `--reset`    | `false` | Run `docker compose down -v` first.                             |
+| `--skip-smoke`| `false`| Skip sample publish/confirm checks.                            |
+
+Without `--skip-smoke`, `ARTICULATE_DEV_AUTOMATION_CLIENT_SECRET` is checked (defaults applied if unset).
+Missing packages are built automatically.
+
+### docker-prod
+
+```
+dotnet run --file build/build.cs -- docker-prod [--lane v17|v18] [--skip-smoke]
+```
+
+Checks `ARTICULATE_DEV_AUTOMATION_CLIENT_SECRET` (defaults applied if unset). Reuses the selected lane's
+volumes, then runs front-end and theme smoke checks (skipped if `--skip-smoke` is set).
+
+### docker-status
+
+```
+dotnet run --file build/build.cs -- docker-status [--lane v17|v18]
+```
+
+Shows Compose status and verifies the packaged Backoffice bundle and
+`umbraco-package.json` inside the running container.
+
+### docker-test
+
+```
+dotnet run --file build/build.cs -- docker-test [options]
+```
+
+| Option        | Default | Notes                                                    |
+|---------------|---------|----------------------------------------------------------|
+| `--lane`      | `all`   | `v17`, `v18`, or `all`.                                  |
+| `--keep`      | `false` | Leave successful stacks running.                         |
+| `--skip-smoke`| `false` | Skip API, front-end, and theme smoke tests.              |
+
+Each lane builds without Docker cache, starts in development mode, and, unless
+smoke is skipped, publishes/confirms content then restarts in Production mode
+for front-end and theme checks.
+
+Without `--skip-smoke`, `ARTICULATE_DEV_AUTOMATION_CLIENT_SECRET` is checked (defaults applied if unset).
+
+### docker-ca
+
+```
+dotnet run --file build/build.cs -- docker-ca
+```
+
+Keeps local CA trust on the same canonical runner as the other Docker commands.
+
+---
+
+## Conventions
+
+- Both lanes share project `bin`/`obj` and static-web-asset paths; always run
+  full-solution lane builds sequentially with `-m:1`. The CLI enforces this.
+- `ARTICULATE_PACKAGE_VERSION` is a CI/release override. v17 uses NBGV; v18
+  derives from `version-v18.txt` plus NBGV metadata.
+- CLI helpers `Bool(value?)` accept `true`/`false`; missing values fall back to
+  the underlying environment variable.

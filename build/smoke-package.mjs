@@ -63,23 +63,30 @@ let checks = 0;
 let failures = 0;
 const failuresByPackage = new Map();
 
+let groupFails = [];
+
 function expect(label, condition, detail = "") {
 	checks++;
-	if (condition) {
-		console.log(`  ok  ${label}`);
-	} else {
-		console.log(`  FAIL ${label}${detail ? "  " + detail : ""}`);
-		failures++;
-		failuresByPackage.set(
-			currentPackage,
-			(failuresByPackage.get(currentPackage) ?? 0) + 1,
-		);
-	}
+	if (condition) return;
+	failures++;
+	failuresByPackage.set(
+		currentPackage,
+		(failuresByPackage.get(currentPackage) ?? 0) + 1,
+	);
+	groupFails.push(`      FAIL ${label}${detail ? "  " + detail : ""}`);
 }
 
 function checkGroup(name, fn) {
-	console.log(`\n${currentPackage} :: ${name}`);
+	const start = checks;
+	groupFails = [];
 	fn();
+	const total = checks - start;
+	if (groupFails.length === 0) {
+		console.log(`  ok   ${name} (${total})`);
+	} else {
+		console.log(`  FAIL ${name} (${groupFails.length}/${total} failed)`);
+		for (const line of groupFails) console.log(line);
+	}
 }
 
 let currentPackage = "";
@@ -93,6 +100,7 @@ function checkPackage(file) {
 	// We need a temp dir to extract DLLs/etc. for resource inspection.
 	const work = mkdtempSync(join(tmpdir(), "smoke-pkg-"));
 
+	console.log(`\n${currentPackage}`);
 	try {
 		if (isSymbols) {
 			checkSymbols(file, entries, names, work);
@@ -200,7 +208,13 @@ function checkMainPackage(file, entries, names, work) {
 		expect("manifest present", !!manifest);
 		if (!manifest) return;
 		unzipExtract(file, [manifest], work);
-		const json = JSON.parse(readFileSync(join(work, manifest), "utf8"));
+		let json;
+		try {
+			json = JSON.parse(readFileSync(join(work, manifest), "utf8"));
+		} catch (err) {
+			expect("manifest is valid JSON", false, `(${err.message})`);
+			return;
+		}
 		expect(
 			"manifest has id",
 			typeof json.id === "string" && json.id.length > 0,
@@ -286,6 +300,7 @@ function checkMainPackage(file, entries, names, work) {
 		];
 		for (const [theme, css, js] of required) {
 			const base = `App_Plugins/Articulate/Themes/${theme}/assets/dist/`;
+			const staticBase = `staticwebassets/App_Plugins/Articulate/Themes/${theme}/assets/`;
 			expect(
 				`${theme} theme css present`,
 				names.some(
@@ -304,6 +319,48 @@ function checkMainPackage(file, entries, names, work) {
 					),
 				);
 			}
+			expect(
+				`${theme} theme source assets present`,
+				names.some((n) => n.startsWith(`${staticBase}src/`)),
+			);
+			expect(
+				`${theme} theme vendor assets present`,
+				names.some((n) => n.startsWith(`${staticBase}vendor/`)),
+			);
+		}
+	});
+
+	checkGroup("Giscus theme stylesheets", () => {
+		// Each shipped theme includes an opt-in giscus.css that recolours the
+		// comment iframe. Assert they ship as static web assets (the serving
+		// path) and as Articulate.Theme:// embedded resources (the theme-copy
+		// path consumed by ArticulateThemeRepository, which normalises the
+		// OS-native separators in RecursiveDir).
+		const themes = ["Material", "Mini", "Phantom", "VAPOR"];
+		for (const theme of themes) {
+			const staticPath = `staticwebassets/App_Plugins/Articulate/Themes/${theme}/assets/giscus.css`;
+			expect(
+				`${theme} giscus.css shipped as static web asset`,
+				names.includes(staticPath),
+			);
+		}
+		const dllPath = "lib/net10.0/Articulate.Web.dll";
+		if (!names.includes(dllPath)) {
+			expect("Articulate.Web.dll extractable for giscus check", false);
+			return;
+		}
+		unzipExtract(file, [dllPath], work);
+		const text = readFileSync(join(work, dllPath)).toString("latin1");
+		// Manifest resource names use OS-native separators in RecursiveDir, so
+		// accept either '/' or '\' (Windows builds embed backslashes).
+		for (const theme of themes) {
+			const re = new RegExp(
+				`Articulate\\.Theme://Themes[/\\\\]${theme}[/\\\\]assets[/\\\\]giscus\\.css`,
+			);
+			expect(
+				`${theme} giscus.css embedded as Articulate.Theme:// resource`,
+				re.test(text),
+			);
 		}
 	});
 
@@ -404,6 +461,10 @@ function checkSamplePackage(file, entries, names, work) {
 		expect(
 			"site.js present",
 			sampleAssets.some((n) => n.endsWith("/assets/js/site.js")),
+		);
+		expect(
+			"giscus.css present",
+			sampleAssets.some((n) => n.endsWith("/assets/giscus.css")),
 		);
 	});
 }
