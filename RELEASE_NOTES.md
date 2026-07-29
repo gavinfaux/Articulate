@@ -1,5 +1,58 @@
 # Articulate Release Notes
 
+## Version 7.0.0
+
+- Adds the Articulate 7 line for Umbraco 18 on .NET 10.
+- Uses the Umbraco 18 Backoffice client and native OpenAPI endpoints.
+- Adds Giscus as a comment provider alongside Disqus. The required settings
+  (`DataRepo`, `DataRepoId`, `DataCategory`, `DataCategoryId`) live globally
+  under `Articulate:Comments:Giscus` in `appsettings.json`. A blog can
+  override these with per-blog values on the Articulate doc type (in the
+  **blog** tab, after `disqusShortname`). Partial overrides are ignored —
+  the blog falls through to appsettings entirely. If a blog has both a
+  Disqus shortname and Giscus options set, Disqus wins; clear the shortname
+  to enable Giscus.
+- Optional Giscus settings: `ScriptSrc`, `DataMapping`, `DataStrict`,
+  `DataReactionsEnabled`, `DataEmitMetadata`, `DataInputPosition`,
+  `DataTheme`, `DataLang`, `DataLoading` (set `DataLoading` to `"lazy"` to
+  defer the iframe until the user scrolls near). All optional settings are
+  appsettings-only — no per-blog override.
+- `DataTheme` defaults to empty, which **auto-derives** from the active
+  theme's `giscus.css` via the `/articulate/giscus-theme/{theme}` endpoint.
+  This is a CORS-enabled proxy of
+  `/App_Plugins/Articulate/Themes/{theme}/assets/giscus.css`. It works
+  uniformly for built-in, copied, and RCL themes. Set `DataTheme` to a
+  Giscus keyword (`light`, `dark`, `preferred_color_scheme`) or to an
+  absolute CSS URL to override. See the
+  [Comments wiki page](https://github.com/Shazwazza/Articulate/wiki/Comments#matching-giscus-to-your-theme)
+  for the Giscus iframe CORS and localhost story.
+- A new migration (`AddGiscusPerBlogProperties`) adds the four per-blog
+  Giscus properties to the existing `blog` tab of the Articulate doc type
+  for existing installs. Existing blogs get empty values, so behavior is
+  unchanged until the fields or matching appsettings are populated.
+- The rendered Giscus script tag now includes `crossorigin="anonymous"` and
+  `async` (matching the canonical snippet from giscus.app).
+- Ships separately from Articulate 6 because the Umbraco 17 and 18
+  extension points are not binary-compatible.
+- Hardens external-image imports against SSRF, malicious redirects, and
+  HTTPS-downgrade attacks.
+
+### Breaking changes
+
+> [!WARNING]
+> **Dev harness only — does not affect production installs.**
+>
+> - The Docker dev harness binds Caddy to `127.0.0.1` by default instead of
+>   `0.0.0.0`. If you relied on reaching the dev site from another machine
+>   on your LAN, set `CADDY_BIND_IP=0.0.0.0` in your environment.
+>   Client browser resolves on `https://localhost:{port}`, not `127.0.0.1`
+
+## Version 6.1.0
+
+- Targets Umbraco 17.4 and later on .NET 10.
+- Continues the Articulate 6 package line for supported Umbraco 17 sites.
+- Articulate 6.0 remains the previous compatibility line for Umbraco 16 and 17.
+
 ## Version 6.0.0
 
 ### Breaking Changes
@@ -7,11 +60,10 @@
 > [!WARNING]
 > **Platform requirements**
 >
-> - Minimum Umbraco version: **16.5.1** on .NET 9
 > - Minimum Umbraco version: **17.4.0** on .NET 10
 > - Umbraco 15 and earlier are no longer supported by Articulate 6
 
-- Articulate 6 is multi-targeted for `net9.0` and `net10.0`, supporting Umbraco 16 and 17 from a single package.
+- Articulate 6 targets `net10.0` and supports Umbraco 16 and 17 from a single package.
 - The old split-project/package layout has been consolidated. Articulate now ships as the main package with the backoffice extension and static assets included.
 - Markdown conversion services were renamed:
   - `IMarkdownToHtmlConverter` -> `IArticulateMarkdownConverter`
@@ -25,17 +77,17 @@
 
 For Razor themes migrating from older Articulate versions, helper usage should move from `Html` and `Url` helpers to model extension methods:
 
-| Old (v5) | New (v6) |
-| --- | --- |
-| `@Html.AuthorCitation(Model)` | `@Model.AuthorCitation()` |
-| `@Html.RenderOpenSearch(Model)` | `@Model.RenderOpenSearch()` |
-| `@Html.RssFeed(Model)` | `@Model.RssFeed()` |
-| `@Html.MetaTags(Model)` | `@Model.MetaTags()` |
+| Old (v5)                               | New (v6)                           |
+|----------------------------------------|------------------------------------|
+| `@Html.AuthorCitation(Model)`          | `@Model.AuthorCitation()`          |
+| `@Html.RenderOpenSearch(Model)`        | `@Model.RenderOpenSearch()`        |
+| `@Html.RssFeed(Model)`                 | `@Model.RssFeed()`                 |
+| `@Html.MetaTags(Model)`                | `@Model.MetaTags()`                |
 | `@Html.GoogleAnalyticsTracking(Model)` | `@Model.GoogleAnalyticsTracking()` |
-| `@Html.TagCloud(...)` | `@Model.Tags.TagCloud(...)` |
-| `@Html.ThemedPartialAsync("Name")` | `@await Html.PartialAsync("Name")` |
-| `@Url.ArticulateSearchUrl(Model)` | `@Model.ArticulateSearchUrl()` |
-| `@Url.ArticulateRssUrl(Model)` | `@Model.ArticulateRssUrl()` |
+| `@Html.TagCloud(...)`                  | `@Model.Tags.TagCloud(...)`        |
+| `@Html.ThemedPartialAsync("Name")`     | `@await Html.PartialAsync("Name")` |
+| `@Url.ArticulateSearchUrl(Model)`      | `@Model.ArticulateSearchUrl()`     |
+| `@Url.ArticulateRssUrl(Model)`         | `@Model.ArticulateRssUrl()`        |
 
 URL-bearing background images in Razor themes should be assigned through CSS custom properties with `ToCssBackgroundImageVariableValue(...)`. The legacy `BlogLogoCss` and `BlogBannerCss` APIs remain as obsolete compatibility shims, but are scheduled for removal in a future release.
 
