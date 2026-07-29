@@ -17,6 +17,9 @@
      -->
     <EnableClientBuild>false</EnableClientBuild>
 
+    <!-- TinyMCE.Umbraco override -->
+    <UseTinyMceUmbraco>false</UseTinyMceUmbraco>
+
     <!-- Build configuration override -->
     <!--<BUILD_CONFIGURATION>Debug</BUILD_CONFIGURATION>-->
   </PropertyGroup>
