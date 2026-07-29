@@ -44,7 +44,11 @@ namespace Articulate.MetaWeblog
         IArticulateRichTextRenderer richTextRenderer,
         ArticulateTagService articulateTagService,
         BackOfficeAuthService backOfficeAuthService,
-        IHtmlSanitizer htmlSanitizer)
+        IHtmlSanitizer htmlSanitizer
+#if UMBRACO_18_OR_GREATER
+        , IIdKeyMap idKeyMap
+#endif
+    )
         : IMetaWeblogProvider
     {
         private static readonly char[] _commaSeparator = [','];
@@ -267,11 +271,11 @@ namespace Articulate.MetaWeblog
             Post[] recent =
             [
                 .. contentService
-                    .GetPagedChildrenCompat(
+                    .EnumeratePagedChildren(
                         node.Id,
                         0,
                         numberOfPosts,
-                        out var _,
+                        out _,
                         ordering: Ordering.By("updateDate", Direction.Descending))
                     .Select(FromContent)
             ];
@@ -416,6 +420,9 @@ namespace Articulate.MetaWeblog
                 dataTypeService,
                 propertyEditors,
                 jsonSerializer,
+#if UMBRACO_18_OR_GREATER
+                idKeyMap,
+#endif
                 logger);
 
             var tags = SplitTagValue(post.mt_keywords);
@@ -428,6 +435,9 @@ namespace Articulate.MetaWeblog
                 dataTypeService,
                 propertyEditors,
                 jsonSerializer,
+#if UMBRACO_18_OR_GREATER
+                idKeyMap,
+#endif
                 logger);
 
             await SaveAndPublishIfNeededAsync(content, user, post, publish).ConfigureAwait(false);
@@ -651,6 +661,9 @@ namespace Articulate.MetaWeblog
                 postid = post.Id.ToString(CultureInfo.InvariantCulture),
                 dateCreated = publishedDate is { } value && value != default
                     ? value
+                    : post.CreateDate != default
+                        ? post.CreateDate
+                        : post.UpdateDate,
                 mt_excerpt = post.GetValue<string>("excerpt"),
                 link = string.Empty,
                 mt_keywords = string.Join(',', tags),

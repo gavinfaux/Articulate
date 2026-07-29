@@ -177,7 +177,7 @@ namespace Articulate.ImportExport
 
         private void AddBlogAuthors(IContent authorsNode, BlogMLDocument blogMlDoc)
         {
-            foreach (IContent author in contentService.GetPagedChildrenCompat(authorsNode.Id, 0, int.MaxValue, out _))
+            foreach (IContent author in contentService.EnumeratePagedChildren(authorsNode.Id, 0, int.MaxValue, out _))
             {
                 var blogMlAuthor = new BlogMLAuthor
                 {
@@ -203,7 +203,7 @@ namespace Articulate.ImportExport
             IContent[] posts;
             do
             {
-                posts = contentService.GetPagedChildrenCompat(
+                posts = contentService.EnumeratePagedChildren(
                     archiveNode.Id,
                     pageIndex,
                     pageSize,
