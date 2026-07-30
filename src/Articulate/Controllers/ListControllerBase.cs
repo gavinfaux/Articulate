@@ -2,6 +2,7 @@
 using Articulate.Options;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Umbraco.Cms.Core.Models.PublishedContent;
@@ -20,8 +21,7 @@ namespace Articulate.Controllers
         ICompositeViewEngine compositeViewEngine,
         IUmbracoContextAccessor umbracoContextAccessor,
         IPublishedUrlProvider publishedUrlProvider,
-        IPublishedValueFallback publishedValueFallback,
-        IOptions<ArticulateCommentsOptions> commentsOptions)
+        IPublishedValueFallback publishedValueFallback)
         : RenderController(logger, compositeViewEngine, umbracoContextAccessor)
     {
         protected IUmbracoContextAccessor UmbracoContextAccessor { get; } = umbracoContextAccessor;
@@ -30,7 +30,10 @@ namespace Articulate.Controllers
 
         protected IPublishedValueFallback PublishedValueFallback { get; } = publishedValueFallback;
 
-        protected ArticulateCommentsOptions CommentsOptions { get; } = commentsOptions.Value;
+        // Resolved on access so the constructor stays compatible with subclasses written before the comments feature.
+        protected ArticulateCommentsOptions CommentsOptions =>
+            HttpContext?.RequestServices.GetRequiredService<IOptions<ArticulateCommentsOptions>>().Value
+            ?? new ArticulateCommentsOptions();
 
         protected PagerModel CreateRequestedPager(IMasterModel masterModel, int? p)
             => new(

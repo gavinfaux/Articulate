@@ -1,13 +1,11 @@
 #nullable enable
 using Articulate.Attributes;
-using Articulate.Options;
 using Articulate.Routing;
 using Articulate.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.PublishedCache;
 using Umbraco.Cms.Core.Routing;
@@ -32,10 +30,9 @@ namespace Articulate.Controllers
         IPublishedValueFallback publishedValueFallback,
         UmbracoHelper umbracoHelper,
         ArticulateTagService articulateTagService,
-        ITagQuery tagQuery,
-        IOptions<ArticulateCommentsOptions> commentsOptions)
+        ITagQuery tagQuery)
         : ListControllerBase(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider,
-            publishedValueFallback, commentsOptions)
+            publishedValueFallback)
     {
         /// <summary>
         /// Used to render the category listing (virtual node)

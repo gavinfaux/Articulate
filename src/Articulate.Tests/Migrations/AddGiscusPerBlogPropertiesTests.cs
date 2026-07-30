@@ -17,7 +17,7 @@ namespace Articulate.Tests.Migrations
         [Test]
         public void GiscusProperties_ExposesFourExpectedAliases()
         {
-            string[] aliases = System.Array.ConvertAll(AddGiscusPerBlogProperties.GiscusProperties, p => p.Alias);
+            string[] aliases = Array.ConvertAll(AddGiscusPerBlogProperties.GiscusProperties, p => p.Alias);
 
             Assert.That(aliases, Is.EquivalentTo(new[]
             {
@@ -31,7 +31,7 @@ namespace Articulate.Tests.Migrations
         [Test]
         public void GiscusProperties_SortOrdersAreSequentialAndUnique()
         {
-            int[] sortOrders = System.Array.ConvertAll(AddGiscusPerBlogProperties.GiscusProperties, p => p.SortOrder);
+            int[] sortOrders = Array.ConvertAll(AddGiscusPerBlogProperties.GiscusProperties, p => p.SortOrder);
 
             Assert.That(sortOrders, Is.Unique);
             Assert.That(sortOrders, Is.Ordered);
@@ -40,10 +40,10 @@ namespace Articulate.Tests.Migrations
         [Test]
         public void GiscusProperties_KeysAreUniqueAndNonEmpty()
         {
-            System.Guid[] keys = System.Array.ConvertAll(AddGiscusPerBlogProperties.GiscusProperties, p => p.Key);
+            Guid[] keys = Array.ConvertAll(AddGiscusPerBlogProperties.GiscusProperties, p => p.Key);
 
             Assert.That(keys, Is.Unique);
-            Assert.That(keys, Has.All.Not.EqualTo(System.Guid.Empty));
+            Assert.That(keys, Has.All.Not.EqualTo(Guid.Empty));
         }
 
         [Test]
@@ -162,7 +162,7 @@ namespace Articulate.Tests.Migrations
 
             await sut.RunAsync();
 
-            Assert.That(blogGroup.PropertyTypes?.Count() ?? 0, Is.EqualTo(0));
+            Assert.That(blogGroup.PropertyTypes?.Count ?? 0, Is.EqualTo(0));
             contentTypeService.Verify(x => x.UpdateAsync(It.IsAny<IContentType>(), It.IsAny<Guid>()), Times.Never);
         }
 

@@ -1,47 +1,20 @@
 #nullable enable
-using Articulate;
 using Articulate.Options;
 using NUnit.Framework;
-using Provider = Articulate.ArticulateConstants.Comments.Provider;
 
 namespace Articulate.Tests.Models
 {
+    /// <summary>
+    /// Tests <see cref="MasterModel.ResolveGiscusRequired"/>.
+    /// The override picks blog-doc values over appsettings values when all four Giscus fields are populated.
+    /// It falls through to appsettings when any field is empty.
+    /// Provider priority (Disqus wins over Giscus) lives in the Razor view as an <c>if/else if</c> chain on <c>IsDisqusEnabled</c> / <c>IsGiscusEnabled</c>.
+    /// View tests cover that logic.
+    /// </summary>
     [TestFixture]
     public class ArticulateCommentsProviderResolutionTests
     {
-        [Test]
-        public void ResolveProvider_ReturnsNone_WhenNoProviderIsConfigured()
-        {
-            Provider result = MasterModel.ResolveProvider(disqusShortNameSet: false, giscusConfigured: false);
-
-            Assert.That(result, Is.EqualTo(Provider.None));
-        }
-
-        [Test]
-        public void ResolveProvider_ReturnsGiscus_WhenOnlyGiscusIsConfigured()
-        {
-            Provider result = MasterModel.ResolveProvider(disqusShortNameSet: false, giscusConfigured: true);
-
-            Assert.That(result, Is.EqualTo(Provider.Giscus));
-        }
-
-        [Test]
-        public void ResolveProvider_ReturnsDisqus_WhenOnlyDisqusIsConfigured()
-        {
-            Provider result = MasterModel.ResolveProvider(disqusShortNameSet: true, giscusConfigured: false);
-
-            Assert.That(result, Is.EqualTo(Provider.Disqus));
-        }
-
-        [Test]
-        public void ResolveProvider_ReturnsDisqus_WhenBothProvidersAreConfigured()
-        {
-            Provider result = MasterModel.ResolveProvider(disqusShortNameSet: true, giscusConfigured: true);
-
-            Assert.That(result, Is.EqualTo(Provider.Disqus));
-        }
-
-        private static readonly GiscusCommentsOptions Appsettings = new()
+        private static readonly GiscusCommentsOptions _appsettings = new()
         {
             DataRepo = "app/repo",
             DataRepoId = "R_app",
@@ -52,7 +25,7 @@ namespace Articulate.Tests.Models
         [Test]
         public void ResolveGiscusRequired_UsesAppsettings_WhenAllDocValuesAreEmpty()
         {
-            (string Repo, string RepoId, string Category, string CategoryId) result = MasterModel.ResolveGiscusRequired(string.Empty, string.Empty, string.Empty, string.Empty, Appsettings);
+            (string Repo, string RepoId, string Category, string CategoryId) result = MasterModel.ResolveGiscusRequired(string.Empty, string.Empty, string.Empty, string.Empty, _appsettings);
 
             Assert.That(result, Is.EqualTo(("app/repo", "R_app", "app/cat", "DIC_app")));
         }
@@ -61,7 +34,7 @@ namespace Articulate.Tests.Models
         public void ResolveGiscusRequired_UsesDocValues_WhenAllFourArePopulated()
         {
             (string Repo, string RepoId, string Category, string CategoryId) result = MasterModel.ResolveGiscusRequired(
-                "blog/repo", "R_blog", "blog/cat", "DIC_blog", Appsettings);
+                "blog/repo", "R_blog", "blog/cat", "DIC_blog", _appsettings);
 
             Assert.That(result, Is.EqualTo(("blog/repo", "R_blog", "blog/cat", "DIC_blog")));
         }
@@ -75,7 +48,7 @@ namespace Articulate.Tests.Models
             string docRepo, string docRepoId, string docCategory, string docCategoryId)
         {
             (string Repo, string RepoId, string Category, string CategoryId) result = MasterModel.ResolveGiscusRequired(
-                docRepo, docRepoId, docCategory, docCategoryId, Appsettings);
+                docRepo, docRepoId, docCategory, docCategoryId, _appsettings);
 
             Assert.That(result, Is.EqualTo(("app/repo", "R_app", "app/cat", "DIC_app")));
         }

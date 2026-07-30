@@ -1,9 +1,7 @@
 #nullable enable
-using Articulate.Options;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.Routing;
 using Umbraco.Cms.Core.Web;
@@ -21,10 +19,9 @@ namespace Articulate.Controllers
         IUmbracoContextAccessor umbracoContextAccessor,
         IPublishedUrlProvider publishedUrlProvider,
         IPublishedValueFallback publishedValueFallback,
-        UmbracoHelper umbracoHelper,
-        IOptions<ArticulateCommentsOptions> commentsOptions)
+        UmbracoHelper umbracoHelper)
         : ListControllerBase(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider,
-            publishedValueFallback, commentsOptions)
+            publishedValueFallback)
     {
         /// <summary>
         /// Override and declare a NonAction so that we get routed to the Index action with the optional page route

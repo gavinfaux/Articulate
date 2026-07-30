@@ -1,7 +1,5 @@
 #nullable enable
 
-using Articulate.Services;
-
 namespace Articulate.Options
 {
     /// <summary>
@@ -82,25 +80,11 @@ namespace Articulate.Options
         /// active comment provider — e.g. by the BlogML importer, which warns when a source
         /// file contains comments that giscus (having no import endpoint) cannot migrate.
         /// </summary>
-        public bool IsFullyConfigured()
+        internal bool IsFullyConfigured()
             => !string.IsNullOrWhiteSpace(DataRepo)
             && !string.IsNullOrWhiteSpace(DataRepoId)
             && !string.IsNullOrWhiteSpace(DataCategory)
             && !string.IsNullOrWhiteSpace(DataCategoryId);
-
-        /// <summary>
-        /// Resolves the giscus <c>data-theme</c> with operator-first precedence:
-        /// <list type="number">
-        /// <item>An explicit, non-empty <paramref name="explicitTheme"/> (keyword or URL) always wins.</item>
-        /// <item>Otherwise the active theme's <paramref name="themeAssetUrl"/> is used when non-null,
-        /// so giscus injects the per-theme stylesheet into its iframe.</item>
-        /// <item>Otherwise giscus's built-in palette applies.</item>
-        /// </list>
-        /// Pure static; the caller resolves <paramref name="themeAssetUrl"/> from the live request
-        /// (LB-correct) via <see cref="IArticulateThemeRepository.GetThemeAssetUrl"/>.
-        /// </summary>
-        public static string ResolveGiscusTheme(string explicitTheme, string? themeAssetUrl)
-            => !string.IsNullOrEmpty(explicitTheme) ? explicitTheme : (themeAssetUrl ?? "preferred_color_scheme");
 
         /// <summary>
         /// Computes the <c>Access-Control-Allow-Origin</c> + <c>Vary</c> response headers
@@ -117,7 +101,7 @@ namespace Articulate.Options
         /// case-insensitive, exact-equality. A null or empty list means "deny everything
         /// cross-origin" — same-origin / no-Origin callers still receive <c>*</c>.
         /// </param>
-        public static CorsHeaderDecision ResolveCorsHeaders(string? requestOrigin, IReadOnlyList<string?>? allowedOrigins)
+        internal static CorsHeaderDecision ResolveCorsHeaders(string? requestOrigin, IReadOnlyList<string?>? allowedOrigins)
         {
             if (string.IsNullOrEmpty(requestOrigin))
             {
@@ -147,5 +131,5 @@ namespace Articulate.Options
     /// reflected from the request, so shared caches cannot serve one origin's allow-list
     /// to another origin's request.
     /// </summary>
-    public sealed record CorsHeaderDecision(string? AllowOrigin, bool Vary);
+    internal sealed record CorsHeaderDecision(string? AllowOrigin, bool Vary);
 }

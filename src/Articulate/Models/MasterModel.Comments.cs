@@ -31,18 +31,11 @@ namespace Articulate.Models
             }
         }
 
-        private ArticulateConstants.Comments.Provider? _commentsProvider;
-
-        public ArticulateConstants.Comments.Provider CommentsProvider
-        {
-            get
-            {
-                _commentsProvider ??= ResolveProvider(IsDisqusEnabled, IsGiscusEnabled);
-                return _commentsProvider.Value;
-            }
-        }
-
-        public bool IsCommentsEnabled => CommentsProvider != ArticulateConstants.Comments.Provider.None;
+        /// <summary>
+        /// True when Disqus or Giscus is configured for this model. Razor partials use this
+        /// as the gate for rendering any comments UI.
+        /// </summary>
+        public bool IsCommentsEnabled => IsDisqusEnabled || IsGiscusEnabled;
 
         public string GiscusScriptSrc
             => field ??= CommentsOptions.Giscus.ScriptSrc;
@@ -96,16 +89,6 @@ namespace Articulate.Models
             !string.IsNullOrWhiteSpace(GiscusCategory) &&
             !string.IsNullOrWhiteSpace(GiscusCategoryId);
 
-        internal static ArticulateConstants.Comments.Provider ResolveProvider(bool disqusShortNameSet, bool giscusConfigured)
-        {
-            if (disqusShortNameSet)
-            {
-                return ArticulateConstants.Comments.Provider.Disqus;
-            }
-
-            return giscusConfigured ? ArticulateConstants.Comments.Provider.Giscus : ArticulateConstants.Comments.Provider.None;
-        }
-
         /// <summary>
         /// Resolves the four required Giscus fields (repo, repo id, category, category id)
         /// as an all-or-nothing override: if all four doc-type values are populated they win,
@@ -143,6 +126,7 @@ namespace Articulate.Models
             return true;
         }
 
+        // Populated from the options binding in the controller's ctor.
         public ArticulateCommentsOptions CommentsOptions { get; }
 
     }

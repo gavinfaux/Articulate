@@ -1,10 +1,8 @@
 #nullable enable
 using Articulate.Attributes;
-using Articulate.Options;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.Routing;
 using Umbraco.Cms.Core.Web;
@@ -21,10 +19,9 @@ namespace Articulate.Controllers
         IUmbracoContextAccessor umbracoContextAccessor,
         IPublishedUrlProvider publishedUrlProvider,
         IPublishedValueFallback publishedValueFallback,
-        IArticulateSearcher articulateSearcher,
-        IOptions<ArticulateCommentsOptions> commentsOptions)
+        IArticulateSearcher articulateSearcher)
         : ListControllerBase(logger, compositeViewEngine, umbracoContextAccessor, publishedUrlProvider,
-            publishedValueFallback, commentsOptions)
+            publishedValueFallback)
     {
         /// <summary>
         /// Used to render the search result listing (virtual node)

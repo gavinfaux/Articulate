@@ -24,7 +24,7 @@ namespace Articulate.Services
         private const string EmbeddedResourceRoot = "Articulate.Theme://";
 
         /// <inheritdoc/>
-        public string? GetThemeAssetUrl(string themeName, HttpRequest request)
+        public string GetThemeAssetUrl(string themeName, HttpRequest request)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(themeName);
             ArgumentNullException.ThrowIfNull(request);

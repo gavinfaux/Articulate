@@ -2,6 +2,7 @@
 using Articulate.Options;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Umbraco.Cms.Core.Cache;
@@ -26,11 +27,15 @@ namespace Articulate.Controllers
         IUmbracoContextAccessor umbracoContextAccessor,
         UmbracoHelper umbracoHelper,
         AppCaches appCaches,
-        IPublishedValueFallback publishedValueFallback,
-        IOptions<ArticulateCommentsOptions> commentsOptions)
+        IPublishedValueFallback publishedValueFallback)
         : RenderController(logger, compositeViewEngine, umbracoContextAccessor)
     {
         private AppCaches AppCaches { get; } = appCaches;
+
+        // Resolved on access so the constructor stays compatible with user subclasses.
+        private ArticulateCommentsOptions CommentsOptions =>
+            HttpContext?.RequestServices.GetRequiredService<IOptions<ArticulateCommentsOptions>>().Value
+            ?? new ArticulateCommentsOptions();
 
         /// <inheritdoc/>
         public override IActionResult Index()
@@ -41,7 +46,7 @@ namespace Articulate.Controllers
                 return NotFound();
             }
 
-            var root = new MasterModel(CurrentPage, publishedValueFallback, commentsOptions.Value);
+            var root = new MasterModel(CurrentPage, publishedValueFallback, CommentsOptions);
 
             // Check if theme has custom Authors.cshtml view before building the listing model.
             if (!EnsurePhysicalViewExists("Authors"))
@@ -86,7 +91,7 @@ namespace Articulate.Controllers
                 })
                 .ToList();
 
-            var model = new AuthorDirectoryModel(CurrentPage, publishedValueFallback, commentsOptions.Value)
+            var model = new AuthorDirectoryModel(CurrentPage, publishedValueFallback, CommentsOptions)
             {
                 Authors = authors
             };
