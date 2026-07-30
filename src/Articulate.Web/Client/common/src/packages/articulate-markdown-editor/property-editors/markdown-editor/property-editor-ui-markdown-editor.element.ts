@@ -1,4 +1,3 @@
-import { type UmbInputMarkdownElement } from '@umbraco-cms/backoffice/markdown-editor';
 import { html, customElement, property, state } from '@umbraco-cms/backoffice/external/lit';
 import { UmbLitElement } from '@umbraco-cms/backoffice/lit-element';
 import type {
@@ -7,6 +6,7 @@ import type {
 } from '@umbraco-cms/backoffice/property-editor';
 import type { UUIModalSidebarSize } from '@umbraco-cms/backoffice/external/uui';
 
+import '@umbraco-cms/backoffice/markdown-editor';
 import { UmbChangeEvent } from '@umbraco-cms/backoffice/event';
 import { UMB_VALIDATION_EMPTY_LOCALIZATION_KEY, UmbFormControlMixin } from '@umbraco-cms/backoffice/validation';
 
@@ -48,8 +48,8 @@ export class ArticulatePropertyEditorUIMarkdownEditorElement
     this._overlaySize = config.getValueByAlias('overlaySize') ?? 'small';
   }
 
-  #onChange(event: Event & { target: UmbInputMarkdownElement }) {
-    this.value = event.target.value as string;
+  #onChange(event: Event & { target: { value: string } }) {
+    this.value = event.target.value;
     this.dispatchEvent(new UmbChangeEvent());
   }
 
