@@ -150,17 +150,36 @@ function checkMainPackage(file, entries, names, work) {
 			"depends on Umbraco.Cms.Api.Management",
 			/<dependency id="Umbraco\.Cms\.Api\.Management"/.test(nuspec),
 		);
-		// Modern .NET 8+ static web assets emit `<contentFiles>` only when the
-		// package ships legacy contentFiles/any/{tfm}/... files. The newer
-		// staticwebassets/ root layout doesn't declare contentFiles, so accept
-		// either as a valid sign that the static web assets pipeline ran.
-		const hasContentFiles = /<contentFiles>/.test(nuspec);
+		// Expect the modern staticwebassets/ root layout. Legacy content/
+		// and contentFiles/any/{tfm}/ were the dual-pack leak fixed in the
+		// v18 build pipeline — keep them out.
 		const hasStaticWebAssets = names.some((n) =>
 			n.startsWith("staticwebassets/"),
 		);
+		const legacyContent = names.filter(
+			(n) => n === "content" || n.startsWith("content/"),
+		);
+		const legacyContentFiles = names.filter((n) =>
+			/^contentFiles\/any\/[^/]+\//.test(n),
+		);
 		expect(
-			"declares contentFiles or ships staticwebassets/",
-			hasContentFiles || hasStaticWebAssets,
+			"ships staticwebassets/ (modern SDK layout)",
+			hasStaticWebAssets,
+			hasStaticWebAssets ? "" : "(no staticwebassets/ entries)",
+		);
+		expect(
+			"no legacy content/ at package root",
+			legacyContent.length === 0,
+			legacyContent.length
+				? `(found ${legacyContent.length}: ${legacyContent.slice(0, 3).join(", ")})`
+				: "",
+		);
+		expect(
+			"no contentFiles/any/{tfm}/ dual-pack leak",
+			legacyContentFiles.length === 0,
+			legacyContentFiles.length
+				? `(found ${legacyContentFiles.length}: ${legacyContentFiles.slice(0, 3).join(", ")})`
+				: "",
 		);
 	});
 
