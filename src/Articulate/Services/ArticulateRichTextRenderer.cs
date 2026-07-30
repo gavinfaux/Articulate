@@ -10,7 +10,7 @@ using Umbraco.Cms.Core.Web;
 
 namespace Articulate.Services
 {
-    public class ArticulateRichTextRenderer(
+    internal class ArticulateRichTextRenderer(
         IUmbracoContextAccessor umbracoContextAccessor,
         IJsonSerializer jsonSerializer,
         ILogger<ArticulateRichTextRenderer> logger)

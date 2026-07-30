@@ -7,7 +7,7 @@ namespace Articulate.Swagger.V18
     /// <summary>
     /// Configures named <see cref="OpenApiOptions"/> for the Articulate management API document in Umbraco 18+.
     /// </summary>
-    public class ArticulateSwaggerOptions
+    internal class ArticulateSwaggerOptions
         : IConfigureNamedOptions<OpenApiOptions>
     {
         /// <summary>
