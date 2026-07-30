@@ -49,7 +49,7 @@
 
 ## Version 6.1.0
 
-- Targets Umbraco 17.4 and later on .NET 10.
+- Targets Umbraco 17.5.3 and later on .NET 10.
 - Continues the Articulate 6 package line for supported Umbraco 17 sites.
 - Articulate 6.0 remains the previous compatibility line for Umbraco 16 and 17.
 
