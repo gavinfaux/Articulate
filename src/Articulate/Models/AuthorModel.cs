@@ -23,6 +23,7 @@ namespace Articulate.Models
             ArticulateCommentsOptions? commentsOptions = null)
             : base(content, pager, listItems, publishedValueFallback, commentsOptions)
         {
+            ArgumentNullException.ThrowIfNull(content);
             PostCount = postCount;
             _image = new Lazy<MediaWithCrops?>(() => Unwrap().Value<MediaWithCrops>("authorImage"), true);
 
