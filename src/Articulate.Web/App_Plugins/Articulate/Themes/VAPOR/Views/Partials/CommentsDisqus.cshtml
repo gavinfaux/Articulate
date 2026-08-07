@@ -1,7 +1,6 @@
 @model PostModel
 @inject IArticulateThemeRepository ThemeRepository
 
-@* Disqus wins when both are configured (release notes 7.0.0). *@
 @if (Model.IsDisqusEnabled)
 {
     <div id="disqus_thread">
