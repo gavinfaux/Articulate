@@ -301,11 +301,6 @@ export default defineConfig(({ mode }: { mode: string }) => {
       minify: isProd ? 'esbuild' : false,
       cssMinify: isProd ? 'lightningcss' : false,
     },
-    oxc: {
-      decorator: {
-        legacy: true,
-      },
-    },
     plugins: [sideCarAssetsPlugin(), versioningPlugin(), umbracoPackagePlugin()],
   };
 });
