@@ -141,7 +141,7 @@ release notes for the loopback-binding change.
 
 Both v17 and v18 run on the same `localhost` authority but different ports.
 Browser cookies are domain-scoped (port is ignored), so the default Umbraco
-back-office cookie (`UMB_UCONTEXT` in v17.4 / v18.0.0-rc3, plus the new OAuth
+back-office cookie (`UMB_UCONTEXT` in Umbraco 17 and 18, plus the new OAuth
 cookies `umbAccessToken` / `umbRefreshToken` / `umbPkceCode` in v17.3+) would
 normally clash and log you out of one lane when signing into the other.
 

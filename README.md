@@ -36,7 +36,7 @@ Supporting all the features you'd want in a blogging platform:
 
 Back up your site, database, and media before upgrading.
 
-On Umbraco 16 or 17, install [TinyMCE.Umbraco](https://github.com/ProWorksCorporation/TinyMCE-Umbraco) before first run to keep TinyMCE as your rich-text editor. Articulate migrates `Umbraco.RichText` to TipTap on first boot; the TinyMCE package must be present before that step.
+On Umbraco 17 or 18, install [TinyMCE.Umbraco](https://github.com/ProWorksCorporation/TinyMCE-Umbraco) before first run to keep TinyMCE as your rich-text editor. Articulate migrates `Umbraco.RichText` to TipTap on first boot; the TinyMCE package must be present before that step.
 
 See [Installation](https://github.com/Shazwazza/Articulate/wiki/Installation) and [Upgrading Articulate](https://github.com/Shazwazza/Articulate/wiki/Upgrading) for version selection, editor migration, BlogML guidance, and post-upgrade checks.
 
