@@ -79,7 +79,6 @@ async Task<int> BuildAsync(Opts o)
     var testSiteData = Path.Combine(Env.Repo, "src", "Articulate.Tests.Website", "umbraco");
     if (clean && !inCi)
     {
-        await Run("pnpm", new[] { "--workspace-concurrency=1", "-r", "run", "clean" }, cwd: clientRoot);
         DeleteDir(Path.Combine(clientRoot, "node_modules"));
         DeleteDir(Path.Combine(clientRoot, "v17", "node_modules"));
         DeleteDir(Path.Combine(clientRoot, "v18", "node_modules"));
