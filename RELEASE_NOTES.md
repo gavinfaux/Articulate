@@ -13,11 +13,25 @@
   behavior until Giscus is configured.
 - Hardens external-image imports against SSRF, malicious redirects, and
   HTTPS-downgrade attacks.
+- Custom `IArticulateThemeRepository` implementations must implement
+  `GetThemeAssetUrl(...)`.
 
 ## Version 7.0.0
 
 - Targets Umbraco 17.5.3 and later on .NET 10.
 - Continues the Articulate 7 package line for supported Umbraco 17 sites.
+- Adds Giscus as a comment provider alongside Disqus. Configure the required
+  repository and category values under `Articulate:Comments:Giscus`; existing
+  blogs can override them on the blog document type. Disqus remains selected
+  when a valid Disqus shortname is present.
+- Giscus can follow the active theme's comment styling or use a configured
+  built-in or hosted theme. See the [Comments wiki page](https://github.com/Shazwazza/Articulate/wiki/Comments).
+- Existing installs receive the per-blog Giscus fields without changing
+  behavior until Giscus is configured.
+- Hardens external-image imports against SSRF, malicious redirects, and
+  HTTPS-downgrade attacks.
+- Custom `IArticulateThemeRepository` implementations must implement
+  `GetThemeAssetUrl(...)`.
 - Articulate 6.0 remains the compatibility line for Umbraco 16 and 17.
 
 ## Version 6.0.0

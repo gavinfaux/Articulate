@@ -60,6 +60,13 @@ namespace Articulate.Models
         /// Gets the number of items per page.
         /// </summary>
         public int PageSize { get; }
+
+        /// <summary>
+        /// Gets the legacy Disqus short name.
+        /// </summary>
+        [Obsolete("Use the concrete MasterModel/PostModel property, or configure Giscus comments.")]
+        public string DisqusShortName { get; }
+
         /// <summary>
         /// Gets the custom RSS feed URL.
         /// </summary>
