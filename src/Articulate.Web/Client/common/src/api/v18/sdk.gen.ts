@@ -30,7 +30,7 @@ export class BlogMlService {
             }
         });
     }
-    
+
     public static getBlogmlExportDisqus<ThrowOnError extends boolean = false>(options?: Options<GetBlogmlExportDisqusData, ThrowOnError>) {
         return (options?.client ?? client).get<GetBlogmlExportDisqusResponses, GetBlogmlExportDisqusErrors, ThrowOnError>({
             security: [{ scheme: 'bearer', type: 'http' }],
@@ -38,7 +38,7 @@ export class BlogMlService {
             ...options
         });
     }
-    
+
     public static postBlogmlImport<ThrowOnError extends boolean = false>(options: Options<PostBlogmlImportData, ThrowOnError>) {
         return (options.client ?? client).post<PostBlogmlImportResponses, PostBlogmlImportErrors, ThrowOnError>({
             security: [{ scheme: 'bearer', type: 'http' }],
@@ -50,7 +50,7 @@ export class BlogMlService {
             }
         });
     }
-    
+
     public static deleteBlogmlImportFile<ThrowOnError extends boolean = false>(options?: Options<DeleteBlogmlImportFileData, ThrowOnError>) {
         return (options?.client ?? client).delete<DeleteBlogmlImportFileResponses, DeleteBlogmlImportFileErrors, ThrowOnError>({
             security: [{ scheme: 'bearer', type: 'http' }],
@@ -58,7 +58,7 @@ export class BlogMlService {
             ...options
         });
     }
-    
+
     public static postBlogmlImportFile<ThrowOnError extends boolean = false>(options: Options<PostBlogmlImportFileData, ThrowOnError>) {
         return (options.client ?? client).post<PostBlogmlImportFileResponses, PostBlogmlImportFileErrors, ThrowOnError>({
             ...formDataBodySerializer,
@@ -100,7 +100,7 @@ export class ThemeOptionsService {
             }
         });
     }
-    
+
     public static getThemeDefault<ThrowOnError extends boolean = false>(options?: Options<GetThemeDefaultData, ThrowOnError>) {
         return (options?.client ?? client).get<GetThemeDefaultResponses, GetThemeDefaultErrors, ThrowOnError>({
             security: [{ scheme: 'bearer', type: 'http' }],
