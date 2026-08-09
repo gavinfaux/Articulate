@@ -9,16 +9,13 @@ allowBuilds:
   unrs-resolver: true
 blockExoticSubdeps: true
 overrides:
-  "@umbraco-ui/uui": "2.0.1"
+  "@umbraco-ui/uui": "2.0.2"
   dompurify@<=3.4.12: ^3.4.13
   uuid: "14.0.1"
   js-yaml@<4.3.1: ^4.3.1
   brace-expansion@<=5.0.8: ^5.0.9
-  nanoid@<3.3.17: ^3.3.17
-  postcss@<=8.5.22: ^8.5.23
+  nanoid@<3.3.16: ^3.3.16
+  postcss@<=8.5.24: ^8.5.25
 minimumReleaseAgeExclude:
   - dompurify@3.4.13
-  - postcss@8.5.23
-  - brace-expansion@5.0.9
-  - js-yaml@4.3.1
-  - nanoid@3.3.17
+  - '@umbraco-cms/backoffice@17.6.0 || 18.1.0'

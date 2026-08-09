@@ -29,9 +29,9 @@
   "devDependencies": {
     "@hey-api/openapi-ts": "^0.97.3",
     "@types/node": "^24",
-    "@umbraco-cms/backoffice": "^17.5.3",
+    "@umbraco-cms/backoffice": "^17.6.0",
     "chalk": "^5.6.2",
     "node-fetch": "^3.3.2",
-    "vite": "^8.0.16"
+    "vite": "^8.2.0"
   }
 }

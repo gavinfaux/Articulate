@@ -30,27 +30,27 @@
     "lit-html": "Direct dependency for the keyed directive used by the BlogML importer."
   },
   "dependencies": {
-    "lit-html": "^3.3.2"
+    "lit-html": "^3.3.3"
   },
   "devDependencies": {
-    "@eslint/compat": "^2.0.3",
-    "@typescript-eslint/eslint-plugin": "^8.60.1",
-    "@typescript-eslint/parser": "^8.60.1",
-    "@umbraco-cms/backoffice": "^18.0.2",
+    "@eslint/compat": "^2.1.0",
+    "@typescript-eslint/eslint-plugin": "^8.65.0",
+    "@typescript-eslint/parser": "^8.65.0",
+    "@umbraco-cms/backoffice": "^18.1.0",
     "cross-env": "^10.1.0",
     "esbuild": "^0.28.0",
-    "eslint": "^9.39.4",
+    "eslint": "^9.39.5",
     "eslint-config-prettier": "^10.1.8",
     "eslint-import-resolver-typescript": "^4.4.5",
     "eslint-plugin-import": "^2.32.0",
-    "eslint-plugin-lit": "^2.2.1",
+    "eslint-plugin-lit": "^2.3.1",
     "eslint-plugin-lit-a11y": "^5.1.1",
     "eslint-plugin-prettier": "^5.5.6",
     "eslint-plugin-wc": "^3.1.0",
-    "globals": "^17.5.0",
-    "lightningcss": "^1.32.0",
-    "prettier": "^3.8.3",
-    "typescript": "^5.9.3",
-    "vite": "^8.0.16"
+    "globals": "^17.9.0",
+    "lightningcss": "^1.33.0",
+    "prettier": "^3.9.6",
+    "typescript": "^6.0.3",
+    "vite": "^8.2.0"
   }
 }
