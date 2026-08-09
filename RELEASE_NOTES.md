@@ -1,57 +1,24 @@
 # Articulate Release Notes
 
-## Version 7.0.0
+## Version 8.0.0
 
-- Adds the Articulate 7 line for Umbraco 18 on .NET 10.
-- Uses the Umbraco 18 Backoffice client and native OpenAPI endpoints.
-- Adds Giscus as a comment provider alongside Disqus. The required settings
-  (`DataRepo`, `DataRepoId`, `DataCategory`, `DataCategoryId`) live globally
-  under `Articulate:Comments:Giscus` in `appsettings.json`. A blog can
-  override these with per-blog values on the Articulate doc type (in the
-  **blog** tab, after `disqusShortname`). Partial overrides are ignored —
-  the blog falls through to appsettings entirely. If a blog has both a
-  Disqus shortname and Giscus options set, Disqus wins; clear the shortname
-  to enable Giscus.
-- Optional Giscus settings: `ScriptSrc`, `DataMapping`, `DataStrict`,
-  `DataReactionsEnabled`, `DataEmitMetadata`, `DataInputPosition`,
-  `DataTheme`, `DataLang`, `DataLoading` (set `DataLoading` to `"lazy"` to
-  defer the iframe until the user scrolls near). All optional settings are
-  appsettings-only — no per-blog override.
-- `DataTheme` defaults to empty, which **auto-derives** from the active
-  theme's `giscus.css` via the `/articulate/giscus-theme/{theme}` endpoint.
-  This is a CORS-enabled proxy of
-  `/App_Plugins/Articulate/Themes/{theme}/assets/giscus.css`. It works
-  uniformly for built-in, copied, and RCL themes. Set `DataTheme` to a
-  Giscus keyword (`light`, `dark`, `preferred_color_scheme`) or to an
-  absolute CSS URL to override. See the
-  [Comments wiki page](https://github.com/Shazwazza/Articulate/wiki/Comments#matching-giscus-to-your-theme)
-  for the Giscus iframe CORS and localhost story.
-- A new migration (`AddGiscusPerBlogProperties`) adds the four per-blog
-  Giscus properties to the existing `blog` tab of the Articulate doc type
-  for existing installs. Existing blogs get empty values, so behavior is
-  unchanged until the fields or matching appsettings are populated.
-- The rendered Giscus script tag now includes `crossorigin="anonymous"` and
-  `async` (matching the canonical snippet from giscus.app).
-- Ships separately from Articulate 6 because the Umbraco 17 and 18
-  extension points are not binary-compatible.
+- Adds the Articulate 8 line for Umbraco 18 on .NET 10.
+- Adds Giscus as a comment provider alongside Disqus. Configure the required
+  repository and category values under `Articulate:Comments:Giscus`; existing
+  blogs can override them on the blog document type. Disqus remains selected
+  when a valid Disqus shortname is present.
+- Giscus can follow the active theme's comment styling or use a configured
+  built-in or hosted theme. See the [Comments wiki page](https://github.com/Shazwazza/Articulate/wiki/Comments).
+- Existing installs receive the per-blog Giscus fields without changing
+  behavior until Giscus is configured.
 - Hardens external-image imports against SSRF, malicious redirects, and
   HTTPS-downgrade attacks.
 
-### Breaking changes
-
-> [!WARNING]
-> **Dev harness only — does not affect production installs.**
->
-> - The Docker dev harness binds Caddy to `127.0.0.1` by default instead of
->   `0.0.0.0`. If you relied on reaching the dev site from another machine
->   on your LAN, set `CADDY_BIND_IP=0.0.0.0` in your environment.
->   Client browser resolves on `https://localhost:{port}`, not `127.0.0.1`
-
-## Version 6.1.0
+## Version 7.0.0
 
 - Targets Umbraco 17.5.3 and later on .NET 10.
-- Continues the Articulate 6 package line for supported Umbraco 17 sites.
-- Articulate 6.0 remains the previous compatibility line for Umbraco 16 and 17.
+- Continues the Articulate 7 package line for supported Umbraco 17 sites.
+- Articulate 6.0 remains the compatibility line for Umbraco 16 and 17.
 
 ## Version 6.0.0
 
@@ -60,15 +27,11 @@
 > [!WARNING]
 > **Platform requirements**
 >
-> - Minimum Umbraco version: **17.4.0** on .NET 10
+> - Minimum Umbraco version: **16.5.1** on .NET 9
 > - Umbraco 15 and earlier are no longer supported by Articulate 6
 
-- Articulate 6 targets `net10.0` and supports Umbraco 16 and 17 from a single package.
+- Articulate 6 is multi-targeted for `net9.0` and `net10.0`, supporting Umbraco 16 and 17 from a single package.
 - The old split-project/package layout has been consolidated. Articulate now ships as the main package with the backoffice extension and static assets included.
-- Markdown conversion services were renamed:
-  - `IMarkdownToHtmlConverter` -> `IArticulateMarkdownConverter`
-  - `MarkdownService` -> `ArticulateMarkdownService`
-- Obsolete model constructors that accepted `IVariationContextAccessor` have been removed.
 - `ListModel` now requires an explicit `listItems` collection. The older fallback behavior that discovered posts through Umbraco services is no longer available.
 - Built-in Articulate themes can still be copied, but copied themes cannot use a built-in theme name as the destination.
 - `redirectArchive` no longer controls the `/authors/` directory. Themes that provide `Authors.cshtml` render the authors directory; themes without it redirect `/authors/` to the blog root.
@@ -90,14 +53,6 @@ For Razor themes migrating from older Articulate versions, helper usage should m
 | `@Url.ArticulateRssUrl(Model)`         | `@Model.ArticulateRssUrl()`        |
 
 URL-bearing background images in Razor themes should be assigned through CSS custom properties with `ToCssBackgroundImageVariableValue(...)`. The legacy `BlogLogoCss` and `BlogBannerCss` APIs remain as obsolete compatibility shims, but are scheduled for removal in a future release.
-
-### Internal API Updates
-
-These changes mainly affect custom extensions that inherit from Articulate classes:
-
-- `DateFormattedUrlProvider` now inherits from `NewDefaultUrlProvider`.
-- `DateFormattedPostContentFinder` now inherits from `ContentFinderByUrlNew`.
-- `MigrateDataTypeConfigurationBase` now inherits from `AsyncMigrationBase`, and custom migrations should implement async migration methods.
 
 ### Notes
 

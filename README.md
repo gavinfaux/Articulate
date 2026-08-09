@@ -11,22 +11,9 @@ _❤️ If you use and like Articulate please consider [becoming a GitHub Sponso
 
 ## Installation
 
-Install the version of Articulate that matches your Umbraco installation:
-
-| Umbraco                | Articulate | Status           |
-|------------------------|------------|------------------|
-| Umbraco 18.0.2+        | 7.x        | Current          |
-| Umbraco 17.5.3+        | 6.1.x      | Current          |
-| Umbraco 16.5+ or 17.4+ | 6.0.x      | Previous release |
-| Umbraco 13 LTS         | 5.x        | Maintenance      |
-
-For Umbraco 17+, install from NuGet:
-
-```shell
-dotnet add package Articulate    # Umbraco 17 / Articulate 6.1, or Umbraco 18 / Articulate 7.0
-```
-
-After installation, open Umbraco and complete any on-screen migration prompts.
+Install the package version that matches your Umbraco installation. See the
+[Installation guide](https://github.com/Shazwazza/Articulate/wiki/Installation)
+for the compatibility matrix and version-specific commands.
 
 ## Features
 
@@ -51,7 +38,7 @@ Back up your site, database, and media before upgrading.
 
 On Umbraco 16 or 17, install [TinyMCE.Umbraco](https://github.com/ProWorksCorporation/TinyMCE-Umbraco) before first run to keep TinyMCE as your rich-text editor. Articulate migrates `Umbraco.RichText` to TipTap on first boot; the TinyMCE package must be present before that step.
 
-See [Installation](https://github.com/Shazwazza/Articulate/wiki/Installation) and [Migration from v5 to v6](https://github.com/Shazwazza/Articulate/wiki/Migration-from-v5-to-v6) for version selection, editor migration, BlogML guidance, and post-upgrade checks.
+See [Installation](https://github.com/Shazwazza/Articulate/wiki/Installation) and [Upgrading Articulate](https://github.com/Shazwazza/Articulate/wiki/Upgrading) for version selection, editor migration, BlogML guidance, and post-upgrade checks.
 
 ## Themes
 

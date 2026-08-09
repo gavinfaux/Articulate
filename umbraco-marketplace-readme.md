@@ -28,22 +28,12 @@ Supporting all the features you'd want in a blogging platform:
 
 ## Compatibility
 
-| Umbraco                | Articulate | Status           |
-|------------------------|------------|------------------|
-| Umbraco 18.0.2+        | 7.x        | Current          |
-| Umbraco 17.5.3+        | 6.1.x      | Current          |
-| Umbraco 16.5+ or 17.4+ | 6.0.x      | Previous release |
-| Umbraco 13 LTS         | 5.x        | Maintenance      |
-
-Install from NuGet:
-
-```shell
-dotnet add package Articulate    # Umbraco 17 / Articulate 6.1, or Umbraco 18 / Articulate 7.0
-```
+Use the [Installation guide](https://github.com/Shazwazza/Articulate/wiki/Installation)
+to select the Articulate package version and install command for your Umbraco version.
 
 ## Upgrading
 
-Back up your site, database, and media before upgrading. See the [Installation](https://github.com/Shazwazza/Articulate/wiki/Installation) and [Migration from v5 to v6](https://github.com/Shazwazza/Articulate/wiki/Migration-from-v5-to-v6) guides for version matching, rich-text editor migration, and BlogML guidance.
+Back up your site, database, and media before upgrading. See the [Installation](https://github.com/Shazwazza/Articulate/wiki/Installation) and [Upgrading Articulate](https://github.com/Shazwazza/Articulate/wiki/Upgrading) guides for version matching, rich-text editor migration, and BlogML guidance.
 
 ## Learn more
 
