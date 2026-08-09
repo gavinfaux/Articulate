@@ -17,16 +17,16 @@ local overrides.
 
 ## Build parameters
 
-| Parameter                    | Default                                | Description                                                                                                                                                                                                                |
-|------------------------------|----------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `--lane`                     | `v17`                                  | Package lane: `v17` (Articulate 7.0 for Umbraco 17) or `v18` (Articulate 8.0 for Umbraco 18).                                                                                                                               |
-| `--configuration`            | `Release`                              | Build configuration: `Debug` or `Release`.                                                                                                                                                                                 |
-| `--tests`                    | `true` in CI, otherwise `false`        | Run `dotnet test` after build.                                                                                                                                                                                             |
-| `--client`                   | `true` in CI/Release, `false` in Debug | Enable the TypeScript Back Office client build (Vite + tsc).                                                                                                                                                               |
-| `--sample`                   | `true` locally, `false` in CI          | Also pack `Articulate.Theme.Sample`. The sample .nupkg is consumed locally by the Docker pipeline (see `docker/src/ArticulateDockerSite.csproj`); it is **not** published and is excluded from CI artifact uploads. |
+| Parameter                    | Default                                | Description                                                                                                                                                                                                                                                           |
+|------------------------------|----------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `--lane`                     | `v17`                                  | Package lane: `v17` (Articulate 7.0 for Umbraco 17) or `v18` (Articulate 8.0 for Umbraco 18).                                                                                                                                                                         |
+| `--configuration`            | `Release`                              | Build configuration: `Debug` or `Release`.                                                                                                                                                                                                                            |
+| `--tests`                    | `true` in CI, otherwise `false`        | Run `dotnet test` after build.                                                                                                                                                                                                                                        |
+| `--client`                   | `true` in CI/Release, `false` in Debug | Enable the TypeScript Back Office client build (Vite + tsc).                                                                                                                                                                                                          |
+| `--sample`                   | `true` locally, `false` in CI          | Also pack `Articulate.Theme.Sample`. The sample .nupkg is consumed locally by the Docker pipeline (see `docker/src/ArticulateDockerSite.csproj`); it is **not** published and is excluded from CI artifact uploads.                                                   |
 | `--clean`                    | `false`                                | Wipe `src/**/bin` and `obj`, `build/ClientAssets`, client `node_modules`, and the local test site's `umbraco` state (database, logs, indexes, and caches); required when switching lanes. CI preserves client dependencies and does not remove local test-site state. |
-| `--preserve-site`            | `false`                                | Keep the local test site's `umbraco` state while cleaning build/client outputs; use this to test forward migrations. |
-| `ARTICULATE_PACKAGE_VERSION` | calculated                             | Optional explicit package-version override. v17 uses NBGV; v18 uses `version-v18.txt` plus NBGV metadata.                                                                                                            |
+| `--preserve-site`            | `false`                                | Keep the local test site's `umbraco` state while cleaning build/client outputs; use this to test forward migrations.                                                                                                                                                  |
+| `ARTICULATE_PACKAGE_VERSION` | calculated                             | Optional explicit package-version override. v17 uses NBGV; v18 uses `version-v18.txt` plus NBGV metadata.                                                                                                                                                             |
 
 The packable package is produced by `src/Articulate.Web/Articulate.Web.csproj`
 (`PackageId=Articulate`). Packages are written under `build/$(Configuration)/v17`
@@ -36,35 +36,52 @@ Because both lanes share project `bin`/`obj` directories and static-web-asset
 paths, always run full-solution lane builds sequentially and with `-m:1`
 (`build/build.cs` already does this internally).
 
-> **Switching lanes:** the Back Office output is shared between v17 and v18.
-> After building one lane, pass `--clean` on the first build of the other
-> lane. For example: `build --lane v18 --clean` after a v17 build. The Docker
-> runner's `--clean` option passes this through to the package build while
-> preserving the host test site's `umbraco` state.
+### Switching lanes
+
+The Back Office output is shared between v17 and v18. Visual Studio does not
+build these assets during background builds. For quick client iteration, run
+the selected command from `src/Articulate.Web/Client`:
+
+```text
+pnpm run build:dev:v17
+pnpm run build:dev:v18
+```
+
+Run only the command for the selected lane. For full validation, pass `--clean`
+on the first build of the other lane:
+
+```text
+dotnet run --file build/build.cs -- build --lane v17 --clean --client true --tests true --sample true
+dotnet run --file build/build.cs -- build --lane v18 --clean --client true --tests true --sample true
+```
+
+`--clean` removes build and client outputs. Add `--preserve-site` when the
+local test-site state must remain. Do not reuse a database across Umbraco major
+versions.
 
 ## Common build commands
 
 Local debug build with the Back Office client:
 
-```powershell
+```text
 dotnet run --file build/build.cs -- build --configuration Debug --client true
 ```
 
 v17 release package with sample theme:
 
-```powershell
+```text
 dotnet run --file build/build.cs -- build --lane v17 --sample
 ```
 
 v18 release package with sample theme:
 
-```powershell
+```text
 dotnet run --file build/build.cs -- build --lane v18 --sample
 ```
 
 CI / release build for both lanes:
 
-```powershell
+```text
 # Run once per lane; each run cleans shared outputs first.
 dotnet run --file build/build.cs -- build --lane v17 --clean --client true --tests --sample
 dotnet run --file build/build.cs -- build --lane v18 --clean --client true --tests --sample
@@ -74,7 +91,7 @@ dotnet run --file build/build.cs -- build --lane v18 --clean --client true --tes
 
 Run the GitHub Actions build job locally with `act`:
 
-```sh
+```text
 act -W ./.github/workflows/build.yml -j build
 ```
 
@@ -86,8 +103,8 @@ workflow job; omit it only when intentionally running every workflow job.
 
 | Lane  | Package line     | Umbraco support | Target framework | Output folder       |
 |-------|------------------|-----------------|------------------|---------------------|
-| `v17` | Articulate 7.0.x | Umbraco 17.5.3+   | `net10.0`        | `build/Release/v17` |
-| `v18` | Articulate 8.0.x | Umbraco 18.0.2+   | `net10.0`        | `build/Release/v18` |
+| `v17` | Articulate 7.0.x | Umbraco 17.6.0+ | `net10.0`        | `build/Release/v17` |
+| `v18` | Articulate 8.0.x | Umbraco 18.1.0+ | `net10.0`        | `build/Release/v18` |
 
 The lanes produce separate NuGet packages because Umbraco 17 and 18 extension
 points are not binary-compatible. Do not cross-install (Articulate 7 ↔ Umbraco 18,
@@ -124,7 +141,7 @@ When you change a centralized version in `Directory.Packages.props` (e.g. the
 Umbraco floor), regenerate the lock files for both lanes.
 Run from the repo root:
 
-```powershell
+```text
 dotnet restore ./src/Articulate.sln -p:ArticulatePackageLane=v17 -p:RestoreLockedMode=false --force-evaluate
 dotnet restore ./src/Articulate.sln -p:ArticulatePackageLane=v18 -p:RestoreLockedMode=false --force-evaluate
 ```
@@ -136,10 +153,10 @@ older dependency floor. CI restores use locked mode.
 
 Current floors in `Directory.Packages.props`:
 
-| Lane | Package | Floor |
-|------|---------|-------|
-| `v17` | `Umbraco.Cms.*` | `[17.5.3,18.0.0)` |
-| `v18` | `Umbraco.Cms.*` | `[18.0.2,19.0.0)` |
+| Lane  | Package           | Floor             |
+|-------|-------------------|-------------------|
+| `v17` | `Umbraco.Cms.*`   | `[17.6.0,18.0.0)` |
+| `v18` | `Umbraco.Cms.*`   | `[18.1.0,19.0.0)` |
 | `v17` | `TinyMCE.Umbraco` | `[17.5.0,18.0.0)` |
 | `v18` | `TinyMCE.Umbraco` | `[18.0.0,19.0.0)` |
 
@@ -147,10 +164,10 @@ Current floors in `Directory.Packages.props`:
 
 The Back Office client package must meet the Umbraco floor for its lane.
 
-| Lane | Client package floor |
-|------|----------------------|
-| `v17` | `@umbraco-cms/backoffice ^17.5.3` |
-| `v18` | `@umbraco-cms/backoffice ^18.0.2` |
+| Lane  | Client package floor              |
+|-------|-----------------------------------|
+| `v17` | `@umbraco-cms/backoffice ^17.6.0` |
+| `v18` | `@umbraco-cms/backoffice ^18.1.0` |
 
 The client package is a development dependency. It is not included in the
 Articulate NuGet package. Umbraco supplies the Back Office runtime.
@@ -207,7 +224,7 @@ workflow upload so leaks never reach GitHub Actions artifacts.
 
 Run it locally after a build:
 
-```bash
+```text
 node build/smoke-package.mjs build/Release/v17 build/Release/v18
 ```
 

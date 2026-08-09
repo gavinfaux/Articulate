@@ -15,7 +15,9 @@
     <ArticulatePackageLane>v17</ArticulatePackageLane>
 
     <!-- Disable the TypeScript client build for faster local iteration in the IDE.
-         CI/CD pipelines will still run the client build. -->
+         CI/CD pipelines will still run the client build.
+         Enabling this in the IDE may cause IO lock issues due the Visual Studio competing background compilation.
+    -->
     <EnableClientBuild>false</EnableClientBuild>
 
     <!-- TinyMCE.Umbraco override -->

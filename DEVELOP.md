@@ -20,7 +20,7 @@ Use `build/build.cs` for repo-owned build, client, and test-site tasks.
    produces spurious diffs after every `dotnet restore`. Run once after
    cloning to normalise on commit and keep the index clean:
 
-   ```bash
+   ```text
    git config core.autocrlf input
    ```
 
@@ -28,7 +28,7 @@ Use `build/build.cs` for repo-owned build, client, and test-site tasks.
    `~/.config/git/articulate-allowed-signers` and set the repository-local
    trust path. The `~` form works across Windows, macOS, and Linux:
 
-   ```bash
+   ```text
    git config --local gpg.ssh.allowedSignersFile "~/.config/git/articulate-allowed-signers"
    ```
 
@@ -37,7 +37,7 @@ Use `build/build.cs` for repo-owned build, client, and test-site tasks.
 
 2. Build the solution and Back Office client:
 
-   ```bash
+   ```text
    dotnet run --file build/build.cs -- build --configuration Debug --client true
    ```
 
@@ -54,7 +54,7 @@ Use `build/build.cs` for repo-owned build, client, and test-site tasks.
    <!-- Directory.Build.props.user -->
    <Project>
      <PropertyGroup>
-       <ArticulatePackageLane>v18</ArticulatePackageLane>
+       <ArticulatePackageLane>v17</ArticulatePackageLane>
        <EnableClientBuild>false</EnableClientBuild>
      </PropertyGroup>
    </Project>
@@ -66,27 +66,23 @@ Use `build/build.cs` for repo-owned build, client, and test-site tasks.
    `build/build.cs`.
 3. Start the test website:
 
-   ```powershell
+   ```text
    dotnet run --file build/build.cs -- site --lane v17
    ```
 
    Or open `src/Articulate.sln`, set `Articulate.Tests.Website` as the startup
-   project, and start it. The default lane is Umbraco 17; pass
-   `-p:ArticulatePackageLane=v18` to run Umbraco 18.
+   project, and start it. The default lane is Umbraco 17. For Visual Studio,
+   set `<ArticulatePackageLane>v18</ArticulatePackageLane>` in the gitignored
+   `Directory.Build.props.user` file. For direct CLI builds, pass
+   `-p:ArticulatePackageLane=v18`.
 4. Complete the Umbraco installer, then the Articulate package migrations will
    install the required schema and content items.
 
 For the full build command, parameter, lane, lock file, and smoke test
 reference, see [BUILD.md](BUILD.md).
 
-### Switching Umbraco lanes locally
-
-The local dev database is lane-specific: Umbraco does not down-grade schema
-across major versions. If you started the test website with
-`ArticulatePackageLane=v18` and then switch to `v17` (e.g. via
-`Directory.Build.props.user` or the IDE's launch profile), point v17 at a
-**fresh** database and let it migrate. Do not reuse the v18 DB or schema
-checks will fail. Back up any local content first.
+For lane switching, including database, client-output, and `--clean` guidance,
+see [BUILD.md](BUILD.md#switching-lanes).
 
 ## Client development
 
@@ -95,14 +91,14 @@ shared implementation under `common/` and lane packages under `v17/` and `v18/`.
 
 Install once:
 
-```bash
+```text
 cd src/Articulate.Web/Client
 pnpm install
 ```
 
 Work in the required lane:
 
-```bash
+```text
 cd v17   # or v18
 pnpm run check     # tsc --noEmit
 pnpm run build     # tsc && vite build
@@ -119,7 +115,7 @@ The shared generator runs from `Client/scripts`, so its runtime dependencies
 belong in the `Client` workspace package.
 
 The client floor must match the Umbraco floor for the lane. The current floors
-are `^17.5.3` for v17 and `^18.0.2` for v18. Update the matching lane
+are `^17.6.0` for v17 and `^18.1.0` for v18. Update the matching lane
 `package.json`, then run `pnpm install` from `Client`. Commit the lockfile
 change with the package change.
 
@@ -144,7 +140,7 @@ OpenAPI generation. Declare only endpoint-specific responses.
 
 Start the test site directly from the build script:
 
-```powershell
+```text
 dotnet run --file build/build.cs -- site --lane v17
 ```
 
@@ -155,7 +151,7 @@ Use `--reset` to delete the local `umbraco` data folder before starting.
 When a public URL is needed to review theme or Giscus widget styling, expose
 the default HTTPS test site with Cloudflare Tunnel:
 
-```powershell
+```text
 cloudflared tunnel --url https://localhost:44317 --no-tls-verify
 ```
 
@@ -179,12 +175,10 @@ expectations, and the Umbraco MCP integration, see
 ## Back Office client builds
 
 `EnableClientBuild` is `false` for Visual Studio background builds and Debug
-builds. Release and CI builds enable it. To rebuild the client during local
-validation, pass `--client true` or set `ENABLE_CLIENT_BUILD=true`.
+builds. This avoids conflicts with the shared Back Office output directory.
+Release and CI builds enable it.
 
-```powershell
-dotnet run --file build/build.cs -- build --client true
-```
+For lane switching and full validation, see [BUILD.md](BUILD.md#switching-lanes).
 
 The lane packages keep only their Umbraco dependency, generated `src/api/**`,
 and small lane adapters. Shared source and client tooling live in
