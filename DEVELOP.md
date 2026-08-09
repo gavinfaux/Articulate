@@ -3,13 +3,13 @@
 ## Requirements
 
 - .NET 10.0 SDK
-- Node.js 24+ with `corepack enable pnpm` (the workspace pins pnpm 11.9.0)
-- Optional: Nerdbank.GitVersioning CLI (`dotnet tool install -g nbgv`), only needed for release builds
+- Node.js 24+ with `corepack enable pnpm` (the workspace pins pnpm 11.19)
+- Nerdbank.GitVersioning CLI (`dotnet tool install -g nbgv`) for default package-version resolution; CI supplies the version explicitly
 - IDE: Visual Studio 2026, JetBrains Rider, or Visual Studio Code
 - Shell: PowerShell 7+ preferred (`pwsh`), PowerShell 5+, or Bash (WSL/Linux)
 
-Use `build/build.cs` for repo-owned build, site, and Docker tasks. `build/help.md`
-and [BUILD.md](BUILD.md) are the command and CI references.
+Use `build/build.cs` for repo-owned build, client, and test-site tasks.
+`build/help.md` and [BUILD.md](BUILD.md) are the command and CI references.
 
 ## First run
 
@@ -35,13 +35,9 @@ and [BUILD.md](BUILD.md) are the command and CI references.
 
    ### Local-only overrides
 
-   Both `.actrc` (local `act` settings) and `Directory.Build.props.user` (local
-   MSBuild property overrides) are gitignored. Examples:
-
-   ```text
-   # .actrc
-   --env ACT=true
-   ```
+   For local CI workflow validation with `act`, see [Run CI locally with
+   act](BUILD.md#run-ci-locally-with-act). `Directory.Build.props.user` remains
+   a gitignored file for machine-specific MSBuild property overrides:
 
    ```xml
    <!-- Directory.Build.props.user -->
@@ -53,9 +49,10 @@ and [BUILD.md](BUILD.md) are the command and CI references.
    </Project>
    ```
 
-   `Directory.Build.props.user` is imported automatically by MSBuild when present
-   and is useful for persisting a default lane or disabling client builds for
-   faster local iteration.
+   `Directory.Build.props.user` is imported automatically by direct MSBuild and
+   IDE builds. The repository runners own their CLI defaults; use `--lane`,
+   `--client`, or the documented environment variables when invoking
+   `build/build.cs`.
 3. Start the test website:
 
    ```powershell
@@ -142,17 +139,37 @@ dotnet run --file build/build.cs -- site --lane v17
 
 Use `--reset` to delete the local `umbraco` data folder before starting.
 
-Run Docker commands through `dotnet run --file build/build.cs -- help`.
+### Public tunnel for theme/Giscus review
+
+When a public URL is needed to review theme or Giscus widget styling, expose
+the default HTTPS test site with Cloudflare Tunnel:
+
+```powershell
+cloudflared tunnel --url https://localhost:44317 --no-tls-verify
+```
+
+Open the generated public URL for the review. The `--no-tls-verify` option is
+needed because the local test site uses a development certificate.
+
+To check the per-theme Giscus stylesheet endpoint through the public site, run:
+
+```powershell
+$css = Invoke-WebRequest `
+    -Uri 'https://<cloudflared-public-url>/articulate/giscus-theme/VAPOR' `
+    -Headers @{ Origin = 'https://giscus.app' }
+$css.Content | Select-String 'Articulate "VAPOR" theme'
+```
+
+Run Docker commands through `dotnet run --file docker/run.cs -- help`.
 For Docker runtime details such as ports, credentials, runtime modes, smoke
 expectations, and the Umbraco MCP integration, see
-[`build/docker-site/README.md`](build/docker-site/README.md).
+[`docker/README.md`](docker/README.md).
 
 ## Back Office client builds
 
-`EnableClientBuild` defaults to `false` so Visual Studio background builds do
-not clash with Vite output. When you need to rebuild the client during packaging
-or local validation, pass `--client true` (or set `ENABLE_CLIENT_BUILD=true`
-inline). A bare `--client` flag falls back to the env/default.
+`EnableClientBuild` is `false` for Visual Studio background builds and Debug
+builds. Release and CI builds enable it. To rebuild the client during local
+validation, pass `--client true` or set `ENABLE_CLIENT_BUILD=true`.
 
 ```powershell
 dotnet run --file build/build.cs -- build --client true
@@ -232,6 +249,24 @@ configuration in the
 - **MetaWeblog provider** lives in `src/Articulate/MetaWeblog/` for Live
   Writer and compatible desktop clients.
 
+### Custom RSS feeds
+
+The `customRssFeedUrl` blog property only changes the URL advertised by the
+theme. To replace the generated feed, implement `IRssFeedGenerator` and
+register it through an Umbraco composer:
+
+```csharp
+public class MyComposer : IComposer
+{
+    public void Compose(IUmbracoBuilder builder) =>
+        builder.Services.AddSingleton<IRssFeedGenerator, MyRssFeedGenerator>();
+}
+```
+
+`GetFeed(IMasterModel rootPageModel, IEnumerable<PostModel> posts)` returns the
+feed content. The built-in controller still selects the posts and routes the
+feed.
+
 ### Property editors
 
 The Markdown editor and other Articulate property editors live in
@@ -241,9 +276,9 @@ existing editor and re-register through your own composer.
 ### Importers
 
 `src/Articulate/ImportExport/BlogMlImporter.cs` is the reference
-implementation for BlogML import. The BlogML safety rules around image
-allowlisting and SSRF apply to any custom importer you add — keep the
-`AllowedMediaHosts` and `MaxImportImageBytes` configuration knobs in mind.
+implementation for BlogML import. Any custom importer must apply the same
+image allowlisting and SSRF protections. Use `AllowedMediaHosts` and
+`MaxImportImageBytes` for those limits.
 
 ### Rich text compatibility
 
