@@ -24,7 +24,7 @@ namespace Articulate.Services
         private const string EmbeddedResourceRoot = "Articulate.Theme://";
 
         /// <inheritdoc/>
-        public string GetThemeAssetUrl(string themeName, HttpRequest request)
+        public string? GetThemeAssetUrl(string themeName, HttpRequest request)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(themeName);
             ArgumentNullException.ThrowIfNull(request);
@@ -34,6 +34,12 @@ namespace Articulate.Services
             // giscus.app's iframe requires. Umbraco's static-web-assets middleware serves
             // /App_Plugins/Articulate/Themes/{theme}/assets/{file} for every theme
             // source (built-in, copied, RCL), so a single URL covers them all.
+            string assetPath = $"App_Plugins/Articulate/Themes/{themeName}/assets/giscus.css";
+            if (!hostingEnvironment.WebRootFileProvider.GetFileInfo(assetPath).Exists)
+            {
+                return null;
+            }
+
             string baseUri = UriHelper.BuildAbsolute(request.Scheme, request.Host, request.PathBase);
             return baseUri.TrimEnd('/') + $"/articulate/giscus-theme/{themeName}";
         }
@@ -416,5 +422,4 @@ namespace Articulate.Services
         }
     }
 }
-
 

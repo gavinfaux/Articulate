@@ -2,6 +2,7 @@
 using Articulate.Options;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -44,29 +45,22 @@ namespace Articulate.Controllers
                 return BadRequest();
             }
 
-            var filePath = Path.Combine(
-                webHostEnvironment.WebRootPath,
-                "App_Plugins",
-                "Articulate",
-                "Themes",
-                Uri.EscapeDataString(theme),
-                "assets",
-                GiscusFileName);
+            string assetPath = $"App_Plugins/Articulate/Themes/{theme}/assets/{GiscusFileName}";
+            IFileInfo fileInfo = webHostEnvironment.WebRootFileProvider.GetFileInfo(assetPath);
 
             ApplyCorsHeaders();
             Response.Headers["Cache-Control"] = "public, max-age=3600";
 
-            if (!System.IO.File.Exists(filePath))
+            if (!fileInfo.Exists)
             {
                 // Theme has no giscus.css (custom theme that ships none). Return 200 with a
                 // no-op body so giscus initializes with its built-in palette instead of
                 // hanging on a never-resolving <link>.
-                logger.LogDebug("No giscus.css at '{Path}'; returning empty body.", filePath);
+                logger.LogDebug("No giscus.css at '{Path}'; returning empty body.", assetPath);
                 return Content($"/* no giscus.css for theme '{theme}' */\n", "text/css; charset=utf-8");
             }
 
-            byte[] bytes = await System.IO.File.ReadAllBytesAsync(filePath).ConfigureAwait(false);
-            return File(bytes, "text/css; charset=utf-8");
+            return File(fileInfo.CreateReadStream(), "text/css; charset=utf-8");
         }
 
         // Reflect the request Origin against the configured allowlist (default
