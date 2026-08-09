@@ -8,6 +8,8 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<NuGetAuditMode>direct</NuGetAuditMode>
+		<NuGetAuditMode Condition="'$(CI)' == 'true'">all</NuGetAuditMode>
+		<WarningsAsErrors Condition="'$(CI)' == 'true'">$(WarningsAsErrors);NU1903;NU1904</WarningsAsErrors>
 		<DisableImplicitNuGetFallbackFolder>true</DisableImplicitNuGetFallbackFolder>
 	</PropertyGroup>
 	<!-- Allow local developer overrides (e.g. ArticulatePackageLane) -->
