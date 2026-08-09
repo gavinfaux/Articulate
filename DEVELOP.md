@@ -24,6 +24,17 @@ Use `build/build.cs` for repo-owned build, client, and test-site tasks.
    git config core.autocrlf input
    ```
 
+   To verify SSH-signed commits locally, create an allowed-signers file at
+   `~/.config/git/articulate-allowed-signers` and set the repository-local
+   trust path. The `~` form works across Windows, macOS, and Linux:
+
+   ```bash
+   git config --local gpg.ssh.allowedSignersFile "~/.config/git/articulate-allowed-signers"
+   ```
+
+   Keep this file outside the repository; it contains trusted public keys for
+   local verification only.
+
 2. Build the solution and Back Office client:
 
    ```bash
