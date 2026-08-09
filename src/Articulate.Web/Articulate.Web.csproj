@@ -43,7 +43,6 @@
     <PackageReference Include="Markdig" />
     <PackageReference Include="WilderMinds.MetaWeblog" />
     <PackageReference Include="System.ServiceModel.Syndication" />
-    <PackageReference Include="System.Security.Cryptography.Xml" PrivateAssets="All" />
   </ItemGroup>
 
   <!-- Build targets shipped with the package (copies XML docs for Swagger) -->
