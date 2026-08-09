@@ -490,6 +490,8 @@ $RECYCLE.BIN/
 skills-lock.json
 build_*.txt
 scratch/
+/.pi-subagents
+
 
 ##
 ## Articulate specific
