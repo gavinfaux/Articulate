@@ -196,6 +196,7 @@ namespace Articulate.Tests.Routing
                 Mock.Of<IPublicAccessRequestHandler>(),
                 Mock.Of<IUmbracoVirtualPageRoute>(),
                 Mock.Of<IOptionsMonitor<GlobalSettings>>(x => x.CurrentValue == new GlobalSettings()),
-                Mock.Of<IDocumentUrlService>());
+                Mock.Of<IDocumentUrlService>(),
+                Mock.Of<IContentRoutingReadiness>(x => x.IsReady == true));
     }
 }
