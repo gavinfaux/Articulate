@@ -5,7 +5,7 @@
   "engines": {
     "node": ">=24"
   },
-  "packageManager": "pnpm@11.9.0",
+  "packageManager": "pnpm@11.19.0",
   "scripts": {
     "dev:v17": "pnpm --filter articulate-backoffice-v17 run dev",
     "dev:v18": "pnpm --filter articulate-backoffice-v18 run dev",

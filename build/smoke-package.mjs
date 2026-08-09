@@ -2,7 +2,7 @@
 // Verify Articulate .nupkg / .snupkg contents. CI runs this after `dotnet pack`
 // and skips the artifact upload on any failure.
 //   node build/smoke-package.mjs build/Release/v17 [build/Release/v18 ...]
-//   node build/smoke-package.mjs path/to/Articulate.6.1.0-rc1.nupkg
+//   node build/smoke-package.mjs path/to/Articulate.<version>.nupkg
 
 import { spawnSync } from "node:child_process";
 import {

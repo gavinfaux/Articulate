@@ -99,6 +99,8 @@
     <ClientBuildInput Include="$(ClientWorkspaceDirectory)/vite.config.ts" />
     <ClientBuildInput Include="$(ClientWorkspaceDirectory)/public/**/*" />
     <ClientBuildInput Include="$(ClientWorkspaceDirectory)/ambient.d.ts" />
+    <ClientBuildInput Include="$(MSBuildProjectDirectory)/wwwroot/App_Plugins/Articulate/Themes/**/assets/src/**/*" />
+    <ClientBuildInput Include="$(MSBuildProjectDirectory)/wwwroot/App_Plugins/Articulate/MarkdownEditor/assets/src/**/*" />
   </ItemGroup>
 
   <!--
