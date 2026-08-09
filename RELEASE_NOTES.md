@@ -2,41 +2,27 @@
 
 ## Version 8.0.0
 
-- Adds the Articulate 8 line for Umbraco 18 on .NET 10.
-- Adds Giscus as a comment provider alongside Disqus. Configure the required
-  repository and category values under `Articulate:Comments:Giscus`; existing
-  blogs can override them on the blog document type. Disqus remains selected
-  when a valid Disqus shortname is present.
-- Giscus can follow the active theme's comment styling or use a configured
-  built-in or hosted theme. See the [Comments wiki page](https://github.com/Shazwazza/Articulate/wiki/Comments).
-- Existing installs receive the per-blog Giscus fields without changing
-  behavior until Giscus is configured.
-- Hardens external-image imports against SSRF, malicious redirects, and
-  HTTPS-downgrade attacks.
-- Custom `IArticulateThemeRepository` implementations must implement
-  `GetThemeAssetUrl(...)`.
+### Breaking changes for v8.0.0
+
+  > [!WARNING]
+  > Requires Umbraco 18.1+ on .NET 10.
+
+- Includes the functional changes listed under [Version 7.0.0](#version-700).
 
 ## Version 7.0.0
 
-- Targets Umbraco 17.5.3 and later on .NET 10.
-- Continues the Articulate 7 package line for supported Umbraco 17 sites.
-- Adds Giscus as a comment provider alongside Disqus. Configure the required
-  repository and category values under `Articulate:Comments:Giscus`; existing
-  blogs can override them on the blog document type. Disqus remains selected
-  when a valid Disqus shortname is present.
-- Giscus can follow the active theme's comment styling or use a configured
-  built-in or hosted theme. See the [Comments wiki page](https://github.com/Shazwazza/Articulate/wiki/Comments).
-- Existing installs receive the per-blog Giscus fields without changing
-  behavior until Giscus is configured.
-- Hardens external-image imports against SSRF, malicious redirects, and
-  HTTPS-downgrade attacks.
-- Custom `IArticulateThemeRepository` implementations must implement
-  `GetThemeAssetUrl(...)`.
-- Articulate 6.0 remains the compatibility line for Umbraco 16 and 17.
+### Breaking changes for v7.0.0
+
+  > [!WARNING]
+  > Requires Umbraco 17.6+ on .NET 10. Umbraco 16 is not supported.
+
+- Adds Giscus support. See the [Comments wiki page](https://github.com/Shazwazza/Articulate/wiki/Comments).
+- Hardens external-image imports.
+- Custom `IArticulateThemeRepository` implementations must implement `GetThemeAssetUrl(...)`.
 
 ## Version 6.0.0
 
-### Breaking Changes
+### Breaking Changes for v6.0.0
 
 > [!WARNING]
 > **Platform requirements**
