@@ -15,10 +15,10 @@
 //   TIMEOUT_SECONDS             default: 300
 //
 // Examples:
-//   node build/docker-site/smoke.mjs publish
-//   node build/docker-site/smoke.mjs confirm
-//   node build/docker-site/smoke.mjs smoke
-//   node build/docker-site/smoke.mjs theme
+//   node docker/smoke.mjs publish
+//   node docker/smoke.mjs confirm
+//   node docker/smoke.mjs smoke
+//   node docker/smoke.mjs theme
 
 import https from 'node:https';
 import http from 'node:http';
@@ -228,17 +228,24 @@ async function waitForRoot(base, timeoutSec) {
   }, now() + timeoutSec, `/ to return 200`);
 }
 
-async function confirmChildren(base, token, rootId) {
-  const data = await jsonGet(`${base}/umbraco/management/api/v1/tree/document/children?parentId=${rootId}&skip=0&take=100`, token);
-  const items = data?.items ?? [];
+async function confirmChildren(base, token, parentId, indent = '') {
   let unpublished = 0;
-  for (const item of items) {
-    const variant = item.variants?.[0] ?? {};
-    const state = variant.state ?? 'unknown';
-    const name = variant.name || item.name || item.id;
-    const tag = item.hasChildren ? ' (has children)' : '';
-    console.log(`Child '${name}' (${item.id}) state=${state}${tag}`);
-    if (state !== 'Published') unpublished++;
+  let skip = 0;
+  while (true) {
+    const data = await jsonGet(`${base}/umbraco/management/api/v1/tree/document/children?parentId=${parentId}&skip=${skip}&take=100`, token);
+    const items = data?.items ?? [];
+    for (const item of items) {
+      const variant = item.variants?.[0] ?? {};
+      const state = variant.state ?? 'unknown';
+      const name = variant.name || item.name || item.id;
+      const tag = item.hasChildren ? ' (has children)' : '';
+      console.log(`${indent}Child '${name}' (${item.id}) state=${state}${tag}`);
+      if (state !== 'Published') unpublished++;
+      if (item.hasChildren)
+        unpublished += await confirmChildren(base, token, item.id, `${indent}  `);
+    }
+    if (items.length < 100) break;
+    skip += items.length;
   }
   return unpublished;
 }
@@ -252,8 +259,8 @@ function getThemeCssMarker(themeName) {
 
 function getAltTheme(currentTheme) {
   const themes = ['VAPOR', 'Material', 'Phantom', 'Mini'];
-  const current = (currentTheme || 'Material').toLowerCase();
-  return themes.find(t => t.toLowerCase() !== current) || 'Material';
+  const current = (currentTheme || 'VAPOR').toLowerCase();
+  return current === 'vapor' ? 'Material' : 'VAPOR';
 }
 
 async function verifyThemeInHtml(base, expectedTheme, timeoutSec) {
@@ -306,7 +313,7 @@ async function main() {
 
   // --- confirm mode ---------------------------------------------------------
   if (mode === 'confirm') {
-    console.log('Confirming published children');
+    console.log('Confirming published children and descendants');
     const missing = await confirmChildren(base, token, rootId);
     if (missing !== 0) die('One or more Articulate children are not published.');
 
@@ -314,7 +321,7 @@ async function main() {
     await waitForRoot(base, timeoutSec);
 
     console.log('Confirmation passed');
-    console.log('Dev automation confirmation passed: root and children are published and / returns 200.');
+    console.log('Dev automation confirmation passed: root, children, and descendants are published and / returns 200.');
     return;
   }
 
@@ -322,7 +329,7 @@ async function main() {
   if (mode === 'theme') {
     console.log('Reading current document');
     const doc = await getDocument(base, token, rootId);
-    const currentTheme = doc.values?.find(v => v.alias === 'theme')?.value ?? 'Material';
+    const currentTheme = doc.values?.find(v => v.alias === 'theme')?.value ?? 'VAPOR';
     const variantName = doc.variants?.[0]?.name ?? 'Blog';
     console.log(`Current theme: ${currentTheme}`);
 
@@ -331,24 +338,31 @@ async function main() {
     console.log(`Confirmed: HTML contains ${getThemeCssMarker(currentTheme)}`);
 
     const newTheme = getAltTheme(currentTheme);
-    console.log(`Changing theme to: ${newTheme}`);
-    await updateDocument(base, token, rootId, [{ alias: 'theme', value: newTheme }], variantName);
+    let themeChanged = false;
+    try {
+      console.log(`Changing theme to: ${newTheme}`);
+      await updateDocument(base, token, rootId, [{ alias: 'theme', value: newTheme }], variantName);
+      themeChanged = true;
 
-    console.log('Publishing root');
-    await publishRoot(base, token, rootId);
-    await reloadCache(base, token);
+      console.log('Publishing root');
+      await publishRoot(base, token, rootId);
+      await reloadCache(base, token);
 
-    console.log('Verifying new theme renders');
-    await verifyThemeInHtml(base, newTheme, timeoutSec);
-    console.log(`Theme verification passed: HTML contains ${getThemeCssMarker(newTheme)}`);
-
-    // Restore original theme so iterative dev runs don't drift
-    console.log('Restoring original theme');
-    await updateDocument(base, token, rootId, [{ alias: 'theme', value: currentTheme }], variantName);
-    await publishRoot(base, token, rootId);
-    await reloadCache(base, token);
-    await verifyThemeInHtml(base, currentTheme, timeoutSec);
-    console.log('Original theme restored.');
+      console.log('Verifying new theme renders');
+      await verifyThemeInHtml(base, newTheme, timeoutSec);
+      console.log(`Theme verification passed: HTML contains ${getThemeCssMarker(newTheme)}`);
+    } finally {
+      // Restore original theme so iterative dev runs don't drift, even when
+      // alternate-theme publishing or verification fails.
+      if (themeChanged) {
+        console.log('Restoring original theme');
+        await updateDocument(base, token, rootId, [{ alias: 'theme', value: currentTheme }], variantName);
+        await publishRoot(base, token, rootId);
+        await reloadCache(base, token);
+        await verifyThemeInHtml(base, currentTheme, timeoutSec);
+        console.log('Original theme restored.');
+      }
+    }
     return;
   }
 

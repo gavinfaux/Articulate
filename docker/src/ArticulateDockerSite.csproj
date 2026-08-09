@@ -17,6 +17,6 @@
     <PackageReference Include="Articulate.Theme.Sample" VersionOverride="$(ArticulatePackageVersion)" />
   </ItemGroup>
   <ItemGroup Condition="'$(UseTinyMceUmbraco)' == 'true'">
-    <PackageReference Include="TinyMCE.Umbraco" />
+    <PackageReference Include="TinyMCE.Umbraco" VersionOverride="$(TinyMceUmbracoPackageVersion)" />
   </ItemGroup>
 </Project>

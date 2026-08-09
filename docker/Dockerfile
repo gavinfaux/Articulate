@@ -15,27 +15,26 @@ WORKDIR /src
 
 # All configurable via build args
 ARG TARGET_FRAMEWORK=net10.0
-# UMBRACO_CMS_VERSION is required; build.cs reads the floor from Directory.Packages.props
+# UMBRACO_CMS_VERSION is required; run.cs reads the floor from Directory.Packages.props
 # and passes it as --build-arg. No default — explicit fail beats silent version drift.
 ARG UMBRACO_CMS_VERSION
 ARG BUILD_CONFIGURATION=Release
 ARG PACKAGE_SOURCE=build/Release/v17
-ARG PACKAGE_LANE=v17
 ARG USE_TINYMCE_UMBRACO=false
 # TINYMCE_UMBRACO_PACKAGE_VERSION is required when USE_TINYMCE_UMBRACO=true;
-# build.cs reads it from Directory.Packages.props and passes as --build-arg.
+# run.cs reads it from Directory.Packages.props and passes as --build-arg.
 ARG TINYMCE_UMBRACO_PACKAGE_VERSION
 
 # Copy config files
 COPY global.json ./
 COPY Directory.Build.props ./
 COPY nuget.config ./
-COPY build/docker-site/ArticulateDockerSite.csproj build/docker-site/
-COPY build/docker-site/Program.cs build/docker-site/
-COPY build/docker-site/appsettings.json build/docker-site/
-COPY build/docker-site/nuget.config build/docker-site/
-COPY build/docker-site/Options/ build/docker-site/Options/
-COPY build/docker-site/Services/ build/docker-site/Services/
+COPY docker/src/ArticulateDockerSite.csproj docker/src/
+COPY docker/src/Program.cs docker/src/
+COPY docker/src/appsettings.json docker/src/
+COPY docker/src/nuget.config docker/src/
+COPY docker/src/Options/ docker/src/Options/
+COPY docker/src/Services/ docker/src/Services/
 COPY ${PACKAGE_SOURCE}/ build/Release/
 
 # Sanity check + restore + publish
@@ -69,12 +68,12 @@ RUN set -eux; \
       export TinyMceUmbracoPackageVersion="${TINYMCE_UMBRACO_PACKAGE_VERSION}"; \
     fi; \
     echo "Building Articulate ${ARTICULATE_PKG_VERSION} for ${TARGET_FRAMEWORK} with Umbraco ${UMBRACO_CMS_VERSION}"; \
-    dotnet restore build/docker-site/ArticulateDockerSite.csproj \
-    --configfile build/docker-site/nuget.config \
+    dotnet restore docker/src/ArticulateDockerSite.csproj \
+    --configfile docker/src/nuget.config \
     /p:TargetFramework=${TARGET_FRAMEWORK} \
     /p:UseTinyMceUmbraco=${USE_TINYMCE_UMBRACO} \
     /p:ArticulatePackageVersion=${ARTICULATE_PKG_VERSION}; \
-    dotnet publish build/docker-site/ArticulateDockerSite.csproj \
+    dotnet publish docker/src/ArticulateDockerSite.csproj \
     --no-restore \
     -c $BUILD_CONFIGURATION \
     -f ${TARGET_FRAMEWORK} \

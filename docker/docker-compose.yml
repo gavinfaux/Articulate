@@ -1,21 +1,24 @@
 services:
   articulate:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: docker/Dockerfile
       target: chiseled
       args:
         BUILD_CONFIGURATION: ${BUILD_CONFIGURATION:-Release}
         TARGET_FRAMEWORK: ${TARGET_FRAMEWORK:-net10.0}
         DOTNET_SDK_IMAGE: ${DOTNET_SDK_IMAGE:-mcr.microsoft.com/dotnet/sdk:10.0}
         DOTNET_ASPNET_IMAGE: ${DOTNET_ASPNET_IMAGE:-mcr.microsoft.com/dotnet/aspnet:10.0}
-        # UMBRACO_CMS_VERSION and TinyMCE versions come from Directory.Packages.props / Directory.Build.props
-        # via build.cs LaneDefaults. Set them in the shell env when invoking `docker compose` directly.
-        UMBRACO_CMS_VERSION: ${UMBRACO_CMS_VERSION:?UMBRACO_CMS_VERSION is required (see build.cs LaneDefaults)}
+        # UMBRACO_CMS_VERSION and TinyMCE versions come from Directory.Packages.props
+        # via run.cs ConfigureLane. Set them in the shell for direct `docker compose` use.
+        UMBRACO_CMS_VERSION: ${UMBRACO_CMS_VERSION:?UMBRACO_CMS_VERSION is required (see run.cs ConfigureLane)}
         PACKAGE_SOURCE: ${PACKAGE_SOURCE:-build/Release/v17}
         USE_TINYMCE_UMBRACO: ${USE_TINYMCE_UMBRACO:-false}
-        TINYMCE_UMBRACO_PACKAGE_VERSION: ${TINYMCE_UMBRACO_PACKAGE_VERSION:?TINYMCE_UMBRACO_PACKAGE_VERSION is required when USE_TINYMCE_UMBRACO=true}
+        # Dockerfile validates this when USE_TINYMCE_UMBRACO=true; empty is valid when it is off.
+        TINYMCE_UMBRACO_PACKAGE_VERSION: ${TINYMCE_UMBRACO_PACKAGE_VERSION:-}
     image: ${IMAGE_TAG:-articulate-local:chiseled}
+    mem_limit: 512m
+    mem_reservation: 256m
     user: "1654:1654"
     environment:
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Container}
@@ -67,7 +70,8 @@ services:
 
   caddy:
     image: caddy:2.11.4-alpine
-    restart: unless-stopped
+    mem_limit: 64m
+    mem_reservation: 32m
     # Bind to loopback only: this harness auto-provisions an OAuth client and an
     # unattended Umbraco install with a known password. `0.0.0.0` would expose
     # them on the LAN. Keep host/LAN reachable? Override CADDY_BIND_IP below.
@@ -82,7 +86,7 @@ services:
     volumes:
       - caddy-data:/data
       - caddy-config:/config
-      - ./build/docker-site/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
     depends_on:
       - articulate
 

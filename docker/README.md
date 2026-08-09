@@ -1,48 +1,17 @@
 # Local Docker Site
 
-`docker-compose.yml` defines the containers. Cross-platform orchestration lives in the .NET 10
-file-based app at `build/build.cs`; `smoke.mjs` contains the Management API assertions.
-Run `dotnet run --file build/build.cs -- help <command>` for canonical option
-defaults and requirements.
+`docker/docker-compose.yml` defines the containers. Cross-platform orchestration
+lives in the .NET 10 file-based app at `docker/run.cs`; `smoke.mjs` contains
+the host-side Management API assertions.
 
 ## Commands
 
 ```text
-dotnet run --file build/build.cs -- docker-build --lane v17
-dotnet run --file build/build.cs -- docker-dev --lane v17
-dotnet run --file build/build.cs -- docker-prod --lane v17
-dotnet run --file build/build.cs -- docker-status --lane v17
-dotnet run --file build/build.cs -- docker-test --lane all
-dotnet run --file build/build.cs -- docker-ca
+dotnet run --file docker/run.cs -- help docker-dev
 ```
 
-- `docker-build [--tag image:tag]` — build the standalone chiseled Docker image.
-  Defaults the tag to `articulate-local:<lane>`.
-- `docker-dev` — boot the compose stack in `BackofficeDevelopment` mode, wait
-  for Umbraco, then publish and confirm Articulate content via the Management
-  API.
-- `docker-prod` — restart the existing lane stack in `Production` mode and
-  re-verify that already-published content serves without the dev automation
-  bootstrap. Run after `docker-dev` against the same volumes.
-- `docker-test --lane v17|v18|all` — full validation: rebuild the image,
-  install, migrate, run `smoke.mjs`, and exercise the Backoffice and theme
-  routes. Use `--keep` to leave successful stacks running; `--skip-smoke` for
-  faster build validation only.
-- `docker-status` — show the lane's running containers and the packaged
-  Backoffice files copied into the site image.
-- `docker-ca` — export and trust the local Caddy root CA through the build
-  runner.
-
-Options:
-
-- `docker-dev --lane v17|v18`: ensure packages, build, boot, publish, and confirm.
-- `docker-dev --skip-smoke`: boot and readiness only.
-- `docker-dev --reset`: remove volumes first.
-- `docker-status --lane v17|v18`: show lane containers and verify packaged
-  Backoffice files inside the running site.
-- `docker-test --lane v17|v18|all`: choose lanes.
-- `docker-test --keep`: leave successful stacks running.
-- `docker-test --skip-smoke`: build the image, run the dev environment, and verify `/umbraco/` reaches 200. Skips `docker-prod` entirely.
+`docker/help.md` is the canonical command and option reference. The rest of this
+page documents runtime behavior, credentials, and direct Compose use.
 
 Full smoke tests use `ARTICULATE_DEV_AUTOMATION_CLIENT_SECRET` (defaults are applied if unset via `Env.RequireSecret()`).
 
@@ -52,11 +21,12 @@ Full smoke tests use `ARTICULATE_DEV_AUTOMATION_CLIENT_SECRET` (defaults are app
 | `v18` | `articulate-local:v18` | `https://localhost:44318/umbraco/` | `http://localhost:44381/` |
 
 HTTPS ports (44317 / 44318) match the Umbraco major. HTTP ports (44380 / 44381)
-sit out of common dev-tool port-snatch ranges — Windows reserves 17000-18099
-for the updater orchestrator and several dev tools grab ports in that span.
+avoid the Windows port range reserved for the updater orchestrator (17000-18099).
 Override either with `CADDY_HTTPS_PORT` / `CADDY_HTTP_PORT`. Bare
-`docker compose up` without `build.cs` falls back to compose's own defaults
-(18443 HTTPS / 8080 HTTP); the per-lane script overrides those.
+`docker compose up` without the runner still requires the package-version
+variables in `docker/docker-compose.yml`; it only falls back to compose's own
+ports (18443 HTTPS / 8080 HTTP). Prefer the per-lane runner, which supplies the
+package values and port isolation.
 
 The unattended install creates this default local Docker backoffice
 administrator:
@@ -73,15 +43,16 @@ unattended user with `UMBRACO_USER_NAME`, `UMBRACO_USER_EMAIL`, and
 ## Trust Caddy's local CA once per machine
 
 Caddy terminates TLS with a locally generated certificate. Trust Caddy's root
-CA once per machine before opening the backoffice. The build runner exposes the
-portable entrypoint:
+CA once per machine before opening the backoffice. The Docker runner exposes
+the portable entrypoint:
 
 ```powershell
-dotnet run --file build/build.cs -- docker-ca
+dotnet run --file docker/run.cs -- docker-ca --lane v17
 ```
 
-The runner selects the platform-specific certificate-store helper internally;
-keep that implementation detail behind `docker-ca`.
+The Docker runner selects the platform-specific certificate-store helper internally;
+keep that implementation detail behind `docker-ca`. On Windows, expect a user
+confirmation prompt when the Caddy root is added to the current-user trust store.
 
 ## Smoke commands
 
@@ -89,13 +60,16 @@ Against an already healthy stack, `smoke.mjs` supports `publish`, `confirm`,
 `smoke`, and `theme`:
 
 ```powershell
-node build/docker-site/smoke.mjs publish
-node build/docker-site/smoke.mjs confirm
-node build/docker-site/smoke.mjs publish --no-descendants
+$env:UMBRACO_PUBLIC_URL = 'https://localhost:44317/'
+node docker/smoke.mjs publish
+node docker/smoke.mjs confirm
+node docker/smoke.mjs publish --no-descendants
 ```
 
-`confirm` is read-only. Publication processes the Articulate root first, waits
-for the public route and published-content cache, then publishes descendants.
+`confirm` is read-only and checks every child and descendant under the
+Articulate root. Publication processes the root first, waits for the public
+route and published-content cache, then publishes descendants.
+Use `https://localhost:44318/` for the v18 lane.
 Set `NODE_BIN` if `node` is not on `PATH`. On Windows, invoke the script from
 PowerShell or cmd rather than passing `node.exe` through WSL or Git Bash.
 
@@ -117,7 +91,7 @@ $env:UMBRACO_PUBLIC_HOST='https://<LAN-IP>:44317'
 $env:UMBRACO_PUBLIC_URL='https://<LAN-IP>:44317/'
 $env:ARTICULATE_REDIRECT_URI='https://<LAN-IP>:44317/a-new/'
 $env:ARTICULATE_LOGOUT_REDIRECT_URI='https://<LAN-IP>:44317/'
-dotnet run --file build/build.cs -- docker-dev --lane v17 --reset
+dotnet run --file docker/run.cs -- docker-dev --lane v17 --reset
 ```
 
 Use port `44318` and `--lane v18` for the v18 lane. Browsers must accept
@@ -132,6 +106,20 @@ During first installation, Umbraco may log two warnings that an empty culture
 was not found in configured localization sources. The starter package contains
 valid invariant content and no language payload; these warnings are harmless
 package-install noise and require no Articulate change.
+
+## TinyMCE opt-in
+
+Set `USE_TINYMCE_UMBRACO=true` before starting the Docker site when testing the
+optional TinyMCE integration:
+
+```powershell
+$env:USE_TINYMCE_UMBRACO = 'true'
+dotnet run --file docker/run.cs -- docker-dev --lane v17
+```
+
+The runner passes the lane's `TinyMceUmbracoPackageVersion` floor from
+`Directory.Packages.props` into the Docker build. The same environment variable
+works with `docker-build` and `docker-test`.
 
 ## Runtime modes
 
@@ -157,7 +145,7 @@ back-office cookie (`UMB_UCONTEXT` in v17.4 / v18.0.0-rc3, plus the new OAuth
 cookies `umbAccessToken` / `umbRefreshToken` / `umbPkceCode` in v17.3+) would
 normally clash and log you out of one lane when signing into the other.
 
-`build/build.cs` `ConfigureLane` sets two per-lane config values to fix this:
+`docker/run.cs` `ConfigureLane` sets two per-lane config values to fix this:
 
 - `Umbraco__CMS__Security__AuthCookieName=UMB_UCONTEXT-{lane}` — renames the
   legacy `UMB_UCONTEXT` cookie. (`Security:AuthCookieName` is the supported
@@ -170,7 +158,7 @@ You stay logged into both lanes simultaneously without browser juggling.
 
 ## Dev automation user overrides
 
-The auto-provisioned API user takes its defaults from `docker-compose.yml` and
+The auto-provisioned API user takes its defaults from `docker/docker-compose.yml` and
 the `ArticulateDevAutomationBootstrapper` service. Override per-run with
 environment variables:
 
@@ -192,15 +180,28 @@ separately via `UMBRACO_USER_NAME` / `UMBRACO_USER_EMAIL` /
 
 Package inputs come from `build/Release/<lane>` and must include Articulate and
 the sample theme. Docker installs those `.nupkg` files; it does not consume
-project output directly. Regenerate packages after changing packaged
-dependencies, client assets, or static assets.
+project output directly. Docker commands invoke the package runner; same-lane
+builds are incremental and `--clean` is required when switching lanes.
 
-Rebuilding an image does not replace an already running container. The build
+The Docker runner resolves `UmbracoCmsPackageVersion` and
+`TinyMceUmbracoPackageVersion` from `Directory.Packages.props` via
+`dotnet msbuild -getProperty`, so the site uses the same dependency floors.
+
+Umbraco startup migrations are forward-only: `UpgradeUnattended=true` applies
+pending migrations, while a database newer than the running code fails startup
+instead of being downgraded. To test an upgrade, start an older package/image
+with `docker-dev --reset`, keep the lane's volumes, then rebuild and run
+`docker-dev` without `--reset`. For the local test site, use `site --reset` only
+for the baseline and then restart `site` without `--reset`; use
+`build --clean --preserve-site` when build outputs need cleaning without deleting
+the migration database.
+
+Rebuilding an image does not replace an already running container. The Docker
 utility uses `--force-recreate` where required. If a site still serves stale
 assets, inspect the running stack and its packaged Backoffice files:
 
 ```powershell
-dotnet run --file build/build.cs -- docker-status --lane v17
+dotnet run --file docker/run.cs -- docker-status --lane v17
 ```
 
 Use `--lane v18` for the v18 lane.
