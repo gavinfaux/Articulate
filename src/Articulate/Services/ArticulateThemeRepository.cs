@@ -220,11 +220,11 @@ namespace Articulate.Services
                           3. Customize CSS in `wwwroot/.../assets/css/`
                           4. Copied themes do not include a production build pipeline for assets, either set up your own build process, or ensure production builds link to src assets.
 
-                          ## Updating a v5 theme to the modern layout
+                          ## Optional: modernize a v5 theme layout
 
                           v5 themes used the `Master.cshtml` convention where every page view set
-                          `Layout = "Master.cshtml"`. To update an existing v5 theme to the standard
-                          ASP.NET Core Razor layout pattern:
+                          `Layout = "Master.cshtml"`. Existing themes can keep using this convention.
+                          If you want to adopt the standard ASP.NET Core Razor layout pattern:
 
                           1. Find every view in your theme that references the old layout:
 
@@ -422,4 +422,3 @@ namespace Articulate.Services
         }
     }
 }
-
