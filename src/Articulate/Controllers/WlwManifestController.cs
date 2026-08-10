@@ -44,8 +44,8 @@ namespace Articulate.Controllers
                 new XElement(
                     ns + "options",
                     new XElement(ns + "clientType", "Metaweblog"),
-                    new XElement(ns + "supportsNewCategories", "Yes"),
                     new XElement(ns + "supportsPostAsDraft", "Yes"),
+                    new XElement(ns + "supportsFileUpload", "Yes"),
                     new XElement(ns + "supportsCustomDate", "Yes"),
                     new XElement(ns + "supportsCategories", "Yes"),
                     new XElement(ns + "supportsCategoriesInline", "Yes"),
