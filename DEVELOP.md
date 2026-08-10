@@ -3,7 +3,7 @@
 ## Requirements
 
 - .NET 10.0 SDK
-- Node.js 24+ with `corepack enable pnpm` (the workspace pins pnpm 11.19)
+- Node.js 24+ with Corepack and pnpm 11.19.0: `corepack enable && corepack install --global pnpm@11.19.0` (the workspace also pins this via `packageManager`)
 - Nerdbank.GitVersioning CLI (`dotnet tool install -g nbgv`) for default package-version resolution; CI supplies the version explicitly
 - IDE: Visual Studio 2026, JetBrains Rider, or Visual Studio Code
 - Shell: PowerShell 7+ preferred (`pwsh`), PowerShell 5+, or Bash (WSL/Linux)
