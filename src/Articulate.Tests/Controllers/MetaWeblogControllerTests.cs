@@ -22,6 +22,25 @@ namespace Articulate.Tests.Controllers
         }
 
         [Test]
+        public void TryNormalizeMetaWeblogRequest_normalizes_wordpress_discovery_fallback()
+        {
+            const string content = """
+                <methodCall>
+                  <methodName>wp.getUsersBlogs</methodName>
+                  <params>
+                    <param><value><string>editor</string></value></param>
+                    <param><value><string>password</string></value></param>
+                  </params>
+                </methodCall>
+                """;
+
+            Assert.That(MetaWeblogController.TryNormalizeMetaWeblogRequest(content, 1000, out string normalized), Is.True);
+            Assert.That(normalized, Does.Contain("<methodName>blogger.getUsersBlogs</methodName>"));
+            Assert.That(normalized, Does.Contain("<params><param><value></value></param>"));
+            Assert.That(normalized.Split("<param>"), Has.Length.EqualTo(4));
+        }
+
+        [Test]
         public void TryNormalizeMetaWeblogRequest_returns_false_when_root_is_not_methodCall()
         {
             const string content = """

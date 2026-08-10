@@ -60,6 +60,7 @@ namespace Articulate.Controllers
             {
                 return Problem("MaxImportImageBytes must be greater than zero");
             }
+
             if (maxImportImageBytes > long.MaxValue / RequestBodyLimitMultiplier)
             {
                 return Problem("MaxImportImageBytes is too large");
@@ -143,6 +144,16 @@ namespace Articulate.Controllers
                     }
                 }
 
+                XElement? methodName = document.Descendants("methodName").FirstOrDefault();
+                XElement? parameters = document.Root.Element("params");
+                if (methodName?.Value == "wp.getUsersBlogs"
+                    && parameters?.Elements("param").Count() == 2)
+                {
+                    // Open Live Writer retries with two arguments; add the unused first parameter.
+                    methodName.Value = "blogger.getUsersBlogs";
+                    parameters.AddFirst(new XElement("param", new XElement("value", string.Empty)));
+                }
+
                 normalized = document.ToString(SaveOptions.DisableFormatting);
                 return true;
             }
@@ -151,6 +162,5 @@ namespace Articulate.Controllers
                 return false;
             }
         }
-
     }
 }
