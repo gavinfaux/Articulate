@@ -1,7 +1,7 @@
 import type { Plugin } from 'vite';
 import path from 'node:path';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
-import { mkdir, writeFile, unlink, rm } from 'node:fs/promises';
+import { copyFile, mkdir, writeFile, unlink, rm } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 
 // --- CONSTANTS & PATHS ---
@@ -79,11 +79,8 @@ const collectFiles = (dir: string, ext: string): string[] => {
   return entries.flatMap((entry) => {
     if (entry.name.startsWith('.') || entry.name === 'dist') return [];
     const fullPath = path.join(dir, entry.name);
-    return entry.isDirectory()
-      ? collectFiles(fullPath, ext)
-      : path.extname(entry.name).toLowerCase() === ext
-        ? [fullPath]
-        : [];
+    if (entry.isDirectory()) return collectFiles(fullPath, ext);
+    return path.extname(entry.name).toLowerCase() === ext ? [fullPath] : [];
   });
 };
 
@@ -92,6 +89,46 @@ const cleanDir = async (dir: string) => {
   if (existsSync(dir)) {
     await rm(dir, { recursive: true, force: true });
   }
+};
+
+const copyVendorAssets = async () => {
+  const assets = [
+    ['@alpinejs/csp/dist/cdn.min.js', path.join(WEB_MARKDOWN, 'assets/vendor/alpine/alpine-csp.min.js')],
+    ['tiny-markdown-editor/dist/tiny-mde.min.js', path.join(WEB_MARKDOWN, 'assets/vendor/tiny-mde/tiny-mde.min.js')],
+    ['tiny-markdown-editor/dist/tiny-mde.min.css', path.join(WEB_MARKDOWN, 'assets/vendor/tiny-mde/tiny-mde.min.css')],
+    ['material-design-lite/dist/material.min.js', path.join(WEB_MARKDOWN, 'assets/vendor/mdl/material.min.js')],
+    [
+      'material-design-lite/dist/material.pink-blue.min.css',
+      path.join(WEB_MARKDOWN, 'assets/vendor/mdl/material.pink-blue.min.css'),
+    ],
+    [
+      '@fontsource/material-icons/files/material-icons-latin-400-normal.woff2',
+      path.join(WEB_MARKDOWN, 'assets/fonts/material-icons/MaterialIcons.woff2'),
+    ],
+    [
+      '@fontsource/roboto/files/roboto-latin-300-normal.woff2',
+      path.join(WEB_MARKDOWN, 'assets/fonts/roboto/Roboto-Light.woff2'),
+    ],
+    [
+      '@fontsource/roboto/files/roboto-latin-400-normal.woff2',
+      path.join(WEB_MARKDOWN, 'assets/fonts/roboto/Roboto-Regular.woff2'),
+    ],
+    [
+      '@fontsource/roboto/files/roboto-latin-500-normal.woff2',
+      path.join(WEB_MARKDOWN, 'assets/fonts/roboto/Roboto-Medium.woff2'),
+    ],
+    [
+      '@fontsource/roboto/files/roboto-latin-700-normal.woff2',
+      path.join(WEB_MARKDOWN, 'assets/fonts/roboto/Roboto-Bold.woff2'),
+    ],
+  ] as const;
+
+  await Promise.all(
+    assets.map(async ([source, destination]) => {
+      await mkdir(path.dirname(destination), { recursive: true });
+      return copyFile(require.resolve(source), destination);
+    }),
+  );
 };
 
 // --- PLUGIN: ASSET BUILDER (Themes + Markdown) ---
@@ -105,6 +142,8 @@ const sideCarAssetsPlugin = (): Plugin => {
     async buildStart() {
       const isProd = mode === 'production';
       const buildPromises: Promise<void>[] = [];
+
+      await copyVendorAssets();
 
       // --- A. BUILD THEMES ---
       if (existsSync(WEB_THEMES)) {
@@ -185,7 +224,22 @@ const sideCarAssetsPlugin = (): Plugin => {
 };
 
 // --- BUNDLE HELPERS ---
-async function buildBundle({ name, inputs, output, type, isProd }: any) {
+type BundleOptions = {
+  name: string;
+  inputs: string[];
+  output: string;
+  type: 'css' | 'js';
+  isProd: boolean;
+};
+
+type EsbuildBundleOptions = {
+  name: string;
+  entry: string;
+  output: string;
+  isProd: boolean;
+};
+
+async function buildBundle({ name, inputs, output, type, isProd }: BundleOptions) {
   if (!inputs.length) return;
 
   let code = inputs.map((f: string) => readFileSync(f, 'utf8')).join('\n');
@@ -215,7 +269,7 @@ async function buildBundle({ name, inputs, output, type, isProd }: any) {
   console.log(`  [${name}] Built`);
 }
 
-async function buildEsbuildBundle({ name, entry, output, isProd }: any) {
+async function buildEsbuildBundle({ name, entry, output, isProd }: EsbuildBundleOptions) {
   const res = await esbuildBuild({
     entryPoints: [entry],
     bundle: true,
@@ -259,7 +313,12 @@ const umbracoPackagePlugin = (): Plugin => {
       const dest = path.join(PACKAGE_ROOT, MANIFEST);
       if (existsSync(src)) {
         await mkdir(path.dirname(dest), { recursive: true });
-        const manifest = JSON.parse(readFileSync(src, 'utf8')) as { version?: string };
+        let manifest: { version?: string };
+        try {
+          manifest = JSON.parse(readFileSync(src, 'utf8')) as { version?: string };
+        } catch (error) {
+          throw new Error(`[manifest] Invalid JSON in ${src}: ${String(error)}`);
+        }
         manifest.version = buildVersion.value;
         await writeFile(dest, `${JSON.stringify(manifest, null, 2)}\n`);
         await unlink(src);
