@@ -292,7 +292,10 @@ namespace Articulate.MetaWeblog
                         numberOfPosts,
                         out _,
                         ordering: Ordering.By("updateDate", Direction.Descending))
-                    .Where(x => x.ContentType.Alias is ArticulateConstants.ContentType.ArticulateRichText or ArticulateConstants.ContentType.ArticulatePost)
+                    .Where(x => x.ContentType.Alias is
+                        ArticulateConstants.ContentType.ArticulateRichText
+                            or ArticulateConstants.ContentType.ArticulatePost
+                            or ArticulateConstants.ContentType.ArticulateMarkdown)
             ];
 
             ISet<Guid> authorizedKeys = await contentPermissionService.FilterAuthorizedAccessAsync(
@@ -409,7 +412,7 @@ namespace Articulate.MetaWeblog
                 languageService,
                 logger);
 
-            if (content.HasProperty("richText"))
+            if (content.HasProperty("richText") || content.HasProperty("markdown"))
             {
                 await ProcessRichTextContentAsync(content, contentType, post, extractFirstImageAsProperty);
             }
@@ -494,13 +497,13 @@ namespace Articulate.MetaWeblog
             contentToSave = UpdateMediaHrefUrls(contentToSave);
             contentToSave = htmlSanitizer.Sanitize(contentToSave);
 
-            await content
-                .SetInvariantOrDefaultCultureValueAsync(
-                    "richText",
-                    contentToSave,
-                    contentType,
-                    languageService,
-                    logger);
+            string bodyProperty = content.HasProperty("richText") ? "richText" : "markdown";
+            await content.SetInvariantOrDefaultCultureValueAsync(
+                bodyProperty,
+                contentToSave,
+                contentType,
+                languageService,
+                logger);
 
             if (extractFirstImageAsProperty && content.HasProperty("postImage") &&
                 !firstImageRelativePath.IsNullOrWhiteSpace())
@@ -699,7 +702,9 @@ namespace Articulate.MetaWeblog
             IContent root = GetBlogRootContent();
             string rootId = root.Id.ToString(CultureInfo.InvariantCulture);
             bool isArticulatePost = post.ContentType.Alias is
-                ArticulateConstants.ContentType.ArticulateRichText or ArticulateConstants.ContentType.ArticulatePost;
+                ArticulateConstants.ContentType.ArticulateRichText
+                    or ArticulateConstants.ContentType.ArticulatePost
+                    or ArticulateConstants.ContentType.ArticulateMarkdown;
             bool isUnderConfiguredRoot = post.Path.Split(',').Contains(rootId, StringComparer.Ordinal);
 
             if (!isArticulatePost || !isUnderConfiguredRoot)
