@@ -14,6 +14,7 @@ using Umbraco.Cms.Core.PropertyEditors;
 using Umbraco.Cms.Core.Security;
 using Umbraco.Cms.Core.Serialization;
 using Umbraco.Cms.Core.Services;
+using Umbraco.Cms.Core.Services.AuthorizationStatus;
 using Umbraco.Cms.Core.Strings;
 using Umbraco.Cms.Core.Web;
 using WilderMinds.MetaWeblog;
@@ -43,7 +44,7 @@ namespace Articulate.MetaWeblog
         IArticulateMarkdownConverter articulateMarkdownConverter,
         IArticulateRichTextRenderer richTextRenderer,
         ArticulateTagService articulateTagService,
-        BackOfficeAuthService backOfficeAuthService,
+        IContentPermissionService contentPermissionService,
         IHtmlSanitizer htmlSanitizer
 #if UMBRACO_18_OR_GREATER
         , IIdKeyMap idKeyMap
@@ -65,14 +66,25 @@ namespace Articulate.MetaWeblog
         public async Task<string> AddPostAsync(string blogid, string username, string password, Post post, bool publish)
         {
             IUser user = await ValidateUserAsync(username, password);
+            EnsureBlogId(blogid);
 
             IPublishedContent root = BlogRoot();
+            IContent rootContent = GetBlogRootContent();
 
             IEnumerable<IPublishedContent> archiveNodes =
                 root.Children().Where(x => x.ContentType.Alias == ArticulateConstants.ContentType.ArticulateArchive);
             IPublishedContent node =
                 archiveNodes.FirstOrDefault() ??
                 throw new InvalidOperationException("No Articulate Archive node found");
+            IContent archive = contentService.GetById(node.Id) ??
+                               throw new InvalidOperationException("No Articulate Archive content found");
+
+            await EnsurePermissionAsync(user, rootContent, ActionBrowse.ActionLetter);
+            await EnsurePermissionAsync(user, archive, ActionNew.ActionLetter);
+            if (publish)
+            {
+                await EnsurePermissionAsync(user, archive, ActionPublish.ActionLetter);
+            }
 
             IContentType contentType = contentTypeService.Get(ArticulateConstants.ContentType.ArticulateRichText) ??
                                        throw new InvalidOperationException(
@@ -120,10 +132,7 @@ namespace Articulate.MetaWeblog
                 return false;
             }
 
-            if (!backOfficeAuthService.HasPermissions(user, content, [ActionDelete.ActionLetter]))
-            {
-                throw new AuthenticationException("User does not have permission to delete this content");
-            }
+            await EnsurePostPermissionAsync(user, content, ActionDelete.ActionLetter);
 
             // Move to recycle bin rather than unpublish
             OperationResult recycleResult = contentService.MoveToRecycleBin(content, userId);
@@ -157,16 +166,12 @@ namespace Articulate.MetaWeblog
             }
 
             IContent umbracoContent = contentService.GetById(asInt.Result) ??
-                                      throw new InvalidOperationException(
-                                          $"The content with id {asInt.Result} could not be found");
+                                      throw new AuthenticationException("The requested content is not available");
 
-            var requiredPermissions = publish
-                ? new[] { ActionUpdate.ActionLetter, ActionPublish.ActionLetter }
-                : new[] { ActionUpdate.ActionLetter };
-
-            if (!backOfficeAuthService.HasPermissions(user, umbracoContent, requiredPermissions))
+            await EnsurePostPermissionAsync(user, umbracoContent, ActionUpdate.ActionLetter);
+            if (publish)
             {
-                throw new AuthenticationException("User does not have permission to edit this content");
+                await EnsurePostPermissionAsync(user, umbracoContent, ActionPublish.ActionLetter);
             }
 
             IContentType contentType = contentTypeService.Get(umbracoContent.ContentType.Alias) ??
@@ -199,18 +204,23 @@ namespace Articulate.MetaWeblog
         /// <inheritdoc/>
         public async Task<CategoryInfo[]> GetCategoriesAsync(string blogid, string username, string password)
         {
-            _ = await ValidateUserAsync(username, password);
+            IUser user = await ValidateUserAsync(username, password);
+            EnsureBlogId(blogid);
+            await EnsurePermissionAsync(user, GetBlogRootContent(), ActionBrowse.ActionLetter);
 
             IEnumerable<ArticulateTagInfo> categories = articulateTagService.GetAllTagInfos(
                 BlogRoot().Path,
                 ArticulateConstants.DataType.ArticulateCategories);
 
-            return categories.Select(x => new CategoryInfo
-            {
-                title = x.Name,
-                description = x.Name,
-                categoryid = x.Id.ToString(CultureInfo.InvariantCulture)
-            }).ToArray();
+            return
+            [
+                .. categories.Select(x => new CategoryInfo
+                {
+                    title = x.Name,
+                    description = x.Name,
+                    categoryid = x.Id.ToString(CultureInfo.InvariantCulture)
+                })
+            ];
         }
 
         /// <inheritdoc/>
@@ -224,7 +234,7 @@ namespace Articulate.MetaWeblog
         /// <inheritdoc/>
         public async Task<Post> GetPostAsync(string postid, string username, string password)
         {
-            _ = await ValidateUserAsync(username, password);
+            IUser user = await ValidateUserAsync(username, password);
 
             Attempt<int> asInt = postid.TryConvertTo<int>();
             if (!asInt)
@@ -232,15 +242,16 @@ namespace Articulate.MetaWeblog
                 throw new InvalidOperationException("The id could not be parsed to an integer");
             }
 
+            IContent content = contentService.GetById(asInt.Result) ??
+                               throw new AuthenticationException("The requested content is not available");
+            await EnsurePostPermissionAsync(user, content, ActionBrowse.ActionLetter);
+
             IPublishedContent? post = umbracoContextAccessor.GetRequiredUmbracoContext().Content.GetById(asInt.Result);
             if (post is not null)
             {
                 Post fromPost = FromPost(new PostModel(post, publishedValueFallback));
                 return fromPost;
             }
-
-            IContent content = contentService.GetById(asInt.Result) ??
-                               throw new InvalidOperationException("No post found with id " + postid);
 
             Post fromContent = FromContent(content);
             return fromContent;
@@ -260,33 +271,44 @@ namespace Articulate.MetaWeblog
 
             numberOfPosts = Math.Min(numberOfPosts, 1000);
 
-            _ = await ValidateUserAsync(username, password);
+            IUser user = await ValidateUserAsync(username, password);
+            EnsureBlogId(blogid);
+            IContent root = GetBlogRootContent();
+            await EnsurePermissionAsync(user, root, ActionBrowse.ActionLetter);
 
-            IEnumerable<IPublishedContent> archiveNodes =
-                BlogRoot().Children().Where(x => x.ContentType.Alias == ArticulateConstants.ContentType.ArticulateArchive);
-            IPublishedContent node =
-                archiveNodes.FirstOrDefault() ??
-                throw new InvalidOperationException("No Articulate Archive node found");
+            IPublishedContent archiveNode = BlogRoot()
+                                                .Children()
+                                                .FirstOrDefault(x => x.ContentType.Alias == ArticulateConstants.ContentType.ArticulateArchive) ??
+                                            throw new InvalidOperationException("No Articulate Archive node found");
+            IContent archive = contentService.GetById(archiveNode.Id) ??
+                               throw new InvalidOperationException("No Articulate Archive content found");
 
-            Post[] recent =
+            IContent[] posts =
             [
                 .. contentService
                     .EnumeratePagedChildren(
-                        node.Id,
+                        archive.Id,
                         0,
                         numberOfPosts,
                         out _,
                         ordering: Ordering.By("updateDate", Direction.Descending))
-                    .Select(FromContent)
+                    .Where(x => x.ContentType.Alias is ArticulateConstants.ContentType.ArticulateRichText or ArticulateConstants.ContentType.ArticulatePost)
             ];
 
-            return recent;
+            ISet<Guid> authorizedKeys = await contentPermissionService.FilterAuthorizedAccessAsync(
+                user,
+                posts.Select(x => x.Key),
+                new HashSet<string> { ActionBrowse.ActionLetter });
+
+            return [.. posts.Where(x => authorizedKeys.Contains(x.Key)).Select(FromContent)];
         }
 
         /// <inheritdoc/>
         public async Task<Tag[]> GetTagsAsync(string blogid, string username, string password)
         {
-            _ = await ValidateUserAsync(username, password);
+            IUser user = await ValidateUserAsync(username, password);
+            EnsureBlogId(blogid);
+            await EnsurePermissionAsync(user, GetBlogRootContent(), ActionBrowse.ActionLetter);
 
             IEnumerable<string> all = articulateTagService.GetAllTags(
                 BlogRoot().Path,
@@ -304,7 +326,8 @@ namespace Articulate.MetaWeblog
         /// <inheritdoc/>
         public async Task<BlogInfo[]> GetUsersBlogsAsync(string key, string username, string password)
         {
-            _ = await ValidateUserAsync(username, password);
+            IUser user = await ValidateUserAsync(username, password);
+            await EnsurePermissionAsync(user, GetBlogRootContent(), ActionBrowse.ActionLetter);
 
             IPublishedContent node = BlogRoot();
             BlogInfo[] blogs =
@@ -322,7 +345,9 @@ namespace Articulate.MetaWeblog
             string password,
             MediaObject mediaObject)
         {
-            _ = await ValidateUserAsync(username, password);
+            IUser user = await ValidateUserAsync(username, password);
+            EnsureBlogId(blogid);
+            await EnsurePermissionAsync(user, GetBlogRootContent(), ActionUpdate.ActionLetter);
 
             if (string.IsNullOrWhiteSpace(mediaObject.bits))
             {
@@ -611,22 +636,22 @@ namespace Articulate.MetaWeblog
 
         private async Task SaveAndPublishIfNeededAsync(IContent content, IUser user, Post post, bool publish)
         {
+            if (post.dateCreated != DateTime.MinValue)
+            {
+                IContentType? contentType = contentTypeService.Get(content.ContentTypeId);
+                if (contentType is not null)
+                {
+                    await content.SetInvariantOrDefaultCultureValueAsync(
+                        "publishedDate",
+                        post.dateCreated,
+                        contentType,
+                        languageService,
+                        logger);
+                }
+            }
+
             if (publish)
             {
-                if (post.dateCreated != DateTime.MinValue)
-                {
-                    IContentType? contentType = contentTypeService.Get(content.ContentTypeId);
-                    if (contentType is not null)
-                    {
-                        await content.SetInvariantOrDefaultCultureValueAsync(
-                            "publishedDate",
-                            post.dateCreated,
-                            contentType,
-                            languageService,
-                            logger);
-                    }
-                }
-
                 OperationResult saveAndPublishSaveResult = contentService.Save(content, user.Id);
                 saveAndPublishSaveResult.EnsureSuccess(logger, $"save content {content.Id}");
 
@@ -647,6 +672,59 @@ namespace Articulate.MetaWeblog
                 throw new InvalidOperationException("No node found by route");
 
             return node;
+        }
+
+        private void EnsureBlogId(string blogid)
+        {
+            if (!int.TryParse(blogid, out int blogId) || blogId != articulateBlogRootNodeId)
+            {
+                throw new AuthenticationException("The requested content is not available");
+            }
+        }
+
+        private IContent GetBlogRootContent()
+        {
+            IContent root = contentService.GetById(articulateBlogRootNodeId) ??
+                            throw new InvalidOperationException("No Articulate root node found");
+
+            if (root.ContentType.Alias != ArticulateConstants.ContentType.Articulate)
+            {
+                throw new InvalidOperationException("The configured node is not an Articulate root");
+            }
+
+            return root;
+        }
+
+        private async Task EnsurePostPermissionAsync(IUser user, IContent post, string permission)
+        {
+            IContent root = GetBlogRootContent();
+            string rootId = root.Id.ToString(CultureInfo.InvariantCulture);
+            bool isArticulatePost = post.ContentType.Alias is
+                ArticulateConstants.ContentType.ArticulateRichText or ArticulateConstants.ContentType.ArticulatePost;
+            bool isUnderConfiguredRoot = post.Path.Split(',').Contains(rootId, StringComparer.Ordinal);
+
+            if (!isArticulatePost || !isUnderConfiguredRoot)
+            {
+                throw new AuthenticationException("The requested content is not available");
+            }
+
+            await EnsurePermissionAsync(user, post, permission);
+        }
+
+        private async Task EnsurePermissionAsync(IUser user, IContent content, params string[] permissions)
+        {
+            foreach (string permission in permissions)
+            {
+                ContentAuthorizationStatus status = await contentPermissionService.AuthorizeAccessAsync(
+                    user,
+                    content.Key,
+                    permission);
+
+                if (status != ContentAuthorizationStatus.Success)
+                {
+                    throw new AuthenticationException("The requested content is not available");
+                }
+            }
         }
 
         private Post FromContent(IContent post)
@@ -685,7 +763,7 @@ namespace Articulate.MetaWeblog
                 null => [],
                 string raw => SplitTagValue(raw),
                 IEnumerable<string> values => CleanTagValues(values),
-                IEnumerable<object> values => CleanTagValues(values.Select(x => x?.ToString())),
+                IEnumerable<object> values => CleanTagValues(values.Select(x => x.ToString())),
                 _ => SplitTagValue(value.ToString()),
             };
         }
@@ -696,25 +774,25 @@ namespace Articulate.MetaWeblog
                 : CleanTagValues(value.Split(_commaSeparator, StringSplitOptions.RemoveEmptyEntries));
 
         private static string[] CleanTagValues(IEnumerable<string?> values) =>
-            values
+        [
+            .. values
                 .Select(x => x?.Trim())
                 .Where(x => !string.IsNullOrWhiteSpace(x))
                 .Select(x => x!)
                 .Distinct(StringComparer.OrdinalIgnoreCase)
-                .ToArray();
+        ];
 
         /// <summary>
-        ///     There are so many variants of Metaweblog API, so I've just included as many properties, custom ones, etc... that I
+        ///     There are so many variants of MetaWeblog API, so I've just included as many properties, custom ones, etc... that I
         ///     can find.
         /// </summary>
         /// <param name="post">The Articulate post model to convert.</param>
         /// <returns>A MetaWeblog <see cref="Post"/> populated from the Articulate post.</returns>
         /// <remarks>
-        ///     http://msdn.microsoft.com/en-us/library/bb463260.aspx
-        ///     http://xmlrpc.scripting.com/metaWeblogApi.html
         ///     http://cyber.law.harvard.edu/rss/rss.html#hrelementsOfLtitemgt
         ///     http://codex.wordpress.org/XML-RPC_MetaWeblog_API
-        ///     https://blogengine.codeplex.com/SourceControl/latest#BlogEngine/BlogEngine.Core/API/MetaWeblog/MetaWeblogHandler.cs .
+        ///     https://github.com/shawnwildermuth/MetaWeblog
+        ///     https://github.com/OpenLiveWriter/OpenLiveWriter
         /// </remarks>
         private static Post FromPost(PostModel post) => new()
         {
@@ -728,15 +806,38 @@ namespace Articulate.MetaWeblog
             title = post.Name,
         };
 
-        private async Task<IUser> ValidateUserAsync(string username, string password)
+        private Task<IUser> ValidateUserAsync(string username, string password) =>
+            ValidateUserAsync(backOfficeUserManager, userService, username, password);
+
+        internal static async Task<IUser> ValidateUserAsync(
+            IBackOfficeUserManager userManager,
+            IUserService userService,
+            string username,
+            string password)
         {
-            if (!await backOfficeUserManager.ValidateCredentialsAsync(username, password))
+            const string invalidCredentialsMessage = "Invalid MetaWeblog credentials";
+
+            BackOfficeIdentityUser? identityUser = await userManager.FindByNameAsync(username);
+            if (identityUser is null || await userManager.IsLockedOutAsync(identityUser))
             {
-                throw new AuthenticationException($"Failed to validate user credentials for {username}");
+                throw new AuthenticationException(invalidCredentialsMessage);
             }
 
+            if (await userManager.GetTwoFactorEnabledAsync(identityUser))
+            {
+                throw new AuthenticationException(invalidCredentialsMessage);
+            }
+
+            if (!await userManager.CheckPasswordAsync(identityUser, password))
+            {
+                await userManager.AccessFailedAsync(identityUser);
+                throw new AuthenticationException(invalidCredentialsMessage);
+            }
+
+            await userManager.ResetAccessFailedCountAsync(identityUser);
+
             IUser user = userService.GetByUsername(username) ??
-                         throw new InvalidOperationException($"Failed to find user for {username}");
+                         throw new AuthenticationException(invalidCredentialsMessage);
 
             return user;
         }
