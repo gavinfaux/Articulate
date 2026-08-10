@@ -147,11 +147,14 @@ Use `--reset` to delete the local `umbraco` data folder before starting.
 
 ### Public tunnel for theme/Giscus review
 
+  > Giscus CSS tunnel testing is supported against the local test site. Docker uses fixed localhost callback and application URLs, so a temporary Cloudflare hostname can produce incorrect absolute theme URLs and OAuth redirects.
+  > Do not use Docker quick tunnels for this test unless the public host is configured before startup.
+
 When a public URL is needed to review theme or Giscus widget styling, expose
 the default HTTPS test site with Cloudflare Tunnel:
 
 ```text
-cloudflared tunnel --url https://localhost:44317 --no-tls-verify
+cloudflared tunnel --url https://localhost:44366 --no-tls-verify
 ```
 
 Open the generated public URL for the review. The `--no-tls-verify` option is
@@ -159,12 +162,12 @@ needed because the local test site uses a development certificate.
 
 To check the per-theme Giscus stylesheet endpoint through the public site, run:
 
-```powershell
-$css = Invoke-WebRequest `
-    -Uri 'https://<cloudflared-public-url>/articulate/giscus-theme/VAPOR' `
-    -Headers @{ Origin = 'https://giscus.app' }
-$css.Content | Select-String 'Articulate "VAPOR" theme'
-```
+```shell
+  curl -fsSL \
+    -H 'Origin: https://giscus.app' \
+    'https://<cloudflared-public-url>/articulate/giscus-theme/VAPOR' |
+    grep -F 'Articulate "VAPOR" theme'
+  ```
 
 Run Docker commands through `dotnet run --file docker/run.cs -- help`.
 For Docker runtime details such as ports, credentials, runtime modes, smoke
