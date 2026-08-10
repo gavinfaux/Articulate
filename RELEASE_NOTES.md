@@ -56,7 +56,7 @@ URL-bearing background images in Razor themes should be assigned through CSS cus
 
 ### Notes
 
-- The standalone Markdown editor now keeps its access token in memory. Refreshing the page clears the token and requires sign-in again.
+- The standalone post editor now keeps its access token in memory. Refreshing the page clears the token and requires sign-in again.
 - Custom themes should provide the expected views, including `Authors.cshtml`, where applicable.
 
 ---

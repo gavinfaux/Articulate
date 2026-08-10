@@ -105,8 +105,7 @@ pnpm run build     # tsc && vite build
 pnpm run lint
 ```
 
-`pnpm run build` also regenerates the built-in theme `assets/dist` bundles and
-the Markdown editor assets, not just the Back Office client.
+`pnpm run build` also regenerates the built-in theme `assets/dist` bundles, Markdown editor assets, and committed vendor assets.
 
 `pnpm run generate:api` regenerates that lane's typed client (`../common/src/api/<lane>/`)
 from a running Umbraco site. The v17 script reads Swagger JSON; the v18 script

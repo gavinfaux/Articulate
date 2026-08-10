@@ -68,6 +68,11 @@ wiki pages for the exact appsettings reference.
 - [Report a bug](https://github.com/Shazwazza/Articulate/issues)
 - [Community discussions](https://forum.umbraco.com/tag/packages)
 
+The standalone post editor emits a strict same-origin CSP. If its custom OAuth or
+login-logo URLs point to another origin, the host site must replace that CSP via
+middleware or its reverse proxy; adding a second CSP header will not relax it.
+The Back Office Markdown property editor is a separate component and is unaffected.
+
 Please use GitHub Issues for reproducible bugs and the Umbraco forum for usage
 questions and general discussion.
 
