@@ -424,15 +424,14 @@ namespace Articulate.MetaWeblog
                     logger);
             }
 
-            if (!post.mt_excerpt.IsNullOrWhiteSpace())
+            if (content.HasProperty("excerpt"))
             {
-                await content
-                    .SetInvariantOrDefaultCultureValueAsync(
-                        "excerpt",
-                        post.mt_excerpt,
-                        contentType,
-                        languageService,
-                        logger);
+                await content.SetInvariantOrDefaultCultureValueAsync(
+                    "excerpt",
+                    post.mt_excerpt ?? string.Empty,
+                    contentType,
+                    languageService,
+                    logger);
             }
 
             await SetCommentSettingsAsync(content, contentType, post.mt_allow_comments);
