@@ -151,7 +151,8 @@ namespace Articulate.Controllers
                 {
                     // Open Live Writer retries with two arguments; add the unused first parameter.
                     methodName.Value = "blogger.getUsersBlogs";
-                    parameters.AddFirst(new XElement("param", new XElement("value", string.Empty)));
+                    parameters.AddFirst(
+                        new XElement("param", new XElement("value", new XElement("string", string.Empty))));
                 }
 
                 normalized = document.ToString(SaveOptions.DisableFormatting);

@@ -36,7 +36,7 @@ namespace Articulate.Tests.Controllers
 
             Assert.That(MetaWeblogController.TryNormalizeMetaWeblogRequest(content, 1000, out string normalized), Is.True);
             Assert.That(normalized, Does.Contain("<methodName>blogger.getUsersBlogs</methodName>"));
-            Assert.That(normalized, Does.Contain("<params><param><value></value></param>"));
+            Assert.That(normalized, Does.Contain("<params><param><value><string></string></value></param>"));
             Assert.That(normalized.Split("<param>"), Has.Length.EqualTo(4));
         }
 

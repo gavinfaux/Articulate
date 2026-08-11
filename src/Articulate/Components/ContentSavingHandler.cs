@@ -91,7 +91,7 @@ namespace Articulate.Components
                 (c, ct, culture) =>
                 {
                     var currentExcerpt = c.GetValue("excerpt", culture?.Culture)?.ToString();
-                    if (!currentExcerpt.IsNullOrWhiteSpace())
+                    if (c.IsPropertyDirty("excerpt") || !currentExcerpt.IsNullOrWhiteSpace())
                     {
                         return null;
                     }

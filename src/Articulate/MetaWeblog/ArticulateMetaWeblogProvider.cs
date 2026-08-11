@@ -427,11 +427,11 @@ namespace Articulate.MetaWeblog
                     logger);
             }
 
-            if (content.HasProperty("excerpt"))
+            if (content.HasProperty("excerpt") && post.mt_excerpt is not null)
             {
                 await content.SetInvariantOrDefaultCultureValueAsync(
                     "excerpt",
-                    post.mt_excerpt ?? string.Empty,
+                    post.mt_excerpt,
                     contentType,
                     languageService,
                     logger);
