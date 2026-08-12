@@ -44,7 +44,8 @@ namespace Articulate.Controllers.Api
         IDataTypeService dataTypeService,
         ILogger<MarkdownEditorApiController> logger,
         IAbsoluteUrlBuilder absoluteUrlBuilder,
-        IArticulateImportMediaService service
+        IArticulateImportMediaService service,
+        ArticulateContentAuthorizationService authorizationService
 #if UMBRACO_18_OR_GREATER
         , IIdKeyMap idKeyMap
 #endif
@@ -80,7 +81,7 @@ namespace Articulate.Controllers.Api
             }
 
             IUser? currentUser = backOfficeAuthService.GetCurrentUser();
-            if (CheckPermissions(archive!, currentUser) is { } permissionError)
+            if (await CheckPermissionsAsync(articulateNode!, archive!, currentUser) is { } permissionError)
             {
                 return permissionError;
             }
@@ -88,10 +89,19 @@ namespace Articulate.Controllers.Api
             bool extractFirstImageAsProperty = articulateNode!.HasProperty("extractFirstImage")
                                                && articulateNode.GetValue<bool>("extractFirstImage");
 
-            ParseImageResponse parsedImageResponse = await ParseImages(
-                model!.Body,
-                Request.Form.Files,
-                extractFirstImageAsProperty);
+            ParseImageResponse parsedImageResponse;
+            try
+            {
+                parsedImageResponse = await ParseImages(
+                    model!.Body,
+                    Request.Form.Files,
+                    extractFirstImageAsProperty,
+                    currentUser!);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
 
             model.Body = parsedImageResponse.BodyText;
 
@@ -143,9 +153,15 @@ namespace Articulate.Controllers.Api
                     statusCode: StatusCodes.Status404NotFound);
             }
 
-            archive = contentService.EnumeratePagedChildren(model.ArticulateBlogNode, 0, 1, out _)
-                .FirstOrDefault(x =>
-                    x.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateArchive));
+            if (!authorizationService.IsArticulateRoot(articulateNode))
+            {
+                return Problem(
+                    $"The specified id is not an Articulate root: {model.ArticulateBlogNode}",
+                    statusCode: StatusCodes.Status404NotFound);
+            }
+
+            archive = authorizationService.FindArchive(
+                EnumerateRootChildren(model.ArticulateBlogNode));
 
             if (archive is null)
             {
@@ -157,20 +173,55 @@ namespace Articulate.Controllers.Api
             return null;
         }
 
-        private ActionResult? CheckPermissions(IContent archive, IUser? currentUser)
+        private IEnumerable<IContent> EnumerateRootChildren(int rootId)
+        {
+            var pageIndex = 0;
+            const int pageSize = 500;
+            while (true)
+            {
+                IContent[] page = contentService.EnumeratePagedChildren(
+                    rootId,
+                    pageIndex++,
+                    pageSize,
+                    out _).ToArray();
+                foreach (IContent child in page)
+                {
+                    yield return child;
+                }
+
+                if (page.Length < pageSize)
+                {
+                    yield break;
+                }
+            }
+        }
+
+        private async Task<ActionResult?> CheckPermissionsAsync(
+            IContent root,
+            IContent archive,
+            IUser? currentUser)
         {
             if (currentUser is null)
             {
                 return Unauthorized();
             }
 
-            var requiredPermissions = new[] { ActionNew.ActionLetter, ActionPublish.ActionLetter };
-            if (!backOfficeAuthService.HasPermissions(currentUser, archive, requiredPermissions))
+            try
+            {
+                await authorizationService.EnsureContentAccessAsync(
+                    currentUser,
+                    [root],
+                    [ActionBrowse.ActionLetter]);
+                await authorizationService.EnsureContentAccessAsync(
+                    currentUser,
+                    [archive],
+                    [ActionNew.ActionLetter, ActionPublish.ActionLetter]);
+                return null;
+            }
+            catch (UnauthorizedAccessException)
             {
                 return Forbid();
             }
-
-            return null;
         }
 
         private async Task<ActionResult<CreatePostResponse>> CreateAndSaveContentAsync(
@@ -216,7 +267,8 @@ namespace Articulate.Controllers.Api
         private async Task<ParseImageResponse> ParseImages(
             string? body,
             IFormFileCollection formFiles,
-            bool extractFirstImageAsProperty)
+            bool extractFirstImageAsProperty,
+            IUser currentUser)
         {
             if (body is null)
             {
@@ -235,7 +287,8 @@ namespace Articulate.Controllers.Api
                 ImageProcessResult result = await ProcessImageMatchAsync(
                     match,
                     formFiles,
-                    extractFirstImageAsProperty && !firstImageCaptured);
+                    extractFirstImageAsProperty && !firstImageCaptured,
+                    currentUser);
 
                 if (result.IsFirstImage && !string.IsNullOrEmpty(result.FirstImageUdi))
                 {
@@ -262,7 +315,8 @@ namespace Articulate.Controllers.Api
         private async Task<ImageProcessResult> ProcessImageMatchAsync(
             Match match,
             IFormFileCollection formFiles,
-            bool saveAsFirstImage)
+            bool saveAsFirstImage,
+            IUser currentUser)
         {
             var userLabel = match.Groups[1].Value;
             var tempUrl = match.Groups[2].Value;
@@ -297,10 +351,11 @@ namespace Articulate.Controllers.Api
 
             if (saveAsFirstImage)
             {
-                return SaveImageToMediaLibrary(
+                return await SaveImageToMediaLibraryAsync(
                     validationResult.ValidatedStream!,
                     altText,
-                    validationResult.CorrectExtension!);
+                    validationResult.CorrectExtension!,
+                    currentUser);
             }
 
             var absoluteUrl = service.SaveToFileSystem(
@@ -318,11 +373,13 @@ namespace Articulate.Controllers.Api
             return ImageProcessResult.RegularImage($"![{altText}]({absoluteUrl})");
         }
 
-        private ImageProcessResult SaveImageToMediaLibrary(
+        private async Task<ImageProcessResult> SaveImageToMediaLibraryAsync(
             Stream stream,
             string altText,
-            string extension)
+            string extension,
+            IUser currentUser)
         {
+            await authorizationService.EnsureMediaWriteAccessAsync(currentUser);
             ImportMediaSaveResult saveResult = service.SaveToMediaLibrary(
                 stream,
                 altText,

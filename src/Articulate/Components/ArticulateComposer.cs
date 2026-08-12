@@ -50,6 +50,7 @@ namespace Articulate.Components
             services.TryAddSingleton<IArticulateRichTextRenderer, ArticulateRichTextRenderer>();
             _ = services.AddTransient<IArticulateThemeResolver, ArticulateThemeResolver>();
             _ = services.AddScoped<BackOfficeAuthService>();
+            _ = services.AddScoped<ArticulateContentAuthorizationService>();
 
             // Register DI-driven view location provider and configure Razor view engine with provider
             services.TryAddSingleton<IArticulateViewLocationProvider, DefaultArticulateViewLocationProvider>();
