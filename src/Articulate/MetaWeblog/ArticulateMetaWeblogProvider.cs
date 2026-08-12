@@ -14,7 +14,6 @@ using Umbraco.Cms.Core.PropertyEditors;
 using Umbraco.Cms.Core.Security;
 using Umbraco.Cms.Core.Serialization;
 using Umbraco.Cms.Core.Services;
-using Umbraco.Cms.Core.Services.AuthorizationStatus;
 using Umbraco.Cms.Core.Strings;
 using Umbraco.Cms.Core.Web;
 using WilderMinds.MetaWeblog;
@@ -44,7 +43,7 @@ namespace Articulate.MetaWeblog
         IArticulateMarkdownConverter articulateMarkdownConverter,
         IArticulateRichTextRenderer richTextRenderer,
         ArticulateTagService articulateTagService,
-        IContentPermissionService contentPermissionService,
+        ArticulateContentAuthorizationService authorizationService,
         IHtmlSanitizer htmlSanitizer
 #if UMBRACO_18_OR_GREATER
         , IIdKeyMap idKeyMap
@@ -167,6 +166,11 @@ namespace Articulate.MetaWeblog
 
             IContent umbracoContent = contentService.GetById(asInt.Result) ??
                                       throw new AuthenticationException("The requested content is not available");
+
+            if (umbracoContent.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateMarkdown))
+            {
+                throw new AuthenticationException("The requested content is not available");
+            }
 
             await EnsurePostPermissionAsync(user, umbracoContent, ActionUpdate.ActionLetter);
             if (publish)
@@ -298,10 +302,7 @@ namespace Articulate.MetaWeblog
                             or ArticulateConstants.ContentType.ArticulateMarkdown)
             ];
 
-            ISet<Guid> authorizedKeys = await contentPermissionService.FilterAuthorizedAccessAsync(
-                user,
-                posts.Select(x => x.Key),
-                new HashSet<string> { ActionBrowse.ActionLetter });
+            ISet<Guid> authorizedKeys = await authorizationService.FilterAuthorizedPostsAsync(user, posts);
 
             return [.. posts.Where(x => authorizedKeys.Contains(x.Key)).Select(FromContent)];
         }
@@ -414,7 +415,14 @@ namespace Articulate.MetaWeblog
 
             if (content.HasProperty("richText") || content.HasProperty("markdown"))
             {
-                await ProcessRichTextContentAsync(content, contentType, post, extractFirstImageAsProperty);
+                try
+                {
+                    await ProcessRichTextContentAsync(content, contentType, post, extractFirstImageAsProperty, user);
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    throw new AuthenticationException("The requested content is not available");
+                }
             }
 
             if (!post.link.IsNullOrWhiteSpace())
@@ -477,7 +485,8 @@ namespace Articulate.MetaWeblog
             IContent content,
             IContentType contentType,
             Post post,
-            bool extractFirstImageAsProperty)
+            bool extractFirstImageAsProperty,
+            IUser user)
         {
             var cleanedContent = StripInvalidImageUrls(post.description);
 
@@ -508,7 +517,7 @@ namespace Articulate.MetaWeblog
             if (extractFirstImageAsProperty && content.HasProperty("postImage") &&
                 !firstImageRelativePath.IsNullOrWhiteSpace())
             {
-                await ExtractAndSaveFirstImageAsync(content, contentType, firstImageRelativePath);
+                await ExtractAndSaveFirstImageAsync(content, contentType, firstImageRelativePath, user);
             }
         }
 
@@ -566,7 +575,8 @@ namespace Articulate.MetaWeblog
         private async Task ExtractAndSaveFirstImageAsync(
             IContent content,
             IContentType contentType,
-            string firstImageRelativePath)
+            string firstImageRelativePath,
+            IUser user)
         {
             if (!mediaFileManager.FileSystem.FileExists(firstImageRelativePath))
             {
@@ -575,6 +585,7 @@ namespace Articulate.MetaWeblog
 
             try
             {
+                await authorizationService.EnsureMediaWriteAccessAsync(user);
                 await using Stream fileStream = mediaFileManager.FileSystem.OpenFile(firstImageRelativePath);
                 var fileName = Path.GetFileName(firstImageRelativePath);
                 var extension = Path.GetExtension(fileName);
@@ -601,6 +612,10 @@ namespace Articulate.MetaWeblog
                         fileName,
                         saveResult.ErrorMessage);
                 }
+            }
+            catch (UnauthorizedAccessException)
+            {
+                throw;
             }
             catch (Exception ex)
             {
@@ -689,7 +704,7 @@ namespace Articulate.MetaWeblog
             IContent root = contentService.GetById(articulateBlogRootNodeId) ??
                             throw new InvalidOperationException("No Articulate root node found");
 
-            if (root.ContentType.Alias != ArticulateConstants.ContentType.Articulate)
+            if (!authorizationService.IsArticulateRoot(root))
             {
                 throw new InvalidOperationException("The configured node is not an Articulate root");
             }
@@ -700,34 +715,58 @@ namespace Articulate.MetaWeblog
         private async Task EnsurePostPermissionAsync(IUser user, IContent post, string permission)
         {
             IContent root = GetBlogRootContent();
-            string rootId = root.Id.ToString(CultureInfo.InvariantCulture);
-            bool isArticulatePost = post.ContentType.Alias is
-                ArticulateConstants.ContentType.ArticulateRichText
-                    or ArticulateConstants.ContentType.ArticulatePost
-                    or ArticulateConstants.ContentType.ArticulateMarkdown;
-            bool isUnderConfiguredRoot = post.Path.Split(',').Contains(rootId, StringComparer.Ordinal);
-
-            if (!isArticulatePost || !isUnderConfiguredRoot)
+            if (!authorizationService.IsAllowedPost(post) || !authorizationService.IsDescendantOf(post, root))
             {
                 throw new AuthenticationException("The requested content is not available");
             }
 
-            await EnsurePermissionAsync(user, post, permission);
+            IContent[] archives = EnumerateRootChildren(root.Id)
+                .Where(authorizationService.IsArchive)
+                .ToArray();
+            if (!archives.Any(archive => authorizationService.IsDescendantOf(post, archive)))
+            {
+                throw new AuthenticationException("The requested content is not available");
+            }
+
+            try
+            {
+                await authorizationService.EnsureContentAccessAsync(user, root, ActionBrowse.ActionLetter);
+                await authorizationService.EnsureContentAccessAsync(user, post, permission);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                throw new AuthenticationException("The requested content is not available");
+            }
+        }
+
+        private IEnumerable<IContent> EnumerateRootChildren(int parentId)
+        {
+            var pageIndex = 0;
+            const int pageSize = 500;
+            while (true)
+            {
+                IContent[] page = contentService.EnumeratePagedChildren(parentId, pageIndex++, pageSize, out _).ToArray();
+                foreach (IContent item in page)
+                {
+                    yield return item;
+                }
+
+                if (page.Length < pageSize)
+                {
+                    yield break;
+                }
+            }
         }
 
         private async Task EnsurePermissionAsync(IUser user, IContent content, params string[] permissions)
         {
-            foreach (string permission in permissions)
+            try
             {
-                ContentAuthorizationStatus status = await contentPermissionService.AuthorizeAccessAsync(
-                    user,
-                    content.Key,
-                    permission);
-
-                if (status != ContentAuthorizationStatus.Success)
-                {
-                    throw new AuthenticationException("The requested content is not available");
-                }
+                await authorizationService.EnsureContentAccessAsync(user, content, permissions);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                throw new AuthenticationException("The requested content is not available");
             }
         }
 
@@ -813,6 +852,10 @@ namespace Articulate.MetaWeblog
         private Task<IUser> ValidateUserAsync(string username, string password) =>
             ValidateUserAsync(backOfficeUserManager, userService, username, password);
 
+        private static bool IsMetaWeblogUserStateUsable(BackOfficeIdentityUser identityUser) =>
+            identityUser.IsApproved
+            && identityUser.IsLockedOut == false;
+
         internal static async Task<IUser> ValidateUserAsync(
             IBackOfficeUserManager userManager,
             IUserService userService,
@@ -823,6 +866,11 @@ namespace Articulate.MetaWeblog
 
             BackOfficeIdentityUser? identityUser = await userManager.FindByNameAsync(username);
             if (identityUser is null || await userManager.IsLockedOutAsync(identityUser))
+            {
+                throw new AuthenticationException(invalidCredentialsMessage);
+            }
+
+            if (!IsMetaWeblogUserStateUsable(identityUser))
             {
                 throw new AuthenticationException(invalidCredentialsMessage);
             }

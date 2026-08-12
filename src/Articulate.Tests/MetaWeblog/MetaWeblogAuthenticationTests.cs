@@ -59,6 +59,19 @@ namespace Articulate.Tests.MetaWeblog
         }
 
         [Test]
+        public void Unapproved_user_is_rejected_by_the_manager_lockout_contract()
+        {
+            (Mock<IBackOfficeUserManager> manager, Mock<IUserService> userService, BackOfficeIdentityUser identityUser, _) = CreateSut();
+            identityUser.IsApproved = false;
+            manager.Setup(x => x.IsLockedOutAsync(identityUser)).ReturnsAsync(true);
+
+            Assert.ThrowsAsync<AuthenticationException>(async () =>
+                await ArticulateMetaWeblogProvider.ValidateUserAsync(manager.Object, userService.Object, "editor", "password"));
+
+            manager.Verify(x => x.CheckPasswordAsync(It.IsAny<BackOfficeIdentityUser>(), It.IsAny<string>()), Times.Never);
+        }
+
+        [Test]
         public void Mfa_user_is_rejected_before_password_check()
         {
             (Mock<IBackOfficeUserManager> manager, Mock<IUserService> userService, BackOfficeIdentityUser identityUser, _) = CreateSut();
@@ -70,12 +83,41 @@ namespace Articulate.Tests.MetaWeblog
             manager.Verify(x => x.CheckPasswordAsync(It.IsAny<BackOfficeIdentityUser>(), It.IsAny<string>()), Times.Never);
         }
 
+        [Test]
+        public void Disabled_user_is_rejected_before_password_check()
+        {
+            (Mock<IBackOfficeUserManager> manager, Mock<IUserService> userService, BackOfficeIdentityUser identityUser, _) = CreateSut();
+            identityUser.IsApproved = false;
+            manager.Setup(x => x.IsLockedOutAsync(identityUser)).ReturnsAsync(false);
+
+            Assert.ThrowsAsync<AuthenticationException>(async () =>
+                await ArticulateMetaWeblogProvider.ValidateUserAsync(manager.Object, userService.Object, "editor", "password"));
+
+            manager.Verify(x => x.CheckPasswordAsync(It.IsAny<BackOfficeIdentityUser>(), It.IsAny<string>()), Times.Never);
+        }
+
+        [Test]
+        public void Approved_first_login_user_is_allowed_to_reach_password_check()
+        {
+            (Mock<IBackOfficeUserManager> manager, Mock<IUserService> userService, BackOfficeIdentityUser identityUser, _) = CreateSut();
+            identityUser.IsApproved = true;
+            identityUser.LastLoginDate = null;
+            manager.Setup(x => x.CheckPasswordAsync(identityUser, "password")).ReturnsAsync(true);
+            manager.Setup(x => x.ResetAccessFailedCountAsync(identityUser)).ReturnsAsync(IdentityResult.Success);
+
+            Assert.DoesNotThrowAsync(async () =>
+                await ArticulateMetaWeblogProvider.ValidateUserAsync(manager.Object, userService.Object, "editor", "password"));
+
+            manager.Verify(x => x.CheckPasswordAsync(identityUser, "password"), Times.Once);
+        }
+
         private static (Mock<IBackOfficeUserManager>, Mock<IUserService>, BackOfficeIdentityUser, IUser) CreateSut()
         {
             var identityUser = new BackOfficeIdentityUser(new GlobalSettings(), 1, []);
             Mock<IBackOfficeUserManager> manager = new();
             Mock<IUserService> userService = new();
             Mock<IUser> user = new();
+            identityUser.IsApproved = true;
 
             userService.Setup(x => x.GetByUsername("editor")).Returns(user.Object);
             manager.Setup(x => x.FindByNameAsync("editor")).ReturnsAsync(identityUser);

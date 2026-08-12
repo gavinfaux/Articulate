@@ -36,6 +36,21 @@ namespace Articulate.Tests.MetaWeblog
         }
 
         [Test]
+        public void Markdown_edit_is_rejected_before_permission_or_save()
+        {
+            (ArticulateMetaWeblogProvider provider, Mock<IContentService> contentService, Mock<IContentPermissionService> permissions) =
+                CreateSut(contentTypeAlias: ArticulateConstants.ContentType.ArticulateMarkdown);
+
+            Assert.ThrowsAsync<AuthenticationException>(async () =>
+                await provider.EditPostAsync("200", "editor", "password", new Post { title = "changed" }, false));
+
+            permissions.Verify(
+                x => x.AuthorizeAccessAsync(It.IsAny<IUser>(), It.IsAny<Guid>(), ActionUpdate.ActionLetter),
+                Times.Never);
+            contentService.Verify(x => x.Save(It.IsAny<IContent>(), It.IsAny<int>()), Times.Never);
+        }
+
+        [Test]
         public void Unauthorized_edit_is_denied_before_save()
         {
             (ArticulateMetaWeblogProvider provider, Mock<IContentService> contentService, Mock<IContentPermissionService> permissions) = CreateSut();
@@ -89,6 +104,21 @@ namespace Articulate.Tests.MetaWeblog
         }
 
         [Test]
+        public void Root_browse_denial_blocks_direct_blog_discovery_operation()
+        {
+            (ArticulateMetaWeblogProvider provider, _, Mock<IContentPermissionService> permissions) = CreateSut();
+            permissions
+                .Setup(x => x.AuthorizeAccessAsync(It.IsAny<IUser>(), It.IsAny<Guid>(), ActionBrowse.ActionLetter))
+                .ReturnsAsync(Umbraco.Cms.Core.Services.AuthorizationStatus.ContentAuthorizationStatus.UnauthorizedMissingPermissionAccess);
+
+            Assert.ThrowsAsync<AuthenticationException>(async () =>
+                await provider.GetUsersBlogsAsync("100", "editor", "password"));
+            permissions.Verify(
+                x => x.AuthorizeAccessAsync(It.IsAny<IUser>(), It.IsAny<Guid>(), ActionBrowse.ActionLetter),
+                Times.Once);
+        }
+
+        [Test]
         public void Unauthorized_get_is_denied_before_unpublished_fallback()
         {
             (ArticulateMetaWeblogProvider provider, _, Mock<IContentPermissionService> permissions) = CreateSut();
@@ -113,13 +143,15 @@ namespace Articulate.Tests.MetaWeblog
         }
 
         private static (ArticulateMetaWeblogProvider, Mock<IContentService>, Mock<IContentPermissionService>) CreateSut(
-            string targetPath = "-1,100,200")
+            string targetPath = "-1,100,200",
+            string contentTypeAlias = ArticulateConstants.ContentType.ArticulatePost)
         {
             const int rootId = 100;
             var identityUser = new BackOfficeIdentityUser(new Umbraco.Cms.Core.Configuration.Models.GlobalSettings(), 1, []);
             Mock<IBackOfficeUserManager> userManager = new();
             Mock<IUserService> userService = new();
             Mock<IUser> user = new();
+            identityUser.IsApproved = true;
             userService.Setup(x => x.GetByUsername("editor")).Returns(user.Object);
             userManager.Setup(x => x.FindByNameAsync("editor")).ReturnsAsync(identityUser);
             userManager.Setup(x => x.IsLockedOutAsync(identityUser)).ReturnsAsync(false);
@@ -130,7 +162,7 @@ namespace Articulate.Tests.MetaWeblog
             Mock<ISimpleContentType> rootType = new();
             rootType.SetupGet(x => x.Alias).Returns(ArticulateConstants.ContentType.Articulate);
             Mock<ISimpleContentType> postType = new();
-            postType.SetupGet(x => x.Alias).Returns(ArticulateConstants.ContentType.ArticulatePost);
+            postType.SetupGet(x => x.Alias).Returns(contentTypeAlias);
             Mock<IContent> root = new();
             root.SetupGet(x => x.Id).Returns(rootId);
             root.SetupGet(x => x.Key).Returns(Guid.NewGuid());
@@ -165,10 +197,12 @@ namespace Articulate.Tests.MetaWeblog
                 Mock.Of<IArticulateMarkdownConverter>(),
                 Mock.Of<IArticulateRichTextRenderer>(),
                 null!,
-                permissions.Object,
+                new ArticulateContentAuthorizationService(
+                    permissions.Object,
+                    Mock.Of<IMediaPermissionService>()),
 #if UMBRACO_18_OR_GREATER
                 Mock.Of<IHtmlSanitizer>(),
-                Mock.Of<IIdKeyMap>());
+                Mock.Of<Umbraco.Cms.Core.Services.IIdKeyMap>());
 #else
                 Mock.Of<IHtmlSanitizer>());
 #endif
