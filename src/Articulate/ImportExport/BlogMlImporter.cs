@@ -7,10 +7,12 @@ using System.Xml.Linq;
 using Argotic.Syndication.Specialized;
 using Articulate.Options;
 using Articulate.Services;
+using Articulate.Syndication.BlogML;
 using Microsoft.AspNetCore.Html;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Umbraco.Cms.Core;
+using Umbraco.Cms.Core.Actions;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Models.Membership;
 using Umbraco.Cms.Core.PropertyEditors;
@@ -40,6 +42,7 @@ namespace Articulate.ImportExport
         IJsonSerializer jsonSerializer,
         ArticulateTempFileSystem articulateTempFileSystem,
         IArticulateImportMediaService service,
+        ArticulateContentAuthorizationService authorizationService,
         IHtmlSanitizer htmlSanitizer,
         IOptions<ArticulateOptions> articulateOptions,
         IOptions<ArticulateCommentsOptions> articulateCommentsOptions
@@ -77,7 +80,7 @@ namespace Articulate.ImportExport
         /// <summary>
         /// Imports the blog content from a BlogML file.
         /// </summary>
-        /// <param name="userId">The ID of the user performing the import.</param>
+        /// <param name="user">The authenticated backoffice user performing the import.</param>
         /// <param name="fileName">The name of the BlogML file in the temporary file system.</param>
         /// <param name="blogRootNode">The ID of the Articulate root node to import into.</param>
         /// <param name="overwrite">If true, existing posts are overwritten.</param>
@@ -88,7 +91,7 @@ namespace Articulate.ImportExport
         /// <param name="importFirstImage">If true, the first image in each post is extracted to a property.</param>
         /// <returns>An <see cref="ImportResponseDto"/> containing import statistics.</returns>
         internal async Task<ImportResponseDto> ImportAsync(
-            int userId,
+            IUser user,
             string fileName,
             Guid blogRootNode,
             bool overwrite,
@@ -104,18 +107,22 @@ namespace Articulate.ImportExport
                 throw new InvalidOperationException("Filename is required");
             }
 
-            if (!articulateTempFileSystem.FileExists(fileName))
-            {
-                throw new FileNotFoundException("File not found: " + fileName);
-            }
-
+            int userId = user.Id;
             IContent root = contentService.GetById(blogRootNode)
                             ?? throw new InvalidOperationException("No node found with id " + blogRootNode);
 
-            if (!root.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.Articulate))
+            if (!authorizationService.IsArticulateRoot(root))
             {
                 throw new InvalidOperationException("The node with id " + blogRootNode +
                                                     " is not an Articulate root node");
+            }
+
+            // Reject unauthorized roots before parsing the uploaded document.
+            await authorizationService.EnsureContentAccessAsync(user, root, ActionBrowse.ActionLetter);
+
+            if (!articulateTempFileSystem.FileExists(fileName))
+            {
+                throw new FileNotFoundException("File not found: " + fileName);
             }
 
             // wrap entire operation in scope
@@ -124,6 +131,14 @@ namespace Articulate.ImportExport
 
             BlogMLDocument document = GetDocument(fileName);
             XDocument xDoc = LoadBlogMlXDocument(fileName);
+            BlogMlImportPlan importPlan = await CreateImportPlanAsync(
+                user,
+                root,
+                document,
+                overwrite,
+                publishAll,
+                importFirstImage,
+                xDoc);
 
             // Warn when BlogML has comments but Giscus is configured and Disqus export isn't requested.
             // Giscus has no import endpoint, so comments would be silently discarded otherwise.
@@ -141,10 +156,11 @@ namespace Articulate.ImportExport
             }
 
             Dictionary<string, string> authorIdsToName =
-                await ImportAuthorsAsync(userId, root, document.Authors);
+                await ImportAuthorsAsync(userId, root, document.Authors, importPlan);
             returnModel.AuthorCount = authorIdsToName.Count;
 
             IEnumerable<IContent> imported = await ImportPostsAsync(
+                user,
                 userId,
                 xDoc,
                 root,
@@ -156,7 +172,8 @@ namespace Articulate.ImportExport
                 regexMatch,
                 regexReplace,
                 publishAll,
-                importFirstImage);
+                importFirstImage,
+                importPlan);
             IContent[] enumerable = imported as IContent[] ?? [.. imported];
             returnModel.PostCount = enumerable.Length;
 
@@ -224,16 +241,218 @@ namespace Articulate.ImportExport
             return XmlReader.Create(stream, settings);
         }
 
-        private async Task<Dictionary<string, string>> ImportAuthorsAsync(
+        internal async Task EnsureImportPermissionsAsync(
+            IUser user,
+            IContent root,
+            BlogMLDocument document,
+            bool overwrite,
+            bool publishAll,
+            bool importFirstImage,
+            XDocument? xDoc = null)
+        {
+            _ = await CreateImportPlanAsync(user, root, document, overwrite, publishAll, importFirstImage, xDoc);
+        }
+
+        private async Task<BlogMlImportPlan> CreateImportPlanAsync(
+            IUser user,
+            IContent root,
+            BlogMLDocument document,
+            bool overwrite,
+            bool publishAll,
+            bool importFirstImage,
+            XDocument? xDoc)
+        {
+            (IContent? authorsNode, IContent[] existingAuthors) =
+                await CreateAuthorImportPlanAsync(user, root, document.Authors);
+            (IContent[] archives, IReadOnlyList<BlogMlPostImportTarget> postTargets) =
+                await CreatePostImportPlanAsync(user, root, document.Posts, overwrite, publishAll, xDoc);
+            await EnsureMediaImportAccessAsync(user, postTargets, overwrite, importFirstImage);
+
+            return new(authorsNode, existingAuthors, archives, postTargets);
+        }
+
+        private async Task<(IContent? AuthorsNode, IContent[] ExistingAuthors)> CreateAuthorImportPlanAsync(
+            IUser user,
+            IContent root,
+            IEnumerable<BlogMLAuthor>? authors)
+        {
+            BlogMLAuthor[] authorItems = authors?.ToArray() ?? [];
+            if (authorItems.Length == 0)
+            {
+                return (null, []);
+            }
+
+            IContentType authorsType =
+                contentTypeService.Get(ArticulateConstants.ContentType.ArticulateAuthors)
+                ?? throw new InvalidOperationException("Articulate authors type is unavailable");
+            IContent? authorsNode = GetRootChildByType(root, authorsType.Id);
+            IContent[] existingAuthors = authorsNode is null
+                ? []
+                : GetExistingAuthorNodes(
+                    authorsNode.Id,
+                    contentTypeService.Get(ArticulateConstants.ContentType.ArticulateAuthor)?.Id
+                    ?? throw new InvalidOperationException("Articulate author type is unavailable"));
+
+            bool hasNewAuthor = authorItems.Any(author =>
+            {
+                string name = GetImportedAuthorName(author);
+                return !existingAuthors.Any(x => x.Name.InvariantEquals(name));
+            });
+            if (hasNewAuthor)
+            {
+                await authorizationService.EnsureContentAccessAsync(
+                    user,
+                    authorsNode ?? root,
+                    ActionNew.ActionLetter,
+                    ActionPublish.ActionLetter);
+            }
+
+            return (authorsNode, existingAuthors);
+        }
+
+        private async Task<(IContent[] Archives, IReadOnlyList<BlogMlPostImportTarget> PostTargets)> CreatePostImportPlanAsync(
+            IUser user,
+            IContent root,
+            IEnumerable<BlogMLPost> posts,
+            bool overwrite,
+            bool publishAll,
+            XDocument? xDoc)
+        {
+            BlogMLPost[] postItems = posts.ToArray();
+            if (postItems.Length == 0)
+            {
+                return ([], []);
+            }
+
+            IContentType archiveType =
+                contentTypeService.Get(ArticulateConstants.ContentType.ArticulateArchive)
+                ?? throw new InvalidOperationException("Articulate archive type is unavailable");
+            IContent[] archives = GetRootChildrenByType(root, archiveType.Id);
+            IReadOnlyList<BlogMlPostImportTarget> postTargets =
+                BuildPostTargets(root, archives, postItems, xDoc);
+            await EnsurePostImportPermissionsAsync(user, postTargets, overwrite, publishAll);
+
+            return (archives, postTargets);
+        }
+
+        private async Task EnsurePostImportPermissionsAsync(
+            IUser user,
+            IReadOnlyList<BlogMlPostImportTarget> postTargets,
+            bool overwrite,
+            bool publishAll)
+        {
+            foreach (IContent archiveTarget in postTargets
+                         .Select(x => x.TargetArchive)
+                         .Where(x => x is not null)
+                         .Select(x => x!)
+                         .DistinctBy(x => x.Key))
+            {
+                await authorizationService.EnsureContentAccessAsync(
+                    user,
+                    archiveTarget,
+                    GetRequiredPostActions(isNew: true, publishAll: publishAll));
+            }
+
+            if (!overwrite)
+            {
+                return;
+            }
+
+            foreach (IContent existing in postTargets
+                         .Select(x => x.ExistingPost)
+                         .Where(x => x is not null)
+                         .Select(x => x!))
+            {
+                await authorizationService.EnsureContentAccessAsync(
+                    user,
+                    existing,
+                    GetRequiredPostActions(isNew: false, publishAll: publishAll));
+            }
+        }
+
+        private async Task EnsureMediaImportAccessAsync(
+            IUser user,
+            IReadOnlyList<BlogMlPostImportTarget> postTargets,
+            bool overwrite,
+            bool importFirstImage)
+        {
+            if (!importFirstImage
+                || !postTargets.Any(x => (x.ExistingPost is null || overwrite) && HasPotentialImageImport(x.Source)))
+            {
+                return;
+            }
+
+            // Keep this early guard so a denied media operation cannot leave an auto-created archive behind.
+            // The write-seam guard below remains authoritative for the actual media mutation.
+            await authorizationService.EnsureMediaWriteAccessAsync(user);
+        }
+
+        private IContent? GetRootChildByType(IContent root, int contentTypeId) =>
+            GetRootChildrenByType(root, contentTypeId).FirstOrDefault();
+
+        private IContent[] GetRootChildrenByType(IContent root, int contentTypeId) =>
+            contentService.GetPagedOfType(
+                contentTypeId,
+                0,
+                int.MaxValue,
+                out _,
+                sqlContext.Query<IContent>().Where(x => x.ParentId == root.Id && x.Trashed == false)).ToArray();
+
+        private IReadOnlyList<BlogMlPostImportTarget> BuildPostTargets(
+            IContent root,
+            IContent[] archives,
+            IEnumerable<BlogMLPost> posts,
+            XDocument? xDoc)
+        {
+            IContent[] existingPosts = GetExistingPosts(archives);
+            return posts
+                .Select(post =>
+                {
+                    IContent? existing = FindExistingPost(existingPosts, post);
+                    return new BlogMlPostImportTarget(
+                        post,
+                        existing,
+                        existing is null ? ResolveArchiveForPost(root, archives, xDoc, post) : null);
+                })
+                .ToArray();
+        }
+
+        private string GetImportedAuthorName(BlogMLAuthor author) =>
+            userService.GetByEmail(author.EmailAddress)?.Name ?? author.Title.Content;
+
+        private static string[] GetRequiredPostActions(bool isNew, bool publishAll) =>
+            isNew
+                ? publishAll
+                    ? [ActionNew.ActionLetter, ActionPublish.ActionLetter]
+                    : [ActionNew.ActionLetter]
+                : publishAll
+                    ? [ActionUpdate.ActionLetter, ActionPublish.ActionLetter]
+                    : [ActionUpdate.ActionLetter];
+
+        private static IContent GetPostPermissionTarget(
+            IContent root,
+            IContent archive,
+            BlogMlPostImportTarget target) =>
+            target.ExistingPost ?? (target.TargetArchive?.Key == root.Key
+                ? root
+                : target.TargetArchive ?? archive);
+
+        internal async Task<Dictionary<string, string>> ImportAuthorsAsync(
             int userId,
             IContent rootNode,
-            IEnumerable<BlogMLAuthor>? authors)
+            IEnumerable<BlogMLAuthor>? authors,
+            BlogMlImportPlan? importPlan = null)
         {
             var result = new Dictionary<string, string>();
 
-            if (authors is null)
+            if (authors is null || !authors.Any())
             {
                 return result;
+            }
+
+            if (importPlan is null)
+            {
+                throw new InvalidOperationException("An import permission plan is required before importing authors");
             }
 
             IContentType authorType = contentTypeService.Get(ArticulateConstants.ContentType.ArticulateAuthor)
@@ -244,9 +463,9 @@ namespace Articulate.ImportExport
                                        ?? throw new InvalidOperationException(
                                            "Articulate is not installed properly, the 'ArticulateAuthors' doc type could not be found");
 
-            IContent authorsNode =
-                await GetOrCreateAuthorsContainerAsync(userId, rootNode, authorsType);
-            IContent[] existingAuthorNodes = GetExistingAuthorNodes(authorsNode.Id, authorType.Id);
+            IContent authorsNode = importPlan.AuthorsNode
+                                   ?? await GetOrCreateAuthorsContainerAsync(userId, rootNode, authorsType);
+            IContent[] existingAuthorNodes = importPlan.ExistingAuthors;
 
             foreach (BlogMLAuthor author in authors)
             {
@@ -346,7 +565,8 @@ namespace Articulate.ImportExport
             return authorNode;
         }
 
-        private async Task<IEnumerable<IContent>> ImportPostsAsync(
+        internal async Task<IEnumerable<IContent>> ImportPostsAsync(
+            IUser user,
             int userId,
             XDocument xDoc,
             IContent rootNode,
@@ -358,26 +578,58 @@ namespace Articulate.ImportExport
             string? regexMatch,
             string? regexReplace,
             bool publishAll,
-            bool importFirstImage = false)
+            bool importFirstImage = false,
+            BlogMlImportPlan? importPlan = null)
         {
             var result = new List<IContent>();
+            BlogMLPost[] postItems = [.. posts];
+
+            if (postItems.Length == 0)
+            {
+                return result;
+            }
 
             IContentType postType = contentTypeService.Get(ArticulateConstants.ContentType.ArticulateRichText)
                                     ?? throw new InvalidOperationException(
                                         "Articulate is not installed properly, the 'ArticulateRichText' doc type could not be found");
 
-            IContent archiveNode = await GetOrCreateArchiveNodeAsync(userId, rootNode);
-            IContent[] existingPosts = GetExistingPosts(archiveNode);
-
-            foreach (BlogMLPost post in posts)
+            IContentType archiveType = contentTypeService.Get(ArticulateConstants.ContentType.ArticulateArchive)
+                                       ?? throw new InvalidOperationException("Articulate archive type is unavailable");
+            IContent[] archiveNodes = importPlan?.Archives ?? GetRootChildrenByType(rootNode, archiveType.Id);
+            if (archiveNodes.Length == 0)
             {
-                IContent? postNode = FindExistingPost(existingPosts, post);
+                await authorizationService.EnsureContentAccessAsync(user, rootNode, ActionNew.ActionLetter);
+            }
+
+            IContent archiveNode = archiveNodes.FirstOrDefault()
+                                   ?? await GetOrCreateArchiveNodeAsync(userId, rootNode);
+            if (!archiveNodes.Any(x => x.Key == archiveNode.Key))
+            {
+                archiveNodes = [archiveNode, .. archiveNodes];
+            }
+
+            IReadOnlyList<BlogMlPostImportTarget> postTargets = importPlan?.PostTargets
+                ?? BuildPostTargets(rootNode, archiveNodes, postItems, xDoc);
+
+            foreach (BlogMlPostImportTarget target in postTargets)
+            {
+                BlogMLPost post = target.Source;
+                IContent? postNode = target.ExistingPost;
 
                 // Skip if exists and we don't want to overwrite
                 if (!overwrite && postNode is not null)
                 {
                     continue;
                 }
+
+                bool isNew = target.ExistingPost is null;
+                IContent targetArchive = target.TargetArchive?.Key == rootNode.Key
+                    ? archiveNode
+                    : target.TargetArchive ?? archiveNode;
+                await authorizationService.EnsureContentAccessAsync(
+                    user,
+                    GetPostPermissionTarget(rootNode, archiveNode, target),
+                    GetRequiredPostActions(isNew, publishAll));
 
                 // Create if it doesn't exist
                 if (postNode is null)
@@ -386,7 +638,7 @@ namespace Articulate.ImportExport
                     postNode = await contentService
                         .CreateWithInvariantOrDefaultCultureNameAsync(
                             title,
-                            archiveNode,
+                            targetArchive,
                             postType,
                             languageService,
                             logger);
@@ -397,7 +649,7 @@ namespace Articulate.ImportExport
 
                 if (importFirstImage)
                 {
-                    await ImportFirstImageAsync(postNode, postType, post);
+                    await ImportFirstImageAsync(postNode, postType, post, user);
                 }
 
                 SaveAndPublishPost(postNode, userId, publishAll);
@@ -407,25 +659,51 @@ namespace Articulate.ImportExport
             return result;
         }
 
-        private async Task ImportFirstImageAsync(IContentBase postNode, IContentType postType, BlogMLPost post)
+        private async Task ImportFirstImageAsync(
+            IContentBase postNode,
+            IContentType postType,
+            BlogMLPost post,
+            IUser user)
         {
-            // Filter for image attachments (any image/* MIME type)
             BlogMLAttachment? attachment = post.Attachments.FirstOrDefault(p =>
                 p.MimeType?.StartsWith("image/", StringComparison.OrdinalIgnoreCase) == true);
-
             if (attachment is null)
             {
                 return;
             }
 
+            ValidatedBlogMlImage? image = await ValidateFirstImageAsync(postNode, post, attachment);
+            if (image is null)
+            {
+                return;
+            }
+
+            if (!image.ValidationResult.IsValid)
+            {
+                logger.LogWarning(
+                    "BlogML attachment validation failed for post '{PostName}' (ImportId: {ImportId}, source: {Source}, identifier: {Identifier}): {ErrorMessage}",
+                    postNode.Name,
+                    post.Id,
+                    image.Source,
+                    image.Identifier,
+                    image.ValidationResult.ErrorMessage);
+                return;
+            }
+
+            await SaveFirstImageAsync(postNode, postType, post, user, image);
+        }
+
+        private async Task<ValidatedBlogMlImage?> ValidateFirstImageAsync(
+            IContentBase postNode,
+            BlogMLPost post,
+            BlogMLAttachment attachment)
+        {
             ImportMediaValidationResult validationResult;
             string attachmentSource;
             string attachmentIdentifier;
 
-            // Decode/download and validate the image
             if (!attachment.Content.IsNullOrWhiteSpace())
             {
-                // Base64 content
                 var fileName = attachment.Url is not null
                     ? Path.GetFileName(attachment.Url.OriginalString)
                     : $"{post.Id}-image";
@@ -436,7 +714,6 @@ namespace Articulate.ImportExport
             }
             else if (attachment.ExternalUri is not null && attachment.ExternalUri.IsAbsoluteUri)
             {
-                // External URL
                 attachmentSource = "external URL";
                 attachmentIdentifier = attachment.ExternalUri.ToString();
                 validationResult = await service.DownloadAndValidateImageAsync(attachment.ExternalUri);
@@ -447,28 +724,28 @@ namespace Articulate.ImportExport
                     "BlogML attachment for post '{PostName}' (ImportId: {ImportId}) has neither base64 content nor external URL",
                     postNode.Name,
                     post.Id);
-                return;
+                return null;
             }
 
-            if (!validationResult.IsValid)
-            {
-                logger.LogWarning(
-                    "BlogML attachment validation failed for post '{PostName}' (ImportId: {ImportId}, source: {Source}, identifier: {Identifier}): {ErrorMessage}",
-                    postNode.Name,
-                    post.Id,
-                    attachmentSource,
-                    attachmentIdentifier,
-                    validationResult.ErrorMessage);
-                return;
-            }
+            return new ValidatedBlogMlImage(validationResult, attachmentSource, attachmentIdentifier);
+        }
 
+        private async Task SaveFirstImageAsync(
+            IContentBase postNode,
+            IContentType postType,
+            BlogMLPost post,
+            IUser user,
+            ValidatedBlogMlImage image)
+        {
             try
             {
-                // Save to media library (service handles name cleaning/fallback)
+                // Recheck immediately before the actual media mutation in case permissions changed after preflight.
+                await authorizationService.EnsureMediaWriteAccessAsync(user);
+
                 ImportMediaSaveResult saveResult = service.SaveToMediaLibrary(
-                    validationResult.ValidatedStream!,
+                    image.ValidationResult.ValidatedStream!,
                     postNode.Name ?? $"Post-{post.Id}-image",
-                    validationResult.CorrectExtension!,
+                    image.ValidationResult.CorrectExtension!,
                     service.GetOrCreateArticulateMediaFolder());
 
                 if (!saveResult.Success)
@@ -477,13 +754,12 @@ namespace Articulate.ImportExport
                         "Failed to save BlogML image for post '{PostName}' (ImportId: {ImportId}, source: {Source}, identifier: {Identifier}): {ErrorMessage}",
                         postNode.Name,
                         post.Id,
-                        attachmentSource,
-                        attachmentIdentifier,
+                        image.Source,
+                        image.Identifier,
                         saveResult.ErrorMessage);
                     return;
                 }
 
-                // Set the postImage property
                 await postNode.SetInvariantOrDefaultCultureValueAsync(
                     "postImage",
                     saveResult.MediaUdi,
@@ -501,9 +777,9 @@ namespace Articulate.ImportExport
             }
             finally
             {
-                if (validationResult.ValidatedStream is not null)
+                if (image.ValidationResult.ValidatedStream is not null)
                 {
-                    await validationResult.ValidatedStream.DisposeAsync();
+                    await image.ValidationResult.ValidatedStream.DisposeAsync();
                 }
             }
         }
@@ -544,6 +820,10 @@ namespace Articulate.ImportExport
             var postCats = allCategories.Where(x => post.Categories.Contains(x.Id))
                 .Select(x => x.Title.Content)
                 .ToArray();
+            if (postCats.Length == 0)
+            {
+                return Task.CompletedTask;
+            }
 
             return postNode.AssignInvariantOrDefaultCultureTagsAsync(
                 "categories",
@@ -584,6 +864,10 @@ namespace Articulate.ImportExport
                 .Where(x => x is not null)
                 .OfType<string>()
                 .ToArray();
+            if (tags.Length == 0)
+            {
+                return;
+            }
 
             await postNode.AssignInvariantOrDefaultCultureTagsAsync(
                 "tags",
@@ -630,17 +914,95 @@ namespace Articulate.ImportExport
             return archiveNode;
         }
 
-        private IContent[] GetExistingPosts(IContent archiveNode)
-        {
-            IEnumerable<IContent> allPostNodes = contentService.EnumeratePagedChildren(
-                archiveNode.Id,
-                0,
-                int.MaxValue,
-                out _,
-                sqlContext.Query<IContent>().Where(x => x.ParentId == archiveNode.Id && x.Trashed == false));
+        private static bool HasPotentialImageImport(BlogMLPost post) =>
+            post.Attachments.Any(attachment =>
+                attachment.MimeType?.StartsWith("image/", StringComparison.OrdinalIgnoreCase) == true
+                && (!attachment.Content.IsNullOrWhiteSpace()
+                    || attachment.ExternalUri?.IsAbsoluteUri == true));
 
-            return allPostNodes as IContent[] ?? [.. allPostNodes];
+        private IContent[] GetExistingPosts(IEnumerable<IContent> archiveNodes)
+        {
+            return archiveNodes
+                .SelectMany(archiveNode => contentService.EnumeratePagedChildren(
+                    archiveNode.Id,
+                    0,
+                    int.MaxValue,
+                    out _,
+                    sqlContext.Query<IContent>().Where(x => x.ParentId == archiveNode.Id && x.Trashed == false)))
+                .Where(authorizationService.IsBlogMlPost)
+                .ToArray();
         }
+
+        internal static IContent ResolveArchiveForPost(
+            IContent root,
+            IContent[] archives,
+            XDocument? xDoc,
+            BlogMLPost post)
+        {
+            string? archiveIdentity = GetArchiveIdentityFromDocument(xDoc, post);
+            if (!string.IsNullOrWhiteSpace(archiveIdentity))
+            {
+                IContent? match = archives.FirstOrDefault(archive =>
+                    string.Equals(
+                        GetArchiveIdentity(archive),
+                        archiveIdentity,
+                        StringComparison.OrdinalIgnoreCase));
+                if (match is not null)
+                {
+                    return match;
+                }
+            }
+
+            string? archiveName = GetArchiveNameFromDocument(xDoc, post);
+            if (!string.IsNullOrWhiteSpace(archiveName))
+            {
+                IContent? match = archives.FirstOrDefault(archive =>
+                    string.Equals(archive.Name, archiveName, StringComparison.OrdinalIgnoreCase));
+                if (match is not null)
+                {
+                    return match;
+                }
+            }
+
+            // Third-party BlogML has no archive marker; preserve the historical first-archive fallback.
+            // With no archive, root is the only pre-mutation parent capability available; the importer
+            // creates the archive beneath it before creating the first post.
+            return archives.FirstOrDefault() ?? root;
+        }
+
+        internal static string? GetArchiveIdentityFromDocument(XDocument? xDoc, BlogMLPost post)
+        {
+            if (xDoc?.Root is null || string.IsNullOrWhiteSpace(post.Id))
+            {
+                return null;
+            }
+
+            XNamespace blogNamespace = xDoc.Root.Name.Namespace;
+            XElement? xmlPost = xDoc.Descendants(blogNamespace + "post")
+                .FirstOrDefault(x => string.Equals(x.Attribute("id")?.Value, post.Id, StringComparison.Ordinal));
+            return GetArchiveMarker(xmlPost)?.Attribute(ArchiveSyndicationExtension.KeyAttribute)?.Value;
+        }
+
+        private static string? GetArchiveNameFromDocument(XDocument? xDoc, BlogMLPost post)
+        {
+            if (xDoc?.Root is null || string.IsNullOrWhiteSpace(post.Id))
+            {
+                return null;
+            }
+
+            XNamespace blogNamespace = xDoc.Root.Name.Namespace;
+            XElement? xmlPost = xDoc.Descendants(blogNamespace + "post")
+                .FirstOrDefault(x => string.Equals(x.Attribute("id")?.Value, post.Id, StringComparison.Ordinal));
+            return GetArchiveMarker(xmlPost)?.Attribute(ArchiveSyndicationExtension.NameAttribute)?.Value;
+        }
+
+        private static XElement? GetArchiveMarker(XElement? xmlPost) =>
+            xmlPost?.Element(XName.Get(ArchiveSyndicationExtension.ElementName, ArchiveSyndicationExtension.Namespace));
+
+        private static string GetArchiveIdentity(IContent archive) =>
+            archive.Key != Guid.Empty
+                ? $"key:{archive.Key:D}"
+                : $"name:{archive.Name ?? string.Empty}";
 
         private static IContent? FindExistingPost(IContent[] existingPosts, BlogMLPost post)
         {
@@ -816,7 +1178,23 @@ namespace Articulate.ImportExport
                 saveResult.EnsureSuccess(logger, $"save post {postNode.Id}");
             }
         }
+
+        private sealed record ValidatedBlogMlImage(
+            ImportMediaValidationResult ValidationResult,
+            string Source,
+            string Identifier);
     }
+
+    internal sealed record BlogMlImportPlan(
+        IContent? AuthorsNode,
+        IContent[] ExistingAuthors,
+        IContent[] Archives,
+        IReadOnlyList<BlogMlPostImportTarget> PostTargets);
+
+    internal sealed record BlogMlPostImportTarget(
+        BlogMLPost Source,
+        IContent? ExistingPost,
+        IContent? TargetArchive);
 
     internal sealed record BlogMlImportFileSummary(int PostCount, int ExternalImageCount, string[] ExternalHosts);
 }

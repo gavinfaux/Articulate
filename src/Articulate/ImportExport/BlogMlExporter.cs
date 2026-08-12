@@ -8,8 +8,10 @@ using Articulate.Services;
 using Articulate.Syndication.BlogML;
 using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Core;
+using Umbraco.Cms.Core.Actions;
 using Umbraco.Cms.Core.IO;
 using Umbraco.Cms.Core.Models;
+using Umbraco.Cms.Core.Models.Membership;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.Persistence.Querying;
 using Umbraco.Cms.Core.PropertyEditors;
@@ -34,84 +36,164 @@ namespace Articulate.ImportExport
         ISqlContext sqlContext,
         ILogger<BlogMlExporter> logger,
         IArticulateMarkdownConverter articulateMarkdownConverter,
-        IArticulateRichTextRenderer richTextRenderer)
+        IArticulateRichTextRenderer richTextRenderer,
+        ArticulateContentAuthorizationService authorizationService)
     {
         /// <summary>
         /// Exports the blog content from a root node to a BlogML file.
         /// </summary>
+        /// <param name="user">The authenticated backoffice user.</param>
         /// <param name="blogRootNode">The unique identifier of the Articulate root node.</param>
         /// <param name="exportFileName">The name of the file to create.</param>
         /// <param name="exportImagesAsBase64">If true, images are embedded as Base64 strings.</param>
         /// <returns>A task representing the asynchronous operation.</returns>
         public async Task ExportAsync(
+            IUser user,
             Guid blogRootNode,
             string exportFileName,
             bool exportImagesAsBase64 = false)
         {
+            BlogMlExportSnapshot snapshot = await CreateAuthorizedExportSnapshotAsync(
+                user,
+                blogRootNode,
+                exportImagesAsBase64);
+
+            IDataType categoryDataType = await dataTypeService.GetAsync("Articulate Categories") ??
+                                         throw new InvalidOperationException(
+                                             "No Data Type named 'Articulate Categories' found");
+            TagConfiguration? categoryConfiguration = categoryDataType.ConfigurationAs<TagConfiguration>();
+            var categoryGroup = categoryConfiguration?.Group;
+            IDataType tagDataType = await dataTypeService.GetAsync("Articulate Tags") ??
+                                    throw new InvalidOperationException(
+                                        "No Data Type named 'Articulate Tags' found");
+            TagConfiguration? tagConfiguration = tagDataType.ConfigurationAs<TagConfiguration>();
+            var tagGroup = tagConfiguration?.Group;
+
+            var blogMlDoc = new BlogMLDocument
             {
-                IContent root = contentService.GetById(blogRootNode) ??
-                                throw new InvalidOperationException("No node found with id " + blogRootNode);
+                RootUrl = new Uri(urlProvider.GetUrl(snapshot.Root.Id), UriKind.RelativeOrAbsolute),
+                GeneratedOn = DateTime.Now,
+                Title = new BlogMLTextConstruct(snapshot.Root.GetValue<string>("blogTitle")),
+                Subtitle = new BlogMLTextConstruct(snapshot.Root.GetValue<string>("blogDescription"))
+            };
 
-                if (!root.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.Articulate))
-                {
-                    throw new InvalidOperationException(
-                        $"The node with id {blogRootNode} is not an Articulate root node");
-                }
-
-                _ = contentTypeService.Get(ArticulateConstants.ContentType.ArticulateRichText) ??
-                    throw new InvalidOperationException(
-                        "Articulate is not installed properly, the 'ArticulateRichText' doc type could not be found");
-                IDataType categoryDataType = await dataTypeService.GetAsync("Articulate Categories") ??
-                                             throw new InvalidOperationException(
-                                                 "No Data Type named 'Articulate Categories' found");
-                TagConfiguration? categoryConfiguration = categoryDataType.ConfigurationAs<TagConfiguration>();
-                var categoryGroup = categoryConfiguration?.Group;
-                IDataType tagDataType = await dataTypeService.GetAsync("Articulate Tags") ??
-                                        throw new InvalidOperationException(
-                                            "No Data Type named 'Articulate Tags' found");
-                TagConfiguration? tagConfiguration = tagDataType.ConfigurationAs<TagConfiguration>();
-                var tagGroup = tagConfiguration?.Group;
-
-                var blogMlDoc = new BlogMLDocument
-                {
-                    RootUrl = new Uri(urlProvider.GetUrl(root.Id), UriKind.RelativeOrAbsolute),
-                    GeneratedOn = DateTime.Now,
-                    Title = new BlogMLTextConstruct(root.GetValue<string>("blogTitle")),
-                    Subtitle = new BlogMLTextConstruct(root.GetValue<string>("blogDescription"))
-                };
-
-                IContentType authorsContentType =
-                    contentTypeService.Get(ArticulateConstants.ContentType.ArticulateAuthors)
-                    ?? throw new InvalidOperationException(
-                        "Articulate is not installed properly, the 'ArticulateAuthors' doc type could not be found");
-
-                foreach (IContent authorsNode in EnumerateDescendants(
-                             root.Id,
-                             sqlContext.Query<IContent>().Where(x => x.ContentTypeId == authorsContentType.Id),
-                             Ordering.By("CreateDate", Direction.Descending)))
-                {
-                    AddBlogAuthors(authorsNode, blogMlDoc);
-                }
-
-                AddBlogCategories(blogMlDoc, categoryGroup);
-
-                IContentType archiveContentType =
-                    contentTypeService.Get(ArticulateConstants.ContentType.ArticulateArchive)
-                    ?? throw new InvalidOperationException(
-                        "Articulate is not installed properly, the 'ArticulateArchive' doc type could not be found");
-
-                foreach (IContent archiveNode in EnumerateDescendants(
-                             root.Id,
-                             sqlContext.Query<IContent>().Where(x => x.ContentTypeId == archiveContentType.Id),
-                             Ordering.By("CreateDate", Direction.Descending)))
-                {
-                    AddBlogPosts(archiveNode, blogMlDoc, categoryGroup, tagGroup, exportImagesAsBase64);
-                }
-
-                WriteFile(blogMlDoc, exportFileName);
+            var categoryIds = snapshot.PostNodes
+                .SelectMany(x => tagService.GetTagsForEntity(x.Id, categoryGroup))
+                .Select(x => x.Id)
+                .ToHashSet();
+            AddBlogCategories(blogMlDoc, categoryGroup, categoryIds);
+            foreach (IContent authorsNode in snapshot.AuthorContainers)
+            {
+                AddBlogAuthors(snapshot.AuthorsByContainer[authorsNode.Id], blogMlDoc);
             }
+
+            foreach (IContent archiveNode in snapshot.ArchiveContainers)
+            {
+                AddBlogPosts(
+                    snapshot.PostsByArchive[archiveNode.Id],
+                    archiveNode,
+                    blogMlDoc,
+                    categoryGroup,
+                    tagGroup,
+                    exportImagesAsBase64);
+            }
+
+            WriteFile(blogMlDoc, exportFileName);
         }
 
+        private async Task<BlogMlExportSnapshot> CreateAuthorizedExportSnapshotAsync(
+            IUser user,
+            Guid blogRootNode,
+            bool exportImagesAsBase64)
+        {
+            IContent root = contentService.GetById(blogRootNode) ??
+                            throw new InvalidOperationException("No node found with id " + blogRootNode);
+
+            if (!authorizationService.IsArticulateRoot(root))
+            {
+                throw new InvalidOperationException(
+                    $"The node with id {blogRootNode} is not an Articulate root node");
+            }
+
+            await EnsureBrowseAccessAsync(user, root);
+
+            _ = contentTypeService.Get(ArticulateConstants.ContentType.ArticulateRichText) ??
+                throw new InvalidOperationException(
+                    "Articulate is not installed properly, the 'ArticulateRichText' doc type could not be found");
+
+            IContentType authorsContentType =
+                contentTypeService.Get(ArticulateConstants.ContentType.ArticulateAuthors)
+                ?? throw new InvalidOperationException(
+                    "Articulate is not installed properly, the 'ArticulateAuthors' doc type could not be found");
+            IContent[] authorContainers = EnumerateDescendants(
+                root.Id,
+                sqlContext.Query<IContent>().Where(x => x.ContentTypeId == authorsContentType.Id),
+                Ordering.By("CreateDate", Direction.Descending)).ToArray();
+            IReadOnlyDictionary<int, IContent[]> authorsByContainer = authorContainers.ToDictionary(
+                authors => authors.Id,
+                authors => EnumerateChildren(authors.Id).ToArray());
+            IContent[] authorNodes = authorsByContainer.Values.SelectMany(x => x).ToArray();
+
+            IContentType archiveContentType =
+                contentTypeService.Get(ArticulateConstants.ContentType.ArticulateArchive)
+                ?? throw new InvalidOperationException(
+                    "Articulate is not installed properly, the 'ArticulateArchive' doc type could not be found");
+            IContent[] archiveContainers = EnumerateDescendants(
+                root.Id,
+                sqlContext.Query<IContent>().Where(x => x.ContentTypeId == archiveContentType.Id),
+                Ordering.By("CreateDate", Direction.Descending)).ToArray();
+            IReadOnlyDictionary<int, IContent[]> postsByArchive = archiveContainers.ToDictionary(
+                archive => archive.Id,
+                archive => EnumerateChildren(archive.Id, 1000, Ordering.By("createDate"))
+                    .Where(x => x.Published && authorizationService.IsBlogMlPost(x))
+                    .ToArray());
+            IContent[] postNodes = postsByArchive.Values.SelectMany(x => x).ToArray();
+
+            await EnsureBrowseAccessAsync(
+                user,
+                authorContainers
+                    .Concat(authorNodes)
+                    .Concat(archiveContainers)
+                    .Concat(postNodes));
+
+            if (exportImagesAsBase64)
+            {
+                Guid[] mediaKeys = postNodes
+                    .Select(x => TryGetMediaId(x, out Guid mediaId) ? mediaId : Guid.Empty)
+                    .Where(x => x != Guid.Empty && mediaService.GetById(x) is not null)
+                    .Distinct()
+                    .ToArray();
+                await authorizationService.EnsureMediaReadAccessAsync(user, mediaKeys);
+            }
+
+            return new(root, authorContainers, authorsByContainer, archiveContainers, postsByArchive, postNodes);
+        }
+
+
+        private async Task EnsureBrowseAccessAsync(IUser user, IContent content)
+        {
+            await EnsureBrowseAccessAsync(user, [content]);
+        }
+
+        private async Task EnsureBrowseAccessAsync(IUser user, IEnumerable<IContent> contents)
+        {
+            if (!contents.Any())
+            {
+                return;
+            }
+
+            try
+            {
+                await authorizationService.EnsureContentAccessAsync(
+                    user,
+                    contents,
+                    [ActionBrowse.ActionLetter]);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                throw new UnauthorizedAccessException("The requested blog export is not available");
+            }
+        }
 
         private void WriteFile(BlogMLDocument blogMlDoc, string fileName)
         {
@@ -119,6 +201,34 @@ namespace Articulate.ImportExport
             blogMlDoc.Save(stream, new SyndicationResourceSaveSettings { CharacterEncoding = Encoding.UTF8 });
             stream.Position = 0;
             articulateTempFileSystem.AddFile(fileName, stream, true);
+        }
+
+        private IEnumerable<IContent> EnumerateChildren(
+            int parentId,
+            int pageSize = 500,
+            Ordering? ordering = null)
+        {
+            var pageIndex = 0;
+            while (true)
+            {
+                IContent[] page = contentService
+                    .EnumeratePagedChildren(parentId, pageIndex++, pageSize, out _, filter: null, ordering: ordering)
+                    .ToArray();
+                if (page.Length == 0)
+                {
+                    yield break;
+                }
+
+                foreach (IContent item in page)
+                {
+                    yield return item;
+                }
+
+                if (page.Length < pageSize)
+                {
+                    yield break;
+                }
+            }
         }
 
         private IEnumerable<IContent> EnumerateDescendants(
@@ -152,12 +262,15 @@ namespace Articulate.ImportExport
             }
         }
 
-        private void AddBlogCategories(BlogMLDocument blogMlDoc, string? tagGroup)
+        private void AddBlogCategories(
+            BlogMLDocument blogMlDoc,
+            string? tagGroup,
+            ISet<int> includedCategoryIds)
         {
             IEnumerable<ITag> categories = tagService.GetAllContentTags(tagGroup);
             foreach (ITag category in categories)
             {
-                if (category.NodeCount == 0)
+                if (category.NodeCount == 0 || !includedCategoryIds.Contains(category.Id))
                 {
                     continue;
                 }
@@ -175,9 +288,9 @@ namespace Articulate.ImportExport
             }
         }
 
-        private void AddBlogAuthors(IContent authorsNode, BlogMLDocument blogMlDoc)
+        private void AddBlogAuthors(IEnumerable<IContent> authors, BlogMLDocument blogMlDoc)
         {
-            foreach (IContent author in contentService.EnumeratePagedChildren(authorsNode.Id, 0, int.MaxValue, out _))
+            foreach (IContent author in authors)
             {
                 var blogMlAuthor = new BlogMLAuthor
                 {
@@ -192,41 +305,22 @@ namespace Articulate.ImportExport
         }
 
         private void AddBlogPosts(
+            IEnumerable<IContent> posts,
             IContent archiveNode,
             BlogMLDocument blogMlDoc,
             string? categoryGroup,
             string? tagGroup,
             bool exportImagesAsBase64)
         {
-            const int pageSize = 1000;
-            var pageIndex = 0;
-            IContent[] posts;
-            do
+            foreach (IContent child in posts)
             {
-                posts = contentService.EnumeratePagedChildren(
-                    archiveNode.Id,
-                    pageIndex,
-                    pageSize,
-                    out _,
-                    ordering: Ordering.By("createDate")).ToArray();
-
-                foreach (IContent child in posts)
-                {
-                    if (!child.Published)
-                    {
-                        continue;
-                    }
-
-                    ProcessSinglePost(child, blogMlDoc, categoryGroup, tagGroup, exportImagesAsBase64);
-                }
-
-                pageIndex++;
+                ProcessSinglePost(child, archiveNode, blogMlDoc, categoryGroup, tagGroup, exportImagesAsBase64);
             }
-            while (posts.Length == pageSize);
         }
 
         private void ProcessSinglePost(
             IContent child,
+            IContent archiveNode,
             BlogMLDocument blogMlDoc,
             string? categoryGroup,
             string? tagGroup,
@@ -236,7 +330,7 @@ namespace Articulate.ImportExport
             var postUrl = new Uri(urlProvider.GetUrl(child.Id), UriKind.RelativeOrAbsolute);
             var postAbsoluteUrl = new Uri(urlProvider.GetUrl(child.Id, UrlMode.Absolute), UriKind.Absolute);
 
-            BlogMLPost blogMlPost = CreateBlogMlPost(child, content, postUrl);
+            BlogMLPost blogMlPost = CreateBlogMlPost(child, archiveNode, content, postUrl);
 
             AssignAuthorToPost(blogMlPost, blogMlDoc, child.GetValue<string>("author"));
             AssignCategoriesToPost(blogMlPost, child, categoryGroup);
@@ -266,9 +360,13 @@ namespace Articulate.ImportExport
             return string.Empty;
         }
 
-        private static BlogMLPost CreateBlogMlPost(IContent child, string content, Uri postUrl)
+        private static BlogMLPost CreateBlogMlPost(
+            IContent child,
+            IContent archiveNode,
+            string content,
+            Uri postUrl)
         {
-            return new BlogMLPost
+            var post = new BlogMLPost
             {
                 Id = child.Key.ToString(),
                 Name = new BlogMLTextConstruct(child.Name),
@@ -281,7 +379,18 @@ namespace Articulate.ImportExport
                 Excerpt = new BlogMLTextConstruct(child.GetValue<string>("excerpt")),
                 Url = postUrl
             };
+            _ = post.AddExtension(new ArchiveSyndicationExtension
+            {
+                ArchiveIdentity = GetArchiveIdentity(archiveNode),
+                ArchiveName = archiveNode.Name
+            });
+            return post;
         }
+
+        private static string GetArchiveIdentity(IContent archive) =>
+            archive.Key != Guid.Empty
+                ? $"key:{archive.Key:D}"
+                : $"name:{archive.Name ?? string.Empty}";
 
         private static void AssignAuthorToPost(BlogMLPost blogMlPost, BlogMLDocument blogMlDoc, string? authorName)
         {
@@ -467,6 +576,14 @@ namespace Articulate.ImportExport
 
             return !string.IsNullOrWhiteSpace(mediaPath);
         }
+
+        private sealed record BlogMlExportSnapshot(
+            IContent Root,
+            IContent[] AuthorContainers,
+            IReadOnlyDictionary<int, IContent[]> AuthorsByContainer,
+            IContent[] ArchiveContainers,
+            IReadOnlyDictionary<int, IContent[]> PostsByArchive,
+            IContent[] PostNodes);
 
         private BlogMLAttachment CreateAttachmentFromMedia(
             bool exportImagesAsBase64,

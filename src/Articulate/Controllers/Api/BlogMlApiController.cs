@@ -13,7 +13,6 @@ using Umbraco.Cms.Api.Common.Attributes;
 using Umbraco.Cms.Api.Management.Controllers;
 using Umbraco.Cms.Core.Configuration.Models;
 using Umbraco.Cms.Core.Models.Membership;
-using Umbraco.Cms.Core.Security;
 using Umbraco.Cms.Web.Common.Authorization;
 
 namespace Articulate.Controllers.Api
@@ -31,7 +30,7 @@ namespace Articulate.Controllers.Api
     public class BlogMlApiController(
         BlogMlExporter blogMlExporter,
         BlogMlImporter blogMlImporter,
-        IBackOfficeSecurityAccessor backOfficeSecurityAccessor,
+        BackOfficeAuthService backOfficeAuthService,
         ArticulateTempFileSystem articulateTempFileSystem,
         IOptionsMonitor<Options.ArticulateOptions> articulateOptions,
         IOptionsMonitor<RuntimeSettings> runtimeSettings,
@@ -168,39 +167,33 @@ namespace Articulate.Controllers.Api
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status503ServiceUnavailable)]
         public async Task<IActionResult> PostExportBlogMl(ExportModel model)
         {
+            if (!TryGetCurrentUser(out IUser? currentUser, out IActionResult? currentUserError))
+            {
+                return currentUserError!;
+            }
+
             var exportFileName = $"BlogMlExport-{Guid.NewGuid()}.xml";
             var exportSucceeded = false;
             try
             {
-                await blogMlExporter.ExportAsync(model.ArticulateBlogNode, exportFileName, model.ExportImagesAsBase64);
+                await blogMlExporter.ExportAsync(
+                    currentUser!,
+                    model.ArticulateBlogNode,
+                    exportFileName,
+                    model.ExportImagesAsBase64);
                 var downloadFileName = $"articulate-export-{DateTime.UtcNow:yyyyMMddHHmmss}.xml";
-
-                Stream? fileStream = null;
-                try
-                {
-                    Stream exportStream = articulateTempFileSystem.OpenFile(exportFileName);
-                    fileStream = exportStream;
-
-                    Response.OnCompleted(() =>
-                    {
-                        exportStream.Dispose();
-                        articulateTempFileSystem.DeleteFile(exportFileName);
-                        return Task.CompletedTask;
-                    });
-
-                    Response.Headers.Append("Content-Disposition", $"attachment; filename*=UTF-8''{downloadFileName}");
-                    exportSucceeded = true;
-                    return File(exportStream, "application/octet-stream");
-                }
-                catch
-                {
-                    if (fileStream is not null)
-                    {
-                        await fileStream.DisposeAsync();
-                    }
-
-                    throw;
-                }
+                return await CreateExportFileResponseAsync(
+                    exportFileName,
+                    downloadFileName,
+                    () => exportSucceeded = true);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                logger.LogWarning(ex, "BlogML export denied for the current user.");
+                return Problem(
+                    title: "Forbidden",
+                    detail: "The requested blog export is not available.",
+                    statusCode: StatusCodes.Status403Forbidden);
             }
             catch (InvalidOperationException ex)
             {
@@ -240,6 +233,39 @@ namespace Articulate.Controllers.Api
             }
         }
 
+        private async Task<IActionResult> CreateExportFileResponseAsync(
+            string exportFileName,
+            string downloadFileName,
+            Action markExportSucceeded)
+        {
+            Stream? fileStream = null;
+            try
+            {
+                Stream exportStream = articulateTempFileSystem.OpenFile(exportFileName);
+                fileStream = exportStream;
+
+                Response.OnCompleted(() =>
+                {
+                    exportStream.Dispose();
+                    articulateTempFileSystem.DeleteFile(exportFileName);
+                    return Task.CompletedTask;
+                });
+
+                Response.Headers.Append("Content-Disposition", $"attachment; filename*=UTF-8''{downloadFileName}");
+                markExportSucceeded();
+                return File(exportStream, "application/octet-stream");
+            }
+            catch
+            {
+                if (fileStream is not null)
+                {
+                    await fileStream.DisposeAsync();
+                }
+
+                throw;
+            }
+        }
+
         /// <summary>
         /// Imports blog data from a previously uploaded BlogML XML file.
         /// </summary>
@@ -255,13 +281,9 @@ namespace Articulate.Controllers.Api
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> PostImportBlogMl(ImportModel model)
         {
-            IUser? currentUser = backOfficeSecurityAccessor.BackOfficeSecurity?.CurrentUser;
-            if (currentUser is null)
+            if (!TryGetCurrentUser(out IUser? currentUser, out IActionResult? currentUserError))
             {
-                return Problem(
-                    title: "Unauthorized",
-                    detail: "Could not determine the current user.",
-                    statusCode: StatusCodes.Status401Unauthorized);
+                return currentUserError!;
             }
 
             if (string.IsNullOrEmpty(model.TempFile) || model.TempFile.Contains('/') || model.TempFile.Contains('\\'))
@@ -275,7 +297,7 @@ namespace Articulate.Controllers.Api
             try
             {
                 ImportResponseDto dto = await blogMlImporter.ImportAsync(
-                    currentUser.Id,
+                    currentUser!,
                     model.TempFile,
                     model.ArticulateBlogNode,
                     model.Overwrite,
@@ -288,6 +310,14 @@ namespace Articulate.Controllers.Api
                 var result = new ImportResponse(dto);
 
                 return Ok(result);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                logger.LogWarning(ex, "BlogML import denied for the current user.");
+                return Problem(
+                    title: "Forbidden",
+                    detail: "The requested blog import is not available.",
+                    statusCode: StatusCodes.Status403Forbidden);
             }
             catch (FileNotFoundException ex)
             {
@@ -322,6 +352,22 @@ namespace Articulate.Controllers.Api
             }
         }
 
+        private bool TryGetCurrentUser(out IUser? currentUser, out IActionResult? error)
+        {
+            currentUser = backOfficeAuthService.GetCurrentUser();
+            if (currentUser is not null)
+            {
+                error = null;
+                return true;
+            }
+
+            error = Problem(
+                title: "Unauthorized",
+                detail: "Could not determine the current user.",
+                statusCode: StatusCodes.Status401Unauthorized);
+            return false;
+        }
+
         /// <summary>
         /// Downloads the exported Disqus comment XML file.
         /// </summary>
@@ -332,7 +378,7 @@ namespace Articulate.Controllers.Api
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
         public IActionResult GetDisqusExport()
         {
-            IUser? currentUser = backOfficeSecurityAccessor.BackOfficeSecurity?.CurrentUser;
+            IUser? currentUser = backOfficeAuthService.GetCurrentUser();
             if (currentUser is null)
             {
                 return Problem(
