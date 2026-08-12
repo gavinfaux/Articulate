@@ -59,11 +59,25 @@ namespace Articulate.Components
 
         private void ValidateConfiguredRouteSegments(IContent root)
         {
+            List<IContent> children = GetChildren(root.Id);
+            ValidateSingleAuthorsContainer(root, children);
+
             ArticulateRouteValidator.ValidateConfiguredRouteSegments(
                 root,
-                GetChildren(root.Id),
+                children,
                 shortStringHelper,
                 urlSegmentProviders);
+        }
+
+        private static void ValidateSingleAuthorsContainer(IContent root, IReadOnlyList<IContent> children)
+        {
+            if (children.Count(x => x.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateAuthors)) <= 1)
+            {
+                return;
+            }
+
+            throw new InvalidOperationException(
+                $"Articulate blog '{root.Name}' (id: {root.Id}) can have only one Authors node.");
         }
 
         private void ValidateRootPathMappings(IReadOnlyList<IContent> rootsToPublish)

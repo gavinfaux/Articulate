@@ -32,6 +32,20 @@ namespace Articulate.Tests.Components
         }
 
         [Test]
+        public void Handle_cancels_publish_when_multiple_authors_containers_exist()
+        {
+            IContent root = CreateContent(ArticulateConstants.ContentType.Articulate);
+            IContent firstAuthors = CreateContent(ArticulateConstants.ContentType.ArticulateAuthors);
+            IContent secondAuthors = CreateContent(ArticulateConstants.ContentType.ArticulateAuthors);
+            ContentPublishingNotification notification = new(root, new EventMessages());
+
+            CreateSut([firstAuthors, secondAuthors]).Handle(notification);
+
+            Assert.That(notification.Cancel, Is.True);
+            Assert.That(notification.Messages, Is.Not.Empty);
+        }
+
+        [Test]
         public void Handle_ignores_non_articulate_content()
         {
             ContentPublishingNotification notification = new(CreateContent("textPage"), new EventMessages());

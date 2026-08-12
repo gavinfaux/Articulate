@@ -63,7 +63,8 @@ namespace Articulate.Tests.Components
                 securityAccessor.Object,
                 Microsoft.Extensions.Options.Options.Create(new ArticulateOptions { AutoGenerateExcerpt = false }),
                 markdownConverter.Object,
-                richTextRenderer.Object);
+                richTextRenderer.Object,
+                Mock.Of<IContentService>());
 
             sut.Handle(new ContentSavingNotification([content.Object], new EventMessages()));
 
@@ -121,7 +122,8 @@ namespace Articulate.Tests.Components
                 securityAccessor.Object,
                 Microsoft.Extensions.Options.Options.Create(new ArticulateOptions { AutoGenerateExcerpt = false }),
                 markdownConverter.Object,
-                richTextRenderer.Object);
+                richTextRenderer.Object,
+                Mock.Of<IContentService>());
 
             sut.Handle(new ContentSavingNotification([content.Object], new EventMessages()));
 
@@ -163,11 +165,65 @@ namespace Articulate.Tests.Components
                 securityAccessor.Object,
                 Microsoft.Extensions.Options.Options.Create(new ArticulateOptions { AutoGenerateExcerpt = false }),
                 markdownConverter.Object,
-                richTextRenderer.Object);
+                richTextRenderer.Object,
+                Mock.Of<IContentService>());
 
             sut.Handle(new ContentSavingNotification([content.Object], new EventMessages()));
 
             Assert.That(setValueCalls, Is.Empty, "Expected no SetValue calls for non-Articulate content.");
+        }
+
+        [Test]
+        public void Handle_cancels_duplicate_authors_container()
+        {
+            Mock<IContentType> authorsType = new();
+            authorsType.SetupGet(x => x.Id).Returns(11);
+            authorsType.SetupGet(x => x.Alias).Returns(ArticulateConstants.ContentType.ArticulateAuthors);
+
+            Mock<ISimpleContentType> authorsSimpleType = new();
+            authorsSimpleType.SetupGet(x => x.Alias).Returns(ArticulateConstants.ContentType.ArticulateAuthors);
+
+            Mock<IContent> authors = new();
+            authors.SetupGet(x => x.Id).Returns(103);
+            authors.SetupGet(x => x.ParentId).Returns(100);
+            authors.SetupGet(x => x.ContentTypeId).Returns(11);
+            authors.SetupGet(x => x.ContentType).Returns(authorsSimpleType.Object);
+
+            Mock<IContent> existingAuthors = new();
+            existingAuthors.SetupGet(x => x.Id).Returns(102);
+            existingAuthors.SetupGet(x => x.ContentType).Returns(authorsSimpleType.Object);
+
+            Mock<IContentTypeService> contentTypeService = new();
+            contentTypeService
+                .Setup(x => x.GetMany(It.Is<int[]>(ids => ids.Length == 1 && ids[0] == 11)))
+                .Returns([authorsType.Object]);
+
+            Mock<IContentService> contentService = new();
+            contentService
+                .Setup(x => x.GetPagedChildren(
+                    It.IsAny<int>(),
+                    It.IsAny<long>(),
+                    It.IsAny<int>(),
+                    out It.Ref<long>.IsAny,
+                    null,
+                    null,
+                    null,
+                    true))
+                .Returns(new[] { existingAuthors.Object });
+
+            var sut = new ContentSavingHandler(
+                contentTypeService.Object,
+                Mock.Of<IBackOfficeSecurityAccessor>(),
+                Microsoft.Extensions.Options.Options.Create(new ArticulateOptions { AutoGenerateExcerpt = false }),
+                Mock.Of<IArticulateMarkdownConverter>(),
+                Mock.Of<IArticulateRichTextRenderer>(),
+                contentService.Object);
+            ContentSavingNotification notification = new([authors.Object], new EventMessages());
+
+            sut.Handle(notification);
+
+            Assert.That(notification.Cancel, Is.True);
+            Assert.That(notification.Messages, Is.Not.Empty);
         }
 
         [Test]
@@ -229,7 +285,8 @@ namespace Articulate.Tests.Components
                 securityAccessor.Object,
                 Microsoft.Extensions.Options.Options.Create(new ArticulateOptions { AutoGenerateExcerpt = true }),
                 markdownConverter.Object,
-                richTextRenderer.Object);
+                richTextRenderer.Object,
+                Mock.Of<IContentService>());
 
             sut.Handle(new ContentSavingNotification([content.Object], new EventMessages()));
 

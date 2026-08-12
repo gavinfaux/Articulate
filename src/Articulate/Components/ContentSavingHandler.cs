@@ -18,7 +18,8 @@ namespace Articulate.Components
         IBackOfficeSecurityAccessor backOfficeSecurityAccessor,
         IOptions<ArticulateOptions> articulateOptions,
         IArticulateMarkdownConverter articulateMarkdownConverter,
-        IArticulateRichTextRenderer richTextRenderer)
+        IArticulateRichTextRenderer richTextRenderer,
+        IContentService contentService)
         : INotificationHandler<ContentSavingNotification>
     {
         private readonly ArticulateOptions _articulateOptions = articulateOptions.Value;
@@ -28,6 +29,11 @@ namespace Articulate.Components
         {
             var saved = notification.SavedEntities.ToList();
             if (saved.Count == 0)
+            {
+                return;
+            }
+
+            if (RejectDuplicateAuthorsContainers(notification, saved, contentService))
             {
                 return;
             }
@@ -50,6 +56,48 @@ namespace Articulate.Components
                 }
             }
         }
+
+        private static bool RejectDuplicateAuthorsContainers(
+            ContentSavingNotification notification,
+            IReadOnlyList<IContent> saved,
+            IContentService contentService)
+        {
+            var authorsBeingSaved = saved.Where(x => !x.Trashed && IsAuthorsContainer(x)).ToList();
+            if (authorsBeingSaved.Count == 0)
+            {
+                return false;
+            }
+
+            if (authorsBeingSaved.GroupBy(x => x.ParentId).Any(group => group.Count() > 1))
+            {
+                CancelDuplicateAuthorsSave(notification);
+                return true;
+            }
+
+            foreach (IContent authors in authorsBeingSaved)
+            {
+                bool duplicateExists = contentService
+                    .EnumeratePagedChildren(authors.ParentId, 0, int.MaxValue, out _)
+                    .Any(x => x.Id != authors.Id && !x.Trashed && IsAuthorsContainer(x));
+
+                if (duplicateExists)
+                {
+                    CancelDuplicateAuthorsSave(notification);
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static void CancelDuplicateAuthorsSave(ContentSavingNotification notification) =>
+            notification.CancelOperation(new EventMessage(
+                "Articulate authors configuration",
+                "An Articulate blog can have only one Authors node. Remove the duplicate before saving.",
+                EventMessageType.Error));
+
+        private static bool IsAuthorsContainer(IContent content) =>
+            content.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateAuthors);
 
         private static bool IsArticulatePost(IContent content) =>
             content.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateRichText) ||
