@@ -232,6 +232,7 @@ namespace Articulate.Tests.Routing
                 , Mock.Of<Umbraco.Cms.Core.Services.Navigation.IDocumentNavigationQueryService>()
                 , Mock.Of<Umbraco.Cms.Core.Services.Navigation.IPublishedContentStatusFilteringService>()
 #endif
+                , Mock.Of<Microsoft.Extensions.Options.IOptionsMonitor<Articulate.Options.ArticulateOptions>>()
             );
     }
 }

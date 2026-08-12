@@ -1,11 +1,13 @@
 #nullable enable
 using System.Collections.Concurrent;
 using Articulate.Controllers;
+using Articulate.Options;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Routing.Template;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.PublishedCache;
 using Umbraco.Cms.Core.Routing;
@@ -66,11 +68,13 @@ namespace Articulate.Routing
         /// <param name="documentUrlService">Service for generating document URLs (Umbraco 18+).</param>
         /// <param name="documentNavigationQueryService">Service for querying document navigation structure (Umbraco 18+).</param>
         /// <param name="publishedContentStatusFilteringService">Service for filtering published content by status (Umbraco 18+).</param>
+        /// <param name="articulateOptions">Articulate configuration options.</param>
 #else
         /// <summary>Constructor for Articulate router initialization.</summary>
         /// <param name="controllerActionSearcher">Searches for controller actions.</param>
         /// <param name="scopeProvider">Provides data access scope.</param>
         /// <param name="logger">Logger instance.</param>
+        /// <param name="articulateOptions">Articulate configuration options.</param>
 #endif
         public ArticulateRouter(
             IControllerActionSearcher controllerActionSearcher,
@@ -79,13 +83,16 @@ namespace Articulate.Routing
             ILogger<ArticulateRouter> logger,
             IDocumentUrlService documentUrlService,
             IDocumentNavigationQueryService documentNavigationQueryService,
-            IPublishedContentStatusFilteringService publishedContentStatusFilteringService)
+            IPublishedContentStatusFilteringService publishedContentStatusFilteringService,
+            IOptionsMonitor<ArticulateOptions> articulateOptions)
 #else
-            ILogger<ArticulateRouter> logger)
+            ILogger<ArticulateRouter> logger,
+            IOptionsMonitor<ArticulateOptions> articulateOptions)
 #endif
         {
             _controllerActionSearcher = controllerActionSearcher;
             _logger = logger;
+            _articulateOptions = articulateOptions;
             _scopeProvider = scopeProvider;
 #if UMBRACO_18_OR_GREATER
             _documentUrlService = documentUrlService;
@@ -93,6 +100,8 @@ namespace Articulate.Routing
             _publishedContentStatusFilteringService = publishedContentStatusFilteringService;
 #endif
         }
+
+        private readonly IOptionsMonitor<ArticulateOptions> _articulateOptions;
 
         public bool TryMatch(PathString path, RouteValueDictionary routeValues, out ArticulateRootNodeCache? articulateRootNodeCache)
         {
@@ -200,9 +209,12 @@ namespace Articulate.Routing
                             MapAuthorsRssRoute(rebuiltRouteCache, httpContext, rootNodePath, articulateRootNode, domains);
 
                             MapSearchRoute(rebuiltRouteCache, httpContext, rootNodePath, articulateRootNode, domains);
-                            MapMetaWeblogRoute(rebuiltRouteCache, httpContext, rootNodePath, articulateRootNode, domains);
-                            MapManifestRoute(rebuiltRouteCache, httpContext, rootNodePath, articulateRootNode, domains);
-                            MapRsdRoute(rebuiltRouteCache, httpContext, rootNodePath, articulateRootNode, domains);
+                            if (_articulateOptions.CurrentValue.EnableMetaWeblog)
+                            {
+                                MapMetaWeblogRoute(rebuiltRouteCache, httpContext, rootNodePath, articulateRootNode, domains);
+                                MapManifestRoute(rebuiltRouteCache, httpContext, rootNodePath, articulateRootNode, domains);
+                                MapRsdRoute(rebuiltRouteCache, httpContext, rootNodePath, articulateRootNode, domains);
+                            }
                             MapOpenSearchRoute(rebuiltRouteCache, httpContext, rootNodePath, articulateRootNode, domains);
 
                             // tags/cats routes are the least specific

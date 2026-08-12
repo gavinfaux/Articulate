@@ -1,5 +1,6 @@
 #nullable enable
 using Articulate.Controllers;
+using Articulate.Options;
 using NUnit.Framework;
 
 namespace Articulate.Tests.Controllers
@@ -7,6 +8,12 @@ namespace Articulate.Tests.Controllers
     [TestFixture]
     public class MetaWeblogControllerTests
     {
+        [Test]
+        public void MetaWeblog_is_disabled_by_default()
+        {
+            Assert.That(new ArticulateOptions().EnableMetaWeblog, Is.False);
+        }
+
         [Test]
         public void TryNormalizeMetaWeblogRequest_returns_true_for_valid_method_call()
         {
