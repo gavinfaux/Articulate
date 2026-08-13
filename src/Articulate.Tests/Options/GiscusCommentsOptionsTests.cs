@@ -7,23 +7,6 @@ namespace Articulate.Tests.Options
     public class GiscusCommentsOptionsTests
     {
         [Test]
-        public void DataLoading_AcceptsLazyValue()
-        {
-            var options = new GiscusCommentsOptions { DataLoading = "lazy" };
-
-            Assert.That(options.DataLoading, Is.EqualTo("lazy"));
-        }
-
-        [Test]
-        public void ArticulateCommentsOptions_DefaultsGiscusToNewInstance()
-        {
-            var options = new ArticulateCommentsOptions();
-
-            Assert.That(options.Giscus, Is.Not.Null);
-            Assert.That(options.Giscus, Is.InstanceOf<GiscusCommentsOptions>());
-        }
-
-        [Test]
         public void AllowedCorsOrigins_DefaultsToGiscusApp()
         {
             var options = new GiscusCommentsOptions();

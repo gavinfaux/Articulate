@@ -100,6 +100,7 @@ public class BlogMlAuthorizationTests
         Assert.That(BlogMlImporter.GetArchiveIdentityFromDocument(document, post), Is.Null);
     }
 
+    //TODO: Add a round-trip integration test using real content and a temporary BlogML file.
     [Test]
     public async Task Import_new_marked_post_creates_under_marked_archive()
     {

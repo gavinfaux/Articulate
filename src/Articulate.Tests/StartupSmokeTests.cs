@@ -16,6 +16,7 @@ namespace Articulate.Tests
             });
         }
 
+        //TODO: Add a real Delivery API request against a seeded test application.
         [Test]
         public void DeliveryApiHostStartup_DoesNotThrow()
         {

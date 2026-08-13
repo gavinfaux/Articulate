@@ -8,6 +8,7 @@ namespace Articulate.Tests.Controllers
     [TestFixture]
     public class MetaWeblogControllerTests
     {
+        //TODO: Add HTTP/XML-RPC coverage for the disabled 404 and enabled request pipeline.
         [Test]
         public void MetaWeblog_is_disabled_by_default()
         {

@@ -26,6 +26,7 @@ namespace Articulate.Tests.Routing
     [TestFixture]
     public class ArticulateRouteValueTransformerTests
     {
+        //TODO: Add a real published-content request proving route-cache construction resolves an Articulate page.
         [Test]
         public async Task TransformAsync_builds_route_cache_for_first_eligible_request()
         {

@@ -7,6 +7,7 @@ namespace Articulate.Tests.Controllers
     [TestFixture]
     public class ArticulateRssControllerTests
     {
+        //TODO: Add an HTTP-level RSS test with seeded Articulate content and assert the generated XML.
         [TestCase(null, 25)]
         [TestCase(0, 1)]
         [TestCase(-1, 1)]
