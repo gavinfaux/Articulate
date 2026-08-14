@@ -6,7 +6,7 @@
     "features": {
         "ghcr.io/devcontainers/features/github-cli:1": {}
     },
-    "runArgs": ["--memory=6g", "--shm-size=1g"],
+    "runArgs": ["--memory=8g", "--shm-size=1g"],
     "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
     "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/${localWorkspaceFolderBasename},type=bind,consistency=cached",
     "forwardPorts": [

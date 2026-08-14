@@ -13,6 +13,25 @@ ARG DOTNET_ASPNET_IMAGE=mcr.microsoft.com/dotnet/aspnet:10.0
 FROM ${DOTNET_SDK_IMAGE} AS build
 WORKDIR /src
 
+# Match the devcontainer and CI client toolchain.
+ARG NODE_VERSION=24
+ARG PNPM_VERSION=11.19.0
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends bash ca-certificates curl \
+    && rm -rf /var/lib/apt/lists/*
+RUN curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION}.x | bash - \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends nodejs \
+    && rm -rf /var/lib/apt/lists/*
+ENV SHELL=/bin/bash
+ENV PNPM_HOME="/root/.local/share/pnpm"
+ENV PATH="${PNPM_HOME}/bin:${PATH}"
+RUN curl -fsSL https://get.pnpm.io/install.sh -o /tmp/install-pnpm.sh \
+    && SHELL=/bin/bash PNPM_VERSION=${PNPM_VERSION} sh /tmp/install-pnpm.sh \
+    && rm /tmp/install-pnpm.sh \
+    && node --version \
+    && pnpm --version
+
 # All configurable via build args
 ARG TARGET_FRAMEWORK=net10.0
 # UMBRACO_CMS_VERSION is required; run.cs reads the floor from Directory.Packages.props
