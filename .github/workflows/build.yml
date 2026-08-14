@@ -101,13 +101,13 @@ jobs:
           # reconciles dependencies for each lane. Without --clean, the v17 hashed JS asset (e.g.
           # client.gen-XXXX.js) is referenced by Articulate's
           # static web assets after v18 lane overwrites it (MSB4018).
-          dotnet run --file build/build.cs -- build --lane v17 --sample --clean
+          dotnet run build/build.cs -- build --lane v17 --sample --clean
 
       - name: Run v18 lane build
         shell: bash
         run: |
           set -euo pipefail
-          dotnet run --file build/build.cs -- build --lane v18 --sample --clean
+          dotnet run build/build.cs -- build --lane v18 --sample --clean
 
       - name: Smoke-test package contents
         # Smoke covers both v17 + v18

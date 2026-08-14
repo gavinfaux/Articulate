@@ -38,7 +38,7 @@ Use `build/build.cs` for repo-owned build, client, and test-site tasks.
 2. Build the solution and Back Office client:
 
    ```text
-   dotnet run --file build/build.cs -- build --configuration Debug --client true
+   dotnet run build/build.cs -- build --configuration Debug --client true
    ```
 
    This restores, builds (including the Back Office client and theme/Markdown
@@ -67,7 +67,7 @@ Use `build/build.cs` for repo-owned build, client, and test-site tasks.
 3. Start the test website:
 
    ```text
-   dotnet run --file build/build.cs -- site --lane v17
+   dotnet run build/build.cs -- site --lane v17
    ```
 
    Or open `src/Articulate.sln`, set `Articulate.Tests.Website` as the startup
@@ -140,7 +140,7 @@ OpenAPI generation. Declare only endpoint-specific responses.
 Start the test site directly from the build script:
 
 ```text
-dotnet run --file build/build.cs -- site --lane v17
+dotnet run build/build.cs -- site --lane v17
 ```
 
 Use `--reset` to delete the local `umbraco` data folder before starting.
@@ -169,7 +169,7 @@ To check the per-theme Giscus stylesheet endpoint through the public site, run:
     grep -F 'Articulate "VAPOR" theme'
   ```
 
-Run Docker commands through `dotnet run --file docker/run.cs -- help`.
+Run Docker commands through `dotnet run docker/run.cs -- help`.
 For Docker runtime details such as ports, credentials, runtime modes, smoke
 expectations, and the Umbraco MCP integration, see
 [`docker/README.md`](docker/README.md).

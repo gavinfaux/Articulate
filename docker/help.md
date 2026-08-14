@@ -1,8 +1,8 @@
 # Articulate Docker utility
 
 ```text
-dotnet run --file docker/run.cs -- <command> [options]
-dotnet run --file docker/run.cs -- help [command]
+dotnet run docker/run.cs -- <command> [options]
+dotnet run docker/run.cs -- help [command]
 ```
 
 | Command | Purpose |
@@ -20,7 +20,7 @@ Commands default to lane `v17`; `docker-test` defaults to both lanes.
 ### docker-build
 
 ```text
-dotnet run --file docker/run.cs -- docker-build [--lane v17|v18] [--clean] [--tag image:tag]
+dotnet run docker/run.cs -- docker-build [--lane v17|v18] [--clean] [--tag image:tag]
 ```
 
 Builds current packages through `build/build.cs` before creating
@@ -30,7 +30,7 @@ package lane from clean outputs.
 ### docker-dev
 
 ```text
-dotnet run --file docker/run.cs -- docker-dev [--lane v17|v18] [--clean] [--reset] [--skip-smoke]
+dotnet run docker/run.cs -- docker-dev [--lane v17|v18] [--clean] [--reset] [--skip-smoke]
 ```
 
 Builds current packages through `build/build.cs` and builds the Docker image,
@@ -42,7 +42,7 @@ state lives in named volumes. `--reset` removes the lane's Docker volumes first;
 ### docker-prod
 
 ```text
-dotnet run --file docker/run.cs -- docker-prod [--lane v17|v18] [--skip-smoke]
+dotnet run docker/run.cs -- docker-prod [--lane v17|v18] [--skip-smoke]
 ```
 
 Recreates the lane's existing image in Production mode. Run `docker-dev` or
@@ -51,7 +51,7 @@ Recreates the lane's existing image in Production mode. Run `docker-dev` or
 ### docker-down
 
 ```text
-dotnet run --file docker/run.cs -- docker-down [--lane v17|v18|all] [--volumes|--purge]
+dotnet run docker/run.cs -- docker-down [--lane v17|v18|all] [--volumes|--purge]
 ```
 
 `--lane all` stops both lanes. `--volumes` removes volumes for the selected
@@ -61,7 +61,7 @@ and orphans.
 ### docker-status
 
 ```text
-dotnet run --file docker/run.cs -- docker-status [--lane v17|v18]
+dotnet run docker/run.cs -- docker-status [--lane v17|v18]
 ```
 
 Shows the lane's containers and verifies the packaged Backoffice files inside
@@ -70,7 +70,7 @@ the running site.
 ### docker-test
 
 ```text
-dotnet run --file docker/run.cs -- docker-test [--lane v17|v18|all] [--keep] [--skip-smoke]
+dotnet run docker/run.cs -- docker-test [--lane v17|v18|all] [--keep] [--skip-smoke]
 ```
 
 Each lane builds fresh packages and images, starts in development mode, and
@@ -80,7 +80,7 @@ successful stacks running.
 ### docker-ca
 
 ```text
-dotnet run --file docker/run.cs -- docker-ca [--lane v17|v18]
+dotnet run docker/run.cs -- docker-ca [--lane v17|v18]
 ```
 
 Exports and trusts the running lane's Caddy root CA.

@@ -7,8 +7,8 @@ developer setup, see [DEVELOP.md](DEVELOP.md).
 and test-site tasks:
 
 ```text
-dotnet run --file build/build.cs -- help
-dotnet run --file build/build.cs -- help <command>
+dotnet run build/build.cs -- help
+dotnet run build/build.cs -- help <command>
 ```
 
 The CLI help is the canonical command/option reference, including defaults and
@@ -51,8 +51,8 @@ Run only the command for the selected lane. For full validation, pass `--clean`
 on the first build of the other lane:
 
 ```text
-dotnet run --file build/build.cs -- build --lane v17 --clean --client true --tests true --sample true
-dotnet run --file build/build.cs -- build --lane v18 --clean --client true --tests true --sample true
+dotnet run build/build.cs -- build --lane v17 --clean --client true --tests true --sample true
+dotnet run build/build.cs -- build --lane v18 --clean --client true --tests true --sample true
 ```
 
 `--clean` removes build and client outputs. Add `--preserve-site` when the
@@ -64,27 +64,27 @@ versions.
 Local debug build with the Back Office client:
 
 ```text
-dotnet run --file build/build.cs -- build --configuration Debug --client true
+dotnet run build/build.cs -- build --configuration Debug --client true
 ```
 
 v17 release package with sample theme:
 
 ```text
-dotnet run --file build/build.cs -- build --lane v17 --sample
+dotnet run build/build.cs -- build --lane v17 --sample
 ```
 
 v18 release package with sample theme:
 
 ```text
-dotnet run --file build/build.cs -- build --lane v18 --sample
+dotnet run build/build.cs -- build --lane v18 --sample
 ```
 
 CI / release build for both lanes:
 
 ```text
 # Run once per lane; each run cleans shared outputs first.
-dotnet run --file build/build.cs -- build --lane v17 --clean --client true --tests --sample
-dotnet run --file build/build.cs -- build --lane v18 --clean --client true --tests --sample
+dotnet run build/build.cs -- build --lane v17 --clean --client true --tests --sample
+dotnet run build/build.cs -- build --lane v18 --clean --client true --tests --sample
 ```
 
 ### Run CI locally with act
