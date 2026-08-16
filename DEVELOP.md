@@ -15,10 +15,8 @@ Use `build/build.cs` for repo-owned build, client, and test-site tasks.
 
 1. Clone or fork the repository.
 
-   **Windows devs**: this repo uses LF-only line endings (enforced by
-   `.gitattributes`). NuGet and dotnet tools default to CRLF on Windows, which
-   produces spurious diffs after every `dotnet restore`. Run once after
-   cloning to normalise on commit and keep the index clean:
+   **Windows devs**: `.gitattributes` is the source of truth for line endings.
+   Keep Git from rewriting them on checkout:
 
    ```text
    git config core.autocrlf input
@@ -182,11 +180,13 @@ Release and CI builds enable it.
 
 For lane switching and full validation, see [BUILD.md](BUILD.md#switching-lanes).
 
-The lane packages keep only their Umbraco dependency, generated `src/api/**`,
+The lane packages keep only their Umbraco dependency, package metadata,
 and small lane adapters. Shared source and client tooling live in
-`src/Articulate.Web/Client/common/`. Run `pnpm run check`, `pnpm run build`, or
-`pnpm run lint` from `Client/v17` or `Client/v18`; `pnpm run generate:api` uses
-the matching lane endpoint and writes only to that lane's generated API folder.
+`src/Articulate.Web/Client/common/`. Generated API output is owned by
+`src/Articulate.Web/Client/common/src/api/<lane>/`. Run `pnpm run check`,
+`pnpm run build`, or `pnpm run lint` from `Client/v17` or `Client/v18`;
+`pnpm run generate:api` uses the matching lane endpoint and writes to the
+matching `common/src/api/<lane>/` folder.
 The Articulate Markdown property editor wraps Umbraco's native
 `umb-input-markdown`; do not copy the native editor into either lane.
 
@@ -201,7 +201,7 @@ For client extensions:
 - Use `DocumentService` and `DocumentTypeService` from
   `@umbraco-cms/backoffice/external/backend-api` for Umbraco lookups.
 - Use the native notification context for success messages.
-- Keep generated API output in each lane's `src/api/**` folder. Put shared
+- Keep generated API output in `common/src/api/<lane>/`. Put shared
   implementation in `common/`.
 
 ## Schema and data

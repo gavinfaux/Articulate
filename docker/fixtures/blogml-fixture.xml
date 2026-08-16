@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<blog xmlns:tags="https://github.com/Shazwazza/Articulate/blogml/" date-created="2026-08-14T16:17:03.23+00:00" root-url="/" xmlns="http://www.blogml.com/2006/09/BlogML">
+  <title type="text"><![CDATA[Articulate Tea Blog]]></title>
+  <sub-title type="text"><![CDATA[Welcome to my Tea blog!]]></sub-title>
+  <authors>
+    <author id="ec4ae61b-b119-4b6d-9095-8fb765e930e8" approved="true">
+      <title type="text"><![CDATA[June Doe]]></title>
+    </author>
+  </authors>
+  <categories>
+    <category id="8" approved="true"><title type="text"><![CDATA[Tea]]></title></category>
+  </categories>
+  <posts>
+    <post id="4cc7dad2-8fa0-4b26-9c03-e8f267188a64" approved="true" post-url="/june-doe/drink-tea/" type="normal" hasexcerpt="true">
+      <title type="text"><![CDATA[Drink tea]]></title>
+      <content type="html"><![CDATA[<p><strong>Just drink tea</strong></p>]]></content>
+      <post-name type="text"><![CDATA[Drink tea]]></post-name>
+      <excerpt type="text"><![CDATA[Just drink tea]]></excerpt>
+      <categories><category ref="8" /></categories>
+      <authors><author ref="ec4ae61b-b119-4b6d-9095-8fb765e930e8" /></authors>
+      <tags:archive name="June Doe" />
+      <tags>
+        <tag ref="Cafe" />
+        <tag ref="Tea" />
+        <tag ref="Milk" />
+      </tags>
+    </post>
+  </posts>
+</blog>

@@ -542,3 +542,8 @@ build/ClientAssets/
 # Local-only developer tooling overrides
 /Directory.Build.props.user
 /.vscode
+VENT.md
+PLAN.md
+/plans
+docs/simplification-audit-2026-08-15.md
+docs/simplification-audit-20260815-145115.md

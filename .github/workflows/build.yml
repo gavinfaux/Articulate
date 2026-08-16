@@ -91,23 +91,19 @@ jobs:
           fi
           echo "Lane boundary clean."
 
-      - name: Run v17 lane build
+      - name: Run lane builds
         shell: bash
         run: |
           set -euo pipefail
 
           # --clean wipes src/**/bin|obj, build/ClientAssets, and BackOffice
-          # static web assets. CI preserves node_modules; the frozen install
-          # reconciles dependencies for each lane. Without --clean, the v17 hashed JS asset (e.g.
-          # client.gen-XXXX.js) is referenced by Articulate's
-          # static web assets after v18 lane overwrites it (MSB4018).
-          dotnet run build/build.cs -- build --lane v17 --sample --clean
-
-      - name: Run v18 lane build
-        shell: bash
-        run: |
-          set -euo pipefail
-          dotnet run build/build.cs -- build --lane v18 --sample --clean
+          # static web assets. Keep lanes sequential: v18 overwrites shared
+          # output, including the v17 hashed JS asset (e.g. client.gen-XXXX.js).
+          for lane in v17 v18; do
+            echo "::group::Build ${lane}"
+            dotnet run build/build.cs -- build --lane "${lane}" --sample --clean
+            echo "::endgroup::"
+          done
 
       - name: Smoke-test package contents
         # Smoke covers both v17 + v18

@@ -31,6 +31,7 @@ namespace Articulate.MetaWeblog
         ILanguageService languageService,
         IBackOfficeUserManager backOfficeUserManager,
         IContentService contentService,
+        IMediaService mediaService,
         IShortStringHelper shortStringHelper,
         IDataTypeService dataTypeService,
         PropertyEditorCollection propertyEditors,
@@ -72,17 +73,39 @@ namespace Articulate.MetaWeblog
 
             IEnumerable<IPublishedContent> archiveNodes =
                 root.Children().Where(x => x.ContentType.Alias == ArticulateConstants.ContentType.ArticulateArchive);
-            IPublishedContent node =
-                archiveNodes.FirstOrDefault() ??
-                throw new InvalidOperationException("No Articulate Archive node found");
-            IContent archive = contentService.GetById(node.Id) ??
-                               throw new InvalidOperationException("No Articulate Archive content found");
-
             await EnsurePermissionAsync(user, rootContent, ActionBrowse.ActionLetter);
-            await EnsurePermissionAsync(user, archive, ActionNew.ActionLetter);
-            if (publish)
+
+            IPublishedContent? node = null;
+            IContent? archive = null;
+            foreach (IPublishedContent candidate in archiveNodes)
             {
-                await EnsurePermissionAsync(user, archive, ActionPublish.ActionLetter);
+                IContent? candidateContent = contentService.GetById(candidate.Id);
+                if (candidateContent is null)
+                {
+                    continue;
+                }
+
+                try
+                {
+                    await EnsurePermissionAsync(user, candidateContent, ActionNew.ActionLetter);
+                    if (publish)
+                    {
+                        await EnsurePermissionAsync(user, candidateContent, ActionPublish.ActionLetter);
+                    }
+
+                    node = candidate;
+                    archive = candidateContent;
+                    break;
+                }
+                catch (AuthenticationException)
+                {
+                    // Try the next archive; scoped authors may only write to one archive.
+                }
+            }
+
+            if (node is null || archive is null)
+            {
+                throw new AuthenticationException("The requested content is not available");
             }
 
             IContentType contentType = contentTypeService.Get(ArticulateConstants.ContentType.ArticulateRichText) ??
@@ -351,7 +374,16 @@ namespace Articulate.MetaWeblog
         {
             IUser user = await ValidateUserAsync(username, password);
             EnsureBlogId(blogid);
-            await EnsurePermissionAsync(user, GetBlogRootContent(), ActionUpdate.ActionLetter);
+            IMedia mediaFolder = ResolveUserMediaFolder(user)
+                                  ?? throw new AuthenticationException("The requested media operation is not available");
+            try
+            {
+                await authorizationService.EnsureMediaWriteAccessAsync(user, mediaFolder.Key);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                throw new AuthenticationException("The requested media operation is not available");
+            }
 
             if (string.IsNullOrWhiteSpace(mediaObject.bits))
             {
@@ -572,6 +604,12 @@ namespace Articulate.MetaWeblog
             });
         }
 
+    private IMedia? ResolveUserMediaFolder(IUser user) =>
+        ArticulateMediaFolderResolver.Resolve(
+            user,
+            mediaService,
+            service.GetOrCreateArticulateMediaFolder);
+
         private async Task ExtractAndSaveFirstImageAsync(
             IContent content,
             IContentType contentType,
@@ -585,7 +623,9 @@ namespace Articulate.MetaWeblog
 
             try
             {
-                await authorizationService.EnsureMediaWriteAccessAsync(user);
+                IMedia mediaFolder = ResolveUserMediaFolder(user)
+                                  ?? throw new UnauthorizedAccessException("The requested media operation is not available");
+                await authorizationService.EnsureMediaWriteAccessAsync(user, mediaFolder.Key);
                 await using Stream fileStream = mediaFileManager.FileSystem.OpenFile(firstImageRelativePath);
                 var fileName = Path.GetFileName(firstImageRelativePath);
                 var extension = Path.GetExtension(fileName);
@@ -594,7 +634,7 @@ namespace Articulate.MetaWeblog
                     fileStream,
                     fileName,
                     extension,
-                    service.GetOrCreateArticulateMediaFolder());
+                    mediaFolder);
 
                 if (saveResult.Success && !string.IsNullOrEmpty(saveResult.MediaUdi))
                 {

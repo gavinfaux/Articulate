@@ -27,5 +27,5 @@
       "lit-html/*": ["./node_modules/lit-html/*"]
     }
   },
-  "include": ["src/**/*.ts", "../common/src/**/*.ts", "ambient.d.ts"]
+  "include": ["../common/src/**/*.ts", "ambient.d.ts"]
 }

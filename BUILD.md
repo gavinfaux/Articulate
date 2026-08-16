@@ -121,9 +121,9 @@ tracks the active lane in an ignored marker; same-lane builds use the per-lane
 Vite stamp, while `--clean` is required before switching lanes.
 
 Client source and tooling are shared under `src/Articulate.Web/Client/common/`.
-The lane folders retain only package metadata, generated API output, and small
-compatibility adapters; the Markdown property editor uses Umbraco's native
-Markdown input.
+Generated API output is owned by `src/Articulate.Web/Client/common/src/api/<lane>/`.
+The lane folders retain only package metadata and small compatibility adapters;
+the Markdown property editor uses Umbraco's native Markdown input.
 
 ## NuGet lock files
 

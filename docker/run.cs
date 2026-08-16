@@ -18,11 +18,11 @@ try
     return command switch
     {
         "docker-build"  => await DockerBuild(opts.Validate(command, "lane", "tag", "clean")),
-        "docker-dev"    => await DockerDev(opts.Validate(command, "lane", "skip-smoke", "reset", "clean")),
+        "docker-dev"    => await DockerDev(opts.Validate(command, "lane", "skip-smoke", "reset", "clean", "fixture")),
         "docker-prod"   => await DockerProd(opts.Validate(command, "lane", "skip-smoke")),
         "docker-down"   => await DockerDown(opts.Validate(command, "lane", "volumes", "purge")),
         "docker-status" => await DockerStatus(opts.Validate(command, "lane")),
-        "docker-test"   => await DockerTest(opts.Validate(command, "lane", "keep", "skip-smoke")),
+        "docker-test"   => await DockerTest(opts.Validate(command, "lane", "fixtures", "keep", "skip-smoke")),
         "docker-ca"     => await DockerCa(opts.Validate(command, "lane")),
         _ => throw new ArgumentException($"Unknown command '{command}'. Run with --help.")
     };
@@ -60,25 +60,41 @@ async Task<int> DockerBuild(Opts o)
         "--build-arg", $"PACKAGE_SOURCE=build/Release/{lane}",
         "--build-arg", $"UMBRACO_CMS_VERSION={Env.Get("UMBRACO_CMS_VERSION")}",
         "--build-arg", $"USE_TINYMCE_UMBRACO={Env.Get("USE_TINYMCE_UMBRACO", "false")}",
-        "--build-arg", $"TINYMCE_UMBRACO_PACKAGE_VERSION={Env.Get("TINYMCE_UMBRACO_PACKAGE_VERSION")}",
         "."
     }, Env.Repo);
     return 0;
 }
 
-async Task<int> DockerDev(Opts o, bool build = true, bool ensurePackages = true)
+async Task<int> DockerDev(Opts o, bool build = true, bool ensurePackages = true, bool preserveHarness = false)
 {
     var lane = ConfigureLane(o.Lane());
     if (ensurePackages) await EnsurePackages(lane, o.Flag("clean"));
     Env.Set("UMBRACO_RUNTIME_MODE", "BackofficeDevelopment");
+    Env.Set("ARTICULATE_HARNESS_API_ENABLED", o.Flag("skip-smoke") && !preserveHarness ? "false" : "true");
+
     if (o.Flag("reset")) await Compose(new[] { "down", "--volumes" }, allowFailure: true);
-    await Compose(build ? new[] { "up", "--detach", "--build" } : new[] { "up", "--detach" });
+    await Compose(build
+        ? new[] { "up", "--detach", "--build", "--force-recreate" }
+        : new[] { "up", "--detach", "--force-recreate" });
     await WaitForPublicSite();
     if (!o.Flag("skip-smoke"))
     {
         Env.RequireSecret();
         await Smoke("publish");
+        if (o.Flag("fixture"))
+        {
+            await Smoke("blogml");
+            await RestartDevApp();
+            await Smoke("fixture");
+            await Smoke("publish");
+        }
         await Smoke("confirm");
+        if (o.Flag("fixture"))
+        {
+            await Smoke("markdown");
+            await Smoke("ol");
+            await Smoke("export");
+        }
     }
     return 0;
 }
@@ -143,20 +159,27 @@ async Task<int> DockerTest(Opts o)
     var requested = (o.String("lane", "all") ?? "all").ToLowerInvariant();
     if (requested is not ("v17" or "v18" or "all"))
         throw new ArgumentException("--lane must be v17, v18, or all.");
+    if (o.Flag("fixtures") && o.Flag("skip-smoke"))
+        throw new ArgumentException("--fixtures cannot be combined with --skip-smoke.");
 
     var lanes = requested == "all" ? new[] { "v17", "v18" } : new[] { requested };
     foreach (var lane in lanes)
     {
         ConfigureLane(lane);
+        await Compose(new[] { "down", "--volumes" }, allowFailure: true);
         await EnsurePackages(lane, clean: true);
         try
         {
             await Compose(new[] { "build", "--no-cache", "--pull" });
             var devOptions = o.Flag("skip-smoke")
                 ? Opts.Of(("lane", lane), ("skip-smoke", null))
-                : Opts.Of(("lane", lane));
+                : o.Flag("fixtures")
+                    ? Opts.Of(("lane", lane), ("fixture", null))
+                    : Opts.Of(("lane", lane));
             await DockerDev(devOptions, build: false, ensurePackages: false);
             if (!o.Flag("skip-smoke")) await DockerProd(Opts.Of(("lane", lane)));
+            if (o.Flag("keep"))
+                await DockerDev(Opts.Of(("lane", lane), ("skip-smoke", null)), build: false, ensurePackages: false, preserveHarness: !o.Flag("skip-smoke"));
             Console.WriteLine($"PASSED: {lane}");
         }
         finally
@@ -196,13 +219,11 @@ string ConfigureLane(string lane)
     var http = lane == "v18" ? "44381" : "44380";
     foreach (var (key, value) in new Dictionary<string, string>
     {
-        ["ARTICULATE_PACKAGE_LANE"] = lane,
         ["COMPOSE_PROJECT_NAME"] = $"art_{lane}",
         ["COMPOSE_VOLUME_PREFIX"] = $"art_{lane}",
         ["IMAGE_TAG"] = $"articulate-local:{lane}",
         ["PACKAGE_SOURCE"] = $"build/Release/{lane}",
         ["UMBRACO_CMS_VERSION"] = Env.MsbuildProperty("UmbracoCmsPackageVersion", lane),
-        ["TINYMCE_UMBRACO_PACKAGE_VERSION"] = Env.MsbuildProperty("TinyMceUmbracoPackageVersion", lane),
         ["Umbraco__CMS__Security__AuthCookieName"] = $"UMB_UCONTEXT-{lane}",
         ["Umbraco__CMS__Security__BackOfficeTokenCookie__SiteName"] = $"-{lane}",
         ["CADDY_HTTPS_PORT"] = https,
@@ -248,7 +269,15 @@ async Task WaitForPublicSite()
     throw new TimeoutException($"Timed out waiting for {url}umbraco/.");
 }
 
-Task Smoke(string command) => Run(Env.Get("NODE_BIN", "node")!, new[] { Path.Combine(Env.Repo, "docker", "smoke.mjs"), command }, Env.Repo);
+async Task RestartDevApp()
+{
+    Console.WriteLine("Restarting Articulate before the next fixture phase");
+    await Compose(new[] { "stop", "articulate" });
+    await Compose(new[] { "up", "--detach", "--force-recreate", "articulate" });
+    await WaitForPublicSite();
+}
+
+Task Smoke(string command) => Run("node", new[] { Path.Combine(Env.Repo, "docker", "smoke.mjs"), command }, Env.Repo);
 Task Compose(IEnumerable<string> args, bool allowFailure = false) => Run("docker", ComposeArgs(args.ToArray()), Env.Repo, allowFailure);
 string[] ComposeArgs(params string[] args) => new[] { "compose", "-f", Path.Combine(Env.Repo, "docker", "docker-compose.yml") }.Concat(args).ToArray();
 
@@ -312,10 +341,8 @@ static class Env
 
     public static void RequireSecret()
     {
-        if (string.IsNullOrWhiteSpace(Get("ARTICULATE_DEV_AUTOMATION_CLIENT_SECRET")))
-            Set("ARTICULATE_DEV_AUTOMATION_CLIENT_SECRET", "articulate-dev-local-secret");
-        if (string.IsNullOrWhiteSpace(Get("ARTICULATE_DEV_AUTOMATION_CLIENT_ID")))
-            Set("ARTICULATE_DEV_AUTOMATION_CLIENT_ID", "articulate-dev-automation");
+        if (string.IsNullOrWhiteSpace(Get("ARTICULATE_HARNESS_API_CLIENT_SECRET")))
+            Set("ARTICULATE_HARNESS_API_CLIENT_SECRET", "articulate-dev-local-secret");
     }
 
     public static string MsbuildProperty(string name, string lane)

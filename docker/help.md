@@ -30,14 +30,21 @@ package lane from clean outputs.
 ### docker-dev
 
 ```text
-dotnet run docker/run.cs -- docker-dev [--lane v17|v18] [--clean] [--reset] [--skip-smoke]
+dotnet run docker/run.cs -- docker-dev [--lane v17|v18] [--clean] [--reset] [--skip-smoke] [--fixture]
 ```
 
 Builds current packages through `build/build.cs` and builds the Docker image,
-starts the development stack, then runs publish/confirm smoke checks. Docker
-package refreshes preserve the host test site's `umbraco` state; Docker database
-state lives in named volumes. `--reset` removes the lane's Docker volumes first;
-`--skip-smoke` stops after readiness succeeds.
+starts the development stack, then runs the smoke phases selected by the runner.
+For direct smoke modes, use the usage header in `docker/smoke.mjs` as the single
+source of truth. Docker package refreshes preserve the host test site's
+`umbraco` state; Docker database state lives in named volumes. `--reset` removes
+the lane's Docker volumes first; `--skip-smoke` stops after readiness succeeds
+without publishing content, so the public root may return 404.
+Without `--fixture`, the runner leaves the package's starter content alone and
+runs only publish/confirm smoke. `--fixture` imports `docker/fixtures/blogml-fixture.xml`,
+restarts, enables the scoped author fixture, and runs the Markdown,
+MetaWeblog, and export smokes. With `--skip-smoke`, the runner also disables
+the harness API and fixture; this is a plain package/startup check.
 
 ### docker-prod
 
@@ -70,12 +77,16 @@ the running site.
 ### docker-test
 
 ```text
-dotnet run docker/run.cs -- docker-test [--lane v17|v18|all] [--keep] [--skip-smoke]
+dotnet run docker/run.cs -- docker-test [--lane v17|v18|all] [--fixtures] [--keep] [--skip-smoke]
 ```
 
-Each lane builds fresh packages and images, starts in development mode, and
-verifies production/theme behavior unless smoke is skipped. `--keep` leaves
-successful stacks running.
+Each lane removes its existing Docker volumes first, builds fresh packages and
+images, then runs the normal development publish/confirm smoke. Add
+`--fixtures` to import `docker/fixtures/blogml-fixture.xml`, create the scoped author
+fixture, and run the Markdown, MetaWeblog, and export smokes. It then switches
+to Production for production/theme smoke. `--keep` only leaves the final stack
+running; without it, successful stacks are removed. `--fixtures` and
+`--skip-smoke` cannot be combined.
 
 ### docker-ca
 

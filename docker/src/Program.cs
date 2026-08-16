@@ -23,13 +23,14 @@ IUmbracoBuilder umbBuilder = builder.CreateUmbracoBuilder()
     .AddDeliveryApi()
     .AddComposers();
 
-_ = umbBuilder.Services.AddOptions<ArticulateDevAutomationOptions>()
-    .BindConfiguration(ArticulateDevAutomationOptions.SectionName);
-_ = umbBuilder.AddNotificationAsyncHandler<UmbracoApplicationStartedNotification, ArticulateDevAutomationBootstrapper>();
+_ = umbBuilder.Services.AddOptions<ArticulateHarnessApiOptions>()
+    .BindConfiguration(ArticulateHarnessApiOptions.SectionName);
+_ = umbBuilder.Services.AddScoped<ArticulateHarnessPermissionsFixture>();
+_ = umbBuilder.AddNotificationAsyncHandler<UmbracoApplicationStartedNotification, ArticulateHarnessApiBootstrapper>();
 
 umbBuilder.Build();
 
-// Increase upload limits, e.g. importing larger BlogML XML files; also ensure Umbraco:CMS:Runtime:MaxRequestLength is set
+// Allow 100 MiB uploads, e.g. larger BlogML XML files; also set Umbraco:CMS:Runtime:MaxRequestLength.
 builder.Services.Configure<FormOptions>(options =>
 {
     options.MultipartBodyLengthLimit = 104857600; // 100MB
@@ -68,5 +69,7 @@ app.UseUmbraco()
         u.UseBackOfficeEndpoints();
         u.UseWebsiteEndpoints();
     });
+
+app.MapControllers();
 
 await app.RunAsync().ConfigureAwait(false);

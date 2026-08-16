@@ -9,12 +9,6 @@
 ---
 _❤️ If you use and like Articulate please consider [becoming a GitHub Sponsor](https://github.com/sponsors/Shazwazza/) ❤️_
 
-## Installation
-
-Install the package version that matches your Umbraco installation. See the
-[Installation guide](https://github.com/Shazwazza/Articulate/wiki/Installation)
-for the compatibility matrix and version-specific commands.
-
 ## Features
 
 Supporting all the features you'd want in a blogging platform:
@@ -22,7 +16,7 @@ Supporting all the features you'd want in a blogging platform:
 - Categories & Tags
 - Themes
 - Multiple archives
-- Live Writer support
+- [Optional Open Live Writer / MetaWeblog support](docs/open-live-writer-protocol.md)
 - Markdown support
 - Post from your mobile phone including photos direct from your camera
 - Disqus and Giscus comment support (or build your own)
@@ -31,6 +25,18 @@ Supporting all the features you'd want in a blogging platform:
 - Customizable RSS feeds
 - Customizable URLs
 - Author profiles
+
+## Minimum requirements
+
+- Umbraco 18.1.0+ - Articulate version 8.x
+- Umbraco 17.6.0+ - Articulate version 7.x
+- Umbraco 13 LTS (maintenance) - Articulate 5.x.
+
+## Installation
+
+Install the package version that matches your Umbraco installation. See the
+[Installation guide](https://github.com/Shazwazza/Articulate/wiki/Installation)
+for the compatibility matrix and version-specific commands.
 
 ## Upgrading
 
@@ -46,9 +52,6 @@ Articulate includes ready-to-use themes and supports custom themes. You can
 copy an existing theme as a starting point or install a theme supplied by
 another package.
 
-For copied themes, views belong under `Views/ArticulateThemes/{Theme}/Views/`
-and assets under `wwwroot/App_Plugins/Articulate/Themes/{Theme}/assets/`.
-
 See the [Themes wiki](https://github.com/Shazwazza/Articulate/wiki/Themes) for
 the full theme layout, RCL theme packages, and Disqus configuration.
 
@@ -63,15 +66,10 @@ wiki pages for the exact appsettings reference.
 
 - [Documentation](https://github.com/Shazwazza/Articulate/wiki)
 - [Settings reference](https://github.com/Shazwazza/Articulate/wiki/Settings-Reference)
-- [Markdown editor authentication](https://github.com/Shazwazza/Articulate/wiki/Markdown-Editor-Authentication)
+- [Markdown editor authentication and CSP](https://github.com/Shazwazza/Articulate/wiki/Markdown-Editor-Authentication)
 - [Releases](https://github.com/Shazwazza/Articulate/releases)
 - [Report a bug](https://github.com/Shazwazza/Articulate/issues)
 - [Community discussions](https://forum.umbraco.com/tag/packages)
-
-The standalone post editor emits a strict same-origin CSP. If its custom OAuth or
-login-logo URLs point to another origin, the host site must replace that CSP via
-middleware or its reverse proxy; adding a second CSP header will not relax it.
-The Back Office Markdown property editor is a separate component and is unaffected.
 
 Please use GitHub Issues for reproducible bugs and the Umbraco forum for usage
 questions and general discussion.

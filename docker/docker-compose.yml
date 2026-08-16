@@ -9,14 +9,11 @@ services:
         TARGET_FRAMEWORK: ${TARGET_FRAMEWORK:-net10.0}
         DOTNET_SDK_IMAGE: ${DOTNET_SDK_IMAGE:-mcr.microsoft.com/dotnet/sdk:10.0}
         DOTNET_ASPNET_IMAGE: ${DOTNET_ASPNET_IMAGE:-mcr.microsoft.com/dotnet/aspnet:10.0}
-        # UMBRACO_CMS_VERSION and TinyMCE versions come from Directory.Packages.props
-        # via run.cs ConfigureLane. Set them in the shell for direct `docker compose` use.
+        # UMBRACO_CMS_VERSION comes from Directory.Packages.props via run.cs ConfigureLane.
         UMBRACO_CMS_VERSION: ${UMBRACO_CMS_VERSION:?UMBRACO_CMS_VERSION is required (see run.cs ConfigureLane)}
-        PACKAGE_SOURCE: ${PACKAGE_SOURCE:-build/Release/v17}
+        PACKAGE_SOURCE: ${PACKAGE_SOURCE:?PACKAGE_SOURCE is required (see run.cs ConfigureLane)}
         USE_TINYMCE_UMBRACO: ${USE_TINYMCE_UMBRACO:-false}
-        # Dockerfile validates this when USE_TINYMCE_UMBRACO=true; empty is valid when it is off.
-        TINYMCE_UMBRACO_PACKAGE_VERSION: ${TINYMCE_UMBRACO_PACKAGE_VERSION:-}
-    image: ${IMAGE_TAG:-articulate-local:chiseled}
+    image: ${IMAGE_TAG:?IMAGE_TAG is required (see run.cs ConfigureLane)}
     mem_limit: 512m
     mem_reservation: 256m
     user: "1654:1654"
@@ -26,35 +23,29 @@ services:
       Umbraco__CMS__Runtime__Mode: ${UMBRACO_RUNTIME_MODE:-BackofficeDevelopment}
       # HTTPS configuration (Caddy terminates TLS)
       Umbraco__CMS__Global__UseHttps: "true"
-      Umbraco__CMS__Security__BackOfficeHost: ${UMBRACO_PUBLIC_HOST:-https://localhost:18443}
-      Umbraco__CMS__Security__AuthCookieName: ${Umbraco__CMS__Security__AuthCookieName:-UMB_UCONTEXT}
-      Umbraco__CMS__Security__BackOfficeTokenCookie__SiteName: ${Umbraco__CMS__Security__BackOfficeTokenCookie__SiteName:-}
-      Umbraco__CMS__WebRouting__UmbracoApplicationUrl: ${UMBRACO_PUBLIC_URL:-https://localhost:18443/}
+      Umbraco__CMS__Security__BackOfficeHost: ${UMBRACO_PUBLIC_HOST:?UMBRACO_PUBLIC_HOST is required (see run.cs ConfigureLane)}
+      Umbraco__CMS__Security__AuthCookieName: ${Umbraco__CMS__Security__AuthCookieName:?cookie name is required (see run.cs ConfigureLane)}
+      Umbraco__CMS__Security__BackOfficeTokenCookie__SiteName: ${Umbraco__CMS__Security__BackOfficeTokenCookie__SiteName:?cookie site name is required (see run.cs ConfigureLane)}
+      Umbraco__CMS__WebRouting__UmbracoApplicationUrl: ${UMBRACO_PUBLIC_URL:?UMBRACO_PUBLIC_URL is required (see run.cs ConfigureLane)}
       # Unattended install
       Umbraco__CMS__Unattended__InstallUnattended: "true"
       Umbraco__CMS__Unattended__UpgradeUnattended: "true"
       Umbraco__CMS__Unattended__UnattendedUserName: ${UMBRACO_USER_NAME:-Jane Doe}
       Umbraco__CMS__Unattended__UnattendedUserEmail: ${UMBRACO_USER_EMAIL:-admin@localhost}
       Umbraco__CMS__Unattended__UnattendedUserPassword: ${UMBRACO_USER_PASSWORD:-@rticulate}
-      # Dev-only automation bootstrap
-      Articulate__DevAutomation__Enabled: ${ARTICULATE_DEV_AUTOMATION_ENABLED:-true}
-      Articulate__DevAutomation__ClientId: ${ARTICULATE_DEV_AUTOMATION_CLIENT_ID:-articulate-dev-automation}
-      Articulate__DevAutomation__ClientSecret: ${ARTICULATE_DEV_AUTOMATION_CLIENT_SECRET:-articulate-dev-local-secret}
-      Articulate__DevAutomation__UserName: ${ARTICULATE_DEV_AUTOMATION_USER_NAME:-articulate-dev-automation}
-      Articulate__DevAutomation__Email: ${ARTICULATE_DEV_AUTOMATION_USER_EMAIL:-articulate-dev-automation@localhost}
-      Articulate__DevAutomation__Name: ${ARTICULATE_DEV_AUTOMATION_USER_DISPLAY_NAME:-Articulate Dev Automation}
-      Articulate__DevAutomation__UserGroupAliases__0: ${ARTICULATE_DEV_AUTOMATION_USER_GROUP_ALIAS:-admin}
+      # Harness API; the scoped-author fixture runs explicitly after startup
+      Articulate__Harness__Api__Enabled: ${ARTICULATE_HARNESS_API_ENABLED:-true}
+      Articulate__Harness__Api__ClientSecret: ${ARTICULATE_HARNESS_API_CLIENT_SECRET:-articulate-dev-local-secret}
       # Articulate OpenID Connect (Markdown Editor client)
       Articulate__ManagementApi__OpenIddict__Client__Enabled: "true"
-      Articulate__ManagementApi__OpenIddict__Client__ClientId: ${ARTICULATE_OPENID_CLIENT_ID:-umbraco-articulate}
-      Articulate__ManagementApi__OpenIddict__Client__DisplayName: ${ARTICULATE_OPENID_DISPLAY_NAME:-Articulate Markdown Editor}
-      Articulate__ManagementApi__OpenIddict__Client__RedirectUris__0: ${ARTICULATE_REDIRECT_URI:-https://localhost:18443/a-new/}
-      Articulate__ManagementApi__OpenIddict__Client__PostLogoutRedirectUris__0: ${ARTICULATE_LOGOUT_REDIRECT_URI:-https://localhost:18443/}
-      # Uncomment for Docker-to-host image import testing:
-      # Articulate__AllowedMediaHosts__0: host.docker.internal
-      # Umbraco__CMS__Runtime__Mode: BackofficeDevelopment
-      # Articulate__AllowUnsafeLocalExternalImageHostsInDevelopment: "true"
-      # If you add a mock image sidecar instead, allowlist that service hostname instead of host.docker.internal.
+      Articulate__ManagementApi__OpenIddict__Client__ClientId: umbraco-articulate
+      Articulate__ManagementApi__OpenIddict__Client__DisplayName: Articulate Markdown Editor
+      Articulate__ManagementApi__OpenIddict__Client__RedirectUris__0: ${ARTICULATE_REDIRECT_URI:?ARTICULATE_REDIRECT_URI is required (see run.cs ConfigureLane)}
+      Articulate__ManagementApi__OpenIddict__Client__PostLogoutRedirectUris__0: ${ARTICULATE_LOGOUT_REDIRECT_URI:?ARTICULATE_LOGOUT_REDIRECT_URI is required (see run.cs ConfigureLane)}
+      # Docker-to-host image import testing. The unsafe override is ignored in Production mode.
+      Articulate__AllowedMediaHosts__0: ${ARTICULATE_ALLOWED_MEDIA_HOST:-host.docker.internal}
+      Articulate__AllowedMediaHosts__1: localhost
+      Articulate__AllowUnsafeLocalExternalImageHostsInDevelopment: ${ARTICULATE_ALLOW_UNSAFE_LOCAL_EXTERNAL_IMAGE_HOSTS:-true}
       Umbraco__CMS__ModelsBuilder__ModelsMode: ${MODELS_MODE:-Nothing}
     volumes:
       - articulate-media:/app/wwwroot/media
@@ -76,12 +67,12 @@ services:
     # unattended Umbraco install with a known password. `0.0.0.0` would expose
     # them on the LAN. Keep host/LAN reachable? Override CADDY_BIND_IP below.
     ports:
-      - "${CADDY_BIND_IP:-127.0.0.1}:${CADDY_HTTP_PORT:-8080}:8080"
-      - "${CADDY_BIND_IP:-127.0.0.1}:${CADDY_HTTPS_PORT:-18443}:18443"
+      - "${CADDY_BIND_IP:-127.0.0.1}:${CADDY_HTTP_PORT:?CADDY_HTTP_PORT is required (see run.cs ConfigureLane)}:8080"
+      - "${CADDY_BIND_IP:-127.0.0.1}:${CADDY_HTTPS_PORT:?CADDY_HTTPS_PORT is required (see run.cs ConfigureLane)}:18443"
     environment:
       ARTICULATE_HOST: articulate
-      HTTPS_HOST: ${CADDY_HTTPS_HOST:-localhost:18443}
-      CADDY_TLS_HOST: ${CADDY_TLS_HOST:-localhost}
+      HTTPS_HOST: ${CADDY_HTTPS_HOST:?CADDY_HTTPS_HOST is required (see run.cs ConfigureLane)}
+      CADDY_TLS_HOST: ${CADDY_TLS_HOST:?CADDY_TLS_HOST is required (see run.cs ConfigureLane)}
     command: caddy run --config /etc/caddy/Caddyfile --adapter caddyfile
     volumes:
       - caddy-data:/data

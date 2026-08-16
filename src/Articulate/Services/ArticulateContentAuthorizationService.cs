@@ -91,6 +91,15 @@ public sealed class ArticulateContentAuthorizationService(
         }
     }
 
+    public async Task EnsureMediaWriteAccessAsync(IUser user, Guid mediaKey)
+    {
+        MediaAuthorizationStatus status = await mediaPermissionService.AuthorizeAccessAsync(user, mediaKey);
+        if (status != MediaAuthorizationStatus.Success)
+        {
+            throw new UnauthorizedAccessException("The requested media operation is not available");
+        }
+    }
+
     public async Task EnsureMediaReadAccessAsync(IUser user, IEnumerable<Guid> mediaKeys)
     {
         Guid[] keys = mediaKeys.Distinct().ToArray();

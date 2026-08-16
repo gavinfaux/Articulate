@@ -3,7 +3,6 @@ using System.Text;
 using System.Xml;
 using System.Xml.Linq;
 using Argotic.Syndication.Specialized;
-using Microsoft.Extensions.Hosting;
 using Articulate.ImportExport;
 using Articulate.Options;
 using Articulate.Services;
@@ -894,6 +893,7 @@ public class BlogMlAuthorizationTests
                 permissions.Object,
                 mediaPermissions?.Object ?? Mock.Of<IMediaPermissionService>()),
             Mock.Of<Umbraco.Cms.Core.Security.IHtmlSanitizer>(),
+            Mock.Of<Umbraco.Cms.Core.Strings.IShortStringHelper>(),
             global::Microsoft.Extensions.Options.Options.Create(new ArticulateOptions()),
             global::Microsoft.Extensions.Options.Options.Create(new ArticulateCommentsOptions())
         ];

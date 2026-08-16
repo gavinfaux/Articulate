@@ -12,6 +12,7 @@
 //   - Packages land in build/<Configuration>/<lane>/.
 
 using System.Diagnostics;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 
 try
@@ -164,6 +165,25 @@ async Task<int> ClientAsync(Opts o)
     var workspace = Path.Combine(Env.Repo, "src", "Articulate.Web", "Client");
     var laneDir = Path.Combine(workspace, o.Lane());
     DeleteDir(Path.Combine(Env.Repo, "build", "ClientAssets"));
+    var requiredNodeVersion = File.ReadAllText(Path.Combine(workspace, ".node-version")).Trim();
+    var requiredNodeMajor = requiredNodeVersion.Split('.')[0];
+    if (string.IsNullOrWhiteSpace(requiredNodeMajor))
+        throw new InvalidOperationException("Client .node-version is empty.");
+    var nodeVersion = (await Capture("node", new[] { "--version" }, workspace)).Trim();
+    var nodeMajor = nodeVersion.TrimStart('v').Split('.')[0];
+    if (!string.Equals(nodeMajor, requiredNodeMajor, StringComparison.Ordinal))
+        throw new InvalidOperationException($"Client build requires Node {requiredNodeVersion} (found {nodeVersion}). See .node-version or CI setup.");
+
+    using var packageJson = JsonDocument.Parse(File.ReadAllText(Path.Combine(workspace, "package.json")));
+    var packageManager = packageJson.RootElement.GetProperty("packageManager").GetString()
+        ?? throw new InvalidOperationException("Client package.json has no packageManager.");
+    const string pnpmPrefix = "pnpm@";
+    if (!packageManager.StartsWith(pnpmPrefix, StringComparison.Ordinal))
+        throw new InvalidOperationException($"Client packageManager must use pnpm (found {packageManager}).");
+    var requiredPnpmVersion = packageManager[pnpmPrefix.Length..];
+    var pnpmVersion = (await Capture("pnpm", new[] { "--version" }, workspace)).Trim();
+    if (pnpmVersion != requiredPnpmVersion)
+        throw new InvalidOperationException($"Client build requires pnpm {requiredPnpmVersion} (found {pnpmVersion}).");
     await Run("pnpm", new[] { "install", "--frozen-lockfile" }, cwd: workspace);
     await Run("pnpm", new[] { "run", "check" }, cwd: laneDir);
     await Run("pnpm", new[] { "run", "build" }, cwd: laneDir);

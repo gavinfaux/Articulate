@@ -9,15 +9,12 @@ using Microsoft.Extensions.Primitives;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using NUnit.Framework;
-using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.Actions;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Models.Membership;
 using Umbraco.Cms.Core.Security;
 using Umbraco.Cms.Core.Services;
 using Umbraco.Cms.Core.Services.AuthorizationStatus;
-using Umbraco.Cms.Core.Web;
-using Umbraco.Cms.Web.Common;
 
 namespace Articulate.Tests.Controllers.Api;
 
@@ -49,7 +46,7 @@ public class MarkdownEditorAuthorizationTests
     [Test]
     public async Task CreatePost_rejects_a_root_without_an_archive()
     {
-        MarkdownEditorSut sut = CreateSut(children: []);
+        MarkdownEditorSut sut = CreateSutWithoutArchives();
 
         ActionResult<CreatePostResponse> result = await sut.Controller.CreatePost(CreateModelJson(sut.Root.Id));
 
@@ -60,7 +57,7 @@ public class MarkdownEditorAuthorizationTests
     [Test]
     public async Task CreatePost_finds_archive_when_it_is_not_the_first_root_child()
     {
-        MarkdownEditorSut sut = CreateSut(archiveNotFirst: true);
+        MarkdownEditorSut sut = CreateSutWithOtherBeforeArchive();
         sut.Controller.ControllerContext = new ControllerContext
         {
             HttpContext = new DefaultHttpContext
@@ -82,7 +79,32 @@ public class MarkdownEditorAuthorizationTests
             Times.Once);
     }
 
-    //TODO: Add multipart HTTP coverage for Markdown create and media authorization.
+    [Test]
+    public async Task CreatePost_skips_an_unauthorized_archive_and_uses_the_authorized_archive()
+    {
+        MarkdownEditorSut sut = CreateSutWithUnauthorizedArchiveFirst();
+        sut.Controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext
+            {
+                Request = { Form = new FormCollection(new Dictionary<string, StringValues>()) }
+            }
+        };
+
+        ActionResult<CreatePostResponse> result = await sut.Controller.CreatePost(CreateModelJson(sut.Root.Id));
+
+        Assert.That(result.Result, Is.TypeOf<ObjectResult>());
+        Assert.That(((ObjectResult)result.Result!).StatusCode, Is.EqualTo(StatusCodes.Status500InternalServerError));
+        sut.Permissions.Verify(
+            x => x.AuthorizeAccessAsync(
+                sut.User.Object,
+                It.Is<IEnumerable<Guid>>(keys => keys.Contains(sut.Archive.Key)),
+                It.Is<ISet<string>>(actions =>
+                    actions.Contains(ActionNew.ActionLetter) && actions.Contains(ActionPublish.ActionLetter))),
+            Times.Once);
+    }
+
+    // TODO: Add host-level multipart coverage for Markdown create and assigned-media authorization.
     [Test]
     public async Task CreatePost_denied_media_write_stops_before_content_or_media_mutation()
     {
@@ -122,9 +144,7 @@ public class MarkdownEditorAuthorizationTests
 
     private static MarkdownEditorSut CreateSut(
         string rootAlias = ArticulateConstants.ContentType.Articulate,
-        IContent[]? children = null,
-        bool extractFirstImage = false,
-        bool archiveNotFirst = false)
+        bool extractFirstImage = false)
     {
         var user = new Mock<IUser>();
         user.SetupGet(x => x.Id).Returns(7);
@@ -148,18 +168,7 @@ public class MarkdownEditorAuthorizationTests
 
         var contentService = new Mock<IContentService>();
         contentService.Setup(x => x.GetById(root.Object.Id)).Returns(root.Object);
-        contentService
-            .Setup(x => x.GetPagedChildren(
-                root.Object.Id,
-                It.IsAny<long>(),
-                It.IsAny<int>(),
-                out It.Ref<long>.IsAny,
-                null,
-                null,
-                null))
-            .Returns(children ?? (archiveNotFirst
-                ? [CreateContent("Other"), archive.Object]
-                : [archive.Object]));
+        SetupChildren(contentService, root.Object.Id, [archive.Object]);
 
         var permissions = new Mock<IContentPermissionService>();
         permissions
@@ -184,6 +193,7 @@ public class MarkdownEditorAuthorizationTests
             NullLogger<BackOfficeAuthService>.Instance);
 
         var mediaService = new Mock<IArticulateImportMediaService>();
+        var mediaLibrary = new Mock<IMediaService>();
         var controller = new MarkdownEditorApiController(
             backOfficeAuth,
             null!,
@@ -196,6 +206,7 @@ public class MarkdownEditorAuthorizationTests
             NullLogger<MarkdownEditorApiController>.Instance,
             null!,
             mediaService.Object,
+            mediaLibrary.Object,
             new ArticulateContentAuthorizationService(permissions.Object, mediaPermissions.Object)
 #if UMBRACO_18_OR_GREATER
             , Mock.Of<Umbraco.Cms.Core.Services.IIdKeyMap>()
@@ -205,11 +216,55 @@ public class MarkdownEditorAuthorizationTests
         return new MarkdownEditorSut(controller, contentService, permissions, mediaPermissions, mediaService, user, root.Object, archive.Object);
     }
 
+    private static MarkdownEditorSut CreateSutWithoutArchives()
+    {
+        MarkdownEditorSut sut = CreateSut();
+        SetupChildren(sut.ContentService, sut.Root.Id, []);
+        return sut;
+    }
+
+    private static MarkdownEditorSut CreateSutWithOtherBeforeArchive()
+    {
+        MarkdownEditorSut sut = CreateSut();
+        SetupChildren(sut.ContentService, sut.Root.Id, [CreateContent("Other"), sut.Archive]);
+        return sut;
+    }
+
+    private static MarkdownEditorSut CreateSutWithUnauthorizedArchiveFirst()
+    {
+        MarkdownEditorSut sut = CreateSut();
+        IContent unauthorizedArchive = CreateContent(ArticulateConstants.ContentType.ArticulateArchive);
+        SetupChildren(sut.ContentService, sut.Root.Id, [unauthorizedArchive, sut.Archive]);
+        sut.Permissions
+            .Setup(x => x.AuthorizeAccessAsync(
+                sut.User.Object,
+                It.Is<IEnumerable<Guid>>(keys => keys.Contains(unauthorizedArchive.Key)),
+                It.Is<ISet<string>>(actions =>
+                    actions.Contains(ActionNew.ActionLetter) && actions.Contains(ActionPublish.ActionLetter))))
+            .ReturnsAsync(ContentAuthorizationStatus.UnauthorizedMissingPermissionAccess);
+        return sut;
+    }
+
+    private static void SetupChildren(Mock<IContentService> contentService, int rootId, IContent[] children)
+    {
+        contentService
+            .Setup(x => x.GetPagedChildren(
+                rootId,
+                It.IsAny<long>(),
+                It.IsAny<int>(),
+                out It.Ref<long>.IsAny,
+                null,
+                null,
+                null))
+            .Returns(children);
+    }
+
     private static IContent CreateContent(string alias)
     {
         var type = new Mock<ISimpleContentType>();
         type.SetupGet(x => x.Alias).Returns(alias);
         var content = new Mock<IContent>();
+        content.SetupGet(x => x.Key).Returns(Guid.NewGuid());
         content.SetupGet(x => x.ContentType).Returns(type.Object);
         return content.Object;
     }

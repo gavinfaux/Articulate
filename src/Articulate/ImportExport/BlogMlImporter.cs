@@ -19,6 +19,7 @@ using Umbraco.Cms.Core.PropertyEditors;
 using Umbraco.Cms.Core.Security;
 using Umbraco.Cms.Core.Serialization;
 using Umbraco.Cms.Core.Services;
+using Umbraco.Cms.Core.Strings;
 using Umbraco.Cms.Infrastructure.Persistence;
 using Umbraco.Cms.Infrastructure.Scoping;
 using Task = System.Threading.Tasks.Task;
@@ -44,6 +45,7 @@ namespace Articulate.ImportExport
         IArticulateImportMediaService service,
         ArticulateContentAuthorizationService authorizationService,
         IHtmlSanitizer htmlSanitizer,
+        IShortStringHelper shortStringHelper,
         IOptions<ArticulateOptions> articulateOptions,
         IOptions<ArticulateCommentsOptions> articulateCommentsOptions
 #if UMBRACO_18_OR_GREATER
@@ -408,7 +410,7 @@ namespace Articulate.ImportExport
             return posts
                 .Select(post =>
                 {
-                    IContent? existing = FindExistingPost(existingPosts, post);
+                    IContent? existing = FindExistingPost(existingPosts, post, ArticulateConstants.ContentType.ArticulateRichText);
                     return new BlogMlPostImportTarget(
                         post,
                         existing,
@@ -601,9 +603,12 @@ namespace Articulate.ImportExport
                 await authorizationService.EnsureContentAccessAsync(user, rootNode, ActionNew.ActionLetter);
             }
 
-            IContent archiveNode = archiveNodes.FirstOrDefault()
-                                   ?? await GetOrCreateArchiveNodeAsync(userId, rootNode);
-            if (!archiveNodes.Any(x => x.Key == archiveNode.Key))
+            IContent? archiveNode = archiveNodes.FirstOrDefault();
+            if (archiveNode is null && postItems.All(post => string.IsNullOrWhiteSpace(GetArchiveNameFromDocument(xDoc, post))))
+            {
+                archiveNode = await GetOrCreateArchiveNodeAsync(userId, rootNode);
+            }
+            if (archiveNode is not null && !archiveNodes.Any(x => x.Key == archiveNode.Key))
             {
                 archiveNodes = [archiveNode, .. archiveNodes];
             }
@@ -611,6 +616,7 @@ namespace Articulate.ImportExport
             IReadOnlyList<BlogMlPostImportTarget> postTargets = importPlan?.PostTargets
                 ?? BuildPostTargets(rootNode, archiveNodes, postItems, xDoc);
 
+            var importedArchives = new Dictionary<string, IContent>(StringComparer.OrdinalIgnoreCase);
             foreach (BlogMlPostImportTarget target in postTargets)
             {
                 BlogMLPost post = target.Source;
@@ -624,11 +630,25 @@ namespace Articulate.ImportExport
 
                 bool isNew = target.ExistingPost is null;
                 IContent targetArchive = target.TargetArchive?.Key == rootNode.Key
-                    ? archiveNode
-                    : target.TargetArchive ?? archiveNode;
+                    ? archiveNode ?? rootNode
+                    : target.TargetArchive ?? archiveNode ?? rootNode;
+                string? archiveName = GetArchiveNameFromDocument(xDoc, post);
+                if (target.TargetArchive?.Key == rootNode.Key && !string.IsNullOrWhiteSpace(archiveName))
+                {
+                    if (!importedArchives.TryGetValue(archiveName, out targetArchive!))
+                    {
+                        targetArchive = await GetOrCreateArchiveNodeAsync(userId, rootNode, archiveName);
+                        importedArchives[archiveName] = targetArchive;
+                    }
+                }
+                if (publishAll && targetArchive.Key != rootNode.Key)
+                {
+                    PublishResult archivePublishResult = contentService.Publish(targetArchive, ["*"], userId);
+                    archivePublishResult.EnsureSuccess(logger, $"publish archive {targetArchive.Id}");
+                }
                 await authorizationService.EnsureContentAccessAsync(
                     user,
-                    GetPostPermissionTarget(rootNode, archiveNode, target),
+                    GetPostPermissionTarget(rootNode, targetArchive, target),
                     GetRequiredPostActions(isNew, publishAll));
 
                 // Create if it doesn't exist
@@ -644,7 +664,7 @@ namespace Articulate.ImportExport
                             logger);
                 }
 
-                await PopulatePostContentAsync(postNode, postType, post, regexMatch, regexReplace);
+                await PopulatePostContentAsync(postNode, postType, post, regexMatch, regexReplace, isNew);
                 await SetPostMetadataAsync(postNode, postType, post, xDoc, authors, categories, authorIdsToName);
 
                 if (importFirstImage)
@@ -883,7 +903,7 @@ namespace Articulate.ImportExport
                 logger);
         }
 
-        private async Task<IContent> GetOrCreateArchiveNodeAsync(int userId, IContent rootNode)
+        private async Task<IContent> GetOrCreateArchiveNodeAsync(int userId, IContent rootNode, string? archiveName = null)
         {
             IContentType archiveDocType = contentTypeService.Get(ArticulateConstants.ContentType.ArticulateArchive)
                                           ?? throw new InvalidOperationException(
@@ -896,12 +916,14 @@ namespace Articulate.ImportExport
                 out _,
                 sqlContext.Query<IContent>().Where(x => x.ParentId == rootNode.Id && x.Trashed == false));
 
-            IContent? archiveNode = archive.FirstOrDefault();
+            IContent? archiveNode = string.IsNullOrWhiteSpace(archiveName)
+                ? archive.FirstOrDefault()
+                : archive.FirstOrDefault(x => string.Equals(x.Name, archiveName, StringComparison.OrdinalIgnoreCase));
 
             if (archiveNode is null)
             {
                 archiveNode = await contentService.CreateWithInvariantOrDefaultCultureNameAsync(
-                    ArticulateConstants.Convention.ArticlesDocument,
+                    string.IsNullOrWhiteSpace(archiveName) ? ArticulateConstants.Convention.ArticlesDocument : archiveName,
                     rootNode,
                     archiveDocType,
                     languageService,
@@ -962,6 +984,9 @@ namespace Articulate.ImportExport
                 {
                     return match;
                 }
+
+                // A named archive that does not exist yet is created by ImportPostsAsync.
+                return root;
             }
 
             // Third-party BlogML has no archive marker; preserve the historical first-archive fallback.
@@ -1004,16 +1029,28 @@ namespace Articulate.ImportExport
                 ? $"key:{archive.Key:D}"
                 : $"name:{archive.Name ?? string.Empty}";
 
-        private static IContent? FindExistingPost(IContent[] existingPosts, BlogMLPost post)
+        private static IContent? FindExistingPost(
+            IContent[] existingPosts,
+            BlogMLPost post,
+            string importedContentTypeAlias)
         {
             if (!string.IsNullOrWhiteSpace(post.Id))
             {
-                return existingPosts.FirstOrDefault(x => x.GetValue<string>("importId") == post.Id);
+                IContent? imported = existingPosts.FirstOrDefault(x =>
+                    x.ContentType.Alias.InvariantEquals(importedContentTypeAlias) &&
+                    x.GetValue<string>("importId") == post.Id);
+                if (imported is not null)
+                {
+                    return imported;
+                }
             }
 
+            // Enhanced BlogML exports can carry a new source id for content that already exists.
+            // Only match the type this importer creates; Markdown and RichText posts are distinct content.
             return existingPosts
                 .Select(x => new { Node = x, UrlName = x.GetValue<string>(Constants.Conventions.Content.UrlName) })
-                .Where(x => x.UrlName is not null && post.Name != null &&
+                .Where(x => x.Node.ContentType.Alias.InvariantEquals(importedContentTypeAlias) &&
+                            x.UrlName is not null && post.Name != null &&
                             x.UrlName.InvariantStartsWith(post.Name.Content))
                 .Select(x => x.Node)
                 .FirstOrDefault();
@@ -1024,7 +1061,8 @@ namespace Articulate.ImportExport
             IContentType postType,
             BlogMLPost post,
             string? regexMatch,
-            string? regexReplace)
+            string? regexReplace,
+            bool isNew)
         {
             await postNode
                 .SetInvariantOrDefaultCultureValueAsync(
@@ -1072,7 +1110,7 @@ namespace Articulate.ImportExport
                     languageService,
                     logger);
 
-            await SetPostSlugAsync(postNode, postType, post);
+            await SetPostSlugAsync(postNode, postType, post, isNew);
         }
 
         private static string DecodeContent(string content, BlogMLContentType contentType) =>
@@ -1108,7 +1146,11 @@ namespace Articulate.ImportExport
             }
         }
 
-        private async Task SetPostSlugAsync(IContentBase postNode, IContentType postType, BlogMLPost post)
+        private async Task SetPostSlugAsync(
+            IContentBase postNode,
+            IContentType postType,
+            BlogMLPost post,
+            bool isNew)
         {
             if (post.Url is null || string.IsNullOrWhiteSpace(post.Url.OriginalString))
             {
@@ -1116,12 +1158,37 @@ namespace Articulate.ImportExport
             }
 
             string slug = ExtractSlugFromPost(post);
+            if (isNew)
+            {
+                string candidateSegment = slug.ToUrlSegment(shortStringHelper);
+                IEnumerable<IContent> siblings = contentService.GetPagedChildren(
+                    postNode.ParentId,
+                    0,
+                    int.MaxValue,
+                    out _,
+                    null,
+                    null,
+                    null);
+                if (siblings.Any(x => x.Id != postNode.Id &&
+                                      GetEffectiveUrlSegment(x).InvariantEquals(candidateSegment)))
+                {
+                    return;
+                }
+            }
+
             await postNode.SetInvariantOrDefaultCultureValueAsync(
                 Constants.Conventions.Content.UrlName,
                 slug,
                 postType,
                 languageService,
                 logger);
+        }
+
+        private string GetEffectiveUrlSegment(IContent content)
+        {
+            string? configuredSegment = content.GetValue<string>(Constants.Conventions.Content.UrlName);
+            return (configuredSegment.IsNullOrWhiteSpace() ? content.Name ?? string.Empty : configuredSegment)
+                .ToUrlSegment(shortStringHelper);
         }
 
         private static string ExtractSlugFromPost(BlogMLPost post)

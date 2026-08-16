@@ -21,19 +21,24 @@ namespace ArticulateDockerSite.Services
     /// The unattended install user is a regular backoffice account and cannot be used with the
     /// client_credentials grant required by the Umbraco Management API token endpoint. We therefore
     /// provision a separate <see cref="UserKind.Api"/> user and bind it to a client id/secret pair
-    /// so smoke tests and dev automation can obtain a bearer token without manual backoffice setup.
+    /// so smoke tests and harness API can obtain a bearer token without manual backoffice setup.
     /// </remarks>
-    internal sealed class ArticulateDevAutomationBootstrapper(
+    internal sealed class ArticulateHarnessApiBootstrapper(
                 IServiceScopeFactory scopeFactory,
-                IOptions<ArticulateDevAutomationOptions> options,
+                IOptions<ArticulateHarnessApiOptions> options,
                 IOptions<RuntimeSettings> runtimeSettings,
                 IRuntimeState runtimeState,
                 IBackOfficeApplicationManager backOfficeApplicationManager,
-                ILogger<ArticulateDevAutomationBootstrapper> logger) :
+                ILogger<ArticulateHarnessApiBootstrapper> logger) :
                 INotificationAsyncHandler<UmbracoApplicationStartedNotification>
     {
         private const string ProductionSkipMessage =
-                "Skipping Articulate dev automation bootstrap: production mode does not allow dev-only client provisioning.";
+                "Skipping Articulate harness API bootstrap: production mode does not allow dev-only client provisioning.";
+        private const string ClientId = "articulate-dev-automation";
+        private const string ApiUserName = "articulate-harness";
+        private const string ApiUserEmail = "articulate-harness@localhost";
+        private const string ApiUserDisplayName = "Articulate";
+        private static readonly string[] ApiUserGroupAliases = ["admin"];
 
         /// <inheritdoc />
         public Task HandleAsync(
@@ -43,7 +48,7 @@ namespace ArticulateDockerSite.Services
 
         private async Task EnsureBootstrapAsync(CancellationToken cancellationToken)
         {
-            ArticulateDevAutomationOptions settings = options.Value;
+            ArticulateHarnessApiOptions settings = options.Value;
 
             if (runtimeSettings.Value.Mode == RuntimeMode.Production)
             {
@@ -53,14 +58,14 @@ namespace ArticulateDockerSite.Services
 
             if (runtimeState.Level == RuntimeLevel.Install)
             {
-                logger.LogWarning("Skipping Articulate dev automation bootstrap: Umbraco installer is running.");
+                logger.LogWarning("Skipping Articulate harness API bootstrap: Umbraco installer is running.");
                 return;
             }
 
             if (runtimeState.Level < RuntimeLevel.Run)
             {
                 logger.LogWarning(
-                    "Skipping Articulate dev automation bootstrap: runtime level '{Level}' is below Run.",
+                    "Skipping Articulate harness API bootstrap: runtime level '{Level}' is below Run.",
                     runtimeState.Level);
                 return;
             }
@@ -78,9 +83,9 @@ namespace ArticulateDockerSite.Services
             IBackOfficeUserClientCredentialsManager credentialsManager = sp.GetRequiredService<IBackOfficeUserClientCredentialsManager>();
             IUserGroupService userGroupService = sp.GetRequiredService<IUserGroupService>();
 
-            IUser? clientBoundUser = await userService.FindByClientIdAsync(settings.ClientId);
+            IUser? clientBoundUser = await userService.FindByClientIdAsync(ClientId);
 
-            IReadOnlyList<IReadOnlyUserGroup> requiredGroups = await ResolveGroupsAsync(userGroupService, settings.UserGroupAliases, cancellationToken);
+            IReadOnlyList<IReadOnlyUserGroup> requiredGroups = await ResolveGroupsAsync(userGroupService, ApiUserGroupAliases, cancellationToken);
             if (requiredGroups.Count == 0)
             {
                 return;
@@ -99,10 +104,10 @@ namespace ArticulateDockerSite.Services
             if (ensured)
             {
                 logger.LogInformation(
-                    "Articulate dev automation bootstrap ensured API user '{Email}' with client '{ClientId}' and groups [{Groups}].",
-                    settings.Email,
-                    settings.ClientId,
-                    string.Join(", ", settings.UserGroupAliases));
+                    "Articulate harness API bootstrap ensured API user '{Email}' with client '{ClientId}' and groups [{Groups}].",
+                    ApiUserEmail,
+                    ClientId,
+                    string.Join(", ", ApiUserGroupAliases));
             }
         }
 
@@ -112,7 +117,7 @@ namespace ArticulateDockerSite.Services
             ICoreBackOfficeUserManager coreUserManager,
             IBackOfficeUserClientCredentialsManager credentialsManager,
             IBackOfficeApplicationManager backOfficeAppManager,
-            ArticulateDevAutomationOptions settings,
+            ArticulateHarnessApiOptions settings,
             IReadOnlyList<IReadOnlyUserGroup> requiredGroups,
             CancellationToken cancellationToken)
         {
@@ -139,28 +144,28 @@ namespace ArticulateDockerSite.Services
             IUser? clientBoundUser,
             IBackOfficeUserStore userStore,
             ICoreBackOfficeUserManager coreUserManager,
-            ArticulateDevAutomationOptions settings,
+            ArticulateHarnessApiOptions settings,
             IReadOnlyList<IReadOnlyUserGroup> requiredGroups)
         {
-            IUser? user = clientBoundUser ?? await userStore.GetByEmailAsync(settings.Email);
+            IUser? user = clientBoundUser ?? await userStore.GetByEmailAsync(ApiUserEmail);
             if (user is null)
             {
                 IdentityCreationResult? createResult = await CreateApiUserAsync(coreUserManager, settings, requiredGroups);
                 if (createResult is null || !createResult.Succeded)
                 {
                     logger.LogWarning(
-                        "Articulate dev automation API user '{Email}' could not be created: {ErrorMessage}",
-                        settings.Email,
+                        "Articulate harness API API user '{Email}' could not be created: {ErrorMessage}",
+                        ApiUserEmail,
                         createResult?.ErrorMessage ?? "unknown error");
                     return null;
                 }
 
-                user = await userStore.GetByEmailAsync(settings.Email);
+                user = await userStore.GetByEmailAsync(ApiUserEmail);
                 if (user is null)
                 {
                     logger.LogWarning(
-                        "Articulate dev automation API user '{Email}' was created but could not be reloaded.",
-                        settings.Email);
+                        "Articulate harness API API user '{Email}' was created but could not be reloaded.",
+                        ApiUserEmail);
                     return null;
                 }
             }
@@ -172,13 +177,13 @@ namespace ArticulateDockerSite.Services
             IUser user,
             IBackOfficeUserStore userStore,
             IReadOnlyList<IReadOnlyUserGroup> requiredGroups,
-            ArticulateDevAutomationOptions settings)
+            ArticulateHarnessApiOptions settings)
         {
             if (user.Kind != UserKind.Api)
             {
                 logger.LogWarning(
-                    "Articulate dev automation bootstrap found an existing non-API user '{Email}'. Create an API user or change the bootstrap email.",
-                    settings.Email);
+                    "Articulate harness API bootstrap found an existing non-API user '{Email}'. Create an API user or change the bootstrap email.",
+                    ApiUserEmail);
                 return false;
             }
 
@@ -195,8 +200,8 @@ namespace ArticulateDockerSite.Services
                 if (saveStatus != UserOperationStatus.Success)
                 {
                     logger.LogWarning(
-                        "Articulate dev automation bootstrap could not persist user '{Email}' group membership. Status: {Status}",
-                        settings.Email,
+                        "Articulate harness API bootstrap could not persist user '{Email}' group membership. Status: {Status}",
+                        ApiUserEmail,
                         saveStatus);
                     return false;
                 }
@@ -210,69 +215,44 @@ namespace ArticulateDockerSite.Services
             IUser? clientBoundUser,
             IBackOfficeUserClientCredentialsManager credentialsManager,
             IBackOfficeApplicationManager backOfficeAppManager,
-            ArticulateDevAutomationOptions settings,
+            ArticulateHarnessApiOptions settings,
             CancellationToken cancellationToken)
         {
             if (clientBoundUser is null)
             {
                 Attempt<BackOfficeUserClientCredentialsOperationStatus> credentialsResult =
-                    await credentialsManager.SaveAsync(user.Key, settings.ClientId, settings.ClientSecret!);
+                    await credentialsManager.SaveAsync(user.Key, ClientId, settings.ClientSecret!);
 
                 // DuplicateClientId means the credentials already exist from a previous boot — treat as success.
                 if (!credentialsResult.Success &&
                     credentialsResult.Result != BackOfficeUserClientCredentialsOperationStatus.DuplicateClientId)
                 {
                     logger.LogWarning(
-                        "Articulate dev automation client credentials for '{ClientId}' could not be created. Status: {Status}",
-                        settings.ClientId,
+                        "Articulate harness API client credentials for '{ClientId}' could not be created. Status: {Status}",
+                        ClientId,
                         credentialsResult.Result);
                     return false;
                 }
             }
 
             await backOfficeAppManager.EnsureBackOfficeClientCredentialsApplicationAsync(
-                settings.ClientId,
+                ClientId,
                 settings.ClientSecret!,
                 cancellationToken);
 
             return true;
         }
 
-        private bool ValidateOptions(ArticulateDevAutomationOptions settings)
+        private bool ValidateOptions(ArticulateHarnessApiOptions settings)
         {
             if (!settings.Enabled)
             {
                 return false;
             }
 
-            if (string.IsNullOrWhiteSpace(settings.ClientId))
-            {
-                logger.LogWarning("Skipping Articulate dev automation bootstrap: no client id was configured.");
-                return false;
-            }
-
             if (string.IsNullOrWhiteSpace(settings.ClientSecret))
             {
-                logger.LogWarning("Skipping Articulate dev automation bootstrap: no client secret was configured.");
-                return false;
-            }
-
-            if (string.IsNullOrWhiteSpace(settings.Email))
-            {
-                logger.LogWarning("Skipping Articulate dev automation bootstrap: no API user email was configured.");
-                return false;
-            }
-
-            if (string.IsNullOrWhiteSpace(settings.UserName))
-            {
-                logger.LogWarning("Skipping Articulate dev automation bootstrap: no API user username was configured.");
-                return false;
-            }
-
-            if (string.IsNullOrWhiteSpace(settings.Name))
-            {
-                logger.LogWarning(
-                    "Skipping Articulate dev automation bootstrap: no API user display name was configured.");
+                logger.LogWarning("Skipping Articulate harness API bootstrap: no client secret was configured.");
                 return false;
             }
 
@@ -281,14 +261,14 @@ namespace ArticulateDockerSite.Services
 
         private async Task<IdentityCreationResult?> CreateApiUserAsync(
                 ICoreBackOfficeUserManager coreUserManager,
-                ArticulateDevAutomationOptions settings,
+                ArticulateHarnessApiOptions settings,
                 IReadOnlyList<IReadOnlyUserGroup> requiredGroups)
         {
             var createModel = new UserCreateModel
             {
-                Email = settings.Email,
-                UserName = settings.UserName,
-                Name = settings.Name,
+                Email = ApiUserEmail,
+                UserName = ApiUserName,
+                Name = ApiUserDisplayName,
                 Kind = UserKind.Api,
                 UserGroupKeys = requiredGroups.Select(x => x.Key).ToHashSet()
             };

@@ -45,6 +45,7 @@ namespace Articulate.Controllers.Api
         ILogger<MarkdownEditorApiController> logger,
         IAbsoluteUrlBuilder absoluteUrlBuilder,
         IArticulateImportMediaService service,
+        IMediaService mediaService,
         ArticulateContentAuthorizationService authorizationService
 #if UMBRACO_18_OR_GREATER
         , IIdKeyMap idKeyMap
@@ -75,13 +76,14 @@ namespace Articulate.Controllers.Api
                 return validationError;
             }
 
-            if (GetArticulateNodes(model!, out IContent? articulateNode, out IContent? archive) is { } nodeError)
+            if (GetArticulateRoot(model!, out IContent? articulateNode) is { } nodeError)
             {
                 return nodeError;
             }
 
             IUser? currentUser = backOfficeAuthService.GetCurrentUser();
-            if (await CheckPermissionsAsync(articulateNode!, archive!, currentUser) is { } permissionError)
+            (ActionResult? permissionError, IContent? archive) = await CheckPermissionsAsync(articulateNode!, currentUser);
+            if (permissionError is not null)
             {
                 return permissionError;
             }
@@ -138,13 +140,11 @@ namespace Articulate.Controllers.Api
             }
         }
 
-        private ActionResult? GetArticulateNodes(
+        private ActionResult? GetArticulateRoot(
             MarkdownEditorModel model,
-            out IContent? articulateNode,
-            out IContent? archive)
+            out IContent? articulateNode)
         {
             articulateNode = contentService.GetById(model.ArticulateBlogNode);
-            archive = null;
 
             if (articulateNode is null)
             {
@@ -157,16 +157,6 @@ namespace Articulate.Controllers.Api
             {
                 return Problem(
                     $"The specified id is not an Articulate root: {model.ArticulateBlogNode}",
-                    statusCode: StatusCodes.Status404NotFound);
-            }
-
-            archive = authorizationService.FindArchive(
-                EnumerateRootChildren(model.ArticulateBlogNode));
-
-            if (archive is null)
-            {
-                return Problem(
-                    "No Articulate Archive node found for the specified id.",
                     statusCode: StatusCodes.Status404NotFound);
             }
 
@@ -196,14 +186,13 @@ namespace Articulate.Controllers.Api
             }
         }
 
-        private async Task<ActionResult?> CheckPermissionsAsync(
+        private async Task<(ActionResult? Error, IContent? Archive)> CheckPermissionsAsync(
             IContent root,
-            IContent archive,
             IUser? currentUser)
         {
             if (currentUser is null)
             {
-                return Unauthorized();
+                return (Unauthorized(), null);
             }
 
             try
@@ -212,16 +201,37 @@ namespace Articulate.Controllers.Api
                     currentUser,
                     [root],
                     [ActionBrowse.ActionLetter]);
-                await authorizationService.EnsureContentAccessAsync(
-                    currentUser,
-                    [archive],
-                    [ActionNew.ActionLetter, ActionPublish.ActionLetter]);
-                return null;
             }
             catch (UnauthorizedAccessException)
             {
-                return Forbid();
+                return (Forbid(), null);
             }
+
+            IContent[] archives = authorizationService.FindArchives(EnumerateRootChildren(root.Id)).ToArray();
+            if (archives.Length == 0)
+            {
+                return (Problem(
+                    "No Articulate Archive node found for the specified id.",
+                    statusCode: StatusCodes.Status404NotFound), null);
+            }
+
+            foreach (IContent archive in archives)
+            {
+                try
+                {
+                    await authorizationService.EnsureContentAccessAsync(
+                        currentUser,
+                        [archive],
+                        [ActionNew.ActionLetter, ActionPublish.ActionLetter]);
+                    return (null, archive);
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    // Scoped authors may only write to one archive.
+                }
+            }
+
+            return (Forbid(), null);
         }
 
         private async Task<ActionResult<CreatePostResponse>> CreateAndSaveContentAsync(
@@ -379,12 +389,18 @@ namespace Articulate.Controllers.Api
             string extension,
             IUser currentUser)
         {
-            await authorizationService.EnsureMediaWriteAccessAsync(currentUser);
+            IMedia mediaFolder = ArticulateMediaFolderResolver.Resolve(
+                currentUser,
+                mediaService,
+                service.GetOrCreateArticulateMediaFolder)
+                ?? throw new UnauthorizedAccessException("The requested media operation is not available");
+
+            await authorizationService.EnsureMediaWriteAccessAsync(currentUser, mediaFolder.Key);
             ImportMediaSaveResult saveResult = service.SaveToMediaLibrary(
                 stream,
                 altText,
                 extension,
-                service.GetOrCreateArticulateMediaFolder());
+                mediaFolder);
 
             if (!saveResult.Success || saveResult.Media is null)
             {

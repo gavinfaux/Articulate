@@ -2,6 +2,7 @@
 using Articulate.Routing;
 using Moq;
 using NUnit.Framework;
+using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.Routing;
 #if UMBRACO_18_OR_GREATER
@@ -75,6 +76,42 @@ namespace Articulate.Tests.Routing
         {
             IPublishedContent left = CreateRoot(id: 1, name: "Blog A", path: "-1,1");
             IPublishedContent right = CreateRoot(id: 2, name: "Blog B", path: "-1,2");
+
+            List<Domain> domains =
+            [
+                new(10, "a.local", 1, string.Empty, false, 0),
+                new(11, "b.local", 2, string.Empty, false, 0)
+            ];
+
+            Assert.DoesNotThrow(() =>
+                ArticulateRouteValidator.ValidateRootPathMappings(
+                    "/blog/",
+                    [left, right],
+                    domains,
+                    new Uri("https://example.local/")));
+        }
+
+        [Test]
+        public void ValidateRootPathMappings_rejects_same_draft_path_without_domains()
+        {
+            IContent left = CreateDraftRoot(id: 1, name: "Blog A", path: "-1,1");
+            IContent right = CreateDraftRoot(id: 2, name: "Blog B", path: "-1,2");
+
+            InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() =>
+                ArticulateRouteValidator.ValidateRootPathMappings(
+                    "/blog/",
+                    [left, right],
+                    [],
+                    new Uri("https://example.local/")))!;
+
+            Assert.That(ex.Message, Does.Contain("Ambiguous Articulate root routing"));
+        }
+
+        [Test]
+        public void ValidateRootPathMappings_allows_same_draft_path_with_distinct_domains()
+        {
+            IContent left = CreateDraftRoot(id: 1, name: "Blog A", path: "-1,1");
+            IContent right = CreateDraftRoot(id: 2, name: "Blog B", path: "-1,2");
 
             List<Domain> domains =
             [
@@ -231,6 +268,18 @@ namespace Articulate.Tests.Routing
                     "searchUrlName",
                     string.Empty,
                     new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)));
+        }
+
+        private static IContent CreateDraftRoot(
+            int id = 1,
+            string name = "Blog",
+            string path = "-1,1")
+        {
+            Mock<IContent> root = new();
+            root.SetupGet(x => x.Id).Returns(id);
+            root.SetupGet(x => x.Name).Returns(name);
+            root.SetupGet(x => x.Path).Returns(path);
+            return root.Object;
         }
 
         private static IPublishedContent CreateRoot(

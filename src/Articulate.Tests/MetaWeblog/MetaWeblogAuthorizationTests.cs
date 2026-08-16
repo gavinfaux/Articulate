@@ -185,6 +185,7 @@ namespace Articulate.Tests.MetaWeblog
                 Mock.Of<ILanguageService>(),
                 userManager.Object,
                 contentService.Object,
+                Mock.Of<IMediaService>(),
                 Mock.Of<IShortStringHelper>(),
                 Mock.Of<IDataTypeService>(),
                 null!,

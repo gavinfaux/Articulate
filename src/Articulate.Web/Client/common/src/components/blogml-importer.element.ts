@@ -8,6 +8,7 @@ import { UmbTextStyles } from '@umbraco-cms/backoffice/style';
 import { keyed } from 'lit-html/directives/keyed.js';
 import { articulateDocumentTypeKey, documentById, openNodePicker } from '../utils/document-node-utils.js';
 import { renderErrorMessage, renderHeaderActions, toUmbProblemDetails } from '../utils/template-utils.js';
+import { downloadBlob, getDownloadFileName } from '../utils/download.js';
 import { BoxStyles, ErrorBoxStyles, FormStyles, HostStyles, NodePickerStyles } from '../utils/style-utils.js';
 import type { ImportFileResponse, ImportModel, ImportResponse } from '@api/types.gen.js';
 import { BlogMlService } from '@api/sdk.gen.js';
@@ -212,37 +213,6 @@ export default class BlogMlImporterElement extends UmbLitElement {
       this._selectedBlogNodeName = variant.name;
     }
   }
-
-  /**
-   * Triggers a browser download for a given Blob.
-   * @param {Blob} blob The file blob to download.
-   * @param {string} fileName The name for the downloaded file.
-   */
-  #downloadFile = (blob: Blob, fileName: string) => {
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.style.display = 'none';
-    a.href = url;
-    a.download = fileName;
-    document.body.appendChild(a);
-    // Dispatch a non-bubbling click so the Umbraco backoffice router does not
-    // intercept the anchor and try to navigate to the blob: URL via pushState.
-    a.dispatchEvent(
-      new MouseEvent('click', {
-        bubbles: false,
-        cancelable: true,
-        composed: false,
-        view: window,
-      }),
-    );
-
-    // Delay cleanup so the browser has time to start the download before the
-    // object URL is revoked and the anchor is removed.
-    window.setTimeout(() => {
-      window.URL.revokeObjectURL(url);
-      a.remove();
-    }, 1000);
-  };
 
   /**
    * Type guard to check if a value is a Blob.
@@ -600,20 +570,8 @@ export default class BlogMlImporterElement extends UmbLitElement {
     if (!this.#isBlob(blob)) {
       throw new Error('Invalid file received for Disqus export.');
     }
-    const contentDisposition = result.response?.headers.get('content-disposition');
-    let fileName = 'disqus-comments.xml'; // Default filename
-    if (contentDisposition) {
-      const fileNameMatch = contentDisposition.match(/filename\*="UTF-8''([^"]+)"/);
-      if (fileNameMatch && fileNameMatch.length > 1 && fileNameMatch[1]) {
-        fileName = fileNameMatch[1];
-      } else {
-        const fileNameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
-        if (fileNameMatch && fileNameMatch.length > 1 && fileNameMatch[1]) {
-          fileName = fileNameMatch[1];
-        }
-      }
-    }
-    this.#downloadFile(blob, fileName);
+    const fileName = getDownloadFileName(result.response?.headers.get('content-disposition'), 'disqus-comments.xml');
+    downloadBlob(blob, fileName);
   };
 
   /**
@@ -729,120 +687,100 @@ export default class BlogMlImporterElement extends UmbLitElement {
                     </div>
                   </uui-form-layout-item>
                 </umb-form-validation-message>
-                ${
-                  this._postCount !== undefined
-                    ? html`
-                        <uui-box>
-                          <div>
-                            <strong>Import file summary</strong>
-                          </div>
-                          <div class="import-summary-intro">
-                            ${
-                              this._externalImageCount > 0
-                                ? html`
-                                    This file references ${this._externalImageCount} external
-                                    image${this._externalImageCount === 1 ? '' : 's'} across
-                                    ${this._externalHosts.length} host${this._externalHosts.length === 1 ? '' : 's'}.
-                                  `
-                                : html`This file does not reference any external image attachments.`
-                            }
-                          </div>
-                          ${
-                            this._externalHosts.length > 0
-                              ? html`
-                                  <div class="import-hosts">
-                                    ${
-                                      this._externalHosts.filter((host) => !this._blockedExternalHosts.includes(host))
-                                        .length > 0
-                                        ? html`
-                                            <div class="import-hosts-heading">Allowed hosts</div>
-                                            <div>
-                                              ${this._externalHosts
-                                                .filter((host) => !this._blockedExternalHosts.includes(host))
-                                                .map(
-                                                  (host) => html`
-                                                    <uui-tag look="secondary" color="positive" class="import-host-tag">
-                                                      ${host}
-                                                    </uui-tag>
-                                                  `,
-                                                )}
-                                            </div>
-                                          `
-                                        : ''
-                                    }
-                                    ${
-                                      this._blockedExternalHosts.length > 0
-                                        ? html`
-                                            <div class="import-blocked-hosts-heading">Blocked hosts</div>
-                                            <div>
-                                              ${this._blockedExternalHosts.map(
-                                                (host) => html`
-                                                  <uui-tag look="secondary" color="danger" class="import-host-tag">
-                                                    ${host}
-                                                  </uui-tag>
-                                                `,
-                                              )}
-                                            </div>
-                                          `
-                                        : ''
-                                    }
-                                  </div>
-                                `
-                              : ''
-                          }
-                          ${
-                            this._blockedExternalHosts.length > 0
-                              ? html`
-                                  <uui-box
-                                    headline="Some external image hosts are not allowed"
-                                    class="blocked-hosts-box">
-                                    ${
-                                      this._importFirstImage
-                                        ? html`
-                                            Posts can still be imported, but external images from these hosts will not
-                                            be fetched unless they are added to
-                                            <code>Articulate:AllowedMediaHosts</code>. Import also validates any
-                                            redirect targets, so all fetched hosts must be allowed.
-                                          `
-                                        : html`
-                                            Posts can still be imported. This only matters if you enable
-                                            <strong>Import First Image from Post Attachments</strong>. If you do, import
-                                            will validate both the declared hosts and any redirect targets.
-                                          `
-                                    }
-                                    <div class="blocked-hosts-config">
-                                      <div class="blocked-hosts-config-title">
-                                        Hosts to add to Articulate:AllowedMediaHosts
+                ${this._postCount !== undefined
+                  ? html`
+                      <uui-box>
+                        <div>
+                          <strong>Import file summary</strong>
+                        </div>
+                        <div class="import-summary-intro">
+                          ${this._externalImageCount > 0
+                            ? html`
+                                This file references ${this._externalImageCount} external
+                                image${this._externalImageCount === 1 ? '' : 's'} across ${this._externalHosts.length}
+                                host${this._externalHosts.length === 1 ? '' : 's'}.
+                              `
+                            : html`This file does not reference any external image attachments.`}
+                        </div>
+                        ${this._externalHosts.length > 0
+                          ? html`
+                              <div class="import-hosts">
+                                ${this._externalHosts.filter((host) => !this._blockedExternalHosts.includes(host))
+                                  .length > 0
+                                  ? html`
+                                      <div class="import-hosts-heading">Allowed hosts</div>
+                                      <div>
+                                        ${this._externalHosts
+                                          .filter((host) => !this._blockedExternalHosts.includes(host))
+                                          .map(
+                                            (host) => html`
+                                              <uui-tag look="secondary" color="positive" class="import-host-tag">
+                                                ${host}
+                                              </uui-tag>
+                                            `,
+                                          )}
                                       </div>
-                                      <code class="blocked-hosts-list">${this._blockedExternalHosts.join('\n')}</code>
-                                    </div>
-                                  </uui-box>
-                                `
-                              : ''
-                          }
-                        </uui-box>
-                      `
-                    : ''
-                }
+                                    `
+                                  : ''}
+                                ${this._blockedExternalHosts.length > 0
+                                  ? html`
+                                      <div class="import-blocked-hosts-heading">Blocked hosts</div>
+                                      <div>
+                                        ${this._blockedExternalHosts.map(
+                                          (host) => html`
+                                            <uui-tag look="secondary" color="danger" class="import-host-tag">
+                                              ${host}
+                                            </uui-tag>
+                                          `,
+                                        )}
+                                      </div>
+                                    `
+                                  : ''}
+                              </div>
+                            `
+                          : ''}
+                        ${this._blockedExternalHosts.length > 0
+                          ? html`
+                              <uui-box headline="Some external image hosts are not allowed" class="blocked-hosts-box">
+                                ${this._importFirstImage
+                                  ? html`
+                                      Posts can still be imported, but external images from these hosts will not be
+                                      fetched unless they are added to
+                                      <code>Articulate:AllowedMediaHosts</code>. Import also validates any redirect
+                                      targets, so all fetched hosts must be allowed.
+                                    `
+                                  : html`
+                                      Posts can still be imported. This only matters if you enable
+                                      <strong>Import First Image from Post Attachments</strong>. If you do, import will
+                                      validate both the declared hosts and any redirect targets.
+                                    `}
+                                <div class="blocked-hosts-config">
+                                  <div class="blocked-hosts-config-title">
+                                    Hosts to add to Articulate:AllowedMediaHosts
+                                  </div>
+                                  <code class="blocked-hosts-list">${this._blockedExternalHosts.join('\n')}</code>
+                                </div>
+                              </uui-box>
+                            `
+                          : ''}
+                      </uui-box>
+                    `
+                  : ''}
                 <div class="form-actions">
-                  ${
-                    this._isPreflighting
-                      ? html`
-                          <uui-tag look="secondary" color="warning" class="import-status-tag">
-                            Analyzing BlogML file...
-                          </uui-tag>
-                        `
-                      : ''
-                  }
-                  ${
-                    this._postCount !== undefined && this._postCount > 0
-                      ? html`
-                          <uui-tag look="secondary" color="positive" class="import-status-tag">
-                            ${this._postCount} posts in uploaded file.
-                          </uui-tag>
-                        `
-                      : ''
-                  }
+                  ${this._isPreflighting
+                    ? html`
+                        <uui-tag look="secondary" color="warning" class="import-status-tag">
+                          Analyzing BlogML file...
+                        </uui-tag>
+                      `
+                    : ''}
+                  ${this._postCount !== undefined && this._postCount > 0
+                    ? html`
+                        <uui-tag look="secondary" color="positive" class="import-status-tag">
+                          ${this._postCount} posts in uploaded file.
+                        </uui-tag>
+                      `
+                    : ''}
                   <uui-button
                     type="button"
                     look="outline"

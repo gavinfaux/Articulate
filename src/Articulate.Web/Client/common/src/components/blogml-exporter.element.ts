@@ -7,6 +7,7 @@ import { tryExecute, type UmbProblemDetails } from '@umbraco-cms/backoffice/reso
 import { UmbTextStyles } from '@umbraco-cms/backoffice/style';
 import { articulateDocumentTypeKey, documentById, openNodePicker } from '../utils/document-node-utils.js';
 import { renderErrorMessage, renderHeaderActions, toUmbProblemDetails } from '../utils/template-utils.js';
+import { downloadBlob, getDownloadFileName } from '../utils/download.js';
 import { BoxStyles, ErrorBoxStyles, FormStyles, HostStyles, NodePickerStyles } from '../utils/style-utils.js';
 import { BlogMlService } from '@api/sdk.gen.js';
 import type { ExportModel } from '@api/types.gen.js';
@@ -135,37 +136,6 @@ export default class BlogMlExporterElement extends UmbLitElement {
   }
 
   /**
-   * Triggers a browser download for a given Blob.
-   * @param {Blob} blob The file blob to download.
-   * @param {string} fileName The name for the downloaded file.
-   */
-  #downloadFile = (blob: Blob, fileName: string) => {
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.style.display = 'none';
-    a.href = url;
-    a.download = fileName;
-    document.body.appendChild(a);
-    // Dispatch a non-bubbling click so the Umbraco backoffice router does not
-    // intercept the anchor and try to navigate to the blob: URL via pushState.
-    a.dispatchEvent(
-      new MouseEvent('click', {
-        bubbles: false,
-        cancelable: true,
-        composed: false,
-        view: window,
-      }),
-    );
-
-    // Delay cleanup so the browser has time to start the download before the
-    // object URL is revoked and the anchor is removed.
-    window.setTimeout(() => {
-      window.URL.revokeObjectURL(url);
-      a.remove();
-    }, 1000);
-  };
-
-  /**
    * Type guard to check if a value is a Blob.
    * @param {unknown} value The value to check.
    * @returns {boolean} True if the value is a Blob.
@@ -236,20 +206,8 @@ export default class BlogMlExporterElement extends UmbLitElement {
     if (!this.#isBlob(blob)) {
       throw new Error('The server did not return a file. Please check the server logs.');
     }
-    const contentDisposition = result.response?.headers.get('content-disposition');
-    let fileName = 'blog-export.xml'; // Default filename
-    if (contentDisposition) {
-      const fileNameMatch = contentDisposition.match(/filename\*="UTF-8''([^"]+)"/);
-      if (fileNameMatch && fileNameMatch.length > 1 && fileNameMatch[1]) {
-        fileName = fileNameMatch[1];
-      } else {
-        const fileNameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
-        if (fileNameMatch && fileNameMatch.length > 1 && fileNameMatch[1]) {
-          fileName = fileNameMatch[1];
-        }
-      }
-    }
-    this.#downloadFile(blob, fileName);
+    const fileName = getDownloadFileName(result.response?.headers.get('content-disposition'), 'blog-export.xml');
+    downloadBlob(blob, fileName);
   };
 
   /**

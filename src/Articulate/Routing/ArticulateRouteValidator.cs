@@ -119,6 +119,7 @@ namespace Articulate.Routing
             }
         }
 
+        // Keep published and draft overloads separate: their Umbraco models and URL semantics differ.
         internal static void ValidateRootPathMappings(
             string rootNodePath,
             IReadOnlyList<IPublishedContent> articulateRoots,

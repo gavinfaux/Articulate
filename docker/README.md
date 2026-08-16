@@ -13,7 +13,7 @@ dotnet run docker/run.cs -- help docker-dev
 `docker/help.md` is the canonical command and option reference. The rest of this
 page documents runtime behavior, credentials, and direct Compose use.
 
-Full smoke tests use `ARTICULATE_DEV_AUTOMATION_CLIENT_SECRET` (defaults are applied if unset via `Env.RequireSecret()`).
+Full smoke tests use `ARTICULATE_HARNESS_API_CLIENT_SECRET` (defaults are applied if unset via `Env.RequireSecret()`).
 
 | Lane  | Image                  | HTTPS backoffice URL               | HTTP listener             |
 |-------|------------------------|------------------------------------|---------------------------|
@@ -22,11 +22,11 @@ Full smoke tests use `ARTICULATE_DEV_AUTOMATION_CLIENT_SECRET` (defaults are app
 
 HTTPS ports (44317 / 44318) match the Umbraco major. HTTP ports (44380 / 44381)
 avoid the Windows port range reserved for the updater orchestrator (17000-18099).
-Override either with `CADDY_HTTPS_PORT` / `CADDY_HTTP_PORT`. Bare
-`docker compose up` without the runner still requires the package-version
-variables in `docker/docker-compose.yml`; it only falls back to compose's own
-ports (18443 HTTPS / 8080 HTTP). Prefer the per-lane runner, which supplies the
-package values and port isolation.
+Override either with `CADDY_HTTPS_PORT` / `CADDY_HTTP_PORT`. The runner is the
+canonical entrypoint: it derives the lane's package, image, port, URL, and
+cookie settings before invoking Compose. Direct `docker compose` use requires
+supplying those derived values yourself; missing values fail loudly instead of
+silently selecting the wrong lane.
 
 The unattended install creates this default local Docker backoffice
 administrator:
@@ -56,22 +56,21 @@ confirmation prompt when the Caddy root is added to the current-user trust store
 
 ## Smoke commands
 
-Against an already healthy stack, `smoke.mjs` supports `publish`, `confirm`,
-`smoke`, and `theme`:
+Against an already healthy stack, run `smoke.mjs` with a mode shown in the
+script's usage header:
 
 ```shell
 $env:UMBRACO_PUBLIC_URL = 'https://localhost:44317/'
-node docker/smoke.mjs publish
-node docker/smoke.mjs confirm
+node docker/smoke.mjs <mode>
 node docker/smoke.mjs publish --no-descendants
 ```
 
 `confirm` is read-only and checks every child and descendant under the
 Articulate root. Publication processes the root first, waits for the public
 route and published-content cache, then publishes descendants.
-Use `https://localhost:44318/` for the v18 lane.
-Set `NODE_BIN` if `node` is not on `PATH`. On Windows, invoke the script from
-PowerShell or cmd rather than passing `node.exe` through WSL or Git Bash.
+Use `https://localhost:44318/` for the v18 lane. On Windows, invoke the
+script from PowerShell or cmd rather than passing `node.exe` through WSL or Git
+Bash.
 
 The smoke client bypasses certificate validation for loopback and RFC1918
 private IPv4 hosts used by the development harness. Public hosts retain normal
@@ -84,7 +83,7 @@ from another machine, set the LAN origin consistently and reset the database so
 OpenIddict registers redirect URIs for that origin:
 
 ```shell
-$env:ARTICULATE_DEV_AUTOMATION_CLIENT_SECRET='articulate-dev-local-secret'
+$env:ARTICULATE_HARNESS_API_CLIENT_SECRET='articulate-dev-local-secret'
 $env:CADDY_BIND_IP='0.0.0.0'
 $env:CADDY_HTTPS_HOST='<LAN-IP>:44317'
 $env:UMBRACO_PUBLIC_HOST='https://<LAN-IP>:44317'
@@ -117,25 +116,28 @@ $env:USE_TINYMCE_UMBRACO = 'true'
 dotnet run docker/run.cs -- docker-dev --lane v17
 ```
 
-The runner passes the lane's `TinyMceUmbracoPackageVersion` floor from
-`Directory.Packages.props` into the Docker build. The same environment variable
-works with `docker-build` and `docker-test`.
+The Docker build derives the compatible TinyMCE package range from the lane's
+`UMBRACO_CMS_VERSION`; no separate TinyMCE version setting is required.
 
 ## Runtime modes
 
 The compose stack switches between two modes through `UMBRACO_RUNTIME_MODE`:
 
 - `BackofficeDevelopment` (default) — auto-provisions the dev automation API
-  user + client credentials after install and migrations, then publishes and
-  confirms content via `smoke.mjs`.
+  user + client credentials after install and migrations. Normal development
+  leaves the package's starter content alone, then publishes and confirms it.
 - `Production` — disables that bootstrap so the only content served is what
   was already published in the data volume. Use `docker-prod` to flip the
   existing stack into this mode and re-verify.
 
-Typical flow: start with empty volumes in `BackofficeDevelopment`, publish
-and confirm content, then re-run `docker-prod` against the same volumes to
-confirm that published content survives a `Production`-mode restart. See the
-release notes for the loopback-binding change.
+Use `docker-dev --fixture` when you want the full deterministic fixture. It
+imports `docker/fixtures/blogml-fixture.xml`, restarts the app, creates the scoped
+author fixture, and runs the Markdown Editor, Open Live Writer, and BlogML
+export smokes. Plain `docker-dev` does none of that XML or fixture setup.
+`docker-test` runs the normal publish/confirm and production checks. Add
+`--fixtures` for the full BlogML, scoped-author, authoring, and export flow.
+With `--skip-smoke`, the package can be installed while no content is
+published; a public-root 404 is expected.
 
 ## Cookie isolation between lanes
 
@@ -156,21 +158,22 @@ normally clash and log you out of one lane when signing into the other.
 
 You stay logged into both lanes simultaneously without browser juggling.
 
-## Dev automation user overrides
+## Harness API and integration fixture
 
 The auto-provisioned API user takes its defaults from `docker/docker-compose.yml` and
-the `ArticulateDevAutomationBootstrapper` service. Override per-run with
+the `ArticulateHarnessApiBootstrapper` service. Override per-run with
 environment variables:
 
 | Variable                                      | Default                               | Purpose                                                                  |
 |-----------------------------------------------|---------------------------------------|--------------------------------------------------------------------------|
-| `ARTICULATE_DEV_AUTOMATION_ENABLED`           | `true`                                | Toggle the bootstrap service entirely.                                   |
-| `ARTICULATE_DEV_AUTOMATION_CLIENT_ID`         | `articulate-dev-automation`           | OAuth client ID used by `smoke.mjs` and MCP clients.                     |
-| `ARTICULATE_DEV_AUTOMATION_CLIENT_SECRET`     | `articulate-dev-local-secret`         | OAuth client secret. Consumed by `smoke.mjs`; defaults are applied if unset via `Env.RequireSecret()`. |
-| `ARTICULATE_DEV_AUTOMATION_USER_NAME`         | `articulate-dev-automation`           | Backoffice user name to provision.                                       |
-| `ARTICULATE_DEV_AUTOMATION_USER_EMAIL`        | `articulate-dev-automation@localhost` | Backoffice user email.                                                   |
-| `ARTICULATE_DEV_AUTOMATION_USER_DISPLAY_NAME` | `Articulate Dev Automation`           | Backoffice display name.                                                 |
-| `ARTICULATE_DEV_AUTOMATION_USER_GROUP_ALIAS`  | `admin`                               | User-group alias granting management access.                             |
+| `ARTICULATE_HARNESS_API_ENABLED`              | `true`                                | Toggle API bootstrap.                                                     |
+| `ARTICULATE_HARNESS_API_CLIENT_SECRET`        | `articulate-dev-local-secret`         | OAuth client secret.                                                      |
+
+The integration fixture is opt-in for `docker-dev --fixture` and automatic for
+`docker-test --fixtures` runs. The BlogML content fixture is imported first;
+the scoped author fixture is created after restart. It is scoped to the
+imported author archive and media folder, and never changes the API user's
+scope.
 
 The unattended backoffice administrator (the human sign-in) is configured
 separately via `UMBRACO_USER_NAME` / `UMBRACO_USER_EMAIL` /
@@ -183,9 +186,9 @@ the sample theme. Docker installs those `.nupkg` files; it does not consume
 project output directly. Docker commands invoke the package runner; same-lane
 builds are incremental and `--clean` is required when switching lanes.
 
-The Docker runner resolves `UmbracoCmsPackageVersion` and
-`TinyMceUmbracoPackageVersion` from `Directory.Packages.props` via
-`dotnet msbuild -getProperty`, so the site uses the same dependency floors.
+The Docker runner resolves `UmbracoCmsPackageVersion` from
+`Directory.Packages.props` via `dotnet msbuild -getProperty`, and the Dockerfile
+derives the TinyMCE range from that value.
 
 Umbraco startup migrations are forward-only: `UpgradeUnattended=true` applies
 pending migrations, while a database newer than the running code fails startup
@@ -222,8 +225,8 @@ the backoffice become callable through natural conversation.
 The docker harness auto-provisions exactly the API user this server expects.
 Configure your MCP client with:
 
-- `UMBRACO_CLIENT_ID` = `ARTICULATE_DEV_AUTOMATION_CLIENT_ID` (= `articulate-dev-automation`)
-- `UMBRACO_CLIENT_SECRET` = `ARTICULATE_DEV_AUTOMATION_CLIENT_SECRET`
+- `UMBRACO_CLIENT_ID` = `articulate-dev-automation`
+- `UMBRACO_CLIENT_SECRET` = `ARTICULATE_HARNESS_API_CLIENT_SECRET`
 - `UMBRACO_BASE_URL` = the lane's public URL (e.g. `https://localhost:44317`)
 
 Install with the lane-matched tag (`@umbraco-cms/mcp-dev@17` for the v17 lane,

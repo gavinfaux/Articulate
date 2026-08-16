@@ -16,7 +16,7 @@ Supporting all the features you'd want in a blogging platform:
 - Categories & Tags
 - Themes
 - Multiple archives
-- Live Writer support
+- Optional Live Writer support
 - Markdown support
 - Post from your mobile phone including photos direct from your camera
 - Disqus and Giscus comment support (or build your own)
@@ -26,23 +26,32 @@ Supporting all the features you'd want in a blogging platform:
 - Customizable URLs
 - Author profiles
 
-## Compatibility
+## Minimum requirements
 
-Use the [Installation guide](https://github.com/Shazwazza/Articulate/wiki/Installation)
-to select the Articulate package version and install command for your Umbraco version.
+- Umbraco 18.1.0+ - Articulate version 8.x
+- Umbraco 17.6.0+ - Articulate version 7.x
+- Umbraco 13 LTS (maintenance) - Articulate 5.x.
+
+## Installation
+
+Install the package version that matches your Umbraco installation. See the
+[Installation guide](https://github.com/Shazwazza/Articulate/wiki/Installation)
+for the compatibility matrix and version-specific commands.
 
 ## Upgrading
 
-Back up your site, database, and media before upgrading. See the [Installation](https://github.com/Shazwazza/Articulate/wiki/Installation) and [Upgrading Articulate](https://github.com/Shazwazza/Articulate/wiki/Upgrading) guides for version matching, rich-text editor migration, and BlogML guidance.
+Back up your site, database, and media before upgrading.
+
+On Umbraco 17 or 18, install [TinyMCE.Umbraco](https://github.com/ProWorksCorporation/TinyMCE-Umbraco) before first run to keep TinyMCE as your rich-text editor. Articulate migrates `Umbraco.RichText` to TipTap on first boot; the TinyMCE package must be present before that step.
+
+See [Installation](https://github.com/Shazwazza/Articulate/wiki/Installation) and [Upgrading Articulate](https://github.com/Shazwazza/Articulate/wiki/Upgrading) for version selection, editor migration, BlogML guidance, and post-upgrade checks.
 
 ## Learn more
 
-- [Configuration](https://github.com/Shazwazza/Articulate/wiki/Configuration)
-- [Themes](https://github.com/Shazwazza/Articulate/wiki/Themes)
-- [Importing](https://github.com/Shazwazza/Articulate/wiki/Importing)
+- [Documentation](https://github.com/Shazwazza/Articulate/wiki/)
 - [Releases](https://github.com/Shazwazza/Articulate/releases)
-- [Report an issue](https://github.com/Shazwazza/Articulate/issues)
 - [Community discussions](https://forum.umbraco.com/tag/packages)
+- [Report an issue](https://github.com/Shazwazza/Articulate/issues)
 
 ## Copyright and license
 

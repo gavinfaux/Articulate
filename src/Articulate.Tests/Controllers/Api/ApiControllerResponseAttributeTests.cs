@@ -1,5 +1,4 @@
 #nullable enable
-using System.Linq;
 using System.Reflection;
 using Articulate.Controllers.Api;
 using Microsoft.AspNetCore.Http;
