@@ -1,6 +1,7 @@
 #nullable enable
 using Microsoft.AspNetCore.OpenApi;
 using Microsoft.Extensions.Options;
+using Microsoft.OpenApi;
 
 namespace Articulate.Swagger.V18
 {
@@ -30,6 +31,16 @@ namespace Articulate.Swagger.V18
                 document.Info.Version = "Latest";
                 document.Info.Title = "Articulate Management API";
                 document.Info.Description = "API for the back office dashboard section Articulate, a wonderful Blog engine built on Umbraco.";
+                document.Info.Contact = new OpenApiContact
+                {
+                    Name = "https://github.com/Shazwazza/Articulate",
+                    Url = new Uri("https://github.com/Shazwazza/Articulate")
+                };
+                document.Info.License = new OpenApiLicense
+                {
+                    Name = $"MIT License, © {DateTime.Now.Year} Shannon Deminick",
+                    Url = new Uri("https://opensource.org/license/MIT")
+                };
                 return Task.CompletedTask;
             });
         }
