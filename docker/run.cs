@@ -336,7 +336,7 @@ static class Env
         var output = process.StandardOutput.ReadToEnd().Trim();
         process.WaitForExit();
         if (process.ExitCode != 0 || string.IsNullOrWhiteSpace(output))
-            throw new InvalidOperationException($"Could not resolve MSBuild property '{name}' for lane '{lane}'.");
+            throw new InvalidOperationException($"Could not resolve MSBuild property '{name}'.");
         return output;
     }
 
