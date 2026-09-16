@@ -11,10 +11,6 @@ on:
     tags:
       - "v*"
   pull_request:
-    branches:
-      - develop
-      - main
-      - "release/**"
   workflow_dispatch:
 
 permissions:
