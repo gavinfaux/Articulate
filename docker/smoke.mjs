@@ -9,7 +9,7 @@
 //   theme     Read current theme, change to a different theme, publish, verify theme CSS in HTML
 //
 // Env:
-//   UMBRACO_PUBLIC_URL          default: https://localhost:18443
+//   UMBRACO_PUBLIC_URL          default: https://localhost:18444
 //   ARTICULATE_TEST_SITE_CLIENT_SECRET  default: articulate-test-site-secret (matches docker-compose)
 //   TIMEOUT_SECONDS             default: 300
 //
@@ -284,7 +284,7 @@ async function main() {
   }
 
   const noDescendants = process.argv.includes('--no-descendants');
-  const base = env('UMBRACO_PUBLIC_URL', 'https://localhost:18443').replace(/\/+$/, '');
+  const base = env('UMBRACO_PUBLIC_URL', 'https://localhost:18444').replace(/\/+$/, '');
   const timeoutSec = parseInt(env('TIMEOUT_SECONDS', '300'), 10);
   if (!Number.isInteger(timeoutSec) || timeoutSec <= 0) {
     die('TIMEOUT_SECONDS must be a positive integer.');

@@ -1,6 +1,6 @@
 # Docker development
 
-The Docker runner provides a local Umbraco 18 site. It uses HTTPS on port `18443` and HTTP on port `8080`.
+The Docker runner provides a local Umbraco 18 site. It uses HTTPS on port `18444` and HTTP on port `8081`.
 
 ```text
 dotnet run --file docker/run.cs -- docker-build

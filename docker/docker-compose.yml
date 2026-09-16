@@ -26,10 +26,10 @@ services:
       Umbraco__CMS__Runtime__Mode: ${UMBRACO_RUNTIME_MODE:-BackofficeDevelopment}
       # HTTPS configuration (Caddy terminates TLS)
       Umbraco__CMS__Global__UseHttps: "true"
-      Umbraco__CMS__Security__BackOfficeHost: ${UMBRACO_PUBLIC_HOST:-https://localhost:18443}
+      Umbraco__CMS__Security__BackOfficeHost: ${UMBRACO_PUBLIC_HOST:-https://localhost:18444}
       Umbraco__CMS__Security__AuthCookieName: ${Umbraco__CMS__Security__AuthCookieName:-UMB_UCONTEXT}
       Umbraco__CMS__Security__BackOfficeTokenCookie__SiteName: ${Umbraco__CMS__Security__BackOfficeTokenCookie__SiteName:-}
-      Umbraco__CMS__WebRouting__UmbracoApplicationUrl: ${UMBRACO_PUBLIC_URL:-https://localhost:18443/}
+      Umbraco__CMS__WebRouting__UmbracoApplicationUrl: ${UMBRACO_PUBLIC_URL:-https://localhost:18444/}
       # Unattended install
       Umbraco__CMS__Unattended__InstallUnattended: "true"
       Umbraco__CMS__Unattended__UpgradeUnattended: "true"
@@ -43,8 +43,8 @@ services:
       Articulate__ManagementApi__OpenIddict__Client__Enabled: "true"
       Articulate__ManagementApi__OpenIddict__Client__ClientId: ${ARTICULATE_OPENID_CLIENT_ID:-umbraco-articulate}
       Articulate__ManagementApi__OpenIddict__Client__DisplayName: ${ARTICULATE_OPENID_DISPLAY_NAME:-Articulate Markdown Editor}
-      Articulate__ManagementApi__OpenIddict__Client__RedirectUris__0: ${ARTICULATE_REDIRECT_URI:-https://localhost:18443/a-new/}
-      Articulate__ManagementApi__OpenIddict__Client__PostLogoutRedirectUris__0: ${ARTICULATE_LOGOUT_REDIRECT_URI:-https://localhost:18443/}
+      Articulate__ManagementApi__OpenIddict__Client__RedirectUris__0: ${ARTICULATE_REDIRECT_URI:-https://localhost:18444/a-new/}
+      Articulate__ManagementApi__OpenIddict__Client__PostLogoutRedirectUris__0: ${ARTICULATE_LOGOUT_REDIRECT_URI:-https://localhost:18444/}
       # Allow manual BlogML imports to fetch images from the host or local site.
       Articulate__AllowedMediaHosts__0: host.docker.internal
       Articulate__AllowedMediaHosts__1: localhost
@@ -71,11 +71,11 @@ services:
     # unattended Umbraco install with a known password. `0.0.0.0` would expose
     # them on the LAN. Keep host/LAN reachable? Override CADDY_BIND_IP below.
     ports:
-      - "${CADDY_BIND_IP:-127.0.0.1}:${CADDY_HTTP_PORT:-8080}:8080"
-      - "${CADDY_BIND_IP:-127.0.0.1}:${CADDY_HTTPS_PORT:-18443}:18443"
+      - "${CADDY_BIND_IP:-127.0.0.1}:${CADDY_HTTP_PORT:-8081}:8080"
+      - "${CADDY_BIND_IP:-127.0.0.1}:${CADDY_HTTPS_PORT:-18444}:18443"
     environment:
       ARTICULATE_HOST: articulate
-      HTTPS_HOST: ${CADDY_HTTPS_HOST:-localhost:18443}
+      HTTPS_HOST: ${CADDY_HTTPS_HOST:-localhost:18444}
       CADDY_TLS_HOST: ${CADDY_TLS_HOST:-localhost}
     command: caddy run --config /etc/caddy/Caddyfile --adapter caddyfile
     volumes:

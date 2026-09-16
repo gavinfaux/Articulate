@@ -174,8 +174,8 @@ async Task<int> DockerCa(Opts o)
 string ConfigureLane()
 {
     const string lane = "v18";
-    var https = Env.HostValue("CADDY_HTTPS_PORT", "18443");
-    var http = Env.HostValue("CADDY_HTTP_PORT", "8080");
+    var https = Env.HostValue("CADDY_HTTPS_PORT", "18444");
+    var http = Env.HostValue("CADDY_HTTP_PORT", "8081");
     var configuration = Env.Get("BUILD_CONFIGURATION")?.Trim();
     if (string.IsNullOrWhiteSpace(configuration)) configuration = "Release";
     foreach (var (key, value) in new Dictionary<string, string>
@@ -213,7 +213,7 @@ Task EnsurePackages(string lane, bool clean = false)
 
 async Task WaitForPublicSite()
 {
-    var url = Env.Get("UMBRACO_PUBLIC_URL") ?? "https://localhost:18443/";
+    var url = Env.Get("UMBRACO_PUBLIC_URL") ?? "https://localhost:18444/";
     using var handler = new HttpClientHandler { ServerCertificateCustomValidationCallback = (_, _, _, _) => true };
     using var client = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(10) };
     var deadline = DateTime.UtcNow.AddMinutes(5);
