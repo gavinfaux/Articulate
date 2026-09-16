@@ -25,7 +25,7 @@ try
     var opts = Opts.Parse(args[1..]);
     return command switch
     {
-        "patch" => await PatchAsync(opts.Validate(command, "profile", "base", "source", "commits", "branch", "worktree", "manifest", "skip-build")),
+        "patch" => await PatchAsync(opts.Validate(command, "profile", "base", "source", "commits", "branch", "worktree", "manifest", "skip-build", "docker")),
         _ => throw new ArgumentException($"Unknown command '{command}'. Run 'dotnet run --file build/promote.cs -- help'.")
     };
 }
@@ -99,8 +99,11 @@ async Task<int> PatchAsync(Opts o)
 
         if (!o.Flag("skip-build"))
         {
+            await RunDockerUtilityCompileCheck(worktree);
             await RunTargetBuild(worktree);
             await RunPackageSmoke(worktree);
+            if (o.Flag("docker"))
+                await RunDockerTest(worktree);
         }
 
         var candidateSha = await GitCaptureAt(worktree, "rev-parse", "HEAD");
@@ -117,7 +120,8 @@ async Task<int> PatchAsync(Opts o)
             CandidateSha: candidateSha,
             TreeSha: treeSha,
             Worktree: worktree,
-            BuildSkipped: o.Flag("skip-build"));
+            BuildSkipped: o.Flag("skip-build"),
+            DockerTested: o.Flag("docker"));
 
         var manifestPath = o.String("manifest");
         if (manifestPath is not null)
@@ -170,6 +174,23 @@ async Task RunPackageSmoke(string worktree)
         throw new InvalidOperationException($"No package directory found under '{releaseRoot}'.");
 
     await RunAt(worktree, "node", new[] { "build/smoke-package.mjs" }.Concat(packageDirs.Select(Path.GetFullPath)).ToArray());
+}
+
+async Task RunDockerUtilityCompileCheck(string worktree)
+{
+    if (!File.Exists(Path.Combine(worktree, "docker", "run.cs")))
+        return; // target carries no docker stack
+    Console.WriteLine("Compile-checking docker/run.cs");
+    await RunAt(worktree, "dotnet", "run", "--file", "docker/run.cs");
+}
+
+async Task RunDockerTest(string worktree)
+{
+    var runScript = Path.Combine(worktree, "docker", "run.cs");
+    if (!File.Exists(runScript))
+        throw new InvalidOperationException($"--docker requested but the target worktree has no docker stack: {runScript}");
+    Console.WriteLine("Running docker runtime validation (docker-test)");
+    await RunAt(worktree, "dotnet", "run", "--file", "docker/run.cs", "--", "docker-test");
 }
 
 async Task<List<string>> FindForbiddenReferences(string worktree, string profile)
@@ -276,7 +297,8 @@ sealed record PromotionManifest(
     string CandidateSha,
     string TreeSha,
     string Worktree,
-    bool BuildSkipped);
+    bool BuildSkipped,
+    bool DockerTested);
 
 static class Env
 {
@@ -324,7 +346,7 @@ sealed class Opts
         if (unknown.Length > 0) throw new ArgumentException($"Unknown option(s) for {command}: {string.Join(", ", unknown.Select(x => $"--{x}"))}.");
         foreach (var key in new[] { "profile", "base", "source", "commits" })
             if (values.ContainsKey(key) && string.IsNullOrWhiteSpace(values[key])) throw new ArgumentException($"--{key} requires a value.");
-        foreach (var key in new[] { "skip-build" })
+        foreach (var key in new[] { "skip-build", "docker" })
             if (values.ContainsKey(key) && values[key] is not null) throw new ArgumentException($"--{key} is a flag and does not accept a value.");
         return this;
     }
