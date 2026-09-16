@@ -5,7 +5,7 @@ dotnet run --file build/build.cs -- <command> [options]
 dotnet run --file build/build.cs -- help [command]
 ```
 
-Use `build/build.cs` for repository build, client, and test-site tasks.
+Use `build/build.cs` for repository build, client, and test-site tasks. The separate [`build/promote.cs`](promote-help.md) utility prepares reviewed patch candidates for the lean LTS/STS branches.
 
 | Command  | Purpose                                                    |
 |----------|------------------------------------------------------------|

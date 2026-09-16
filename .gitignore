@@ -539,3 +539,4 @@ build/ClientAssets/
 
 # Local-only developer tooling overrides
 /Directory.Build.props.user
+/docs
