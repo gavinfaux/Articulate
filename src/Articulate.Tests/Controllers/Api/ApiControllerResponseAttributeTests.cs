@@ -4,7 +4,6 @@ using Articulate.Controllers.Api;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using NUnit.Framework;
-#if !UMBRACO_18_OR_GREATER
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Articulate.Swagger.V17;
 using Microsoft.AspNetCore.Hosting;
@@ -15,7 +14,6 @@ using Microsoft.OpenApi;
 using Moq;
 using Swashbuckle.AspNetCore.Swagger;
 using Swashbuckle.AspNetCore.SwaggerGen;
-#endif
 
 namespace Articulate.Tests.Controllers.Api
 {
@@ -44,7 +42,6 @@ namespace Articulate.Tests.Controllers.Api
             Assert.That(hasServerErrorResponse, Is.True);
         }
 
-#if !UMBRACO_18_OR_GREATER
         [Test]
         public void BlogMl_swagger_document_generates_without_duplicate_security_responses()
         {
@@ -95,6 +92,5 @@ namespace Articulate.Tests.Controllers.Api
                 }
             }
         }
-#endif
     }
 }

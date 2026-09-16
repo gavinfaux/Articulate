@@ -7,14 +7,13 @@
   },
   "packageManager": "pnpm@11.19.0",
   "scripts": {
-    "dev": "pnpm --filter articulate-backoffice-v17 run dev & pnpm --filter articulate-backoffice-v18 run dev",
-    "build": "pnpm --filter articulate-backoffice-v17 run build && pnpm --filter articulate-backoffice-v18 run build",
-    "build:dev": "pnpm --filter articulate-backoffice-v17 run build:dev && pnpm --filter articulate-backoffice-v18 run build:dev",
-    "check": "pnpm --filter articulate-backoffice-v17 run check && pnpm --filter articulate-backoffice-v18 run check",
-    "lint": "pnpm --filter articulate-backoffice-v17 run lint && pnpm --filter articulate-backoffice-v18 run lint",
-    "lint:fix": "pnpm --filter articulate-backoffice-v17 run lint:fix && pnpm --filter articulate-backoffice-v18 run lint:fix",
-    "generate:api:v17": "pnpm --filter articulate-backoffice-v17 run generate:api",
-    "generate:api:v18": "pnpm --filter articulate-backoffice-v18 run generate:api"
+    "dev": "pnpm --filter articulate-backoffice-v17 run dev",
+    "build": "pnpm --filter articulate-backoffice-v17 run build build",
+    "build:dev": "pnpm --filter articulate-backoffice-v17 run build:dev build:dev",
+    "check": "pnpm --filter articulate-backoffice-v17 run check check",
+    "lint": "pnpm --filter articulate-backoffice-v17 run lint lint",
+    "lint:fix": "pnpm --filter articulate-backoffice-v17 run lint:fix lint:fix",
+    "generate:api:v17": "pnpm --filter articulate-backoffice-v17 run generate:api"
   },
   "devDependencies": {
     "@hey-api/openapi-ts": "^0.97.3",

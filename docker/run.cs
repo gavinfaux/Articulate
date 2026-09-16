@@ -17,13 +17,13 @@ try
     var opts = Opts.Parse(args[1..]);
     return command switch
     {
-        "docker-build"  => await DockerBuild(opts.Validate(command, "lane", "tag", "clean")),
-        "docker-dev"    => await DockerDev(opts.Validate(command, "lane", "skip-smoke", "reset", "clean", "reuse-packages")),
-        "docker-prod"   => await DockerProd(opts.Validate(command, "lane", "skip-smoke")),
-        "docker-down"   => await DockerDown(opts.Validate(command, "lane", "volumes", "purge")),
-        "docker-status" => await DockerStatus(opts.Validate(command, "lane")),
-        "docker-test"   => await DockerTest(opts.Validate(command, "lane", "keep", "skip-smoke")),
-        "docker-ca"     => await DockerCa(opts.Validate(command, "lane")),
+        "docker-build"  => await DockerBuild(opts.Validate(command, "tag", "clean")),
+        "docker-dev"    => await DockerDev(opts.Validate(command, "skip-smoke", "reset", "clean", "reuse-packages")),
+        "docker-prod"   => await DockerProd(opts.Validate(command, "skip-smoke")),
+        "docker-down"   => await DockerDown(opts.Validate(command, "volumes", "purge")),
+        "docker-status" => await DockerStatus(opts.Validate(command)),
+        "docker-test"   => await DockerTest(opts.Validate(command, "keep", "skip-smoke")),
+        "docker-ca"     => await DockerCa(opts.Validate(command)),
         _ => throw new ArgumentException($"Unknown command '{command}'. Run with --help.")
     };
 }
@@ -52,7 +52,7 @@ void Help(string? topic)
 
 async Task<int> DockerBuild(Opts o)
 {
-    var lane = ConfigureLane(o.Lane());
+    var lane = ConfigureLane();
     await EnsurePackages(lane, o.Flag("clean"));
     await Run("docker", new[]
     {
@@ -68,7 +68,7 @@ async Task<int> DockerBuild(Opts o)
 
 async Task<int> DockerDev(Opts o, bool build = true, bool ensurePackages = true)
 {
-    var lane = ConfigureLane(o.Lane());
+    var lane = ConfigureLane();
     var reusePackages = o.Flag("reuse-packages");
     if (reusePackages && o.Flag("clean"))
         throw new ArgumentException("--clean cannot be used with --reuse-packages.");
@@ -88,7 +88,7 @@ async Task<int> DockerDev(Opts o, bool build = true, bool ensurePackages = true)
 
 async Task<int> DockerProd(Opts o)
 {
-    ConfigureLane(o.Lane());
+    ConfigureLane();
     Env.RequireSecret();
     Env.Set("UMBRACO_RUNTIME_MODE", "Production");
     await Compose(new[] { "up", "--detach", "--force-recreate" });
@@ -103,25 +103,16 @@ async Task<int> DockerProd(Opts o)
 
 async Task<int> DockerDown(Opts o)
 {
-    var args = o.Flag("purge")
-        ? new[] { "down", "--volumes", "--rmi", "all", "--remove-orphans" }
-        : o.Flag("volumes")
-            ? new[] { "down", "--volumes" }
-            : new[] { "down" };
-    var lanes = string.Equals(o.String("lane"), "all", StringComparison.OrdinalIgnoreCase)
-        ? new[] { "v17", "v18" }
-        : new[] { o.Lane() };
-    foreach (var lane in lanes)
-    {
-        ConfigureLane(lane);
-        await Compose(args);
-    }
+    var args = o.Flag("purge") ? new[] { "down", "--volumes", "--rmi", "all", "--remove-orphans" }
+        : o.Flag("volumes") ? new[] { "down", "--volumes" } : new[] { "down" };
+    ConfigureLane();
+    await Compose(args);
     return 0;
 }
 
 async Task<int> DockerStatus(Opts o)
 {
-    ConfigureLane(o.Lane());
+    ConfigureLane();
     await Compose(new[] { "ps" });
     var id = (await Capture("docker", ComposeArgs("ps", "-q", "articulate"), Env.Repo)).Trim();
     if (string.IsNullOrWhiteSpace(id)) throw new InvalidOperationException("articulate container is not running.");
@@ -143,36 +134,23 @@ async Task<int> DockerStatus(Opts o)
 
 async Task<int> DockerTest(Opts o)
 {
-    var requested = (o.String("lane", "all") ?? "all").ToLowerInvariant();
-    if (requested is not ("v17" or "v18" or "all"))
-        throw new ArgumentException("--lane must be v17, v18, or all.");
-
-    var lanes = requested == "all" ? new[] { "v17", "v18" } : new[] { requested };
-    foreach (var lane in lanes)
+    ConfigureLane();
+    await EnsurePackages("v17", clean: true);
+    try
     {
-        ConfigureLane(lane);
-        await EnsurePackages(lane, clean: true);
-        try
-        {
-            await Compose(new[] { "build", "--no-cache", "--pull" });
-            var devOptions = o.Flag("skip-smoke")
-                ? Opts.Of(("lane", lane), ("skip-smoke", null))
-                : Opts.Of(("lane", lane));
-            await DockerDev(devOptions, build: false, ensurePackages: false);
-            if (!o.Flag("skip-smoke")) await DockerProd(Opts.Of(("lane", lane)));
-            Console.WriteLine($"PASSED: {lane}");
-        }
-        finally
-        {
-            if (!o.Flag("keep")) await Compose(new[] { "down", "--volumes" }, allowFailure: true);
-        }
+        await Compose(new[] { "build", "--no-cache", "--pull" });
+        var options = o.Flag("skip-smoke") ? Opts.Of(("skip-smoke", null)) : Opts.Of();
+        await DockerDev(options, build: false, ensurePackages: false);
+        if (!o.Flag("skip-smoke")) await DockerProd(Opts.Of());
+        Console.WriteLine("PASSED: v17");
     }
+    finally { if (!o.Flag("keep")) await Compose(new[] { "down", "--volumes" }, allowFailure: true); }
     return 0;
 }
 
 async Task<int> DockerCa(Opts o)
 {
-    ConfigureLane(o.Lane());
+    ConfigureLane();
     var id = (await Capture("docker", ComposeArgs("ps", "-q", "caddy"), Env.Repo)).Trim();
     if (string.IsNullOrWhiteSpace(id)) throw new InvalidOperationException("Could not find a running 'caddy' container. Run 'docker-dev' first.");
 
@@ -193,21 +171,21 @@ async Task<int> DockerCa(Opts o)
     return 0;
 }
 
-string ConfigureLane(string lane)
+string ConfigureLane()
 {
-    var https = Env.HostValue("CADDY_HTTPS_PORT", lane == "v18" ? "18444" : "18443");
-    var http = Env.HostValue("CADDY_HTTP_PORT", lane == "v18" ? "8081" : "8080");
+    const string lane = "v17";
+    var https = Env.HostValue("CADDY_HTTPS_PORT", "18443");
+    var http = Env.HostValue("CADDY_HTTP_PORT", "8080");
     var configuration = Env.Get("BUILD_CONFIGURATION")?.Trim();
     if (string.IsNullOrWhiteSpace(configuration)) configuration = "Release";
     foreach (var (key, value) in new Dictionary<string, string>
     {
-        ["ARTICULATE_PACKAGE_LANE"] = lane,
         ["COMPOSE_PROJECT_NAME"] = $"art_{lane}",
         ["COMPOSE_VOLUME_PREFIX"] = $"art_{lane}",
         ["IMAGE_TAG"] = $"articulate-local:{lane}",
-        ["PACKAGE_SOURCE"] = $"build/{configuration}/{lane}",
-        ["UMBRACO_CMS_VERSION"] = Env.MsbuildProperty("UmbracoCmsPackageVersion", lane),
-        ["TINYMCE_UMBRACO_PACKAGE_VERSION"] = Env.MsbuildProperty("TinyMceUmbracoPackageVersion", lane),
+        ["PACKAGE_SOURCE"] = $"build/{configuration}",
+        ["UMBRACO_CMS_VERSION"] = Env.MsbuildProperty("UmbracoCmsPackageVersion"),
+        ["TINYMCE_UMBRACO_PACKAGE_VERSION"] = Env.MsbuildProperty("TinyMceUmbracoPackageVersion"),
         ["Umbraco__CMS__Security__AuthCookieName"] = $"UMB_UCONTEXT-{lane}",
         ["Umbraco__CMS__Security__BackOfficeTokenCookie__SiteName"] = $"-{lane}",
         ["CADDY_HTTPS_PORT"] = https,
@@ -228,7 +206,7 @@ string ConfigureLane(string lane)
 
 Task EnsurePackages(string lane, bool clean = false)
 {
-    var args = new List<string> { "run", "--file", "build/build.cs", "--", "build", "--lane", lane, "--sample" };
+    var args = new List<string> { "run", "--file", "build/build.cs", "--", "build", "--sample" };
     if (clean) args.Add("--clean");
     return Run("dotnet", args, Env.Repo);
 }
@@ -320,7 +298,7 @@ static class Env
             Set("ARTICULATE_TEST_SITE_CLIENT_SECRET", "articulate-test-site-secret");
     }
 
-    public static string MsbuildProperty(string name, string lane)
+    public static string MsbuildProperty(string name)
     {
         var project = Path.Combine(Repo, "src", "Articulate.Web", "Articulate.Web.csproj");
         var psi = new ProcessStartInfo("dotnet")
@@ -330,7 +308,7 @@ static class Env
             CreateNoWindow = true,
             WorkingDirectory = Repo,
         };
-        foreach (var arg in new[] { "msbuild", project, $"-getProperty:{name}", $"-p:ArticulatePackageLane={lane}" })
+        foreach (var arg in new[] { "msbuild", project, $"-getProperty:{name}" })
             psi.ArgumentList.Add(arg);
         using var process = Process.Start(psi) ?? throw new InvalidOperationException("Could not start dotnet msbuild.");
         var output = process.StandardOutput.ReadToEnd().Trim();
@@ -382,7 +360,6 @@ sealed class Opts
                 $"Unknown option(s) for {command}: {string.Join(", ", unknown.Select(key => $"--{key}"))}. " +
                 $"Run 'dotnet run --file docker/run.cs -- help {command}'.");
 
-        RequireValue("lane");
         RequireValue("tag");
         RequireFlag("clean");
         RequireFlag("reset");
@@ -395,12 +372,6 @@ sealed class Opts
         return this;
     }
 
-    public string Lane() => (String("lane") ?? Env.Get("ARTICULATE_PACKAGE_LANE", "v17") ?? "v17").ToLowerInvariant() switch
-    {
-        "v17" => "v17",
-        "v18" => "v18",
-        var lane => throw new ArgumentException($"--lane must be v17 or v18 (got '{lane}').")
-    };
 
     public string? String(string key, string? fallback = null) => _values.TryGetValue(key, out var value) ? value : fallback;
     public bool Flag(string key) => _values.TryGetValue(key, out var value) && value is null;

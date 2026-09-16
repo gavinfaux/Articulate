@@ -66,9 +66,7 @@ namespace Articulate.Tests.Routing
                 .AddSingleton(Mock.Of<IContentTypeService>())
                 .AddSingleton(Mock.Of<IMediaTypeService>())
                 .AddSingleton(Mock.Of<IMemberTypeService>())
-#if !UMBRACO_18_OR_GREATER
                 .AddSingleton(Mock.Of<IFileService>())
-#endif
                 .AddSingleton(Microsoft.Extensions.Options.Options.Create(new WebRoutingSettings()))
                 .AddSingleton(Mock.Of<IExamineManager>())
                 .AddSingleton(Mock.Of<IDocumentUrlService>())
@@ -188,14 +186,8 @@ namespace Articulate.Tests.Routing
             ArticulateRouter router = new(
                 controllerActionSearcher.Object,
                 scopeProvider.Object,
-#if UMBRACO_18_OR_GREATER
-                NullLogger<ArticulateRouter>.Instance,
-                Mock.Of<IDocumentUrlService>(),
-                articulateOptions.Object
-#else
                 NullLogger<ArticulateRouter>.Instance,
                 articulateOptions.Object
-#endif
             );
 
             IPublishedContentType articulateContentType = Mock.Of<IPublishedContentType>(x =>
@@ -233,11 +225,7 @@ namespace Articulate.Tests.Routing
             publishedRouter
                 .Setup(x => x.CreateRequestAsync(It.IsAny<Uri>()))
                 .ReturnsAsync((Uri uri) =>
-#if UMBRACO_18_OR_GREATER
-                    new PublishedRequestBuilder(uri, Mock.Of<ITemplateService>()));
-#else
                     new PublishedRequestBuilder(uri, Mock.Of<IFileService>()));
-#endif
 
             ArticulateRouteRefreshState refreshState = new();
             UmbracoRouteValueTransformer umbracoTransformer = CreateUmbracoTransformer(umbracoContextAccessor.Object);

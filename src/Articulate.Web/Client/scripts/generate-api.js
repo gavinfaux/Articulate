@@ -6,14 +6,6 @@ console.log("Generating OpenAPI client...");
 const args = process.argv.slice(2);
 const swaggerUrl = args[0];
 const outputPath = args[1];
-const laneIndex = args.indexOf("--lane");
-const lane = laneIndex !== -1 && args[laneIndex + 1] ? args[laneIndex + 1] : "v17";
-
-if (lane !== "v17" && lane !== "v18") {
-  console.error(`ERROR: Unsupported client lane: ${lane}`);
-  process.exit(1);
-}
-
 // Find --includeTags and --excludeTags in the arguments
 const includeIndex = args.indexOf("--includeTags");
 const excludeIndex = args.indexOf("--excludeTags");

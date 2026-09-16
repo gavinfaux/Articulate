@@ -114,11 +114,7 @@ namespace Articulate.Tests.Routing
 
             return new DateFormattedUrlProvider(
                 optionsMonitor.Object,
-#if UMBRACO_18_OR_GREATER
-                Mock.Of<ILogger<DefaultUrlProvider>>(),
-#else
                 Mock.Of<ILogger<NewDefaultUrlProvider>>(),
-#endif
                 Mock.Of<ISiteDomainMapper>(),
                 _umbracoContextAccessor.Object,
                 uriUtility,
@@ -183,9 +179,7 @@ namespace Articulate.Tests.Routing
                 postKey,
                 102,
                 ("publishedDate", new DateTime(2024, 6, 13)));
-#if !UMBRACO_18_OR_GREATER
             Mock.Get(post).SetupGet(x => x.UrlSegment).Returns("my-post");
-#endif
 
             return (site, blog, post);
         }

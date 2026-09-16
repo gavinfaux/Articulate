@@ -5,9 +5,6 @@ using NUnit.Framework;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.Routing;
-#if UMBRACO_18_OR_GREATER
-using Umbraco.Cms.Core.Services;
-#endif
 
 namespace Articulate.Tests.Routing
 {
@@ -209,30 +206,14 @@ namespace Articulate.Tests.Routing
         {
             IPublishedContent root = CreateRoot();
 
-#if UMBRACO_18_OR_GREATER
-            IPublishedContent[] children = [
-                CreateRoot(name: "Child A", urlSegment: "tags"),
-                CreateRoot(name: "Child B", urlSegment: "Tags")
-            ];
-            Mock<IDocumentUrlService> documentUrlService = new();
-            documentUrlService.Setup(x => x.GetUrlSegment(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<bool>()))
-#pragma warning disable CS0618 // Type or member is obsolete
-                .Returns((Guid key, string culture, bool ignoreOverride) => children.First(c => c.Key == key).UrlSegment);
-#pragma warning restore CS0618 // Type or member is obsolete
-#endif
 
             InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() =>
                 ArticulateRouteValidator.ValidateConfiguredRouteSegments(
                     root,
-#if UMBRACO_18_OR_GREATER
-                    documentUrlService.Object,
-                    children))!;
-#else
                     [
                         CreateRoot(name: "Child A", urlSegment: "tags"),
                         CreateRoot(name: "Child B", urlSegment: "Tags")
                     ]))!;
-#endif
 
             Assert.That(ex.Message, Does.Contain("child content 'Child A'"));
             Assert.That(ex.Message, Does.Contain("child content 'Child B'"));

@@ -42,10 +42,6 @@ namespace Articulate.ImportExport
         IArticulateImportMediaService service,
         IHtmlSanitizer htmlSanitizer,
         IOptions<ArticulateOptions> articulateOptions
-#if UMBRACO_18_OR_GREATER
-        ,
-        IIdKeyMap idKeyMap
-#endif
     )
     {
         private readonly long _maxXmlCharacters = articulateOptions.Value.BlogMlImportMaxXmlCharacters;
@@ -536,9 +532,6 @@ namespace Articulate.ImportExport
                 dataTypeService,
                 dataEditors,
                 jsonSerializer,
-#if UMBRACO_18_OR_GREATER
-                idKeyMap,
-#endif
                 logger);
         }
 
@@ -576,9 +569,6 @@ namespace Articulate.ImportExport
                 dataTypeService,
                 dataEditors,
                 jsonSerializer,
-#if UMBRACO_18_OR_GREATER
-                idKeyMap,
-#endif
                 logger);
         }
 

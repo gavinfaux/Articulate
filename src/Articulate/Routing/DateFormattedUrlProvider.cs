@@ -15,29 +15,18 @@ namespace Articulate.Routing
     /// <summary>
     /// Provides date-formatted URLs for Articulate blog posts (e.g., /YYYY/MM/DD/post-name/).
     /// </summary>
-#if UMBRACO_18_OR_GREATER
-    public class DateFormattedUrlProvider : DefaultUrlProvider
-#else
     public class DateFormattedUrlProvider : NewDefaultUrlProvider
-#endif
     {
         private readonly IDocumentNavigationQueryService _navigationQueryService;
         private readonly IPublishedContentStatusFilteringService _publishedContentStatusFilteringService;
         private readonly IPublishedValueFallback _publishedValueFallback;
-#if UMBRACO_18_OR_GREATER
-        private readonly IDocumentUrlService _documentUrlService;
-#endif
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DateFormattedUrlProvider"/> class.
         /// </summary>
         public DateFormattedUrlProvider(
             IOptionsMonitor<RequestHandlerSettings> requestSettings,
-#if UMBRACO_18_OR_GREATER
-            ILogger<DefaultUrlProvider> logger,
-#else
             ILogger<NewDefaultUrlProvider> logger,
-#endif
             ISiteDomainMapper siteDomainMapper,
             IUmbracoContextAccessor umbracoContextAccessor,
             UriUtility uriUtility,
@@ -66,9 +55,6 @@ namespace Articulate.Routing
             _navigationQueryService = navigationQueryService;
             _publishedContentStatusFilteringService = publishedContentStatusFilteringService;
             _publishedValueFallback = publishedValueFallback;
-#if UMBRACO_18_OR_GREATER
-            _documentUrlService = documentUrlService;
-#endif
         }
 
         /// <inheritdoc/>
@@ -106,12 +92,7 @@ namespace Articulate.Routing
             var urlFolder = $"{date.Value.Year}/{date.Value.Month:d2}/{date.Value.Day:d2}";
             UrlInfo? parentPath = base.GetUrl(parent, mode, culture, current);
             var parentUrl = parentPath?.Url?.ToString().EnsureEndsWith("/");
-#if UMBRACO_18_OR_GREATER
-            var urlSegment = _documentUrlService.GetUrlSegment(content.Key, culture ?? string.Empty, false);
-
-#else
             var urlSegment = content.UrlSegment;
-#endif
             if (string.IsNullOrWhiteSpace(parentUrl) || string.IsNullOrWhiteSpace(urlSegment))
             {
                 return null;

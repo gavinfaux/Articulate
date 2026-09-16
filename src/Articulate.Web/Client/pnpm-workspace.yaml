@@ -1,6 +1,5 @@
 packages:
   - "v17"
-  - "v18"
 
 minimumReleaseAge: 10080
 minimumReleaseAgeStrict: true
@@ -14,4 +13,4 @@ overrides:
   js-yaml@<4.3.1: ^4.3.1
   nanoid@<3.3.18: ^3.3.18
 minimumReleaseAgeExclude:
-  - '@umbraco-cms/backoffice@17.6.2 || 18.1.1'
+  - "@umbraco-cms/backoffice@17.6.2"

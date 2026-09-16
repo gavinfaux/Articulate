@@ -10,7 +10,7 @@ import { UmbTextStyles } from '@umbraco-cms/backoffice/style';
 
 import { toUmbProblemDetails } from '../utils/template-utils.js';
 import { ThemePickerService } from '@api/sdk.gen.js';
-import { createThemePickerChangeEvent } from '@lane';
+import { UmbPropertyValueChangeEvent } from '@umbraco-cms/backoffice/property-editor';
 
 /**
  * A custom element for picking an Articulate theme.
@@ -106,7 +106,7 @@ export default class ThemePickerElement extends UmbElementMixin(UmbLitElement) i
 
     if (this.value !== newValue) {
       this.value = newValue;
-      this.dispatchEvent(createThemePickerChangeEvent());
+      this.dispatchEvent(new UmbPropertyValueChangeEvent());
     }
   }
 
