@@ -139,11 +139,7 @@ namespace Articulate.Tests.Routing
         public async Task TryFindContent_requires_more_than_4_segments(string requestUri)
         {
             var finder = new DateFormattedPostContentFinder(
-#if UMBRACO_18_OR_GREATER
                 Mock.Of<ILogger<ContentFinderByUrl>>(),
-#else
-                Mock.Of<ILogger<ContentFinderByUrlNew>>(),
-#endif
                 Mock.Of<IUmbracoContextAccessor>(),
                 Mock.Of<IDocumentUrlService>(),
                 Mock.Of<IPublishedContentCache>(),
@@ -241,11 +237,7 @@ namespace Articulate.Tests.Routing
 
             Mock<IPublishedValueFallback> publishedValueFallback = new();
             DateFormattedPostContentFinder finder = new(
-#if UMBRACO_18_OR_GREATER
                     Mock.Of<ILogger<ContentFinderByUrl>>(),
-#else
-                    Mock.Of<ILogger<ContentFinderByUrlNew>>(),
-#endif
                 umbracoContextAccessor.Object,
                 documentUrlService.Object,
                 publishedContentCache.Object,

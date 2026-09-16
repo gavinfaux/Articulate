@@ -15,9 +15,7 @@ using Umbraco.Cms.Core.Web;
 using Umbraco.Cms.Infrastructure.Scoping;
 using Umbraco.Cms.Web.Common.Controllers;
 using Umbraco.Cms.Web.Website.Routing;
-#if UMBRACO_18_OR_GREATER
 using Umbraco.Cms.Core.Services;
-#endif
 
 namespace Articulate.Routing
 {
@@ -54,43 +52,26 @@ namespace Articulate.Routing
         private readonly ILogger<ArticulateRouter> _logger;
         private readonly IScopeProvider _scopeProvider;
         private readonly IOptions<ArticulateOptions> _articulateOptions;
-#if UMBRACO_18_OR_GREATER
         private readonly IDocumentUrlService _documentUrlService;
-#endif
 
-#if UMBRACO_18_OR_GREATER
         /// <summary>Constructor for Articulate router initialization.</summary>
         /// <param name="controllerActionSearcher">Searches for controller actions.</param>
         /// <param name="scopeProvider">Provides data access scope.</param>
         /// <param name="logger">Logger instance.</param>
         /// <param name="documentUrlService">Service for generating document URLs (Umbraco 18+).</param>
         /// <param name="articulateOptions">Articulate configuration options.</param>
-#else
-        /// <summary>Constructor for Articulate router initialization.</summary>
-        /// <param name="controllerActionSearcher">Searches for controller actions.</param>
-        /// <param name="scopeProvider">Provides data access scope.</param>
-        /// <param name="logger">Logger instance.</param>
-        /// <param name="articulateOptions">Articulate configuration options.</param>
-#endif
         public ArticulateRouter(
             IControllerActionSearcher controllerActionSearcher,
             IScopeProvider scopeProvider,
-#if UMBRACO_18_OR_GREATER
             ILogger<ArticulateRouter> logger,
             IDocumentUrlService documentUrlService,
             IOptions<ArticulateOptions> articulateOptions)
-#else
-            ILogger<ArticulateRouter> logger,
-            IOptions<ArticulateOptions> articulateOptions)
-#endif
         {
             _controllerActionSearcher = controllerActionSearcher;
             _logger = logger;
             _scopeProvider = scopeProvider;
             _articulateOptions = articulateOptions;
-#if UMBRACO_18_OR_GREATER
             _documentUrlService = documentUrlService;
-#endif
         }
 
         public bool TryMatch(PathString path, RouteValueDictionary routeValues, out ArticulateRootNodeCache? articulateRootNodeCache)
@@ -187,11 +168,7 @@ namespace Articulate.Routing
 
                         foreach (IPublishedContent articulateRootNode in groupedNodes)
                         {
-#if UMBRACO_18_OR_GREATER
                             ArticulateRouteValidator.ValidateConfiguredRouteSegments(articulateRootNode, _documentUrlService);
-#else
-                            ArticulateRouteValidator.ValidateConfiguredRouteSegments(articulateRootNode);
-#endif
 
                             MapRssRoute(rebuiltRouteCache, httpContext, rootNodePath, articulateRootNode, domains);
 

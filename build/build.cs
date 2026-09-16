@@ -6,10 +6,9 @@
 // Articulate build utility. CLI reference lives in build/help.md.
 //
 // Conventions:
-//   - Restore + build + test + pack, one lane at a time.
-//   - Shared src/*/bin and obj means lanes build sequentially with -m:1.
-//   - Use --clean when switching package lanes in the same checkout.
-//   - Packages land in build/<Configuration>/<lane>/.
+//   - Restore + build + test + pack for the v18 target.
+//   - Shared src/*/bin and obj means builds run sequentially with -m:1.
+//   - Packages land in build/<Configuration>.
 
 using System.Diagnostics;
 using System.Text.Json;
@@ -24,9 +23,9 @@ try
     var opts = Opts.Parse(args[1..]);
     return command switch
     {
-        "build"         => await BuildAsync(opts.Validate(command, "lane", "configuration", "tests", "client", "sample", "clean", "update-locks")),
-        "client"        => await ClientAsync(opts.Validate(command, "lane")),
-        "site"          => await SiteAsync(opts.Validate(command, "lane", "configuration", "reset")),
+        "build"         => await BuildAsync(opts.Validate(command, "configuration", "tests", "client", "sample", "clean")),
+        "client"        => await ClientAsync(opts.Validate(command)),
+        "site"          => await SiteAsync(opts.Validate(command, "configuration", "reset")),
         _ => throw new ArgumentException($"Unknown command '{command}'. Run with --help.")
     };
 }
@@ -61,33 +60,27 @@ void Help(string? topic)
 async Task<int> BuildAsync(Opts o)
 {
     var sw = Stopwatch.StartNew();
-    var lane = o.Lane();
     var cfg = o.String("configuration", Env.Get("BUILD_CONFIGURATION", "Release"));
     ValidateConfiguration(cfg);
     var inCi = Env.IsTrue(Env.CallerCi) || Env.IsTrue(Env.CallerGithubActions) || Env.IsTrue(Env.CallerAct);
     if (inCi) Environment.SetEnvironmentVariable("CI", "true");
-    if (o.Flag("update-locks") && inCi)
-        throw new InvalidOperationException("--update-locks is for local development only and cannot run in CI or act.");
-
     var defaults = BuildDefaults.Resolve(o, inCi, cfg);
     var clean = o.Flag("clean");
-    var releaseDir = Path.Combine(Env.Repo, "build", cfg ?? "Release", lane);
+    var releaseDir = Path.Combine(Env.Repo, "build", cfg ?? "Release");
     Directory.CreateDirectory(releaseDir);
 
     var clientAssetsDir = Path.Combine(Env.Repo, "build", "ClientAssets");
     var backofficeDir = Path.Combine(Env.Repo, "src", "Articulate.Web", "wwwroot", "App_Plugins", "Articulate", "BackOffice");
-    var activeLanePath = Path.Combine(clientAssetsDir, "active-lane.txt");
     var activeVersionPath = Path.Combine(clientAssetsDir, "active-version.txt");
 
     var props = new List<string>
     {
         "-p:EnableClientBuild=" + defaults.Client.ToString().ToLowerInvariant(),
-        "-p:ArticulatePackageLane=" + lane,
     };
-    var packageVersion = await ResolvePackageVersion(lane);
+    var packageVersion = await ResolvePackageVersion();
     props.Add("-p:ArticulatePackageVersion=" + packageVersion);
 
-    Console.WriteLine($"Build: {lane}, {cfg}, package {packageVersion}{(clean ? " (Clean Build)" : "")}");
+    Console.WriteLine($"Build: {cfg}, package {packageVersion}{(clean ? " (Clean Build)" : "")}");
     DeleteExistingPackages(releaseDir);
 
     if (clean)
@@ -99,45 +92,23 @@ async Task<int> BuildAsync(Opts o)
 
     if (defaults.Client)
     {
-        var activeLane = File.Exists(activeLanePath) ? File.ReadAllText(activeLanePath).Trim() : null;
         var activeVersion = File.Exists(activeVersionPath) ? File.ReadAllText(activeVersionPath).Trim() : null;
-        if (!clean && activeLane is not null && !string.Equals(activeLane, lane, StringComparison.OrdinalIgnoreCase))
-            throw new InvalidOperationException($"Client assets belong to {activeLane}; rerun with --clean before building {lane}.");
-        if (clean || activeLane is null || !string.Equals(activeVersion, packageVersion, StringComparison.Ordinal))
+        if (clean || !string.Equals(activeVersion, packageVersion, StringComparison.Ordinal))
         {
             DeleteDir(backofficeDir);
-            DeleteClientBuildStamps(clientAssetsDir, lane);
+            DeleteClientBuildStamps(clientAssetsDir);
         }
-        DeleteFile(activeLanePath);
         DeleteFile(activeVersionPath);
     }
     else
     {
         DeleteDir(backofficeDir);
-        DeleteClientBuildStamps(clientAssetsDir, lane);
-        DeleteFile(activeLanePath);
+        DeleteClientBuildStamps(clientAssetsDir);
         DeleteFile(activeVersionPath);
     }
 
     var cfgName = cfg ?? "Release";
     var common = new[] { "-c", cfgName, "-m:1", "-p:BuildInParallel=false" };
-
-    if (o.Flag("update-locks"))
-    {
-        foreach (var lockLane in new[] { "v17", "v18" })
-        {
-            Console.WriteLine($"> dotnet restore lock files ({lockLane})");
-            await Run("dotnet", new[]
-            {
-                "restore", Env.Solution,
-                "-v", "minimal",
-                "-p:RestoreUseStaticGraphEvaluation=true",
-                $"-p:ArticulatePackageLane={lockLane}",
-                "-p:RestoreLockedMode=false",
-                "--force-evaluate"
-            });
-        }
-    }
 
     var restoreArgs = new[] { "restore", Env.Solution, "-v", "minimal", "-p:RestoreUseStaticGraphEvaluation=true" }
         .Concat(inCi ? new string[] { "--locked-mode" } : Array.Empty<string>())
@@ -161,8 +132,7 @@ async Task<int> BuildAsync(Opts o)
     VerifyPackages(releaseDir, packageVersion, defaults.Sample);
     if (defaults.Client)
     {
-        Directory.CreateDirectory(Path.GetDirectoryName(activeLanePath)!);
-        File.WriteAllText(activeLanePath, lane + Environment.NewLine);
+        Directory.CreateDirectory(Path.GetDirectoryName(activeVersionPath)!);
         File.WriteAllText(activeVersionPath, packageVersion + Environment.NewLine);
     }
 
@@ -173,7 +143,7 @@ async Task<int> BuildAsync(Opts o)
 async Task<int> ClientAsync(Opts o)
 {
     var workspace = Path.Combine(Env.Repo, "src", "Articulate.Web", "Client");
-    var laneDir = Path.Combine(workspace, o.Lane());
+    var laneDir = Path.Combine(workspace, "v18");
     DeleteDir(Path.Combine(Env.Repo, "build", "ClientAssets"));
     var requiredNodeVersion = File.ReadAllText(Path.Combine(workspace, ".node-version")).Trim();
     var requiredNodeMajor = requiredNodeVersion.Split('.')[0];
@@ -197,22 +167,21 @@ async Task<int> ClientAsync(Opts o)
     await Run("pnpm", new[] { "run", "check" }, cwd: laneDir);
     await Run("pnpm", new[] { "run", "build" }, cwd: laneDir);
     await Run("pnpm", new[] { "run", "lint" }, cwd: laneDir);
-    Console.WriteLine($"Client {o.Lane()} OK.");
+    Console.WriteLine("Client OK.");
     return 0;
 }
 
 async Task<int> SiteAsync(Opts o)
 {
-    var lane = o.Lane();
     var cfg = o.String("configuration", "Debug");
     ValidateConfiguration(cfg);
     var project = Path.Combine(Env.Repo, "src", "Articulate.Tests.Website", "Articulate.Tests.Website.csproj");
     if (o.Flag("reset")) DeleteDir(Path.Combine(Env.Repo, "src", "Articulate.Tests.Website", "umbraco"));
-    await Run("dotnet", new[] { "run", "-c", cfg ?? "Debug", "--project", project, $"-p:ArticulatePackageLane={lane}" }, cwd: Env.Repo);
+    await Run("dotnet", new[] { "run", "-c", cfg ?? "Debug", "--project", project }, cwd: Env.Repo);
     return 0;
 }
 
-async Task<string> ResolvePackageVersion(string lane)
+async Task<string> ResolvePackageVersion()
 {
     var packageVersion = Env.Get("ARTICULATE_PACKAGE_VERSION");
     if (!string.IsNullOrWhiteSpace(packageVersion)) return packageVersion;
@@ -221,15 +190,7 @@ async Task<string> ResolvePackageVersion(string lane)
     var nbgv = inCi ? Env.Get("NBGV_SemVer2") : null;
     if (string.IsNullOrWhiteSpace(nbgv))
         nbgv = (await Capture("nbgv", new[] { "get-version", "-v", "SemVer2" }, Env.Repo)).Trim();
-    if (lane == "v17") return nbgv;
-
-    var baseVersionPath = Path.Combine(Env.Repo, $"version-{lane}.txt");
-    var baseVersion = File.ReadAllText(baseVersionPath).Trim();
-    if (string.IsNullOrWhiteSpace(baseVersion))
-        throw new InvalidOperationException($"{Path.GetFileName(baseVersionPath)} is empty.");
-
-    var commitMatch = Regex.Match(nbgv, @"[-.]g[a-f0-9]+$");
-    return baseVersion + commitMatch.Value;
+    return nbgv;
 }
 
 void ValidateConfiguration(string? configuration)
@@ -274,11 +235,10 @@ async Task<string> Capture(string file, IEnumerable<string> args, string cwd)
 
 void DeleteDir(string path) { if (Directory.Exists(path)) Directory.Delete(path, recursive: true); }
 void DeleteFile(string path) { if (File.Exists(path)) File.Delete(path); }
-void DeleteClientBuildStamps(string clientAssetsDir, string lane)
+void DeleteClientBuildStamps(string clientAssetsDir)
 {
     if (!Directory.Exists(clientAssetsDir)) return;
-    var laneSuffix = lane[1..];
-    foreach (var stamp in Directory.EnumerateFiles(clientAssetsDir, $"BackofficeClient_v{laneSuffix}*.stamp"))
+    foreach (var stamp in Directory.EnumerateFiles(clientAssetsDir, "BackofficeClient_v18*.stamp"))
         DeleteFile(stamp);
 }
 
@@ -401,7 +361,6 @@ sealed class Opts
                 $"Unknown option(s) for {command}: {string.Join(", ", unknown.Select(x => $"--{x}"))}. " +
                 $"Run 'dotnet run --file build/build.cs -- help {command}'.");
 
-        RequireValue("lane");
         RequireValue("configuration");
         RequireBoolean("tests");
         RequireBoolean("client");
@@ -416,12 +375,6 @@ sealed class Opts
         return this;
     }
 
-    public string Lane() => (String("lane") ?? Env.Get("ARTICULATE_PACKAGE_LANE", "v17") ?? "v17").ToLowerInvariant() switch
-    {
-        "v17" => "v17",
-        "v18" => "v18",
-        var x => throw new ArgumentException($"--lane must be v17 or v18 (got '{x}').")
-    };
 
     public string? String(string key, string? fallback = null) => _v.TryGetValue(key, out var v) ? v : fallback;
 

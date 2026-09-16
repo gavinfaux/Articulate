@@ -5,9 +5,7 @@ import { copyFile, mkdir, writeFile, unlink, rm } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 
 // --- CONSTANTS & PATHS ---
-// Each lane lives under Client/, so WEB_ROOT is two levels up from this workspace folder.
-// Vite runs from the selected lane package. Keep the implementation and
-// generated Articulate client here; each lane provides only package metadata.
+// The selected workspace owns the Back Office build; shared source remains under common/.
 const UI_ROOT = process.cwd();
 const require = createRequire(path.resolve(UI_ROOT, 'package.json'));
 const { defineConfig, transformWithEsbuild } = require('vite');
@@ -54,18 +52,6 @@ const defaultBuildVersion = (() => {
 const buildVersion = {
   value: defaultBuildVersion,
 };
-
-// The active lane is derived from the lane package directory (`process.cwd()`).
-// v17 and v18 are the only valid values; the @umbraco-cms/backoffice major
-// version pinned in each lane's package.json determines which event class is
-// available (UmbPropertyValueChangeEvent is v17-only; UmbChangeEvent is both).
-const lane = (() => {
-  const name = path.basename(UI_ROOT);
-  if (name !== 'v17' && name !== 'v18') {
-    throw new Error(`Unexpected lane directory '${name}'; expected v17 or v18.`);
-  }
-  return name;
-})();
 
 const resolveBuildVersion = (command: string, mode: string): string => {
   if (command !== 'build' || mode !== 'production') {
@@ -354,15 +340,8 @@ export default defineConfig(({ mode }: { mode: string }) => {
     resolve: {
       alias: {
         '@api': path.resolve(UI_ROOT, '../common/src/api'),
-        '@lane': path.resolve(UI_ROOT, '../common/src/lane-adapter.ts'),
         'lit-html': path.resolve(UI_ROOT, 'node_modules/lit-html'),
       },
-    },
-    define: {
-      // Build-time `LANE` constant. Set to the literal "v17" or "v18" via
-      // esbuild's `define` replacement. common/src/lane-adapter.ts reads this
-      // constant to dispatch to the per-lane event class.
-      LANE: JSON.stringify(lane),
     },
     build: {
       outDir: UI_OUT,

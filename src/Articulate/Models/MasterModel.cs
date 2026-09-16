@@ -14,11 +14,7 @@ namespace Articulate.Models
         /// The basic model for all articulate objects
         /// </summary>
         public MasterModel(IPublishedContent content, IPublishedValueFallback publishedValueFallback)
-#if UMBRACO_18_OR_GREATER
             : base(content)
-#else
-            : base(content, publishedValueFallback)
-#endif
         {
             PublishedValueFallback = publishedValueFallback;
         }

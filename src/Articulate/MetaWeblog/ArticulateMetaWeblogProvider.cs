@@ -44,9 +44,7 @@ namespace Articulate.MetaWeblog
         ArticulateTagService articulateTagService,
         BackOfficeAuthService backOfficeAuthService,
         IHtmlSanitizer htmlSanitizer
-#if UMBRACO_18_OR_GREATER
         , IIdKeyMap idKeyMap
-#endif
     )
         : IMetaWeblogProvider
     {
@@ -419,9 +417,7 @@ namespace Articulate.MetaWeblog
                 dataTypeService,
                 propertyEditors,
                 jsonSerializer,
-#if UMBRACO_18_OR_GREATER
                 idKeyMap,
-#endif
                 logger);
 
             var tags = SplitTagValue(post.mt_keywords);
@@ -434,9 +430,7 @@ namespace Articulate.MetaWeblog
                 dataTypeService,
                 propertyEditors,
                 jsonSerializer,
-#if UMBRACO_18_OR_GREATER
                 idKeyMap,
-#endif
                 logger);
 
             await SaveAndPublishIfNeededAsync(content, user, post, publish).ConfigureAwait(false);

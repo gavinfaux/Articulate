@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-# Parameterized build - supports Umbraco 17 and 18 on net10.0
+# Parameterized build - supports Umbraco 18 and 18 on net10.0
 # Targets: chiseled (for docker-compose), final (alternate)
 #
 # Examples:
@@ -19,7 +19,7 @@ ARG TARGET_FRAMEWORK=net10.0
 # and passes it as --build-arg. No default — explicit fail beats silent version drift.
 ARG UMBRACO_CMS_VERSION
 ARG BUILD_CONFIGURATION=Release
-ARG PACKAGE_SOURCE=build/Release/v17
+ARG PACKAGE_SOURCE=build/Release/v18
 ARG USE_TINYMCE_UMBRACO=false
 # TINYMCE_UMBRACO_PACKAGE_VERSION is required when USE_TINYMCE_UMBRACO=true;
 # run.cs reads it from Directory.Packages.props and passes as --build-arg.
@@ -48,17 +48,17 @@ RUN set -eux; \
       ARTICULATE_PKG_VERSION=0.0.0; \
     fi; \
     if [ -z "${UMBRACO_CMS_VERSION}" ]; then \
-      echo 'ERROR: UMBRACO_CMS_VERSION build-arg is required. Pass --build-arg UMBRACO_CMS_VERSION=<range>, e.g. [17.6.2,18.0.0) for v17 or [18.1.1,19.0.0) for v18. build.cs reads the floor from Directory.Packages.props.'; \
+      echo 'ERROR: UMBRACO_CMS_VERSION build-arg is required. Pass --build-arg UMBRACO_CMS_VERSION=<range>, e.g. [18.1.1,19.0.0) for v18 or [18.1.1,19.0.0) for v18. build.cs reads the floor from Directory.Packages.props.'; \
       exit 1; \
     fi; \
     if [ "${USE_TINYMCE_UMBRACO}" = "true" ]; then \
       if [ -z "${TINYMCE_UMBRACO_PACKAGE_VERSION}" ]; then \
-        echo 'ERROR: TINYMCE_UMBRACO_PACKAGE_VERSION build-arg is required when USE_TINYMCE_UMBRACO=true. build.cs reads the floor from Directory.Packages.props (per lane: [17.5.0,18.0.0) for v17, [18.0.0,19.0.0) for v18).'; \
+        echo 'ERROR: TINYMCE_UMBRACO_PACKAGE_VERSION build-arg is required when USE_TINYMCE_UMBRACO=true. build.cs reads the floor from Directory.Packages.props (per lane: [18.0.0,19.0.0) for v18, [18.0.0,19.0.0) for v18).'; \
         exit 1; \
       fi; \
     fi; \
     # MSBuild's CLI parser splits on `)` for /p:Name=Value, so CPM ranges like
-    # `[17.6.2,18.0.0)` can't be passed that way. Setting them as environment
+    # `[18.1.1,19.0.0)` can't be passed that way. Setting them as environment
     # variables before the dotnet call lets MSBuild pick them up as properties
     # without going through the CLI parser. Names must match the property names
     # exactly (case-sensitive on Linux). UseTinyMceUmbraco stays as /p: — it's a

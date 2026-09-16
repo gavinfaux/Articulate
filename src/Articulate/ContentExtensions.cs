@@ -116,9 +116,7 @@ namespace Articulate
             IDataTypeService dataTypeService,
             PropertyEditorCollection dataEditors,
             IJsonSerializer jsonSerializer,
-#if UMBRACO_18_OR_GREATER
             IIdKeyMap idKeyMap,
-#endif
             ILogger? logger = null,
             bool merge = false)
         {
@@ -142,7 +140,6 @@ namespace Articulate
                 }
             }
 
-#if UMBRACO_18_OR_GREATER
             content.AssignTags(
                 dataEditors,
                 dataTypeService,
@@ -152,16 +149,6 @@ namespace Articulate
                 tags,
                 merge,
                 culture);
-#else
-            content.AssignTags(
-                dataEditors,
-                dataTypeService,
-                jsonSerializer,
-                propertyTypeAlias,
-                tags,
-                merge,
-                culture);
-#endif
         }
 
         internal static void SetAllPropertyCultureValues(

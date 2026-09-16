@@ -45,9 +45,7 @@ namespace Articulate.Controllers.Api
         ILogger<MarkdownEditorApiController> logger,
         IAbsoluteUrlBuilder absoluteUrlBuilder,
         IArticulateImportMediaService service
-#if UMBRACO_18_OR_GREATER
         , IIdKeyMap idKeyMap
-#endif
     )
         : ManagementApiControllerBase
     {
@@ -429,9 +427,7 @@ namespace Articulate.Controllers.Api
                     dataTypeService,
                     propertyEditors,
                     jsonSerializer,
-#if UMBRACO_18_OR_GREATER
                     idKeyMap,
-#endif
                     logger);
             }
 
@@ -447,9 +443,7 @@ namespace Articulate.Controllers.Api
                     dataTypeService,
                     propertyEditors,
                     jsonSerializer,
-#if UMBRACO_18_OR_GREATER
                     idKeyMap,
-#endif
                     logger);
             }
 
