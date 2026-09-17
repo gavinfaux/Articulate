@@ -213,7 +213,7 @@ static void Help()
           --mapping <mode>     Discussion key: title (default) or pathname.
                                pathname requires --site and creates discussions titled with the route.
           --title-suffix <s>   With title mapping, append this to each title so it matches the site's
-                               "<post> - <blog>" page title. Do not use with pathname mapping.
+                               "<post> - <blog>" page title.
           --site <origin>      Fetch published routes from this origin's Delivery API. Required for
                                pathname mapping; also adds each live URL to title-mapped discussions.
 
