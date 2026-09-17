@@ -37,7 +37,7 @@ const string ListQuery = """
 
 if (args.Length == 0 || args[0] is "-h" or "--help") { Help(); return 0; }
 
-string? file = null, repo = null, repoId = null, categoryId = null, titleSuffix = null, site = null;
+string? file = null, repo = null, repoId = null, categoryId = null, titleSuffix = null, site = null, mapping = "title";
 bool go = false;
 for (var i = 0; i < args.Length; i++)
 {
@@ -48,6 +48,7 @@ for (var i = 0; i < args.Length; i++)
         case "--repo-id": repoId = args[++i]; break;
         case "--category-id": categoryId = args[++i]; break;
         case "--title-suffix": titleSuffix = args[++i]; break;
+        case "--mapping": mapping = args[++i]; break;
         case "--site": site = args[++i].TrimEnd('/'); break;
         default:
             if (args[i].StartsWith('-'))
@@ -68,6 +69,21 @@ for (var i = 0; i < args.Length; i++)
 }
 
 if (file is null) { Console.Error.WriteLine("Missing export file path."); Help(); return 1; }
+if (mapping is not ("title" or "pathname"))
+{
+    Console.Error.WriteLine("--mapping must be 'title' or 'pathname'.");
+    return 1;
+}
+if (mapping == "pathname" && site is null)
+{
+    Console.Error.WriteLine("--mapping pathname requires --site <origin>.");
+    return 1;
+}
+if (mapping == "pathname" && titleSuffix is not null)
+{
+    Console.Error.WriteLine("--title-suffix cannot be used with --mapping pathname.");
+    return 1;
+}
 if (go && (repo is null || repoId is null || categoryId is null))
 {
     Console.Error.WriteLine("--go requires --repo <owner/name>, --repo-id and --category-id (the giscus data-repo-id / data-category-id values).");
@@ -138,11 +154,18 @@ if (go && repo is not null)
 // --- migrate ---
 foreach (var post in posts)
 {
-    if (existingTitles.Contains(post.Title + titleSuffix)) { Console.WriteLine($"• skip (exists): {post.Title}"); continue; }
+    var path = urlMap?.GetValueOrDefault(post.Title);
+    if (mapping == "pathname" && path is null)
+    {
+        Console.Error.WriteLine($"No published route found for '{post.Title}'.");
+        return 1;
+    }
 
-    var discussionTitle = post.Title + titleSuffix;
+    var discussionTitle = mapping == "pathname" ? path! : post.Title + titleSuffix;
+    if (existingTitles.Contains(discussionTitle)) { Console.WriteLine($"• skip (exists): {post.Title}"); continue; }
+
     var body = $"Migrated comments for: **{post.Title}** ({post.Comments.Count} comment{(post.Comments.Count == 1 ? "" : "s")})";
-    if (urlMap is not null && urlMap.TryGetValue(post.Title, out var path)) body += $"\n\nURL: {site}{path}";
+    if (path is not null) body += $"\n\nURL: {site}{path}";
 
     Console.WriteLine($"• {discussionTitle}  [{post.Comments.Count} comments]");
     if (post.Comments.Count > 0)
@@ -187,10 +210,12 @@ static void Help()
           --repo <owner/name>  Target repository. Required with --go.
           --repo-id <id>       Repository GraphQL node id (giscus data-repo-id). Required with --go.
           --category-id <id>   Discussion category GraphQL node id (giscus data-category-id). Required with --go.
-          --title-suffix <s>   Appended to each discussion title so giscus title-mapping matches the
-                               site's "<post> - <blog>" page title. Keep it identical to the live site.
-          --site <origin>      Fetch published routes from this origin's Delivery API and add each
-                               discussion's live URL to the body (helps URL-based mapping and review).
+          --mapping <mode>     Discussion key: title (default) or pathname.
+                               pathname requires --site and creates discussions titled with the route.
+          --title-suffix <s>   With title mapping, append this to each title so it matches the site's
+                               "<post> - <blog>" page title. Do not use with pathname mapping.
+          --site <origin>      Fetch published routes from this origin's Delivery API. Required for
+                               pathname mapping; also adds each live URL to title-mapped discussions.
 
         Notes:
           - Dry run by default; nothing is created unless --go is passed.
