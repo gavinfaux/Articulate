@@ -36,7 +36,7 @@ Articulate 6.x supports Umbraco 16.5.1–16.x on .NET 9 and Umbraco 17.4.0–17.
 - Open Live Writer desktop publishing through MetaWeblog (supported, disabled by default)
 - Markdown and rich-text posts
 - Responsive Markdown editor for browser, phone, and tablet publishing
-- Disqus comments
+- Disqus or Giscus comments
 - Search and customizable URLs
 - BlogML import/export and Disqus export
 - Customizable RSS feeds

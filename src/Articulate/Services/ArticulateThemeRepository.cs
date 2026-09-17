@@ -2,6 +2,8 @@
 using System.Reflection;
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Core.Cache;
 using static Articulate.ArticulateConstants;
@@ -21,6 +23,26 @@ namespace Articulate.Services
         private const string AllThemesCacheKey = "Articulate_AllThemes";
         private const string EmbeddedResourceRoot = "Articulate.Theme://";
 
+        /// <inheritdoc/>
+        public string? GetThemeAssetUrl(string themeName, HttpRequest request)
+        {
+            ArgumentNullException.ThrowIfNullOrWhiteSpace(themeName);
+            ArgumentNullException.ThrowIfNull(request);
+
+            // Always point at the GiscusThemeController endpoint. The controller proxies
+            // the static-web-assets URL with the Access-Control-Allow-Origin header
+            // giscus.app's iframe requires. Umbraco's static-web-assets middleware serves
+            // /App_Plugins/Articulate/Themes/{theme}/assets/{file} for every theme
+            // source (built-in, copied, RCL), so a single URL covers them all.
+            string assetPath = $"App_Plugins/Articulate/Themes/{themeName}/assets/giscus.css";
+            if (!hostingEnvironment.WebRootFileProvider.GetFileInfo(assetPath).Exists)
+            {
+                return null;
+            }
+
+            string baseUri = UriHelper.BuildAbsolute(request.Scheme, request.Host, request.PathBase);
+            return baseUri.TrimEnd('/') + $"/articulate/giscus-theme/{themeName}";
+        }
         /// <inheritdoc/>
         async Task IArticulateThemeRepository.CopyThemeAsync(string themeName, string newThemeName)
         {

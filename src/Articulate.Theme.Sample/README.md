@@ -35,7 +35,7 @@ Optional controller-rendered views:
 
 This sample also uses normal Razor layout files (`_ViewStart.cshtml` and `_Layout.cshtml`) and theme-owned partials such as `Menu.cshtml`, `Pager.cshtml`, `PostCard.cshtml`, and `CommentsDisqus.cshtml`.
 
-`CommentsDisqus.cshtml` renders only when post comments are enabled and the Articulate root has a valid `disqusShortname` value. Leave `disqusShortname` empty to disable Disqus without showing a placeholder panel.
+`CommentsDisqus.cshtml` renders when post comments are enabled and a provider is configured. Disqus renders when the Articulate root has a valid `disqusShortname` value. Otherwise Giscus renders when the four `giscus*` properties on the root are set, or when the `Articulate:Comments:Giscus` appsettings section is fully configured. When both are configured, Disqus takes precedence. With no provider configured the partial renders nothing.
 
 See the wiki for the full theme guidance:
 
