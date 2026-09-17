@@ -19,7 +19,7 @@ Features include:
 - Live Writer support (disabled by default)
 - Markdown support
 - Post from a mobile device, including photos
-- Disqus comment support (or build your own)
+- Disqus or Giscus comment support (or build your own)
 - Search
 - BlogML import/export and Disqus export
 - Customizable RSS feeds

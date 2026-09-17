@@ -30,6 +30,11 @@
   - Existing custom TipTap configuration is preserved.
 - Organizes the built-in post URL-alias and import-ID properties into SEO and System property groups during migration.
 
+  - Adds Giscus as an alternative comment provider. Configure it in
+    ppsettings.json under Articulate:Comments:Giscus, or per blog with four
+    giscus* properties. Themes can ship a giscus.css stylesheet that Articulate
+    serves to the giscus iframe.
+
 ## Version 6.0.0
 
 ### Breaking changes for v6.0.0
