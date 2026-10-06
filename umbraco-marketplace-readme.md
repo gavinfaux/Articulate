@@ -28,9 +28,9 @@ Features include:
 
 ## Minimum requirements
 
-- Umbraco 18.1.1 through 18.x - Articulate version 8.x
-- Umbraco 17.6.2 through 17.x - Articulate version 7.x
-- Umbraco 16.5.1–16.x on .NET 9 or Umbraco 17.4.0–17.x on .NET 10 - Articulate version 6.x (deprecated; Articulate 7.0.0 supersedes it from Umbraco 17.6.2)
+- Umbraco 18.2.1 through 18.x - Articulate version 8.x
+- Umbraco 17.7.1 through 17.x - Articulate version 7.x
+- Umbraco 16.5.1–16.x on .NET 9 or Umbraco 17.4.0–17.x on .NET 10 - Articulate version 6.x (deprecated; Articulate 7.0.0 supersedes it from Umbraco 17.7.1)
 - Umbraco 13 LTS (maintenance) - Articulate 5.x.
 
 ## Installation

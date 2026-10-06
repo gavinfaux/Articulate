@@ -69,10 +69,10 @@ Repository defaults in `.actrc` provide the runner image, 2 GiB container limit,
 
 | Lane  | Package line     | Umbraco support | Target framework | Output folder       |
 |-------|------------------|-----------------|------------------|---------------------|
-| `v17` | Articulate 7.0.x | Umbraco 17.6.2–17.x | `net10.0` | `build/Release/v17` |
-| `v18` | Articulate 8.0.x | Umbraco 18.1.1–18.x   | `net10.0` | `build/Release/v18` |
+| `v17` | Articulate 7.0.x | Umbraco 17.7.1–17.x | `net10.0` | `build/Release/v17` |
+| `v18` | Articulate 8.0.x | Umbraco 18.2.1–18.x   | `net10.0` | `build/Release/v18` |
 
-The lanes produce separate NuGet packages because their Umbraco extension points are not binary-compatible. Each lane has its own supported Umbraco range: Articulate 7 starts at Umbraco 17.6.2 and stops before 18.0.0; Articulate 8 starts at Umbraco 18.1.1 and stops before 19.0.0.
+The lanes produce separate NuGet packages because their Umbraco extension points are not binary-compatible.
 
 `version.json` defines the Articulate 7.0 version through NBGV. `version-v18.txt` defines the Articulate 8.0 base version. The build runner appends NBGV commit metadata when present: a v18 base of `8.0.0` produces `8.0.0.gabcdef`. Change the text file to advance the v18 release; callers normally use these version sources.
 
@@ -125,19 +125,19 @@ Current floors in `Directory.Packages.props`:
 
 | Lane | Package | Floor |
 |------|---------|-------|
-| `v17` | `Umbraco.Cms.*` | `[17.6.2,18.0.0)` |
-| `v18` | `Umbraco.Cms.*` | `[18.1.1,19.0.0)` |
+| `v17` | `Umbraco.Cms.*` | `[17.7.1,18.0.0)` |
+| `v18` | `Umbraco.Cms.*` | `[18.2.1,19.0.0)` |
 | `v17` | `TinyMCE.Umbraco` | `[17.5.0,18.0.0)` |
 | `v18` | `TinyMCE.Umbraco` | `[18.0.0,19.0.0)` |
 
 ### Back Office client floors
 
-The Back Office client package must meet the Umbraco floor for its lane.
+The Back Office client package must target the same Umbraco major lane.
 
 | Lane | Client package floor |
 |------|----------------------|
-| `v17` | `@umbraco-cms/backoffice ^17.6.2` |
-| `v18` | `@umbraco-cms/backoffice ^18.1.1` |
+| `v17` | `@umbraco-cms/backoffice ^17.7.1` |
+| `v18` | `@umbraco-cms/backoffice ^18.2.1` |
 
 The client package is a development dependency. It is not included in the Articulate NuGet package. Umbraco supplies the Back Office runtime.
 
