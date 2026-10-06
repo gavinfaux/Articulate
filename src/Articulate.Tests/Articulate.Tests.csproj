@@ -25,7 +25,9 @@
     <PackageReference Include="Umbraco.Cms.DevelopmentMode.Backoffice" />
   </ItemGroup>
 
-  <!-- Umbraco.Code 3 allows Roslyn 5.x but NuGet otherwise selects Workspaces 5.0. Align it with Umbraco 18's compiler 5.3 packages. -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" PrivateAssets="All" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Articulate\Articulate.csproj" />

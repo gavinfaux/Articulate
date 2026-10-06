@@ -48,17 +48,17 @@ RUN set -eux; \
       ARTICULATE_PKG_VERSION=0.0.0; \
     fi; \
     if [ -z "${UMBRACO_CMS_VERSION}" ]; then \
-      echo 'ERROR: UMBRACO_CMS_VERSION build-arg is required. Pass --build-arg UMBRACO_CMS_VERSION=<range>, e.g. [18.1.1,19.0.0) for v18 or [18.1.1,19.0.0) for v18. build.cs reads the floor from Directory.Packages.props.'; \
+      echo 'ERROR: UMBRACO_CMS_VERSION build-arg is required. Pass --build-arg UMBRACO_CMS_VERSION=<range>, e.g. [18.2.1,19.0.0) for v18. build.cs reads the floor from Directory.Packages.props.'; \
       exit 1; \
     fi; \
     if [ "${USE_TINYMCE_UMBRACO}" = "true" ]; then \
       if [ -z "${TINYMCE_UMBRACO_PACKAGE_VERSION}" ]; then \
-        echo 'ERROR: TINYMCE_UMBRACO_PACKAGE_VERSION build-arg is required when USE_TINYMCE_UMBRACO=true. build.cs reads the floor from Directory.Packages.props (per lane: [18.0.0,19.0.0) for v18, [18.0.0,19.0.0) for v18).'; \
+        echo 'ERROR: TINYMCE_UMBRACO_PACKAGE_VERSION build-arg is required when USE_TINYMCE_UMBRACO=true. build.cs reads the floor from Directory.Packages.props ([18.0.0,19.0.0) for v18).'; \
         exit 1; \
       fi; \
     fi; \
     # MSBuild's CLI parser splits on `)` for /p:Name=Value, so CPM ranges like
-    # `[18.1.1,19.0.0)` can't be passed that way. Setting them as environment
+    # `[18.2.1,19.0.0)` can't be passed that way. Setting them as environment
     # variables before the dotnet call lets MSBuild pick them up as properties
     # without going through the CLI parser. Names must match the property names
     # exactly (case-sensitive on Linux). UseTinyMceUmbraco stays as /p: — it's a

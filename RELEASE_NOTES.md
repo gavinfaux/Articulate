@@ -5,7 +5,7 @@
 ### Breaking changes for v8.0.0
 
 > [!WARNING]
-> Requires Umbraco 18.1.1 through 18.x on .NET 10.
+> Requires Umbraco 18.2.1 through 18.x on .NET 10.
 >
 > Articulate 8 is a separate package line from Articulate 7 because Umbraco 18 APIs and backoffice extension points are not binary-compatible.
 
@@ -17,7 +17,7 @@
 ### Breaking changes for v7.0.0
 
 > [!WARNING]
-> Requires Umbraco 17.6.2 through 17.x on .NET 10. Umbraco 16 is not supported.
+> Requires Umbraco 17.7.1 through 17.x on .NET 10. Umbraco 16 is not supported.
 >
 > Articulate 7 is a separate package line from Articulate 6 because Umbraco 17 APIs and backoffice extension points are not binary-compatible.
 
@@ -36,7 +36,7 @@
 
 > [!WARNING]
 > Supports Umbraco **16.5.1–16.x** on .NET 9 and Umbraco **17.4.0–17.x** on .NET 10.
-> [Version 7.0.0](#version-700) supersedes this line for Umbraco 17.6.2+.
+> [Version 7.0.0](#version-700) supersedes this line for Umbraco 17.7.1+.
 > Umbraco 15 and earlier are no longer supported by Articulate 6.
 
 - Articulate 6 is deprecated; these notes document compatibility for existing installations.
