@@ -74,6 +74,12 @@ Repository defaults in `.actrc` provide the runner image, 2 GiB container limit,
 
 The lanes produce separate NuGet packages because their Umbraco extension points are not binary-compatible.
 
+## Updating branches
+
+`pr/v18-build` is the dual-lane PR branch. Merge or fast-forward source changes into it normally.
+
+`pr/v17-lts` and `pr/v18-sts` are independent package branches. Apply version and lock-file changes separately for each lane. `build/promote.cs` cherry-picks compatible commits into an isolated candidate and validates it. It does not adapt lane-specific versions or update the target branch. See [promotion utility](build/promote-help.md).
+
 `version.json` defines the Articulate 7.0 version through NBGV. `version-v18.txt` defines the Articulate 8.0 base version. The build runner appends NBGV commit metadata when present: a v18 base of `8.0.0` produces `8.0.0.gabcdef`. Change the text file to advance the v18 release; callers normally use these version sources.
 
 Both lanes share `wwwroot/App_Plugins/Articulate/BackOffice/`. The build runner tracks the active lane in an ignored marker; same-lane builds use the per-lane Vite stamp, while `--clean` is required before switching lanes.

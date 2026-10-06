@@ -1,6 +1,6 @@
 # Articulate promotion utility
 
-`build/promote.cs` prepares a candidate branch from selected commits in the side-by-side development branch. It never pushes, force-updates a ref, or opens a pull request.
+`build/promote.cs` creates and validates a local candidate for an independent LTS/STS branch. It cherry-picks commits that already fit that lane; it does not port version or lock-file changes between lanes or update the target branch. For the dual-lane PR branch (`pr/v18-build`), merge or fast-forward source changes normally. It never pushes or opens a pull request. See [Updating branches](../BUILD.md#updating-branches).
 
 ```text
 dotnet run --file build/promote.cs -- patch [options]
@@ -28,7 +28,8 @@ dotnet run --file build/promote.cs -- patch \
 | `--branch` | no | Candidate branch. Defaults to `promote/<profile>/<source-short-sha>`. |
 | `--worktree` | no | Candidate worktree. Defaults to a temporary directory. |
 | `--manifest` | no | Path for the JSON evidence manifest, relative to the repository root. |
-| `--skip-build` | no | Run Git/reference checks only. Use only while preparing or debugging a target branch. |
+| `--docker` | no | Also run Docker runtime validation. Tears down the fixed lane Compose project and its volumes; do not run against an active `docker-dev` stack. Requires Docker; cannot be combined with `--skip-build`. |
+| `--skip-build` | no | Run Git/reference checks only. Cannot be combined with `--docker`. Use only while preparing or debugging a target branch. |
 
 The command resolves refs to SHAs, verifies that every selected commit belongs to the source ref, creates an isolated worktree from the target base, cherry-picks the commits, checks for forbidden platform references, and runs the target branch's clean build, tests and package smoke checks.
 

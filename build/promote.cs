@@ -26,7 +26,7 @@ try
     return command switch
     {
         "patch" => await PatchAsync(opts.Validate(command, "profile", "base", "source", "commits", "branch", "worktree", "manifest", "skip-build", "docker")),
-        _ => throw new ArgumentException($"Unknown command '{command}'. Run 'dotnet run --file build/promote.cs -- help'.")
+        _ => throw new ArgumentException($"Unknown command '{command}'. Run 'dotnet run --file build/promote.cs -- --help'.")
     };
 }
 catch (Exception e)
@@ -348,6 +348,8 @@ sealed class Opts
             if (values.ContainsKey(key) && string.IsNullOrWhiteSpace(values[key])) throw new ArgumentException($"--{key} requires a value.");
         foreach (var key in new[] { "skip-build", "docker" })
             if (values.ContainsKey(key) && values[key] is not null) throw new ArgumentException($"--{key} is a flag and does not accept a value.");
+        if (Flag("skip-build") && Flag("docker"))
+            throw new ArgumentException("--docker cannot be combined with --skip-build; Docker validation requires a built candidate.");
         return this;
     }
 
