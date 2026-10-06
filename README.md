@@ -15,8 +15,8 @@ Choose the package line that matches your Umbraco installation.
 
 ### Umbraco 17 and 18 (.NET 10)
 
-- Umbraco 17.6.2 through 17.x: `dotnet add package Articulate --version 7.0.0-rc1`
-- Umbraco 18.1.1 through 18.x: `dotnet add package Articulate --version 8.0.0-rc1`
+- Umbraco 17.7.1 through 17.x: `dotnet add package Articulate --version 7.0.0-rc1`
+- Umbraco 18.2.1 through 18.x: `dotnet add package Articulate --version 8.0.0-rc1`
 
 These are pre-release packages. Use `7.0.0` or `8.0.0` after the stable release.
 
@@ -26,7 +26,7 @@ Articulate 5.x remains available for existing Umbraco 13 sites. Umbraco 13 secur
 
 ### Articulate 6.x (deprecated)
 
-Articulate 6.x supports Umbraco 16.5.1–16.x on .NET 9 and Umbraco 17.4.0–17.x on .NET 10. Articulate 7.0.0 supersedes it for Umbraco 17.6.2+; current feature work is on Articulate 7.x and 8.x.
+Articulate 6.x supports Umbraco 16.5.1–16.x on .NET 9 and Umbraco 17.4.0–17.x on .NET 10. Articulate 7.0.0 supersedes it for Umbraco 17.7.1+; current feature work is on Articulate 7.x and 8.x.
 
 ## Features
 

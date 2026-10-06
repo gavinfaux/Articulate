@@ -9,8 +9,11 @@ allowBuilds:
   unrs-resolver: true
 blockExoticSubdeps: true
 overrides:
-  dompurify@<=3.4.12: ^3.4.13
+  brace-expansion@<1.1.21: ^1.1.21
+  brace-expansion@>=5.0.0 <5.0.12: ^5.0.12
+  dompurify@<3.4.16: ^3.4.16
   js-yaml@<4.3.2: ^4.3.2
-  nanoid@<3.3.18: ^3.3.18
+  source-map-js@<1.2.2: ^1.2.2
 minimumReleaseAgeExclude:
-  - "@umbraco-cms/backoffice@17.6.2"
+  - source-map-js@1.2.2
+  - '@umbraco-cms/backoffice@17.7.1'
