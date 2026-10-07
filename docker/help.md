@@ -65,6 +65,10 @@ dotnet run --file docker/run.cs -- docker-test [--lane v17|v18|all] [--keep] [--
 
 Each lane builds fresh packages and images, starts in development mode, and verifies production/theme behavior unless smoke is skipped. With `--skip-smoke`, smoke publishing is skipped. The public root may return 404 when the blog root or its children are unpublished; an existing volume with published content may return 200. `--keep` leaves successful stacks running.
 
+### HTTP E2E tests
+
+See the [E2E guide](../src/Articulate.Web/Client/e2e/README.md) for setup, tests and cleanup. Use only the separate `art_e2e_v17` and `art_e2e_v18` resources.
+
 ### docker-ca
 
 ```text

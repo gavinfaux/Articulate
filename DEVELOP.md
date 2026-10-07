@@ -45,6 +45,8 @@ dotnet run --file docker/run.cs -- docker-dev --lane v17
 
 Use `--lane v18` for Umbraco 18. Use `--reset` only when you need a fresh Docker database.
 
+For HTTP E2E tests, follow the [E2E guide](src/Articulate.Web/Client/e2e/README.md). Use the separate `art_e2e_v17` and `art_e2e_v18` stacks, not `art_v17` or `art_v18`.
+
 ## Client Development
 
 From `src/Articulate.Web/Client`:

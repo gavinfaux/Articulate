@@ -50,7 +50,13 @@ node docker/smoke.mjs publish --no-descendants
 
 `confirm` is read-only and checks all descendants under the Articulate root. Publication processes the root first, waits for the public route and published-content cache, then publishes descendants. Use `https://localhost:18444/` for the v18 lane. Set `NODE_BIN` if `node` is not on `PATH`. On Windows, invoke the script from PowerShell or cmd rather than passing `node.exe` through WSL or Git Bash.
 
+The `theme` smoke command changes the theme, reloads the app cache and restores the original theme. The E2E test checks theme changes without a cache reload.
+
 The smoke client bypasses certificate validation for loopback and RFC1918 private IPv4 hosts used by the development harness. Public hosts retain normal certificate validation.
+
+## HTTP E2E tests
+
+Follow the [E2E guide](../src/Articulate.Web/Client/e2e/README.md) to test the packaged application. Use the separate `art_e2e_v17` and `art_e2e_v18` stacks. Do not use or reset `art_v17` or `art_v18`. These tests do not run in CI.
 
 ## LAN access
 
@@ -146,6 +152,6 @@ The Docker harness auto-provisions the API user this server expects. Configure y
 
 Install with the lane-matched tag (`@umbraco-cms/mcp-dev@17` for the v17 lane, `@18` for v18). See the [Umbraco MCP documentation](https://docs.umbraco.com/umbraco-developer-mcp) for the full tool list, permissions model, and Claude Desktop config snippet.
 
-MCP complements `smoke.mjs`; it does not replace the deterministic publish, state, front-end, and theme assertions used by the Docker test command.
+Use MCP for interactive Management API tasks. Use smoke tests and E2E for repeatable checks.
 
 > The `umbraco-articulate` OpenID client is **not** the right credential here. It is the Markdown Editor's browser-side OAuth client (see [Markdown Editor Authentication](https://github.com/Shazwazza/Articulate/wiki/Markdown-Editor-Authentication)), not an API user client-credentials identity.

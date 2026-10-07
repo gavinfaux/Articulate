@@ -302,6 +302,9 @@ static class Env
         "UMBRACO_PUBLIC_URL",
         "ARTICULATE_REDIRECT_URI",
         "ARTICULATE_LOGOUT_REDIRECT_URI",
+        "COMPOSE_PROJECT_NAME",
+        "COMPOSE_VOLUME_PREFIX",
+        "IMAGE_TAG",
     }.ToDictionary(name => name, Environment.GetEnvironmentVariable);
 
     public static string? Get(string name, string? fallback = null)
