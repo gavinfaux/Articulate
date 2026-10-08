@@ -79,13 +79,13 @@ The site needs a published Articulate root, its Articles archive and the VAPOR t
 | --- | --- |
 | Publishing | Draft returns 404; published post appears in HTML and RSS; unpublished route returns 404. |
 | RSS | `maxItems=2` returns both test posts; `maxItems=0` returns one. |
-| Search | Title/body matches; drafts and non-matches excluded; 200-character and 10-token limits; quote escaping. |
+| Search | Title/body matches; drafts and non-matches excluded; 200-character and 10-token limits; quote escaping; two-page capacity, disjoint exact title/URL pairs and complete fixture union. Pagination temporarily sets the dedicated root pageSize to 2, then restores its full saved values, variants and template. |
 | Search routing | Page-one redirect; reserved index names use published content. |
 | Route refresh | Publishing `searchUrlName` changes a warmed route without a reload. |
 | Themes | Publishing a theme change serves the rendered CSS URL; original configuration restored. |
 | Giscus | Packaged CSS, one-hour cache, reflected allowed-origin CORS, anonymous wildcard CORS without `Vary: Origin`, and missing-theme fallback. |
 
-One helper test checks VAPOR result extraction. Search tests do not cover other themes or distinguish AND from OR queries. RSS tests do not check feed freshness after unpublish.
+One helper test checks that VAPOR extraction returns only each preview's `h1.post-title` link, not read-more, excerpt or sidebar links. Search tests do not cover other themes or distinguish AND from OR queries. RSS tests do not check feed freshness after unpublish.
 
 ## Teardown
 

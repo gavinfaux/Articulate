@@ -1,4 +1,6 @@
 import { randomUUID } from 'node:crypto';
+import { mkdir, writeFile } from 'node:fs/promises';
+import { dirname } from 'node:path';
 import { expect, test, type APIRequestContext } from '@playwright/test';
 import { XMLParser } from 'fast-xml-parser';
 
@@ -64,11 +66,15 @@ async function waitFor(request: APIRequestContext, path: string, predicate: (sta
 function searchResults(html: string): Array<{ title: string; href: string }> {
   const previews = [...html.matchAll(/<article\b([^>]*)>([\s\S]*?)<\/article>/gi)]
     .filter(([, attributes]) => attributes.match(/\bclass\s*=\s*(["'])(.*?)\1/i)?.[2]?.split(/\s+/).includes('preview'));
-  return previews.flatMap(([, , article]) => [...article.matchAll(/<a\b([^>]*)>([\s\S]*?)<\/a>/gi)].flatMap(([, attributes, content]) => {
-    const href = attributes.match(/\bhref\s*=\s*(["'])(.*?)\1/i)?.[2];
-    const title = content.replace(/<[^>]*>/g, '').replace(/&amp;/g, '&').trim();
+  return previews.flatMap(([, , article]) => {
+    const heading = article.match(/<h1\b([^>]*)>([\s\S]*?)<\/h1>/i);
+    if (!heading || !heading[1].match(/\bclass\s*=\s*(["'])(.*?)\1/i)?.[2]?.split(/\s+/).includes('post-title')) return [];
+    const anchor = heading[2].match(/<a\b([^>]*)>([\s\S]*?)<\/a>/i);
+    if (!anchor) return [];
+    const href = anchor[1].match(/\bhref\s*=\s*(["'])(.*?)\1/i)?.[2];
+    const title = anchor[2].replace(/<[^>]*>/g, '').replace(/&amp;/g, '&').trim();
     return href && title ? [{ href, title }] : [];
-  }));
+  });
 }
 
 function checkedThemeAssetUrl(href: string, siteUrl: string, expectedPath: string): URL {
@@ -79,10 +85,15 @@ function checkedThemeAssetUrl(href: string, siteUrl: string, expectedPath: strin
   return assetUrl;
 }
 
-test('VAPOR search result extraction ignores identical links outside result articles', () => {
-  const twoPreviewsAndSidebar = '<aside><a href="/owned/">Owned result</a></aside><article class="preview"><p>No results</p></article><article class="preview"><a href="/owned/">Owned result</a></article><aside><a href="/owned/">Owned result</a></aside>';
-  expect(searchResults(twoPreviewsAndSidebar), 'the owned result in the second preview is found once; sidebar duplicates are excluded').toEqual([
-    { href: '/owned/', title: 'Owned result' },
+test('VAPOR search result extraction returns one post-title link per card', () => {
+  const twoPreviewsAndSidebar = '<aside><a href="/first/">First post</a><a href="/second/">Second post</a></aside>' +
+    '<article class="preview"><p>No results</p></article>' +
+    '<article class="preview"><header><h1 class="post-title"><a href="/first/" title="Read this article">First post</a></h1></header><section><p>First excerpt <a href="/first/">excerpt link</a></p><p class="readmore"><a href="/first/" title="Read this article">Read this article <i class="fa-solid fa-circle-chevron-right"></i></a></p></section></article>' +
+    '<article class="preview"><header><h1 class="post-title"><a href="/second/" title="Read this article">Second post</a></h1></header><section><p>Second excerpt</p><p class="readmore"><a href="/second/" title="Read this article">Read this article <i class="fa-solid fa-circle-chevron-right"></i></a></p></section></article>' +
+    '<aside><a href="/first/">First post</a><a href="/second/">Second post</a></aside>';
+  expect(searchResults(twoPreviewsAndSidebar), 'both VAPOR cards yield one title link; read-more, excerpt and outside links are excluded').toEqual([
+    { href: '/first/', title: 'First post' },
+    { href: '/second/', title: 'Second post' },
   ]);
 });
 
@@ -349,6 +360,229 @@ test('public search discovers a published Markdown post and excludes drafts and 
       expect([200, 204].includes(deletion.status()), 'search fixture is cleaned up').toBeTruthy();
     }
   }
+});
+
+test('public search paginates every matching published post exactly once', async ({ request, baseURL }) => {
+  const accessToken = await token(request);
+  const { id: rootId, document: root } = await rootDocument(request, accessToken);
+  expect(root.values.find(value => value.alias === 'theme')?.value, 'VAPOR List.cshtml owns the dedicated fixture search-result article markup').toBe('VAPOR');
+  const searchValue = root.values.find(value => value.alias === 'searchUrlName')?.value;
+  if (typeof searchValue !== 'string' || !searchValue) throw new Error('searchUrlName is missing or not a string');
+  const originalPageSize = root.values.find(value => value.alias === 'pageSize');
+  if (!originalPageSize) throw new Error('pageSize is missing from the dedicated root values');
+  expect(originalPageSize.value, 'the dedicated root publishes the source-owned pageSize property').toBe(10);
+
+  const childrenResponse = await api(request, accessToken, `/tree/document/children?parentId=${rootId}&skip=0&take=100`);
+  expect(childrenResponse.ok(), 'Management API lists root children').toBeTruthy();
+  const children = (await childrenResponse.json() as { items: Array<{ id: string; documentType: { id: string } }> }).items;
+  let articlesId: string | undefined;
+  for (const child of children) {
+    const typeResponse = await api(request, accessToken, `/document-type/${child.documentType.id}`);
+    expect(typeResponse.ok()).toBeTruthy();
+    const type = await typeResponse.json() as { alias: string };
+    if (type.alias === 'ArticulateArchive') articlesId = child.id;
+  }
+  const archiveId = required(articlesId, 'Articles archive');
+  const siteUrl = required(baseURL, 'configured isolated base URL');
+  const fixtures = Array.from({ length: 3 }, () => {
+    const id = randomUUID().replaceAll('-', '');
+    return { title: `E2E paged search ${id}`, slug: `paged-search-${id}` };
+  });
+  const marker = `pagination${randomUUID().replaceAll('-', '')}`;
+  const searchPath = `/${searchValue}/?term=${encodeURIComponent(marker)}`;
+  const rootBackup = {
+    id: rootId,
+    values: root.values,
+    variants: root.variants,
+    template: root.template ?? null,
+    pageSize: originalPageSize.value,
+  };
+  const info = test.info();
+  const rootBackupPath = info.outputPath('n3-root-before-mutation.json');
+  const journalPath = info.outputPath('n3-fixture-journal.json');
+  await mkdir(dirname(rootBackupPath), { recursive: true });
+  await writeFile(rootBackupPath, JSON.stringify(rootBackup, null, 2));
+  await info.attach('n3-root-before-mutation.json', { path: rootBackupPath, contentType: 'application/json' });
+
+  const fixtureJournal: Array<{ title: string; slug: string; state: string; id?: string; location?: string }> = [];
+  const documentIds: string[] = [];
+  const expectedPairs: Array<{ title: string; url: string }> = [];
+  let rootMutationAttempted = false;
+  let publishedPageSize = 0;
+  let latestSearchObservation: {
+    searchPath: string;
+    publishedPageSize: number;
+    pages: Array<{ status: number; count: number; results: Array<{ title: string; href: string }>; html: string }>;
+  } | undefined;
+  let testFailure: unknown;
+  const cleanupErrors: string[] = [];
+  const persistRecoveryJournal = async () => {
+    try {
+      await writeFile(journalPath, JSON.stringify(fixtureJournal, null, 2));
+    } catch (error) {
+      cleanupErrors.push(`fixture journal: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  };
+  try {
+    const changedValues = root.values.map(value => value.alias === 'pageSize' ? { ...value, value: 2 } : value);
+    rootMutationAttempted = true;
+    const update = await api(request, accessToken, `/document/${rootId}`, {
+      method: 'PUT', data: { values: changedValues, variants: root.variants, template: root.template ?? null },
+    });
+    expect(update.ok(), 'Management API saves the actual root pageSize property as 2').toBeTruthy();
+    await publish(request, accessToken, rootId);
+    const updatedRoot = await getDocument(request, accessToken, rootId);
+    const pageSizeValue = updatedRoot.values.find(value => value.alias === 'pageSize')?.value;
+    expect(pageSizeValue, 'published root pageSize is 2').toBe(2);
+    if (typeof pageSizeValue !== 'number') throw new Error('Published root pageSize is not numeric');
+    publishedPageSize = pageSizeValue;
+
+    for (const fixture of fixtures) {
+      fixtureJournal.push({ ...fixture, state: 'intent-recorded-before-create' });
+      await writeFile(journalPath, JSON.stringify(fixtureJournal, null, 2));
+      const created = await api(request, accessToken, '/document', {
+        method: 'POST',
+        data: {
+          parent: { id: archiveId },
+          documentType: { id: '9c2df3ea-74d9-41ef-8773-07960ac5a819' },
+          template: null,
+          variants: [{ culture: null, segment: null, name: fixture.title }],
+          values: [
+            { alias: 'markdown', value: `Pagination fixture ${marker} ${fixture.slug}`, culture: null, segment: null, editorAlias: 'Umbraco.MarkdownEditor', entityType: 'document-property-value' },
+            { alias: 'umbracoUrlName', value: fixture.slug, culture: null, segment: null, editorAlias: 'Umbraco.TextBox', entityType: 'document-property-value' },
+          ],
+        },
+      });
+      expect(created.status(), 'Management API creates each Markdown draft').toBe(201);
+      const location = required(created.headers().location, 'created document location');
+      const documentId = required(new URL(location, siteUrl).pathname.split('/').at(-1), 'created document id');
+      documentIds.push(documentId);
+      const journalEntry = fixtureJournal.at(-1);
+      if (!journalEntry) throw new Error('Fixture journal lost its latest entry');
+      Object.assign(journalEntry, { state: 'created', id: documentId, location });
+      await writeFile(journalPath, JSON.stringify(fixtureJournal, null, 2));
+      await publish(request, accessToken, documentId);
+      const urlsResponse = await api(request, accessToken, `/document/urls?id=${documentId}`);
+      expect(urlsResponse.ok(), 'Management API returns each published fixture URL').toBeTruthy();
+      const urls = await urlsResponse.json() as Array<{ urlInfos: Array<{ url: string }> }>;
+      expectedPairs.push({
+        title: fixture.title,
+        url: new URL(required(urls[0]?.urlInfos[0]?.url, 'published Markdown post URL'), siteUrl).href,
+      });
+    }
+
+    const readPages = async () => {
+      const [first, second] = await Promise.all([
+        request.get(searchPath),
+        request.get(`${searchPath}&p=2`),
+      ]);
+      const [firstHtml, secondHtml] = await Promise.all([first.text(), second.text()]);
+      const firstResults = searchResults(firstHtml);
+      const secondResults = searchResults(secondHtml);
+      latestSearchObservation = {
+        searchPath,
+        publishedPageSize,
+        pages: [
+          { status: first.status(), count: firstResults.length, results: firstResults.map(result => ({ title: result.title, href: new URL(result.href, siteUrl).href })), html: firstHtml },
+          { status: second.status(), count: secondResults.length, results: secondResults.map(result => ({ title: result.title, href: new URL(result.href, siteUrl).href })), html: secondHtml },
+        ],
+      };
+      if (first.status() !== 200 || second.status() !== 200) return undefined;
+      return [firstResults, secondResults] as const;
+    };
+    const expectedKeys = new Set(expectedPairs.map(pair => JSON.stringify(pair)));
+    let pages: Awaited<ReturnType<typeof readPages>>;
+    await expect.poll(async () => {
+      pages = await readPages();
+      if (!pages) return false;
+      const pairs = pages.flatMap(results => results.map(result => ({
+        title: result.title,
+        url: new URL(result.href, siteUrl).href,
+      })));
+      const ownedKeys = new Set(pairs.filter(pair => expectedKeys.has(JSON.stringify(pair))).map(pair => JSON.stringify(pair)));
+      return pages[0].length === 2 && pages[1].length === 1 && ownedKeys.size === expectedPairs.length;
+    }, { timeout: 20_000, intervals: [250, 500, 1000, 2000] }).toBe(true);
+
+    const [firstPage, secondPage] = required(pages, 'both search pages rendered');
+    expect(firstPage, 'page one contains exactly the configured capacity').toHaveLength(2);
+    expect(secondPage, 'page two contains the one remaining owned post').toHaveLength(1);
+    const firstPairs = firstPage.map(result => ({ title: result.title, url: new URL(result.href, siteUrl).href }));
+    const secondPairs = secondPage.map(result => ({ title: result.title, url: new URL(result.href, siteUrl).href }));
+    const firstKeys = firstPairs.map(pair => JSON.stringify(pair));
+    const secondKeys = secondPairs.map(pair => JSON.stringify(pair));
+    expect(firstKeys.filter(key => secondKeys.includes(key)), 'pages contain disjoint exact title and public URL pairs').toEqual([]);
+    const allKeys = [...firstKeys, ...secondKeys];
+    expect(allKeys, 'the complete two-page union has exactly three results').toHaveLength(expectedPairs.length);
+    expect(new Set(allKeys).size, 'no result is duplicated across or within pages').toBe(expectedPairs.length);
+    for (const key of expectedKeys) expect(allKeys, 'the complete two-page union contains every exact owned pair').toContain(key);
+  } catch (error) {
+    testFailure = error;
+    if (latestSearchObservation) {
+      try {
+        const observationPath = info.outputPath('n3-last-search-observation.json');
+        await writeFile(observationPath, JSON.stringify({
+          searchPath: latestSearchObservation.searchPath,
+          publishedPageSize: latestSearchObservation.publishedPageSize,
+          pages: latestSearchObservation.pages.map(({ status, count, results }) => ({ status, count, results })),
+        }, null, 2));
+        await info.attach('n3-last-search-observation.json', { path: observationPath, contentType: 'application/json' });
+        for (const [index, page] of latestSearchObservation.pages.entries()) {
+          await info.attach(`n3-last-search-page-${index + 1}.html`, { body: page.html, contentType: 'text/html' });
+        }
+      } catch (diagnosticError) {
+        cleanupErrors.push(`search diagnostics: ${diagnosticError instanceof Error ? diagnosticError.message : String(diagnosticError)}`);
+      }
+    }
+  } finally {
+    for (const id of documentIds) {
+      try {
+        const deletion = await api(request, accessToken, `/document/${id}`, { method: 'DELETE' });
+        if (![200, 204].includes(deletion.status())) throw new Error(`DELETE returned ${deletion.status()}`);
+        const verification = await api(request, accessToken, `/document/${id}`);
+        if (verification.status() !== 404) throw new Error(`post-delete Management API read returned ${verification.status()}`);
+        const entry = fixtureJournal.find(fixture => fixture.id === id);
+        if (entry) entry.state = 'deleted-and-verified';
+        await persistRecoveryJournal();
+      } catch (error) {
+        cleanupErrors.push(`fixture ${id}: ${error instanceof Error ? error.message : String(error)}`);
+        const entry = fixtureJournal.find(fixture => fixture.id === id);
+        if (entry) entry.state = 'cleanup-failed';
+        await persistRecoveryJournal();
+      }
+    }
+    if (rootMutationAttempted) {
+      try {
+        const restore = await api(request, accessToken, `/document/${rootId}`, {
+          method: 'PUT', data: { values: rootBackup.values, variants: rootBackup.variants, template: rootBackup.template },
+        });
+        if (!restore.ok()) throw new Error(`root restore returned ${restore.status()}`);
+        await publish(request, accessToken, rootId);
+        const restored = await getDocument(request, accessToken, rootId);
+        expect(restored.values, 'root property values are restored exactly').toEqual(rootBackup.values);
+        const withoutPublishTimestamps = (variants: typeof rootBackup.variants) => variants.map(variant =>
+          Object.fromEntries(Object.entries(variant).filter(([field]) => field !== 'publishDate' && field !== 'updateDate')),
+        );
+        expect(
+          withoutPublishTimestamps(restored.variants),
+          'all root variant fields are restored except publish-managed timestamps',
+        ).toEqual(withoutPublishTimestamps(rootBackup.variants));
+        expect(restored.template ?? null, 'root template is restored exactly, including null').toEqual(rootBackup.template);
+        await info.attach('n3-root-restored.json', {
+          body: JSON.stringify({ id: rootId, values: restored.values, variants: restored.variants, template: restored.template ?? null }, null, 2),
+          contentType: 'application/json',
+        });
+      } catch (error) {
+        cleanupErrors.push(`root ${rootId} restoration: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    }
+    await info.attach('n3-fixture-journal.json', { path: journalPath, contentType: 'application/json' });
+  }
+  if (cleanupErrors.length > 0) {
+    const recoveryFailure = new Error(`N3 recovery needs attention: ${cleanupErrors.join('; ')}`);
+    if (testFailure !== undefined) throw new AggregateError([testFailure, recoveryFailure], 'N3 test failed and recovery needs attention');
+    throw recoveryFailure;
+  }
+  if (testFailure !== undefined) throw testFailure;
 });
 
 test('root theme changes serve the alternate packaged stylesheet and restore the original configuration', async ({ request, baseURL }) => {
