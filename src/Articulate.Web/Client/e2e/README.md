@@ -79,7 +79,7 @@ The site needs a published Articulate root, its Articles archive and the VAPOR t
 | --- | --- |
 | Publishing | Draft returns 404; published post appears in HTML and RSS; unpublished route returns 404. |
 | RSS | `maxItems=2` returns both test posts; `maxItems=0` returns one. |
-| Search | Title and body matches; drafts and non-matching posts excluded. |
+| Search | Title/body matches; drafts and non-matches excluded; 200-character and 10-token limits; quote escaping. |
 | Search routing | Page-one redirect; reserved index names use published content. |
 | Route refresh | Publishing `searchUrlName` changes a warmed route without a reload. |
 | Themes | Publishing a theme change serves the rendered CSS URL; original configuration restored. |

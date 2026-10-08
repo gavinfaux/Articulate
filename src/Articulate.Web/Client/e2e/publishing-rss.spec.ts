@@ -267,6 +267,33 @@ test('public search discovers a published Markdown post and excludes drafts and 
   const resultPath = `/${searchValue}/?term=${encodeURIComponent(marker)}`;
   const titleOnlyPath = `/${searchValue}/?term=${encodeURIComponent(titleToken)}`;
   const multiTermPath = `/${searchValue}/?term=${encodeURIComponent(`${titleToken} ${marker}`)}`;
+  const characterFiller = `charfiller${randomUUID().replaceAll('-', '')}`;
+  const characterInRangeFiller = `${characterFiller}${'x'.repeat(164 - characterFiller.length)}`;
+  const characterBoundaryFiller = `${characterFiller}${'x'.repeat(199 - characterFiller.length)}`;
+  const characterInRangeQuery = `${characterInRangeFiller} ${marker}`;
+  const characterBoundaryQuery = `${characterBoundaryFiller} ${marker}`;
+  const tokenFillers = Array.from({ length: 10 }, (_, index) => `f${randomUUID().replaceAll('-', '').slice(0, 8)}${index}`);
+  const tokenTenQuery = `${tokenFillers.slice(0, 9).join(' ')} ${marker}`;
+  const tokenElevenQuery = `${tokenFillers.join(' ')} ${marker}`;
+  expect(characterInRangeQuery.length).toBe(200);
+  expect(characterInRangeQuery.indexOf(marker)).toBe(165);
+  expect(characterInRangeQuery.indexOf(marker) + marker.length).toBe(200);
+  expect(characterBoundaryQuery.length).toBe(200 + marker.length);
+  expect(characterBoundaryQuery.indexOf(marker)).toBe(200);
+  expect(characterInRangeQuery.split(' ').length).toBe(2);
+  expect(characterBoundaryQuery.split(' ').length).toBe(2);
+  expect(tokenTenQuery.length).toBe(134);
+  expect(tokenElevenQuery.length).toBe(145);
+  expect(tokenTenQuery.split(' ').length).toBe(10);
+  expect(tokenElevenQuery.split(' ').length).toBe(11);
+  for (const filler of [characterFiller, characterInRangeFiller, characterBoundaryFiller, ...tokenFillers]) {
+    expect([title, body, slug].some(value => value.includes(filler)), 'boundary filler is absent from the owned document').toBe(false);
+  }
+  const characterInRangePath = `/${searchValue}/?term=${encodeURIComponent(characterInRangeQuery)}`;
+  const characterBoundaryPath = `/${searchValue}/?term=${encodeURIComponent(characterBoundaryQuery)}`;
+  const tokenTenPath = `/${searchValue}/?term=${encodeURIComponent(tokenTenQuery)}`;
+  const tokenElevenPath = `/${searchValue}/?term=${encodeURIComponent(tokenElevenQuery)}`;
+  const punctuationPath = `/${searchValue}/?term=${encodeURIComponent(`${marker} "`)}`;
   const nonmatchingPath = `/${searchValue}/?term=${encodeURIComponent(`absent${randomUUID().replaceAll('-', '')}`)}`;
   let documentId: string | undefined;
 
@@ -307,12 +334,14 @@ test('public search discovers a published Markdown post and excludes drafts and 
       return searchResults(await response.text()).some(result =>
         result.title === title && new URL(result.href, siteUrl).href === expectedUrl);
     };
-    for (const queryPath of [resultPath, titleOnlyPath, multiTermPath]) {
+    for (const queryPath of [resultPath, titleOnlyPath, multiTermPath, tokenTenPath, characterInRangePath, punctuationPath]) {
       await expect.poll(() => includesOwnedResult(queryPath), {
         timeout: 20_000, intervals: [250, 500, 1000, 2000],
       }).toBe(true);
     }
 
+    expect(await includesOwnedResult(characterBoundaryPath), 'a marker wholly beyond character 200 is excluded').toBe(false);
+    expect(await includesOwnedResult(tokenElevenPath), 'the matching marker in token 11 is excluded').toBe(false);
     expect(await includesOwnedResult(nonmatchingPath), 'non-matching search excludes the fixture URL from rendered links').toBe(false);
   } finally {
     if (documentId) {
