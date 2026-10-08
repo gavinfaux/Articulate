@@ -83,7 +83,7 @@ The site needs a published Articulate root, its Articles archive and the VAPOR t
 | Search routing | Page-one redirect; reserved index names use published content. |
 | Route refresh | Publishing `searchUrlName` changes a warmed route without a reload. |
 | Themes | Publishing a theme change serves the rendered CSS URL; original configuration restored. |
-| Giscus | CSS, cache and CORS headers; missing-theme fallback. |
+| Giscus | Packaged CSS, one-hour cache, reflected allowed-origin CORS, anonymous wildcard CORS without `Vary: Origin`, and missing-theme fallback. |
 
 One helper test checks VAPOR result extraction. Search tests do not cover other themes or distinguish AND from OR queries. RSS tests do not check feed freshness after unpublish.
 
