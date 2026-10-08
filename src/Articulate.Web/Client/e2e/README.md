@@ -82,6 +82,7 @@ The site needs a published Articulate root, its Articles archive and the VAPOR t
 | Taxonomy | Three published posts use the live `Umbraco.Tags` JSON-array schemas and distinct tag/category groups. Exact title/URL sets and nonmatching-post exclusions are checked in tag/category listings and scoped RSS; fixture posts are deleted and owned tag records are reported. |
 | Search | Title/body matches; drafts and non-matches excluded; 200-character and 10-token limits; quote escaping; two-page capacity, disjoint exact title/URL pairs and complete fixture union. Pagination temporarily sets the dedicated root pageSize to 2, then restores its full saved values, variants and template. |
 | Search routing | Page-one redirect; reserved index names use published content. |
+| Route collisions | Valid root publish succeeds; exact `categoriesUrlName`/`tagsUrlName` collision draft is read back; normal publish returns `CancelledByEvent`; original root is restored and publishes normally; public route snapshots and the collision route are checked. |
 | Route refresh | Publishing `searchUrlName` changes a warmed route without a reload. |
 | Themes | Publishing a theme change serves the rendered CSS URL; original configuration restored. |
 | Giscus | Packaged CSS, one-hour cache, reflected allowed-origin CORS, anonymous wildcard CORS without `Vary: Origin`, and missing-theme fallback. |

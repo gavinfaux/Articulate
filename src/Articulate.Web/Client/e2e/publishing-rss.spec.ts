@@ -49,11 +49,11 @@ async function rootDocument(request: APIRequestContext, accessToken: string) {
   throw new Error('No Articulate root document exists; refusing to fall back to another root.');
 }
 
-async function publish(request: APIRequestContext, accessToken: string, id: string) {
+async function publish(request: APIRequestContext, accessToken: string, id: string, assertion = 'Management API publishes normally') {
   const response = await api(request, accessToken, `/document/${id}/publish`, {
     method: 'PUT', data: { publishSchedules: [{ culture: null, schedule: null }] },
   });
-  expect(response.ok(), 'Management API publishes normally').toBeTruthy();
+  expect(response.ok(), assertion).toBeTruthy();
 }
 
 async function waitFor(request: APIRequestContext, path: string, predicate: (status: number, body: string) => boolean) {
@@ -61,6 +61,45 @@ async function waitFor(request: APIRequestContext, path: string, predicate: (sta
     const response = await request.get(path, { headers: { 'Cache-Control': 'no-cache' } });
     return predicate(response.status(), await response.text());
   }, { timeout: 20_000, intervals: [250, 500, 1000, 2000] }).toBe(true);
+}
+
+async function publicRouteSnapshot(request: APIRequestContext, path: string) {
+  const response = await request.get(path, { maxRedirects: 0, headers: { 'Cache-Control': 'no-cache' } });
+  const body = await response.text();
+  const main = body.match(/<main\b[^>]*>([\s\S]*?)<\/main>/i)?.[1] ?? body;
+  const title = body.match(/<title\b[^>]*>([\s\S]*?)<\/title>/i)?.[1]
+    ?.replace(/<[^>]*>/g, '')
+    .replace(/&amp;/g, '&')
+    .trim() ?? '';
+  // The tag view has no ordering contract, so compare visible main text as a sorted word multiset.
+  const contentWords = main
+    .replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi, ' ')
+    .replace(/<!--[\s\S]*?-->/g, ' ')
+    .replace(/<a\b[^>]*>[\s\S]*?<\/a>/gi, ' ')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&nbsp;|&#160;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&hellip;/gi, '…')
+    .replace(/&(?:[a-z][a-z0-9]+|#x?[0-9a-f]+);/gi, ' ')
+    .toLowerCase()
+    .match(/[\p{L}\p{N}]+(?:['’][\p{L}\p{N}]+)*/gu) ?? [];
+  contentWords.sort((left, right) => left < right ? -1 : left > right ? 1 : 0);
+  const links = [...body.matchAll(/<a\b([^>]*)>([\s\S]*?)<\/a>/gi)]
+    .map(([, attributes, content]) => {
+      const href = attributes.match(/\bhref\s*=\s*(["'])(.*?)\1/i)?.[2];
+      const text = content.replace(/<[^>]*>/g, '').replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim();
+      return href === undefined ? undefined : { href, text };
+    })
+    .filter((link): link is { href: string; text: string } => link !== undefined);
+  links.sort((left, right) => left.href.localeCompare(right.href) || left.text.localeCompare(right.text));
+  return {
+    path,
+    status: response.status(),
+    contentType: response.headers()['content-type'] ?? null,
+    title,
+    contentWords,
+    links,
+  };
 }
 
 function searchResults(html: string): Array<{ title: string; href: string }> {
@@ -1031,4 +1070,167 @@ test('publishing a real search route configuration refreshes a warmed route with
     await waitFor(request, oldUrl, (status, html) => status === 200 && html.includes(expectedSearchOutput));
     await waitFor(request, newUrl, status => status === 404);
   }
+});
+
+test('publish veto preserves existing public routes when configured route segments collide', async ({ request, baseURL }) => {
+  const accessToken = await token(request);
+  const { id: rootId, document: root } = await rootDocument(request, accessToken);
+  const siteUrl = required(baseURL, 'configured isolated base URL');
+  const routeValues = ['searchUrlName', 'categoriesUrlName', 'tagsUrlName'].map(alias => {
+    const value = root.values.find(item => item.alias === alias)?.value;
+    if (typeof value !== 'string' || !value) throw new Error(`${alias} is missing or not a string`);
+    return { alias, value };
+  });
+  const rootUrls = await api(request, accessToken, `/document/urls?id=${rootId}`);
+  expect(rootUrls.ok(), 'Management API returns the published root URL').toBeTruthy();
+  const rootUrlData = await rootUrls.json() as Array<{ urlInfos: Array<{ url: string }> }>;
+  const rootUrl = required(rootUrlData[0]?.urlInfos[0]?.url, 'published root URL');
+  const publishedRootUrl = new URL(rootUrl, siteUrl);
+  expect(publishedRootUrl.origin, 'published root URL remains on the dedicated site').toBe(new URL(siteUrl).origin);
+  const publicPaths = [
+    publishedRootUrl.pathname,
+    ...routeValues.map(({ value }) => new URL(`${value.replace(/^\/+|\/+$/g, '')}/`, publishedRootUrl).pathname),
+  ];
+  const baselineRoutes = [];
+  for (const path of publicPaths) {
+    const snapshot = await publicRouteSnapshot(request, path);
+    expect(snapshot.status, `published route ${path} responds before the mutation`).toBe(200);
+    baselineRoutes.push(snapshot);
+  }
+
+  const marker = `e2e-route-collision-${randomUUID().replaceAll('-', '')}`;
+  const collisionPath = new URL(`${marker}/`, publishedRootUrl).pathname;
+  const rootBackup = {
+    id: rootId,
+    values: root.values,
+    variants: root.variants,
+    template: root.template ?? null,
+    baselineRoutes,
+    intendedCollision: {
+      segment: marker,
+      aliases: ['categoriesUrlName', 'tagsUrlName'],
+    },
+  };
+  const info = test.info();
+  const backupPath = info.outputPath('n5-root-before-mutation.json');
+  await mkdir(dirname(backupPath), { recursive: true });
+  await writeFile(backupPath, JSON.stringify(rootBackup, null, 2));
+  await info.attach('n5-root-before-mutation.json', { path: backupPath, contentType: 'application/json' });
+
+  let mutationAttempted = false;
+  let testFailure: unknown;
+  const recoveryErrors: string[] = [];
+  try {
+    expect(
+      root.variants.every(variant => variant.state === 'Published'),
+      'every original root variant is published with no pending changes before the control publish',
+    ).toBe(true);
+    await publish(request, accessToken, rootId, 'the valid root route configuration publishes before the collision draft');
+    const validPublishedRoot = await getDocument(request, accessToken, rootId);
+    expect(
+      validPublishedRoot.variants.map(({ culture, state }) => ({ culture, state })),
+      'the valid root remains published before the collision draft',
+    ).toEqual(root.variants.map(({ culture }) => ({ culture, state: 'Published' })));
+
+    const changedValues = root.values.map(value =>
+      value.alias === 'categoriesUrlName' || value.alias === 'tagsUrlName'
+        ? { ...value, value: marker }
+        : value,
+    );
+    mutationAttempted = true;
+    const update = await api(request, accessToken, `/document/${rootId}`, {
+      method: 'PUT', data: { values: changedValues, variants: root.variants, template: root.template ?? null },
+    });
+    expect(update.ok(), 'Management API saves the owned route-collision draft').toBeTruthy();
+
+    const collisionDraft = await getDocument(request, accessToken, rootId);
+    expect(
+      collisionDraft.values
+        .filter(value => value.alias === 'categoriesUrlName' || value.alias === 'tagsUrlName')
+        .map(({ alias, value }) => ({ alias, value }))
+        .sort((left, right) => left.alias.localeCompare(right.alias)),
+      'the exact conflicting route draft values were saved',
+    ).toEqual([
+      { alias: 'categoriesUrlName', value: marker },
+      { alias: 'tagsUrlName', value: marker },
+    ]);
+    expect(
+      collisionDraft.variants.map(({ culture, state }) => ({ culture, state })),
+      'the conflicting values are a saved pending publish, not a malformed request',
+    ).toEqual(root.variants.map(({ culture }) => ({ culture, state: 'PublishedPendingChanges' })));
+
+    const rejection = await api(request, accessToken, `/document/${rootId}/publish`, {
+      method: 'PUT', data: { publishSchedules: [{ culture: null, schedule: null }] },
+    });
+    const rejectionBody: unknown = await rejection.json();
+    expect(rejection.status(), 'Umbraco reports the cancelled publish operation with its source-backed HTTP status').toBe(400);
+    expect(rejectionBody, 'the normal publish endpoint reports cancellation by an event, not malformed input').toMatchObject({
+      type: 'Error',
+      title: 'Publish cancelled by event',
+      status: 400,
+      detail: 'The publish operation was cancelled by an event.',
+      operationStatus: 'CancelledByEvent',
+    });
+    await info.attach('n5-publish-cancellation.json', {
+      body: JSON.stringify({ status: rejection.status(), body: rejectionBody }, null, 2),
+      contentType: 'application/json',
+    });
+
+    const routesAfterVeto = [];
+    for (const path of publicPaths) routesAfterVeto.push(await publicRouteSnapshot(request, path));
+    expect(routesAfterVeto, 'published route status, content type, title, main text and links are unchanged by the veto').toEqual(baselineRoutes);
+    const collision = await request.get(collisionPath, { maxRedirects: 0, headers: { 'Cache-Control': 'no-cache' } });
+    expect(collision.status(), 'the rejected collision never becomes a new public route').toBe(404);
+  } catch (error) {
+    testFailure = error;
+  } finally {
+    if (mutationAttempted) {
+      try {
+        const restore = await api(request, accessToken, `/document/${rootId}`, {
+          method: 'PUT', data: { values: rootBackup.values, variants: rootBackup.variants, template: rootBackup.template },
+        });
+        if (!restore.ok()) throw new Error(`full root data restore returned ${restore.status()}`);
+      } catch (error) {
+        recoveryErrors.push(`root ${rootId} data restore: ${error instanceof Error ? error.message : String(error)}`);
+      }
+
+      if (recoveryErrors.length === 0) {
+        try {
+          await publish(request, accessToken, rootId, 'the original route configuration publishes normally after the veto');
+        } catch (error) {
+          recoveryErrors.push(`root ${rootId} publish-state restore: ${error instanceof Error ? error.message : String(error)}`);
+        }
+      }
+
+      try {
+        const restored = await getDocument(request, accessToken, rootId);
+        expect(restored.values, 'all original root property values are restored').toEqual(rootBackup.values);
+        const withoutPublishTimestamps = (variants: typeof rootBackup.variants) => variants.map(variant =>
+          Object.fromEntries(Object.entries(variant).filter(([field]) => field !== 'publishDate' && field !== 'updateDate')),
+        );
+        expect(
+          withoutPublishTimestamps(restored.variants),
+          'all original variant fields are restored except server-managed publish timestamps',
+        ).toEqual(withoutPublishTimestamps(rootBackup.variants));
+        expect(restored.template ?? null, 'the original template is restored exactly, including null').toEqual(rootBackup.template);
+      } catch (error) {
+        recoveryErrors.push(`root ${rootId} verification: ${error instanceof Error ? error.message : String(error)}`);
+      }
+
+      try {
+        const routesAfterRestore = [];
+        for (const path of publicPaths) routesAfterRestore.push(await publicRouteSnapshot(request, path));
+        expect(routesAfterRestore, 'all original public routes are restored with identical status, type, title, main text and links').toEqual(baselineRoutes);
+      } catch (error) {
+        recoveryErrors.push(`public route restoration verification: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    }
+  }
+
+  if (recoveryErrors.length > 0) {
+    const recoveryFailure = new Error(`N5 recovery requires attention: ${recoveryErrors.join('; ')}`);
+    if (testFailure !== undefined) throw new AggregateError([testFailure, recoveryFailure], 'N5 assertion failed and recovery needs attention');
+    throw recoveryFailure;
+  }
+  if (testFailure !== undefined) throw testFailure;
 });
