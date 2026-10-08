@@ -246,6 +246,267 @@ test('RSS maxItems binds to query values and clamps values below one', async ({ 
   }
 });
 
+test('tag and category listings and scoped RSS contain only matching published posts', async ({ request, baseURL }) => {
+  const accessToken = await token(request);
+  const siteUrl = required(baseURL, 'configured isolated base URL');
+  const info = test.info();
+  const { id: rootId, document: root } = await rootDocument(request, accessToken);
+  const tagsUrlName = root.values.find(value => value.alias === 'tagsUrlName')?.value;
+  const categoriesUrlName = root.values.find(value => value.alias === 'categoriesUrlName')?.value;
+  if (typeof tagsUrlName !== 'string' || !tagsUrlName) throw new Error('tagsUrlName is missing or not a string');
+  if (typeof categoriesUrlName !== 'string' || !categoriesUrlName) throw new Error('categoriesUrlName is missing or not a string');
+
+  const markdownTypeResponse = await api(request, accessToken, '/document-type/9c2df3ea-74d9-41ef-8773-07960ac5a819');
+  expect(markdownTypeResponse.ok(), 'Management API returns the deployed Markdown document type').toBeTruthy();
+  const markdownType = await markdownTypeResponse.json() as {
+    id: string;
+    alias: string;
+    compositions: Array<{ compositionType: string; documentType?: { id: string } }>;
+  };
+  expect(markdownType.alias).toBe('ArticulateMarkdown');
+  const postTypeId = markdownType.compositions.find(composition => composition.compositionType === 'Inheritance')?.documentType?.id;
+  const articulatePostTypeId = required(postTypeId, 'ArticulatePost inheritance type id');
+  const postTypeResponse = await api(request, accessToken, `/document-type/${articulatePostTypeId}`);
+  expect(postTypeResponse.ok(), 'Management API returns the inherited ArticulatePost schema').toBeTruthy();
+  const postType = await postTypeResponse.json() as {
+    alias: string;
+    properties: Array<{ alias: string; dataType?: { id: string } }>;
+  };
+  expect(postType.alias).toBe('ArticulatePost');
+
+  const readTagField = async (alias: 'tags' | 'categories', expectedGroup: string) => {
+    const property = required(postType.properties.find(item => item.alias === alias), `${alias} property`);
+    const dataTypeId = required(property.dataType?.id, `${alias} data type id`);
+    const response = await api(request, accessToken, `/data-type/${dataTypeId}`);
+    expect(response.ok(), `Management API returns the ${alias} data type`).toBeTruthy();
+    const dataType = await response.json() as {
+      id: string;
+      editorAlias: string;
+      editorUiAlias: string;
+      values: Array<{ alias: string; value: unknown }>;
+    };
+    const setting = (name: string) => dataType.values.find(value => value.alias === name)?.value;
+    const group = setting('group');
+    const storageType = setting('storageType');
+    expect(dataType.editorAlias, `${alias} uses the installed Umbraco tag editor`).toBe('Umbraco.Tags');
+    expect(dataType.editorUiAlias, `${alias} uses the installed tags value editor`).toBe('Umb.PropertyEditorUi.Tags');
+    expect(group, `${alias} has its actual configured tag group`).toBe(expectedGroup);
+    expect(storageType, `${alias} uses the configured JSON storage`).toBe('Json');
+    if (group !== expectedGroup || storageType !== 'Json') throw new Error(`${alias} editor configuration does not match the actual Articulate tag schema`);
+    return { alias, dataTypeId, editorAlias: dataType.editorAlias, group, storageType };
+  };
+  const tagsField = await readTagField('tags', 'ArticulateTags');
+  const categoriesField = await readTagField('categories', 'ArticulateCategories');
+  const schemaPath = info.outputPath('n4-live-taxonomy-schema.json');
+  await mkdir(dirname(schemaPath), { recursive: true });
+  await writeFile(schemaPath, JSON.stringify({ markdownTypeId: markdownType.id, postTypeId: articulatePostTypeId, tagsField, categoriesField }, null, 2));
+  await info.attach('n4-live-taxonomy-schema.json', { path: schemaPath, contentType: 'application/json' });
+
+  const childrenResponse = await api(request, accessToken, `/tree/document/children?parentId=${rootId}&skip=0&take=100`);
+  expect(childrenResponse.ok(), 'Management API lists the Articulate root children').toBeTruthy();
+  const children = (await childrenResponse.json() as { items: Array<{ id: string; documentType: { id: string } }> }).items;
+  let articlesId: string | undefined;
+  for (const child of children) {
+    const typeResponse = await api(request, accessToken, `/document-type/${child.documentType.id}`);
+    expect(typeResponse.ok()).toBeTruthy();
+    const type = await typeResponse.json() as { alias: string };
+    if (type.alias === 'ArticulateArchive') articlesId = child.id;
+  }
+  const archiveId = required(articlesId, 'Articles archive');
+  const marker = `n4${randomUUID().replaceAll('-', '')}`;
+  const sharedTag = `e2e-tag-${marker}-shared`;
+  const otherTag = `e2e-tag-${marker}-other`;
+  const onlyTag = `e2e-tag-${marker}-only`;
+  const sharedCategory = `e2e-category-${marker}-shared`;
+  const onlyCategory = `e2e-category-${marker}-only`;
+  const fixtures = [
+    { title: `E2E taxonomy ${marker} alpha`, slug: `taxonomy-${marker}-alpha`, body: `Taxonomy fixture ${marker} alpha`, tags: [sharedTag, onlyTag], categories: [onlyCategory] },
+    { title: `E2E taxonomy ${marker} beta`, slug: `taxonomy-${marker}-beta`, body: `Taxonomy fixture ${marker} beta`, tags: [sharedTag], categories: [sharedCategory] },
+    { title: `E2E taxonomy ${marker} gamma`, slug: `taxonomy-${marker}-gamma`, body: `Taxonomy fixture ${marker} gamma`, tags: [otherTag], categories: [sharedCategory] },
+  ];
+  const fixtureJournal = fixtures.map(fixture => ({
+    ...fixture,
+    state: 'intent-recorded' as string,
+    status: undefined as number | undefined,
+    location: undefined as string | undefined,
+    id: undefined as string | undefined,
+    persistedTags: undefined as string[] | undefined,
+    persistedCategories: undefined as string[] | undefined,
+    expectedUrl: undefined as string | undefined,
+  }));
+  const remainingTagRecords: Array<{ group: string; items: Array<{ text?: string | null; group?: string | null; nodeCount: number }> }> = [];
+  const journalPath = info.outputPath('n4-taxonomy-fixture-journal.json');
+  await mkdir(dirname(journalPath), { recursive: true });
+  const writeJournal = async () => writeFile(journalPath, JSON.stringify({ fixtures: fixtureJournal, ownedTagRecordsAfterCleanup: remainingTagRecords }, null, 2));
+  await writeJournal();
+  await info.attach('n4-taxonomy-fixture-intent.json', { path: journalPath, contentType: 'application/json' });
+
+  const cleanupErrors: string[] = [];
+  let testFailure: unknown;
+  try {
+    for (const [index, fixture] of fixtures.entries()) {
+      const journalEntry = fixtureJournal[index];
+      if (!journalEntry) throw new Error('Taxonomy fixture journal lost its entry');
+      journalEntry.state = 'creating';
+      await writeJournal();
+      const created = await api(request, accessToken, '/document', {
+        method: 'POST',
+        data: {
+          parent: { id: archiveId },
+          documentType: { id: markdownType.id },
+          template: null,
+          variants: [{ culture: null, segment: null, name: fixture.title }],
+          values: [
+            { alias: 'markdown', value: fixture.body, culture: null, segment: null, editorAlias: 'Umbraco.MarkdownEditor', entityType: 'document-property-value' },
+            { alias: 'umbracoUrlName', value: fixture.slug, culture: null, segment: null, editorAlias: 'Umbraco.TextBox', entityType: 'document-property-value' },
+            { alias: tagsField.alias, value: fixture.tags, culture: null, segment: null, editorAlias: tagsField.editorAlias, entityType: 'document-property-value' },
+            { alias: categoriesField.alias, value: fixture.categories, culture: null, segment: null, editorAlias: categoriesField.editorAlias, entityType: 'document-property-value' },
+          ],
+        },
+      });
+      journalEntry.status = created.status();
+      journalEntry.location = created.headers().location;
+      if (journalEntry.location) {
+        journalEntry.id = new URL(journalEntry.location, siteUrl).pathname.split('/').filter(Boolean).at(-1);
+      }
+      journalEntry.state = journalEntry.id ? 'created' : 'create-response-without-id';
+      await writeJournal();
+      expect(created.status(), 'Management API creates each owned taxonomy fixture').toBe(201);
+      const documentId = required(journalEntry.id, 'created taxonomy fixture id');
+
+      const persisted = await getDocument(request, accessToken, documentId);
+      const persistedTags = persisted.values.find(value => value.alias === tagsField.alias)?.value;
+      const persistedCategories = persisted.values.find(value => value.alias === categoriesField.alias)?.value;
+      const readStringArray = (value: unknown, label: string) => {
+        if (!Array.isArray(value)) throw new Error(`${label} is not stored as a JSON array`);
+        const strings = value.filter((item): item is string => typeof item === 'string');
+        if (strings.length !== value.length) throw new Error(`${label} contains a non-string value`);
+        return strings;
+      };
+      journalEntry.persistedTags = readStringArray(persistedTags, 'tags property');
+      journalEntry.persistedCategories = readStringArray(persistedCategories, 'categories property');
+      expect(journalEntry.persistedTags, 'Management API persists tags as the configured JSON-backed array').toEqual(fixture.tags);
+      expect(journalEntry.persistedCategories, 'Management API persists categories as the configured JSON-backed array').toEqual(fixture.categories);
+      await writeJournal();
+      await publish(request, accessToken, documentId);
+      journalEntry.state = 'published';
+      await writeJournal();
+    }
+
+    const expectedPairs: Array<{ title: string; url: string }> = [];
+    for (const fixture of fixtures) {
+      const journalEntry = fixtureJournal.find(entry => entry.title === fixture.title);
+      const documentId = required(journalEntry?.id, 'published taxonomy fixture id');
+      const urlsResponse = await api(request, accessToken, `/document/urls?id=${documentId}`);
+      expect(urlsResponse.ok(), 'Management API returns each published taxonomy fixture URL').toBeTruthy();
+      const urls = await urlsResponse.json() as Array<{ urlInfos: Array<{ url: string }> }>;
+      const expectedUrl = new URL(required(urls[0]?.urlInfos[0]?.url, 'published taxonomy post URL'), siteUrl).href;
+      expectedPairs.push({ title: fixture.title, url: expectedUrl });
+      if (journalEntry) {
+        journalEntry.expectedUrl = expectedUrl;
+        await writeJournal();
+      }
+    }
+    const fixtureKeys = new Set(expectedPairs.map(pair => JSON.stringify(pair)));
+    for (const [index, fixture] of fixtures.entries()) {
+      const expectedUrl = expectedPairs[index]?.url;
+      const publicPath = new URL(required(expectedUrl, 'expected public taxonomy post URL')).pathname;
+      await waitFor(request, publicPath, (status, html) => status === 200 && html.includes(fixture.body));
+    }
+    await expect.poll(async () => {
+      const items = await rssItems(request, '/rss');
+      return expectedPairs.every(pair => items.some(item => item.title === pair.title && item.link === pair.url));
+    }, { timeout: 20_000, intervals: [250, 500, 1000, 2000] }).toBe(true);
+
+    const assertFixturePairs = (observed: Array<{ title: string; url: string }>, expected: Array<{ title: string; url: string }>, output: string) => {
+      const owned = observed.filter(pair => expectedPairs.some(expected => expected.title === pair.title || expected.url === pair.url));
+      const actualKeys = owned.map(pair => JSON.stringify(pair)).sort();
+      const expectedKeys = expected.map(pair => JSON.stringify(pair)).sort();
+      expect(actualKeys, `${output} contains exactly its owned matching title and URL pairs`).toEqual(expectedKeys);
+      const excluded = fixtures.filter(fixture => !expected.some(pair => pair.title === fixture.title));
+      for (const fixture of excluded) {
+        const excludedPair = expectedPairs.find(pair => pair.title === fixture.title);
+        expect(observed.some(pair => pair.title === fixture.title || pair.url === excludedPair?.url), `${output} excludes nonmatching published fixture ${fixture.title}`).toBe(false);
+      }
+    };
+    const tagExpected = expectedPairs.filter(pair => fixtures.find(fixture => fixture.title === pair.title)?.tags.includes(sharedTag));
+    const categoryExpected = expectedPairs.filter(pair => fixtures.find(fixture => fixture.title === pair.title)?.categories.includes(sharedCategory));
+    const readList = async (path: string, expected: Array<{ title: string; url: string }>, label: string) => {
+      const response = await request.get(path);
+      expect(response.status(), `${label} returns HTTP 200`).toBe(200);
+      const observed = searchResults(await response.text()).map(result => ({ title: result.title, url: new URL(result.href, siteUrl).href }));
+      assertFixturePairs(observed, expected, label);
+    };
+    const readScopedFeed = async (path: string, expected: Array<{ title: string; url: string }>, label: string) => {
+      const items = await rssItems(request, path);
+      const observed = items.flatMap(item => typeof item.title === 'string' && typeof item.link === 'string'
+        ? [{ title: item.title, url: new URL(item.link, siteUrl).href }]
+        : []);
+      assertFixturePairs(observed, expected, label);
+    };
+
+    await readList(`/${tagsUrlName}/${sharedTag}`, tagExpected, 'shared-tag listing');
+    await readList(`/${categoriesUrlName}/${sharedCategory}`, categoryExpected, 'shared-category listing');
+    await readScopedFeed(`/${tagsUrlName}/${sharedTag}/rss`, tagExpected, 'shared-tag RSS');
+    await readScopedFeed(`/${categoriesUrlName}/${sharedCategory}/rss`, categoryExpected, 'shared-category RSS');
+    expect(tagExpected.map(pair => pair.title).sort()).not.toEqual(categoryExpected.map(pair => pair.title).sort());
+    expect(fixtureKeys.size).toBe(fixtures.length);
+  } catch (error) {
+    testFailure = error;
+  } finally {
+    for (const entry of fixtureJournal) {
+      if (!entry.id) {
+        if (entry.state !== 'intent-recorded') cleanupErrors.push(`fixture ${entry.title}: create was attempted but returned no document id; inspect ${journalPath}`);
+        continue;
+      }
+      try {
+        const deletion = await api(request, accessToken, `/document/${entry.id}`, { method: 'DELETE' });
+        if (![200, 204].includes(deletion.status())) throw new Error(`DELETE returned ${deletion.status()}`);
+        const verification = await api(request, accessToken, `/document/${entry.id}`);
+        if (verification.status() !== 404) throw new Error(`post-delete Management API read returned ${verification.status()}`);
+        entry.state = 'deleted-and-verified';
+        await writeJournal();
+      } catch (error) {
+        cleanupErrors.push(`fixture ${entry.id}: ${error instanceof Error ? error.message : String(error)}`);
+        entry.state = 'cleanup-failed';
+        try { await writeJournal(); } catch (journalError) {
+          cleanupErrors.push(`fixture journal: ${journalError instanceof Error ? journalError.message : String(journalError)}`);
+        }
+      }
+    }
+    for (const [group, prefix, names] of [
+      [tagsField.group, `e2e-tag-${marker}`, [sharedTag, otherTag, onlyTag]],
+      [categoriesField.group, `e2e-category-${marker}`, [sharedCategory, onlyCategory]],
+    ] as const) {
+      try {
+        const response = await api(request, accessToken, `/tag?query=${encodeURIComponent(prefix)}&tagGroup=${encodeURIComponent(group)}&skip=0&take=100`);
+        if (!response.ok()) throw new Error(`tag record lookup returned ${response.status()}`);
+        const body = await response.json() as { items: Array<{ text?: string | null; group?: string | null; nodeCount: number }> };
+        const items = body.items.filter(item => names.includes(item.text ?? '') && item.group === group);
+        remainingTagRecords.push({ group, items });
+        if (items.some(item => item.nodeCount > 0)) cleanupErrors.push(`${group}: owned tag still has published-content relationships`);
+      } catch (error) {
+        cleanupErrors.push(`${group} owned tag record verification: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    }
+    try {
+      await writeJournal();
+      const tagRecordsPath = info.outputPath('n4-taxonomy-tag-records-after-cleanup.json');
+      await writeFile(tagRecordsPath, JSON.stringify(remainingTagRecords, null, 2));
+      await info.attach('n4-taxonomy-fixture-journal.json', { path: journalPath, contentType: 'application/json' });
+      await info.attach('n4-taxonomy-tag-records-after-cleanup.json', { path: tagRecordsPath, contentType: 'application/json' });
+    } catch (error) {
+      cleanupErrors.push(`cleanup evidence attachment: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+  if (cleanupErrors.length > 0) {
+    const recoveryFailure = new Error(`N4 recovery needs attention: ${cleanupErrors.join('; ')}`);
+    if (testFailure !== undefined) throw new AggregateError([testFailure, recoveryFailure], 'N4 test failed and fixture recovery needs attention');
+    throw recoveryFailure;
+  }
+  if (testFailure !== undefined) throw testFailure;
+});
+
 test('public search discovers a published Markdown post and excludes drafts and non-matching queries', async ({ request, baseURL }) => {
   const accessToken = await token(request);
   const { id: rootId, document: root } = await rootDocument(request, accessToken);

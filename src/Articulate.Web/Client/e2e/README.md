@@ -79,6 +79,7 @@ The site needs a published Articulate root, its Articles archive and the VAPOR t
 | --- | --- |
 | Publishing | Draft returns 404; published post appears in HTML and RSS; unpublished route returns 404. |
 | RSS | `maxItems=2` returns both test posts; `maxItems=0` returns one. |
+| Taxonomy | Three published posts use the live `Umbraco.Tags` JSON-array schemas and distinct tag/category groups. Exact title/URL sets and nonmatching-post exclusions are checked in tag/category listings and scoped RSS; fixture posts are deleted and owned tag records are reported. |
 | Search | Title/body matches; drafts and non-matches excluded; 200-character and 10-token limits; quote escaping; two-page capacity, disjoint exact title/URL pairs and complete fixture union. Pagination temporarily sets the dedicated root pageSize to 2, then restores its full saved values, variants and template. |
 | Search routing | Page-one redirect; reserved index names use published content. |
 | Route refresh | Publishing `searchUrlName` changes a warmed route without a reload. |
