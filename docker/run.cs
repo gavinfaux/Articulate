@@ -7,6 +7,9 @@
 
 using System.Diagnostics;
 using System.Net;
+using System.Net.Sockets;
+using System.Security.Cryptography;
+using System.Text.RegularExpressions;
 
 try
 {
@@ -22,7 +25,7 @@ try
         "docker-prod"   => await DockerProd(opts.Validate(command, "lane", "skip-smoke")),
         "docker-down"   => await DockerDown(opts.Validate(command, "lane", "volumes", "purge")),
         "docker-status" => await DockerStatus(opts.Validate(command, "lane")),
-        "docker-test"   => await DockerTest(opts.Validate(command, "lane", "keep", "skip-smoke")),
+        "docker-test"   => await DockerTest(opts.Validate(command, "lane", "keep", "skip-smoke", "reuse-packages")),
         "docker-ca"     => await DockerCa(opts.Validate(command, "lane")),
         _ => throw new ArgumentException($"Unknown command '{command}'. Run with --help.")
     };
@@ -94,10 +97,7 @@ async Task<int> DockerProd(Opts o)
     await Compose(new[] { "up", "--detach", "--force-recreate" });
     await WaitForPublicSite();
     if (!o.Flag("skip-smoke"))
-    {
         await Smoke("smoke");
-        await Smoke("theme");
-    }
     return 0;
 }
 
@@ -150,25 +150,137 @@ async Task<int> DockerTest(Opts o)
     var lanes = requested == "all" ? new[] { "v17", "v18" } : new[] { requested };
     foreach (var lane in lanes)
     {
-        ConfigureLane(lane);
-        await EnsurePackages(lane, clean: true);
+        if (!o.Flag("reuse-packages")) await EnsurePackages(lane, clean: true);
+        var configuration = Env.Get("BUILD_CONFIGURATION", "Release") ?? "Release";
+        var packageDirectory = Path.Combine(Env.Repo, "build", configuration, lane);
+        var nonce = Guid.NewGuid().ToString("N");
+        var project = $"art_e2e_candidate_{lane}_{nonce}";
+        var image = $"articulate-e2e-candidate:{lane}-{nonce}";
+        ConfigureCandidate(lane, project, image, null, null);
+        await EnsureCandidateResourcesAbsent(project, image);
+
         try
         {
+            await Run(Env.Get("NODE_BIN", "node")!, new[] { Path.Combine(Env.Repo, "build", "smoke-package.mjs"), packageDirectory }, Env.Repo);
+            var packages = Directory.EnumerateFiles(packageDirectory, "Articulate.*.nupkg")
+                .Where(file => Regex.IsMatch(Path.GetFileName(file), @"^Articulate\.[0-9]", RegexOptions.CultureInvariant))
+                .ToArray();
+            if (packages.Length != 1)
+                throw new InvalidOperationException($"Expected exactly one numeric-version Articulate package in {packageDirectory}; found {packages.Length}.");
+            var package = packages[0];
+            await using var packageStream = File.OpenRead(package);
+            var packageHash = Convert.ToHexString(await SHA256.HashDataAsync(packageStream));
             await Compose(new[] { "build", "--no-cache", "--pull" });
+            var imageId = (await Capture("docker", new[] { "image", "inspect", "--format", "{{.Id}}", image }, Env.Repo)).Trim();
+
+            var httpsPort = FindFreePort();
+            var httpPort = FindFreePort();
+            while (httpPort == httpsPort) httpPort = FindFreePort();
+            ConfigureCandidate(lane, project, image, httpsPort, httpPort);
+            Env.RequireSecret();
+
             var devOptions = o.Flag("skip-smoke")
                 ? Opts.Of(("lane", lane), ("skip-smoke", null))
                 : Opts.Of(("lane", lane));
             await DockerDev(devOptions, build: false, ensurePackages: false);
-            if (!o.Flag("skip-smoke")) await DockerProd(Opts.Of(("lane", lane)));
+            if (!o.Flag("skip-smoke"))
+            {
+                await DockerProd(Opts.Of(("lane", lane)));
+                await Smoke("index-ready");
+                var containerIds = string.Join(',', SplitLines(await Capture("docker", ComposeArgs("ps", "-q"), Env.Repo)));
+                Console.WriteLine($"Candidate receipt: lane={lane} package={Path.GetFileName(package)} sha256={packageHash} image={image} imageId={imageId} project={project} containers={containerIds} url=https://localhost:{httpsPort}/ root=publish-confirm-passed API-prerequisite=Development-bootstrap-persisted indexing-prerequisite=owned-publish-external-index-delete-passed");
+                var e2eCommand = new List<string>
+                {
+                    "run", "--file", Path.Combine(Env.Repo, "build", "test.cs"), "--", "e2e", "--lane", lane,
+                    "--candidate-project", project, "--candidate-port", httpsPort.ToString(System.Globalization.CultureInfo.InvariantCulture)
+                };
+                await Run("dotnet", e2eCommand, Env.Repo);
+                Console.WriteLine($"E2E result: {string.Join(' ', e2eCommand)}; exit=0; existing suite completed.");
+            }
+            if (o.Flag("skip-smoke"))
+                Console.WriteLine($"Candidate receipt: lane={lane} package={Path.GetFileName(package)} sha256={packageHash} image={image} imageId={imageId} project={project} E2E=skipped-by-request");
             Console.WriteLine($"PASSED: {lane}");
         }
         finally
         {
-            if (!o.Flag("keep")) await Compose(new[] { "down", "--volumes" }, allowFailure: true);
+            if (!o.Flag("keep"))
+            {
+                await Compose(new[] { "down", "--volumes" });
+                var candidateImage = (await Capture("docker", new[] { "image", "ls", "-q", image }, Env.Repo)).Trim();
+                if (candidateImage.Length > 0) await Run("docker", new[] { "image", "rm", image }, Env.Repo);
+                await VerifyCandidateRemoved(project, image);
+                Console.WriteLine($"Candidate cleanup verified: project={project} volumes=removed image={(candidateImage.Length > 0 ? "removed" : "absent")}");
+            }
+            else
+            {
+                Console.WriteLine($"Candidate kept for debugging: project={project} image={image}");
+            }
         }
     }
     return 0;
 }
+
+void ConfigureCandidate(string lane, string project, string image, int? httpsPort, int? httpPort)
+{
+    ConfigureLane(lane);
+    var https = httpsPort?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? (lane == "v18" ? "18444" : "18443");
+    var http = httpPort?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? (lane == "v18" ? "8081" : "8080");
+    foreach (var (key, value) in new Dictionary<string, string>
+    {
+        ["COMPOSE_PROJECT_NAME"] = project,
+        ["COMPOSE_VOLUME_PREFIX"] = project,
+        ["IMAGE_TAG"] = image,
+        ["CADDY_HTTPS_PORT"] = https,
+        ["CADDY_HTTP_PORT"] = http,
+        ["CADDY_HTTPS_HOST"] = $"localhost:{https}",
+        ["CADDY_TLS_HOST"] = "localhost",
+        ["UMBRACO_PUBLIC_HOST"] = $"https://localhost:{https}",
+        ["UMBRACO_PUBLIC_URL"] = $"https://localhost:{https}/",
+        ["ARTICULATE_REDIRECT_URI"] = $"https://localhost:{https}/a-new/",
+        ["ARTICULATE_LOGOUT_REDIRECT_URI"] = $"https://localhost:{https}/"
+    })
+        Env.SetHostOverride(key, value);
+    Env.Set("CADDY_BIND_IP", "127.0.0.1");
+}
+
+int FindFreePort()
+{
+    using var listener = new TcpListener(IPAddress.Loopback, 0);
+    listener.Start();
+    var port = ((IPEndPoint)listener.LocalEndpoint).Port;
+    listener.Stop();
+    return port;
+}
+
+async Task EnsureCandidateResourcesAbsent(string project, string image)
+{
+    var containers = (await Capture("docker", new[] { "ps", "-a", "--filter", $"label=com.docker.compose.project={project}", "--format", "{{.ID}}" }, Env.Repo)).Trim();
+    var containerNames = SplitLines(await Capture("docker", new[] { "ps", "-a", "--format", "{{.Names}}" }, Env.Repo));
+    var networks = (await Capture("docker", new[] { "network", "ls", "--filter", $"label=com.docker.compose.project={project}", "--format", "{{.ID}}" }, Env.Repo)).Trim();
+    var networkNames = SplitLines(await Capture("docker", new[] { "network", "ls", "--format", "{{.Name}}" }, Env.Repo));
+    var volumeNames = SplitLines(await Capture("docker", new[] { "volume", "ls", "-q" }, Env.Repo));
+    var imageIds = (await Capture("docker", new[] { "image", "ls", "-q", image }, Env.Repo)).Trim();
+    if (containers.Length > 0 || containerNames.Any(name => name.StartsWith($"{project}-", StringComparison.Ordinal))
+        || networks.Length > 0 || networkNames.Any(name => name.StartsWith($"{project}_", StringComparison.Ordinal))
+        || volumeNames.Any(name => name.StartsWith($"{project}_", StringComparison.Ordinal)) || imageIds.Length > 0)
+        throw new InvalidOperationException("Candidate project, volume, or image name already exists; refusing to reuse or remove it.");
+}
+
+async Task VerifyCandidateRemoved(string project, string image)
+{
+    var containers = (await Capture("docker", new[] { "ps", "-a", "--filter", $"label=com.docker.compose.project={project}", "--format", "{{.ID}}" }, Env.Repo)).Trim();
+    var networks = (await Capture("docker", new[] { "network", "ls", "--filter", $"label=com.docker.compose.project={project}", "--format", "{{.ID}}" }, Env.Repo)).Trim();
+    var containerNames = SplitLines(await Capture("docker", new[] { "ps", "-a", "--format", "{{.Names}}" }, Env.Repo));
+    var networkNames = SplitLines(await Capture("docker", new[] { "network", "ls", "--format", "{{.Name}}" }, Env.Repo));
+    var volumes = SplitLines(await Capture("docker", new[] { "volume", "ls", "-q" }, Env.Repo));
+    var imageIds = (await Capture("docker", new[] { "image", "ls", "-q", image }, Env.Repo)).Trim();
+    if (containers.Length > 0 || containerNames.Any(name => name.StartsWith($"{project}-", StringComparison.Ordinal))
+        || networks.Length > 0 || networkNames.Any(name => name.StartsWith($"{project}_", StringComparison.Ordinal))
+        || volumes.Any(name => name.StartsWith($"{project}_", StringComparison.Ordinal)) || imageIds.Length > 0)
+        throw new InvalidOperationException("Candidate cleanup left a project-owned container, network, volume, or image.");
+}
+
+string[] SplitLines(string value) => value.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
 
 async Task<int> DockerCa(Opts o)
 {
@@ -267,6 +379,7 @@ async Task Run(string file, IEnumerable<string> args, string? cwd = null, bool a
     await process.WaitForExitAsync();
     if (process.ExitCode != 0 && !allowFailure)
         throw new InvalidOperationException($"{file} exited {process.ExitCode}.");
+    Console.WriteLine($"Exit code: {process.ExitCode}");
 }
 
 async Task<string> Capture(string file, IEnumerable<string> args, string cwd)
@@ -316,6 +429,12 @@ static class Env
         => string.IsNullOrWhiteSpace(HostOverrides.GetValueOrDefault(name)) ? fallback : HostOverrides[name]!;
 
     public static void SetHostValue(string name, string fallback) => Set(name, HostValue(name, fallback));
+
+    public static void SetHostOverride(string name, string value)
+    {
+        HostOverrides[name] = value;
+        Set(name, value);
+    }
 
     public static void RequireSecret()
     {
@@ -391,6 +510,7 @@ sealed class Opts
         RequireFlag("reset");
         RequireFlag("skip-smoke");
         RequireFlag("keep");
+        RequireFlag("reuse-packages");
         RequireFlag("volumes");
         RequireFlag("purge");
         if (Flag("volumes") && Flag("purge"))

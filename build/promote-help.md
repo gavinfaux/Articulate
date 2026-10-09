@@ -28,7 +28,7 @@ dotnet run --file build/promote.cs -- patch \
 | `--branch` | no | Candidate branch. Defaults to `promote/<profile>/<source-short-sha>`. |
 | `--worktree` | no | Candidate worktree. Defaults to a temporary directory. |
 | `--manifest` | no | Path for the JSON evidence manifest, relative to the repository root. |
-| `--docker` | no | Also run Docker runtime validation. Tears down the fixed lane Compose project and its volumes; do not run against an active `docker-dev` stack. Requires Docker; cannot be combined with `--skip-build`. |
+| `--docker` | no | Also run the target worktree's `docker-test`. Requires Docker; cannot be combined with `--skip-build`. |
 | `--skip-build` | no | Run Git/reference checks only. Cannot be combined with `--docker`. Use only while preparing or debugging a target branch. |
 
 The command resolves refs to SHAs, verifies that every selected commit belongs to the source ref, creates an isolated worktree from the target base, cherry-picks the commits, checks for forbidden platform references, and runs the target branch's clean build, tests and package smoke checks.

@@ -18,7 +18,7 @@ dotnet run --file build/build.cs -- build --lane v17 --sample
 dotnet run --file build/build.cs -- build --lane v18 --sample
 ```
 
-The Docker test site consumes the resulting package locally. This package is not published to the general NuGet feed.
+Native E2E and Docker test sites use the resulting package locally. It is not published to the general NuGet feed.
 
 ## View contract
 

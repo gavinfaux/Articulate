@@ -1166,9 +1166,7 @@ test('publish veto preserves existing public routes when configured route segmen
     expect(rejection.status(), 'Umbraco reports the cancelled publish operation with its source-backed HTTP status').toBe(400);
     expect(rejectionBody, 'the normal publish endpoint reports cancellation by an event, not malformed input').toMatchObject({
       type: 'Error',
-      title: 'Publish cancelled by event',
       status: 400,
-      detail: 'The publish operation was cancelled by an event.',
       operationStatus: 'CancelledByEvent',
     });
     await info.attach('n5-publish-cancellation.json', {

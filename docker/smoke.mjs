@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 //
-// smoke.mjs — Umbraco test-site bootstrap smoke-test / publish / confirm / theme
+// Shared preparation for native and Docker test sites; behaviour tests live in Client/e2e.
 //
 // Modes:
 //   publish   Full publish root + descendants via Management API (default; --no-descendants skips children)
 //   confirm   Read-only: verify root + children are published and / returns 200
-//   smoke     Wait for production root to return 200 (docker compose must already be running)
-//   theme     Read current theme, change to a different theme, publish, verify theme CSS in HTML
+//   smoke     Wait for the already-running Production host to return 200
+//   index-ready  Candidate-only: publish/index/delete a temporary post before E2E
 //
 // Env:
 //   UMBRACO_PUBLIC_URL          default: https://localhost:18443
@@ -17,10 +17,10 @@
 //   node docker/smoke.mjs publish
 //   node docker/smoke.mjs confirm
 //   node docker/smoke.mjs smoke
-//   node docker/smoke.mjs theme
 
 import https from 'node:https';
 import http from 'node:http';
+import { randomUUID } from 'node:crypto';
 
 // --- helpers ----------------------------------------------------------------
 
@@ -43,10 +43,9 @@ function sleep(ms) {
 
 // --- HTTP transport ---------------------------------------------------------
 
-// The dev harness always serves Caddy's self-signed `tls internal` cert, which
-// Node does not trust. Loopback and private-network hosts (incl. the LAN IP the
-// operator may browse via UMBRACO_PUBLIC_URL) are all dev-harness targets, so
-// disable cert validation for them. Public hosts keep strict validation.
+// Native test hosts and Caddy use local certificates that Node does not trust.
+// Skip certificate validation for loopback and private-network test sites.
+// Public hosts keep strict validation.
 function isDevHost(host) {
   if (['localhost', '127.0.0.1', '::1', '[::1]'].includes(host)) return true;
   // Private IPv4 ranges: 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16.
@@ -168,23 +167,6 @@ async function findArticulateRoot(base, token) {
   return articulate.id;
 }
 
-async function getDocument(base, token, id) {
-  return jsonGet(`${base}/umbraco/management/api/v1/document/${id}`, token);
-}
-
-async function updateDocument(base, token, id, values, variantName) {
-  // Read-modify-write: Management API PUT /document replaces the values
-  // collection, so a partial payload would wipe required properties
-  // (blogTitle, pageSize, ...) and cause publish to 400.
-  const current = await getDocument(base, token, id);
-  const merged = new Map((current.values ?? []).map(v => [v.alias, v]));
-  for (const change of values) merged.set(change.alias, change);
-  await jsonPut(`${base}/umbraco/management/api/v1/document/${id}`, token, {
-    values: Array.from(merged.values()),
-    variants: [{ culture: null, name: variantName }],
-  });
-}
-
 async function publishRoot(base, token, rootId) {
   console.log('Publishing root');
   await jsonPut(`${base}/umbraco/management/api/v1/document/${rootId}/publish`, token, {
@@ -249,38 +231,66 @@ async function confirmChildren(base, token, parentId, indent = '') {
   return unpublished;
 }
 
-// --- Theme helpers ----------------------------------------------------------
+async function waitForIndexing(base, token, rootId, timeoutSec) {
+  const deadline = now() + timeoutSec;
+  const api = `${base}/umbraco/management/api/v1`;
+  const headers = { Authorization: `Bearer ${token}`, Accept: 'application/json', 'Content-Type': 'application/json' };
+  const children = await jsonGet(`${api}/tree/document/children?parentId=${rootId}&skip=0&take=100`, token);
+  let archiveId;
+  for (const child of children.items ?? []) {
+    const type = await jsonGet(`${api}/document-type/${child.documentType.id}`, token);
+    if (type.alias === 'ArticulateArchive') archiveId = child.id;
+  }
+  if (!archiveId) throw new Error('Index readiness requires the Articles archive.');
 
-function getThemeCssMarker(themeName) {
-  const lower = (themeName || '').toLowerCase();
-  return `/App_Plugins/Articulate/Themes/${lower}/assets/dist/css/${lower}.min.css`;
-}
+  const marker = `ready${randomUUID().replaceAll('-', '')}`;
+  const created = await request(`${api}/document`, {
+    method: 'POST', headers,
+    body: JSON.stringify({
+      parent: { id: archiveId },
+      documentType: { id: '9c2df3ea-74d9-41ef-8773-07960ac5a819' },
+      template: null,
+      variants: [{ culture: null, segment: null, name: `Index readiness ${marker}` }],
+      values: [
+        { alias: 'markdown', value: marker, culture: null, segment: null, editorAlias: 'Umbraco.MarkdownEditor', entityType: 'document-property-value' },
+        { alias: 'umbracoUrlName', value: marker, culture: null, segment: null, editorAlias: 'Umbraco.TextBox', entityType: 'document-property-value' },
+      ],
+    }),
+  });
+  if (created.status !== 201) throw new Error(`Index readiness creation returned HTTP ${created.status}.`);
+  const id = new URL(created.headers.location, base).pathname.split('/').at(-1);
+  if (!/^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/i.test(id ?? ''))
+    throw new Error('Index readiness creation did not return a document ID.');
 
-function getAltTheme(currentTheme) {
-  const current = (currentTheme || 'VAPOR').toLowerCase();
-  return current === 'vapor' ? 'Material' : 'VAPOR';
-}
-
-async function verifyThemeInHtml(base, expectedTheme, timeoutSec) {
-  // Theme folders are title-/upper-case on disk (Material, VAPOR, ...) so
-  // match case-insensitively against the served HTML.
-  const marker = getThemeCssMarker(expectedTheme).toLowerCase();
-  await poll(async () => {
-    try {
-      const res = await request(`${base}/`, { timeout: 15_000 });
-      if (res.status !== 200) return false;
-      return res.body.toLowerCase().includes(marker);
-    } catch { return false; }
-  }, now() + timeoutSec, `HTML to contain theme CSS marker: ${marker}`);
+  try {
+    await jsonPut(`${api}/document/${id}/publish`, token, { publishSchedules: [{ culture: null, schedule: null }] });
+    const query = encodeURIComponent(`__Key:"${id}"`);
+    // Articulate searches ExternalIndex; the CMS document-search helper checks InternalIndex.
+    while (now() < deadline) {
+      const result = await jsonGet(`${api}/searcher/ExternalIndex/query?term=${query}`, token);
+      if (result.items?.some(item => item.fields?.some(field => field.name === '__Key' && field.values?.includes(id)))) {
+        console.log('Index readiness passed: CMS ExternalIndex contains the owned publication.');
+        return;
+      }
+      await sleep(2000);
+    }
+    throw new Error('Timed out waiting for publication indexing before E2E.');
+  } finally {
+    const deleted = await request(`${api}/document/${id}`, { method: 'DELETE', headers });
+    if (![200, 204].includes(deleted.status)) throw new Error(`Index readiness cleanup returned HTTP ${deleted.status}.`);
+    const absent = await request(`${api}/document/${id}`, { headers });
+    if (absent.status !== 404) throw new Error('Index readiness post was not removed.');
+    console.log('Index readiness post cleanup verified.');
+  }
 }
 
 // --- main -------------------------------------------------------------------
 
 async function main() {
-  const validModes = ['publish', 'confirm', 'smoke', 'theme'];
+  const validModes = ['publish', 'confirm', 'smoke', 'index-ready'];
   const mode = process.argv[2] || 'publish';
   if (!validModes.includes(mode)) {
-    die(`Usage: smoke.mjs <publish|confirm|smoke|theme> [--no-descendants]`);
+    die(`Usage: smoke.mjs <publish|confirm|smoke|index-ready> [--no-descendants]`);
   }
 
   const noDescendants = process.argv.includes('--no-descendants');
@@ -288,6 +298,15 @@ async function main() {
   const timeoutSec = parseInt(env('TIMEOUT_SECONDS', '300'), 10);
   if (!Number.isInteger(timeoutSec) || timeoutSec <= 0) {
     die('TIMEOUT_SECONDS must be a positive integer.');
+  }
+
+  if (mode === 'index-ready') {
+    const project = env('ARTICULATE_E2E_CANDIDATE_PROJECT', env('COMPOSE_PROJECT_NAME', ''));
+    const target = new URL(base);
+    if (!/^art_e2e_(?:candidate|native)_(v17|v18)_[a-f0-9]{32}$/.test(project)
+      || target.protocol !== 'https:' || target.hostname !== 'localhost'
+      || !target.port || ['18443', '18444', '19443', '19444'].includes(target.port))
+      throw new Error('Index readiness is restricted to disposable localhost E2E candidates.');
   }
 
   // --- smoke mode (no auth needed) ------------------------------------------
@@ -298,7 +317,7 @@ async function main() {
     return;
   }
 
-  // --- confirm / publish / theme: shared setup (token + root) ---------------
+  // --- confirm / publish: shared setup (token + root) -----------------------
   const clientId = 'articulate-test-site';
   const clientSecret = env('ARTICULATE_TEST_SITE_CLIENT_SECRET', 'articulate-test-site-secret');
 
@@ -308,6 +327,11 @@ async function main() {
   console.log('Finding Articulate root');
   const rootId = await findArticulateRoot(base, token);
   console.log(`Root id: ${rootId}`);
+
+  if (mode === 'index-ready') {
+    await waitForIndexing(base, token, rootId, timeoutSec);
+    return;
+  }
 
   // --- confirm mode ---------------------------------------------------------
   if (mode === 'confirm') {
@@ -320,47 +344,6 @@ async function main() {
 
     console.log('Confirmation passed');
     console.log('Test-site confirmation passed: root, children, and descendants are published and / returns 200.');
-    return;
-  }
-
-  // --- theme mode -----------------------------------------------------------
-  if (mode === 'theme') {
-    console.log('Reading current document');
-    const doc = await getDocument(base, token, rootId);
-    const currentTheme = doc.values?.find(v => v.alias === 'theme')?.value ?? 'VAPOR';
-    const variantName = doc.variants?.[0]?.name ?? 'Blog';
-    console.log(`Current theme: ${currentTheme}`);
-
-    console.log('Verifying current theme renders');
-    await verifyThemeInHtml(base, currentTheme, timeoutSec);
-    console.log(`Confirmed: HTML contains ${getThemeCssMarker(currentTheme)}`);
-
-    const newTheme = getAltTheme(currentTheme);
-    let themeChanged = false;
-    try {
-      console.log(`Changing theme to: ${newTheme}`);
-      await updateDocument(base, token, rootId, [{ alias: 'theme', value: newTheme }], variantName);
-      themeChanged = true;
-
-      console.log('Publishing root');
-      await publishRoot(base, token, rootId);
-      await reloadCache(base, token);
-
-      console.log('Verifying new theme renders');
-      await verifyThemeInHtml(base, newTheme, timeoutSec);
-      console.log(`Theme verification passed: HTML contains ${getThemeCssMarker(newTheme)}`);
-    } finally {
-      // Restore original theme so iterative dev runs don't drift, even when
-      // alternate-theme publishing or verification fails.
-      if (themeChanged) {
-        console.log('Restoring original theme');
-        await updateDocument(base, token, rootId, [{ alias: 'theme', value: currentTheme }], variantName);
-        await publishRoot(base, token, rootId);
-        await reloadCache(base, token);
-        await verifyThemeInHtml(base, currentTheme, timeoutSec);
-        console.log('Original theme restored.');
-      }
-    }
     return;
   }
 

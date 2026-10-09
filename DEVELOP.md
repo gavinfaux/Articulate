@@ -37,7 +37,7 @@ For a normal local checkout, use **Dev Containers: Reopen in Container**. See th
 
 ## Docker
 
-Use the [Docker guide](docker/README.md) for Docker tooling, ports, credentials, runtime modes, smoke checks, and diagnostics. Use [`docker/help.md`](docker/help.md) for command options.
+Docker is optional for local browsing and container deployment checks. CI runs the HTTP tests on native packaged hosts. See the [Docker guide](docker/README.md) for ports and credentials, and [`docker/help.md`](docker/help.md) for commands.
 
 ```sh
 dotnet run --file docker/run.cs -- docker-dev --lane v17
@@ -45,7 +45,7 @@ dotnet run --file docker/run.cs -- docker-dev --lane v17
 
 Use `--lane v18` for Umbraco 18. Use `--reset` only when you need a fresh Docker database.
 
-For HTTP E2E tests, follow the [E2E guide](src/Articulate.Web/Client/e2e/README.md). Use the separate `art_e2e_v17` and `art_e2e_v18` stacks, not `art_v17` or `art_v18`.
+For HTTP E2E tests, use `dotnet run --file build/test.cs -- fresh --lane all` after building both Release packages with `--sample`. Docker's `docker-test` runs the same suite when you need to check Caddy and the container runtime. See the [E2E guide](src/Articulate.Web/Client/e2e/README.md). Do not run tests against `art_v17` or `art_v18`.
 
 ## Client Development
 

@@ -1,8 +1,29 @@
 # HTTP E2E tests
 
-Run Playwright against the packaged Docker sites. Tests use HTTP requests, not a browser. They delete their posts and restore root configuration after each test.
+One Playwright suite tests the packaged application through HTTP, without a browser. It runs on native hosts in CI and can run unchanged behind Caddy in Docker. Tests delete their own posts and restore complete root configuration after each test.
 
-## Start isolated sites
+## Run on a fresh native site
+
+Build the selected Release packages first, including the sample theme, then run:
+
+```sh
+dotnet run --file build/test.cs -- fresh --lane v17
+dotnet run --file build/test.cs -- fresh --lane v18
+```
+
+`--lane all` runs both sequentially. Each CI matrix job builds and tests one lane in its own checkout. The runner reuses `docker/src/ArticulateDockerSite.csproj` as a normal .NET application outside the checkout. It inspects the exact packages and verifies their restored hashes. Each host has an owned temporary database, self-signed certificate, random secret and free loopback HTTPS port. No Docker client, browser installation or certificate-store change is required.
+
+Preparation publishes and confirms starter content, restarts the host in Production, then publishes one temporary post. It waits for that post's exact key in `ExternalIndex` through Umbraco's Examine query API, deletes it and verifies removal. The existing 300-second readiness budget and test timeouts are unchanged. The runner stops its owned process and deletes its temporary directory on success or failure. Host logs remain in `.temp/art_e2e_native_<lane>_<id>/`; Playwright reports and test artefacts use the candidate name in `e2e-report-*` and `e2e-results-*`.
+
+`NODE_BIN` and `DOTNET_BIN` can select existing executables. The suite retains its client-credentials HTTP transport; browser-based Umbraco API helpers are not a drop-in replacement and no SDK dependency is added.
+
+## Optional Docker deployment check
+
+`dotnet run --file docker/run.cs -- docker-test --lane all --reuse-packages` runs these same 11 tests on disposable containers behind Caddy. Omit `--reuse-packages` to build packages first. Each lane gets a unique Compose project, volumes, image tag and available loopback ports. Cleanup removes only those candidate resources. There are no separate theme or Giscus smoke assertions; publication, confirmation and startup readiness remain preparation.
+
+Do not point E2E at `art_v17`, `art_v18`, or any site other than an owned fresh candidate or the dedicated manual-test projects below.
+
+## Optional manual Docker sites
 
 Run from the repository root. Use only these test resources, not `art_v17` or `art_v18`:
 
@@ -49,7 +70,7 @@ env ARTICULATE_E2E_BASE_URL=https://localhost:19444 ARTICULATE_TEST_SITE_CLIENT_
 
 Reports are in `src/Articulate.Web/Client/e2e-report-<lane>`; test artefacts are in `e2e-results-<lane>`. Open a report with `dotnet run --file build/test.cs -- report --lane v17` or `--lane v18`. Playwright prints the local URL. Stop it with Ctrl+C.
 
-The config accepts only HTTPS localhost ports 19443 and 19444. Certificate checks are disabled only for Playwright requests. Tests run with one worker, no retries and a 20-second polling limit. They do not reload the app cache or restart the site.
+The standalone config accepts HTTPS localhost ports 19443 and 19444. The integrated runner also supplies a candidate project name and its verified loopback HTTPS port; arbitrary URLs are rejected. Certificate checks are disabled only for Playwright requests. Tests run with one worker and no retries. The suite does not reload the app cache or restart the site; candidate setup and Production readiness happen before E2E starts.
 
 Check the test types:
 

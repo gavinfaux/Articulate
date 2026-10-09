@@ -4,6 +4,12 @@
 #nullable enable
 
 using System.Diagnostics;
+using System.Net;
+using System.Net.Sockets;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
+using System.Text.RegularExpressions;
+using System.Xml.Linq;
 
 try
 {
@@ -18,6 +24,7 @@ try
     return command switch
     {
         "e2e" => await RunE2e(options),
+        "fresh" => await RunFresh(options),
         "report" => await ShowReport(options),
         _ => throw new ArgumentException($"Unknown command '{command}'. Run with 'help'.")
     };
@@ -36,12 +43,17 @@ static void Help()
 
 static async Task<int> RunE2e(Options options)
 {
-    options.Validate("e2e", "lane");
+    options.Validate("e2e", "lane", "candidate-project", "candidate-port");
+    var candidateProject = options.Get("candidate-project");
+    var candidatePort = options.Get("candidate-port");
+    if ((candidateProject is null) != (candidatePort is null))
+        throw new ArgumentException("--candidate-project and --candidate-port must be used together.");
     var lanes = options.Get("lane", "all") switch
     {
         "v17" => new[] { "v17" },
         "v18" => new[] { "v18" },
-        "all" => new[] { "v17", "v18" },
+        "all" when candidateProject is null => new[] { "v17", "v18" },
+        "all" => throw new ArgumentException("Candidate E2E requires one lane."),
         var lane => throw new ArgumentException($"--lane must be v17, v18 or all (got '{lane}').")
     };
 
@@ -50,23 +62,255 @@ static async Task<int> RunE2e(Options options)
     var cli = Path.Combine(client, "node_modules", "@playwright", "test", "cli.js");
     RequireFile(cli, "Playwright is not installed. Install the Client dependencies first (see src/Articulate.Web/Client/e2e/README.md).");
 
+    if (candidateProject is not null && candidatePort is not null)
+    {
+        var lane = lanes[0];
+        if (!Regex.IsMatch(candidateProject, $@"^art_e2e_candidate_{lane}_[a-f0-9]{{32}}$", RegexOptions.CultureInvariant))
+            throw new ArgumentException("--candidate-project must be the generated project name for the selected lane.");
+        if (!int.TryParse(candidatePort, out var parsedPort) || parsedPort is < 1024 or > 65535 || parsedPort is 18443 or 18444 or 19443 or 19444)
+            throw new ArgumentException("--candidate-port must be a non-protected localhost port.");
+        await VerifyCandidate(root, candidateProject, parsedPort);
+    }
+
     foreach (var lane in lanes)
     {
-        var port = lane == "v17" ? "19443" : "19444";
-        var psi = new ProcessStartInfo("node") { WorkingDirectory = client, UseShellExecute = false };
-        psi.ArgumentList.Add(cli);
-        psi.ArgumentList.Add("test");
-        psi.ArgumentList.Add("--config");
-        psi.ArgumentList.Add("playwright.config.ts");
-        psi.Environment["ARTICULATE_E2E_BASE_URL"] = $"https://localhost:{port}";
-        psi.Environment["PLAYWRIGHT_HTML_OUTPUT_DIR"] = Path.Combine(client, $"e2e-report-{lane}");
-        psi.Environment["PLAYWRIGHT_OUTPUT_DIR"] = Path.Combine(client, $"e2e-results-{lane}");
-        Console.WriteLine($"E2E {lane}: https://localhost:{port}");
-        using var process = Process.Start(psi) ?? throw new InvalidOperationException("Could not start Node.");
-        await process.WaitForExitAsync();
-        if (process.ExitCode != 0) return process.ExitCode;
+        var port = candidateProject is null ? lane == "v17" ? "19443" : "19444" : candidatePort!;
+        var exit = await RunPlaywright(root, lane, port, candidateProject);
+        if (exit != 0) return exit;
     }
     return 0;
+}
+
+static async Task<int> RunPlaywright(string root, string lane, string port, string? candidate = null, IReadOnlyDictionary<string, string>? environment = null)
+{
+    var client = Path.Combine(root, "src", "Articulate.Web", "Client");
+    var cli = Path.Combine(client, "node_modules", "@playwright", "test", "cli.js");
+    RequireFile(cli, "Install the Client dependencies before running E2E.");
+    var psi = new ProcessStartInfo(Environment.GetEnvironmentVariable("NODE_BIN") ?? "node") { WorkingDirectory = client, UseShellExecute = false };
+    if (environment is not null) foreach (var (key, value) in environment) psi.Environment[key] = value;
+    foreach (var arg in new[] { cli, "test", "--config", "playwright.config.ts" }) psi.ArgumentList.Add(arg);
+    psi.Environment["ARTICULATE_E2E_BASE_URL"] = $"https://localhost:{port}";
+    psi.Environment.Remove("ARTICULATE_E2E_CANDIDATE_PROJECT");
+    psi.Environment.Remove("ARTICULATE_E2E_CANDIDATE_PORT");
+    if (candidate is not null)
+    {
+        psi.Environment["ARTICULATE_E2E_CANDIDATE_PROJECT"] = candidate;
+        psi.Environment["ARTICULATE_E2E_CANDIDATE_PORT"] = port;
+    }
+    psi.Environment["PLAYWRIGHT_HTML_OUTPUT_DIR"] = Path.Combine(client, $"e2e-report-{candidate ?? lane}");
+    psi.Environment["PLAYWRIGHT_OUTPUT_DIR"] = Path.Combine(client, $"e2e-results-{candidate ?? lane}");
+    Console.WriteLine($"E2E {lane}: https://localhost:{port}");
+    using var process = Process.Start(psi) ?? throw new InvalidOperationException("Could not start Node.");
+    await process.WaitForExitAsync();
+    return process.ExitCode;
+}
+
+static async Task<int> RunFresh(Options options)
+{
+    options.Validate("fresh", "lane");
+    var lanes = options.Get("lane", "all") switch
+    {
+        "v17" => new[] { "v17" }, "v18" => new[] { "v18" }, "all" => new[] { "v17", "v18" },
+        var lane => throw new ArgumentException($"--lane must be v17, v18 or all (got '{lane}').")
+    };
+    var root = FindRepositoryRoot();
+    var dotnet = Environment.GetEnvironmentVariable("DOTNET_BIN") ?? "dotnet";
+    var node = Environment.GetEnvironmentVariable("NODE_BIN") ?? "node";
+    foreach (var lane in lanes)
+    {
+        var packages = Path.Combine(root, "build", "Release", lane);
+        var main = Directory.EnumerateFiles(packages, "Articulate.*.nupkg")
+            .Where(file => Regex.IsMatch(Path.GetFileName(file), @"^Articulate\.[0-9]", RegexOptions.CultureInvariant)).ToArray();
+        if (main.Length != 1) throw new InvalidOperationException($"Expected exactly one main package in {packages}.");
+        var version = Path.GetFileName(main[0])["Articulate.".Length..^".nupkg".Length];
+        var cms = (await Capture(dotnet, new[] { "msbuild", Path.Combine(root, "src", "Articulate.Web", "Articulate.Web.csproj"), "-getProperty:UmbracoCmsPackageVersion", $"-p:ArticulatePackageLane={lane}" }, root)).Trim();
+        if (string.IsNullOrWhiteSpace(cms)) throw new InvalidOperationException("The lane CMS version is missing.");
+        var candidate = $"art_e2e_native_{lane}_{Guid.NewGuid():N}";
+        var directory = Path.Combine(Path.GetTempPath(), candidate);
+        if (Directory.Exists(directory)) throw new IOException("Native candidate directory already exists.");
+        Directory.CreateDirectory(directory);
+        var evidence = Path.Combine(root, ".temp", candidate);
+        (Process Process, Task<string> Output, Task<string> Error)? host = null;
+        var generation = 0;
+        try
+        {
+            await RunCommand(node, new[] { Path.Combine(root, "build", "smoke-package.mjs"), packages }, root);
+            var source = Path.Combine(root, "docker", "src");
+            foreach (var file in Directory.EnumerateFiles(source, "*", SearchOption.AllDirectories))
+            {
+                var relative = Path.GetRelativePath(source, file);
+                if (relative.Split(Path.DirectorySeparatorChar).Any(part => part is "bin" or "obj")) continue;
+                if (Path.GetExtension(file) is not (".cs" or ".csproj") && relative != "appsettings.json") continue;
+                var target = Path.Combine(directory, relative);
+                Directory.CreateDirectory(Path.GetDirectoryName(target)!);
+                File.Copy(file, target);
+            }
+            new XDocument(new XElement("configuration", new XElement("packageSources", new XElement("clear"),
+                new XElement("add", new XAttribute("key", "lane"), new XAttribute("value", packages)),
+                new XElement("add", new XAttribute("key", "nuget.org"), new XAttribute("value", "https://api.nuget.org/v3/index.json")))))
+                .Save(Path.Combine(directory, "nuget.config"));
+            var password = $"E2e!{Guid.NewGuid():N}";
+            var certificate = Path.Combine(directory, "localhost.pfx");
+            using (var key = RSA.Create(2048))
+            {
+                var request = new CertificateRequest("CN=localhost", key, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+                var names = new SubjectAlternativeNameBuilder();
+                names.AddDnsName("localhost");
+                request.CertificateExtensions.Add(names.Build());
+                request.CertificateExtensions.Add(new X509BasicConstraintsExtension(false, false, 0, true));
+                request.CertificateExtensions.Add(new X509KeyUsageExtension(X509KeyUsageFlags.DigitalSignature | X509KeyUsageFlags.KeyEncipherment, true));
+                request.CertificateExtensions.Add(new X509EnhancedKeyUsageExtension(new OidCollection { new Oid("1.3.6.1.5.5.7.3.1") }, true));
+                using var cert = request.CreateSelfSigned(DateTimeOffset.UtcNow.AddMinutes(-1), DateTimeOffset.UtcNow.AddDays(1));
+                await File.WriteAllBytesAsync(certificate, cert.Export(X509ContentType.Pfx, password));
+            }
+            int port;
+            do
+            {
+                using var listener = new TcpListener(IPAddress.Loopback, 0);
+                listener.Start();
+                port = ((IPEndPoint)listener.LocalEndpoint).Port;
+            } while (port is 18443 or 18444 or 19443 or 19444);
+            var url = $"https://localhost:{port}";
+            var environment = new Dictionary<string, string>
+            {
+                ["NUGET_PACKAGES"] = Path.Combine(directory, "packages"),
+                ["ASPNETCORE_ENVIRONMENT"] = "Production", ["ASPNETCORE_URLS"] = url,
+                ["Kestrel__Certificates__Default__Path"] = certificate, ["Kestrel__Certificates__Default__Password"] = password,
+                ["ConnectionStrings__umbracoDbDSN"] = $"Data Source={Path.Combine(directory, "database.sqlite")};Cache=Shared;Foreign Keys=True;Pooling=True",
+                ["ConnectionStrings__umbracoDbDSN_ProviderName"] = "Microsoft.Data.Sqlite",
+                ["Umbraco__CMS__Runtime__Mode"] = "BackofficeDevelopment",
+                ["Umbraco__CMS__Unattended__UnattendedUserName"] = "E2E candidate",
+                ["Umbraco__CMS__Unattended__UnattendedUserEmail"] = "e2e@localhost",
+                ["Umbraco__CMS__Unattended__UnattendedUserPassword"] = password,
+                ["Umbraco__CMS__Security__BackOfficeHost"] = url, ["Umbraco__CMS__Global__UseHttps"] = "true",
+                ["Umbraco__CMS__WebRouting__UmbracoApplicationUrl"] = url + "/",
+                ["Articulate__TestSite__Enabled"] = "true", ["Articulate__TestSite__ClientSecret"] = password,
+                ["Articulate__ManagementApi__OpenIddict__Client__RedirectUris__0"] = url + "/a-new/",
+                ["Articulate__ManagementApi__OpenIddict__Client__PostLogoutRedirectUris__0"] = url + "/",
+                ["ARTICULATE_TEST_SITE_CLIENT_SECRET"] = password, ["UMBRACO_PUBLIC_URL"] = url,
+                ["ARTICULATE_E2E_CANDIDATE_PROJECT"] = candidate, ["ARTICULATE_E2E_CANDIDATE_PORT"] = port.ToString(),
+                ["TIMEOUT_SECONDS"] = "300"
+            };
+            var project = Path.Combine(directory, "ArticulateDockerSite.csproj");
+            // The copied host is outside the repository's central-package and implicit-using settings.
+            var projectXml = XDocument.Load(project);
+            projectXml.Root!.Element("PropertyGroup")!.Add(new XElement("ImplicitUsings", "enable"),
+                new XElement("ArticulatePackageVersion", version), new XElement("UmbracoCmsPackageVersion", cms));
+            foreach (var reference in projectXml.Descendants("PackageReference"))
+            {
+                if (reference.Attribute("VersionOverride") is not { } overridden) continue;
+                reference.SetAttributeValue("Version", overridden.Value);
+                overridden.Remove();
+            }
+            projectXml.Save(project);
+            var published = Path.Combine(directory, "published");
+            await RunCommand(dotnet, new[] { "publish", project, "--configuration", "Release", "--output", published }, root, environment);
+            foreach (var package in Directory.EnumerateFiles(packages, "*.nupkg"))
+            {
+                var name = Path.GetFileNameWithoutExtension(package);
+                var id = name.StartsWith("Articulate.Theme.Sample.", StringComparison.Ordinal) ? "articulate.theme.sample" : "articulate";
+                var restored = Path.Combine(directory, "packages", id, version.ToLowerInvariant(), name.ToLowerInvariant() + ".nupkg.sha512");
+                var expected = Convert.ToBase64String(SHA512.HashData(await File.ReadAllBytesAsync(package)));
+                if (!File.Exists(restored) || (await File.ReadAllTextAsync(restored)).Trim() != expected)
+                    throw new InvalidOperationException($"The restored package differs from the inspected archive: {name}.");
+            }
+            foreach (var mode in new[] { "BackofficeDevelopment", "Production" })
+            {
+                environment["Umbraco__CMS__Runtime__Mode"] = mode;
+                var start = Command(dotnet, new[] { Path.Combine(published, "ArticulateDockerSite.dll") }, published, environment);
+                start.RedirectStandardOutput = true;
+                start.RedirectStandardError = true;
+                var process = Process.Start(start) ?? throw new InvalidOperationException("Could not start the owned native host.");
+                host = (process, process.StandardOutput.ReadToEndAsync(), process.StandardError.ReadToEndAsync());
+                generation++;
+                foreach (var smoke in mode == "Production" ? new[] { "smoke", "index-ready" } : new[] { "publish", "confirm" })
+                    await RunCommand(node, new[] { Path.Combine(root, "docker", "smoke.mjs"), smoke }, root, environment);
+                if (mode == "Production") break;
+                var preparedHost = host.Value;
+                host = null;
+                await StopHost(preparedHost, evidence, generation);
+            }
+            var hash = Convert.ToHexString(SHA256.HashData(await File.ReadAllBytesAsync(main[0])));
+            Console.WriteLine($"Native candidate receipt: lane={lane} package={Path.GetFileName(main[0])} sha256={hash} cms={cms} candidate={candidate} pid={host!.Value.Process.Id} url={url} package-restore=exact-archives indexing=owned-external-key");
+            var exit = await RunPlaywright(root, lane, port.ToString(), candidate, environment);
+            if (exit != 0) return exit;
+        }
+        finally
+        {
+            try
+            {
+                if (host is not null)
+                {
+                    var ownedHost = host.Value;
+                    host = null;
+                    await StopHost(ownedHost, evidence, generation);
+                }
+            }
+            finally
+            {
+                Directory.Delete(directory, recursive: true);
+                if (Directory.Exists(directory)) throw new IOException("Native candidate cleanup failed.");
+                Console.WriteLine($"Native candidate cleanup verified: {candidate}");
+            }
+        }
+    }
+    return 0;
+}
+
+static ProcessStartInfo Command(string file, IEnumerable<string> args, string cwd, IReadOnlyDictionary<string, string>? environment = null)
+{
+    var start = new ProcessStartInfo(file) { WorkingDirectory = cwd, UseShellExecute = false };
+    foreach (var arg in args) start.ArgumentList.Add(arg);
+    if (environment is not null) foreach (var (key, value) in environment) start.Environment[key] = value;
+    return start;
+}
+
+static async Task RunCommand(string file, IEnumerable<string> args, string cwd, IReadOnlyDictionary<string, string>? environment = null)
+{
+    using var process = Process.Start(Command(file, args, cwd, environment)) ?? throw new InvalidOperationException($"Could not start {file}.");
+    await process.WaitForExitAsync();
+    if (process.ExitCode != 0) throw new InvalidOperationException($"{Path.GetFileName(file)} exited {process.ExitCode}.");
+}
+
+static async Task StopHost((Process Process, Task<string> Output, Task<string> Error) host, string evidence, int generation)
+{
+    using var process = host.Process;
+    if (!process.HasExited) process.Kill(entireProcessTree: true);
+    await process.WaitForExitAsync();
+    Directory.CreateDirectory(evidence);
+    await File.WriteAllTextAsync(Path.Combine(evidence, $"native-host-{generation}.log"), await host.Output);
+    await File.WriteAllTextAsync(Path.Combine(evidence, $"native-host-{generation}.stderr.log"), await host.Error);
+}
+
+static async Task VerifyCandidate(string root, string project, int port)
+{
+    var composeFile = Path.Combine(root, "docker", "docker-compose.yml");
+    var containerId = await Capture("docker", new[] { "compose", "--project-name", project, "-f", composeFile, "ps", "-q", "caddy" }, root);
+    containerId = containerId.Trim();
+    if (containerId.Length == 0) throw new InvalidOperationException("Candidate Compose project has no Caddy container.");
+
+    var identity = await Capture("docker", new[]
+    {
+        "inspect", "--format", "{{ index .Config.Labels \"com.docker.compose.project\" }}|{{ index .Config.Labels \"com.docker.compose.service\" }}|{{ .State.Status }}", containerId
+    }, root);
+    if (identity.Trim() != $"{project}|caddy|running")
+        throw new InvalidOperationException("Candidate Caddy container identity does not match its Compose project.");
+
+    var publishedPort = await Capture("docker", new[] { "compose", "--project-name", project, "-f", composeFile, "port", "caddy", "18443" }, root);
+    if (!publishedPort.Trim().EndsWith($":{port}", StringComparison.Ordinal))
+        throw new InvalidOperationException("Candidate Compose project does not own the requested HTTPS port.");
+}
+
+static async Task<string> Capture(string file, IEnumerable<string> args, string cwd)
+{
+    var psi = new ProcessStartInfo(file) { UseShellExecute = false, WorkingDirectory = cwd, RedirectStandardOutput = true, RedirectStandardError = true };
+    foreach (var arg in args) psi.ArgumentList.Add(arg);
+    using var process = Process.Start(psi) ?? throw new InvalidOperationException($"Could not start {file}.");
+    var output = await process.StandardOutput.ReadToEndAsync();
+    var error = await process.StandardError.ReadToEndAsync();
+    await process.WaitForExitAsync();
+    if (process.ExitCode != 0) throw new InvalidOperationException($"{file} exited {process.ExitCode}: {error.Trim()}");
+    return output;
 }
 
 static async Task<int> ShowReport(Options options)

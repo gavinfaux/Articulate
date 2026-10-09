@@ -17,9 +17,9 @@ For current command syntax, options, and defaults, use [`build/help.md`](build/h
 
 The packable package is produced by `src/Articulate.Web/Articulate.Web.csproj` (`PackageId=Articulate`). Packages are written under `build/$(Configuration)/v17` or `build/$(Configuration)/v18`.
 
-Set `ARTICULATE_PACKAGE_VERSION` to override the calculated package version. The sample package supports the local Docker pipeline; it is not published or uploaded as a CI artefact.
+Set `ARTICULATE_PACKAGE_VERSION` to override the calculated package version. The sample package supports the native and Docker test sites. It is not published or uploaded as a CI artefact.
 
-Because both lanes share project `bin`/`obj` directories and static-web-asset paths, always run full-solution lane builds sequentially and with `-m:1` (`build/build.cs` already does this internally).
+Within one checkout, both lanes share project `bin`/`obj` directories and static-web-asset paths. Run full-solution lane builds sequentially and with `-m:1`; `build/build.cs` already does this. CI uses separate matrix jobs and checkouts, one per lane.
 
 > **Switching lanes:** The Back Office output is shared between v17 and v18. After building one lane, pass `--clean` on the first build of the other lane. For example: `build --lane v18 --clean` after a v17 build. The Docker runner's `--clean` option passes this through to the package build. Cleaning leaves the local test site unchanged; use `site --reset` explicitly when needed.
 
@@ -161,7 +161,7 @@ An Umbraco package update alone leaves the Articulate API client unchanged. Rege
 
 TinyMCE.Umbraco is included only when `UseTinyMceUmbraco=true` is set at build time, and only in the two non-packable consumers:
 
-- `docker/src/ArticulateDockerSite.csproj` — dev Docker site
+- `docker/src/ArticulateDockerSite.csproj` — packaged test site used by native E2E and Docker
 - `src/Articulate.Tests.Website/Articulate.Tests.Website.csproj` — test website
 
 The dist `Articulate.nupkg` and `Articulate.Theme.Sample.nupkg` do **not** include TinyMCE.Umbraco and do **not** reference it; consumers install it separately if they want it.
@@ -178,7 +178,9 @@ The lock files are restore-time inputs for `<RestoreLockedMode>` and never ship 
 
 ## Package smoke test
 
-`build/smoke-package.mjs` opens each `build/Release/<lane>/*.nupkg` and `*.snupkg`, extracts key files, and verifies the package is well-formed. CI runs it after both lanes pack and before artifact upload; a failed check skips the workflow upload so leaks never reach GitHub Actions artifacts.
+`build/smoke-package.mjs` opens each `build/Release/<lane>/*.nupkg` and `*.snupkg`, extracts key files, and verifies the package is well-formed. Each CI matrix job builds one lane, then runs `dotnet run --file build/test.cs -- fresh --lane <lane>`. This command inspects the packages, verifies an isolated restore against their hashes, and runs the same 11 HTTP tests on a fresh native host in Production. Preparation proves publication indexing with one temporary post. Failed inspection or E2E prevents package upload.
+
+Docker is optional deployment coverage. `docker-test` runs the same suite behind Caddy; it has no separate theme or Giscus smoke assertions. Publication, confirmation and readiness checks are setup, not a second behaviour suite. See the [E2E guide](src/Articulate.Web/Client/e2e/README.md).
 
 Run it locally after a build:
 

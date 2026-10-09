@@ -23,8 +23,13 @@ concurrency:
 
 jobs:
   build:
+    name: Build and test ${{ matrix.lane }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        lane: [v17, v18]
 
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -99,31 +104,12 @@ jobs:
           fi
           echo "Lane boundary clean."
 
-      - name: Run lane builds
-        shell: bash
-        run: |
-          set -euo pipefail
+      - name: Build lane packages
+        # Each matrix job has its own checkout and shared build outputs.
+        run: dotnet run --file build/build.cs -- build --lane "${{ matrix.lane }}" --sample --clean
 
-          # --clean wipes src/**/bin|obj, build/ClientAssets, and BackOffice
-          # static web assets. Keep lanes sequential: v18 overwrites shared
-          # output, including the v17 hashed JS asset (e.g. client.gen-XXXX.js).
-          for lane in v17 v18; do
-            echo "::group::Build ${lane}"
-            dotnet run --file build/build.cs -- build --lane "${lane}" --sample --clean
-            echo "::endgroup::"
-          done
-
-      - name: Smoke-test package contents
-        # Smoke covers both v17 + v18
-        shell: bash
-        run: |
-          set -euo pipefail
-          # Verify each lane's .nupkg / .snupkg has the expected shape
-          # (manifest, backoffice bundles, themes, embedded resources,
-          # razor-compiled views, no lock files) before we publish them.
-          node build/smoke-package.mjs \
-            build/Release/v17 \
-            build/Release/v18
+      - name: Inspect packages and run fresh native HTTP E2E
+        run: dotnet run --file build/test.cs -- fresh --lane "${{ matrix.lane }}"
 
       - name: Resolve generated package versions
         shell: bash
@@ -138,30 +124,16 @@ jobs:
             basename "$package" | sed -e 's/^Articulate\.//' -e 's/\.nupkg$//'
           }
 
-          V17_VERSION="$(package_version build/Release/v17)"
-          V18_VERSION="$(package_version build/Release/v18)"
-          echo "V17_VERSION=$V17_VERSION" >> "$GITHUB_ENV"
-          echo "V18_VERSION=$V18_VERSION" >> "$GITHUB_ENV"
-          echo "Generated v17 package: $V17_VERSION"
-          echo "Generated v18 package: $V18_VERSION"
+          PACKAGE_VERSION="$(package_version build/Release/${{ matrix.lane }})"
+          echo "PACKAGE_VERSION=$PACKAGE_VERSION" >> "$GITHUB_ENV"
+          echo "Generated ${{ matrix.lane }} package: $PACKAGE_VERSION"
 
-      - name: Upload v17 packages
+      - name: Upload lane packages
         if: ${{ !env.ACT }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: Articulate-${{ env.V17_VERSION }}
-          # Articulate.Theme.Sample is built for the local Docker pipeline
-          # (see docker/src/ArticulateDockerSite.csproj) but never
-          # published, so don't upload it as a CI artifact.
+          name: Articulate-${{ env.PACKAGE_VERSION }}
+          # The sample theme supports the native/Docker test host, not release publication.
           path: |
-            ${{ env.RELEASE_FOLDER }}/v17/Articulate.[0-9]*.nupkg
-            ${{ env.RELEASE_FOLDER }}/v17/Articulate.[0-9]*.snupkg
-
-      - name: Upload v18 packages
-        if: ${{ !env.ACT }}
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: Articulate-${{ env.V18_VERSION }}
-          path: |
-            ${{ env.RELEASE_FOLDER }}/v18/Articulate.[0-9]*.nupkg
-            ${{ env.RELEASE_FOLDER }}/v18/Articulate.[0-9]*.snupkg
+            ${{ env.RELEASE_FOLDER }}/${{ matrix.lane }}/Articulate.[0-9]*.nupkg
+            ${{ env.RELEASE_FOLDER }}/${{ matrix.lane }}/Articulate.[0-9]*.snupkg

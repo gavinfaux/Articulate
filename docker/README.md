@@ -1,6 +1,8 @@
-# Local Docker Site
+# Local Docker site
 
-`docker/docker-compose.yml` defines the containers. Cross-platform orchestration lives in the .NET 10 file-based app at `docker/run.cs`; `smoke.mjs` contains the host-side Management API assertions.
+Docker is optional. `docker-test` runs the same HTTP suite as native CI, behind Caddy in a container. There is no separate Docker behaviour suite.
+
+`docker/docker-compose.yml` defines the containers. `docker/run.cs` starts and stops them. `docker/smoke.mjs` prepares content and checks startup readiness; native E2E uses it too.
 
 ## Commands
 
@@ -10,7 +12,7 @@ dotnet run --file docker/run.cs -- help docker-dev
 
 `docker/help.md` is the canonical command and option reference. The rest of this page documents runtime behavior, credentials, and direct Compose use. Examples use POSIX shell syntax; in PowerShell, replace `export NAME='value'` with `$env:NAME = 'value'`.
 
-Full smoke tests require `ARTICULATE_TEST_SITE_CLIENT_SECRET`; `Env.RequireSecret()` supplies a default when it is unset.
+Publication and confirmation use `ARTICULATE_TEST_SITE_CLIENT_SECRET`. The runner supplies the local default when it is unset.
 
 | Lane  | Image                  | HTTPS backoffice URL               | HTTP listener             |
 |-------|------------------------|------------------------------------|---------------------------|
@@ -29,17 +31,17 @@ Use this account to sign in to either backoffice URL above. These are public, lo
 
 ## Trust Caddy's local CA once per machine
 
-Caddy terminates TLS with a locally generated certificate. Trust Caddy's root CA once per machine before opening the backoffice. The Docker runner exposes the portable entrypoint:
+Caddy serves HTTPS with a local certificate. To avoid browser certificate warnings, add its root CA to your trust store:
 
 ```sh
 dotnet run --file docker/run.cs -- docker-ca --lane v17
 ```
 
-The Docker runner selects the platform-specific certificate-store helper internally; keep that implementation detail behind `docker-ca`. On Windows, expect a user confirmation prompt when the Caddy root is added to the current-user trust store.
+On Windows, this command adds the CA to the current user's root certificate store. Run it only if you want to trust that CA. Automated HTTP tests do not need it.
 
-## Smoke commands
+## Content preparation and readiness
 
-Against an already healthy stack, `smoke.mjs` supports `publish`, `confirm`, `smoke`, and `theme`:
+For a running test site, `smoke.mjs` supports `publish`, `confirm`, and `smoke`. These prepare content and check readiness; the Playwright suite tests application behaviour:
 
 ```sh
 export UMBRACO_PUBLIC_URL='https://localhost:18443/'
@@ -50,17 +52,19 @@ node docker/smoke.mjs publish --no-descendants
 
 `confirm` is read-only and checks all descendants under the Articulate root. Publication processes the root first, waits for the public route and published-content cache, then publishes descendants. Use `https://localhost:18444/` for the v18 lane. Set `NODE_BIN` if `node` is not on `PATH`. On Windows, invoke the script from PowerShell or cmd rather than passing `node.exe` through WSL or Git Bash.
 
-The `theme` smoke command changes the theme, reloads the app cache and restores the original theme. The E2E test checks theme changes without a cache reload.
+`docker-test` runs the existing E2E suite after the fresh site enters Production. Before tests start, it publishes one temporary post, waits until Umbraco's Examine query API returns its exact key from `ExternalIndex`, then deletes it and verifies removal. This checks publication indexing within the existing 300-second preparation budget: Umbraco's startup rebuild can delay indexing after the root returns 200. The theme E2E changes and restores the root theme and checks the packaged stylesheet. The `publish` setup still reloads the published-content cache.
 
 The smoke client bypasses certificate validation for loopback and RFC1918 private IPv4 hosts used by the development harness. Public hosts retain normal certificate validation.
 
 ## HTTP E2E tests
 
-Follow the [E2E guide](../src/Articulate.Web/Client/e2e/README.md) to test the packaged application. Use the separate `art_e2e_v17` and `art_e2e_v18` stacks. Do not use or reset `art_v17` or `art_v18`. These tests do not run in CI.
+CI runs the shared 11-test suite on fresh native packaged hosts through `build/test.cs -- fresh`, one lane per matrix job. Docker is an optional deployment check: `docker-test` starts disposable containers behind Caddy and runs those same tests. No separate Docker behaviour suite is maintained.
+
+Follow the [E2E guide](../src/Articulate.Web/Client/e2e/README.md) for manual tests using the separate `art_e2e_v17` and `art_e2e_v18` stacks. Do not use or reset `art_v17` or `art_v18`.
 
 ## LAN access
 
-The harness remains loopback-only by default. To test the standalone editor from another machine, set the LAN origin consistently and reset the database so OpenIddict registers redirect URIs for that origin:
+The site binds to loopback by default. To test the standalone editor from another machine, set the LAN origin consistently and reset the database so OpenIddict registers redirect URIs for that origin:
 
 ```sh
 export ARTICULATE_TEST_SITE_CLIENT_SECRET='articulate-test-site-secret'
@@ -96,24 +100,22 @@ The runner passes the lane's `TinyMceUmbracoPackageVersion` floor from `Director
 The compose stack switches between two modes through `UMBRACO_RUNTIME_MODE`:
 
 - `BackofficeDevelopment` (default) — auto-provisions the test-site API user + client credentials after install and migrations, then publishes and confirms content via `smoke.mjs`.
-- `Production` — disables that bootstrap so the only content served is what was already published in the data volume. Use `docker-prod` to flip the existing stack into this mode and re-verify.
+- `Production` — disables that bootstrap so the only content served is what was already published in the data volume. `docker-prod` switches an existing stack into this mode and checks root readiness; `docker-test` also runs the full HTTP E2E suite against a fresh disposable project after this transition.
 
-Typical flow: start with empty volumes in `BackofficeDevelopment`, publish and confirm content, then re-run `docker-prod` against the same volumes to confirm that published content survives a `Production`-mode restart. See the release notes for the loopback-binding change.
+Typical flow: start with empty volumes in `BackofficeDevelopment`, publish and confirm content, then re-run `docker-prod` against the same volumes to confirm that published content survives a `Production`-mode restart. To run the shared suite in fresh containers, use `dotnet run --file docker/run.cs -- docker-test --lane all`.
 
 ## Cookie isolation between lanes
 
-Both v17 and v18 run on the same `localhost` authority but different ports. Browser cookies are domain-scoped (port is ignored), so the default Umbraco back-office cookie (`UMB_UCONTEXT` in Umbraco 17 and 18, plus the new OAuth cookies `umbAccessToken` / `umbRefreshToken` / `umbPkceCode` in v17.3+) would normally clash and log you out of one lane when signing into the other.
+Browsers share `localhost` cookies across ports. The runner gives each lane separate backoffice cookie names:
 
-`docker/run.cs` `ConfigureLane` sets two per-lane config values to fix this:
+- `Umbraco__CMS__Security__AuthCookieName=UMB_UCONTEXT-{lane}`
+- `Umbraco__CMS__Security__BackOfficeTokenCookie__SiteName=-{lane}`
 
-- `Umbraco__CMS__Security__AuthCookieName=UMB_UCONTEXT-{lane}` — renames the legacy `UMB_UCONTEXT` cookie. (`Security:AuthCookieName` is the supported config key; the Docker harness passes it through.)
-- `Umbraco__CMS__Security__BackOfficeTokenCookie__SiteName=-{lane}` — appends a suffix to the new OAuth cookie names per Umbraco PR #22057 (shipped in Umbraco 17.3+).
-
-You stay logged into both lanes simultaneously without browser juggling.
+This keeps the v17 and v18 backoffice sessions separate.
 
 ## Test-site switches
 
-The test-site identity is fixed for deterministic smoke and MCP credentials. Only bootstrap enablement and the client secret are configurable per run:
+Content preparation, E2E and MCP use the same test-site API identity. Only bootstrap enablement and the client secret are configurable per run:
 
 | Variable                                      | Default                               | Purpose                                                                  |
 |-----------------------------------------------|---------------------------------------|--------------------------------------------------------------------------|
@@ -128,7 +130,7 @@ Package inputs come from `build/Release/<lane>` and must include Articulate and 
 
 The Docker runner resolves `UmbracoCmsPackageVersion` and `TinyMceUmbracoPackageVersion` from `Directory.Packages.props` via `dotnet msbuild -getProperty`, so the site uses the same dependency floors.
 
-Umbraco startup migrations are forward-only: `UpgradeUnattended=true` applies pending migrations, while a database newer than the running code fails startup instead of being downgraded. To test an upgrade, start an older package/image with `docker-dev --reset`, keep the lane's volumes, then rebuild and run `docker-dev` without `--reset`. For the local test site, use `site --reset` only for the baseline and then restart `site` without `--reset`. `build --clean` never deletes the migration database.
+Docker stores the database and media in named volumes. Rebuilding packages or images keeps that data. `docker-dev --reset` removes the selected lane's volumes. `build --clean` does not delete the database.
 
 Rebuilding an image does not replace an already running container. The Docker utility uses `--force-recreate` where required. If a site still serves stale assets, inspect the running stack and its packaged Backoffice files:
 
@@ -137,8 +139,6 @@ dotnet run --file docker/run.cs -- docker-status --lane v17
 ```
 
 Use `--lane v18` for the v18 lane.
-
-Standard smoke evidence is HTTP, DOM, state, and container-log based. Screenshots are optional manual-review evidence.
 
 ## Umbraco MCP Dev
 
@@ -152,6 +152,6 @@ The Docker harness auto-provisions the API user this server expects. Configure y
 
 Install with the lane-matched tag (`@umbraco-cms/mcp-dev@17` for the v17 lane, `@18` for v18). See the [Umbraco MCP documentation](https://docs.umbraco.com/umbraco-developer-mcp) for the full tool list, permissions model, and Claude Desktop config snippet.
 
-Use MCP for interactive Management API tasks. Use smoke tests and E2E for repeatable checks.
+Use MCP for interactive Management API tasks. Use the shared E2E suite for repeatable behaviour checks.
 
 > The `umbraco-articulate` OpenID client is **not** the right credential here. It is the Markdown Editor's browser-side OAuth client (see [Markdown Editor Authentication](https://github.com/Shazwazza/Articulate/wiki/Markdown-Editor-Authentication)), not an API user client-credentials identity.
