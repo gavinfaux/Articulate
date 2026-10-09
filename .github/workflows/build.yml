@@ -37,6 +37,12 @@ jobs:
       # The actual test run is ~2s; 60s gives a 30x margin for testhost startup
       VSTEST_CONNECTION_TIMEOUT: 60
       DOTNET_SYSTEM_NET_DISABLEIPV6: 1
+      # Temporary ImageSharp risk acceptance for this fork's test branch only.
+      ARTICULATE_TESTING_AUDIT_EXCEPTION: >-
+        ${{ github.repository == 'gavinfaux/Articulate' &&
+            (github.ref == 'refs/heads/explore/e2e-first-testing' ||
+             (github.head_ref == 'explore/e2e-first-testing' &&
+              github.event.pull_request.head.repo.full_name == 'gavinfaux/Articulate')) }}
 
     steps:
       - name: Checkout
@@ -61,6 +67,9 @@ jobs:
           echo "Version: ${NBGV_SemVer2}"
           echo "Commit: ${NBGV_GitCommitIdShort}"
           echo "Date: ${NBGV_GitCommitDate}"
+          if [ "${ARTICULATE_TESTING_AUDIT_EXCEPTION}" = "true" ]; then
+            echo "::warning::Testing only: three ImageSharp advisories are temporarily exempt. ImageSharp 3.1.12 remains affected; package upload is disabled."
+          fi
 
       - name: Setup pnpm
         uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
@@ -129,7 +138,7 @@ jobs:
           echo "Generated ${{ matrix.lane }} package: $PACKAGE_VERSION"
 
       - name: Upload lane packages
-        if: ${{ !env.ACT }}
+        if: ${{ !env.ACT && env.ARTICULATE_TESTING_AUDIT_EXCEPTION != 'true' }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: Articulate-${{ env.PACKAGE_VERSION }}

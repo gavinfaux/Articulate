@@ -12,6 +12,14 @@
 		<WarningsAsErrors Condition="'$(CI)' == 'true'">$(WarningsAsErrors);NU1903;NU1904</WarningsAsErrors>
 		<DisableImplicitNuGetFallbackFolder>true</DisableImplicitNuGetFallbackFolder>
 	</PropertyGroup>
+	<!-- Temporary testing exception, enabled only for the fork/branch selected in build.yml.
+	     ImageSharp 3.1.12 remains affected. Remove after the CMS fix and advisory corrections.
+	     Upstream fixes: https://github.com/umbraco/Umbraco-CMS/pull/24158 and /pull/24159. -->
+	<ItemGroup Condition="'$(CI)' == 'true' and '$(ARTICULATE_TESTING_AUDIT_EXCEPTION)' == 'true'">
+		<NuGetAuditSuppress Include="https://github.com/advisories/GHSA-j3p4-wp97-rph4" />
+		<NuGetAuditSuppress Include="https://github.com/advisories/GHSA-j9gm-c75j-xc9q" />
+		<NuGetAuditSuppress Include="https://github.com/advisories/GHSA-jjfr-hcj7-qf5w" />
+	</ItemGroup>
 	<!-- Allow local developer overrides (e.g. ArticulatePackageLane) -->
 	<Import Project="$(MSBuildThisFileDirectory)Directory.Build.props.user" Condition="Exists('$(MSBuildThisFileDirectory)Directory.Build.props.user')" />
 
