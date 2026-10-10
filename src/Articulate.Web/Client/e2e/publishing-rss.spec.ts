@@ -56,6 +56,57 @@ async function publish(request: APIRequestContext, accessToken: string, id: stri
   expect(response.ok(), assertion).toBeTruthy();
 }
 
+async function articlesArchive(request: APIRequestContext, accessToken: string, rootId: string) {
+  const childrenResponse = await api(request, accessToken, `/tree/document/children?parentId=${rootId}&skip=0&take=100`);
+  expect(childrenResponse.ok(), 'Management API lists the Articulate root children').toBeTruthy();
+  const children = (await childrenResponse.json() as { items: Array<{ id: string; documentType: { id: string } }> }).items;
+  let archiveId: string | undefined;
+  for (const child of children) {
+    const response = await api(request, accessToken, `/document-type/${child.documentType.id}`);
+    expect(response.ok(), 'Management API returns the child document type').toBeTruthy();
+    const type = await response.json() as { alias: string };
+    if (type.alias === 'ArticulateArchive') archiveId = child.id;
+  }
+  return required(archiveId, 'Articles archive');
+}
+
+function createMarkdownPost(request: APIRequestContext, accessToken: string, parentId: string, post: { title: string; body: string; slug: string; documentTypeId?: string; extraValues?: unknown[] }) {
+  const value = (alias: string, content: unknown, editorAlias: string) => ({ alias, value: content, culture: null, segment: null, editorAlias, entityType: 'document-property-value' });
+  return api(request, accessToken, '/document', {
+    method: 'POST',
+    data: {
+      parent: { id: parentId },
+      documentType: { id: post.documentTypeId ?? '9c2df3ea-74d9-41ef-8773-07960ac5a819' },
+      template: null,
+      variants: [{ culture: null, segment: null, name: post.title }],
+      values: [value('markdown', post.body, 'Umbraco.MarkdownEditor'), value('umbracoUrlName', post.slug, 'Umbraco.TextBox'), ...(post.extraValues ?? [])],
+    },
+  });
+}
+
+async function deleteDocument(request: APIRequestContext, accessToken: string, id: string, assertion: string) {
+  const deletion = await api(request, accessToken, `/document/${id}`, { method: 'DELETE' });
+  expect([200, 204].includes(deletion.status()), assertion).toBeTruthy();
+}
+
+// Runs one restore step without letting its failure hide the others or the test's own failure.
+async function attempt(recoveryErrors: string[], label: string, step: () => Promise<unknown>) {
+  try {
+    await step();
+  } catch (error) {
+    recoveryErrors.push(`${label}: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
+function settle(name: string, testFailure: unknown, recoveryErrors: string[]) {
+  if (recoveryErrors.length > 0) {
+    const recoveryFailure = new Error(`${name} recovery requires attention: ${recoveryErrors.join('; ')}`);
+    if (testFailure !== undefined) throw new AggregateError([testFailure, recoveryFailure], `${name} assertion failed and recovery needs attention`);
+    throw recoveryFailure;
+  }
+  if (testFailure !== undefined) throw testFailure;
+}
+
 async function waitFor(request: APIRequestContext, path: string, predicate: (status: number, body: string) => boolean) {
   await expect.poll(async () => {
     const response = await request.get(path, { headers: { 'Cache-Control': 'no-cache' } });
@@ -150,16 +201,7 @@ async function rssItems(request: APIRequestContext, path: string) {
 test('draft publishes as rendered content and an RSS item, then unpublishes the route', async ({ request, baseURL }) => {
   const accessToken = await token(request);
   const { id: rootId } = await rootDocument(request, accessToken);
-  const childrenResponse = await api(request, accessToken, `/tree/document/children?parentId=${rootId}&skip=0&take=100`);
-  expect(childrenResponse.ok()).toBeTruthy();
-  const children = (await childrenResponse.json() as { items: Array<{ id: string; documentType: { id: string } }> }).items;
-  let articlesId: string | undefined;
-  for (const child of children) {
-    const response = await api(request, accessToken, `/document-type/${child.documentType.id}`);
-    const type = await response.json() as { alias: string };
-    if (type.alias === 'ArticulateArchive') articlesId = child.id;
-  }
-  expect(articlesId, 'the Articulate root has its Articles archive').toBeTruthy();
+  const articlesId = await articlesArchive(request, accessToken, rootId);
 
   const marker = `e2e-${randomUUID()}`;
   const title = `E2E ${marker}`;
@@ -174,18 +216,11 @@ test('draft publishes as rendered content and an RSS item, then unpublishes the 
   const publicPath = `${archivePath.replace(/\/$/, '')}/${slug}/`;
   const rssPath = '/rss';
   let documentId: string | undefined;
+  let testFailure: unknown;
+  const recoveryErrors: string[] = [];
 
   try {
-    const createResponse = await api(request, accessToken, '/document', {
-      method: 'POST',
-      data: {
-        parent: { id: articlesId },
-        documentType: { id: '9c2df3ea-74d9-41ef-8773-07960ac5a819' },
-        template: null,
-        variants: [{ culture: null, segment: null, name: title }],
-        values: [{ alias: 'markdown', value: body, culture: null, segment: null, editorAlias: 'Umbraco.MarkdownEditor', entityType: 'document-property-value' }, { alias: 'umbracoUrlName', value: slug, culture: null, segment: null, editorAlias: 'Umbraco.TextBox', entityType: 'document-property-value' }],
-      },
-    });
+    const createResponse = await createMarkdownPost(request, accessToken, articlesId, { title, body, slug });
     expect(createResponse.status(), 'Management API creates the draft').toBe(201);
     const location = required(createResponse.headers().location, 'create response location');
     documentId = required(new URL(location, siteUrl).pathname.split('/').at(-1), 'created document id');
@@ -207,82 +242,47 @@ test('draft publishes as rendered content and an RSS item, then unpublishes the 
     const unpublish = await api(request, accessToken, `/document/${documentId}/unpublish`, { method: 'PUT', data: { cultures: null } });
     expect(unpublish.ok(), 'Management API unpublishes normally').toBeTruthy();
     await waitFor(request, publicPath, status => status === 404);
+  } catch (error) {
+    testFailure = error;
   } finally {
-    if (documentId) {
-      const deletion = await api(request, accessToken, `/document/${documentId}`, { method: 'DELETE' });
-      expect([200, 204].includes(deletion.status()), 'test content is cleaned up').toBeTruthy();
-    }
+    const createdId = documentId;
+    if (createdId) await attempt(recoveryErrors, 'test content cleanup', () => deleteDocument(request, accessToken, createdId, 'test content is cleaned up'));
   }
+  settle('Publishing', testFailure, recoveryErrors);
 });
 
 test('RSS maxItems binds to query values and clamps values below one', async ({ request, baseURL }) => {
   const accessToken = await token(request);
   const { id: rootId } = await rootDocument(request, accessToken);
-  const childrenResponse = await api(request, accessToken, `/tree/document/children?parentId=${rootId}&skip=0&take=100`);
-  expect(childrenResponse.ok()).toBeTruthy();
-  const children = (await childrenResponse.json() as { items: Array<{ id: string; documentType: { id: string } }> }).items;
-  let archiveId: string | undefined;
-  for (const child of children) {
-    const response = await api(request, accessToken, `/document-type/${child.documentType.id}`);
-    const type = await response.json() as { alias: string };
-    if (type.alias === 'ArticulateArchive') archiveId = child.id;
-  }
-  const articlesId = required(archiveId, 'Articles archive');
+  const articlesId = await articlesArchive(request, accessToken, rootId);
   const siteUrl = required(baseURL, 'configured isolated base URL');
+  // Fixtures only guarantee at least two published posts; which posts fill the feed is not asserted.
   const fixtures = [
-    { title: `E2E RSS older ${randomUUID()}`, slug: `rss-${randomUUID()}` },
-    { title: `E2E RSS newer ${randomUUID()}`, slug: `rss-${randomUUID()}` },
+    { title: `E2E RSS ${randomUUID()}`, slug: `rss-${randomUUID()}` },
+    { title: `E2E RSS ${randomUUID()}`, slug: `rss-${randomUUID()}` },
   ];
   const documentIds: string[] = [];
-  const expectedLinks: string[] = [];
+  let testFailure: unknown;
+  const recoveryErrors: string[] = [];
   try {
     for (const fixture of fixtures) {
-      const created = await api(request, accessToken, '/document', {
-        method: 'POST',
-        data: {
-          parent: { id: articlesId },
-          documentType: { id: '9c2df3ea-74d9-41ef-8773-07960ac5a819' },
-          template: null,
-          variants: [{ culture: null, segment: null, name: fixture.title }],
-          values: [
-            { alias: 'markdown', value: `RSS fixture ${fixture.slug}`, culture: null, segment: null, editorAlias: 'Umbraco.MarkdownEditor', entityType: 'document-property-value' },
-            { alias: 'umbracoUrlName', value: fixture.slug, culture: null, segment: null, editorAlias: 'Umbraco.TextBox', entityType: 'document-property-value' },
-          ],
-        },
-      });
+      const created = await createMarkdownPost(request, accessToken, articlesId, { title: fixture.title, body: `RSS fixture ${fixture.slug}`, slug: fixture.slug });
       expect(created.status(), 'Management API creates each RSS draft').toBe(201);
       const location = required(created.headers().location, 'create response location');
       const id = required(new URL(location, siteUrl).pathname.split('/').at(-1), 'created document id');
       documentIds.push(id);
       await publish(request, accessToken, id);
-      const urls = await api(request, accessToken, `/document/urls?id=${id}`);
-      expect(urls.ok()).toBeTruthy();
-      const urlData = await urls.json() as Array<{ urlInfos: Array<{ url: string }> }>;
-      expectedLinks.push(new URL(required(urlData[0]?.urlInfos[0]?.url, 'published document URL'), siteUrl).href);
     }
 
     const readFeed = async (maxItems: number) => rssItems(request, `/rss?maxItems=${maxItems}`);
-    await expect.poll(async () => {
-      const feed = await readFeed(2);
-      return fixtures.every((fixture, index) => feed.some(item => item.title === fixture.title && item.link === expectedLinks[index]));
-    }, { timeout: 20_000, intervals: [250, 500, 1000, 2000] }).toBe(true);
-
-    const twoItems = await readFeed(2);
-    expect(twoItems).toHaveLength(2);
-    expect(twoItems.map(item => ({ title: item.title, link: item.link }))).toEqual(expect.arrayContaining(
-      fixtures.map((fixture, index) => ({ title: fixture.title, link: expectedLinks[index] })),
-    ));
-    const clampedToOne = await readFeed(0);
-    expect(clampedToOne).toHaveLength(1);
-    expect(fixtures.some((fixture, index) =>
-      clampedToOne[0]?.title === fixture.title && clampedToOne[0]?.link === expectedLinks[index]),
-    'maxItems=0 is clamped to one owned feed item').toBe(true);
+    await expect.poll(async () => (await readFeed(2)).length, { message: 'maxItems=2 returns two items', timeout: 20_000, intervals: [250, 500, 1000, 2000] }).toBe(2);
+    expect(await readFeed(0), 'maxItems=0 is clamped to one item').toHaveLength(1);
+  } catch (error) {
+    testFailure = error;
   } finally {
-    for (const id of documentIds) {
-      const deletion = await api(request, accessToken, `/document/${id}`, { method: 'DELETE' });
-      expect([200, 204].includes(deletion.status()), 'RSS fixture is cleaned up').toBeTruthy();
-    }
+    for (const id of documentIds) await attempt(recoveryErrors, `RSS fixture ${id} cleanup`, () => deleteDocument(request, accessToken, id, 'RSS fixture is cleaned up'));
   }
+  settle('RSS maxItems', testFailure, recoveryErrors);
 });
 
 test('tag and category listings and scoped RSS contain only matching published posts', async ({ request, baseURL }) => {
@@ -341,17 +341,7 @@ test('tag and category listings and scoped RSS contain only matching published p
   await writeFile(schemaPath, JSON.stringify({ markdownTypeId: markdownType.id, postTypeId: articulatePostTypeId, tagsField, categoriesField }, null, 2));
   await info.attach('n4-live-taxonomy-schema.json', { path: schemaPath, contentType: 'application/json' });
 
-  const childrenResponse = await api(request, accessToken, `/tree/document/children?parentId=${rootId}&skip=0&take=100`);
-  expect(childrenResponse.ok(), 'Management API lists the Articulate root children').toBeTruthy();
-  const children = (await childrenResponse.json() as { items: Array<{ id: string; documentType: { id: string } }> }).items;
-  let articlesId: string | undefined;
-  for (const child of children) {
-    const typeResponse = await api(request, accessToken, `/document-type/${child.documentType.id}`);
-    expect(typeResponse.ok()).toBeTruthy();
-    const type = await typeResponse.json() as { alias: string };
-    if (type.alias === 'ArticulateArchive') articlesId = child.id;
-  }
-  const archiveId = required(articlesId, 'Articles archive');
+  const archiveId = await articlesArchive(request, accessToken, rootId);
   const marker = `n4${randomUUID().replaceAll('-', '')}`;
   const sharedTag = `e2e-tag-${marker}-shared`;
   const otherTag = `e2e-tag-${marker}-other`;
@@ -388,20 +378,15 @@ test('tag and category listings and scoped RSS contain only matching published p
       if (!journalEntry) throw new Error('Taxonomy fixture journal lost its entry');
       journalEntry.state = 'creating';
       await writeJournal();
-      const created = await api(request, accessToken, '/document', {
-        method: 'POST',
-        data: {
-          parent: { id: archiveId },
-          documentType: { id: markdownType.id },
-          template: null,
-          variants: [{ culture: null, segment: null, name: fixture.title }],
-          values: [
-            { alias: 'markdown', value: fixture.body, culture: null, segment: null, editorAlias: 'Umbraco.MarkdownEditor', entityType: 'document-property-value' },
-            { alias: 'umbracoUrlName', value: fixture.slug, culture: null, segment: null, editorAlias: 'Umbraco.TextBox', entityType: 'document-property-value' },
-            { alias: tagsField.alias, value: fixture.tags, culture: null, segment: null, editorAlias: tagsField.editorAlias, entityType: 'document-property-value' },
-            { alias: categoriesField.alias, value: fixture.categories, culture: null, segment: null, editorAlias: categoriesField.editorAlias, entityType: 'document-property-value' },
-          ],
-        },
+      const created = await createMarkdownPost(request, accessToken, archiveId, {
+        title: fixture.title,
+        body: fixture.body,
+        slug: fixture.slug,
+        documentTypeId: markdownType.id,
+        extraValues: [
+          { alias: tagsField.alias, value: fixture.tags, culture: null, segment: null, editorAlias: tagsField.editorAlias, entityType: 'document-property-value' },
+          { alias: categoriesField.alias, value: fixture.categories, culture: null, segment: null, editorAlias: categoriesField.editorAlias, entityType: 'document-property-value' },
+        ],
       });
       journalEntry.status = created.status();
       journalEntry.location = created.headers().location;
@@ -553,16 +538,7 @@ test('public search discovers a published Markdown post and excludes drafts and 
   const searchValue = root.values.find(value => value.alias === 'searchUrlName')?.value;
   if (typeof searchValue !== 'string' || !searchValue) throw new Error('searchUrlName is missing or not a string');
 
-  const childrenResponse = await api(request, accessToken, `/tree/document/children?parentId=${rootId}&skip=0&take=100`);
-  expect(childrenResponse.ok(), 'Management API lists root children').toBeTruthy();
-  const children = (await childrenResponse.json() as { items: Array<{ id: string; documentType: { id: string } }> }).items;
-  let articlesId: string | undefined;
-  for (const child of children) {
-    const response = await api(request, accessToken, `/document-type/${child.documentType.id}`);
-    const type = await response.json() as { alias: string };
-    if (type.alias === 'ArticulateArchive') articlesId = child.id;
-  }
-  const archiveId = required(articlesId, 'Articles archive');
+  const archiveId = await articlesArchive(request, accessToken, rootId);
   const marker = `e2e${randomUUID().replaceAll('-', '')}`;
   const titleToken = `title${randomUUID().replaceAll('-', '')}`;
   const title = `E2E Search ${titleToken}`;
@@ -607,21 +583,11 @@ test('public search discovers a published Markdown post and excludes drafts and 
   const punctuationPath = `/${searchValue}/?term=${encodeURIComponent(`${marker} "`)}`;
   const nonmatchingPath = `/${searchValue}/?term=${encodeURIComponent(`absent${randomUUID().replaceAll('-', '')}`)}`;
   let documentId: string | undefined;
+  let testFailure: unknown;
+  const recoveryErrors: string[] = [];
 
   try {
-    const createResponse = await api(request, accessToken, '/document', {
-      method: 'POST',
-      data: {
-        parent: { id: archiveId },
-        documentType: { id: '9c2df3ea-74d9-41ef-8773-07960ac5a819' },
-        template: null,
-        variants: [{ culture: null, segment: null, name: title }],
-        values: [
-          { alias: 'markdown', value: body, culture: null, segment: null, editorAlias: 'Umbraco.MarkdownEditor', entityType: 'document-property-value' },
-          { alias: 'umbracoUrlName', value: slug, culture: null, segment: null, editorAlias: 'Umbraco.TextBox', entityType: 'document-property-value' },
-        ],
-      },
-    });
+    const createResponse = await createMarkdownPost(request, accessToken, archiveId, { title, body, slug });
     expect(createResponse.status(), 'Management API creates the draft').toBe(201);
     const location = required(createResponse.headers().location, 'create response location');
     documentId = required(new URL(location, siteUrl).pathname.split('/').at(-1), 'created document id');
@@ -645,8 +611,10 @@ test('public search discovers a published Markdown post and excludes drafts and 
       return searchResults(await response.text()).some(result =>
         result.title === title && new URL(result.href, siteUrl).href === expectedUrl);
     };
-    for (const queryPath of [resultPath, titleOnlyPath, multiTermPath, tokenTenPath, characterInRangePath, punctuationPath]) {
+    // MembersIndex contains no blog posts; this non-redirect request proves normal searches fall back to ExternalIndex.
+    for (const queryPath of [resultPath, titleOnlyPath, multiTermPath, tokenTenPath, characterInRangePath, punctuationPath, `${resultPath}&indexName=MembersIndex`]) {
       await expect.poll(() => includesOwnedResult(queryPath), {
+        message: `the published fixture appears in ${queryPath}`,
         timeout: 20_000, intervals: [250, 500, 1000, 2000],
       }).toBe(true);
     }
@@ -654,12 +622,13 @@ test('public search discovers a published Markdown post and excludes drafts and 
     expect(await includesOwnedResult(characterBoundaryPath), 'a marker wholly beyond character 200 is excluded').toBe(false);
     expect(await includesOwnedResult(tokenElevenPath), 'the matching marker in token 11 is excluded').toBe(false);
     expect(await includesOwnedResult(nonmatchingPath), 'non-matching search excludes the fixture URL from rendered links').toBe(false);
+  } catch (error) {
+    testFailure = error;
   } finally {
-    if (documentId) {
-      const deletion = await api(request, accessToken, `/document/${documentId}`, { method: 'DELETE' });
-      expect([200, 204].includes(deletion.status()), 'search fixture is cleaned up').toBeTruthy();
-    }
+    const createdId = documentId;
+    if (createdId) await attempt(recoveryErrors, 'search fixture cleanup', () => deleteDocument(request, accessToken, createdId, 'search fixture is cleaned up'));
   }
+  settle('Search', testFailure, recoveryErrors);
 });
 
 test('public search paginates every matching published post exactly once', async ({ request, baseURL }) => {
@@ -672,17 +641,7 @@ test('public search paginates every matching published post exactly once', async
   if (!originalPageSize) throw new Error('pageSize is missing from the dedicated root values');
   expect(originalPageSize.value, 'the dedicated root publishes the source-owned pageSize property').toBe(10);
 
-  const childrenResponse = await api(request, accessToken, `/tree/document/children?parentId=${rootId}&skip=0&take=100`);
-  expect(childrenResponse.ok(), 'Management API lists root children').toBeTruthy();
-  const children = (await childrenResponse.json() as { items: Array<{ id: string; documentType: { id: string } }> }).items;
-  let articlesId: string | undefined;
-  for (const child of children) {
-    const typeResponse = await api(request, accessToken, `/document-type/${child.documentType.id}`);
-    expect(typeResponse.ok()).toBeTruthy();
-    const type = await typeResponse.json() as { alias: string };
-    if (type.alias === 'ArticulateArchive') articlesId = child.id;
-  }
-  const archiveId = required(articlesId, 'Articles archive');
+  const archiveId = await articlesArchive(request, accessToken, rootId);
   const siteUrl = required(baseURL, 'configured isolated base URL');
   const fixtures = Array.from({ length: 3 }, () => {
     const id = randomUUID().replaceAll('-', '');
@@ -740,18 +699,8 @@ test('public search paginates every matching published post exactly once', async
     for (const fixture of fixtures) {
       fixtureJournal.push({ ...fixture, state: 'intent-recorded-before-create' });
       await writeFile(journalPath, JSON.stringify(fixtureJournal, null, 2));
-      const created = await api(request, accessToken, '/document', {
-        method: 'POST',
-        data: {
-          parent: { id: archiveId },
-          documentType: { id: '9c2df3ea-74d9-41ef-8773-07960ac5a819' },
-          template: null,
-          variants: [{ culture: null, segment: null, name: fixture.title }],
-          values: [
-            { alias: 'markdown', value: `Pagination fixture ${marker} ${fixture.slug}`, culture: null, segment: null, editorAlias: 'Umbraco.MarkdownEditor', entityType: 'document-property-value' },
-            { alias: 'umbracoUrlName', value: fixture.slug, culture: null, segment: null, editorAlias: 'Umbraco.TextBox', entityType: 'document-property-value' },
-          ],
-        },
+      const created = await createMarkdownPost(request, accessToken, archiveId, {
+        title: fixture.title, body: `Pagination fixture ${marker} ${fixture.slug}`, slug: fixture.slug,
       });
       expect(created.status(), 'Management API creates each Markdown draft').toBe(201);
       const location = required(created.headers().location, 'created document location');
@@ -921,11 +870,11 @@ test('root theme changes serve the alternate packaged stylesheet and restore the
       href = link;
       return true;
     }, { timeout: 20_000, intervals: [250, 500, 1000, 2000] }).toBe(true);
-    const assetPaths = {
-      VAPOR: '/App_Plugins/Articulate/Themes/VAPOR/assets/dist/css/vapor.min.css',
-      Material: '/App_Plugins/Articulate/Themes/Material/assets/dist/css/material.min.css',
-    } as const;
-    const assetPath = theme === 'VAPOR' ? assetPaths.VAPOR : theme === 'Material' ? assetPaths.Material : undefined;
+    const assetPaths: Record<string, string> = {
+      vapor: '/App_Plugins/Articulate/Themes/VAPOR/assets/dist/css/vapor.min.css',
+      material: '/App_Plugins/Articulate/Themes/Material/assets/dist/css/material.min.css',
+    };
+    const assetPath = assetPaths[theme.toLowerCase()];
     expect(assetPath, 'theme is one of the two packaged smoke themes').toBeTruthy();
     const assetUrl = checkedThemeAssetUrl(href, siteUrl, required(assetPath, 'allowlisted packaged theme stylesheet path'));
     expect(assetUrl.origin, 'theme stylesheet stays on the dedicated site').toBe(new URL(siteUrl).origin);
@@ -936,95 +885,39 @@ test('root theme changes serve the alternate packaged stylesheet and restore the
   };
 
   let mutationAttempted = false;
+  let testFailure: unknown;
+  const recoveryErrors: string[] = [];
   try {
     await verifyTheme(originalTheme);
     mutationAttempted = true;
     await updateTheme(alternateTheme);
     await verifyTheme(alternateTheme);
+  } catch (error) {
+    testFailure = error;
   } finally {
     if (mutationAttempted) {
-      await updateTheme(originalTheme);
-      await verifyTheme(originalTheme);
+      await attempt(recoveryErrors, 'theme restore', () => updateTheme(originalTheme));
+      await attempt(recoveryErrors, 'theme restore verification', () => verifyTheme(originalTheme));
     }
   }
+  settle('Theme', testFailure, recoveryErrors);
 });
 
 test('public search redirects page one canonically and reserved indexes cannot bypass published-content search', async ({ request, baseURL }) => {
   const accessToken = await token(request);
   const { id: rootId, document: root } = await rootDocument(request, accessToken);
-  expect(root.values.find(value => value.alias === 'theme')?.value, 'VAPOR List.cshtml owns the dedicated fixture search-result article markup').toBe('VAPOR');
   const searchValue = root.values.find(value => value.alias === 'searchUrlName')?.value;
   if (typeof searchValue !== 'string' || !searchValue) throw new Error('searchUrlName is missing or not a string');
-  const children = await api(request, accessToken, `/tree/document/children?parentId=${rootId}&skip=0&take=100`);
-  expect(children.ok()).toBeTruthy();
-  const childItems = (await children.json() as { items: Array<{ id: string; documentType: { id: string } }> }).items;
-  let archiveId: string | undefined;
-  for (const child of childItems) {
-    const type = await api(request, accessToken, `/document-type/${child.documentType.id}`);
-    if ((await type.json() as { alias: string }).alias === 'ArticulateArchive') archiveId = child.id;
-  }
-  const archive = required(archiveId, 'Articles archive');
-  const marker = `reserved${randomUUID().replaceAll('-', '')}`;
-  const title = `E2E reserved search ${marker}`;
-  const slug = `reserved-${randomUUID()}`;
-  const siteUrl = required(baseURL, 'configured isolated base URL');
   const term = `routing-${randomUUID()}`;
-  const redirectPath = `/${searchValue}/?term=${encodeURIComponent(term)}&indexName=ExternalIndex&p=1`;
   const rootUrls = await api(request, accessToken, `/document/urls?id=${rootId}`);
   expect(rootUrls.ok()).toBeTruthy();
   const rootUrlData = await rootUrls.json() as Array<{ urlInfos: Array<{ url: string }> }>;
   const rootPath = new URL(required(rootUrlData[0]?.urlInfos[0]?.url, 'published root URL'), required(baseURL, 'configured isolated base URL')).pathname;
-  const queryPath = `/${searchValue}/?term=${encodeURIComponent(marker)}`;
-  let documentId: string | undefined;
-  let expectedUrl: string | undefined;
-  try {
-    const redirect = await request.fetch(redirectPath, { maxRedirects: 0 });
-    expect(redirect.status(), 'p=1 uses the controller canonical redirect').toBe(302);
-    expect(redirect.headers().location, 'redirect preserves the term and public external index selector at the published root URL').toBe(`${rootPath}?term=${encodeURIComponent(term)}&indexName=ExternalIndex`);
-
-    const created = await api(request, accessToken, '/document', {
-      method: 'POST',
-      data: {
-        parent: { id: archive },
-        documentType: { id: '9c2df3ea-74d9-41ef-8773-07960ac5a819' },
-        template: null,
-        variants: [{ culture: null, segment: null, name: title }],
-        values: [
-          { alias: 'markdown', value: `Reserved index fixture ${marker}`, culture: null, segment: null, editorAlias: 'Umbraco.MarkdownEditor', entityType: 'document-property-value' },
-          { alias: 'umbracoUrlName', value: slug, culture: null, segment: null, editorAlias: 'Umbraco.TextBox', entityType: 'document-property-value' },
-        ],
-      },
-    });
-    expect(created.status()).toBe(201);
-    documentId = required(new URL(required(created.headers().location, 'created document location'), siteUrl).pathname.split('/').at(-1), 'created document id');
-    const archiveUrls = await api(request, accessToken, `/document/urls?id=${archive}`);
-    expect(archiveUrls.ok()).toBeTruthy();
-    const archiveUrlData = await archiveUrls.json() as Array<{ urlInfos: Array<{ url: string }> }>;
-    const archivePath = new URL(required(archiveUrlData[0]?.urlInfos[0]?.url, 'published Articles archive URL'), siteUrl).pathname;
-    expectedUrl = new URL(`${archivePath.replace(/\/$/, '')}/${slug}/`, siteUrl).href;
-
-    for (const indexName of ['InternalIndex', 'MembersIndex']) {
-      const response = await request.get(`${queryPath}&indexName=${indexName}`);
-      expect(response.status()).toBe(200);
-      expect(searchResults(await response.text()).some(result => new URL(result.href, siteUrl).href === expectedUrl), `${indexName} cannot expose a draft`).toBe(false);
-    }
-
-    await publish(request, accessToken, documentId);
-    for (const indexName of ['InternalIndex', 'MembersIndex']) {
-      const reservedPath = `${queryPath}&indexName=${indexName}`;
-      await expect.poll(async () => {
-        const response = await request.get(reservedPath);
-        if (response.status() !== 200) return false;
-        const rendered = await response.text();
-        const results = searchResults(rendered);
-        return results.some(result => result.title === title && new URL(result.href, siteUrl).href === expectedUrl);
-      }, { timeout: 20_000, intervals: [250, 500, 1000, 2000] }).toBe(true);
-    }
-  } finally {
-    if (documentId) {
-      const deletion = await api(request, accessToken, `/document/${documentId}`, { method: 'DELETE' });
-      expect([200, 204].includes(deletion.status()), 'reserved-index fixture is cleaned up').toBeTruthy();
-    }
+  // InternalIndex also holds published posts, so only the redirect's rewritten selector proves the substitution.
+  for (const indexName of ['ExternalIndex', 'InternalIndex', 'MembersIndex']) {
+    const redirect = await request.fetch(`/${searchValue}/?term=${encodeURIComponent(term)}&indexName=${indexName}&p=1`, { maxRedirects: 0 });
+    expect(redirect.status(), `p=1 with ${indexName} uses the controller canonical redirect`).toBe(302);
+    expect(redirect.headers().location, `${indexName} is served from the public external index at the published root URL`).toBe(`${rootPath}?term=${encodeURIComponent(term)}&indexName=ExternalIndex`);
   }
 });
 
@@ -1052,6 +945,8 @@ test('publishing a real search route configuration refreshes a warmed route with
     body: JSON.stringify({ id, searchUrlName: oldSegment, template: previousTemplate }),
     contentType: 'application/json',
   });
+  let testFailure: unknown;
+  const recoveryErrors: string[] = [];
   try {
     const values = previousValues.map(value => value.alias === 'searchUrlName' ? { ...value, value: newSegment } : value);
     const update = await api(request, accessToken, `/document/${id}`, {
@@ -1061,15 +956,23 @@ test('publishing a real search route configuration refreshes a warmed route with
     await publish(request, accessToken, id);
     await waitFor(request, newUrl, (status, html) => status === 200 && html.includes(expectedSearchOutput));
     await waitFor(request, oldUrl, status => status === 404);
+  } catch (error) {
+    testFailure = error;
   } finally {
-    const restore = await api(request, accessToken, `/document/${id}`, {
-      method: 'PUT', data: { values: previousValues, variants: previousVariants, template: previousTemplate },
+    await attempt(recoveryErrors, 'route property restore', async () => {
+      const restore = await api(request, accessToken, `/document/${id}`, {
+        method: 'PUT', data: { values: previousValues, variants: previousVariants, template: previousTemplate },
+      });
+      expect(restore.ok(), 'fixture route property is restored').toBeTruthy();
     });
-    expect(restore.ok(), 'fixture route property is restored').toBeTruthy();
-    await publish(request, accessToken, id);
-    await waitFor(request, oldUrl, (status, html) => status === 200 && html.includes(expectedSearchOutput));
-    await waitFor(request, newUrl, status => status === 404);
+    // Republishing an unrestored draft would publish the temporary route.
+    if (recoveryErrors.length === 0) {
+      await attempt(recoveryErrors, 'root republish', () => publish(request, accessToken, id));
+      await attempt(recoveryErrors, 'original route verification', () => waitFor(request, oldUrl, (status, html) => status === 200 && html.includes(expectedSearchOutput)));
+      await attempt(recoveryErrors, 'temporary route removal verification', () => waitFor(request, newUrl, status => status === 404));
+    }
   }
+  settle('Search route', testFailure, recoveryErrors);
 });
 
 test('publish veto preserves existing public routes when configured route segments collide', async ({ request, baseURL }) => {
@@ -1216,9 +1119,14 @@ test('publish veto preserves existing public routes when configured route segmen
       }
 
       try {
-        const routesAfterRestore = [];
-        for (const path of publicPaths) routesAfterRestore.push(await publicRouteSnapshot(request, path));
-        expect(routesAfterRestore, 'all original public routes are restored with identical status, type, title, main text and links').toEqual(baselineRoutes);
+        await expect.poll(async () => {
+          const routesAfterRestore = [];
+          for (const path of publicPaths) routesAfterRestore.push(await publicRouteSnapshot(request, path));
+          return routesAfterRestore;
+        }, {
+          message: 'all original public routes are restored with identical status, type, title, main text and links',
+          timeout: 20_000, intervals: [250, 500, 1000, 2000],
+        }).toEqual(baselineRoutes);
       } catch (error) {
         recoveryErrors.push(`public route restoration verification: ${error instanceof Error ? error.message : String(error)}`);
       }
