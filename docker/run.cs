@@ -157,8 +157,10 @@ async Task<int> DockerTest(Opts o)
         var project = $"art_e2e_candidate_{lane}_{nonce}";
         var image = $"articulate-e2e-candidate:{lane}-{nonce}";
         ConfigureCandidate(lane, project, image, null, null);
-        await EnsureCandidateResourcesAbsent(project, image);
+        if (await CandidateLeftovers(project, image))
+            throw new InvalidOperationException("Candidate project, volume, or image name already exists; refusing to reuse or remove it.");
 
+        var failed = false;
         try
         {
             await Run(Env.Get("NODE_BIN", "node")!, new[] { Path.Combine(Env.Repo, "build", "smoke-package.mjs"), packageDirectory }, Env.Repo);
@@ -168,8 +170,7 @@ async Task<int> DockerTest(Opts o)
             if (packages.Length != 1)
                 throw new InvalidOperationException($"Expected exactly one numeric-version Articulate package in {packageDirectory}; found {packages.Length}.");
             var package = packages[0];
-            await using var packageStream = File.OpenRead(package);
-            var packageHash = Convert.ToHexString(await SHA256.HashDataAsync(packageStream));
+            var packageHash = Convert.ToHexString(SHA256.HashData(await File.ReadAllBytesAsync(package)));
             await Compose(new[] { "build", "--no-cache", "--pull" });
             var imageId = (await Capture("docker", new[] { "image", "inspect", "--format", "{{.Id}}", image }, Env.Repo)).Trim();
 
@@ -201,15 +202,32 @@ async Task<int> DockerTest(Opts o)
                 Console.WriteLine($"Candidate receipt: lane={lane} package={Path.GetFileName(package)} sha256={packageHash} image={image} imageId={imageId} project={project} E2E=skipped-by-request");
             Console.WriteLine($"PASSED: {lane}");
         }
+        catch { failed = true; throw; }
         finally
         {
             if (!o.Flag("keep"))
             {
-                await Compose(new[] { "down", "--volumes" });
-                var candidateImage = (await Capture("docker", new[] { "image", "ls", "-q", image }, Env.Repo)).Trim();
-                if (candidateImage.Length > 0) await Run("docker", new[] { "image", "rm", image }, Env.Repo);
-                await VerifyCandidateRemoved(project, image);
-                Console.WriteLine($"Candidate cleanup verified: project={project} volumes=removed image={(candidateImage.Length > 0 ? "removed" : "absent")}");
+                // Each step runs even if an earlier one failed; cleanup errors never replace the original failure.
+                var errors = new List<Exception>();
+                var candidateImage = "";
+                async Task Step(Func<Task> step) { try { await step(); } catch (Exception e) { errors.Add(e); } }
+                await Step(() => Compose(new[] { "down", "--volumes" }));
+                await Step(async () =>
+                {
+                    candidateImage = (await Capture("docker", new[] { "image", "ls", "-q", image }, Env.Repo)).Trim();
+                    if (candidateImage.Length > 0) await Run("docker", new[] { "image", "rm", image }, Env.Repo);
+                });
+                await Step(async () =>
+                {
+                    if (await CandidateLeftovers(project, image))
+                        throw new InvalidOperationException("Candidate cleanup left a project-owned container, network, volume, or image.");
+                });
+                if (errors.Count == 0)
+                    Console.WriteLine($"Candidate cleanup verified: project={project} volumes=removed image={(candidateImage.Length > 0 ? "removed" : "absent")}");
+                else if (failed)
+                    foreach (var error in errors) Console.Error.WriteLine($"Cleanup error: {error.Message}");
+                else
+                    throw new AggregateException(errors);
             }
             else
             {
@@ -248,11 +266,11 @@ int FindFreePort()
     using var listener = new TcpListener(IPAddress.Loopback, 0);
     listener.Start();
     var port = ((IPEndPoint)listener.LocalEndpoint).Port;
-    listener.Stop();
+    listener.Stop(); // shortcut: port can be taken between probe and bind (TOCTOU); acceptable for single-runner CI
     return port;
 }
 
-async Task EnsureCandidateResourcesAbsent(string project, string image)
+async Task<bool> CandidateLeftovers(string project, string image)
 {
     var containers = (await Capture("docker", new[] { "ps", "-a", "--filter", $"label=com.docker.compose.project={project}", "--format", "{{.ID}}" }, Env.Repo)).Trim();
     var containerNames = SplitLines(await Capture("docker", new[] { "ps", "-a", "--format", "{{.Names}}" }, Env.Repo));
@@ -260,24 +278,9 @@ async Task EnsureCandidateResourcesAbsent(string project, string image)
     var networkNames = SplitLines(await Capture("docker", new[] { "network", "ls", "--format", "{{.Name}}" }, Env.Repo));
     var volumeNames = SplitLines(await Capture("docker", new[] { "volume", "ls", "-q" }, Env.Repo));
     var imageIds = (await Capture("docker", new[] { "image", "ls", "-q", image }, Env.Repo)).Trim();
-    if (containers.Length > 0 || containerNames.Any(name => name.StartsWith($"{project}-", StringComparison.Ordinal))
+    return containers.Length > 0 || containerNames.Any(name => name.StartsWith($"{project}-", StringComparison.Ordinal))
         || networks.Length > 0 || networkNames.Any(name => name.StartsWith($"{project}_", StringComparison.Ordinal))
-        || volumeNames.Any(name => name.StartsWith($"{project}_", StringComparison.Ordinal)) || imageIds.Length > 0)
-        throw new InvalidOperationException("Candidate project, volume, or image name already exists; refusing to reuse or remove it.");
-}
-
-async Task VerifyCandidateRemoved(string project, string image)
-{
-    var containers = (await Capture("docker", new[] { "ps", "-a", "--filter", $"label=com.docker.compose.project={project}", "--format", "{{.ID}}" }, Env.Repo)).Trim();
-    var networks = (await Capture("docker", new[] { "network", "ls", "--filter", $"label=com.docker.compose.project={project}", "--format", "{{.ID}}" }, Env.Repo)).Trim();
-    var containerNames = SplitLines(await Capture("docker", new[] { "ps", "-a", "--format", "{{.Names}}" }, Env.Repo));
-    var networkNames = SplitLines(await Capture("docker", new[] { "network", "ls", "--format", "{{.Name}}" }, Env.Repo));
-    var volumes = SplitLines(await Capture("docker", new[] { "volume", "ls", "-q" }, Env.Repo));
-    var imageIds = (await Capture("docker", new[] { "image", "ls", "-q", image }, Env.Repo)).Trim();
-    if (containers.Length > 0 || containerNames.Any(name => name.StartsWith($"{project}-", StringComparison.Ordinal))
-        || networks.Length > 0 || networkNames.Any(name => name.StartsWith($"{project}_", StringComparison.Ordinal))
-        || volumes.Any(name => name.StartsWith($"{project}_", StringComparison.Ordinal)) || imageIds.Length > 0)
-        throw new InvalidOperationException("Candidate cleanup left a project-owned container, network, volume, or image.");
+        || volumeNames.Any(name => name.StartsWith($"{project}_", StringComparison.Ordinal)) || imageIds.Length > 0;
 }
 
 string[] SplitLines(string value) => value.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
@@ -377,9 +380,11 @@ async Task Run(string file, IEnumerable<string> args, string? cwd = null, bool a
     Console.WriteLine($"> {file} {string.Join(' ', args)}");
     using var process = Process.Start(psi) ?? throw new InvalidOperationException($"Could not start {file}.");
     await process.WaitForExitAsync();
-    if (process.ExitCode != 0 && !allowFailure)
-        throw new InvalidOperationException($"{file} exited {process.ExitCode}.");
-    Console.WriteLine($"Exit code: {process.ExitCode}");
+    if (process.ExitCode != 0)
+    {
+        if (!allowFailure) throw new InvalidOperationException($"{file} exited {process.ExitCode}.");
+        Console.WriteLine($"Exit code: {process.ExitCode}");
+    }
 }
 
 async Task<string> Capture(string file, IEnumerable<string> args, string cwd)
@@ -392,10 +397,13 @@ async Task<string> Capture(string file, IEnumerable<string> args, string cwd)
         RedirectStandardError = true,
     };
     foreach (var arg in args) psi.ArgumentList.Add(arg);
+    Env.NoMsbuildNodes(psi);
     using var process = Process.Start(psi) ?? throw new InvalidOperationException($"Could not start {file}.");
-    var output = await process.StandardOutput.ReadToEndAsync();
-    var error = await process.StandardError.ReadToEndAsync();
-    await process.WaitForExitAsync();
+    var outputTask = process.StandardOutput.ReadToEndAsync();
+    var errorTask = process.StandardError.ReadToEndAsync();
+    await Task.WhenAll(outputTask, errorTask, process.WaitForExitAsync());
+    var output = outputTask.Result;
+    var error = errorTask.Result;
     if (process.ExitCode != 0) throw new InvalidOperationException($"{file} exited {process.ExitCode}: {error.Trim()}");
     return output;
 }
@@ -442,6 +450,13 @@ static class Env
             Set("ARTICULATE_TEST_SITE_CLIENT_SECRET", "articulate-test-site-secret");
     }
 
+    // MSBuild worker nodes inherit the redirected stdout pipe and keep ReadToEnd blocked -> CI hangs.
+    public static void NoMsbuildNodes(ProcessStartInfo psi)
+    {
+        psi.Environment["MSBUILDDISABLENODEREUSE"] = "1";
+        psi.Environment["DOTNET_CLI_USE_MSBUILD_SERVER"] = "0";
+    }
+
     public static string MsbuildProperty(string name, string lane)
     {
         var project = Path.Combine(Repo, "src", "Articulate.Web", "Articulate.Web.csproj");
@@ -452,7 +467,8 @@ static class Env
             CreateNoWindow = true,
             WorkingDirectory = Repo,
         };
-        foreach (var arg in new[] { "msbuild", project, $"-getProperty:{name}", $"-p:ArticulatePackageLane={lane}" })
+        NoMsbuildNodes(psi);
+        foreach (var arg in new[] { "msbuild", "-nodeReuse:false", project, $"-getProperty:{name}", $"-p:ArticulatePackageLane={lane}" })
             psi.ArgumentList.Add(arg);
         using var process = Process.Start(psi) ?? throw new InvalidOperationException("Could not start dotnet msbuild.");
         var output = process.StandardOutput.ReadToEnd().Trim();

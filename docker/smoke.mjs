@@ -124,22 +124,23 @@ function parseJsonResponse(res, label) {
 // --- retry helpers ----------------------------------------------------------
 
 async function retry(fn, deadline, label) {
+  let last = '';
   while (now() < deadline) {
     try {
       const result = await fn();
       if (result !== undefined) return result;
-    } catch { /* retry */ }
+    } catch (err) { last = err.message; }
     await sleep(2000);
   }
-  die(`Timed out: ${label}`);
+  die(`Timed out: ${label}${last ? ` (last error: ${last})` : ''}`);
 }
 
-async function poll(fn, deadline, label) {
+async function poll(fn, deadline, label, last = () => '') {
   while (now() < deadline) {
     if (await fn()) return;
     await sleep(2000);
   }
-  die(`Timed out: ${label}`);
+  die(`Timed out: ${label}${last() ? ` (last: ${last()})` : ''}`);
 }
 
 // --- Token / Management API operations --------------------------------------
@@ -201,12 +202,14 @@ async function publishWithDescendants(base, token, id, label, timeoutSec) {
 }
 
 async function waitForRoot(base, timeoutSec) {
+  let last = '';
   await poll(async () => {
     try {
       const res = await request(`${base}/`, { timeout: 15_000 });
+      last = `HTTP ${res.status}: ${res.body.slice(0, 120)}`;
       return res.status === 200;
-    } catch { return false; }
-  }, now() + timeoutSec, `/ to return 200`);
+    } catch (err) { last = err.message; return false; }
+  }, now() + timeoutSec, `/ to return 200`, () => last);
 }
 
 async function confirmChildren(base, token, parentId, indent = '') {
@@ -262,26 +265,33 @@ async function waitForIndexing(base, token, rootId, timeoutSec) {
   if (!/^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/i.test(id ?? ''))
     throw new Error('Index readiness creation did not return a document ID.');
 
+  let original;
   try {
     await jsonPut(`${api}/document/${id}/publish`, token, { publishSchedules: [{ culture: null, schedule: null }] });
     const query = encodeURIComponent(`__Key:"${id}"`);
     // Articulate searches ExternalIndex; the CMS document-search helper checks InternalIndex.
-    while (now() < deadline) {
+    let hits = 0, indexed = false;
+    while (!indexed && now() < deadline) {
       const result = await jsonGet(`${api}/searcher/ExternalIndex/query?term=${query}`, token);
-      if (result.items?.some(item => item.fields?.some(field => field.name === '__Key' && field.values?.includes(id)))) {
-        console.log('Index readiness passed: CMS ExternalIndex contains the owned publication.');
-        return;
-      }
-      await sleep(2000);
+      hits = result.items?.length ?? 0;
+      indexed = result.items?.some(item => item.fields?.some(field => field.name === '__Key' && field.values?.includes(id))) ?? false;
+      if (!indexed) await sleep(2000);
     }
-    throw new Error('Timed out waiting for publication indexing before E2E.');
-  } finally {
+    if (!indexed) throw new Error(`Timed out waiting for publication indexing before E2E (last search returned ${hits} items, none with __Key ${id}).`);
+    console.log('Index readiness passed: CMS ExternalIndex contains the owned publication.');
+  } catch (err) { original = err; }
+
+  try {
     const deleted = await request(`${api}/document/${id}`, { method: 'DELETE', headers });
     if (![200, 204].includes(deleted.status)) throw new Error(`Index readiness cleanup returned HTTP ${deleted.status}.`);
     const absent = await request(`${api}/document/${id}`, { headers });
     if (absent.status !== 404) throw new Error('Index readiness post was not removed.');
     console.log('Index readiness post cleanup verified.');
+  } catch (err) {
+    if (!original) throw err;
+    console.error(`Cleanup error: ${err.message}`);
   }
+  if (original) throw original;
 }
 
 // --- main -------------------------------------------------------------------
