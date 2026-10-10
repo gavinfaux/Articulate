@@ -17,7 +17,7 @@ For current command syntax, options, and defaults, use [`build/help.md`](build/h
 
 The packable package is produced by `src/Articulate.Web/Articulate.Web.csproj` (`PackageId=Articulate`). Packages are written under `build/$(Configuration)/v17` or `build/$(Configuration)/v18`.
 
-Set `ARTICULATE_PACKAGE_VERSION` to override the calculated package version. The sample package supports the native and Docker test sites. It is not published or uploaded as a CI artefact.
+Set `ARTICULATE_PACKAGE_VERSION` to override the calculated package version. The sample package supports the native and Docker test sites. It is included in the one-day `lane-packages-<lane>` CI hand-off artefacts, but not the final `Articulate-<version>` artefacts.
 
 Within one checkout, both lanes share project `bin`/`obj` directories and static-web-asset paths. Run full-solution lane builds sequentially and with `-m:1`; `build/build.cs` already does this. CI uses separate matrix jobs and checkouts, one per lane.
 
@@ -25,7 +25,19 @@ Within one checkout, both lanes share project `bin`/`obj` directories and static
 
 ## CI trigger policy
 
-The build workflow runs for pull requests targeting `develop`, `main`, or a `release/**` branch. Push builds run for those shared/release branches and for `v*` tags. Feature branches are validated through their pull request; use `workflow_dispatch` when a pre-PR build is needed. Pull request and `develop` integration runs cancel superseded work; release and tag runs are preserved.
+The workflow runs on pull requests targeting any branch when they are opened, updated, reopened or labelled. Push builds run on `develop`, `main`, `release/**` and `v*` tags. Use **Run workflow** for a feature branch without a PR. Superseded PR and `develop` runs are cancelled. Push runs on release branches and tags are not cancelled by later runs.
+
+### CI jobs and E2E
+
+Both lanes build, run unit tests and inspect packages. Each build job uploads its packages as a one-day `lane-packages-<lane>` artefact.
+
+Fresh-site HTTP E2E is off by default for routine CI. Enable it for both lanes with the **Run fresh-site HTTP E2E** manual input, the `e2e` PR label or the repository variable `E2E=true`. Runs on `release/**` branches, PRs targeting those branches and `v*` tags always run E2E.
+
+A separate publish job uploads the final `Articulate-<version>` artefacts after both builds pass and E2E passes or was not selected. A build or E2E failure in either lane blocks final uploads for both. Cancelled workflows do not publish.
+
+The testing audit exception disables final uploads. Local `act` runs skip E2E and all uploads.
+
+When the native E2E step fails, CI retains host logs for one day. Certificates, databases and Playwright traces are not uploaded.
 
 ## Common build commands
 
@@ -180,9 +192,7 @@ The lock files are restore-time inputs for `<RestoreLockedMode>` and never ship 
 
 `build/smoke-package.mjs` opens each `build/Release/<lane>/*.nupkg` and `*.snupkg`, extracts key files, and verifies the package is well-formed. Each CI matrix job builds one lane, runs its unit tests and inspects its packages. These checks always run.
 
-Fresh-site HTTP E2E is off for routine CI. Select **Run fresh-site HTTP E2E** when starting the workflow manually to enable it for both lanes. Builds on `release/**` branches, pull requests targeting those branches, and `v*` tags always run E2E. The runner verifies an isolated restore against the package hashes, prepares a native host in Production and runs the shared 11-test suite. Failed inspection or a selected E2E run prevents package upload. Native host failure logs are retained as a separate diagnostic artefact for one day; certificates, databases and Playwright traces are not uploaded.
-
-Docker is optional deployment coverage. `docker-test` runs the same suite behind Caddy; it has no separate theme or Giscus smoke assertions. Publication, confirmation and readiness checks are setup, not a second behaviour suite. See the [E2E guide](src/Articulate.Web/Client/e2e/README.md).
+Fresh-site HTTP E2E tests packaged runtime behaviour separately from archive inspection. Native hosts and optional Docker/Caddy candidates use one shared 11-test suite. Publication and readiness checks prepare the test site. See [CI jobs and E2E](#ci-jobs-and-e2e) for workflow selection and uploads, and the [E2E guide](src/Articulate.Web/Client/e2e/README.md) for local commands.
 
 Run it locally after a build:
 

@@ -11,13 +11,13 @@ dotnet run --file build/test.cs -- fresh --lane v17
 dotnet run --file build/test.cs -- fresh --lane v18
 ```
 
-`--lane all` runs both sequentially. Each CI matrix job builds one lane, runs unit tests and checks packages in its own checkout. Select **Run fresh-site HTTP E2E** in the manual workflow form to run this suite in both jobs; it is off by default. Release branches, pull requests targeting release branches and `v*` tags always run E2E. Failed runs retain native host logs for one day, without certificates, databases or Playwright traces.
+`--lane all` runs both sequentially. CI runs the suite in separate jobs after package builds. See [CI jobs and E2E](../../../../BUILD.md#ci-jobs-and-e2e) for workflow selection and uploads.
 
 The runner reuses `docker/src/ArticulateDockerSite.csproj` as a normal .NET application outside the checkout. It inspects the exact packages and verifies their restored hashes. Each host has an owned temporary database, self-signed certificate, random secret and free loopback HTTPS port. No Docker client, browser installation or certificate-store change is required.
 
-Preparation publishes and confirms starter content, restarts the host in Production, then publishes one temporary post. It waits for that post's exact key in `ExternalIndex` through Umbraco's Examine query API, deletes it and verifies removal. The existing 300-second readiness budget and test timeouts are unchanged. The runner stops its owned process and deletes its temporary directory on success or failure. Host logs remain in `.temp/art_e2e_native_<lane>_<id>/`; Playwright reports and test artefacts use the candidate name in `e2e-report-*` and `e2e-results-*`.
+Preparation publishes and confirms starter content, restarts the host in Production, then publishes one temporary post. It waits for that post's exact key in `ExternalIndex` through Umbraco's Examine query API, deletes it and verifies removal. Each native readiness wait uses a 180-second timeout. The runner stops its owned process and deletes its temporary directory on success or failure. Host logs remain in `.temp/art_e2e_native_<lane>_<id>/`; Playwright reports and test artefacts use the candidate name in `e2e-report-*` and `e2e-results-*`.
 
-`NODE_BIN` and `DOTNET_BIN` can select existing executables. The suite retains its client-credentials HTTP transport; browser-based Umbraco API helpers are not a drop-in replacement and no SDK dependency is added.
+`NODE_BIN` and `DOTNET_BIN` can select existing executables.
 
 ## Optional Docker deployment check
 
@@ -101,11 +101,11 @@ The site needs a published Articulate root, its Articles archive and the VAPOR t
 | Area | Checks |
 | --- | --- |
 | Publishing | Draft returns 404; published post appears in HTML and RSS; unpublished route returns 404. |
-| RSS | `maxItems=2` returns both test posts; `maxItems=0` returns one. |
-| Taxonomy | Three published posts use the live `Umbraco.Tags` JSON-array schemas and distinct tag/category groups. Exact title/URL sets and nonmatching-post exclusions are checked in tag/category listings and scoped RSS; fixture posts are deleted and owned tag records are reported. |
-| Search | Title/body matches; drafts and non-matches excluded; 200-character and 10-token limits; quote escaping; two-page capacity, disjoint exact title/URL pairs and complete fixture union. Pagination temporarily sets the dedicated root pageSize to 2, then restores its full saved values, variants and template. |
+| RSS | `maxItems=2` returns two items; `maxItems=0` is clamped to one. |
+| Taxonomy | Tags and categories use their live JSON datatypes and separate groups. Listings and scoped RSS contain exactly the matching published title/URL pairs and exclude nonmatching posts. |
+| Search | Title/body matches; drafts and non-matches excluded; 200-character and 10-token limits; quote escaping. Every matching post appears exactly once across both pages. |
 | Search routing | Page-one redirect; reserved index names use published content. |
-| Route collisions | Valid root publish succeeds; exact `categoriesUrlName`/`tagsUrlName` collision draft is read back; normal publish returns `CancelledByEvent`; original root is restored and publishes normally; public route snapshots and the collision route are checked. |
+| Route collisions | A valid root publishes. A `categoriesUrlName`/`tagsUrlName` collision returns `CancelledByEvent`, leaves the invalid draft saved and keeps published routes unchanged. The original root is restored. |
 | Route refresh | Publishing `searchUrlName` changes a warmed route without a reload. |
 | Themes | Publishing a theme change serves the rendered CSS URL; original configuration restored. |
 | Giscus | Packaged CSS, one-hour cache, reflected allowed-origin CORS, anonymous wildcard CORS without `Vary: Origin`, and missing-theme fallback. |
