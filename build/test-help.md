@@ -13,7 +13,7 @@ dotnet run --file build/test.cs -- help
 
 Preparation publishes and confirms starter content, restarts the host in Production, then proves that one owned publication is in `ExternalIndex`. The same 11 HTTP tests run with no retries. The runner stops its own process and deletes its own temporary directory on success or failure. Host logs remain under `.temp/art_e2e_native_<lane>_<id>/`; Playwright reports and test artefacts use the same candidate name under `src/Articulate.Web/Client/e2e-report-*` and `e2e-results-*`. Neither certificate trust stores nor existing sites are changed.
 
-CI runs `fresh` once per lane in separate matrix jobs. Local `all` runs are sequential and stop on failure. `NODE_BIN` and `DOTNET_BIN` can select existing executable paths without changing PATH.
+CI always runs unit tests and package checks in separate lane jobs. Fresh-site E2E is a manual workflow option, off by default; release branches, pull requests targeting release branches and `v*` tags always run it. Failed E2E runs retain native host logs for one day. Local `all` runs are sequential and stop on failure. `NODE_BIN` and `DOTNET_BIN` can select existing executable paths without changing PATH.
 
 `e2e` tests sites that are already running. It does not build packages or start sites. Only these dedicated manual-test URLs are allowed:
 

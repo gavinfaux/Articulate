@@ -11,7 +11,9 @@ dotnet run --file build/test.cs -- fresh --lane v17
 dotnet run --file build/test.cs -- fresh --lane v18
 ```
 
-`--lane all` runs both sequentially. Each CI matrix job builds and tests one lane in its own checkout. The runner reuses `docker/src/ArticulateDockerSite.csproj` as a normal .NET application outside the checkout. It inspects the exact packages and verifies their restored hashes. Each host has an owned temporary database, self-signed certificate, random secret and free loopback HTTPS port. No Docker client, browser installation or certificate-store change is required.
+`--lane all` runs both sequentially. Each CI matrix job builds one lane, runs unit tests and checks packages in its own checkout. Select **Run fresh-site HTTP E2E** in the manual workflow form to run this suite in both jobs; it is off by default. Release branches, pull requests targeting release branches and `v*` tags always run E2E. Failed runs retain native host logs for one day, without certificates, databases or Playwright traces.
+
+The runner reuses `docker/src/ArticulateDockerSite.csproj` as a normal .NET application outside the checkout. It inspects the exact packages and verifies their restored hashes. Each host has an owned temporary database, self-signed certificate, random secret and free loopback HTTPS port. No Docker client, browser installation or certificate-store change is required.
 
 Preparation publishes and confirms starter content, restarts the host in Production, then publishes one temporary post. It waits for that post's exact key in `ExternalIndex` through Umbraco's Examine query API, deletes it and verifies removal. The existing 300-second readiness budget and test timeouts are unchanged. The runner stops its owned process and deletes its temporary directory on success or failure. Host logs remain in `.temp/art_e2e_native_<lane>_<id>/`; Playwright reports and test artefacts use the candidate name in `e2e-report-*` and `e2e-results-*`.
 

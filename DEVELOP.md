@@ -37,7 +37,7 @@ For a normal local checkout, use **Dev Containers: Reopen in Container**. See th
 
 ## Docker
 
-Docker is optional for local browsing and container deployment checks. CI runs the HTTP tests on native packaged hosts. See the [Docker guide](docker/README.md) for ports and credentials, and [`docker/help.md`](docker/help.md) for commands.
+Docker is optional for local browsing and container deployment checks. CI's fresh-site HTTP E2E option uses native packaged hosts; unit tests and package checks always run. See the [Docker guide](docker/README.md) for ports and credentials, and [`docker/help.md`](docker/help.md) for commands.
 
 ```sh
 dotnet run --file docker/run.cs -- docker-dev --lane v17

@@ -178,7 +178,9 @@ The lock files are restore-time inputs for `<RestoreLockedMode>` and never ship 
 
 ## Package smoke test
 
-`build/smoke-package.mjs` opens each `build/Release/<lane>/*.nupkg` and `*.snupkg`, extracts key files, and verifies the package is well-formed. Each CI matrix job builds one lane, then runs `dotnet run --file build/test.cs -- fresh --lane <lane>`. This command inspects the packages, verifies an isolated restore against their hashes, and runs the same 11 HTTP tests on a fresh native host in Production. Preparation proves publication indexing with one temporary post. Failed inspection or E2E prevents package upload.
+`build/smoke-package.mjs` opens each `build/Release/<lane>/*.nupkg` and `*.snupkg`, extracts key files, and verifies the package is well-formed. Each CI matrix job builds one lane, runs its unit tests and inspects its packages. These checks always run.
+
+Fresh-site HTTP E2E is off for routine CI. Select **Run fresh-site HTTP E2E** when starting the workflow manually to enable it for both lanes. Builds on `release/**` branches, pull requests targeting those branches, and `v*` tags always run E2E. The runner verifies an isolated restore against the package hashes, prepares a native host in Production and runs the shared 11-test suite. Failed inspection or a selected E2E run prevents package upload. Native host failure logs are retained as a separate diagnostic artefact for one day; certificates, databases and Playwright traces are not uploaded.
 
 Docker is optional deployment coverage. `docker-test` runs the same suite behind Caddy; it has no separate theme or Giscus smoke assertions. Publication, confirmation and readiness checks are setup, not a second behaviour suite. See the [E2E guide](src/Articulate.Web/Client/e2e/README.md).
 

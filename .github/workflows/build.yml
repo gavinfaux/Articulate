@@ -12,6 +12,11 @@ on:
       - "v*"
   pull_request:
   workflow_dispatch:
+    inputs:
+      e2e:
+        description: Run fresh-site HTTP E2E
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -117,8 +122,25 @@ jobs:
         # Each matrix job has its own checkout and shared build outputs.
         run: dotnet run --file build/build.cs -- build --lane "${{ matrix.lane }}" --sample --clean
 
-      - name: Inspect packages and run fresh native HTTP E2E
+      - name: Inspect lane packages
+        run: node build/smoke-package.mjs "build/Release/${{ matrix.lane }}"
+
+      - name: Run fresh native HTTP E2E
+        id: native_e2e
+        if: >-
+          ${{ inputs.e2e || startsWith(github.ref, 'refs/heads/release/') ||
+              startsWith(github.ref, 'refs/tags/v') || startsWith(github.base_ref, 'release/') }}
         run: dotnet run --file build/test.cs -- fresh --lane "${{ matrix.lane }}"
+
+      - name: Retain native host failure logs
+        if: ${{ failure() && !env.ACT && steps.native_e2e.outcome == 'failure' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: native-e2e-${{ matrix.lane }}-${{ github.run_attempt }}
+          path: .temp/art_e2e_native_${{ matrix.lane }}_*/native-host-*.log
+          include-hidden-files: true
+          retention-days: 1
+          if-no-files-found: warn
 
       - name: Resolve generated package versions
         shell: bash
