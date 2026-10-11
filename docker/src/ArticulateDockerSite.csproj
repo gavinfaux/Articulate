@@ -19,4 +19,9 @@
   <ItemGroup Condition="'$(UseTinyMceUmbraco)' == 'true'">
     <PackageReference Include="TinyMCE.Umbraco" VersionOverride="$(TinyMceUmbracoPackageVersion)" />
   </ItemGroup>
+  <!-- Security pin over the CMS transitive version (versions from Directory.Packages.props); build excluded to skip the SixLabors licence check. -->
+  <ItemGroup Condition="'$(SixLaborsImageSharpPackageVersion)' != ''">
+    <PackageReference Include="SixLabors.ImageSharp" VersionOverride="$(SixLaborsImageSharpPackageVersion)" ExcludeAssets="build" />
+    <PackageReference Include="SixLabors.ImageSharp.Web" VersionOverride="$(SixLaborsImageSharpWebPackageVersion)" ExcludeAssets="build" />
+  </ItemGroup>
 </Project>

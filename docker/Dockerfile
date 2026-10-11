@@ -24,6 +24,9 @@ ARG USE_TINYMCE_UMBRACO=false
 # TINYMCE_UMBRACO_PACKAGE_VERSION is required when USE_TINYMCE_UMBRACO=true;
 # run.cs reads it from Directory.Packages.props and passes as --build-arg.
 ARG TINYMCE_UMBRACO_PACKAGE_VERSION
+# ImageSharp security pins from Directory.Packages.props via run.cs; empty leaves the CMS transitive version.
+ARG SIXLABORS_IMAGESHARP_VERSION
+ARG SIXLABORS_IMAGESHARP_WEB_VERSION
 
 # Copy config files
 COPY global.json ./
@@ -63,7 +66,7 @@ RUN set -eux; \
     # without going through the CLI parser. Names must match the property names
     # exactly (case-sensitive on Linux). UseTinyMceUmbraco stays as /p: — it's a
     # plain bool flag with no `)` in any value.
-    export UmbracoCmsPackageVersion="${UMBRACO_CMS_VERSION}"; \
+    export UmbracoCmsPackageVersion="${UMBRACO_CMS_VERSION}";     export SixLaborsImageSharpPackageVersion="${SIXLABORS_IMAGESHARP_VERSION}";     export SixLaborsImageSharpWebPackageVersion="${SIXLABORS_IMAGESHARP_WEB_VERSION}"; \
     if [ "${USE_TINYMCE_UMBRACO}" = "true" ]; then \
       export TinyMceUmbracoPackageVersion="${TINYMCE_UMBRACO_PACKAGE_VERSION}"; \
     fi; \

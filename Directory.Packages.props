@@ -17,6 +17,12 @@
 		     Floor per lane (TinyMCE.Umbraco N requires Umbraco N+, so the lane gate keeps major versions aligned). -->
 		<TinyMceUmbracoPackageVersion Condition="'$(ArticulatePackageLane)' == 'v17'">[17.5.0,18.0.0)</TinyMceUmbracoPackageVersion>
 		<TinyMceUmbracoPackageVersion Condition="'$(ArticulatePackageLane)' == 'v18'">[18.0.0,19.0.0)</TinyMceUmbracoPackageVersion>
+		<!-- Test projects pin ImageSharp above the CMS floor for the October 2026 security fixes.
+		     v17/v18 mirror Umbraco-CMS PRs 24158/24159; drop once the CMS floor reaches these versions. -->
+		<SixLaborsImageSharpPackageVersion Condition="'$(ArticulatePackageLane)' == 'v19'">4.1.3</SixLaborsImageSharpPackageVersion>
+		<SixLaborsImageSharpPackageVersion Condition="'$(ArticulatePackageLane)' != 'v19'">3.2.0</SixLaborsImageSharpPackageVersion>
+		<SixLaborsImageSharpWebPackageVersion Condition="'$(ArticulatePackageLane)' == 'v19'">4.0.2</SixLaborsImageSharpWebPackageVersion>
+		<SixLaborsImageSharpWebPackageVersion Condition="'$(ArticulatePackageLane)' != 'v19'">3.3.0</SixLaborsImageSharpWebPackageVersion>
 	</PropertyGroup>
 	<ItemGroup>
 		<PackageVersion Include="Argotic.Core" Version="3001.0.0" />
@@ -31,6 +37,8 @@
 		<PackageVersion Include="Moq" Version="4.20.72" />
 		<PackageVersion Include="NUnit" Version="3.14.0" />
 		<PackageVersion Include="NUnit3TestAdapter" Version="4.6.0" />
+		<PackageVersion Include="SixLabors.ImageSharp" Version="$(SixLaborsImageSharpPackageVersion)" />
+		<PackageVersion Include="SixLabors.ImageSharp.Web" Version="$(SixLaborsImageSharpWebPackageVersion)" />
 		<PackageVersion Include="System.ServiceModel.Syndication" Version="$(SystemServiceModelSyndicationPackageVersion)" />
 		<PackageVersion Include="TinyMCE.Umbraco" Version="$(TinyMceUmbracoPackageVersion)" />
 		<PackageVersion Include="Umbraco.Cms" Version="$(UmbracoCmsPackageVersion)" />

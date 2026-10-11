@@ -16,6 +16,9 @@ services:
         USE_TINYMCE_UMBRACO: ${USE_TINYMCE_UMBRACO:-false}
         # Dockerfile validates this when USE_TINYMCE_UMBRACO=true; empty is valid when it is off.
         TINYMCE_UMBRACO_PACKAGE_VERSION: ${TINYMCE_UMBRACO_PACKAGE_VERSION:-}
+        # ImageSharp security pins; empty leaves the CMS transitive version.
+        SIXLABORS_IMAGESHARP_VERSION: ${SIXLABORS_IMAGESHARP_VERSION:-}
+        SIXLABORS_IMAGESHARP_WEB_VERSION: ${SIXLABORS_IMAGESHARP_WEB_VERSION:-}
     image: ${IMAGE_TAG:-articulate-local:chiseled}
     mem_limit: 512m
     mem_reservation: 256m

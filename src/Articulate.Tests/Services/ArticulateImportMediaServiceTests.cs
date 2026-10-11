@@ -332,6 +332,15 @@ namespace Articulate.Tests.Services
                 .Returns(coreScopeProvider);
             StaticServiceProvider.Instance = serviceProvider.Object;
 
+#if UMBRACO_19_OR_GREATER
+            MediaFileManager mediaFileManager = new(
+                Mock.Of<IFileSystem>(),
+                Mock.Of<IMediaPathScheme>(),
+                NullLogger<MediaFileManager>.Instance,
+                Mock.Of<IShortStringHelper>(),
+                serviceProvider.Object,
+                coreScopeProvider);
+#else
 #pragma warning disable CS0618
             MediaFileManager mediaFileManager = new(
                 Mock.Of<IFileSystem>(),
@@ -340,6 +349,7 @@ namespace Articulate.Tests.Services
                 Mock.Of<IShortStringHelper>(),
                 serviceProvider.Object);
 #pragma warning restore CS0618
+#endif
 
             return new ArticulateImportMediaService(
                 NullLogger<ArticulateImportMediaService>.Instance,

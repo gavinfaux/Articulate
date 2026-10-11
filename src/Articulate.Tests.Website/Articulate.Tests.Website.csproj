@@ -9,6 +9,9 @@
   <ItemGroup>
     <PackageReference Include="MessagePack" />
     <PackageReference Include="Umbraco.Cms" />
+    <!-- Security pin over the CMS transitive version; build excluded to skip the SixLabors licence check. -->
+    <PackageReference Include="SixLabors.ImageSharp" ExcludeAssets="build" />
+    <PackageReference Include="SixLabors.ImageSharp.Web" ExcludeAssets="build" />
   </ItemGroup>
   <ItemGroup Condition="'$(UseTinyMceUmbraco)' == 'true'">
     <PackageReference Include="TinyMCE.Umbraco" />
