@@ -15,6 +15,9 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Umbraco.Cms.Core.Composing;
 using Umbraco.Cms.Core.Notifications;
 using Umbraco.Cms.Core.Routing;
+#if UMBRACO_19_OR_GREATER
+using Umbraco.Cms.Core.Search.Indexing;
+#endif
 
 namespace Articulate.Components
 {
@@ -63,6 +66,10 @@ namespace Articulate.Components
 #else
             _ = builder.UrlProviders().InsertBefore<NewDefaultUrlProvider, DateFormattedUrlProvider>();
             _ = builder.ContentFinders().InsertBefore<ContentFinderByUrlNew, DateFormattedPostContentFinder>();
+#endif
+
+#if UMBRACO_19_OR_GREATER
+            _ = services.AddTransient<IContentIndexer, ArticulatePostContentIndexer>();
 #endif
 
             _ = services.AddOptions<ArticulateOptions>()

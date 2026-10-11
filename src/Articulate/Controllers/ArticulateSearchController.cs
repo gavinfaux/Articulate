@@ -29,15 +29,10 @@ namespace Articulate.Controllers
         /// <param name="term">
         /// The search term
         /// </param>
-        /// <param name="indexName">
-        /// The searcher name (optional)
-        /// </param>
         /// <param name="p"></param>
         /// <returns></returns>
-        public IActionResult Search(string? term, string? indexName = null, int? p = null)
+        public async Task<IActionResult> Search(string? term, int? p = null)
         {
-            indexName = SanitizeIndexName(indexName);
-
             if (CurrentPage is null)
             {
                 logger.LogWarning("ArticulateSearchController.Search: CurrentPage is null, returning 404");
@@ -54,44 +49,18 @@ namespace Articulate.Controllers
 
             if (p is 1)
             {
-                return Redirect(BuildSearchUrl(currentPage, term, indexName));
+                return Redirect(BuildSearchUrl(currentPage, term));
             }
 
             var pageNumber = p is > 0 ? p.Value : 1;
 
-            IEnumerable<IPublishedContent>? searchResult = articulateSearcher.Search(
+            (IEnumerable<IPublishedContent> searchResult, long totalPosts) = await articulateSearcher.SearchAsync(
                 term,
-                indexName,
                 masterModel.BlogArchiveNode.Id,
                 masterModel.PageSize,
-                pageNumber - 1,
-                out var totalPosts);
+                pageNumber - 1);
 
-            return GetPagedListView(masterModel, currentPage, searchResult ?? [], totalPosts, pageNumber);
-        }
-
-        private string? SanitizeIndexName(string? indexName)
-        {
-            if (string.IsNullOrWhiteSpace(indexName))
-            {
-                return indexName;
-            }
-
-            if (!indexName.Equals(
-                    Umbraco.Cms.Core.Constants.UmbracoIndexes.InternalIndexName,
-                    StringComparison.OrdinalIgnoreCase) &&
-                !indexName.Equals(
-                    Umbraco.Cms.Core.Constants.UmbracoIndexes.MembersIndexName,
-                    StringComparison.OrdinalIgnoreCase))
-            {
-                return indexName;
-            }
-
-            logger.LogWarning(
-                "ArticulateSearchController.Search: Blocked access to sensitive index '{IndexName}'",
-                indexName);
-
-            return Umbraco.Cms.Core.Constants.UmbracoIndexes.ExternalIndexName;
+            return GetPagedListView(masterModel, currentPage, searchResult, totalPosts, pageNumber);
         }
 
         private ListModel CreateEmptyListModel(IPublishedContent currentPage, MasterModel masterModel) =>
@@ -101,18 +70,13 @@ namespace Articulate.Controllers
                 [],
                 PublishedValueFallback);
 
-        private string BuildSearchUrl(IPublishedContent currentPage, string term, string? indexName)
+        private string BuildSearchUrl(IPublishedContent currentPage, string term)
         {
             var url = currentPage.Url(PublishedUrlProvider);
 
             if (!string.IsNullOrWhiteSpace(term))
             {
                 url = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(url, "term", term);
-            }
-
-            if (!string.IsNullOrWhiteSpace(indexName))
-            {
-                url = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(url, "indexName", indexName);
             }
 
             return url;

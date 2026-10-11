@@ -1,5 +1,15 @@
 # Articulate Release Notes
 
+## Version 9.0.0
+
+### Breaking changes for v9.0.0
+
+- On Umbraco 19, public search uses native CMS matching and relevance instead of Articulate's weighted OR, whole-phrase boosts, custom field weights, and raw Lucene syntax. Every separate query term must match; prefix matching remains supported, and standalone punctuation can prevent a match. Umbraco 17 and 18 keep existing Articulate search behaviour.
+- On Umbraco 19, Articulate posts feed the CMS relevance tiers: the URL name ranks highest, then the Markdown or rich text body, then tags and categories. Tags and categories are free-text searchable again (the CMS indexes them for exact match only). Rebuild the search index after upgrading.
+- To keep weighted OR, phrase boosts or raw Lucene syntax, replace `IArticulateSearcher`. Register your own in a composer with `[ComposeAfter(typeof(ArticulateComposer))]` and `builder.Services.AddUnique<IArticulateSearcher, MySearcher>()`. The Umbraco 17/18 branch of `DefaultArticulateSearcher` shows the legacy Examine `NativeQuery`. On Umbraco 19 that query is tied to the Examine search provider: it renames fields (for example `Field_markdown_*`) and swaps between two physical indexes, so check field names against your index.
+- Custom searchers: `IArticulateSearcher.Search(term, indexName, blogArchiveNodeId, pageSize, pageIndex, out totalResults)` is replaced by `SearchAsync(term, blogArchiveNodeId, pageSize, pageIndex)`, which returns `(Results, TotalResults)`. Applies to the Umbraco 17, 18 and 19 builds.
+- The `?indexName=` search query string is removed and ignored. Search always uses the public published-content index.
+
 ## Version 8.0.0
 
 ### Breaking changes for v8.0.0

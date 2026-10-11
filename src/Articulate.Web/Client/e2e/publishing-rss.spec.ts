@@ -532,6 +532,7 @@ test('tag and category listings and scoped RSS contain only matching published p
 });
 
 test('public search discovers a published Markdown post and excludes drafts and non-matching queries', async ({ request, baseURL }) => {
+  test.skip(process.env.ARTICULATE_E2E_LANE === 'v19', 'v19 temp: covered by the v19 search test below');
   const accessToken = await token(request);
   const { id: rootId, document: root } = await rootDocument(request, accessToken);
   expect(root.values.find(value => value.alias === 'theme')?.value, 'VAPOR List.cshtml owns the dedicated fixture search-result article markup').toBe('VAPOR');
@@ -621,6 +622,103 @@ test('public search discovers a published Markdown post and excludes drafts and 
 
     expect(await includesOwnedResult(characterBoundaryPath), 'a marker wholly beyond character 200 is excluded').toBe(false);
     expect(await includesOwnedResult(tokenElevenPath), 'the matching marker in token 11 is excluded').toBe(false);
+    expect(await includesOwnedResult(nonmatchingPath), 'non-matching search excludes the fixture URL from rendered links').toBe(false);
+  } catch (error) {
+    testFailure = error;
+  } finally {
+    const createdId = documentId;
+    if (createdId) await attempt(recoveryErrors, 'search fixture cleanup', () => deleteDocument(request, accessToken, createdId, 'search fixture is cleaned up'));
+  }
+  settle('Search', testFailure, recoveryErrors);
+});
+
+// v19 temp: native CMS matching (every term must match, prefix only, no phrase boosts or raw Lucene, standalone punctuation can block a match) differs from the legacy query; becomes one test with the one above once v19 GA behaviour is settled.
+test('v19 public search discovers a published Markdown post and excludes drafts and non-matching queries', async ({ request, baseURL }) => {
+  test.skip(process.env.ARTICULATE_E2E_LANE !== 'v19', 'v19 lane only');
+  const accessToken = await token(request);
+  const { id: rootId, document: root } = await rootDocument(request, accessToken);
+  expect(root.values.find(value => value.alias === 'theme')?.value, 'VAPOR List.cshtml owns the dedicated fixture search-result article markup').toBe('VAPOR');
+  const searchValue = root.values.find(value => value.alias === 'searchUrlName')?.value;
+  if (typeof searchValue !== 'string' || !searchValue) throw new Error('searchUrlName is missing or not a string');
+
+  const archiveId = await articlesArchive(request, accessToken, rootId);
+  const marker = `e2e${randomUUID().replaceAll('-', '')}`;
+  const tokenFillers = Array.from({ length: 10 }, (_, index) => `o${randomUUID().replaceAll('-', '').slice(0, 8)}${index}`);
+  const titleToken = `title${randomUUID().replaceAll('-', '')}`;
+  const title = `E2E Search ${titleToken}`;
+  const body = `SearchableMarkdown ${marker} searchable fixture ${tokenFillers.join(' ')}`;
+  const tagToken = `tag${randomUUID().replaceAll('-', '')}`;
+  const slug = `search-${randomUUID()}`;
+  const siteUrl = required(baseURL, 'configured isolated base URL');
+  const archiveUrlsResponse = await api(request, accessToken, `/document/urls?id=${archiveId}`);
+  expect(archiveUrlsResponse.ok()).toBeTruthy();
+  const archiveUrls = await archiveUrlsResponse.json() as Array<{ urlInfos: Array<{ url: string }> }>;
+  const archiveUrl = required(archiveUrls[0]?.urlInfos[0]?.url, 'published Articles archive URL');
+  const archivePath = new URL(archiveUrl, siteUrl).pathname;
+  const publicPath = `${archivePath.replace(/\/$/, '')}/${slug}/`;
+  const resultPath = `/${searchValue}/?term=${encodeURIComponent(marker)}`;
+  const tagOnlyPath = `/${searchValue}/?term=${encodeURIComponent(tagToken)}`;
+  const titleOnlyPath = `/${searchValue}/?term=${encodeURIComponent(titleToken)}`;
+  const multiTermPath = `/${searchValue}/?term=${encodeURIComponent(`${titleToken} ${marker}`)}`;
+  const characterInRangeQuery = `${marker}${' '.repeat(200 - marker.length)}`;
+  const characterBoundaryQuery = `${characterInRangeQuery} absent${randomUUID().replaceAll('-', '')}`;
+  const tokenTenQuery = tokenFillers.join(' ');
+  const tokenElevenQuery = `${tokenTenQuery} absent${randomUUID().replaceAll('-', '')}`;
+  expect(characterInRangeQuery.length).toBe(200);
+  expect(characterInRangeQuery.indexOf(marker)).toBe(0);
+  expect(characterBoundaryQuery.length).toBeGreaterThan(200);
+  expect(characterInRangeQuery.split(' ').filter(Boolean)).toHaveLength(1);
+  expect(characterBoundaryQuery.split(' ').filter(Boolean)).toHaveLength(2);
+  expect(tokenTenQuery.length).toBeLessThan(200);
+  expect(tokenElevenQuery.length).toBeLessThan(200);
+  expect(tokenTenQuery.split(' ')).toHaveLength(10);
+  expect(tokenElevenQuery.split(' ')).toHaveLength(11);
+  const characterInRangePath = `/${searchValue}/?term=${encodeURIComponent(characterInRangeQuery)}`;
+  const characterBoundaryPath = `/${searchValue}/?term=${encodeURIComponent(characterBoundaryQuery)}`;
+  const tokenTenPath = `/${searchValue}/?term=${encodeURIComponent(tokenTenQuery)}`;
+  const tokenElevenPath = `/${searchValue}/?term=${encodeURIComponent(tokenElevenQuery)}`;
+  const punctuationPath = `/${searchValue}/?term=${encodeURIComponent(`${marker} "`)}`;
+  const nonmatchingPath = `/${searchValue}/?term=${encodeURIComponent(`absent${randomUUID().replaceAll('-', '')}`)}`;
+  let documentId: string | undefined;
+  let testFailure: unknown;
+  const recoveryErrors: string[] = [];
+
+  try {
+    const createResponse = await createMarkdownPost(request, accessToken, archiveId, { title, body, slug, extraValues: [{ alias: 'tags', value: [tagToken], culture: null, segment: null, editorAlias: 'Umbraco.Tags', entityType: 'document-property-value' }] });
+    expect(createResponse.status(), 'Management API creates the draft').toBe(201);
+    const location = required(createResponse.headers().location, 'create response location');
+    documentId = required(new URL(location, siteUrl).pathname.split('/').at(-1), 'created document id');
+
+    for (const queryPath of [resultPath, titleOnlyPath, multiTermPath, nonmatchingPath]) {
+      const response = await request.get(queryPath);
+      expect(response.status(), 'public search returns HTTP 200').toBe(200);
+      expect(searchResults(await response.text()).some(result => new URL(result.href, siteUrl).href === new URL(publicPath, siteUrl).href), 'draft URL is absent from rendered search links').toBe(false);
+    }
+
+    await publish(request, accessToken, documentId);
+    const urlsResponse = await api(request, accessToken, `/document/urls?id=${documentId}`);
+    expect(urlsResponse.ok()).toBeTruthy();
+    const urls = await urlsResponse.json() as Array<{ urlInfos: Array<{ url: string }> }>;
+    const publishedUrl = required(urls[0]?.urlInfos[0]?.url, 'published document URL');
+    const expectedUrl = new URL(publishedUrl, siteUrl).href;
+    expect(new URL(expectedUrl).pathname).toBe(publicPath);
+    const includesOwnedResult = async (path: string) => {
+      const response = await request.get(path);
+      expect(response.status(), 'public search returns HTTP 200 while indexing propagates').toBe(200);
+      return searchResults(await response.text()).some(result =>
+        result.title === title && new URL(result.href, siteUrl).href === expectedUrl);
+    };
+    // indexName was removed in 9.0 and is ignored, so this request must behave like a normal search.
+    for (const queryPath of [resultPath, titleOnlyPath, tagOnlyPath, multiTermPath, tokenTenPath, characterInRangePath, `${resultPath}&indexName=MembersIndex`]) {
+      await expect.poll(() => includesOwnedResult(queryPath), {
+        message: `the published fixture appears in ${queryPath}`,
+        timeout: 20_000, intervals: [250, 500, 1000, 2000],
+      }).toBe(true);
+    }
+
+    expect(await includesOwnedResult(punctuationPath), 'native v19 CMS matching does not return the fixture for a query with a standalone quote').toBe(false);
+    expect(await includesOwnedResult(characterBoundaryPath), 'the matching marker before character 200 survives an absent term beyond the character cap').toBe(true);
+    expect(await includesOwnedResult(tokenElevenPath), 'the ten owned matches survive an absent term in token 11').toBe(true);
     expect(await includesOwnedResult(nonmatchingPath), 'non-matching search excludes the fixture URL from rendered links').toBe(false);
   } catch (error) {
     testFailure = error;
@@ -903,7 +1001,7 @@ test('root theme changes serve the alternate packaged stylesheet and restore the
   settle('Theme', testFailure, recoveryErrors);
 });
 
-test('public search redirects page one canonically and reserved indexes cannot bypass published-content search', async ({ request, baseURL }) => {
+test('public search redirects page one canonically and drops the removed indexName parameter', async ({ request, baseURL }) => {
   const accessToken = await token(request);
   const { id: rootId, document: root } = await rootDocument(request, accessToken);
   const searchValue = root.values.find(value => value.alias === 'searchUrlName')?.value;
@@ -913,12 +1011,10 @@ test('public search redirects page one canonically and reserved indexes cannot b
   expect(rootUrls.ok()).toBeTruthy();
   const rootUrlData = await rootUrls.json() as Array<{ urlInfos: Array<{ url: string }> }>;
   const rootPath = new URL(required(rootUrlData[0]?.urlInfos[0]?.url, 'published root URL'), required(baseURL, 'configured isolated base URL')).pathname;
-  // InternalIndex also holds published posts, so only the redirect's rewritten selector proves the substitution.
-  for (const indexName of ['ExternalIndex', 'InternalIndex', 'MembersIndex']) {
-    const redirect = await request.fetch(`/${searchValue}/?term=${encodeURIComponent(term)}&indexName=${indexName}&p=1`, { maxRedirects: 0 });
-    expect(redirect.status(), `p=1 with ${indexName} uses the controller canonical redirect`).toBe(302);
-    expect(redirect.headers().location, `${indexName} is served from the public external index at the published root URL`).toBe(`${rootPath}?term=${encodeURIComponent(term)}&indexName=ExternalIndex`);
-  }
+  // indexName was removed in v9; a stale one must be ignored, not echoed into the canonical URL.
+  const redirect = await request.fetch(`/${searchValue}/?term=${encodeURIComponent(term)}&indexName=InternalIndex&p=1`, { maxRedirects: 0 });
+  expect(redirect.status(), 'p=1 uses the controller canonical redirect').toBe(302);
+  expect(redirect.headers().location, 'redirect targets the published root URL with only the term').toBe(`${rootPath}?term=${encodeURIComponent(term)}`);
 });
 
 test('publishing a real search route configuration refreshes a warmed route without reload', async ({ request }) => {

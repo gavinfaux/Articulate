@@ -9,14 +9,12 @@ namespace Articulate
     public interface IArticulateSearcher
     {
         /// <summary>
-        /// Searches for posts based on the provided term and criteria.
+        /// Searches the published content index for posts based on the provided term and criteria.
         /// </summary>
-        public IEnumerable<IPublishedContent>? Search(
+        public Task<(IEnumerable<IPublishedContent> Results, long TotalResults)> SearchAsync(
             string term,
-            string? indexName,
             int blogArchiveNodeId,
             int pageSize,
-            int pageIndex,
-            out long totalResults);
+            int pageIndex);
     }
 }
