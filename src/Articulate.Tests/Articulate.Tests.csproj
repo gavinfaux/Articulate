@@ -1,7 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
     <IsPackable>false</IsPackable>
     <UseArticulateUsings>true</UseArticulateUsings>
     <TestTfmsInParallel>false</TestTfmsInParallel>
@@ -24,12 +23,12 @@
     <PackageReference Include="SixLabors.ImageSharp.Web" ExcludeAssets="build" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
+  <ItemGroup>
     <PackageReference Include="Umbraco.Cms.DevelopmentMode.Backoffice" />
   </ItemGroup>
 
   <!-- Keep Roslyn Workspaces aligned with the version required by Umbraco 18's development backoffice. -->
-  <ItemGroup Condition="'$(ArticulatePackageLane)' == 'v18'">
+  <ItemGroup Condition="'$(ArticulatePackageLane)' == 'v18' or '$(ArticulatePackageLane)' == 'v19'">
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" PrivateAssets="All" />
   </ItemGroup>
 
@@ -47,7 +46,7 @@
   </ItemGroup>
 
   <!-- OperationId handler tests are lane-specific; the shared StubControllers live at Swagger/. -->
-  <ItemGroup Condition="'$(ArticulatePackageLane)' == 'v18'">
+  <ItemGroup Condition="'$(ArticulatePackageLane)' == 'v18' or '$(ArticulatePackageLane)' == 'v19'">
     <Compile Remove="Swagger/V17/**/*.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(ArticulatePackageLane)' == 'v17'">

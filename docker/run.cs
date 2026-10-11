@@ -542,7 +542,8 @@ sealed class Opts
     {
         "v17" => "v17",
         "v18" => "v18",
-        var lane => throw new ArgumentException($"--lane must be v17 or v18 (got '{lane}').")
+        // v19 temp: local-only (preview CMS feed, net11 images) until GA, becomes a third lane.
+        var lane => throw new ArgumentException($"--lane must be v17 or v18 (got '{lane}'); v19 is local-only until Umbraco 19 GA.")
     };
 
     public string? String(string key, string? fallback = null) => _values.TryGetValue(key, out var value) ? value : fallback;

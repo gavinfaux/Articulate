@@ -52,6 +52,9 @@ static async Task<int> RunE2e(Options options)
     {
         "v17" => new[] { "v17" },
         "v18" => new[] { "v18" },
+        // v19 temp: no published CMS 19 to E2E against; joins the default lanes at GA.
+        "v19" when candidateProject is not null && candidatePort is not null => new[] { "v19" },
+        "v19" => throw new ArgumentException("v19 E2E requires an owned candidate project and port; use 'fresh --lane v19 --nuget-source <feed>'."),
         "all" when candidateProject is null => new[] { "v17", "v18" },
         "all" => throw new ArgumentException("Candidate E2E requires one lane."),
         var lane => throw new ArgumentException($"--lane must be v17, v18 or all (got '{lane}').")
@@ -63,8 +66,8 @@ static async Task<int> RunE2e(Options options)
     if (candidateProject is not null && candidatePort is not null)
     {
         var lane = lanes[0];
-        if (!Regex.IsMatch(candidateProject, $@"^art_e2e_candidate_{lane}_[a-f0-9]{{32}}$", RegexOptions.CultureInvariant))
-            throw new ArgumentException("--candidate-project must be the generated project name for the selected lane.");
+        if (!Regex.IsMatch(candidateProject, $@"^art_e2e_candidate_{lane}_[a-f0-9]{{32}}$|^art_e2e_native_{lane}_[a-f0-9]{{32}}$", RegexOptions.CultureInvariant))
+            throw new ArgumentException("--candidate-project must be a generated candidate project name for the selected lane.");
         if (!int.TryParse(candidatePort, out var parsedPort) || parsedPort is < 1024 or > 65535 || IsProtectedPort(parsedPort))
             throw new ArgumentException("--candidate-port must be a non-protected localhost port.");
         await VerifyCandidate(root, candidateProject, parsedPort);
@@ -105,11 +108,18 @@ static async Task<int> RunPlaywright(string root, string lane, string port, stri
 
 static async Task<int> RunFresh(Options options)
 {
-    options.Validate("fresh", "lane");
+    options.Validate("fresh", "lane", "nuget-source");
+    var nugetSource = options.Get("nuget-source");
     var lanes = options.Get("lane", "all") switch
     {
-        "v17" => new[] { "v17" }, "v18" => new[] { "v18" }, "all" => new[] { "v17", "v18" },
-        var lane => throw new ArgumentException($"--lane must be v17, v18 or all (got '{lane}').")
+        "v17" when nugetSource is null => new[] { "v17" },
+        "v18" when nugetSource is null => new[] { "v18" },
+        "all" when nugetSource is null => new[] { "v17", "v18" },
+        // v19 temp: local feed required and excluded from "all"; v19 joins "all" and --nuget-source goes away at GA.
+        "v19" when !string.IsNullOrWhiteSpace(nugetSource) => new[] { "v19" },
+        "v19" => throw new ArgumentException("The v19 experiment requires --nuget-source with the local CMS package feed."),
+        "all" => throw new ArgumentException("--nuget-source is only valid with --lane v19."),
+        var lane => throw new ArgumentException($"--lane must be v17, v18 or all; use --lane v19 with --nuget-source (got '{lane}').")
     };
     var root = FindRepositoryRoot();
     var dotnet = Environment.GetEnvironmentVariable("DOTNET_BIN") ?? "dotnet";
@@ -149,9 +159,12 @@ static async Task<int> RunFresh(Options options)
                 Directory.CreateDirectory(Path.GetDirectoryName(target)!);
                 File.Copy(file, target);
             }
-            new XDocument(new XElement("configuration", new XElement("packageSources", new XElement("clear"),
-                new XElement("add", new XAttribute("key", "lane"), new XAttribute("value", packages)),
-                new XElement("add", new XAttribute("key", "nuget.org"), new XAttribute("value", "https://api.nuget.org/v3/index.json")))))
+            var sources = new XElement("packageSources", new XElement("clear"),
+                new XElement("add", new XAttribute("key", "lane"), new XAttribute("value", packages)));
+            // v19 temp: local CMS feed; goes away at GA.
+            if (lane == "v19") sources.Add(new XElement("add", new XAttribute("key", "umbraco-v19"), new XAttribute("value", Path.GetFullPath(nugetSource!))));
+            sources.Add(new XElement("add", new XAttribute("key", "nuget.org"), new XAttribute("value", "https://api.nuget.org/v3/index.json")));
+            new XDocument(new XElement("configuration", sources))
                 .Save(Path.Combine(directory, "nuget.config"));
             var password = $"E2e!{Guid.NewGuid():N}";
             var pfxPassword = Guid.NewGuid().ToString("N");
@@ -190,7 +203,7 @@ static async Task<int> RunFresh(Options options)
                 ["Articulate__ManagementApi__OpenIddict__Client__PostLogoutRedirectUris__0"] = url + "/",
                 ["ARTICULATE_TEST_SITE_CLIENT_SECRET"] = clientSecret, ["UMBRACO_PUBLIC_URL"] = url,
                 ["ARTICULATE_E2E_CANDIDATE_PROJECT"] = candidate, ["ARTICULATE_E2E_CANDIDATE_PORT"] = port.ToString(),
-                ["TIMEOUT_SECONDS"] = "180",
+                ["TIMEOUT_SECONDS"] = "180", ["ARTICULATE_E2E_LANE"] = lane,
                 ["MSBUILDDISABLENODEREUSE"] = "1", ["DOTNET_CLI_USE_MSBUILD_SERVER"] = "0" // why: see Capture
             };
             var project = Path.Combine(directory, "ArticulateDockerSite.csproj");
@@ -240,7 +253,7 @@ static async Task<int> RunFresh(Options options)
                 await StopHost(preparedHost);
             }
             var hash = Convert.ToHexString(SHA256.HashData(await File.ReadAllBytesAsync(main[0])));
-            Console.WriteLine($"Native candidate receipt: lane={lane} package={Path.GetFileName(main[0])} sha256={hash} cms={cms} candidate={candidate} pid={host!.Value.Process.Id} url={url} package-restore=exact-archives indexing=owned-external-key");
+            Console.WriteLine($"Native candidate receipt: lane={lane} package={Path.GetFileName(main[0])} sha256={hash} cms={cms} candidate={candidate} pid={host!.Value.Process.Id} url={url} package-restore=exact-archives indexing=owned-{(lane == "v19" ? "published-content-guid" : "external-key")}");
             var exit = await RunPlaywright(root, lane, port.ToString(), candidate, environment);
             if (exit != 0)
             {
@@ -351,8 +364,8 @@ static async Task<string> Capture(string file, IEnumerable<string> args, string 
 static async Task<int> ShowReport(Options options)
 {
     options.Validate("report", "lane");
-    var lane = options.Get("lane") ?? throw new ArgumentException("report requires --lane v17 or v18.");
-    if (lane is not ("v17" or "v18")) throw new ArgumentException("--lane must be v17 or v18.");
+    var lane = options.Get("lane") ?? throw new ArgumentException("report requires --lane v17, v18 or v19.");
+    if (lane is not ("v17" or "v18" or "v19")) throw new ArgumentException("--lane must be v17, v18 or v19.");
     var root = FindRepositoryRoot();
     var client = Path.Combine(root, "src", "Articulate.Web", "Client");
     var report = Path.Combine(client, $"e2e-report-{lane}");

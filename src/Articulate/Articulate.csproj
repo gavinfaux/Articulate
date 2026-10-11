@@ -1,7 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
     <!-- PackageId differentiates this from Articulate.Web's PackageId=Articulate during restore -->
     <PackageId>Articulate.Core</PackageId>
     <UseArticulateUsings>true</UseArticulateUsings>
@@ -12,6 +11,7 @@
     <PackageReference Include="Umbraco.Cms.Web.Website" />
 
     <PackageReference Include="Umbraco.Cms.Api.Management" />
+    <PackageReference Include="Umbraco.Cms.Search.Provider.Examine" Condition="'$(ArticulatePackageLane)' == 'v19'" />
     <PackageReference Include="OpenIddict.Abstractions" />
 
     <PackageReference Include="Argotic.Core" />
@@ -28,7 +28,7 @@
 
   <!-- Swagger/OpenAPI configuration is lane-specific: V17 uses Swashbuckle, V18 uses Microsoft.AspNetCore.OpenApi.
        The shared generator/regexes live at Swagger/ (no Vxx subfolder) and are included in both lanes. -->
-  <ItemGroup Condition="'$(ArticulatePackageLane)' == 'v18'">
+  <ItemGroup Condition="'$(ArticulatePackageLane)' == 'v18' or '$(ArticulatePackageLane)' == 'v19'">
     <Compile Remove="Swagger/V17/**/*.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(ArticulatePackageLane)' == 'v17'">

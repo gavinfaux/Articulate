@@ -6,7 +6,8 @@
 # Examples:
 #   docker build --target chiseled --build-arg TARGET_FRAMEWORK=net10.0 ...
 
-ARG DOTNET_SDK_IMAGE=mcr.microsoft.com/dotnet/sdk:10.0
+# v19 temp: RC tag matches the exact global.json pin; becomes sdk:11.0 at GA.
+ARG DOTNET_SDK_IMAGE=mcr.microsoft.com/dotnet/sdk:11.0.100-rc.1
 ARG DOTNET_ASPNET_IMAGE=mcr.microsoft.com/dotnet/aspnet:10.0
 
 # Build stage

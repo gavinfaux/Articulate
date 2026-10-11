@@ -56,13 +56,13 @@ const buildVersion = {
 };
 
 // The active lane is derived from the lane package directory (`process.cwd()`).
-// v17 and v18 are the only valid values; the @umbraco-cms/backoffice major
-// version pinned in each lane's package.json determines which event class is
-// available (UmbPropertyValueChangeEvent is v17-only; UmbChangeEvent is both).
+// The @umbraco-cms/backoffice major version pinned in each lane's package.json
+// determines which event class is available (UmbPropertyValueChangeEvent is
+// v17-only; UmbChangeEvent is available in v18 and v19).
 const lane = (() => {
   const name = path.basename(UI_ROOT);
-  if (name !== 'v17' && name !== 'v18') {
-    throw new Error(`Unexpected lane directory '${name}'; expected v17 or v18.`);
+  if (name !== 'v17' && name !== 'v18' && name !== 'v19') {
+    throw new Error(`Unexpected lane directory '${name}'; expected v17, v18 or v19.`);
   }
   return name;
 })();
@@ -359,9 +359,9 @@ export default defineConfig(({ mode }: { mode: string }) => {
       },
     },
     define: {
-      // Build-time `LANE` constant. Set to the literal "v17" or "v18" via
-      // esbuild's `define` replacement. common/src/lane-adapter.ts reads this
-      // constant to dispatch to the per-lane event class.
+      // Build-time `LANE` constant. Set to the literal lane name via esbuild's
+      // `define` replacement. common/src/lane-adapter.ts reads this constant to
+      // dispatch to the per-lane event class.
       LANE: JSON.stringify(lane),
     },
     build: {

@@ -24,7 +24,7 @@ try
     var opts = Opts.Parse(args[1..]);
     return command switch
     {
-        "build"         => await BuildAsync(opts.Validate(command, "lane", "configuration", "tests", "client", "sample", "clean", "update-locks")),
+        "build"         => await BuildAsync(opts.Validate(command, "lane", "configuration", "tests", "client", "sample", "clean", "update-locks", "nuget-source")),
         "client"        => await ClientAsync(opts.Validate(command, "lane")),
         "site"          => await SiteAsync(opts.Validate(command, "lane", "configuration", "reset")),
         _ => throw new ArgumentException($"Unknown command '{command}'. Run with --help.")
@@ -84,8 +84,21 @@ async Task<int> BuildAsync(Opts o)
         "-p:EnableClientBuild=" + defaults.Client.ToString().ToLowerInvariant(),
         "-p:ArticulatePackageLane=" + lane,
     };
+    // v19 temp: CMS 19 is not on nuget.org yet, so restore names the local feed; goes away at GA.
+    var nugetSource = o.String("nuget-source");
+    if (lane == "v19" && string.IsNullOrWhiteSpace(nugetSource))
+        throw new ArgumentException("--lane v19 requires --nuget-source with the local CMS package feed.");
+    if (lane != "v19" && nugetSource is not null)
+        throw new ArgumentException("--nuget-source is only valid with --lane v19.");
+    if (nugetSource is not null) props.Add("-p:RestoreAdditionalProjectSources=" + Path.GetFullPath(nugetSource));
     var packageVersion = await ResolvePackageVersion(lane);
     props.Add("-p:ArticulatePackageVersion=" + packageVersion);
+
+    // Refuse a lane switch before deleting anything.
+    var activeLane = File.Exists(activeLanePath) ? File.ReadAllText(activeLanePath).Trim() : null;
+    var activeVersion = File.Exists(activeVersionPath) ? File.ReadAllText(activeVersionPath).Trim() : null;
+    if (defaults.Client && !clean && activeLane is not null && !string.Equals(activeLane, lane, StringComparison.OrdinalIgnoreCase))
+        throw new InvalidOperationException($"Client assets belong to {activeLane}; rerun with --clean before building {lane}.");
 
     Console.WriteLine($"Build: {lane}, {cfg}, package {packageVersion}{(clean ? " (Clean Build)" : "")}");
     DeleteExistingPackages(releaseDir);
@@ -99,10 +112,6 @@ async Task<int> BuildAsync(Opts o)
 
     if (defaults.Client)
     {
-        var activeLane = File.Exists(activeLanePath) ? File.ReadAllText(activeLanePath).Trim() : null;
-        var activeVersion = File.Exists(activeVersionPath) ? File.ReadAllText(activeVersionPath).Trim() : null;
-        if (!clean && activeLane is not null && !string.Equals(activeLane, lane, StringComparison.OrdinalIgnoreCase))
-            throw new InvalidOperationException($"Client assets belong to {activeLane}; rerun with --clean before building {lane}.");
         if (clean || activeLane is null || !string.Equals(activeVersion, packageVersion, StringComparison.Ordinal))
         {
             DeleteDir(backofficeDir);
@@ -124,7 +133,8 @@ async Task<int> BuildAsync(Opts o)
 
     if (o.Flag("update-locks"))
     {
-        foreach (var lockLane in new[] { "v17", "v18" })
+        // v19 temp: v19 locks need the local feed; becomes an unconditional v17/v18/v19 list at GA.
+        foreach (var lockLane in nugetSource is null ? new[] { "v17", "v18" } : new[] { "v17", "v18", "v19" })
         {
             Console.WriteLine($"> dotnet restore lock files ({lockLane})");
             await Run("dotnet", new[]
@@ -135,7 +145,7 @@ async Task<int> BuildAsync(Opts o)
                 $"-p:ArticulatePackageLane={lockLane}",
                 "-p:RestoreLockedMode=false",
                 "--force-evaluate"
-            });
+            }.Concat(lockLane == "v19" ? new[] { "-p:RestoreAdditionalProjectSources=" + Path.GetFullPath(nugetSource!) } : Array.Empty<string>()).ToArray());
         }
     }
 
@@ -194,6 +204,9 @@ async Task<int> ClientAsync(Opts o)
     if (pnpmVersion != requiredPnpmVersion)
         throw new InvalidOperationException($"Client build requires pnpm {requiredPnpmVersion} (found {pnpmVersion}).");
     await Run("pnpm", new[] { "install", "--frozen-lockfile" }, cwd: workspace);
+    // A lane with its own pnpm-workspace.yaml is standalone, so the root install does not cover it.
+    if (File.Exists(Path.Combine(laneDir, "pnpm-workspace.yaml")))
+        await Run("pnpm", new[] { "install", "--frozen-lockfile" }, cwd: laneDir);
     await Run("pnpm", new[] { "run", "check" }, cwd: laneDir);
     await Run("pnpm", new[] { "run", "build" }, cwd: laneDir);
     await Run("pnpm", new[] { "run", "lint" }, cwd: laneDir);
@@ -216,7 +229,6 @@ async Task<string> ResolvePackageVersion(string lane)
 {
     var packageVersion = Env.Get("ARTICULATE_PACKAGE_VERSION");
     if (!string.IsNullOrWhiteSpace(packageVersion)) return packageVersion;
-
     var inCi = Env.IsTrue(Env.CallerCi) || Env.IsTrue(Env.CallerGithubActions) || Env.IsTrue(Env.CallerAct);
     var nbgv = inCi ? Env.Get("NBGV_SemVer2") : null;
     if (string.IsNullOrWhiteSpace(nbgv))
@@ -228,8 +240,7 @@ async Task<string> ResolvePackageVersion(string lane)
     if (string.IsNullOrWhiteSpace(baseVersion))
         throw new InvalidOperationException($"{Path.GetFileName(baseVersionPath)} is empty.");
 
-    var commitMatch = Regex.Match(nbgv, @"[-.]g[a-f0-9]+$");
-    return baseVersion + commitMatch.Value;
+    return baseVersion + Regex.Match(nbgv, @"[-.]g[a-f0-9]+$", RegexOptions.CultureInvariant).Value;
 }
 
 void ValidateConfiguration(string? configuration)
@@ -420,7 +431,8 @@ sealed class Opts
     {
         "v17" => "v17",
         "v18" => "v18",
-        var x => throw new ArgumentException($"--lane must be v17 or v18 (got '{x}').")
+        "v19" => "v19",
+        var x => throw new ArgumentException($"--lane must be v17, v18 or v19 (got '{x}').")
     };
 
     public string? String(string key, string? fallback = null) => _v.TryGetValue(key, out var v) ? v : fallback;

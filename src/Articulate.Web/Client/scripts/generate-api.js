@@ -9,7 +9,7 @@ const outputPath = args[1];
 const laneIndex = args.indexOf("--lane");
 const lane = laneIndex !== -1 && args[laneIndex + 1] ? args[laneIndex + 1] : "v17";
 
-if (lane !== "v17" && lane !== "v18") {
+if (!["v17", "v18", "v19"].includes(lane)) {
   console.error(`ERROR: Unsupported client lane: ${lane}`);
   process.exit(1);
 }

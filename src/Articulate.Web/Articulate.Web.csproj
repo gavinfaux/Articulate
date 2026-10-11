@@ -1,7 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk.Razor">
 
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
     <PackageId>Articulate</PackageId>
     <Title>Articulate</Title>
     <AssemblyName>Articulate.Web</AssemblyName>
@@ -37,6 +36,7 @@
   <ItemGroup>
     <PackageReference Include="Umbraco.Cms.Web.Website" />
     <PackageReference Include="Umbraco.Cms.Api.Management" />
+    <PackageReference Include="Umbraco.Cms.Search.Provider.Examine" Condition="'$(ArticulatePackageLane)' == 'v19'" />
     <PackageReference Include="OpenIddict.Abstractions" />
     <PackageReference Include="MessagePack" />
     <PackageReference Include="Argotic.Core" />
@@ -50,6 +50,7 @@
   <ItemGroup>
     <Content Include="build\Articulate.targets" Pack="true" PackagePath="build\" />
   </ItemGroup>
+
 
   <!-- Lock files are restore-time inputs for <RestoreLockedMode>; never ship them. -->
   <ItemGroup>
@@ -76,13 +77,15 @@
     <ClientProjectDirectory>$(MSBuildProjectDirectory)/Client</ClientProjectDirectory>
     <ExpectedUmbracoClientVersion Condition="'$(ArticulatePackageLane)' == 'v17'">17</ExpectedUmbracoClientVersion>
     <ExpectedUmbracoClientVersion Condition="'$(ArticulatePackageLane)' == 'v18'">18</ExpectedUmbracoClientVersion>
+    <ExpectedUmbracoClientVersion Condition="'$(ArticulatePackageLane)' == 'v19'">19</ExpectedUmbracoClientVersion>
     <!-- Derive UmbracoClientVersion from ArticulatePackageLane unless the caller set it explicitly. -->
     <UmbracoClientVersion Condition="'$(UmbracoClientVersion)' == ''">$(ExpectedUmbracoClientVersion)</UmbracoClientVersion>
-    <ArticulateClientVersionValidationError Condition="'$(UmbracoClientVersion)' != '17' and '$(UmbracoClientVersion)' != '18'">$([System.Int32]::Parse("UmbracoClientVersion must be '17' or '18' (got '$(UmbracoClientVersion)')."))</ArticulateClientVersionValidationError>
+    <ArticulateClientVersionValidationError Condition="'$(UmbracoClientVersion)' != '17' and '$(UmbracoClientVersion)' != '18' and '$(UmbracoClientVersion)' != '19'">$([System.Int32]::Parse("UmbracoClientVersion must be '17', '18' or '19' (got '$(UmbracoClientVersion)')."))</ArticulateClientVersionValidationError>
     <ArticulateClientLaneConsistencyError Condition="'$(ExpectedUmbracoClientVersion)' != '' and '$(UmbracoClientVersion)' != '$(ExpectedUmbracoClientVersion)'">$([System.Int32]::Parse("UmbracoClientVersion '$(UmbracoClientVersion)' is inconsistent with ArticulatePackageLane '$(ArticulatePackageLane)'. Expected '$(ExpectedUmbracoClientVersion)'."))</ArticulateClientLaneConsistencyError>
     <ClientWorkspaceDirectory>$(ClientProjectDirectory)</ClientWorkspaceDirectory>
     <ClientWorkspaceDirectory Condition="'$(UmbracoClientVersion)' == '17'">$(ClientProjectDirectory)/v17</ClientWorkspaceDirectory>
     <ClientWorkspaceDirectory Condition="'$(UmbracoClientVersion)' == '18'">$(ClientProjectDirectory)/v18</ClientWorkspaceDirectory>
+    <ClientWorkspaceDirectory Condition="'$(UmbracoClientVersion)' == '19'">$(ClientProjectDirectory)/v19</ClientWorkspaceDirectory>
     <BackofficeOutputDir>$(MSBuildProjectDirectory)/wwwroot/App_Plugins/Articulate/BackOffice</BackofficeOutputDir>
     <ClientAssetsCacheDir>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/../../build/ClientAssets'))</ClientAssetsCacheDir>
     <ClientBuildMode>prod</ClientBuildMode>
@@ -101,6 +104,8 @@
     <ClientBuildInput Include="$(ClientProjectDirectory)/pnpm-workspace.yaml" />
     <ClientBuildInput Include="$(ClientProjectDirectory)/common/**/*" />
     <ClientBuildInput Include="$(ClientWorkspaceDirectory)/package.json" />
+    <ClientBuildInput Include="$(ClientWorkspaceDirectory)/pnpm-lock.yaml" Condition="'$(ClientWorkspaceDirectory)' != '$(ClientProjectDirectory)' and Exists('$(ClientWorkspaceDirectory)/pnpm-lock.yaml')" />
+    <ClientBuildInput Include="$(ClientWorkspaceDirectory)/pnpm-workspace.yaml" Condition="'$(ClientWorkspaceDirectory)' != '$(ClientProjectDirectory)' and Exists('$(ClientWorkspaceDirectory)/pnpm-workspace.yaml')" />
     <ClientBuildInput Include="$(ClientWorkspaceDirectory)/tsconfig*.json" />
     <ClientBuildInput Include="$(ClientWorkspaceDirectory)/vite.config.ts" />
     <ClientBuildInput Include="$(ClientWorkspaceDirectory)/ambient.d.ts" />
@@ -134,6 +139,8 @@
     <Error Text="pnpm-lock.yaml is out of sync. Run 'pnpm install' locally." Condition="'$(PnpmFrozenExitCode)' != '0' and '$(PnpmFrozenExitCode)' != ''" />
 
     <Exec Command="pnpm install --frozen-lockfile" WorkingDirectory="$(ClientProjectDirectory)" Condition="'$(CI)' != 'true'" />
+    <!-- A lane with its own pnpm-workspace.yaml is standalone, so the root install does not cover it. -->
+    <Exec Command="pnpm install --frozen-lockfile" WorkingDirectory="$(ClientWorkspaceDirectory)" Condition="'$(ClientWorkspaceDirectory)' != '$(ClientProjectDirectory)' and Exists('$(ClientWorkspaceDirectory)/pnpm-workspace.yaml')" />
 
     <Exec Command="$(ClientBuildCommand)" WorkingDirectory="$(ClientWorkspaceDirectory)" EnvironmentVariables="ARTICULATE_APP_VERSION=$(_ResolvedArticulateAppVersion)" />
 
