@@ -2,7 +2,7 @@
 // Verify Articulate .nupkg / .snupkg contents. CI runs this after `dotnet pack`
 // and skips the artifact upload on any failure.
 //   node build/smoke-package.mjs build/Release/v17 [build/Release/v18 ...]
-//   node build/smoke-package.mjs path/to/Articulate.<version>.nupkg
+//   node build/smoke-package.mjs build/Release/v19/Articulate.<version>.nupkg
 
 import { spawnSync } from "node:child_process";
 import {
@@ -89,7 +89,17 @@ function checkGroup(name, fn) {
 
 let currentPackage = "";
 
-function checkPackage(file) {
+// Mirrors the lane TargetFramework in Directory.Build.props.
+const targetFrameworkByLane = { v17: "net10.0", v18: "net10.0", v19: "net11.0" };
+
+function laneFromPath(path) {
+	const match = path.match(/(?:^|[\\/])(v17|v18|v19)(?=[\\/]|$)/);
+	if (!match) throw new Error(`Package path must include an explicit lane directory (v17, v18 or v19): ${path}`);
+	return match[1];
+}
+
+function checkPackage(file, lane) {
+	const targetFramework = targetFrameworkByLane[lane];
 	currentPackage = basename(file);
 	const isSymbols = extname(file) === ".snupkg";
 	const entries = parseUnzipList(unzipList(file));
@@ -101,11 +111,11 @@ function checkPackage(file) {
 	console.log(`\n${currentPackage}`);
 	try {
 		if (isSymbols) {
-			checkSymbols(file, entries, names, work);
+			checkSymbols(file, entries, names, work, targetFramework);
 		} else if (currentPackage.startsWith("Articulate.Theme.Sample.")) {
-			checkSamplePackage(file, entries, names, work);
+			checkSamplePackage(file, entries, names, work, targetFramework);
 		} else if (currentPackage.startsWith("Articulate.")) {
-			checkMainPackage(file, entries, names, work);
+			checkMainPackage(file, entries, names, work, targetFramework);
 		} else {
 			console.log(`\n${currentPackage} :: skipped (unknown package id)`);
 		}
@@ -114,7 +124,7 @@ function checkPackage(file) {
 	}
 }
 
-function checkMainPackage(file, entries, names, work) {
+function checkMainPackage(file, entries, names, work, targetFramework) {
 	checkGroup("root files", () => {
 		expect("LICENSE at package root", names.includes("LICENSE"));
 		expect("README.md at package root", names.includes("README.md"));
@@ -145,8 +155,8 @@ function checkMainPackage(file, entries, names, work) {
 		const nuspec = readFileSync(join(work, nuspecName), "utf8");
 		expect("id=Articulate", /<id>Articulate<\/id>/.test(nuspec));
 		expect(
-			"has net10.0 dependency group",
-			/targetFramework="net10\.0"/.test(nuspec),
+			`has ${targetFramework} dependency group`,
+			new RegExp(`targetFramework="${targetFramework.replaceAll(".", "\\.")}"`).test(nuspec),
 		);
 		expect(
 			"depends on Umbraco.Cms.Web.Website",
@@ -158,7 +168,7 @@ function checkMainPackage(file, entries, names, work) {
 		);
 		// Expect the modern staticwebassets/ root layout. Legacy content/
 		// and contentFiles/any/{tfm}/ were the dual-pack leak fixed in the
-		// v18 build pipeline — keep them out.
+		// v18 build pipeline - keep them out.
 		const hasStaticWebAssets = names.some((n) =>
 			n.startsWith("staticwebassets/"),
 		);
@@ -189,22 +199,22 @@ function checkMainPackage(file, entries, names, work) {
 		);
 	});
 
-	checkGroup("lib/net10.0", () => {
+	checkGroup(`lib/${targetFramework}`, () => {
 		expect(
 			"Articulate.Web.dll present",
-			names.includes("lib/net10.0/Articulate.Web.dll"),
+			names.includes(`lib/${targetFramework}/Articulate.Web.dll`),
 		);
 		expect(
 			"Articulate.Web.xml present",
-			names.includes("lib/net10.0/Articulate.Web.xml"),
+			names.includes(`lib/${targetFramework}/Articulate.Web.xml`),
 		);
 		expect(
 			"Articulate.dll present (from IncludeProjectReferenceDlls)",
-			names.includes("lib/net10.0/Articulate.dll"),
+			names.includes(`lib/${targetFramework}/Articulate.dll`),
 		);
 		expect(
 			"Articulate.xml present",
-			names.includes("lib/net10.0/Articulate.xml"),
+			names.includes(`lib/${targetFramework}/Articulate.xml`),
 		);
 	});
 
@@ -213,16 +223,41 @@ function checkMainPackage(file, entries, names, work) {
 			"Articulate.targets present",
 			names.includes("build/Articulate.targets"),
 		);
+		// net11 SDK packs static web assets as PackageAssets.json + a .targets that
+		// nothing imports unless build/Articulate.targets does; net10 generates Articulate.props.
+		const packageAssetMetadata = targetFramework === "net11.0"
+			? "build/Articulate.PackageAssets.json"
+			: "build/Articulate.props";
 		expect(
-			"Articulate.props present",
-			names.includes("build/Articulate.props"),
+			`${packageAssetMetadata} present`,
+			names.includes(packageAssetMetadata),
 		);
 		expect(
-			"StaticWebAssets props present",
+			"StaticWebAssets build integration present",
 			hasAny(entries, (e) =>
 				/^build\/Microsoft\.AspNetCore\.StaticWebAssets/.test(e.name),
 			),
 		);
+		if (targetFramework === "net11.0") {
+			expect(
+				"v19 adjacent StaticWebAssets target present",
+				names.includes("build/Microsoft.AspNetCore.StaticWebAssets.targets"),
+			);
+			const packageTargets = "build/Articulate.targets";
+			let importsStaticWebAssets = false;
+			if (names.includes(packageTargets)) {
+				unzipExtract(file, [packageTargets], work);
+				const targetsXml = readFileSync(join(work, packageTargets), "utf8");
+				importsStaticWebAssets =
+					/<Import\b[^>]*\bProject=["']Microsoft\.AspNetCore\.StaticWebAssets\.targets["'][^>]*\/>/i.test(
+						targetsXml,
+					);
+			}
+			expect(
+				"v19 Articulate.targets imports StaticWebAssets integration",
+				importsStaticWebAssets,
+			);
+		}
 	});
 
 	checkGroup("umbraco-package.json", () => {
@@ -355,7 +390,7 @@ function checkMainPackage(file, entries, names, work) {
 
 
 	checkGroup("embedded resources in Articulate.dll", () => {
-		const dllPath = "lib/net10.0/Articulate.dll";
+		const dllPath = `lib/${targetFramework}/Articulate.dll`;
 		if (!names.includes(dllPath)) {
 			expect("Articulate.dll extractable", false);
 			return;
@@ -380,7 +415,7 @@ function checkMainPackage(file, entries, names, work) {
 	});
 
 	checkGroup("embedded theme + razor in Articulate.Web.dll", () => {
-		const dllPath = "lib/net10.0/Articulate.Web.dll";
+		const dllPath = `lib/${targetFramework}/Articulate.Web.dll`;
 		if (!names.includes(dllPath)) {
 			expect("Articulate.Web.dll extractable", false);
 			return;
@@ -402,7 +437,7 @@ function checkMainPackage(file, entries, names, work) {
 	});
 }
 
-function checkSamplePackage(file, entries, names, work) {
+function checkSamplePackage(file, entries, names, work, targetFramework) {
 	checkGroup("root files", () => {
 		expect("LICENSE at package root", names.includes("LICENSE"));
 		expect("README.md at package root", names.includes("README.md"));
@@ -432,10 +467,10 @@ function checkSamplePackage(file, entries, names, work) {
 		expect("depends on Articulate", /<dependency id="Articulate"/.test(nuspec));
 	});
 
-	checkGroup("lib/net10.0", () => {
+	checkGroup(`lib/${targetFramework}`, () => {
 		expect(
 			"Articulate.Theme.Sample.dll present",
-			names.includes("lib/net10.0/Articulate.Theme.Sample.dll"),
+			names.includes(`lib/${targetFramework}/Articulate.Theme.Sample.dll`),
 		);
 	});
 
@@ -455,14 +490,14 @@ function checkSamplePackage(file, entries, names, work) {
 	});
 }
 
-function checkSymbols(_file, entries, names, _work) {
+function checkSymbols(_file, entries, names, _work, targetFramework) {
 	checkGroup("symbols package", () => {
 		expect(
 			"Articulate.Web.pdb present",
-			names.includes("lib/net10.0/Articulate.Web.pdb"),
+			names.includes(`lib/${targetFramework}/Articulate.Web.pdb`),
 		);
 		const pdb = entries.find(
-			(e) => e.name === "lib/net10.0/Articulate.Web.pdb",
+			(e) => e.name === `lib/${targetFramework}/Articulate.Web.pdb`,
 		);
 		if (pdb) {
 			expect(
@@ -483,15 +518,16 @@ for (const arg of args) {
 			.filter((n) => /\.(nu|snu)pkg$/.test(n))
 			.sort()
 			.map((n) => join(arg, n));
-		files.push(...found);
+		const lane = laneFromPath(arg);
+		files.push(...found.map((file) => ({ file, lane })));
 	} else {
-		files.push(arg);
+		files.push({ file: arg, lane: laneFromPath(arg) });
 	}
 }
 
-for (const file of files) {
+for (const { file, lane } of files) {
 	try {
-		checkPackage(file);
+		checkPackage(file, lane);
 	} catch (err) {
 		failures++;
 		console.log(`\n${basename(file)} :: error ${err.message}`);

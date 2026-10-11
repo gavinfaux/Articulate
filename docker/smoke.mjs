@@ -98,6 +98,15 @@ async function jsonPut(url, token, body) {
   return parseJsonResponse(res, url);
 }
 
+async function jsonPost(url, token, body) {
+  const res = await request(url, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  return parseJsonResponse(res, url);
+}
+
 async function post(url, body) {
   const res = await request(url, {
     method: 'POST',
@@ -268,17 +277,26 @@ async function waitForIndexing(base, token, rootId, timeoutSec) {
   let original;
   try {
     await jsonPut(`${api}/document/${id}/publish`, token, { publishSchedules: [{ culture: null, schedule: null }] });
-    const query = encodeURIComponent(`__Key:"${id}"`);
-    // Articulate searches ExternalIndex; the CMS document-search helper checks InternalIndex.
+    const lane = env('ARTICULATE_E2E_LANE', 'v18');
     let hits = 0, indexed = false;
     while (!indexed && now() < deadline) {
-      const result = await jsonGet(`${api}/searcher/ExternalIndex/query?term=${query}`, token);
-      hits = result.items?.length ?? 0;
-      indexed = result.items?.some(item => item.fields?.some(field => field.name === '__Key' && field.values?.includes(id))) ?? false;
+      if (lane === 'v19') {
+        const result = await jsonPost(`${api}/search/search?take=100`, token, {
+          indexAlias: 'Umb_PublishedContent', query: marker,
+        });
+        hits = result.documents?.length ?? 0;
+        indexed = result.documents?.some(item => item.id?.toLowerCase() === id.toLowerCase()) ?? false;
+      } else {
+        const query = encodeURIComponent(`__Key:"${id}"`);
+        const result = await jsonGet(`${api}/searcher/ExternalIndex/query?term=${query}`, token);
+        hits = result.items?.length ?? 0;
+        indexed = result.items?.some(item => item.fields?.some(field => field.name === '__Key' && field.values?.includes(id))) ?? false;
+      }
       if (!indexed) await sleep(2000);
     }
-    if (!indexed) throw new Error(`Timed out waiting for publication indexing before E2E (last search returned ${hits} items, none with __Key ${id}).`);
-    console.log('Index readiness passed: CMS ExternalIndex contains the owned publication.');
+    const indexName = lane === 'v19' ? 'PublishedContent' : 'ExternalIndex';
+    if (!indexed) throw new Error(`Timed out waiting for publication indexing before E2E (last ${indexName} search returned ${hits} items, none with the owned key ${id}).`);
+    console.log(`Index readiness passed: CMS ${indexName} contains the owned publication key ${id}.`);
   } catch (err) { original = err; }
 
   try {
@@ -312,8 +330,11 @@ async function main() {
 
   if (mode === 'index-ready') {
     const project = env('ARTICULATE_E2E_CANDIDATE_PROJECT', env('COMPOSE_PROJECT_NAME', ''));
+    const lane = env('ARTICULATE_E2E_LANE', project.match(/^art_e2e_(?:candidate|native)_(v17|v18|v19)_/)?.[1] ?? '');
     const target = new URL(base);
-    if (!/^art_e2e_(?:candidate|native)_(v17|v18)_[a-f0-9]{32}$/.test(project)
+    if (!/^art_e2e_(?:candidate|native)_(v17|v18|v19)_[a-f0-9]{32}$/.test(project)
+      || !['v17', 'v18', 'v19'].includes(lane)
+      || !project.startsWith(`art_e2e_native_${lane}_`) && !project.startsWith(`art_e2e_candidate_${lane}_`)
       || target.protocol !== 'https:' || target.hostname !== 'localhost'
       || !target.port || ['18443', '18444', '19443', '19444'].includes(target.port))
       throw new Error('Index readiness is restricted to disposable localhost E2E candidates.');

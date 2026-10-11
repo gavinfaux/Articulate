@@ -1,5 +1,8 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
+  <!-- net11+ packages use this SDK target; net10 and earlier use generated .props imports. -->
+  <Import Project="Microsoft.AspNetCore.StaticWebAssets.targets" Condition="Exists('$(MSBuildThisFileDirectory)Microsoft.AspNetCore.StaticWebAssets.targets')" />
+
   <!--
     Articulate XML Documentation Copy Target
 
