@@ -15,7 +15,7 @@ dotnet run --file docker/run.cs -- help [command]
 | `docker-test`   | Run package, startup, Production-readiness and HTTP E2E checks.       |
 | `docker-ca`     | Export and trust Caddy's local root CA.                             |
 
-Commands default to lane `v17`; `docker-test` defaults to both lanes.
+Commands default to lane `v17`; `docker-test` defaults to both lanes. Docker does not support `v19` until Umbraco 19 GA.
 
 ### docker-build
 

@@ -2,7 +2,7 @@
 
 ## Requirements
 
-- [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0); the repository utilities use [.NET file-based apps](https://learn.microsoft.com/en-us/dotnet/core/sdk/file-based-apps).
+- The .NET SDK pinned in `global.json` (currently the [.NET 11](https://dotnet.microsoft.com/download/dotnet/11.0) RC; all lanes build with it); the repository utilities use [.NET file-based apps](https://learn.microsoft.com/en-us/dotnet/core/sdk/file-based-apps).
 - [Node.js 24.x](https://nodejs.org/en/download/) and [pnpm 11.19.0](https://pnpm.io/installation).
 - [Nerdbank.GitVersioning](https://github.com/dotnet/Nerdbank.GitVersioning) CLI (`dotnet tool install -g nbgv`) for local build and pack commands. Set `ARTICULATE_PACKAGE_VERSION` to use an explicit version instead.
 - IDE: Visual Studio 2026, JetBrains Rider, or Visual Studio Code.
@@ -24,7 +24,7 @@ This restores NuGet and Node packages, builds the Back Office client, builds the
    dotnet run --file build/build.cs -- site --lane v17
    ```
 
-Use `--lane v18` to test Umbraco 18. Use `--reset` when you need a fresh database. Alternatively, open `src/Articulate.sln`, set `Articulate.Tests.Website` as the startup project, and start it from the IDE.
+Use `--lane v18` to test Umbraco 18. `--lane v19` (Umbraco 19 preview) is local-only until Umbraco 19 GA and needs the preview CMS packages; build it with `--nuget-source <feed>`. Use `--reset` when you need a fresh database. Alternatively, open `src/Articulate.sln`, set `Articulate.Tests.Website` as the startup project, and start it from the IDE.
 4. Sign in with the local credentials in `src/Articulate.Tests.Website/appsettings.json`. The test site installs Umbraco and runs the Articulate package migrations automatically.
 
 ## Dev Containers
@@ -43,7 +43,7 @@ Docker is optional for local browsing and container deployment checks. CI's fres
 dotnet run --file docker/run.cs -- docker-dev --lane v17
 ```
 
-Use `--lane v18` for Umbraco 18. Use `--reset` only when you need a fresh Docker database.
+Use `--lane v18` for Umbraco 18. Docker does not support `v19` until Umbraco 19 GA. Use `--reset` only when you need a fresh Docker database.
 
 For HTTP E2E tests, use `dotnet run --file build/test.cs -- fresh --lane all` after building both Release packages with `--sample`. Docker's `docker-test` runs the same suite when you need to check Caddy and the container runtime. See the [E2E guide](src/Articulate.Web/Client/e2e/README.md). Do not run tests against `art_v17` or `art_v18`.
 
@@ -56,11 +56,11 @@ pnpm install
 pnpm run build
 ```
 
-`pnpm run build` checks both lanes and rebuilds the built-in theme and Markdown editor assets.
+`pnpm run build` checks all three lanes (v19 needs `pnpm install` in `v19` first) and rebuilds the built-in theme and Markdown editor assets.
 
 ## Compatibility
 
-`ArticulatePackageLane` selects the package lane. `Directory.Build.props` defines `UMBRACO_18_OR_GREATER` for v18. The packages remain separate because the Umbraco extension points are not binary-compatible.
+`ArticulatePackageLane` selects the package lane. `Directory.Build.props` defines `UMBRACO_<N>_OR_GREATER` (18, 19) from the Umbraco major. The packages remain separate because the Umbraco extension points are not binary-compatible.
 
 ### Server API
 
@@ -79,7 +79,7 @@ See [BUILD.md's Client API generation section](BUILD.md#client-api-generation) f
 
 ### Back Office client
 
-Feature source lives in `src/Articulate.Web/Client/common/`. The `v17` and `v18` folders contain lane metadata and configuration. `src/Articulate.Web/Client/common/src/lane-adapter.ts` maps v17's deprecated `UmbPropertyValueChangeEvent` to v18's `UmbChangeEvent`; assert the external `change` behaviour rather than the class name.
+Feature source lives in `src/Articulate.Web/Client/common/`. The `v17` and `v18` folders contain lane metadata and configuration. `v19` is a standalone package outside the pnpm workspace (its own lockfile) until Umbraco 19 GA. `src/Articulate.Web/Client/common/src/lane-adapter.ts` maps v17's deprecated `UmbPropertyValueChangeEvent` to v18's `UmbChangeEvent`; assert the external `change` behaviour rather than the class name.
 
 Keep `legacyDecoratorsPlugin()` in `src/Articulate.Web/Client/common/vite.config.ts`. `pnpm run check` only type-checks; `pnpm run build` also checks the decorator transform. BlogML callers live in `src/Articulate.Web/Client/common/src/components/` and `src/Articulate.Web/Client/common/src/utils/download.ts`.
 

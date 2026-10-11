@@ -23,20 +23,21 @@ dotnet run --file build/build.cs -- build [options]
 
 | Option            | Default                                             | Notes                                                                                                                                                                                                                                                                                                                               |
 |-------------------|-----------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `--lane`          | `v17`                                               | `v17` (Articulate 7.x for Umbraco 17) or `v18` (Articulate 8.x for Umbraco 18).                                                                                                                                                                                                                                                     |
+| `--lane`          | `v17`                                               | `v17` (Articulate 7.x for Umbraco 17) , `v18` (Articulate 8.x for Umbraco 18) or `v19` (Articulate 9.x for Umbraco 19; local-only, needs `--nuget-source`). |
 | `--configuration` | `BUILD_CONFIGURATION` or `Release`                  | `Debug` or `Release`.                                                                                                                                                                                                                                                                                                               |
 | `--tests`         | `RUN_TESTS`, otherwise true in CI                   | Run `dotnet test` after building.                                                                                                                                                                                                                                                                                                   |
 | `--client`        | `ENABLE_CLIENT_BUILD`, otherwise true in Release/CI | Build the Backoffice client.                                                                                                                                                                                                                                                                                                        |
 | `--sample`        | `PACK_SAMPLE_THEME`, otherwise true locally         | Pack `Articulate.Theme.Sample`.                                                                                                                                                                                                                                                                                                     |
 | `--clean`         | `false`                                             | Clean source outputs, client assets, and packaged Backoffice assets first; required when switching lanes. It does not delete client dependencies or local test-site state. Use `site --reset` for an explicit site reset. Same-lane builds reuse client dependencies and, when tracked client inputs and build mode are unchanged, the incremental client stamp. |
-| `--update-locks`  | `false`                                             | Regenerate both v17 and v18 NuGet lock files before building. Local-only; the command refuses to run in CI or act. |
+| `--update-locks`  | `false`                                             | Regenerate v17 and v18 NuGet lock files (plus v19 when `--nuget-source` is set) before building. Local-only; the command refuses to run in CI or act. |
+| `--nuget-source`  | none                                                | Local CMS package feed; required for (and only valid with) the local-only `--lane v19`, which also adds it to the v19 lock restore. |
 
 Packages land in `build/<Configuration>/<lane>/`.
 
 ### client
 
 ```text
-dotnet run --file build/build.cs -- client [--lane v17|v18]
+dotnet run --file build/build.cs -- client [--lane v17|v18|v19]
 ```
 
 Runs `pnpm install`, then `check`, `build`, and `lint` for the selected lane.
@@ -49,7 +50,7 @@ dotnet run --file build/build.cs -- site [options]
 
 | Option            | Default | Notes                                         |
 |-------------------|---------|-----------------------------------------------|
-| `--lane`          | `v17`   | `v17` or `v18`.                               |
+| `--lane`          | `v17`   | `v17`, `v18` or `v19` (v19 needs the preview CMS feed in your NuGet sources). |
 | `--configuration` | `Debug` | Build configuration.                          |
 | `--reset`         | `false` | Delete the site's local `umbraco` data first. |
 
@@ -57,6 +58,6 @@ This command remains attached to the running site until stopped.
 
 ## Conventions
 
-- Both lanes share project `bin`/`obj` and static-web-asset paths; full-solution lane builds run sequentially with `-m:1`.
+- All lanes share project `bin`/`obj` and static-web-asset paths; full-solution lane builds run sequentially with `-m:1`.
 - `ARTICULATE_PACKAGE_VERSION` overrides calculated package versions.
 - `help` is the canonical build command and option reference.
