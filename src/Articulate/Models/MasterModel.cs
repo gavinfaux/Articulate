@@ -1,12 +1,13 @@
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Models.PublishedContent;
+using Articulate.Options;
 
 namespace Articulate.Models
 {
     /// <summary>
     /// The basic model for all articulate objects
     /// </summary>
-    public class MasterModel : PublishedContentWrapped, IMasterModel
+    public partial class MasterModel : PublishedContentWrapped, IMasterModel
     {
         private int? _pageSize;
 
@@ -14,9 +15,18 @@ namespace Articulate.Models
         /// The basic model for all articulate objects
         /// </summary>
         public MasterModel(IPublishedContent content, IPublishedValueFallback publishedValueFallback)
+            : this(content, publishedValueFallback, new ArticulateCommentsOptions())
+        {
+        }
+
+        /// <summary>
+        /// Creates a model with the configured comment-provider options.
+        /// </summary>
+        public MasterModel(IPublishedContent content, IPublishedValueFallback publishedValueFallback, ArticulateCommentsOptions commentsOptions)
             : base(content, publishedValueFallback)
         {
             PublishedValueFallback = publishedValueFallback;
+            CommentsOptions = commentsOptions ?? new ArticulateCommentsOptions();
         }
 
         /// <summary>
@@ -92,32 +102,6 @@ namespace Articulate.Models
                 return field;
             }
             protected set;
-        }
-
-        /// <inheritdoc/>
-        public string DisqusShortName
-        {
-            get => field ??= Unwrap().Value<string>("disqusShortname", fallback: Fallback.ToAncestors);
-            protected set;
-        }
-
-        /// <summary>
-        /// Gets whether Disqus comments are enabled and configured with a valid shortname.
-        /// Validates that the DisqusShortName is not empty and contains only valid characters (alphanumeric and hyphens).
-        /// </summary>
-        public bool IsDisqusEnabled => !string.IsNullOrWhiteSpace(DisqusShortName)
-                                       && IsValidDisqusShortName(DisqusShortName);
-
-        private static bool IsValidDisqusShortName(ReadOnlySpan<char> shortName)
-        {
-            foreach (var c in shortName)
-            {
-                if (!char.IsAsciiLetterOrDigit(c) && c != '-')
-                {
-                    return false;
-                }
-            }
-            return true;
         }
 
         /// <inheritdoc/>

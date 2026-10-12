@@ -29,6 +29,7 @@
 - When converting from TinyMCE, the upgrade applies Articulate's default TipTap settings.
   - Existing custom TipTap configuration is preserved.
 - Organizes the built-in post URL-alias and import-ID properties into SEO and System property groups during migration.
+- Adds Giscus as an alternative comment provider. Configure it in `Articulate:Comments:Giscus` or with the four Giscus properties on the blog root. Disqus keeps precedence when both providers are configured.
 
 ## Version 6.0.0
 
