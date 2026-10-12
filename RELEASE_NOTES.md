@@ -11,6 +11,7 @@
 
 - Adds the Articulate 8 package line for Umbraco 18.
 - Includes the functional changes listed under [Version 7.0.0](#version-700).
+- Adds Giscus as an alternative to Disqus comments. Configure it under `Articulate:Comments:Giscus` or set all four `giscus*` properties on a blog; existing Disqus comments remain the default when configured.
 
 ## Version 7.0.0
 

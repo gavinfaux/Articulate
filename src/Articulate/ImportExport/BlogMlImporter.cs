@@ -41,12 +41,13 @@ namespace Articulate.ImportExport
         ArticulateTempFileSystem articulateTempFileSystem,
         IArticulateImportMediaService service,
         IHtmlSanitizer htmlSanitizer,
-        IOptions<ArticulateOptions> articulateOptions
-        ,
+        IOptions<ArticulateOptions> articulateOptions,
+        IOptions<ArticulateCommentsOptions> commentsOptions,
         IIdKeyMap idKeyMap
     )
     {
         private readonly long _maxXmlCharacters = articulateOptions.Value.BlogMlImportMaxXmlCharacters;
+        private readonly ArticulateCommentsOptions _commentsOptions = commentsOptions.Value;
 
         internal int GetPostCount(string fileName) => GetDocument(fileName).Posts.Count();
 
@@ -140,6 +141,19 @@ namespace Articulate.ImportExport
                 importFirstImage);
             IContent[] enumerable = imported as IContent[] ?? [.. imported];
             returnModel.PostCount = enumerable.Length;
+
+            if (!exportDisqusXml && _commentsOptions.Giscus.IsFullyConfigured())
+            {
+                int postsWithComments = document.Posts.Count(post => post.Comments.Count > 0);
+                int totalComments = document.Posts.Sum(post => post.Comments.Count);
+                if (totalComments > 0)
+                {
+                    logger.LogWarning(
+                        "BlogML import contains {CommentCount} comment(s) across {PostCount} post(s), but Giscus is configured and no Disqus XML export was requested. Giscus has no import endpoint; these comments will not be migrated. See https://github.com/Shazwazza/Articulate/wiki/Comments#caveats for migration options.",
+                        totalComments,
+                        postsWithComments);
+                }
+            }
 
             if (exportDisqusXml)
             {
