@@ -5,20 +5,38 @@ on:
     branches: [develop, main, "release/**"]
     tags: ["v*"]
   pull_request:
+    types: [opened, synchronize, reopened, labeled]
   workflow_dispatch:
+    inputs:
+      e2e:
+        description: Run fresh packaged-site HTTP E2E
+        type: boolean
+        default: false
 
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: >-
+    ${{ !startsWith(github.ref, 'refs/heads/release/') &&
+        !startsWith(github.ref, 'refs/tags/v') }}
+
 jobs:
   build:
+    name: Build and test v17
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    outputs:
+      handoff: ${{ steps.handoff.outcome }}
+      publish: ${{ !env.ACT }}
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       RELEASE_FOLDER: build/Release
       VSTEST_CONNECTION_TIMEOUT: 60
       DOTNET_SYSTEM_NET_DISABLEIPV6: 1
+      MSBUILDDISABLENODEREUSE: 1
+      DOTNET_CLI_USE_MSBUILD_SERVER: 0
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -44,15 +62,126 @@ jobs:
           node-version-file: src/Articulate.Web/Client/.node-version
           cache: pnpm
           cache-dependency-path: src/Articulate.Web/Client/pnpm-lock.yaml
-      - name: Build
-        run: dotnet run --file build/build.cs -- build --client true --tests --sample --clean
+      - name: Build and test
+        run: >-
+          dotnet run --file build/build.cs -- build
+          --client true --tests --sample --clean
       - name: Smoke-test package contents
         run: node build/smoke-package.mjs build/Release
-      - name: Upload packages
+      - name: Hand off packages for optional E2E
+        id: handoff
         if: ${{ !env.ACT }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: Articulate-${{ env.NBGV_SemVer2 }}
+          name: lane-packages-v17
+          overwrite: true
           path: |
-            ${{ env.RELEASE_FOLDER }}/Articulate.[0-9]*.nupkg
-            ${{ env.RELEASE_FOLDER }}/Articulate.[0-9]*.snupkg
+            build/Release/Articulate.[0-9]*.nupkg
+            build/Release/Articulate.[0-9]*.snupkg
+            build/Release/Articulate.Theme.Sample.[0-9]*.nupkg
+          retention-days: 1
+          if-no-files-found: error
+
+  e2e:
+    name: Fresh native HTTP E2E v17
+    needs: build
+    if: >-
+      ${{ needs.build.outputs.handoff == 'success' &&
+          (inputs.e2e || vars.E2E == 'true' ||
+          contains(github.event.pull_request.labels.*.name, 'e2e') ||
+          startsWith(github.ref, 'refs/heads/release/') ||
+          startsWith(github.ref, 'refs/tags/v') ||
+          startsWith(github.base_ref, 'release/')) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      DOTNET_SYSTEM_NET_DISABLEIPV6: 1
+      MSBUILDDISABLENODEREUSE: 1
+      DOTNET_CLI_USE_MSBUILD_SERVER: 0
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68
+        with:
+          dotnet-version: 10.0.x
+          cache: true
+          cache-dependency-path: "**/packages.lock.json"
+      - name: Setup pnpm
+        uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86
+        with:
+          package_json_file: src/Articulate.Web/Client/package.json
+          run_install: false
+      - name: Setup NodeJS
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version-file: src/Articulate.Web/Client/.node-version
+          cache: pnpm
+          cache-dependency-path: src/Articulate.Web/Client/pnpm-lock.yaml
+      - name: Install Playwright runner
+        working-directory: src/Articulate.Web/Client
+        run: pnpm install --frozen-lockfile
+      - name: Download v17 packages
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: lane-packages-v17
+          path: build/Release
+      - name: Run fresh native HTTP E2E
+        id: native_e2e
+        timeout-minutes: 7
+        run: dotnet run --file build/test.cs -- fresh
+      - name: Retain native host logs and Playwright evidence
+        if: ${{ always() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: native-e2e-v17-${{ github.run_attempt }}
+          path: |
+            .temp/art_e2e_native_v17_*/native-host-*.log
+            .temp/art_e2e_native_v17_*/native-host-*.stderr.log
+            src/Articulate.Web/Client/e2e-report-art_e2e_native_v17_*/**
+            src/Articulate.Web/Client/e2e-results-art_e2e_native_v17_*/**
+          include-hidden-files: true
+          retention-days: 7
+          if-no-files-found: warn
+
+  publish:
+    name: Upload v17 packages
+    needs: [build, e2e]
+    if: >-
+      ${{ !cancelled() && needs.build.result == 'success' &&
+          needs.build.outputs.publish == 'true' &&
+          (needs.e2e.result == 'success' || needs.e2e.result == 'skipped') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Download v17 packages
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: lane-packages-v17
+          path: packages
+      - name: Resolve generated package version
+        shell: bash
+        run: |
+          set -euo pipefail
+          package="$(find packages -maxdepth 1 -type f \
+            -name 'Articulate.[0-9]*.nupkg' -print -quit)"
+          if [[ -z "$package" ]]; then
+            echo "No Articulate package found" >&2
+            exit 1
+          fi
+          PACKAGE_VERSION="${package#packages/Articulate.}"
+          PACKAGE_VERSION="${PACKAGE_VERSION%.nupkg}"
+          echo "PACKAGE_VERSION=$PACKAGE_VERSION" >> "$GITHUB_ENV"
+          echo "Generated v17 package: $PACKAGE_VERSION"
+      - name: Upload v17 packages
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: Articulate-${{ env.PACKAGE_VERSION }}
+          overwrite: true
+          path: |
+            packages/Articulate.[0-9]*.nupkg
+            packages/Articulate.[0-9]*.snupkg
+          if-no-files-found: error
