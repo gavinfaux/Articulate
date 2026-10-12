@@ -1,6 +1,7 @@
 #nullable enable
 using Articulate.Options;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Logging;
@@ -64,8 +65,8 @@ namespace Articulate.Controllers
         }
 
         // Reflect the request Origin against the configured allowlist (default
-        // ["https://giscus.app"]). Vary: Origin is set on reflection so shared
-        // caches don't poison Allow-Origin between different callers. Falls back
+        // ["https://giscus.app"]). Vary: Origin is always set so shared
+        // caches don't mix responses between different callers. Falls back
         // to "*" for same-origin / no-Origin callers.
         private void ApplyCorsHeaders()
         {
@@ -78,7 +79,7 @@ namespace Articulate.Controllers
             }
             if (cors.Vary)
             {
-                Response.Headers["Vary"] = "Origin";
+                Response.Headers.Append("Vary", "Origin");
             }
         }
 

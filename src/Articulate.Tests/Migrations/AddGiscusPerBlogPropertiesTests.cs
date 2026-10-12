@@ -6,6 +6,7 @@ using NUnit.Framework;
 using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Services;
+using Umbraco.Cms.Core.Services.OperationStatus;
 using Umbraco.Cms.Core.Strings;
 using Umbraco.Cms.Infrastructure.Migrations;
 
@@ -166,6 +167,17 @@ namespace Articulate.Tests.Migrations
             contentTypeService.Verify(x => x.UpdateAsync(It.IsAny<IContentType>(), It.IsAny<Guid>()), Times.Never);
         }
 
+        [Test]
+        public void RunAsync_Throws_WhenSavingContentTypeFails()
+        {
+            PropertyGroup blogGroup = CreateBlogGroup();
+            AddGiscusPerBlogProperties sut = CreateMigration(blogGroup, out Mock<IContentTypeService> contentTypeService, out _);
+            contentTypeService.Setup(x => x.UpdateAsync(It.IsAny<IContentType>(), It.IsAny<Guid>()))
+                .ReturnsAsync(Attempt.Fail(ContentTypeOperationStatus.Unknown));
+
+            Assert.ThrowsAsync<InvalidOperationException>(() => sut.RunAsync());
+        }
+
         // --- helpers ---
 
         private static IShortStringHelper ShortStringHelper =>
@@ -195,6 +207,7 @@ namespace Articulate.Tests.Migrations
 
             contentTypeService = new Mock<IContentTypeService>();
             contentTypeService.Setup(x => x.Get(ArticulateConstants.ContentType.Articulate)).Returns(contentType.Object);
+            contentTypeService.Setup(x => x.UpdateAsync(It.IsAny<IContentType>(), It.IsAny<Guid>())).ReturnsAsync(Attempt.Succeed(ContentTypeOperationStatus.Success));
 
             var dataType = new Mock<IDataType>();
             dataType.SetupGet(x => x.Id).Returns(42);
