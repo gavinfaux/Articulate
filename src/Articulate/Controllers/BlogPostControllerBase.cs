@@ -3,13 +3,11 @@ using Articulate.Options;
 using Articulate.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.Web;
 using Umbraco.Cms.Web.Common.Controllers;
-using Umbraco.Cms.Web.Common.DependencyInjection;
 
 namespace Articulate.Controllers
 {
@@ -20,7 +18,6 @@ namespace Articulate.Controllers
         private readonly IPublishedValueFallback _publishedValueFallback;
         private readonly IOptions<ArticulateCommentsOptions> _commentsOptions;
 
-        [Obsolete("Use the constructor that accepts IOptions<ArticulateCommentsOptions>. Scheduled for removal in a future release.")]
         protected BlogPostControllerBase(
             ILogger<BlogPostControllerBase> logger,
             ICompositeViewEngine compositeViewEngine,
@@ -31,7 +28,7 @@ namespace Articulate.Controllers
                 compositeViewEngine,
                 umbracoContextAccessor,
                 publishedValueFallback,
-                StaticServiceProvider.Instance.GetRequiredService<IOptions<ArticulateCommentsOptions>>())
+                Microsoft.Extensions.Options.Options.Create(new ArticulateCommentsOptions()))
         {
         }
 

@@ -14,7 +14,6 @@ namespace Articulate.Controllers
     /// </summary>
     public class ArticulateRichTextController : BlogPostControllerBase
     {
-        [Obsolete("Use the constructor that accepts IOptions<ArticulateCommentsOptions>. Scheduled for removal in a future release.")]
         public ArticulateRichTextController(
             ILogger<ArticulateRichTextController> logger,
             ICompositeViewEngine compositeViewEngine,
