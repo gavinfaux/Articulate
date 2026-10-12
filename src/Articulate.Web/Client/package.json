@@ -13,11 +13,14 @@
     "check": "pnpm --filter articulate-backoffice-v18 run check",
     "lint": "pnpm --filter articulate-backoffice-v18 run lint",
     "lint:fix": "pnpm --filter articulate-backoffice-v18 run lint:fix",
-    "generate:api:v18": "pnpm --filter articulate-backoffice-v18 run generate:api"
+    "generate:api:v18": "pnpm --filter articulate-backoffice-v18 run generate:api",
+    "test:e2e": "playwright test --config playwright.config.ts"
   },
   "devDependencies": {
     "@hey-api/openapi-ts": "^0.97.3",
+    "@playwright/test": "^1.63.0",
     "@types/node": "^24",
+    "fast-xml-parser": "^5.11.2",
     "@umbraco-cms/backoffice": "^18.2.1",
     "vite": "^8.3.1"
   }
