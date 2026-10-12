@@ -83,6 +83,19 @@ namespace Articulate.Tests.Routing
         }
 
         [Test]
+        public void PostModel_UsesConfiguredCommentOptions()
+        {
+            // CMS 17 caches friendly-extension services on first use; share this fixture's provider.
+            var options = new Articulate.Options.ArticulateCommentsOptions
+            {
+                Giscus = new Articulate.Options.GiscusCommentsOptions { ScriptSrc = "https://comments.example.com/client.js" },
+            };
+            var model = new Articulate.Models.PostModel(CreateRoot(100), Mock.Of<IPublishedValueFallback>(), options);
+
+            Assert.That(model.GiscusScriptSrc, Is.EqualTo("https://comments.example.com/client.js"));
+        }
+
+        [Test]
         public async Task TransformAsync_routes_seeded_articulate_path_to_controller_and_content()
         {
             IPublishedContent root = CreateRoot(100);

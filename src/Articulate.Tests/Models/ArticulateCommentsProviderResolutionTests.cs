@@ -1,17 +1,6 @@
 #nullable enable
 using Articulate.Options;
-using Examine;
-using Microsoft.Extensions.DependencyInjection;
-using Moq;
 using NUnit.Framework;
-using Umbraco.Cms.Core;
-using Umbraco.Cms.Core.Configuration.Models;
-using Umbraco.Cms.Core.Models.PublishedContent;
-using Umbraco.Cms.Core.PublishedCache;
-using Umbraco.Cms.Core.Routing;
-using Umbraco.Cms.Core.Services;
-using Umbraco.Cms.Core.Services.Navigation;
-using Umbraco.Cms.Core.Web;
 
 namespace Articulate.Tests.Models
 {
@@ -32,49 +21,6 @@ namespace Articulate.Tests.Models
             DataCategory = "app/cat",
             DataCategoryId = "DIC_app",
         };
-
-        [Test]
-        public void PostModel_UsesConfiguredCommentOptions()
-        {
-            var options = new ArticulateCommentsOptions
-            {
-                Giscus = new GiscusCommentsOptions { ScriptSrc = "https://comments.example.com/client.js" },
-            };
-
-            IServiceProvider original = StaticServiceProvider.Instance;
-            using ServiceProvider services = new ServiceCollection()
-                .AddSingleton(Mock.Of<IPublishedValueFallback>())
-                .AddSingleton(Mock.Of<IVariationContextAccessor>())
-                .AddSingleton(Mock.Of<IPublishedUrlProvider>())
-                .AddSingleton(Mock.Of<IDomainCache>())
-                .AddSingleton(Mock.Of<IPublishedContentCache>())
-                .AddSingleton(Mock.Of<IMediaNavigationQueryService>())
-                .AddSingleton(Mock.Of<IPublishedModelFactory>())
-                .AddSingleton(Mock.Of<IDocumentNavigationQueryService>())
-                .AddSingleton(Mock.Of<IPublishedContentStatusFilteringService>())
-                .AddSingleton(Mock.Of<IUserService>())
-                .AddSingleton(Mock.Of<IUmbracoContextAccessor>())
-                .AddSingleton(Mock.Of<ISiteDomainMapper>())
-                .AddSingleton(Mock.Of<ITemplateService>())
-                .AddSingleton(Mock.Of<IContentTypeService>())
-                .AddSingleton(Mock.Of<IMediaTypeService>())
-                .AddSingleton(Mock.Of<IMemberTypeService>())
-                .AddSingleton(Mock.Of<IFileService>())
-                .AddSingleton(Microsoft.Extensions.Options.Options.Create(new WebRoutingSettings()))
-                .AddSingleton(Mock.Of<IExamineManager>())
-                .AddSingleton(Mock.Of<IDocumentUrlService>())
-                .BuildServiceProvider();
-            StaticServiceProvider.Instance = services;
-            try
-            {
-                var model = new Articulate.Models.PostModel(Mock.Of<IPublishedContent>(), Mock.Of<IPublishedValueFallback>(), options);
-                Assert.That(model.GiscusScriptSrc, Is.EqualTo("https://comments.example.com/client.js"));
-            }
-            finally
-            {
-                StaticServiceProvider.Instance = original;
-            }
-        }
 
         [Test]
         public void ResolveGiscusRequired_UsesAppsettings_WhenAllDocValuesAreEmpty()
