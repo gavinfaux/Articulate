@@ -16,7 +16,6 @@ namespace Articulate.Tests.Routing
         }
 
         [Test]
-        [Test]
         public void MarkDirty_increments_and_returns_current_version()
         {
             ArticulateRouteRefreshState sut = new();
