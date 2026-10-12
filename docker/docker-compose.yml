@@ -9,10 +9,12 @@ services:
         TARGET_FRAMEWORK: ${TARGET_FRAMEWORK:-net10.0}
         DOTNET_SDK_IMAGE: ${DOTNET_SDK_IMAGE:-mcr.microsoft.com/dotnet/sdk:10.0}
         DOTNET_ASPNET_IMAGE: ${DOTNET_ASPNET_IMAGE:-mcr.microsoft.com/dotnet/aspnet:10.0}
-        # UMBRACO_CMS_VERSION and TinyMCE versions come from Directory.Packages.props
-        # via run.cs ConfigureLane. Set them in the shell for direct `docker compose` use.
+        # Umbraco, ImageSharp, and TinyMCE versions come from Directory.Packages.props
+        # via run.cs ConfigureLane. Set them for direct `docker compose` use.
         UMBRACO_CMS_VERSION: ${UMBRACO_CMS_VERSION:?UMBRACO_CMS_VERSION is required (see run.cs ConfigureLane)}
-        PACKAGE_SOURCE: ${PACKAGE_SOURCE:-build/Release/v17}
+        SIXLABORS_IMAGESHARP_VERSION: ${SIXLABORS_IMAGESHARP_VERSION:?SIXLABORS_IMAGESHARP_VERSION is required (see run.cs ConfigureLane)}
+        SIXLABORS_IMAGESHARP_WEB_VERSION: ${SIXLABORS_IMAGESHARP_WEB_VERSION:?SIXLABORS_IMAGESHARP_WEB_VERSION is required (see run.cs ConfigureLane)}
+        PACKAGE_SOURCE: ${PACKAGE_SOURCE:-build/Release}
         USE_TINYMCE_UMBRACO: ${USE_TINYMCE_UMBRACO:-false}
         # Dockerfile validates this when USE_TINYMCE_UMBRACO=true; empty is valid when it is off.
         TINYMCE_UMBRACO_PACKAGE_VERSION: ${TINYMCE_UMBRACO_PACKAGE_VERSION:-}

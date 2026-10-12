@@ -8,6 +8,8 @@
 		<UmbracoCmsPackageVersion>[17.7.1,18.0.0)</UmbracoCmsPackageVersion>
 		<UmbracoCodePackageVersion>2.4.0</UmbracoCodePackageVersion>
 		<SystemServiceModelSyndicationPackageVersion>[10.0.10,11.0.0)</SystemServiceModelSyndicationPackageVersion>
+		<SixLaborsImageSharpPackageVersion>3.2.0</SixLaborsImageSharpPackageVersion>
+		<SixLaborsImageSharpWebPackageVersion>3.3.0</SixLaborsImageSharpWebPackageVersion>
 		<MarkdigPackageVersion>[1.1.3,2.0.0)</MarkdigPackageVersion>
   		<MicrosoftNetTestSdkPackageVersion>[18.8.1,19.0.0)</MicrosoftNetTestSdkPackageVersion>
 		<TinyMceUmbracoPackageVersion>[17.5.0,18.0.0)</TinyMceUmbracoPackageVersion>
@@ -25,6 +27,8 @@
 		<PackageVersion Include="NUnit" Version="3.14.0" />
 		<PackageVersion Include="NUnit3TestAdapter" Version="4.6.0" />
 		<PackageVersion Include="System.ServiceModel.Syndication" Version="$(SystemServiceModelSyndicationPackageVersion)" />
+		<PackageVersion Include="SixLabors.ImageSharp" Version="$(SixLaborsImageSharpPackageVersion)" />
+		<PackageVersion Include="SixLabors.ImageSharp.Web" Version="$(SixLaborsImageSharpWebPackageVersion)" />
 		<PackageVersion Include="TinyMCE.Umbraco" Version="$(TinyMceUmbracoPackageVersion)" />
 		<PackageVersion Include="Umbraco.Cms" Version="$(UmbracoCmsPackageVersion)" />
 		<PackageVersion Include="Umbraco.Cms.Api.Management" Version="$(UmbracoCmsPackageVersion)" />

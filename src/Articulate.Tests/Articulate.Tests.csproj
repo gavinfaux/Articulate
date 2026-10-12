@@ -1,7 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
     <IsPackable>false</IsPackable>
     <UseArticulateUsings>true</UseArticulateUsings>
     <TestTfmsInParallel>false</TestTfmsInParallel>
@@ -19,9 +18,11 @@
     <PackageReference Include="NUnit" />
     <PackageReference Include="NUnit3TestAdapter" />
     <PackageReference Include="Umbraco.Cms" />
+    <PackageReference Include="SixLabors.ImageSharp" ExcludeAssets="build" />
+    <PackageReference Include="SixLabors.ImageSharp.Web" ExcludeAssets="build" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
+  <ItemGroup>
     <PackageReference Include="Umbraco.Cms.DevelopmentMode.Backoffice" />
   </ItemGroup>
 

@@ -18,8 +18,10 @@ ARG TARGET_FRAMEWORK=net10.0
 # UMBRACO_CMS_VERSION is required; run.cs reads the floor from Directory.Packages.props
 # and passes it as --build-arg. No default — explicit fail beats silent version drift.
 ARG UMBRACO_CMS_VERSION
+ARG SIXLABORS_IMAGESHARP_VERSION
+ARG SIXLABORS_IMAGESHARP_WEB_VERSION
 ARG BUILD_CONFIGURATION=Release
-ARG PACKAGE_SOURCE=build/Release/v17
+ARG PACKAGE_SOURCE=build/Release
 ARG USE_TINYMCE_UMBRACO=false
 # TINYMCE_UMBRACO_PACKAGE_VERSION is required when USE_TINYMCE_UMBRACO=true;
 # run.cs reads it from Directory.Packages.props and passes as --build-arg.
@@ -48,12 +50,12 @@ RUN set -eux; \
       ARTICULATE_PKG_VERSION=0.0.0; \
     fi; \
     if [ -z "${UMBRACO_CMS_VERSION}" ]; then \
-      echo 'ERROR: UMBRACO_CMS_VERSION build-arg is required. Pass --build-arg UMBRACO_CMS_VERSION=<range>, e.g. [17.7.1,18.0.0) for v17 or [18.2.1,19.0.0) for v18. build.cs reads the floor from Directory.Packages.props.'; \
+      echo 'ERROR: UMBRACO_CMS_VERSION build-arg is required. Pass --build-arg UMBRACO_CMS_VERSION="[17.7.1,18.0.0)". build.cs reads the floor from Directory.Packages.props.'; \
       exit 1; \
     fi; \
     if [ "${USE_TINYMCE_UMBRACO}" = "true" ]; then \
       if [ -z "${TINYMCE_UMBRACO_PACKAGE_VERSION}" ]; then \
-        echo 'ERROR: TINYMCE_UMBRACO_PACKAGE_VERSION build-arg is required when USE_TINYMCE_UMBRACO=true. build.cs reads the floor from Directory.Packages.props (per lane: [17.5.0,18.0.0) for v17, [18.0.0,19.0.0) for v18).'; \
+        echo 'ERROR: TINYMCE_UMBRACO_PACKAGE_VERSION build-arg is required when USE_TINYMCE_UMBRACO=true. build.cs reads the v17 floor from Directory.Packages.props.'; \
         exit 1; \
       fi; \
     fi; \
@@ -64,6 +66,8 @@ RUN set -eux; \
     # exactly (case-sensitive on Linux). UseTinyMceUmbraco stays as /p: — it's a
     # plain bool flag with no `)` in any value.
     export UmbracoCmsPackageVersion="${UMBRACO_CMS_VERSION}"; \
+    export SixLaborsImageSharpPackageVersion="${SIXLABORS_IMAGESHARP_VERSION}"; \
+    export SixLaborsImageSharpWebPackageVersion="${SIXLABORS_IMAGESHARP_WEB_VERSION}"; \
     if [ "${USE_TINYMCE_UMBRACO}" = "true" ]; then \
       export TinyMceUmbracoPackageVersion="${TINYMCE_UMBRACO_PACKAGE_VERSION}"; \
     fi; \
