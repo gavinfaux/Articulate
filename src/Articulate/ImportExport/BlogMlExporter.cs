@@ -74,7 +74,7 @@ namespace Articulate.ImportExport
                 var blogMlDoc = new BlogMLDocument
                 {
                     RootUrl = new Uri(urlProvider.GetUrl(root.Id), UriKind.RelativeOrAbsolute),
-                    GeneratedOn = DateTime.Now,
+                    GeneratedOn = DateTime.UtcNow,
                     Title = new BlogMLTextConstruct(root.GetValue<string>("blogTitle")),
                     Subtitle = new BlogMLTextConstruct(root.GetValue<string>("blogDescription"))
                 };
