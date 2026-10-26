@@ -15,6 +15,7 @@ using Umbraco.Cms.Core.Persistence.Querying;
 using Umbraco.Cms.Core.PropertyEditors;
 using Umbraco.Cms.Core.Routing;
 using Umbraco.Cms.Core.Services;
+using Umbraco.Cms.Core.Serialization;
 using Umbraco.Cms.Infrastructure.Persistence;
 
 namespace Articulate.ImportExport
@@ -33,7 +34,8 @@ namespace Articulate.ImportExport
         IPublishedUrlProvider urlProvider,
         ISqlContext sqlContext,
         ILogger<BlogMlExporter> logger,
-        IArticulateMarkdownConverter articulateMarkdownConverter)
+        IArticulateMarkdownConverter articulateMarkdownConverter,
+        IJsonSerializer jsonSerializer)
     {
         /// <summary>
         /// Exports the blog content from a root node to a BlogML file.
@@ -249,7 +251,10 @@ namespace Articulate.ImportExport
         {
             if (child.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateRichText))
             {
-                return child.GetValue<string>("richText") ?? string.Empty;
+                var value = child.GetValue<string>("richText");
+                return RichTextPropertyEditorHelper.TryParseRichTextEditorValue(value, jsonSerializer, logger, out RichTextEditorValue? richText)
+                    ? richText.Markup
+                    : value ?? string.Empty;
             }
 
             if (child.ContentType.Alias.InvariantEquals(ArticulateConstants.ContentType.ArticulateMarkdown))

@@ -101,13 +101,15 @@ namespace Articulate.Controllers.Api
                     !isProductionMode &&
                     options.AllowUnsafeLocalExternalImageHostsInDevelopment;
                 ISet<string> allowedHosts = options.AllowedMediaHosts.ToHashSet(StringComparer.OrdinalIgnoreCase);
-                string[] blockedExternalHosts = summary.ExternalHosts
-                    .Where(host => ExternalImageHostPolicy.ValidateHost(
-                        host,
-                        allowedHosts,
-                        allowUnsafeLocalExternalImageHosts,
-                        isProductionMode) is not null)
-                    .ToArray();
+                string[] blockedExternalHosts =
+                [
+                    .. summary.ExternalHosts
+                        .Where(host => ExternalImageHostPolicy.ValidateHost(
+                            host,
+                            allowedHosts,
+                            allowUnsafeLocalExternalImageHosts,
+                            isProductionMode) is not null)
+                ];
 
                 keepFile = true;
                 return Ok(new ImportFileResponse
@@ -306,6 +308,14 @@ namespace Articulate.Controllers.Api
                     title: "File Not Found",
                     detail: "The requested import file could not be found.",
                     statusCode: StatusCodes.Status404NotFound);
+            }
+            catch (BlogMlImportException ex)
+            {
+                logger.LogWarning(ex, "BlogML import rejected because archive placement was unsafe.");
+                return Problem(
+                    title: "Ambiguous BlogML Archive",
+                    detail: ex.Message,
+                    statusCode: StatusCodes.Status400BadRequest);
             }
             catch (InvalidOperationException ex)
             {

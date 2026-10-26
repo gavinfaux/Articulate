@@ -33,8 +33,15 @@
   appsettings.json under Articulate:Comments:Giscus, or per blog with four
   giscus* properties. Themes can ship a giscus.css stylesheet that Articulate
   serves to the giscus iframe.
-- BlogML export records each post's archive, and import restores posts to the matching archive under the chosen blog root, creating it if needed. Files without the marker import as before.
-- BlogML re-import matches posts by import ID across all archives under the blog root, so existing posts are updated in place instead of duplicated.
+- BlogML export records each post's archive. Import restores posts to the matching archive under the chosen blog root, creating it if needed. Posts without archive markers use the blog's first archive, or a new default archive if none exists.
+- For posts carrying the Articulate archive marker, BlogML re-import matches import IDs across all archives under the selected blog root. Matching posts stay in their current archive and are updated when overwrite is enabled.
+- If no import ID matches, BlogML import can match an exact slug in the target archive only when the existing post has no stored import ID. With overwrite disabled, that post is left untouched and no copy is created. With overwrite enabled, that post is updated and receives the incoming import ID. This can replace manually created content.
+- New BlogML archives retain available source archive keys. If a new post's archive cannot be identified safely, import reports a clear error instead of silently merging distinct source archives. Name-only markers cannot distinguish same-named source archives.
+- BlogML import preserves existing post URLs, handles duplicate IDs within one file and accepts root-only URLs without aborting later posts.
+- Newly created BlogML archives are published when "publish all" is enabled.
+- BlogML export includes only categories referenced by exported posts and writes its generation time in UTC.
+- BlogML rich-text export writes HTML markup instead of stored editor JSON. Embedded blocks are not rendered.
+- BlogML import and export show an error when the blog picker context is unavailable.
 - BlogML import temp files are stored under the host's local temp path instead of the site folder.
 
 ## Version 6.0.0

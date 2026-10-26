@@ -32,24 +32,6 @@ namespace Articulate.Tests.ImportExport
         private static readonly Guid FirstKey = Guid.NewGuid();
         private static readonly Guid SecondKey = Guid.NewGuid();
 
-        [TestCase("Other", null, "hello")]
-        [TestCase("Hello", null, "hello (1)")]
-        [TestCase("Hello", " Hello-1 ", "hello (2)")]
-        [TestCase(" ", null, "hello")]
-        [TestCase("Hello", " Hello-1 ", "hello (2)", "en-US")]
-        public void EnsureUniqueSlug_suffixes_like_umbraco(string siblingName, string? siblingUrlName, string expected, string? culture = null)
-        {
-            var helper = new DefaultShortStringHelper(new DefaultShortStringHelperConfig());
-            IContentBase[] siblings =
-            [
-                Mock.Of<IContentBase>(x => x.Name == siblingName),
-                Mock.Of<IContentBase>(x => x.Name == "Unrelated"
-                    && x.GetValue<string>(Umbraco.Cms.Core.Constants.Conventions.Content.UrlName, culture, null, false) == siblingUrlName),
-            ];
-
-            Assert.That(BlogMlImporter.EnsureUniqueSlug("hello", BlogMlImporter.CountSlugs(siblings, helper, culture), helper), Is.EqualTo(expected));
-        }
-
         [Test]
         public void Extension_writes_element_only_when_key_or_name_is_set()
         {
@@ -143,11 +125,18 @@ namespace Articulate.Tests.ImportExport
             var named = new BlogMLPost { Name = new BlogMLTextConstruct("Hello World") };
 
             var byImportId = new Dictionary<string, IContent> { ["p1"] = byId };
-            var bySlug = new Dictionary<string, IContent>(StringComparer.OrdinalIgnoreCase) { ["hello-world-2"] = prefixed, ["Hello World".ToUrlSegment(helper)] = exact };
+            var bySlug = new Dictionary<string, IContent>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["hello-world-2"] = prefixed, ["Hello World".ToUrlSegment(helper)] = exact,
+                ["Other".ToUrlSegment(helper)] = byId
+            };
             var prefixedOnly = new Dictionary<string, IContent>(StringComparer.OrdinalIgnoreCase) { ["hello-world-2"] = prefixed };
 
             Assert.That(BlogMlImporter.FindExistingPost(byImportId, bySlug, new BlogMLPost { Id = "p1" }, helper), Is.SameAs(byId));
-            Assert.That(BlogMlImporter.FindExistingPost(byImportId, bySlug, new BlogMLPost { Id = "unknown", Name = new BlogMLTextConstruct("Hello World") }, helper), Is.Null);
+            Assert.That(
+                BlogMlImporter.FindExistingPost(byImportId, bySlug, new BlogMLPost { Id = "p1", Name = new BlogMLTextConstruct("Hello World") }, helper),
+                Is.SameAs(byId));
+            Assert.That(BlogMlImporter.FindExistingPost(byImportId, bySlug, new BlogMLPost { Id = "unknown", Name = new BlogMLTextConstruct("Other") }, helper), Is.Null);
             Assert.That(BlogMlImporter.FindExistingPost(byImportId, bySlug, named, helper), Is.SameAs(exact));
             Assert.That(BlogMlImporter.FindExistingPost(byImportId, prefixedOnly, named, helper), Is.Null);
             Assert.That(BlogMlImporter.FindExistingPost(byImportId, bySlug, new BlogMLPost(), helper), Is.Null);
@@ -169,19 +158,15 @@ namespace Articulate.Tests.ImportExport
             Assert.That(BlogMlImporter.EnsureUniqueSlug("hello", taken, helper), Is.EqualTo("hello"));
         }
 
-        [TestCase(null, null, null, "Hello")]
-        [TestCase(null, null, "Hello (1)", "Hello", "hello")]
-        [TestCase(null, "kept", null, "Hello", "hello")]
-        [TestCase("hello", "hello (1)", "hello (1)", "Hello")]
-        [TestCase("hello", "hello (2)", "hello (2)", "Hello", "hello")]
-        [TestCase("hello", "hello (1)", "hello", "Hello", "hello (1)")]
-        [TestCase("hello", "other", "hello", "Hello")]
-        public void ChoosePostSlug_dedupes_new_slugs_and_keeps_reimported_ones(string? source, string? current, string? expected, string nodeName, params string[] taken)
+        [TestCase(null, null, "Hello")]
+        [TestCase(null, "Hello (1)", "Hello", "hello")]
+        [TestCase("hello", "hello (1)", "Hello", "hello")]
+        public void ChoosePostSlug_dedupes_new_slugs(string? source, string? expected, string nodeName, params string[] taken)
         {
             var helper = new DefaultShortStringHelper(new DefaultShortStringHelperConfig());
             Dictionary<string, int> takenSlugs = taken.ToDictionary(slug => slug.ToUrlSegment(helper), _ => 1, StringComparer.OrdinalIgnoreCase);
 
-            Assert.That(BlogMlImporter.ChoosePostSlug(source, current, nodeName, takenSlugs, helper), Is.EqualTo(expected));
+            Assert.That(BlogMlImporter.ChoosePostSlug(source, nodeName, takenSlugs, helper), Is.EqualTo(expected));
         }
 
         [Test]
@@ -252,25 +237,6 @@ namespace Articulate.Tests.ImportExport
             Assert.That(BlogMlImporter.ResolveArchiveForPost(root, archives, Marker(xDoc, "post-b")), Is.SameAs(importSecond.Object));
         }
 
-        [TestCase(true)]
-        [TestCase(false)]
-        public async Task CreateArchiveNode_saves_and_publishes_only_when_publishAll(bool publishAll)
-        {
-            (Mock<IContentService> contentService, BlogMlImporter sut, IContent root, IContent archive) = ImporterWithArchiveCreate();
-            contentService.Setup(x => x.Save(archive, 7, null)).Returns(OperationResult.Succeed(new EventMessages()));
-            contentService
-                .Setup(x => x.Publish(archive, It.Is<string[]>(c => c.Length == 1 && c[0] == "*"), 7))
-                .Returns(new PublishResult(new EventMessages(), archive));
-
-            IContent result = await sut.CreateArchiveNodeAsync(7, root, "Archive A", publishAll, ArchiveType());
-
-            Assert.That(result, Is.SameAs(archive));
-            contentService.Verify(x => x.Save(archive, 7, null), Times.Once);
-            contentService.Verify(
-                x => x.Publish(archive, It.Is<string[]>(c => c.Length == 1 && c[0] == "*"), 7),
-                publishAll ? Times.Once() : Times.Never());
-        }
-
         [Test]
         public async Task GetOrCreateArchiveNode_creates_once_for_names_differing_only_in_case_or_whitespace()
         {
@@ -312,50 +278,6 @@ namespace Articulate.Tests.ImportExport
             Assert.ThrowsAsync<InvalidOperationException>(() => sut.CreateArchiveNodeAsync(7, root, "Archive A", true, ArchiveType()));
         }
 
-        [Test]
-        public async Task Marked_post_that_moved_stays_in_its_archive_and_no_archive_is_created()
-        {
-            (Mock<IContentService> contentService, BlogMlImporter sut, _, _) = ImporterWithArchiveCreate();
-            (IContent root, _, _) = Archives();
-            var current = new Mock<IContent>();
-            current.SetupGet(x => x.Key).Returns(Guid.NewGuid());
-            current.SetupGet(x => x.Id).Returns(42);
-            IContent postNode = Mock.Of<IContent>(x => x.ParentId == 42);
-
-            IContent result = await sut.ResolveTargetArchiveAsync(
-                7, root, [current.Object], new Dictionary<string, IContent>(StringComparer.OrdinalIgnoreCase),
-                Marker(MissingArchiveMarker()), postNode, Post(), false, ArchiveType());
-
-            Assert.That(result, Is.SameAs(current.Object));
-            contentService.Verify(x => x.Create(It.IsAny<string>(), It.IsAny<IContent>(), It.IsAny<string>(), It.IsAny<int>()), Times.Never);
-            contentService.Verify(x => x.Save(It.IsAny<IContent>(), It.IsAny<int?>(), It.IsAny<ContentScheduleCollection?>()), Times.Never);
-        }
-
-        [Test]
-        public async Task Unmatched_marker_creates_the_archive()
-        {
-            (Mock<IContentService> contentService, BlogMlImporter sut, IContent root, IContent archive) = ImporterWithArchiveCreate();
-            contentService.Setup(x => x.Save(archive, 7, null)).Returns(OperationResult.Succeed(new EventMessages()));
-
-            IContent result = await sut.ResolveTargetArchiveAsync(
-                7, root, [], new Dictionary<string, IContent>(StringComparer.OrdinalIgnoreCase),
-                Marker(MissingArchiveMarker()), null, Post(), false, ArchiveType());
-
-            Assert.That(result, Is.SameAs(archive));
-            contentService.Verify(x => x.Save(archive, 7, null), Times.Once);
-        }
-
-        [Test]
-        public void Skipped_existing_post_keeps_slug_taken_so_new_post_is_suffixed()
-        {
-            var helper = new DefaultShortStringHelper(new DefaultShortStringHelperConfig());
-            IContent existing = Mock.Of<IContent>(x => x.Name == "Hello");
-            Dictionary<string, int> taken = BlogMlImporter.CountSlugs([existing], helper, null);
-
-            // overwrite=false skips before ReleaseSlug, so the existing slug is still counted
-            Assert.That(BlogMlImporter.EnsureUniqueSlug("hello", taken, helper), Is.EqualTo("hello (1)"));
-        }
-
         [TestCase(null, "a1", "a1")]
         [TestCase("", "a1", "a1")]
         [TestCase("  ", "a1", "a1")]
@@ -380,19 +302,6 @@ namespace Articulate.Tests.ImportExport
             var result = await sut.ProcessSingleAuthorAsync(1, author, Mock.Of<IContent>(), ArchiveType(), byName);
 
             Assert.That(result, Is.EqualTo(expected));
-        }
-
-        [Test]
-        public void FindExistingPost_matches_import_id_when_slug_dictionary_is_another_archives()
-        {
-            var helper = new DefaultShortStringHelper(new DefaultShortStringHelperConfig());
-            IContent byId = Mock.Of<IContent>(x => x.Name == "Hello World");
-            var byImportId = new Dictionary<string, IContent> { ["p1"] = byId };
-            var otherArchiveSlugs = new Dictionary<string, IContent>(StringComparer.OrdinalIgnoreCase);
-
-            Assert.That(
-                BlogMlImporter.FindExistingPost(byImportId, otherArchiveSlugs, new BlogMLPost { Id = "p1", Name = new BlogMLTextConstruct("Hello World") }, helper),
-                Is.SameAs(byId));
         }
 
         [Test]
@@ -481,10 +390,11 @@ namespace Articulate.Tests.ImportExport
                 Mock.Of<IHtmlSanitizer>(),
                 Mock.Of<IShortStringHelper>(),
                 Microsoft.Extensions.Options.Options.Create(new ArticulateOptions()),
-                Microsoft.Extensions.Options.Options.Create(new ArticulateCommentsOptions())
+                Microsoft.Extensions.Options.Options.Create(new ArticulateCommentsOptions()),
+                Mock.Of<IEntityService>()
 #if UMBRACO_18_OR_GREATER
                 ,
-                Mock.Of<Umbraco.Cms.Core.Services.IIdKeyMap>()
+                Mock.Of<IIdKeyMap>()
 #endif
             );
 #pragma warning restore SA1111

@@ -202,7 +202,13 @@ export default class BlogMlImporterElement extends UmbLitElement {
     if (!this._articulateDoctypeKey) return;
 
     this._formError = null;
-    if (!this._modalManagerContext) return;
+    if (!this._modalManagerContext) {
+      this.#setError(
+        new Error('The node picker is unavailable. Please reload the page and try again.'),
+        'Node Picker Failed',
+      );
+      return;
+    }
     const udi = await openNodePicker(this._modalManagerContext, this._articulateDoctypeKey, this);
     if (udi) {
       const variant = await documentById(this, udi);

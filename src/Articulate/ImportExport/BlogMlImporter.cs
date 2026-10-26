@@ -29,7 +29,7 @@ namespace Articulate.ImportExport
     /// <summary>
     /// Importer for blog content from BlogML format.
     /// </summary>
-    public partial class BlogMlImporter(
+    public class BlogMlImporter(
         DisqusXmlExporter disqusXmlExporter,
         IContentService contentService,
         IContentTypeService contentTypeService,
@@ -46,7 +46,8 @@ namespace Articulate.ImportExport
         IHtmlSanitizer htmlSanitizer,
         IShortStringHelper shortStringHelper,
         IOptions<ArticulateOptions> articulateOptions,
-        IOptions<ArticulateCommentsOptions> commentsOptions
+        IOptions<ArticulateCommentsOptions> commentsOptions,
+        IEntityService entityService
 #if UMBRACO_18_OR_GREATER
         ,
         IIdKeyMap idKeyMap
@@ -407,18 +408,37 @@ namespace Articulate.ImportExport
                 languageService,
                 logger);
 
+            string? importIdCulture = await ContentExtensions.GetInvariantOrDefaultCultureAsync(
+                "importId",
+                postType,
+                languageService,
+                logger);
             (Dictionary<string, XElement> ById, Dictionary<string, XElement> ByName) postElements = BuildPostElementLookup(xDoc);
+            XElement[] rawPostElements = [.. xDoc.Descendants(xDoc.Root!.Name.Namespace + "post")];
+            var archiveMarkers = new Dictionary<XElement, ArchiveSyndicationExtension>();
+            foreach (XElement xmlPost in rawPostElements)
+            {
+                if (LoadArchiveMarker(xmlPost) is { } marker)
+                {
+                    archiveMarkers[xmlPost] = marker;
+                }
+            }
+
+            // One entry per distinct source archive, not per post, so archive resolution stays linear.
+            ArchiveSyndicationExtension[] sourceArchives = [.. archiveMarkers.Values
+                .DistinctBy(marker => (marker.ArchiveKey, ArchiveName(marker)))];
 
             (Dictionary<string, IContent> BySlug, Dictionary<string, IContent> ByImportId, Dictionary<string, int> TakenSlugs) GetArchivePosts(IContent archive)
             {
-                if (existingPostsByArchive.TryGetValue(archive.Key,
+                if (existingPostsByArchive.TryGetValue(
+                        archive.Key,
                         out (Dictionary<string, IContent> BySlug, Dictionary<string, IContent> ByImportId,
                         Dictionary<string, int> TakenSlugs) cached))
                 {
                     return cached;
                 }
 
-                cached = IndexArchivePosts(archive, urlNameCulture, postsByImportId);
+                cached = IndexArchivePosts(archive, urlNameCulture, importIdCulture, postsByImportId);
                 existingPostsByArchive[archive.Key] = cached;
 
                 return cached;
@@ -429,26 +449,41 @@ namespace Articulate.ImportExport
                 _ = GetArchivePosts(archive);
             }
 
+            var archiveOwnershipClaims = new HashSet<(Guid SourceKey, int DestinationId)>();
+            foreach (XElement xmlPost in rawPostElements)
+            {
+                ArchiveSyndicationExtension? marker = archiveMarkers.GetValueOrDefault(xmlPost);
+                if (marker is not null && marker.ArchiveKey != Guid.Empty &&
+                    xmlPost.Attribute("id")?.Value is { } id && !string.IsNullOrWhiteSpace(id) &&
+                    postsByImportId.TryGetValue(id, out IContent? existing) &&
+                    archives.Any(archive => archive.Id == existing.ParentId))
+                {
+                    archiveOwnershipClaims.Add((marker.ArchiveKey, existing.ParentId));
+                }
+            }
+
             foreach (BlogMLPost post in posts)
             {
                 XElement? postElement = FindPostElement(postElements, post);
-                ArchiveSyndicationExtension? archiveMarker = LoadArchiveMarker(postElement);
+                ArchiveSyndicationExtension? archiveMarker = postElement is null ? null : archiveMarkers.GetValueOrDefault(postElement);
 
                 IContent? postNode = FindMarkedPost(archiveMarker, post, postsByImportId);
 
-                IContent archiveNode = await ResolveTargetArchiveAsync(userId, rootNode, archives, createdArchives, archiveMarker, postNode, post, publishAll, archiveType);
+                IContent archiveNode = await ResolveTargetArchiveAsync(userId, rootNode, archives, createdArchives, archiveMarker, postNode, post, publishAll, archiveType, sourceArchives, archiveOwnershipClaims);
 
                 (Dictionary<string, IContent>? bySlug, Dictionary<string, IContent>? byImportId, Dictionary<string, int>? takenSlugs) = GetArchivePosts(archiveNode);
-                postNode ??= FindExistingPost(byImportId, bySlug, post, shortStringHelper);
+                postNode ??= FindExistingPost(byImportId, bySlug, post, shortStringHelper, importIdCulture);
                 if (!overwrite && postNode is not null)
                 {
                     continue;
                 }
 
+                bool preserveUrl = postNode is not null;
+                string? oldSlug = postNode is null ? null : SlugSegment(postNode, shortStringHelper, urlNameCulture);
+                string? oldImportId = postNode?.GetValue<string>("importId", importIdCulture);
                 postNode = await ReuseOrCreatePostAsync(postNode, post, archiveNode, postType, takenSlugs, urlNameCulture);
 
-                await PopulatePostContentAsync(postNode, postType, post, takenSlugs, urlNameCulture, regexMatch, regexReplace);
-                TakeSlug(takenSlugs, SlugSegment(postNode, shortStringHelper, urlNameCulture));
+                await PopulatePostContentAsync(postNode, postType, post, takenSlugs, urlNameCulture, regexMatch, regexReplace, preserveUrl);
                 await SetPostMetadataAsync(postNode, postType, post, postElement, categories, authorIdsToName);
 
                 if (importFirstImage)
@@ -457,10 +492,34 @@ namespace Articulate.ImportExport
                 }
 
                 SaveAndPublishPost(postNode, userId, publishAll);
+                string? savedSlug = SlugSegment(postNode, shortStringHelper, urlNameCulture);
+                TakeSlug(takenSlugs, savedSlug);
+                RemovePostIndexEntry(bySlug, oldSlug, postNode);
+                RemovePostIndexEntry(byImportId, oldImportId, postNode);
+                RemovePostIndexEntry(postsByImportId, oldImportId, postNode);
+                if (savedSlug is { Length: > 0 })
+                {
+                    bySlug.TryAdd(savedSlug, postNode);
+                }
+
+                if (postNode.GetValue<string>("importId", importIdCulture) is { Length: > 0 } savedId)
+                {
+                    byImportId.TryAdd(savedId, postNode);
+                    postsByImportId.TryAdd(savedId, postNode);
+                }
+
                 result.Add(postNode);
             }
 
             return result;
+        }
+
+        private static void RemovePostIndexEntry(Dictionary<string, IContent> index, string? key, IContent post)
+        {
+            if (key is not null && index.GetValueOrDefault(key) == post)
+            {
+                index.Remove(key);
+            }
         }
 
         private IContentType GetRequiredContentType(string alias)
@@ -502,6 +561,7 @@ namespace Articulate.ImportExport
         private (Dictionary<string, IContent> BySlug, Dictionary<string, IContent> ByImportId, Dictionary<string, int> TakenSlugs) IndexArchivePosts(
             IContent archive,
             string? urlNameCulture,
+            string? importIdCulture,
             Dictionary<string, IContent> postsByImportId)
         {
             var bySlug = new Dictionary<string, IContent>(StringComparer.OrdinalIgnoreCase);
@@ -516,7 +576,7 @@ namespace Articulate.ImportExport
                 }
 
                 TakeSlug(taken, slug);
-                if (existing.GetValue<string>("importId") is not { Length: > 0 } importId)
+                if (existing.GetValue<string>("importId", importIdCulture) is not { Length: > 0 } importId)
                 {
                     continue;
                 }
@@ -543,22 +603,28 @@ namespace Articulate.ImportExport
             IContent? postNode,
             BlogMLPost post,
             bool publishAll,
-            IContentType archiveType)
+            IContentType archiveType,
+            IReadOnlyList<ArchiveSyndicationExtension>? sourceArchives = null,
+            IReadOnlyCollection<(Guid SourceKey, int DestinationId)>? archiveOwnershipClaims = null)
         {
-            IContent archiveNode = ResolveArchiveForPost(rootNode, archives, archiveMarker);
-
-            if (postNode is not null && archives.FirstOrDefault(archive => archive.Id == postNode.ParentId) is { } owner && owner.Key != archiveNode.Key)
+            if (postNode is not null && archives.FirstOrDefault(archive => archive.Id == postNode.ParentId) is { } owner)
             {
-                logger.LogWarning(
-                    "BlogML post '{PostTitle}' (ImportId: {ImportId}) matched existing post '{PostName}' in archive '{OwnerArchive}' rather than '{TargetArchive}'; if the file is from a different source its ids may collide",
-                    post.Title.Content,
-                    post.Id,
-                    postNode.Name,
-                    owner.Name,
-                    archiveMarker?.ArchiveName ?? archiveNode.Name);
+                if (ResolveArchiveForPost(rootNode, archives, archiveMarker).Key != owner.Key)
+                {
+                    logger.LogWarning(
+                        "BlogML post '{PostTitle}' (ImportId: {ImportId}) matched existing post '{PostName}' in archive '{OwnerArchive}' rather than '{TargetArchive}'; if the file is from a different source its ids may collide",
+                        post.Title.Content,
+                        post.Id,
+                        postNode.Name,
+                        owner.Name,
+                        archiveMarker?.ArchiveName);
+                }
+
                 return owner;
             }
 
+            sourceArchives ??= archiveMarker is null ? [] : [archiveMarker];
+            IContent archiveNode = ResolveSafeArchive(rootNode, archives, archiveMarker, sourceArchives, archiveOwnershipClaims ?? []);
             if (archiveNode.Key != rootNode.Key)
             {
                 return archiveNode;
@@ -572,6 +638,89 @@ namespace Articulate.ImportExport
 
             return archiveNode;
         }
+
+        private IContent ResolveSafeArchive(
+            IContent root,
+            IReadOnlyList<IContent> archives,
+            ArchiveSyndicationExtension? marker,
+            IReadOnlyList<ArchiveSyndicationExtension> sourceArchives,
+            IReadOnlyCollection<(Guid SourceKey, int DestinationId)> archiveOwnershipClaims)
+        {
+            if (marker is null)
+            {
+                return ResolveArchiveForPost(root, archives, marker);
+            }
+
+            if (marker.ArchiveKey != Guid.Empty)
+            {
+                IContent? exact = archives.FirstOrDefault(archive => archive.Key == marker.ArchiveKey);
+                if (exact is not null)
+                {
+                    return exact;
+                }
+
+                if (entityService.Exists(marker.ArchiveKey))
+                {
+                    throw OccupiedArchiveKey();
+                }
+            }
+
+            string name = ArchiveName(marker);
+            IContent[] named = [.. archives.Where(archive => string.Equals(archive.Name?.Trim(), name, StringComparison.OrdinalIgnoreCase))];
+            Guid[] sameNameKeys = [.. sourceArchives.Where(source => string.Equals(ArchiveName(source), name, StringComparison.OrdinalIgnoreCase))
+                .Select(source => source.ArchiveKey).Where(key => key != Guid.Empty).Distinct()];
+            if (sameNameKeys.Length > 1 && marker.ArchiveKey != Guid.Empty)
+            {
+                if (named.Any(archive => !sameNameKeys.Contains(archive.Key)))
+                {
+                    throw AmbiguousArchive();
+                }
+
+                return root;
+            }
+
+            if (named.Length > 1)
+            {
+                throw AmbiguousArchive();
+            }
+
+            if (named.Length == 1)
+            {
+                IContent destination = named[0];
+                if (marker.ArchiveKey != Guid.Empty && archiveOwnershipClaims.Any(claim =>
+                    claim.DestinationId == destination.Id && claim.SourceKey != marker.ArchiveKey))
+                {
+                    throw AmbiguousArchive();
+                }
+
+                if (marker.ArchiveKey != Guid.Empty && sourceArchives.Any(source =>
+                    source.ArchiveKey != Guid.Empty && source.ArchiveKey != marker.ArchiveKey &&
+                    (source.ArchiveKey == destination.Key ||
+                     (archives.All(archive => archive.Key != source.ArchiveKey) &&
+                      string.Equals(ArchiveName(source), name, StringComparison.OrdinalIgnoreCase)))))
+                {
+                    throw AmbiguousArchive();
+                }
+
+                return destination;
+            }
+
+            // A nameless, unkeyed marker retains the legacy default-archive fallback.
+            return marker.ArchiveKey == Guid.Empty && string.IsNullOrWhiteSpace(marker.ArchiveName)
+                ? archives.FirstOrDefault() ?? root
+                : root;
+        }
+
+        private static BlogMlImportException OccupiedArchiveKey() => new(
+            "The source archive key is already in use outside the selected blog. Import into the original blog or use an export with unambiguous destination archive markers.");
+
+        private static BlogMlImportException AmbiguousArchive() => new(
+            "The destination archive is ambiguous. Use distinct archive keys that identify archives in the selected blog, or import into a blog without conflicting destination archives.");
+
+        private static string ArchiveName(ArchiveSyndicationExtension? marker) =>
+            string.IsNullOrWhiteSpace(marker?.ArchiveName)
+                ? ArticulateConstants.Convention.ArticlesDocument
+                : marker.ArchiveName.Trim();
 
         private async Task ImportFirstImageAsync(IContentBase postNode, IContentType postType, BlogMLPost post)
         {
@@ -748,24 +897,26 @@ namespace Articulate.ImportExport
             bool publishAll,
             IContentType archiveDocType)
         {
-            string archiveName = archiveMarker?.ArchiveName?.Trim() ?? string.Empty;
-            if (string.IsNullOrWhiteSpace(archiveName))
-            {
-                archiveName = ArticulateConstants.Convention.ArticlesDocument;
-            }
-
-            if (createdArchives.TryGetValue(archiveName, out IContent? created))
+            string archiveName = ArchiveName(archiveMarker);
+            Guid sourceKey = archiveMarker?.ArchiveKey ?? Guid.Empty;
+            string cacheKey = sourceKey == Guid.Empty ? "name:" + archiveName : "key:" + sourceKey.ToString("D");
+            if (createdArchives.TryGetValue(cacheKey, out IContent? created))
             {
                 return created;
             }
 
-            created = await CreateArchiveNodeAsync(userId, rootNode, archiveName, publishAll, archiveDocType);
-            createdArchives[archiveName] = created;
+            if (sourceKey != Guid.Empty && entityService.Exists(sourceKey))
+            {
+                throw OccupiedArchiveKey();
+            }
+
+            created = await CreateArchiveNodeAsync(userId, rootNode, archiveName, publishAll, archiveDocType, sourceKey);
+            createdArchives[cacheKey] = created;
 
             return created;
         }
 
-        internal async Task<IContent> CreateArchiveNodeAsync(int userId, IContent rootNode, string archiveName, bool publishAll, IContentType archiveDocType)
+        internal async Task<IContent> CreateArchiveNodeAsync(int userId, IContent rootNode, string archiveName, bool publishAll, IContentType archiveDocType, Guid sourceKey = default)
         {
             IContent archiveNode = await contentService.CreateWithInvariantOrDefaultCultureNameAsync(
                 archiveName,
@@ -773,6 +924,11 @@ namespace Articulate.ImportExport
                 archiveDocType,
                 languageService,
                 logger);
+
+            if (sourceKey != Guid.Empty)
+            {
+                archiveNode.Key = sourceKey;
+            }
 
             OperationResult archiveSaveResult = contentService.Save(archiveNode, userId);
             archiveSaveResult.EnsureSuccess(logger, $"save archive container {archiveNode.Id}");
@@ -800,18 +956,15 @@ namespace Articulate.ImportExport
             }
 
             string? archiveName = archiveMarker?.ArchiveName?.Trim();
-            switch (string.IsNullOrWhiteSpace(archiveName))
+            if (!string.IsNullOrWhiteSpace(archiveName))
             {
-                case false:
-                {
-                    IContent? match = archives.FirstOrDefault(archive =>
-                        string.Equals(archive.Name, archiveName, StringComparison.OrdinalIgnoreCase));
+                IContent? match = archives.FirstOrDefault(archive =>
+                    string.Equals(archive.Name, archiveName, StringComparison.OrdinalIgnoreCase));
 
-                    return match ?? root;
-                }
-                default:
-                    return archives.FirstOrDefault() ?? root;
+                return match ?? root;
             }
+
+            return archives.FirstOrDefault() ?? root;
         }
 
         internal static (Dictionary<string, XElement> ById, Dictionary<string, XElement> ByName) BuildPostElementLookup(XDocument? xDoc)
@@ -868,11 +1021,12 @@ namespace Articulate.ImportExport
             Dictionary<string, IContent> postsByImportId,
             Dictionary<string, IContent> postsBySlug,
             BlogMLPost post,
-            IShortStringHelper shortStringHelper)
+            IShortStringHelper shortStringHelper,
+            string? importIdCulture = null)
         {
-            if (!string.IsNullOrWhiteSpace(post.Id))
+            if (!string.IsNullOrWhiteSpace(post.Id) && postsByImportId.TryGetValue(post.Id, out IContent? byId))
             {
-                return postsByImportId.GetValueOrDefault(post.Id);
+                return byId;
             }
 
             if (post.Name is null && string.IsNullOrWhiteSpace(post.Url?.OriginalString))
@@ -880,8 +1034,17 @@ namespace Articulate.ImportExport
                 return null;
             }
 
-            string slug = ExtractSlugFromPost(post).ToUrlSegment(shortStringHelper);
-            return string.IsNullOrEmpty(slug) ? null : postsBySlug.GetValueOrDefault(slug);
+            string sourceSlug = ExtractSlugFromPost(post);
+            if (string.IsNullOrWhiteSpace(sourceSlug))
+            {
+                return null;
+            }
+
+            string slug = sourceSlug.ToUrlSegment(shortStringHelper);
+            IContent? candidate = string.IsNullOrEmpty(slug) ? null : postsBySlug.GetValueOrDefault(slug);
+            return candidate is not null && string.IsNullOrWhiteSpace(candidate.GetValue<string>("importId", importIdCulture))
+                ? candidate
+                : null;
         }
 
         private async Task PopulatePostContentAsync(
@@ -891,7 +1054,8 @@ namespace Articulate.ImportExport
             Dictionary<string, int> takenSlugs,
             string? urlNameCulture,
             string? regexMatch,
-            string? regexReplace)
+            string? regexReplace,
+            bool preserveUrl)
         {
             await postNode
                 .SetInvariantOrDefaultCultureValueAsync(
@@ -939,7 +1103,10 @@ namespace Articulate.ImportExport
                     languageService,
                     logger);
 
-            SetPostSlug(postNode, post, takenSlugs, urlNameCulture);
+            if (!preserveUrl)
+            {
+                SetPostSlug(postNode, post, takenSlugs, urlNameCulture);
+            }
         }
 
         private static string DecodeContent(string content, BlogMLContentType contentType) =>
@@ -978,18 +1145,18 @@ namespace Articulate.ImportExport
         private void SetPostSlug(IContentBase postNode, BlogMLPost post, Dictionary<string, int> takenSlugs, string? culture)
         {
             string? source = post.Name is not null || !string.IsNullOrWhiteSpace(post.Url?.OriginalString) ? ExtractSlugFromPost(post) : null;
-            string? current = postNode.GetValue<string>(Constants.Conventions.Content.UrlName, culture)?.Trim();
-            if (ChoosePostSlug(source, current, postNode.Name, takenSlugs, shortStringHelper) is { } slug)
+            string? name = culture is null ? postNode.Name : postNode.GetCultureName(culture);
+            if (ChoosePostSlug(source, name, takenSlugs, shortStringHelper) is { } slug)
             {
                 postNode.SetValue(Constants.Conventions.Content.UrlName, slug, culture);
             }
         }
 
-        internal static string? ChoosePostSlug(string? source, string? current, string? nodeName, Dictionary<string, int> taken, IShortStringHelper shortStringHelper)
+        internal static string? ChoosePostSlug(string? source, string? nodeName, Dictionary<string, int> taken, IShortStringHelper shortStringHelper)
         {
             if (string.IsNullOrWhiteSpace(source))
             {
-                if (!string.IsNullOrWhiteSpace(current) || string.IsNullOrWhiteSpace(nodeName))
+                if (string.IsNullOrWhiteSpace(nodeName))
                 {
                     return null;
                 }
@@ -998,29 +1165,7 @@ namespace Articulate.ImportExport
                 return unique == nodeName ? null : unique;
             }
 
-            if (!string.IsNullOrWhiteSpace(current) && !taken.ContainsKey(current.ToUrlSegment(shortStringHelper)))
-            {
-                Match suffixed = Suffixed().Match(current);
-                string sourceSegment = source.ToUrlSegment(shortStringHelper);
-                if (string.Equals(current.ToUrlSegment(shortStringHelper), sourceSegment, StringComparison.OrdinalIgnoreCase)
-                    || (suffixed.Success && string.Equals(suffixed.Groups[1].Value.ToUrlSegment(shortStringHelper), sourceSegment, StringComparison.OrdinalIgnoreCase)))
-                {
-                    return current;
-                }
-            }
-
             return EnsureUniqueSlug(source, taken, shortStringHelper);
-        }
-
-        internal static Dictionary<string, int> CountSlugs(IEnumerable<IContentBase> nodes, IShortStringHelper shortStringHelper, string? culture)
-        {
-            var taken = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-            foreach (IContentBase node in nodes)
-            {
-                TakeSlug(taken, SlugSegment(node, shortStringHelper, culture));
-            }
-
-            return taken;
         }
 
         internal static void TakeSlug(Dictionary<string, int> taken, string? segment)
@@ -1053,7 +1198,7 @@ namespace Articulate.ImportExport
             string? source = node.GetValue<string>(Constants.Conventions.Content.UrlName, culture)?.Trim();
             if (string.IsNullOrWhiteSpace(source))
             {
-                source = node.Name;
+                source = culture is null ? node.Name : node.GetCultureName(culture);
             }
 
             return string.IsNullOrWhiteSpace(source) ? null : source.ToUrlSegment(shortStringHelper);
@@ -1090,10 +1235,8 @@ namespace Articulate.ImportExport
                 return post.Name.Content;
             }
 
-            var slugArray = post.Url!.OriginalString.Split(['/'], StringSplitOptions.RemoveEmptyEntries);
-            var fileNameAndQuery = slugArray[^1];
-            var fileNameAndQueryArray = fileNameAndQuery.Split(['?'], StringSplitOptions.RemoveEmptyEntries);
-            var fileName = fileNameAndQueryArray[0];
+            string? fileNameAndQuery = post.Url?.OriginalString.Split(['/'], StringSplitOptions.RemoveEmptyEntries).LastOrDefault();
+            string fileName = fileNameAndQuery?.Split('?')[0] ?? string.Empty;
             int lastDotIndex = fileName.LastIndexOf('.');
             return lastDotIndex > 0 ? fileName[..lastDotIndex] : fileName;
         }
@@ -1133,8 +1276,6 @@ namespace Articulate.ImportExport
             publishResult.EnsureSuccess(logger, $"publish post {postNode.Id}");
         }
 
-        [GeneratedRegex(@"^(.*) \(\d+\)$")]
-        private static partial Regex Suffixed();
     }
 
     internal sealed record BlogMlImportFileSummary(int PostCount, int ExternalImageCount, string[] ExternalHosts);
