@@ -2,12 +2,15 @@
 using Articulate.Components;
 using Articulate.Options;
 using Articulate.Services;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using NUnit.Framework;
+using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.Events;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Notifications;
 using Umbraco.Cms.Core.Security;
+using Umbraco.Cms.Core.Serialization;
 using Umbraco.Cms.Core.Services;
 
 namespace Articulate.Tests.Components
@@ -61,7 +64,9 @@ namespace Articulate.Tests.Components
                 contentTypeService.Object,
                 securityAccessor.Object,
                 Microsoft.Extensions.Options.Options.Create(new ArticulateOptions { AutoGenerateExcerpt = false }),
-                markdownConverter.Object);
+                markdownConverter.Object,
+                Mock.Of<IJsonSerializer>(),
+                NullLogger<ContentSavingHandler>.Instance);
 
             sut.Handle(new ContentSavingNotification([content.Object], new EventMessages()));
 
@@ -117,7 +122,9 @@ namespace Articulate.Tests.Components
                 contentTypeService.Object,
                 securityAccessor.Object,
                 Microsoft.Extensions.Options.Options.Create(new ArticulateOptions { AutoGenerateExcerpt = false }),
-                markdownConverter.Object);
+                markdownConverter.Object,
+                Mock.Of<IJsonSerializer>(),
+                NullLogger<ContentSavingHandler>.Instance);
 
             sut.Handle(new ContentSavingNotification([content.Object], new EventMessages()));
 
@@ -199,7 +206,9 @@ namespace Articulate.Tests.Components
                         return generatedExcerpt;
                     }
                 }),
-                markdownConverter.Object);
+                markdownConverter.Object,
+                Mock.Of<IJsonSerializer>(),
+                NullLogger<ContentSavingHandler>.Instance);
 
             sut.Handle(new ContentSavingNotification([content.Object], new EventMessages()));
 
@@ -208,6 +217,64 @@ namespace Articulate.Tests.Components
             Assert.That(setValueCalls, Has.Count.EqualTo(2));
             Assert.That(setValueCalls.Single(x => x.Alias == "excerpt").Value, Is.EqualTo(generatedExcerpt));
             Assert.That(setValueCalls.Single(x => x.Alias == "socialDescription").Value, Is.EqualTo(generatedExcerpt));
+        }
+
+        [Test]
+        public void Handle_generates_excerpt_from_rich_text_json_with_paragraphs_spaced()
+        {
+            const string json = """{"markup":"<p>So some</p><p>rich text</p>","blocks":null}""";
+
+            Mock<IPropertyType> excerptProperty = new();
+            excerptProperty.SetupGet(x => x.Alias).Returns("excerpt");
+
+            Mock<IPropertyType> richTextProperty = new();
+            richTextProperty.SetupGet(x => x.Alias).Returns("richText");
+
+            Mock<IContentType> contentType = new();
+            contentType.SetupGet(x => x.Id).Returns(101);
+            contentType.SetupGet(x => x.Alias).Returns(ArticulateConstants.ContentType.ArticulateRichText);
+            contentType.SetupGet(x => x.CompositionPropertyTypes).Returns(
+                [excerptProperty.Object, richTextProperty.Object]);
+
+            Mock<ISimpleContentType> simpleContentType = new();
+            simpleContentType.SetupGet(x => x.Alias).Returns(ArticulateConstants.ContentType.ArticulateRichText);
+
+            Mock<IContent> content = new();
+            content.SetupGet(x => x.ContentTypeId).Returns(101);
+            content.SetupGet(x => x.ContentType).Returns(simpleContentType.Object);
+            content.SetupGet(x => x.HasIdentity).Returns(true);
+            content.Setup(x => x.HasProperty("richText")).Returns(true);
+            content.Setup(x => x.GetValue("publishedDate", null, null, false)).Returns(DateTime.UtcNow);
+            content.Setup(x => x.GetValue("author", null, null, false)).Returns("author");
+            content.Setup(x => x.GetValue("excerpt", null, null, false)).Returns((object?)null);
+            content.Setup(x => x.GetValue<string>("richText", null, null, false)).Returns(json);
+
+            var setValueCalls = new List<(string Alias, object? Value)>();
+            content
+                .Setup(x => x.SetValue(It.IsAny<string>(), It.IsAny<object?>(), It.IsAny<string?>(), It.IsAny<string?>()))
+                .Callback<string, object?, string?, string?>((alias, value, _, _) => setValueCalls.Add((alias, value)));
+
+            Mock<IJsonSerializer> jsonSerializer = new();
+            jsonSerializer
+                .Setup(x => x.Deserialize<RichTextEditorValue>(json))
+                .Returns(new RichTextEditorValue { Markup = "<p>So some</p><p>rich text</p>" });
+
+            Mock<IContentTypeService> contentTypeService = new();
+            contentTypeService
+                .Setup(x => x.GetMany(It.Is<int[]>(ids => ids.Length == 1 && ids[0] == 101)))
+                .Returns([contentType.Object]);
+
+            var sut = new ContentSavingHandler(
+                contentTypeService.Object,
+                Mock.Of<IBackOfficeSecurityAccessor>(),
+                Microsoft.Extensions.Options.Options.Create(new ArticulateOptions { AutoGenerateExcerpt = true }),
+                Mock.Of<IArticulateMarkdownConverter>(),
+                jsonSerializer.Object,
+                NullLogger<ContentSavingHandler>.Instance);
+
+            sut.Handle(new ContentSavingNotification([content.Object], new EventMessages()));
+
+            Assert.That(setValueCalls.Single(x => x.Alias == "excerpt").Value, Is.EqualTo("So some rich text"));
         }
 
         [Test]
@@ -240,7 +307,9 @@ namespace Articulate.Tests.Components
                 contentTypeService.Object,
                 securityAccessor.Object,
                 Microsoft.Extensions.Options.Options.Create(new ArticulateOptions { AutoGenerateExcerpt = false }),
-                markdownConverter.Object);
+                markdownConverter.Object,
+                Mock.Of<IJsonSerializer>(),
+                NullLogger<ContentSavingHandler>.Instance);
 
             sut.Handle(new ContentSavingNotification([content.Object], new EventMessages()));
 
