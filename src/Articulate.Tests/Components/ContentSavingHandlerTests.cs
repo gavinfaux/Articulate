@@ -18,6 +18,8 @@ namespace Articulate.Tests.Components
     [TestFixture]
     internal class ContentSavingHandlerTests
     {
+        private const string RichTextJson = """{"markup":"<p>So some</p><p>rich text</p>","blocks":null}""";
+
         [Test]
         public void Handle_sets_enableComments_for_new_articulate_posts()
         {
@@ -219,11 +221,11 @@ namespace Articulate.Tests.Components
             Assert.That(setValueCalls.Single(x => x.Alias == "socialDescription").Value, Is.EqualTo(generatedExcerpt));
         }
 
-        [Test]
-        public void Handle_generates_excerpt_from_rich_text_json_with_paragraphs_spaced()
+        // The editor stores JSON; BlogML import and MetaWeblog store plain HTML.
+        [TestCase(RichTextJson)]
+        [TestCase("<p>So some</p><p>rich text</p>")]
+        public void Handle_generates_excerpt_from_rich_text_with_paragraphs_spaced(string storedValue)
         {
-            const string json = """{"markup":"<p>So some</p><p>rich text</p>","blocks":null}""";
-
             Mock<IPropertyType> excerptProperty = new();
             excerptProperty.SetupGet(x => x.Alias).Returns("excerpt");
 
@@ -247,7 +249,7 @@ namespace Articulate.Tests.Components
             content.Setup(x => x.GetValue("publishedDate", null, null, false)).Returns(DateTime.UtcNow);
             content.Setup(x => x.GetValue("author", null, null, false)).Returns("author");
             content.Setup(x => x.GetValue("excerpt", null, null, false)).Returns((object?)null);
-            content.Setup(x => x.GetValue<string>("richText", null, null, false)).Returns(json);
+            content.Setup(x => x.GetValue<string>("richText", null, null, false)).Returns(storedValue);
 
             var setValueCalls = new List<(string Alias, object? Value)>();
             content
@@ -256,7 +258,7 @@ namespace Articulate.Tests.Components
 
             Mock<IJsonSerializer> jsonSerializer = new();
             jsonSerializer
-                .Setup(x => x.Deserialize<RichTextEditorValue>(json))
+                .Setup(x => x.Deserialize<RichTextEditorValue>(RichTextJson))
                 .Returns(new RichTextEditorValue { Markup = "<p>So some</p><p>rich text</p>" });
 
             Mock<IContentTypeService> contentTypeService = new();
