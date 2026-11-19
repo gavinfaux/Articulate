@@ -161,6 +161,28 @@ namespace Articulate.Tests.Components
         }
 
         [Test]
+        public void Handle_refresh_by_payload_marks_routes_dirty_once_for_several_affecting_payloads()
+        {
+            IPublishedContent first = CreatePublishedContent(100, "-1,100", 1, 0, ArticulateConstants.ContentType.Articulate);
+            IPublishedContent second = CreatePublishedContent(200, "-1,200", 1, 1, ArticulateConstants.ContentType.Articulate);
+            IPublishedContentCache contentCache = Mock.Of<IPublishedContentCache>(x =>
+                x.GetById(false, 100) == first &&
+                x.GetById(false, 200) == second);
+
+            ContentCacheRefresherHandler sut = CreateSut([], out Mock<IArticulateRouteRefreshState> routeRefreshState, contentCache);
+
+            sut.Handle(new ContentCacheRefresherNotification(
+                new[]
+                {
+                    new ContentCacheRefresher.JsonPayload { Id = 100, ChangeTypes = TreeChangeTypes.RefreshNode },
+                    new ContentCacheRefresher.JsonPayload { Id = 200, ChangeTypes = TreeChangeTypes.RefreshNode },
+                },
+                MessageType.RefreshByPayload));
+
+            routeRefreshState.Verify(x => x.MarkDirty(), Times.Once);
+        }
+
+        [Test]
         public void Handle_refresh_by_payload_ignores_payload_without_relevant_change_types()
         {
             IPublishedContent changedContent = CreatePublishedContent(

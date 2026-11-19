@@ -54,7 +54,7 @@ namespace Articulate.Components
                     break;
                 case MessageType.RefreshById:
                 case MessageType.RemoveById:
-                    RefreshById(
+                    _ = RefreshById(
                         (int)notification.MessageObject,
                         notification.MessageType == MessageType.RemoveById);
                     break;
@@ -69,16 +69,16 @@ namespace Articulate.Components
             }
         }
 
+        // One rebuild covers the whole notification: marking routes dirty rebuilds them from current content.
         private void HandleRefreshByPayload(ContentCacheRefresher.JsonPayload[] payloads)
         {
             foreach (ContentCacheRefresher.JsonPayload payload in payloads)
             {
                 if (payload.ChangeTypes.HasTypesAny(TreeChangeTypes.Remove | TreeChangeTypes.RefreshBranch |
-                                                    TreeChangeTypes.RefreshNode))
+                                                    TreeChangeTypes.RefreshNode) &&
+                    RefreshById(payload.Id, payload.ChangeTypes.HasTypesAny(TreeChangeTypes.Remove)))
                 {
-                    RefreshById(
-                        payload.Id,
-                        payload.ChangeTypes.HasTypesAny(TreeChangeTypes.Remove));
+                    return;
                 }
             }
         }
@@ -110,7 +110,7 @@ namespace Articulate.Components
             }
         }
 
-        private void RefreshById(int id, bool allowUnpublishedRefresh)
+        private bool RefreshById(int id, bool allowUnpublishedRefresh)
         {
             using (scopeProvider.CreateScope(autoComplete: true))
             {
@@ -132,12 +132,12 @@ namespace Articulate.Components
                             id,
                             contentTypeAlias: null,
                             contentPath: null);
-                        return;
+                        return true;
                     }
 
                     if (!allowUnpublishedRefresh)
                     {
-                        return;
+                        return false;
                     }
                 }
 
@@ -148,7 +148,7 @@ namespace Articulate.Components
                         item.ContentType.Alias,
                         GetArticulateRoots()))
                 {
-                    return;
+                    return false;
                 }
 
                 MarkRoutesDirty(
@@ -156,6 +156,7 @@ namespace Articulate.Components
                     item.Id,
                     item.ContentType.Alias,
                     item.Path);
+                return true;
             }
         }
 
