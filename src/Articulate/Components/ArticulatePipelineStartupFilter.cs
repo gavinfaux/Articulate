@@ -1,13 +1,15 @@
 #nullable enable
 using Articulate.Routing;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Umbraco.Cms.Web.Common.ApplicationBuilder;
 
 namespace Articulate.Components
 {
     /// <summary>
-    /// Configuration for the Articulate dynamic routing in the middleware pipeline.
+    /// Adds Articulate's endpoints to the pipeline ahead of Umbraco's catch-all route, and sets Umbraco's route
+    /// values for them straight after routing.
     /// </summary>
     public class ArticulatePipelineStartupFilter : IConfigureOptions<UmbracoPipelineOptions>
     {
@@ -15,13 +17,9 @@ namespace Articulate.Components
         public void Configure(UmbracoPipelineOptions options)
             => options.AddFilter(new UmbracoPipelineFilter(nameof(ArticulatePipelineStartupFilter))
             {
+                PostRouting = app => app.Use(ArticulateEndpointDataSource.SetRouteValuesAsync),
                 Endpoints = app => app.UseEndpoints(endpoints =>
-                {
-                    endpoints.MapDynamicControllerRoute<ArticulateRouteValueTransformer>(
-                        "/{any}/{**slug}",
-                        null!,
-                        1000); // Ensure it runs AFTER Umbraco so that we can check if things are already matched.
-                }),
+                    endpoints.DataSources.Add(endpoints.ServiceProvider.GetRequiredService<ArticulateEndpointDataSource>())),
             });
     }
 }

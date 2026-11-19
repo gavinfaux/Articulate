@@ -41,10 +41,11 @@ namespace Articulate.Components
             _ = services.AddSingleton<DisqusXmlExporter>();
             _ = services.AddScoped<BlogMlImporter>();
             services.TryAddSingleton<IArticulateSearcher, DefaultArticulateSearcher>();
-            _ = services.AddSingleton<ArticulateRouteValueTransformer>();
             _ = services.AddSingleton<ArticulateRouter>();
+            _ = services.AddSingleton<ArticulateEndpointDataSource>();
+            services.TryAddSingleton(TimeProvider.System);
             services.TryAddEnumerable(
-                ServiceDescriptor.Singleton<MatcherPolicy, ArticulateDynamicRouteSelectorPolicy>());
+                ServiceDescriptor.Singleton<MatcherPolicy, ArticulateEndpointSelectorPolicy>());
             services.TryAddSingleton<IArticulateThemeRepository, ArticulateThemeRepository>();
             services.TryAddSingleton<IArticulateMarkdownConverter, ArticulateMarkdownService>();
             _ = services.AddTransient<IArticulateThemeResolver, ArticulateThemeResolver>();
@@ -77,6 +78,7 @@ namespace Articulate.Components
             _ = builder.AddNotificationHandler<ContentTypeSavingNotification, ContentTypeSavingHandler>();
             _ = builder.AddNotificationHandler<ContentCacheRefresherNotification, ContentCacheRefresherHandler>();
             _ = builder.AddNotificationHandler<DomainCacheRefresherNotification, DomainCacheRefresherHandler>();
+            _ = builder.AddNotificationHandler<UmbracoApplicationStartedNotification, ArticulateRouteStartedHandler>();
 
             // Ensure MVC discovers controllers in the Articulate assembly.
             _ = services

@@ -1,5 +1,4 @@
 #nullable enable
-using Articulate.Attributes;
 using Articulate.Routing;
 using Articulate.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -21,7 +20,6 @@ namespace Articulate.Controllers
     /// Cached for one minute
     /// </remarks>
     [OutputCache(PolicyName = "Articulate60")]
-    [ArticulateDynamicRoute]
     public class ArticulateTagsController(
         ILogger<ArticulateTagsController> logger,
         ICompositeViewEngine compositeViewEngine,

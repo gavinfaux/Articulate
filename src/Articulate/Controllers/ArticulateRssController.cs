@@ -1,6 +1,5 @@
 #nullable enable
 using System.ServiceModel.Syndication;
-using Articulate.Attributes;
 using Articulate.Services;
 using Articulate.Syndication;
 using Microsoft.AspNetCore.Mvc;
@@ -21,7 +20,6 @@ namespace Articulate.Controllers
     /// Cached for one minute
     /// </remarks>
     [OutputCache(PolicyName = "Articulate300")]
-    [ArticulateDynamicRoute]
     public class ArticulateRssController(
         ILogger<ArticulateRssController> logger,
         ICompositeViewEngine compositeViewEngine,

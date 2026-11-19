@@ -1,6 +1,5 @@
 #nullable enable
 using System.Xml.Linq;
-using Articulate.Attributes;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Logging;
@@ -14,7 +13,6 @@ namespace Articulate.Controllers
     /// <summary>
     /// Controller for OpenSearch description.
     /// </summary>
-    [ArticulateDynamicRoute]
     public class OpenSearchController(
         IPublishedValueFallback publishedValueFallback,
         UmbracoHelper umbraco,

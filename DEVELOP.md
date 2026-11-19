@@ -71,7 +71,7 @@ pnpm run build
 | Tag assignment | Existing `AssignTags` overload | `IIdKeyMap` parameter | `src/Articulate/ContentExtensions.cs` and callers |
 | Published wrapper | `PublishedContentWrapped(content, publishedValueFallback)` | `PublishedContentWrapped(content)` | `src/Articulate/Models/MasterModel.cs` |
 
-The date provider and content finder select the matching base class and logger type. `ArticulateRouter` takes `IDocumentUrlService` only in v18. The v18 test projects pin `Microsoft.CodeAnalysis.CSharp.Workspaces` for Umbraco.Code 3. `ArticulateRouteValueTransformerTests.cs` mirrors the v17 `IFileService` and v18 `ITemplateService` constructor requirements.
+The date provider and content finder select the matching base class and logger type. `ArticulateRouter` takes `IDocumentUrlService` only in v18. The v18 test projects pin `Microsoft.CodeAnalysis.CSharp.Workspaces` for Umbraco.Code 3. `ArticulateRouterTests.cs` also registers `IFileService` on v17 for Umbraco's published-content extensions.
 
 The checked-in API client uses v18 OpenAPI at `src/Articulate.Web/Client/common/src/api/`; v17 output is comparison-only under `src/Articulate.Web/Client/common/.api-check/v17/`. BlogML responses stay `unknown`; `src/Articulate.Web/Client/common/src/api/api-compatibility.type-test.ts` protects the schema boundary and callers narrow the value to `Blob`.
 

@@ -2,7 +2,6 @@
 using System.Text;
 using System.Xml;
 using System.Xml.Linq;
-using Articulate.Attributes;
 using Articulate.MetaWeblog;
 using Articulate.Options;
 using Microsoft.AspNetCore.Mvc;
@@ -25,7 +24,6 @@ namespace Articulate.Controllers
     /// middleware but that just supports one endpoint, we are basically wrapping that
     /// with our own multi-tenanted version.
     /// </remarks>
-    [ArticulateDynamicRoute]
     public class MetaWeblogController(
         ILogger<MetaWeblogController> logger,
         ICompositeViewEngine compositeViewEngine,

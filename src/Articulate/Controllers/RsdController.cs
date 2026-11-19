@@ -1,6 +1,5 @@
 #nullable enable
 using System.Xml.Linq;
-using Articulate.Attributes;
 using Articulate.Options;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
@@ -16,7 +15,6 @@ namespace Articulate.Controllers
     /// <summary>
     /// Really simple discovery controller
     /// </summary>
-    [ArticulateDynamicRoute]
     public class RsdController(
         UmbracoHelper umbracoHelper,
         ILogger<RsdController> logger,

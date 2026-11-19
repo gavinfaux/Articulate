@@ -13,16 +13,8 @@ namespace Articulate.Routing
     {
         private static readonly string[] _configuredRouteAliases = ["searchUrlName", "categoriesUrlName", "tagsUrlName"];
 
-        private static readonly HashSet<string> _reservedRouteSegments = new(StringComparer.OrdinalIgnoreCase)
-        {
-            "a-new",
-            "author",
-            "metaweblog",
-            "opensearch",
-            "rss",
-            "rsd",
-            "wlwmanifest"
-        };
+        // Roots' domains are only compared with each other, so any base resolves relative names consistently.
+        private static readonly Uri _domainComparisonBaseUri = new("https://localhost/");
 
         internal static List<Domain> DomainsForContent(IPublishedContent content, IReadOnlyList<Domain> domains)
         {
@@ -122,8 +114,7 @@ namespace Articulate.Routing
         internal static void ValidateRootPathMappings(
             string rootNodePath,
             IReadOnlyList<IPublishedContent> articulateRoots,
-            IReadOnlyList<Domain> domains,
-            Uri currentUri)
+            IReadOnlyList<Domain> domains)
         {
             var rootsWithDomains = articulateRoots
                 .Select(root => (Root: root, Domains: DomainsForContent(root, domains)))
@@ -139,7 +130,7 @@ namespace Articulate.Routing
                     List<string> overlappingDomains =
                     [
                         .. leftDomains
-                            .Where(leftDomain => rightDomains.Any(rightDomain => ArticulateDomainMatcher.Matches(leftDomain, rightDomain, currentUri)))
+                            .Where(leftDomain => rightDomains.Any(rightDomain => ArticulateDomainMatcher.Matches(leftDomain, rightDomain, _domainComparisonBaseUri)))
                             .Select(leftDomain => leftDomain.Name)
                             .Distinct(StringComparer.OrdinalIgnoreCase)
                     ];
@@ -164,8 +155,7 @@ namespace Articulate.Routing
         internal static void ValidateRootPathMappings(
             string rootNodePath,
             IReadOnlyList<IContent> articulateRoots,
-            IReadOnlyList<Domain> domains,
-            Uri currentUri)
+            IReadOnlyList<Domain> domains)
         {
             var rootsWithDomains = articulateRoots
                 .Select(root => (Root: root, Domains: DomainsForContent(root, domains)))
@@ -181,7 +171,7 @@ namespace Articulate.Routing
                     List<string> overlappingDomains =
                     [
                         .. leftDomains
-                            .Where(leftDomain => rightDomains.Any(rightDomain => ArticulateDomainMatcher.Matches(leftDomain, rightDomain, currentUri)))
+                            .Where(leftDomain => rightDomains.Any(rightDomain => ArticulateDomainMatcher.Matches(leftDomain, rightDomain, _domainComparisonBaseUri)))
                             .Select(leftDomain => leftDomain.Name)
                             .Distinct(StringComparer.OrdinalIgnoreCase)
                     ];
@@ -243,7 +233,7 @@ namespace Articulate.Routing
                     $"for '{propertyAlias}'. Route segments must be a single URL segment.");
             }
 
-            if (_reservedRouteSegments.Contains(normalizedRouteSegment))
+            if (ArticulateRouteSegmentHelper.Reserved.Contains(normalizedRouteSegment))
             {
                 throw new InvalidOperationException(
                     $"Articulate root '{articulateRootName}' (id: {articulateRootId}) cannot use reserved route segment " +

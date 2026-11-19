@@ -19,7 +19,6 @@ namespace Articulate.Controllers
     /// <summary>
     /// Controller for the Articulate Markdown editor.
     /// </summary>
-    [ArticulateDynamicRoute]
     public class MarkdownEditorController(
         ILogger<MarkdownEditorController> logger,
         ICompositeViewEngine compositeViewEngine,

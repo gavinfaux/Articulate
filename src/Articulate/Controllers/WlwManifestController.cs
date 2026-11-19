@@ -1,6 +1,5 @@
 #nullable enable
 using System.Xml.Linq;
-using Articulate.Attributes;
 using Articulate.Options;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
@@ -16,7 +15,6 @@ namespace Articulate.Controllers
     /// <summary>
     /// Controller for Windows Live Writer manifest.
     /// </summary>
-    [ArticulateDynamicRoute]
     public class WlwManifestController(
         UmbracoHelper umbraco,
         ILogger<WlwManifestController> logger,

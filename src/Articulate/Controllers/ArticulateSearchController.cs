@@ -1,5 +1,4 @@
 #nullable enable
-using Articulate.Attributes;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.Extensions.Logging;
@@ -12,7 +11,6 @@ namespace Articulate.Controllers
     /// <summary>
     /// Renders search results
     /// </summary>
-    [ArticulateDynamicRoute]
     public class ArticulateSearchController(
         ILogger<ArticulateSearchController> logger,
         ICompositeViewEngine compositeViewEngine,

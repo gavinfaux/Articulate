@@ -65,8 +65,7 @@ namespace Articulate.Tests.Routing
                 ArticulateRouteValidator.ValidateRootPathMappings(
                     "/blog/",
                     [left, right],
-                    [],
-                    new Uri("https://example.local/")))!;
+                    []))!;
 
             Assert.That(ex.Message, Does.Contain("Ambiguous Articulate root routing"));
         }
@@ -87,8 +86,7 @@ namespace Articulate.Tests.Routing
                 ArticulateRouteValidator.ValidateRootPathMappings(
                     "/blog/",
                     [left, right],
-                    domains,
-                    new Uri("https://example.local/")));
+                    domains));
         }
 
         [Test]
@@ -101,8 +99,7 @@ namespace Articulate.Tests.Routing
                 ArticulateRouteValidator.ValidateRootPathMappings(
                     "/blog/",
                     [left, right],
-                    [],
-                    new Uri("https://example.local/")))!;
+                    []))!;
 
             Assert.That(ex.Message, Does.Contain("Ambiguous Articulate root routing"));
         }
@@ -123,8 +120,7 @@ namespace Articulate.Tests.Routing
                 ArticulateRouteValidator.ValidateRootPathMappings(
                     "/blog/",
                     [left, right],
-                    domains,
-                    new Uri("https://example.local/")));
+                    domains));
         }
 
         [Test]
@@ -143,8 +139,7 @@ namespace Articulate.Tests.Routing
                 ArticulateRouteValidator.ValidateRootPathMappings(
                     "/blog/",
                     [left, right],
-                    domains,
-                    new Uri("https://blog.local/")))!;
+                    domains))!;
 
             Assert.That(ex.Message, Does.Contain("Ambiguous Articulate root routing"));
         }
@@ -158,8 +153,7 @@ namespace Articulate.Tests.Routing
                 ArticulateRouteValidator.ValidateRootPathMappings(
                     "/blog/",
                     [single],
-                    [],
-                    new Uri("https://example.local/")));
+                    []));
         }
 
         [Test]
@@ -178,8 +172,7 @@ namespace Articulate.Tests.Routing
                 ArticulateRouteValidator.ValidateRootPathMappings(
                     "/blog/",
                     [left, right],
-                    domains,
-                    new Uri("https://blog.local/")));
+                    domains));
         }
 
         [Test]
@@ -198,8 +191,7 @@ namespace Articulate.Tests.Routing
                 ArticulateRouteValidator.ValidateRootPathMappings(
                     "/blog/",
                     [left, right],
-                    domains,
-                    new Uri("https://blog.local/")))!;
+                    domains))!;
 
             Assert.That(ex.Message, Does.Contain("Ambiguous Articulate root routing"));
         }
